@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,11 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
-#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+#include <sstream>
 
 namespace L0 {
 namespace Sysman {
@@ -35,6 +36,23 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
+
+    if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        const std::string memFreeKey = "MemFree";
+        const std::string memAvailableKey = "MemAvailable";
+        std::unordered_set<std::string> keys{memFreeKey, memAvailableKey};
+        auto memInfoValues = readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
+            pState->free = memInfoValues[memFreeKey] * 1024;
+            pState->size = memInfoValues[memAvailableKey] * 1024;
+        } else {
+            pState->free = 0;
+            pState->size = 0;
+            status = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return status;
+    }
+
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanProductHelper->getMemoryHealthIndicator(pFwInterface, &pState->health);
@@ -49,8 +67,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         if (errno == ENODEV) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
         return status;
     }
 
@@ -58,6 +76,31 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     pState->free = region.unallocatedSize;
     pState->size = region.probedSize;
     return status;
+}
+
+std::unordered_map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAccessInterface *pFsAccess, const std::unordered_set<std::string> &keys) {
+    std::unordered_map<std::string, uint64_t> result;
+    const std::string memInfoFile = "/proc/meminfo";
+    std::vector<std::string> memInfo;
+
+    if (pFsAccess->read(std::move(memInfoFile), memInfo) == ZE_RESULT_SUCCESS) {
+        for (const auto &line : memInfo) {
+            std::istringstream lineStream(line);
+            std::string label, unit;
+            uint64_t value = 0;
+            lineStream >> label >> value >> unit;
+            if (!label.empty() && label.back() == ':') {
+                label.pop_back();
+            }
+            if (keys.count(label)) {
+                result[label] = value;
+                if (result.size() == keys.size()) {
+                    break;
+                }
+            }
+        }
+    }
+    return result;
 }
 
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
@@ -69,6 +112,9 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        return true;
+    }
     return gfxCoreHelper.getEnableLocalMemory(pDevice->getHardwareInfo());
 }
 

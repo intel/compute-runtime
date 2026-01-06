@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,14 +34,14 @@ uint8_t MockGmmClientContextBase::getMediaSurfaceStateCompressionFormat(GMM_RESO
     return compressionFormatToReturn;
 }
 
-void MockGmmClientContextBase::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
-    EXPECT_NE(deviceInfo, nullptr);
-
-    GMM_DEVICE_CALLBACKS_INT emptyStruct{};
-    EXPECT_EQ(0, memcmp(deviceInfo->pDeviceCb, &emptyStruct, sizeof(GMM_DEVICE_CALLBACKS_INT)));
-}
 uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
     freeGpuVirtualAddressCalled++;
     return 0;
 }
+
+void MockGmmClientContextBase::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initializeCalled++;
+    deviceHandle = 0x08;
+    clientContext = {reinterpret_cast<GMM_CLIENT_CONTEXT *>(deviceHandle), [](auto) {}};
+};
 } // namespace NEO

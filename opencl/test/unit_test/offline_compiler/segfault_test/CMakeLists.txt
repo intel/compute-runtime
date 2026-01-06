@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ set(CLOC_SEGFAULT_TEST_SOURCES
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/offline_compiler/ocloc_tests_configuration.cpp
 )
@@ -39,7 +40,7 @@ else()
 endif()
 
 add_executable(ocloc_segfault_test ${CLOC_SEGFAULT_TEST_SOURCES})
-target_link_libraries(ocloc_segfault_test gmock-gtest)
+target_link_libraries(ocloc_segfault_test neo_gtest)
 if(WIN32)
   if(MSVC)
     target_compile_options(ocloc_segfault_test PRIVATE /Zi)

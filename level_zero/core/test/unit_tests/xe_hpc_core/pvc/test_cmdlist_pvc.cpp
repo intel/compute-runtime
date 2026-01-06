@@ -5,15 +5,23 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
-#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
+
+#include "igfxfmid.h"
+
+#include <list>
+#include <memory>
 
 namespace L0 {
 namespace ult {
@@ -39,7 +47,7 @@ PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfter
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     commandList->appendEventForProfiling(event.get(), nullptr, false, false, false, false);
 
     GenCmdList cmdList;

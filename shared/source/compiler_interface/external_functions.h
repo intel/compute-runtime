@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,16 +28,22 @@ struct ExternalFunctionInfo {
     uint16_t numGrfRequired = 0U;
     uint8_t simdSize = 0U;
     bool hasRTCalls = false;
+    bool hasPrintfCalls = false;
+    bool hasIndirectCalls = false;
+    bool requireAssertBuffer = false;
+    bool requireSyncBuffer = false;
 };
 
 struct ExternalFunctionUsageKernel {
     std::string usedFuncName;
     std::string kernelName;
+    bool optional = false;
 };
 
 struct ExternalFunctionUsageExtFunc {
     std::string usedFuncName;
     std::string callerFuncName;
+    bool optional = false;
 };
 
 using ExternalFunctionInfosT = std::vector<ExternalFunctionInfo *>;

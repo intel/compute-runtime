@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -45,7 +45,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScra
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
-    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
+    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.maxProgrammableSlmSize);
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckBlitterOperationsSupportThenReturnFalse) {
@@ -68,18 +68,22 @@ HWTEST2_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThen
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
-HWTEST2_F(Gen12LpDeviceCaps, GivenTGLLPWhenCheckftr64KBpagesThenTrue, IsTGLLP) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
-}
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
 
-HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
-GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingFloatAtomicsSupportThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
-}
-
-GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingCxlTypeThenReturnZero) {
-    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
+    EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 0, nullptr, false));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1, nullptr, false));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1024, nullptr, false));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1025, nullptr, false));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2048, nullptr, false));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2049, nullptr, false));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4096, nullptr, false));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4097, nullptr, false));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8192, nullptr, false));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8193, nullptr, false));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16384, nullptr, false));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16385, nullptr, false));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32768, nullptr, false));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32769, nullptr, false));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 65536, nullptr, false));
 }

@@ -16,7 +16,7 @@ static auto coreFamily = IGFX_XE3_CORE;
 
 template <>
 void populateFactoryTable<DebuggerL0Hw<GfxFamily>>() {
-    extern DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE];
+    extern DebugerL0CreateFn debuggerL0Factory[NEO::maxCoreEnumValue];
     debuggerL0Factory[coreFamily] = DebuggerL0Hw<GfxFamily>::allocate;
 }
 template class DebuggerL0Hw<GfxFamily>;

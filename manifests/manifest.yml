@@ -2,27 +2,27 @@ components:
   aub_configs:
     branch: aub_configs
     dest_dir: aub_configs
-    revision: c61eb321f2751d50e890a900d9301f9e995ffdcd
+    revision: 0d41e3e2316378a1cdd61b9a0ac4836441a44ca7
     type: git
   aub_stream:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: f76c02c6980dd88b7aaeeba736df85a2f6ec3479
+    revision: 4e21c745727cb4799c58952b6db867fa66a149fd
     type: git
   gmmlib:
     asset_name: gmmlib
     dest_dir: gmmlib
     type: git
     branch: master
-    revision: intel-gmmlib-22.7.0
+    revision: intel-gmmlib-22.9.0
     repository: https://github.com/intel/gmmlib.git
   igc:
     asset_name: igc
     dest_dir: igc
     type: git
-    branch: releases/2.10.x
-    revision: 1169711dbba4067c714ee92bc943589d64edfa6d
+    branch: releases/2.27.x
+    revision: 8d898271797591d183ef1c547fceb4bfcce6be67
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
     asset_name: igsc
@@ -41,18 +41,13 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3361-3902
-  kmdaf:
-    branch: kmdaf
-    dest_dir: kmdaf
-    revision: e73be7d107f5c18e8e2260da962239b33b7293ec
-    type: git
+    revision: 3864-6077
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
     type: git
     branch: master
-    revision: v1.21.1
+    revision: v1.26.2
     repository: https://github.com/oneapi-src/level-zero
   libva:
     asset_name: libva
@@ -66,14 +61,14 @@ components:
     dest_dir: metrics/discovery
     type: git
     branch: master
-    revision: metrics-discovery-1.14.180
+    revision: metrics-discovery-1.14.182
     repository: https://github.com/intel/metrics-discovery.git
   metrics-library:
     asset_name: metrics-library
     dest_dir: metrics/library
     type: git
     branch: master
-    revision: metrics-library-1.0.196
+    revision: metrics-library-1.0.200
     repository: https://github.com/intel/metrics-library.git
   neo-clang-format:
     dest_dir: tools/clang-format
@@ -84,13 +79,13 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: f2275bc82a304df0315a1d7c059199fc30ae6471-3350
+    revision: bf1eed7c8fae8d03da0810bfc29377cd9cc88db0-3796
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-3361
+converter: M-3864
 include:
 - infra.yml
 version: '1'

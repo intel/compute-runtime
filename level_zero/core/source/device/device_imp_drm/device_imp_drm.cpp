@@ -5,6 +5,10 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/os_interface/os_interface.h"
+
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/device/device_imp_drm/device_imp_peer.h"
 
@@ -27,8 +31,11 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
-    return queryFabricStatsDrm(this, pPeerDevice, latency, bandwidth);
+bool DeviceImp::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
+    if (device.getRootDeviceEnvironment().osInterface) {
+        return queryPeerAccessDrm(device, peerDevice, handlePtr, handle);
+    }
+    return false;
 }
 
 } // namespace L0

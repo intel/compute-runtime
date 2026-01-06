@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,10 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_host_pointer_manager.h"
 
 namespace L0 {
@@ -485,6 +488,35 @@ TEST_F(ForceEnabledHostPointerManagerTest, givenHostPointerManagerForceEnabledTh
 
     result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using MultiDeviceHostPointerManagerTests = Test<MultiDeviceFixture>;
+
+TEST_F(MultiDeviceHostPointerManagerTests, createHostPointerMultiAllocationHandlesNonZeroRootDeviceIndex) {
+    // Create a NEO device with rootDeviceIndex == 1
+    const uint32_t rootDeviceIndex = 1;
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex));
+    MockDeviceImp l0Device(neoDevice);
+
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    auto hostDriverHandle = std::make_unique<L0::ult::DriverHandle>();
+    hostDriverHandle->initialize(std::move(neoDevices));
+
+    std::vector<L0::Device *> devices;
+    devices.push_back(&l0Device);
+
+    size_t bufferSize = 4096;
+    void *buffer = malloc(bufferSize);
+
+    // Should not abort, should succeed
+    auto openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
+    auto result = openHostPointerManager->createHostPointerMultiAllocation(devices, buffer, bufferSize);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    openHostPointerManager->freeHostPointerAllocation(buffer);
+    free(buffer);
 }
 
 } // namespace ult

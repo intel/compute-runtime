@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -352,8 +352,9 @@ int MockNlApi::nlaIsNested(const struct nlattr *attr) {
 }
 
 int MockNlApi::nlaLen(const struct nlattr *attr) {
-    if (nullptr == attr)
+    if (nullptr == attr) {
         return 0;
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return sizeof(MyNlattr) + nlaLen(reinterpret_cast<const struct nlattr *>(pAttr->next)) + nlaLen(reinterpret_cast<const struct nlattr *>(pAttr->nested));
 }

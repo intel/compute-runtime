@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "opencl/source/sharings/gl/gl_texture.h"
 
-#include "config.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

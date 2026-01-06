@@ -22,7 +22,6 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include <cstdint>
-
 namespace NEO {
 
 BuiltIns::BuiltIns() {
@@ -44,12 +43,12 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         auto ret = compilerInterface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
 
-        UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::success);
+        UNRECOVERABLE_IF(ret != TranslationErrorCode::success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
 
         if (NEO::debugManager.flags.DumpSipHeaderFile.get() != "unk") {
             std::string name = NEO::debugManager.flags.DumpSipHeaderFile.get() + "_header.bin";
-            writeDataToFile(name.c_str(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
+            writeDataToFile(name.c_str(), std::string_view(stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));
         }
 
         const auto allocType = AllocationType::kernelIsaInternal;
@@ -115,9 +114,13 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
                     binary[bindlessSip.getPidOffset()] = static_cast<uint32_t>((context->getOfflineDumpContextId(deviceIndex) >> 32) & 0xFFFFFFFF);
                 }
 
+                auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+                auto &productHelper = device.getProductHelper();
+
                 DeviceBitfield copyBitfield{};
                 copyBitfield.set(deviceIndex);
-                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
+                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                                                    device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
                 DEBUG_BREAK_IF(!copySuccess);
             }
         }

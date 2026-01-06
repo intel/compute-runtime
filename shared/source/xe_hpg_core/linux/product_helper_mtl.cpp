@@ -10,6 +10,7 @@
 
 constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
+#include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 #include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 #include "shared/source/xe_hpg_core/xe_lpg/linux/product_helper_xe_lpg_linux.inl"
 #include "shared/source/xe_hpg_core/xe_lpg/os_agnostic_product_helper_xe_lpg.inl"

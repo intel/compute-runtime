@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -41,8 +40,6 @@ void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
                                                              allocData->cpuAllocation,
                                                              allocData->size, false);
     UNRECOVERABLE_IF(ret);
-
-    this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
 }
 void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
@@ -83,7 +80,7 @@ void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHand
             long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
             pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(allocPtr);
 
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
+            PRINT_STRING(NEO::debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
         }
     }
     if (migration) {

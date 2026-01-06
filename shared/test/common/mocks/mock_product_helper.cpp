@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
@@ -14,6 +14,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/release_helper/release_helper.h"
+
+#include "aubstream/stepping_values.h"
 
 namespace NEO {
 
@@ -131,15 +133,15 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Ha
     case REVISION_A0:
     case REVISION_A1:
     case REVISION_A3:
-        return AubMemDump::SteppingValues::A;
+        return aub_stream::SteppingValues::A;
     case REVISION_B:
-        return AubMemDump::SteppingValues::B;
+        return aub_stream::SteppingValues::B;
     case REVISION_C:
-        return AubMemDump::SteppingValues::C;
+        return aub_stream::SteppingValues::C;
     case REVISION_D:
-        return AubMemDump::SteppingValues::D;
+        return aub_stream::SteppingValues::D;
     case REVISION_K:
-        return AubMemDump::SteppingValues::K;
+        return aub_stream::SteppingValues::K;
     }
 }
 
@@ -154,12 +156,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const Hardwar
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported() const {
     return false;
 }
 
@@ -189,7 +186,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
     return false;
 }
 
@@ -201,6 +198,11 @@ std::pair<bool, bool> ProductHelperHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipe
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return false;
+}
+
+template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::canShareMemoryWithoutNTHandle() const {
+    return 1u;
 }
 
 template <>
@@ -273,36 +275,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushMitigated() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::mitigateDcFlush() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndTwoWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overrideUsageForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndOneWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overrideCacheableForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }
@@ -313,17 +285,12 @@ bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(NEO::DriverModel *driverModel, const
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -344,10 +311,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const
 
 template <>
 void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
-}
-
-template <>
-void ProductHelperHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) const {
 }
 
 template <>
@@ -478,7 +441,6 @@ struct UnknownProduct {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = false;
     };
 
@@ -507,6 +469,39 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getCacheLineSize() const {
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::is48bResourceNeededForRayTracing() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isResourceUncachedForCS(AllocationType allocationType) const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isNonCoherentTimestampsModeEnabled() const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isPidFdOrSocketForIpcSupported() const {
+    return false;
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo.gtSystemInfo.SLMSizeInKb;
 }
 
 } // namespace NEO

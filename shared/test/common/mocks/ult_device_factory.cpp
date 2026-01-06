@@ -7,9 +7,9 @@
 
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -79,6 +79,9 @@ bool UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+        if (debugManager.flags.ExposeSingleDevice.get() != -1) {
+            executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());
+        }
     }
     executionEnvironment.parseAffinityMask();
     auto retVal = executionEnvironment.rootDeviceEnvironments.size();

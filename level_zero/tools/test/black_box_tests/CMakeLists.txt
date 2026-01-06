@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,10 @@ if(UNIX)
                           VS_DEBUGGER_COMMAND "$(TargetPath)"
                           VS_DEBUGGER_COMMAND_ARGUMENTS ""
                           VS_DEBUGGER_WORKING_DIRECTORY "$(OutputPath)"
+    )
+
+    target_include_directories(${TEST_NAME} PUBLIC
+                               ${NEO_SOURCE_DIR}/level_zero/include
     )
 
     if(BUILD_LEVEL_ZERO_LOADER)
@@ -43,6 +47,10 @@ if(WIN32)
                           VS_DEBUGGER_COMMAND "$(TargetPath)"
                           VS_DEBUGGER_COMMAND_ARGUMENTS ""
                           VS_DEBUGGER_WORKING_DIRECTORY "$(OutputPath)"
+    )
+
+    target_include_directories(${TEST_NAME} PUBLIC
+                               ${NEO_SOURCE_DIR}/level_zero/include
     )
 
     if(BUILD_LEVEL_ZERO_LOADER)

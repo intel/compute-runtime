@@ -77,7 +77,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_link_libraries(${TARGET_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
   target_link_libraries(${TARGET_NAME} ${HW_LIBS_ULT})
-  target_link_libraries(${TARGET_NAME} gmock-gtest)
+  target_link_libraries(${TARGET_NAME} neo_gtest)
   target_link_libraries(${TARGET_NAME} ${NEO_EXTRA_LIBS})
   target_link_libraries(${TARGET_NAME} ${AUB_STREAM_PROJECT_NAME})
 
@@ -91,7 +91,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_include_directories(${TARGET_NAME} PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
-                             ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                              ${ENGINE_NODE_DIR}
                              ${CIF_BASE_DIR}

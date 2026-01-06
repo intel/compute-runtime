@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
         memcpy_s(categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t), config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
@@ -66,7 +66,7 @@ ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
 ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     if (clear == true) {
         if (pFsAccess->isRootUser() == false) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
             return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
     }
@@ -121,7 +121,7 @@ ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t 
 
 ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t category) {
     if (pFsAccess->isRootUser() == false) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
@@ -147,6 +147,22 @@ void LinuxRasImp::initSources() {
     if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
         rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     }
+}
+
+ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxRasImp::osRasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : osRasErrorType(type), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {

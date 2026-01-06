@@ -7,15 +7,13 @@
 
 #pragma once
 #include "shared/source/helpers/definitions/engine_group_types.h"
-#include "shared/source/helpers/device_bitfield.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 
 inline constexpr bool is32bit = (sizeof(void *) == 4);
 inline constexpr bool is64bit = (sizeof(void *) == 8);
-
-inline constexpr NEO::DeviceBitfield systemMemoryBitfield(0b0);
 
 constexpr uint64_t maxNBitValue(uint64_t n) {
     return ((n == 64) ? std::numeric_limits<uint64_t>::max()

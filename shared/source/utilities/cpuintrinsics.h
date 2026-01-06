@@ -14,6 +14,8 @@ namespace CpuIntrinsics {
 
 void sfence();
 
+void mfence();
+
 void clFlush(void const *ptr);
 
 void clFlushOpt(void *ptr);

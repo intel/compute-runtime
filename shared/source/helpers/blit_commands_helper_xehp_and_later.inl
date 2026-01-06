@@ -60,7 +60,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemoryOptionsForFillBuffer(NEO::Gr
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getUncachedMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }
@@ -80,7 +80,7 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
-    if (blitProperties.srcAllocation->getDefaultGmm()) {
+    if (blitProperties.srcAllocation && blitProperties.srcAllocation->getDefaultGmm()) {
         auto resInfo = blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
@@ -100,7 +100,7 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
         }
     }
 
-    if (blitProperties.dstAllocation->getDefaultGmm()) {
+    if (blitProperties.dstAllocation && blitProperties.dstAllocation->getDefaultGmm()) {
         auto resInfo = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
@@ -121,19 +121,19 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::appendTilingType(ImageTilingMode srcTilingType, ImageTilingMode dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     UNRECOVERABLE_IF((srcTilingType != dstTilingType) && blitCmd.getSpecialModeOfOperation() == XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
-    if (srcTilingType == GMM_TILED_4) {
+    if (srcTilingType == ImageTilingMode::tiled4) {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
-    } else if (srcTilingType == GMM_TILED_64) {
+    } else if (srcTilingType == ImageTilingMode::tiled64) {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
     }
-    if (dstTilingType == GMM_TILED_4) {
+    if (dstTilingType == ImageTilingMode::tiled4) {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
-    } else if (dstTilingType == GMM_TILED_64) {
+    } else if (dstTilingType == ImageTilingMode::tiled64) {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
@@ -170,16 +170,16 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                                GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                                ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLODSurfaceState();
         auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
         if (resInfo.Tile4) {
-            tileType = GMM_TILED_4;
+            tileType = ImageTilingMode::tiled4;
         } else if (resInfo.Tile64) {
-            tileType = GMM_TILED_64;
+            tileType = ImageTilingMode::tiled64;
         }
 
         if (!resInfo.Linear) {
@@ -190,7 +190,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
         auto gmmClientContext = rootDeviceEnvironment.getGmmClientContext();
         if (resInfo.MediaCompressed) {
             compressionDetails = gmmClientContext->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
-            EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, plane);
+            EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, static_cast<int>(plane));
         } else if (resInfo.RenderCompressed) {
             compressionDetails = gmmClientContext->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }
@@ -199,8 +199,8 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
-    auto srcTileType = GMM_NOT_TILED;
-    auto dstTileType = GMM_NOT_TILED;
+    auto srcTileType = ImageTilingMode::notTiled;
+    auto dstTileType = ImageTilingMode::notTiled;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcRowPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
@@ -212,16 +212,20 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     auto srcCompressionFormat = blitCmd.getSourceCompressionFormat();
     auto dstCompressionFormat = blitCmd.getDestinationCompressionFormat();
 
-    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
-                                rootDeviceEnvironment, blitProperties.srcPlane);
-    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
-                                rootDeviceEnvironment, blitProperties.dstPlane);
+    if (srcAllocation) {
+        getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
+                                    rootDeviceEnvironment, blitProperties.srcPlane);
+    }
+    if (dstAllocation) {
+        getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
+                                    rootDeviceEnvironment, blitProperties.dstPlane);
+    }
 
     srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
 
-    blitCmd.setSourcePitch(srcTileType == GMM_NOT_TILED ? srcRowPitch : srcRowPitch / 4);
-    blitCmd.setDestinationPitch(dstTileType == GMM_NOT_TILED ? dstRowPitch : dstRowPitch / 4);
+    blitCmd.setSourcePitch(srcTileType == ImageTilingMode::notTiled ? srcRowPitch : srcRowPitch / 4);
+    blitCmd.setDestinationPitch(dstTileType == ImageTilingMode::notTiled ? dstRowPitch : dstRowPitch / 4);
     blitCmd.setSourceSurfaceQpitch(srcQPitch / 4);
     blitCmd.setDestinationSurfaceQpitch(dstQPitch / 4);
     blitCmd.setSourceMipTailStartLOD(srcMipTailLod);
@@ -287,54 +291,52 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
 }
 
 template <typename GfxFamily>
-bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
-    return true;
-}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {
-    printf("Slice index: %u\n", sliceIndex);
-    printf("ColorDepth: %u\n", blitCmd.getColorDepth());
-    printf("SourcePitch: %u\n", blitCmd.getSourcePitch());
-    printf("SourceTiling: %u\n", blitCmd.getSourceTiling());
-    printf("SourceX1Coordinate_Left: %u\n", blitCmd.getSourceX1CoordinateLeft());
-    printf("SourceY1Coordinate_Top: %u\n", blitCmd.getSourceY1CoordinateTop());
-    printf("SourceBaseAddress: %" PRIx64 "\n", blitCmd.getSourceBaseAddress());
-    printf("SourceXOffset: %u\n", blitCmd.getSourceXOffset());
-    printf("SourceYOffset: %u\n", blitCmd.getSourceYOffset());
-    printf("SourceTargetMemory: %u\n", blitCmd.getSourceTargetMemory());
-    printf("SourceCompressionFormat: %u\n", blitCmd.getSourceCompressionFormat());
-    printf("SourceSurfaceHeight: %u\n", blitCmd.getSourceSurfaceHeight());
-    printf("SourceSurfaceWidth: %u\n", blitCmd.getSourceSurfaceWidth());
-    printf("SourceSurfaceType: %u\n", blitCmd.getSourceSurfaceType());
-    printf("SourceSurfaceQpitch: %u\n", blitCmd.getSourceSurfaceQpitch());
-    printf("SourceSurfaceDepth: %u\n", blitCmd.getSourceSurfaceDepth());
-    printf("SourceHorizontalAlign: %u\n", blitCmd.getSourceHorizontalAlign());
-    printf("SourceVerticalAlign: %u\n", blitCmd.getSourceVerticalAlign());
-    printf("SourceArrayIndex: %u\n", blitCmd.getSourceArrayIndex());
-    printf("DestinationPitch: %u\n", blitCmd.getDestinationPitch());
-    printf("DestinationTiling: %u\n", blitCmd.getDestinationTiling());
-    printf("DestinationX1Coordinate_Left: %u\n", blitCmd.getDestinationX1CoordinateLeft());
-    printf("DestinationY1Coordinate_Top: %u\n", blitCmd.getDestinationY1CoordinateTop());
-    printf("DestinationX2Coordinate_Right: %u\n", blitCmd.getDestinationX2CoordinateRight());
-    printf("DestinationY2Coordinate_Bottom: %u\n", blitCmd.getDestinationY2CoordinateBottom());
-    printf("DestinationBaseAddress: %" PRIx64 "\n", blitCmd.getDestinationBaseAddress());
-    printf("DestinationXOffset: %u\n", blitCmd.getDestinationXOffset());
-    printf("DestinationYOffset: %u\n", blitCmd.getDestinationYOffset());
-    printf("DestinationTargetMemory: %u\n", blitCmd.getDestinationTargetMemory());
-    printf("DestinationCompressionFormat: %u\n", blitCmd.getDestinationCompressionFormat());
-    printf("DestinationSurfaceHeight: %u\n", blitCmd.getDestinationSurfaceHeight());
-    printf("DestinationSurfaceWidth: %u\n", blitCmd.getDestinationSurfaceWidth());
-    printf("DestinationSurfaceType: %u\n", blitCmd.getDestinationSurfaceType());
-    printf("DestinationSurfaceQpitch: %u\n", blitCmd.getDestinationSurfaceQpitch());
-    printf("DestinationSurfaceDepth: %u\n", blitCmd.getDestinationSurfaceDepth());
-    printf("DestinationHorizontalAlign: %u\n", blitCmd.getDestinationHorizontalAlign());
-    printf("DestinationVerticalAlign: %u\n", blitCmd.getDestinationVerticalAlign());
-    printf("DestinationArrayIndex: %u\n\n", blitCmd.getDestinationArrayIndex());
+    std::ostringstream ss;
+    ss << std::showbase;
+    ss << "Slice index: " << sliceIndex << "\n";
+    ss << "ColorDepth: " << blitCmd.getColorDepth() << "\n";
+    ss << "SourcePitch: " << blitCmd.getSourcePitch() << "\n";
+    ss << "SourceTiling: " << blitCmd.getSourceTiling() << "\n";
+    ss << "SourceX1Coordinate_Left: " << blitCmd.getSourceX1CoordinateLeft() << "\n";
+    ss << "SourceY1Coordinate_Top: " << blitCmd.getSourceY1CoordinateTop() << "\n";
+    ss << "SourceBaseAddress: " << std::hex << blitCmd.getSourceBaseAddress() << std::dec << "\n";
+    ss << "SourceXOffset: " << blitCmd.getSourceXOffset() << "\n";
+    ss << "SourceYOffset: " << blitCmd.getSourceYOffset() << "\n";
+    ss << "SourceTargetMemory: " << blitCmd.getSourceTargetMemory() << "\n";
+    ss << "SourceCompressionFormat: " << blitCmd.getSourceCompressionFormat() << "\n";
+    ss << "SourceSurfaceHeight: " << blitCmd.getSourceSurfaceHeight() << "\n";
+    ss << "SourceSurfaceWidth: " << blitCmd.getSourceSurfaceWidth() << "\n";
+    ss << "SourceSurfaceType: " << blitCmd.getSourceSurfaceType() << "\n";
+    ss << "SourceSurfaceQpitch: " << blitCmd.getSourceSurfaceQpitch() << "\n";
+    ss << "SourceSurfaceDepth: " << blitCmd.getSourceSurfaceDepth() << "\n";
+    ss << "SourceHorizontalAlign: " << blitCmd.getSourceHorizontalAlign() << "\n";
+    ss << "SourceVerticalAlign: " << blitCmd.getSourceVerticalAlign() << "\n";
+    ss << "SourceArrayIndex: " << blitCmd.getSourceArrayIndex() << "\n";
+    ss << "DestinationPitch: " << blitCmd.getDestinationPitch() << "\n";
+    ss << "DestinationTiling: " << blitCmd.getDestinationTiling() << "\n";
+    ss << "DestinationX1Coordinate_Left: " << blitCmd.getDestinationX1CoordinateLeft() << "\n";
+    ss << "DestinationY1Coordinate_Top: " << blitCmd.getDestinationY1CoordinateTop() << "\n";
+    ss << "DestinationX2Coordinate_Right: " << blitCmd.getDestinationX2CoordinateRight() << "\n";
+    ss << "DestinationY2Coordinate_Bottom: " << blitCmd.getDestinationY2CoordinateBottom() << "\n";
+    ss << "DestinationBaseAddress: " << std::hex << blitCmd.getDestinationBaseAddress() << std::dec << "\n";
+    ss << "DestinationXOffset: " << blitCmd.getDestinationXOffset() << "\n";
+    ss << "DestinationYOffset: " << blitCmd.getDestinationYOffset() << "\n";
+    ss << "DestinationTargetMemory: " << blitCmd.getDestinationTargetMemory() << "\n";
+    ss << "DestinationCompressionFormat: " << blitCmd.getDestinationCompressionFormat() << "\n";
+    ss << "DestinationSurfaceHeight: " << blitCmd.getDestinationSurfaceHeight() << "\n";
+    ss << "DestinationSurfaceWidth: " << blitCmd.getDestinationSurfaceWidth() << "\n";
+    ss << "DestinationSurfaceType: " << blitCmd.getDestinationSurfaceType() << "\n";
+    ss << "DestinationSurfaceQpitch: " << blitCmd.getDestinationSurfaceQpitch() << "\n";
+    ss << "DestinationSurfaceDepth: " << blitCmd.getDestinationSurfaceDepth() << "\n";
+    ss << "DestinationHorizontalAlign: " << blitCmd.getDestinationHorizontalAlign() << "\n";
+    ss << "DestinationVerticalAlign: " << blitCmd.getDestinationVerticalAlign() << "\n";
+    ss << "DestinationArrayIndex: " << blitCmd.getDestinationArrayIndex() << "\n\n";
+    PRINT_STRING(true, stdout, "%s", ss.str().c_str());
 }
 
 template <typename GfxFamily>
@@ -365,12 +367,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
         blitCmd.setColorDepth(COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
         blitCmd.setDestinationX2CoordinateRight(1u);
         blitCmd.setDestinationY2CoordinateBottom(4u);
-        blitCmd.setDestinationPitch(static_cast<uint32_t>(MemoryConstants::pageSize));
+        blitCmd.setDestinationPitch(64u);
 
         appendTilingEnable(blitCmd);
         appendBlitMemoryOptionsForFillBuffer(dummyAllocation, blitCmd, *rootDeviceEnvironment);
 
         BlitProperties blitProperties = {};
+        blitProperties.dstAllocation = dummyAllocation;
 
         appendBlitFillCommand(blitProperties, blitCmd);
 

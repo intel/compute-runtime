@@ -136,6 +136,49 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
     platformsImpl->clear();
 }
 
+TEST(clGetPlatformIDsTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironmentThenCorrectEnvValueIsStored) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+
+    {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "1"}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        cl_int retVal = CL_SUCCESS;
+        cl_platform_id platformRet = nullptr;
+        cl_uint numPlatforms = 0;
+
+        platformsImpl->clear();
+
+        retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto executionEnvironment = platform()->peekExecutionEnvironment();
+        EXPECT_TRUE(executionEnvironment->isOneApiPvcWaEnv());
+
+        platformsImpl->clear();
+    }
+    {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        cl_int retVal = CL_SUCCESS;
+        cl_platform_id platformRet = nullptr;
+        cl_uint numPlatforms = 0;
+
+        platformsImpl->clear();
+
+        retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto executionEnvironment = platform()->peekExecutionEnvironment();
+        EXPECT_FALSE(executionEnvironment->isOneApiPvcWaEnv());
+
+        platformsImpl->clear();
+    }
+}
+
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
@@ -301,6 +344,11 @@ TEST(clGetPlatformIDsTest, givenDefaultFP64EmulationStateWhenGettingPlatformIdsT
 }
 
 TEST(clGetPlatformIDsTest, givenMultipleDifferentDevicesWhenGetPlatformIdsThenSeparatePlatformIsReturnedPerEachProductFamily) {
+    if (!hardwareInfoSetup[IGFX_LUNARLAKE] ||
+        !hardwareInfoSetup[IGFX_BMG] ||
+        !hardwareInfoSetup[IGFX_PTL]) {
+        GTEST_SKIP();
+    }
     platformsImpl->clear();
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     const size_t numRootDevices = 5u;

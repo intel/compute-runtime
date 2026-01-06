@@ -76,7 +76,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     if (debugManager.flags.FlattenBatchBufferForAUBDump.get() || debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     }
-    defaultSshSize = HeapSize::getDefaultHeapSize(EncodeStates<GfxFamily>::getSshHeapSize());
+    defaultSshSize = HeapSize::getHeapSize(EncodeStates<GfxFamily>::getSshHeapSize());
     this->use4GbHeaps = are4GbHeapsAvailable();
 
     timestampPacketWriteEnabled = gfxCoreHelper.timestampPacketWriteSupported();
@@ -196,6 +196,7 @@ void CommandStreamReceiverHw<GfxFamily>::addPipeControlFlushTaskIfNeeded(LinearS
         const auto programPipeControl = !timestampPacketWriteEnabled;
         if (programPipeControl) {
             PipeControlArgs args;
+            args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
             MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
         }
         this->taskLevel = taskLevel;
@@ -305,6 +306,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     ImmediateDispatchFlags &dispatchFlags,
     Device &device) {
 
+    this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
+
     ImmediateFlushData flushData;
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
         flushData.pipelineSelectFullConfigurationNeeded = !getPreambleSetFlag();
@@ -341,7 +344,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
 
         flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
         if (flushData.stateCacheFlushRequired) {
-            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         }
 
         if (requiresInstructionCacheFlush) {
@@ -400,6 +403,26 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     DispatchFlags &dispatchFlags,
     Device &device) {
 
+    this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
+
+    if (this->getHeaplessStateInitEnabled()) {
+        return flushTaskHeapless(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    } else {
+        return flushTaskHeapful(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+}
+
+template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
+    LinearStream &commandStreamTask,
+    size_t commandStreamStartTask,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
+    TaskCountType taskLevel,
+    DispatchFlags &dispatchFlags,
+    Device &device) {
+
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
@@ -419,12 +442,18 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
         initProgrammingFlags();
     }
-
+    if (this->ucResourceRequiresTagUpdate) {
+        this->emitTagUpdateWithoutDCFlush(commandStreamTask);
+    }
     const auto &hwInfo = peekHwInfo();
 
     bool hasStallingCmdsOnTaskStream = false;
-
-    if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
+    bool barrierWithPostSyncNeeded = dispatchFlags.blocking ||
+                                     dispatchFlags.dcFlush ||
+                                     dispatchFlags.guardCommandBufferWithPipeControl ||
+                                     dispatchFlags.textureCacheFlush ||
+                                     this->heapStorageRequiresRecyclingTag;
+    if (barrierWithPostSyncNeeded) {
         LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
         processBarrierWithPostSync(epilogueCommandStream, dispatchFlags, levelClosed, currentPipeControlForNooping,
                                    epiloguePipeControlLocation, hasStallingCmdsOnTaskStream, args);
@@ -441,7 +470,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     handlePipelineSelectStateTransition(dispatchFlags);
 
     this->streamProperties.stateComputeMode.setPropertiesAll(false, dispatchFlags.numGrfRequired,
-                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode());
+                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), device.hasAnyPeerAccess());
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
@@ -473,7 +502,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (dispatchFlags.usePerDssBackedBuffer) {
         if (!perDssBackedBuffer) {
-            createPerDssBackedBuffer(device);
+            auto success = createPerDssBackedBuffer(device);
+            UNRECOVERABLE_IF(!success);
         }
         makeResident(*perDssBackedBuffer);
     }
@@ -484,7 +514,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
     if (stateCacheFlushRequired) {
-        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
@@ -504,7 +534,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
     programL3(commandStreamCSR, newL3Config, EngineHelpers::isBcs(this->osContext->getEngineType()));
     programPreamble(commandStreamCSR, device, newL3Config);
-    programMediaSampler(commandStreamCSR, dispatchFlags);
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
     if (isRayTracingStateProgramingNeeded(device)) {
@@ -643,7 +672,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
 
-            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), lastPipeControlArgs.tlbInvalidation);
+            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -671,7 +700,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getGpuAddress();
-                auto offsetedCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
+                auto offsetCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
                 auto cpuAddressForCommandBufferDestination = ptrOffset(nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), nextCommandBuffer->batchBuffer.startOffset);
                 auto cpuAddressForCurrentCommandBufferEndingSection = alignUp(ptrOffset(currentBBendLocation, sizeof(MI_BATCH_BUFFER_START)), MemoryConstants::cacheLineSize);
 
@@ -679,7 +708,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 if (cpuAddressForCurrentCommandBufferEndingSection == cpuAddressForCommandBufferDestination) {
                     memset(currentBBendLocation, 0u, ptrDiff(cpuAddressForCurrentCommandBufferEndingSection, currentBBendLocation));
                 } else {
-                    addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer, false);
+                    addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetCommandBuffer, false);
                 }
 
                 if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
@@ -776,14 +805,13 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!getSipSentFlag()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
     if (this->streamProperties.stateComputeMode.isDirty()) {
         size += getCmdSizeForComputeMode();
     }
-    size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
     if ((dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) || isRayTracingStateProgramingNeeded(device)) {
@@ -813,7 +841,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
 
     if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier();
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     return size;
@@ -822,8 +851,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
     size_t size = 0;
-    if ((csrSizeRequestFlags.mediaSamplerConfigChanged ||
-         csrSizeRequestFlags.systolicPipelineSelectMode ||
+    if ((csrSizeRequestFlags.systolicPipelineSelectMode ||
          !isPreambleSent) &&
         !isPipelineSelectAlreadyProgrammed()) {
         size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment());
@@ -843,7 +871,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
         status = waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, taskCountToWait);
     }
 
-    // If GPU hang occured, then propagate it to the caller.
+    // If GPU hang occurred, then propagate it to the caller.
     if (status == WaitStatus::gpuHang) {
         return status;
     }
@@ -903,7 +931,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
-        auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
+        auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType, nullptr);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, peekRootDeviceEnvironment(), requiredScratchSlot0Size, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties);
@@ -915,15 +943,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         setMediaVFEStateDirty(false);
         this->streamProperties.frontEndState.clearIsDirty();
     }
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
-    return 0;
 }
 
 template <typename GfxFamily>
@@ -1070,11 +1089,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         if (blitProperties.blitSyncProperties.outputTimestampPacket) {
             bool deviceToHostPostSyncFenceRequired = getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
-                                                     !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
-                                                     blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+                                                     (blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()) &&
+                                                     (blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool());
 
             if (deviceToHostPostSyncFenceRequired) {
-                MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+                MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
             }
 
             if (blitProperties.blitSyncProperties.isTimestampMode()) {
@@ -1090,10 +1109,14 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         }
 
         blitProperties.csrDependencies.makeResident(*this);
-        blitProperties.srcAllocation->prepareHostPtrForResidency(this);
-        blitProperties.dstAllocation->prepareHostPtrForResidency(this);
-        makeResident(*blitProperties.srcAllocation);
-        makeResident(*blitProperties.dstAllocation);
+        if (blitProperties.srcAllocation) {
+            blitProperties.srcAllocation->prepareHostPtrForResidency(this);
+            makeResident(*blitProperties.srcAllocation);
+        }
+        if (blitProperties.dstAllocation) {
+            blitProperties.dstAllocation->prepareHostPtrForResidency(this);
+            makeResident(*blitProperties.dstAllocation);
+        }
         if (blitProperties.clearColorAllocation) {
             makeResident(*blitProperties.clearColorAllocation);
         }
@@ -1107,7 +1130,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
 
     if (updateTag) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
         args.commandWithPostSync = true;
         args.waArgs.isWaRequired = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
@@ -1120,7 +1143,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             makeResident(*dummyAllocation);
         }
 
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
     }
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
@@ -1194,7 +1217,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
-    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(peekRootDeviceEnvironment()) +
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, peekRootDeviceEnvironment()) +
                           EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
 
     if (initializeProlog) {
@@ -1208,7 +1231,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
         programHardwareContext(commandStream);
     }
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, false, peekRootDeviceEnvironment());
+    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, NEO::FenceType::release, peekRootDeviceEnvironment());
 
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args);
 
@@ -1224,9 +1247,10 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
     auto lock = obtainUniqueOwnership();
 
     PipeControlArgs args;
-    args.dcFlushEnable = this->dcFlushSupport || this->checkDcFlushRequiredForDcMitigationAndReset();
+    args.dcFlushEnable = this->dcFlushSupport;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
     if (stateCacheFlush) {
         args.textureCacheInvalidationEnable = true;
@@ -1235,7 +1259,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
         args.tlbInvalidation = this->isTlbFlushRequiredForStateCacheFlush();
     }
 
-    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
+    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) + this->getCmdSizeForPrologue();
 
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
@@ -1280,7 +1304,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
     if (submissionStatus == SubmissionStatus::success) {
-        taskCount++;
+        ++taskCount;
     }
     return submissionStatus;
 }
@@ -1305,7 +1329,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
 
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
 
-    if (productHelper.isL3FlushAfterPostSyncRequired(this->heaplessModeEnabled) && ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless()) {
+    if (productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled) && ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless()) {
         enabled &= true;
     } else {
         enabled &= this->isAnyDirectSubmissionEnabled();
@@ -1383,6 +1407,15 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programExceptions(LinearStream &csr, Device &device) {
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForExceptions() const {
+    return 0u;
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking, bool needsLock) {
     if (this->isAnyDirectSubmissionEnabled()) {
         std::unique_lock<MutexType> lock;
@@ -1395,6 +1428,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocki
             this->directSubmission->stopRingBuffer(blocking);
         }
     }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::resetDirectSubmission() {
+    this->blitterDirectSubmission.reset();
+    this->directSubmission.reset();
 }
 
 template <typename GfxFamily>
@@ -1434,7 +1473,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
                 if (directSubmissionController) {
                     directSubmissionController->registerDirectSubmission(this);
                 }
-                this->startControllingDirectSubmissions();
                 if (this->isUpdateTagFromWaitEnabled()) {
                     this->overrideDispatchPolicy(DispatchMode::immediateDispatch);
                 }
@@ -1443,9 +1481,11 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             if (this->osContext->isDirectSubmissionLightActive()) {
                 this->pushAllocationsForMakeResident = false;
                 WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *this->peekExecutionEnvironment().rootDeviceEnvironments[this->getRootDeviceIndex()]->getHardwareInfo());
+                WaitUtils::adjustWaitpkgParamsForUllsLight();
             }
         }
     }
+
     return ret;
 }
 
@@ -1541,15 +1581,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(const Dis
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags) {
-    if (streamProperties.pipelineSelect.mediaSamplerDopClockGate.value != -1) {
-        this->lastMediaSamplerConfig = static_cast<int8_t>(streamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
-    }
     if (streamProperties.pipelineSelect.systolicMode.value != -1) {
         this->lastSystolicPipelineSelectMode = !!streamProperties.pipelineSelect.systolicMode.value;
     }
 
-    csrSizeRequestFlags.mediaSamplerConfigChanged = this->pipelineSupportFlags.mediaSamplerDopClockGate &&
-                                                    (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired));
     csrSizeRequestFlags.systolicPipelineSelectMode = this->pipelineSupportFlags.systolicMode &&
                                                      (this->lastSystolicPipelineSelectMode != dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode);
 }
@@ -1652,14 +1687,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                                       surfaceStateBaseAddress, surfaceStateSize);
     }
 
-    auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
-    stateBaseAddressDirty |= ((gsbaFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
     bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
     handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
 
     // reprogram state base address command if required
     if (isStateBaseAddressDirty) {
-        reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, force32BitAllocations, sshDirty, bindingTablePoolCommandNeeded);
+        reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, sshDirty, bindingTablePoolCommandNeeded);
     }
 
     if (hasDsh) {
@@ -1683,16 +1716,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded) {
+inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool sshDirty, bool bindingTablePoolCommandNeeded) {
 
     uint64_t newGshBase = 0;
     gsbaFor32BitProgrammed = false;
-    if (is64bit && scratchSpaceController->getScratchSpaceSlot0Allocation() && !force32BitAllocations) {
+    if (is64bit && scratchSpaceController->getScratchSpaceSlot0Allocation()) {
         newGshBase = scratchSpaceController->calculateNewGSH();
-    } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
-        bool useLocalMemory = scratchSpaceController->getScratchSpaceSlot0Allocation() ? scratchSpaceController->getScratchSpaceSlot0Allocation()->isAllocatedInLocalMemoryPool() : false;
-        newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
-        gsbaFor32BitProgrammed = true;
     }
 
     uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
@@ -1733,7 +1762,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
-    bool debuggingEnabled = device.getDebugger() != nullptr;
+    bool debuggingEnabled = device.getDebugger() != nullptr && !this->osContext->isInternalEngine();
 
     EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(csrCommandStream, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
     EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(csrCommandStream, pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
@@ -1816,6 +1845,25 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::emitTagUpdateWithoutDCFlush(LinearStream &commandStream) {
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+    auto address = this->getUcTagGPUAddress();
+
+    PipeControlArgs args = {};
+    args.notifyEnable = isUsedNotifyEnableForPostSync();
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+        commandStream,
+        PostSyncMode::immediateData,
+        address,
+        taskCount + 1,
+        rootDeviceEnvironment,
+        args);
+
+    makeResident(*tagAllocation);
+    this->ucResourceRequiresTagUpdate = false;
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(LinearStream &commandStreamTask, DispatchFlags &dispatchFlags, bool &levelClosed, void *&currentPipeControlForNooping, void *&epiloguePipeControlLocation, bool &hasStallingCmdsOnTaskStream, PipeControlArgs &args) {
 
     if (this->dispatchMode == DispatchMode::immediateDispatch) {
@@ -1828,7 +1876,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
         }
     }
 
-    this->heapStorageRequiresRecyclingTag = false;
     epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
     if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&
@@ -1842,12 +1889,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
 
     args.dcFlushEnable = getDcFlushRequired(dispatchFlags.dcFlush);
-    args.dcFlushEnable |= this->checkDcFlushRequiredForDcMitigationAndReset();
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
-    args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
+    args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush || this->heapStorageRequiresRecyclingTag;
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
-    args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
+    args.stateCacheInvalidationEnable |= dispatchFlags.stateCacheInvalidation || this->heapStorageRequiresRecyclingTag;
+    this->heapStorageRequiresRecyclingTag = false;
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         commandStreamTask,
@@ -1897,6 +1945,7 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
                 this->latestFlushedTaskCount = this->taskCount + 1;
             }
         } else {
+            args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBufferEndLocation = batchBuffer.endCmdPtr;
             commandBuffer->batchBuffer = std::move(batchBuffer);
@@ -1972,7 +2021,6 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState
     flushData.pipelineSelectArgs = {
         this->streamProperties.pipelineSelect.systolicMode.value == 1,
         false,
-        false,
         this->pipelineSupportFlags.systolicMode};
 }
 
@@ -2006,7 +2054,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushFrontEndCommand(I
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), peekHwInfo());
 
-        auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType);
+        auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType, nullptr);
         PreambleHelper<GfxFamily>::programVfeState(feStateCmdSpace,
                                                    peekRootDeviceEnvironment(),
                                                    requiredScratchSlot0Size,
@@ -2105,6 +2153,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
             flushData.contextOneTimeInit = true;
             flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
         }
+        flushData.estimatedSize += this->getCmdSizeForExceptions();
     } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
@@ -2137,6 +2186,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
                                                                device,
                                                                device.getDebugSurface());
             this->setCsrSurfaceProgrammed(true);
+            this->programExceptions(csrStream, device);
         } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
             PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
@@ -2214,9 +2264,9 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
 
         PipeControlArgs args = {};
         args.dcFlushEnable = this->dcFlushSupport;
-        args.dcFlushEnable |= this->checkDcFlushRequiredForDcMitigationAndReset();
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
+        args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             epilogueCommandStream,
             PostSyncMode::immediateData,
@@ -2313,6 +2363,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleBatchedDispatchImplicitFlu
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressHeapless(Device &device, LinearStream &commandStream) {
+}
+
+template <typename GfxFamily>
 inline BatchBuffer CommandStreamReceiverHw<GfxFamily>::prepareBatchBufferForSubmission(LinearStream &commandStreamTask,
                                                                                        size_t commandStreamStartTask,
                                                                                        LinearStream &commandStreamCSR,
@@ -2403,12 +2457,13 @@ bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag
     }
     auto ownership = obtainUniqueOwnership();
     PipeControlArgs args;
-    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
+    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) + this->getCmdSizeForPrologue();
     auto &commandStream = getCS(expectedSize);
     auto commandStreamStart = commandStream.getUsed();
     auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);
     this->programEnginePrologue(commandStream);
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, this->peekRootDeviceEnvironment());
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         commandStream,
         PostSyncMode::immediateData,

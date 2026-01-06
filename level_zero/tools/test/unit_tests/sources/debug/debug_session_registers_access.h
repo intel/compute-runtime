@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,16 @@ struct DebugSessionRegistersAccess {
 struct DebugSessionRegistersAccessV3 : public DebugSessionRegistersAccess {
     void setUp() override;
 };
+
+struct DebugSessionRegistersAccessScratch : public DebugSessionRegistersAccess {
+    void setUp() override;
+};
+
+struct DebugSessionRegistersAccessScratchV3 : public DebugSessionRegistersAccessV3 {
+    void setUp() override;
+};
+
+void setIsScratchInGrf(NEO::MockDevice *neoDevice, bool value);
 
 } // namespace ult
 } // namespace L0

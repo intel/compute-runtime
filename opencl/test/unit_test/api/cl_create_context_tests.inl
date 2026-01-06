@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 using namespace NEO;
 
@@ -84,7 +85,7 @@ TEST_F(ClCreateContextTests, GivenNullUserDataWhenCreatingContextThenContextIsCr
 }
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWithoutSubDevicesWhenCreatingContextThenContextIsCreated) {
-    UltClDeviceFactory deviceFactory{2, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 0};
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
@@ -93,7 +94,7 @@ TEST_F(ClCreateContextTests, givenMultipleRootDevicesWithoutSubDevicesWhenCreati
 }
 
 TEST_F(ClCreateContextTests, givenMultipleSubDevicesFromDifferentRootDevicesWhenCreatingContextThenContextIsCreated) {
-    UltClDeviceFactory deviceFactory{2, 2};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 2};
     cl_device_id devices[] = {deviceFactory.subDevices[0], deviceFactory.subDevices[1], deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
     auto context = clCreateContext(nullptr, 4u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
@@ -102,7 +103,7 @@ TEST_F(ClCreateContextTests, givenMultipleSubDevicesFromDifferentRootDevicesWhen
 }
 
 TEST_F(ClCreateContextTests, givenDisabledMultipleRootDeviceSupportWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
-    UltClDeviceFactory deviceFactory{2, 2};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 2};
     debugManager.flags.EnableMultiRootDeviceContexts.set(false);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
@@ -111,7 +112,7 @@ TEST_F(ClCreateContextTests, givenDisabledMultipleRootDeviceSupportWhenCreatingC
 }
 
 TEST_F(ClCreateContextTests, whenCreateContextWithMultipleRootDevicesWithSubDevicesThenContextIsCreated) {
-    UltClDeviceFactory deviceFactory{2, 2};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 2};
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
@@ -120,7 +121,7 @@ TEST_F(ClCreateContextTests, whenCreateContextWithMultipleRootDevicesWithSubDevi
 }
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenRootDeviceIndicesSetIsFilled) {
-    UltClDeviceFactory deviceFactory{3, 2};
+    UltClDeviceFactoryWithPlatform deviceFactory{3, 2};
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};
     auto context = clCreateContext(nullptr, 3u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
@@ -138,7 +139,7 @@ TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenRootDe
 }
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRootDeviceIndexIsProperlyFilled) {
-    UltClDeviceFactory deviceFactory{3, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{3, 0};
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
@@ -152,7 +153,7 @@ TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRoo
 }
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenSpecialQueueIsProperlyFilled) {
-    UltClDeviceFactory deviceFactory{3, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{3, 0};
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 using namespace NEO;
 using EngineNodeHelperBmgTests = ::Test<DeviceFixture>;
 
-HWTEST_EXCLUDE_PRODUCT(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit_IsAtLeastXeHpCore, IGFX_BMG);
+HWTEST_EXCLUDE_PRODUCT(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit_IsAtLeastXeCore, IGFX_BMG);
 
 BMGTEST_F(EngineNodeHelperBmgTests, WhenGetBcsEngineTypeIsCalledForBmgThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;

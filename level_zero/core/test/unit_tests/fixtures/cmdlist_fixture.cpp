@@ -7,20 +7,17 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -50,7 +47,7 @@ void CommandListFixture::setUp() {
     eventDesc.signal = 0;
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void CommandListFixture::tearDown() {
@@ -74,7 +71,6 @@ void DirectSubmissionCommandListFixture::tearDown() {
 
 void MultiTileCommandListFixtureInit::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
-    osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
     apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
 
     SingleRootMultiSubDeviceFixture::setUp();
@@ -105,7 +101,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     eventDesc.signal = 0;
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void ModuleMutableCommandListFixture::setUpImpl() {
@@ -130,7 +126,6 @@ void ModuleMutableCommandListFixture::setUpImpl() {
 
     commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
-    commandListImmediate->isFlushTaskSubmissionEnabled = true;
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
@@ -170,7 +165,7 @@ void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
 
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(dispatchCmdBufferPrimary);
     debugManager.flags.EnableFrontEndTracking.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ModuleMutableCommandListFixture::setUp(REVISION_B);
 }
 
@@ -225,14 +220,13 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->dynamicStateHeapDataSize = 512;
+    kernel->privateState.dynamicStateHeapData.resize(512);
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->surfaceStateHeapDataSize = 128;
-    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->privateState.surfaceStateHeapData.reserve(256);
+    kernel->privateState.surfaceStateHeapData.resize(128);
 
     bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
 }
@@ -276,7 +270,6 @@ void CommandListGlobalHeapsFixtureInit::tearDown() {
 void ImmediateCmdListSharedHeapsFixture::setUp() {
     constexpr uint32_t storeAllocations = 4;
 
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
     debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
     debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
     debugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
@@ -306,8 +299,8 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
         auto surfaceStateSize = device->getNEODevice()->getGfxCoreHelper().getSamplerStateSize();
 
-        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
-        kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
+        const auto dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        kernel->privateState.dynamicStateHeapData.resize(dynamicStateHeapDataSize);
 
         mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
     }
@@ -317,8 +310,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
     mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
 
-    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
-    kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
+    kernel->privateState.surfaceStateHeapData.resize(mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize);
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -331,7 +323,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    event = std::unique_ptr<Event>(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void ImmediateCmdListSharedHeapsFixture::tearDown() {
@@ -404,6 +396,9 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::validateDispatchFlags(bool
 bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
                                                                          size_t size,
                                                                          NEO::SvmAllocationData *&allocData) {
+    if (forceFalseFromfindAllocationDataForRange) {
+        return false;
+    }
     mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
     data.gpuAllocations.addAllocation(mockAllocation.get());
     allocData = &data;
@@ -557,14 +552,13 @@ void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->dynamicStateHeapDataSize = 512;
+    kernel->privateState.dynamicStateHeapData.resize(512);
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->surfaceStateHeapDataSize = 128;
-    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->privateState.surfaceStateHeapData.reserve(256);
+    kernel->privateState.surfaceStateHeapData.resize(128);
 }
 
 void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {

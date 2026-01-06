@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "level_zero/core/source/sampler/sampler.h"
 
 namespace L0 {
+struct Device;
 
 class SamplerImp : public Sampler {
   public:

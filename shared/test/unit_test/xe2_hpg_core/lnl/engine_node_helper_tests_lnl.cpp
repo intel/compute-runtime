@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 using namespace NEO;
 using EngineNodeHelperLnlTests = ::Test<DeviceFixture>;
 
-HWTEST_EXCLUDE_PRODUCT(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit_IsAtLeastXeHpCore, IGFX_LUNARLAKE);
+HWTEST_EXCLUDE_PRODUCT(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit_IsAtLeastXeCore, IGFX_LUNARLAKE);
 
 LNLTEST_F(EngineNodeHelperLnlTests, WhenGetBcsEngineTypeIsCalledForLnlThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;

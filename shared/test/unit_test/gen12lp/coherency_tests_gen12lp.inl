@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -25,6 +26,10 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
         MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1){};
+        MyCsr(ExecutionEnvironment &executionEnvironment,
+              int32_t rootDeviceIndex,
+              const DeviceBitfield deviceBitfield)
+            : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
@@ -42,9 +47,11 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
     }
 
     void SetUp() override {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MyCsr>();
+
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        csr = new MyCsr(*device->executionEnvironment);
-        device->resetCommandStreamReceiver(csr);
+        csr = static_cast<MyCsr *>(&device->getGpgpuCommandStreamReceiver());
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
 
         MemoryManager::OsHandleData osHandleData{123u};

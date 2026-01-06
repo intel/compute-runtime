@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamp
 
 TEST(castToSamplerTest, GivenGenericPointerWhichDoestNotHoldSamplerObjectWhenCastToSamplerIsCalledThenCastWithAFailure) {
     auto context = std::make_unique<MockContext>();
-    auto notSamplerObj = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context.get()));
+    auto notSamplerObj = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context.get()));
     void *ptr = notSamplerObj.get();
     auto notSampler = castToObject<Sampler>(ptr);
 

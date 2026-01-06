@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/xe2_hpg_core/aub_mapper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 
 using Family = NEO::Xe2HpgCoreFamily;
@@ -79,9 +78,9 @@ uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+        return gmmHelper.getL3EnabledMOCS() >> 1;
     }
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 template <>
@@ -109,8 +108,10 @@ aub_stream::MMIOList GfxCoreHelperHw<Family>::getExtraMmioList(const HardwareInf
 }
 
 template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -124,16 +125,18 @@ size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchron
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
-        if (acquire) {
+        if (fenceType == NEO::FenceType::acquire) {
             miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE);
         } else {
             miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
@@ -159,8 +162,8 @@ bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDevice
 }
 
 template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+size_t MemorySynchronizationCommands<Family>::getSizeForAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(fenceType, rootDeviceEnvironment);
 }
 
 template <>
@@ -214,9 +217,17 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         }
 
         if (properties.allocationType == AllocationType::commandBuffer ||
-            properties.allocationType == AllocationType::ringBuffer ||
-            properties.allocationType == AllocationType::semaphoreBuffer) {
+            properties.allocationType == AllocationType::ringBuffer) {
             allocationData.flags.useSystemMemory = false;
+            allocationData.flags.requiresCpuAccess = true;
+        }
+
+        if (properties.allocationType == AllocationType::semaphoreBuffer) {
+            if (rootDeviceEnvironment.getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)) {
+                allocationData.flags.useSystemMemory = false;
+            } else {
+                allocationData.flags.useSystemMemory = true;
+            }
             allocationData.flags.requiresCpuAccess = true;
         }
     }
@@ -244,32 +255,26 @@ uint32_t GfxCoreHelperHw<Family>::overrideMaxWorkGroupSize(uint32_t maxWG) const
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     uint32_t numThreadsPerThreadGroup = getThreadsPerWG(simd, totalWorkItems);
     if (debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.get() == 1) {
         return numThreadsPerThreadGroup;
     }
-    auto simt = isSimd1(simd) ? 32u : simd;
+
     uint32_t maxThreadsPerThreadGroup = 32u;
-    if (grfCount != GrfConfig::largeGrfNumber && ((simt == 16u) || (simt == 32u && !isHwLocalIdGeneration))) {
+    // driver limit maxWorkgroupSize to 1024 (NEO-11881) so for simt 32 the max threads per thread group is 32
+    if ((grfCount != GrfConfig::largeGrfNumber && (simd == 16u)) || isSimd1(simd)) {
         maxThreadsPerThreadGroup = 64u;
     }
-    return std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
+    numThreadsPerThreadGroup = std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
+    DEBUG_BREAK_IF(numThreadsPerThreadGroup * simd > CommonConstants::maxWorkgroupSize);
+    return numThreadsPerThreadGroup;
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    const uint32_t threadsPerThreadGroup = calculateNumThreadsPerThreadGroup(simd, defaultMaxGroupSize, grfCount, isHwLocalGeneration, rootDeviceEnvironment);
+uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    const uint32_t threadsPerThreadGroup = calculateNumThreadsPerThreadGroup(simd, defaultMaxGroupSize, grfCount, rootDeviceEnvironment);
     return (threadsPerThreadGroup * simd);
-}
-
-template <>
-bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
-    }
-
-    return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
 template <>
@@ -278,12 +283,24 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getDeviceTimestampWidth() const {
-    if (debugManager.flags.OverrideTimestampWidth.get() != -1) {
-        return debugManager.flags.OverrideTimestampWidth.get();
+void MemorySynchronizationCommands<Family>::setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
+    using RESOURCE_BARRIER = typename Family::RESOURCE_BARRIER;
+
+    auto resourceBarrier = Family::cmdInitResourceBarrier;
+    resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
+    resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
+    resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+    auto invalidateL1Cache = false;
+    auto flushL1Cache = false;
+    auto l1FlushMode = debugManager.flags.ResourceBarrierL1FlushMode.get();
+    if (l1FlushMode != -1) {
+        invalidateL1Cache = (l1FlushMode & 0x1) == 0x1;
+        flushL1Cache = (l1FlushMode & 0x2) == 0x2;
     }
-    return 64u;
-};
+    resourceBarrier.setL1DataportCacheInvalidate(invalidateL1Cache);
+    resourceBarrier.setL1DataportUavFlush(flushL1Cache);
+    *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
+}
 
 } // namespace NEO
 

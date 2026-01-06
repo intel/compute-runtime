@@ -42,6 +42,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
     using ExecutionEnvironment::adjustCcsCountImpl;
+    using ExecutionEnvironment::configureCcsMode;
     using ExecutionEnvironment::directSubmissionController;
     using ExecutionEnvironment::memoryManager;
     using ExecutionEnvironment::rootDeviceEnvironments;
@@ -51,6 +52,7 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment(const HardwareInfo *hwInfo);
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices);
     void initGmm();
+    void addToRootDeviceNumCcsMap(uint32_t rootDeviceIndex, uint32_t numCcs);
 };
 
 } // namespace NEO

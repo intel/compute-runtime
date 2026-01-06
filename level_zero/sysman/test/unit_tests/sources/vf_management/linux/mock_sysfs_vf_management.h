@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
@@ -85,12 +86,12 @@ struct MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
     }
 };
 
-struct MockVfNeoDrm : public Drm {
-    using Drm::engineInfo;
-    using Drm::setupIoctlHelper;
+struct MockVfNeoDrm : public NEO::Drm {
+    using NEO::Drm::engineInfo;
+    using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockVfNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-    MockVfNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
+    MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : NEO::Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
     ~MockVfNeoDrm() override = default;
 
     bool mockReadSysmanQueryEngineInfo = true;
@@ -109,13 +110,14 @@ struct MockVfNeoDrm : public Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfos{i915QueryEngineInfo};
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfos));
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfos));
         return true;
     }
 };
 
 struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadMemoryError = ZE_RESULT_SUCCESS;
     ze_result_t mockRealPathError = ZE_RESULT_SUCCESS;
     bool mockValidBdfData = true;
     bool mockInvalidTokens = true;
@@ -140,8 +142,8 @@ struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     }
 
     ze_result_t getVal(const std::string file, uint64_t &val) {
-        if (mockError != ZE_RESULT_SUCCESS) {
-            return mockError;
+        if (mockReadMemoryError != ZE_RESULT_SUCCESS) {
+            return mockReadMemoryError;
         }
 
         if (file.compare(fileForLmemUsed) == 0) {
@@ -165,7 +167,7 @@ struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_result_t getRealPath(const std::string path, std::string &buf) override {
+    ze_result_t getRealPath(const std::string &path, std::string &buf) override {
         if (mockRealPathError != ZE_RESULT_SUCCESS) {
             return mockRealPathError;
         }

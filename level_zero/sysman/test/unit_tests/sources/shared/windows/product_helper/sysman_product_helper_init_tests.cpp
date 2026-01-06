@@ -35,6 +35,11 @@ HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQu
     EXPECT_TRUE(pSysmanProductHelper->isZesInitSupported());
 }
 
+HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQueryingForZesInitSupportThenTrueIsReturned, IsNVLS) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isZesInitSupported());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

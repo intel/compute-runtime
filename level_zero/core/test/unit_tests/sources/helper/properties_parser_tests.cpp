@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,7 +266,7 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedExportHandlesAn
     EXPECT_TRUE(l0LookupTable.areImageProperties);
 }
 
-TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsuportedOptionsWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {
+TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsupportedOptionsWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {
     uint64_t handle = 0x02;
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ enum class ThreadPriority {
 
 DWORD getLastError();
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 BOOL closeHandle(HANDLE hObject);
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr);
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
@@ -45,6 +46,8 @@ BOOL findNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 BOOL findClose(HANDLE hFindFile);
 DWORD getFileAttributesA(LPCSTR lpFileName);
 DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
+HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId);
 
 void setProcessPowerThrottlingState(ProcessPowerThrottlingState state);
 void setThreadPriority(ThreadPriority priority);
@@ -56,6 +59,15 @@ HANDLE createFile(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 BOOL deviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 CONFIGRET cmGetDeviceInterfaceListSize(PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags);
 CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags);
+CONFIGRET cmGetDeviceIdSize(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags);
+CONFIGRET cmGetDeviceId(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags);
+CONFIGRET cmGetChild(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags);
+CONFIGRET cmGetSibling(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags);
+BOOL setupDiGetDeviceRegistryProperty(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize);
+BOOL setupDiOpenDeviceInfo(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData);
+BOOL setupDiEnumDeviceInfo(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData);
+BOOL setupDiDestroyDeviceInfoList(HDEVINFO deviceInfoSet);
+HDEVINFO setupDiGetClassDevs(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags);
 LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
 BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
@@ -65,7 +77,10 @@ DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
 BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
 DWORD getLastError();
-
+extern LPWCH mockEnvStringsW;
+extern BOOL mockFreeEnvStringsWResult;
+LPWCH getEnvironmentStringsW();
+BOOL freeEnvironmentStringsW(LPWCH);
 } // namespace SysCalls
 
 } // namespace NEO

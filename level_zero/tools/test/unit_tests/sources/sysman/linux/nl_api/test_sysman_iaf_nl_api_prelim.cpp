@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include "mock_nl_api_prelim.h"
 
+#include <algorithm>
 #include <limits>
 #include <netlink/handlers.h>
 

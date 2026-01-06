@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,7 +10,6 @@ set(IGDRCL_SRCS_tests_context
     ${CMAKE_CURRENT_SOURCE_DIR}/context_multi_device_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context_negative_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/context_usm_memory_pool_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_enqueue_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.h

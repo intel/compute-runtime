@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -16,8 +14,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
-
-#include "gtest/gtest.h"
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -33,21 +29,24 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 struct MockSubDevice : public SubDevice {
     using Device::allEngines;
     using Device::createEngines;
+    using Device::secondaryEngines;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
 
-    ~MockSubDevice() override {
-        EXPECT_EQ(nullptr, this->getDebugSurface());
-    }
+    ~MockSubDevice() override;
 
-    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
-    }
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool failOnCreateEngine = false;
+    bool pollForCompletionCalled = false;
+
     bool createEngine(EngineTypeUsage engineTypeUsage) override;
+    void pollForCompletion() override {
+        pollForCompletionCalled = true;
+        Device::pollForCompletion();
+    }
 };
 
 class MockDevice : public RootDevice {
@@ -66,6 +65,7 @@ class MockDevice : public RootDevice {
     using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
+    using Device::initializePeerAccessForDevices;
     using Device::initUsmReuseLimits;
     using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
@@ -76,6 +76,7 @@ class MockDevice : public RootDevice {
     using Device::rtMemoryBackedBuffer;
     using Device::secondaryCsrs;
     using Device::secondaryEngines;
+    using Device::usmMemAllocPool;
     using Device::uuid;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
@@ -99,9 +100,7 @@ class MockDevice : public RootDevice {
 
     void injectMemoryManager(MemoryManager *);
 
-    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
-        performanceCounters = std::move(perfCounters);
-    }
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters);
 
     size_t getMaxParameterSizeFromIGC() const override {
         if (callBaseGetMaxParameterSizeFromIGC) {
@@ -153,9 +152,7 @@ class MockDevice : public RootDevice {
         return Device::create<MockSubDevice>(executionEnvironment, subDeviceIndex, *this);
     }
 
-    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
-    }
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
 
     bool verifyAdapterLuid() override;
 
@@ -168,13 +165,18 @@ class MockDevice : public RootDevice {
         rtDispatchGlobalsForceAllocation = true;
     }
 
-    bool isAnyDirectSubmissionEnabled(bool light) const override {
+    bool isAnyDirectSubmissionEnabledImpl(bool light) const override {
         return anyDirectSubmissionEnabledReturnValue;
     }
 
     void stopDirectSubmissionAndWaitForCompletion() override {
         stopDirectSubmissionCalled = true;
         Device::stopDirectSubmissionAndWaitForCompletion();
+    }
+
+    void pollForCompletion() override {
+        pollForCompletionCalled = true;
+        Device::pollForCompletion();
     }
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override {
@@ -184,7 +186,7 @@ class MockDevice : public RootDevice {
         return getGlobalMemorySizeReturn;
     }
 
-    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) override;
+    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
@@ -196,6 +198,7 @@ class MockDevice : public RootDevice {
     size_t maxParameterSizeFromIGC = 0u;
     bool rtDispatchGlobalsForceAllocation = true;
     bool stopDirectSubmissionCalled = false;
+    bool pollForCompletionCalled = false;
     ReleaseHelper *mockReleaseHelper = nullptr;
     AILConfiguration *mockAilConfigurationHelper = nullptr;
     uint64_t getGlobalMemorySizeReturn = 0u;
@@ -241,4 +244,13 @@ struct EnvironmentWithCsrWrapper {
     VariableBackup<decltype(MockSubDevice::createCommandStreamReceiverFunc)> createSubDeviceCsrFuncBackup{&MockSubDevice::createCommandStreamReceiverFunc};
     VariableBackup<decltype(MockDevice::createCommandStreamReceiverFunc)> createRootDeviceCsrFuncBackup{&MockDevice::createCommandStreamReceiverFunc};
 };
+
+class MockDeviceWithDebuggerActive : public MockDevice {
+  public:
+    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
+    void initializeCaps() override {
+        MockDevice::initializeCaps();
+    }
+};
+
 } // namespace NEO

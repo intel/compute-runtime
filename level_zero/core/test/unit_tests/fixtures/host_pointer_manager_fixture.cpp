@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -58,8 +59,8 @@ void HostPointerManagerFixure::setUp() {
 
 void HostPointerManagerFixure::tearDown() {
     context->destroy();
-
     hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);
+    hostDriverHandle->svmAllocsManager->cleanupUSMAllocCaches();
 }
 
 } // namespace ult

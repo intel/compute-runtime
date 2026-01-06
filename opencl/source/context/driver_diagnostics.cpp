@@ -11,11 +11,11 @@
 
 namespace NEO {
 
-DriverDiagnostics::DriverDiagnostics(cl_diagnostics_verbose_level level) {
+DriverDiagnostics::DriverDiagnostics(cl_diagnostic_verbose_level_intel level) {
     this->verboseLevel = level;
 }
 
-bool DriverDiagnostics::validFlags(cl_diagnostics_verbose_level flags) const {
+bool DriverDiagnostics::validFlags(cl_diagnostic_verbose_level_intel flags) const {
     return !!(verboseLevel & flags);
 }
 

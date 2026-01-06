@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,8 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
+
+#include "os_global_operations.h"
 
 #include <algorithm>
 

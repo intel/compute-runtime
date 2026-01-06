@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "helper.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "translate_platform_base.h"
 
 #include <memory>

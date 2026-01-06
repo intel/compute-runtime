@@ -14,12 +14,26 @@
 
 #include <unistd.h>
 
+namespace NEO {
+class Drm;
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
 
 class SysmanKmdInterface;
 class PmuInterface;
+class LinuxSysmanImp;
 struct Device;
+
+struct EngineGroupInfo {
+    zes_engine_group_t engineGroup;
+    uint32_t engineInstance;
+    uint32_t tileId;
+};
+struct OsSysman;
+struct SysmanDeviceImp;
+
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
@@ -30,23 +44,22 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     bool isEngineModuleSupported() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
-    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice);
+    LinuxEngineImp(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice);
     ~LinuxEngineImp() override;
     void cleanup();
 
   protected:
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
-    zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
-    uint32_t engineInstance = 0;
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    EngineGroupInfo engineGroupInfo = {};
     PmuInterface *pPmuInterface = nullptr;
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
-    uint32_t gtId = 0;
     ze_bool_t onSubDevice = false;
 
   private:
-    void init();
-    std::vector<std::pair<int64_t, int64_t>> fdList{};
+    void init(MapOfEngineInfo &mapEngineInfo);
+    std::vector<int64_t> fdList{};
     ze_result_t initStatus = ZE_RESULT_SUCCESS;
 };
 

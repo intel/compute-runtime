@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
@@ -177,11 +178,12 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     BufferObject *boArray[1] = {bo.get()};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(0, ret);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
     size_t expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
@@ -198,11 +200,12 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     bool result = bo->close();
     EXPECT_EQ(true, result);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t idx = output.find("Calling gem close on handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
@@ -217,21 +220,23 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
         MockBufferObjectHandleWrapper sharedBoHandleWrapper = bo->acquireSharedOwnershipOfBoHandle();
         EXPECT_TRUE(bo->isBoHandleShared());
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         bool result = bo->close();
         EXPECT_EQ(true, result);
 
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         size_t idx = output.find("Skipped closing BO-");
         size_t expectedValue = 0u;
         EXPECT_EQ(expectedValue, idx);
     }
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     bool result = bo->close();
     EXPECT_EQ(true, result);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t idx = output.find("Calling gem close on handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
@@ -243,13 +248,19 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     debugManager.flags.PrintExecutionBuffer.set(true);
     ExecObject execObjectsStorage = {};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
     EXPECT_EQ(0, ret);
 
-    std::string output = testing::internal::GetCapturedStdout();
-    auto idx = output.find("drm_i915_gem_execbuffer2 {");
-    size_t expectedValue = 29;
+    std::string output = capture.getCapturedStdout();
+
+    auto idx = output.find("Exec called with drmVmId = " + std::to_string(mock->getVmIdForContext(*osContext.get(), 0)));
+    uint32_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+
+    idx = output.find("drm_i915_gem_execbuffer2 {");
+    expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
 }
 
@@ -520,23 +531,27 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     auto osContext = engines[contextId].osContext;
     osContext->ensureContextInitialized(false);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     bo.bind(osContext, 0, false);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
-    std::string bindOutput = testing::internal::GetCapturedStdout();
+    std::string bindOutput = capture.getCapturedStdout();
     std::stringstream expected;
-    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    expected << "bind BO-0 to VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(bindOutput.c_str(), expected.str().c_str()) << bindOutput;
     expected.str("");
-    testing::internal::CaptureStdout();
+
+    capture.captureStdout();
 
     bo.unbind(osContext, 0);
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
-    std::string unbindOutput = testing::internal::GetCapturedStdout();
-    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    std::string unbindOutput = capture.getCapturedStdout();
+    expected << "unbind BO-0 from VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(unbindOutput.c_str(), expected.str().c_str()) << unbindOutput;
 }
 
@@ -578,24 +593,27 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     auto osContext = engines[contextId].osContext;
     osContext->ensureContextInitialized(false);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     bo.bind(osContext, 0, false);
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
-    std::string bindOutput = testing::internal::GetCapturedStderr();
+    std::string bindOutput = capture.getCapturedStderr();
     std::stringstream expected;
-    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
+    expected << "bind BO-0 to VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
     EXPECT_TRUE(hasSubstr(expected.str(), expected.str())) << bindOutput;
     expected.str("");
-    testing::internal::CaptureStderr();
+    capture.captureStderr();
     bo.bindInfo[contextId][0] = true;
 
     bo.unbind(osContext, 0);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
-    std::string unbindOutput = testing::internal::GetCapturedStderr();
-    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22";
+    std::string unbindOutput = capture.getCapturedStderr();
+    expected << "unbind BO-0 from VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: -1, errno: 22";
     EXPECT_TRUE(hasSubstr(unbindOutput, expected.str())) << unbindOutput;
 }
 
@@ -612,7 +630,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationFailsThenFenceValueNotGrow) {
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
     ioctlHelper->vmBindResult = -1;
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -647,7 +665,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -675,7 +693,7 @@ class DrmBufferObjectBindTestWithForcePagingFenceSucceeds : public ::testing::Te
 TEST_P(DrmBufferObjectBindTestWithForcePagingFenceSucceeds, givenDrmWhenBindOperationSucceedsWithForcePagingFenceThenFenceValueGrow) {
     int32_t waitOnUserFenceAfterBindAndUnbindVal = std::get<0>(GetParam());
     bool isVMBindImmediateSupportedVal = std::get<1>(GetParam());
-    bool isWaitBeforeBindRequiredResultVal = std::get<2>(GetParam());
+    bool requiresUserFenceSetupResultVal = std::get<2>(GetParam());
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.set(waitOnUserFenceAfterBindAndUnbindVal);
@@ -705,7 +723,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceSucceeds, givenDrmWhenBindOper
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = isVMBindImmediateSupportedVal;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = isWaitBeforeBindRequiredResultVal;
+    ioctlHelper->requiresUserFenceSetupResult = requiresUserFenceSetupResultVal;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -743,7 +761,7 @@ class DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled : p
 TEST_P(DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled, givenDrmWhenBindOperationSucceedsWithForcePagingFenceFalseThenFenceValueDoesNotGrow) {
     int32_t waitOnUserFenceAfterBindAndUnbindVal = std::get<0>(GetParam());
     bool isVMBindImmediateSupportedVal = std::get<1>(GetParam());
-    bool isWaitBeforeBindRequiredResultVal = std::get<2>(GetParam());
+    bool requiresUserFenceSetupResultVal = std::get<2>(GetParam());
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.set(waitOnUserFenceAfterBindAndUnbindVal);
@@ -773,7 +791,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled, g
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = isVMBindImmediateSupportedVal;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = isWaitBeforeBindRequiredResultVal;
+    ioctlHelper->requiresUserFenceSetupResult = requiresUserFenceSetupResultVal;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -840,7 +858,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsWithForcePagingFenceWithD
     // Making the useVMBindImmediate() false
     drm->isVMBindImmediateSupported = false;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -878,7 +896,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationFailsThenFenceValueNotGrow) {
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
     ioctlHelper->vmUnbindResult = -1;
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -909,7 +927,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -944,7 +962,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceUserFenceUponUn
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -993,7 +1011,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceFenceWaitThenFe
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -1046,7 +1064,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindFalseAndF
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = false;
+    ioctlHelper->requiresUserFenceSetupResult = false;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -1099,7 +1117,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindTrueAndFo
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = false;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());

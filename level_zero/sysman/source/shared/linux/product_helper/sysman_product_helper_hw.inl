@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
+#include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
@@ -24,6 +25,8 @@
 namespace L0 {
 namespace Sysman {
 
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
+
 template <PRODUCT_FAMILY gfxProduct>
 const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return nullptr;
@@ -35,10 +38,21 @@ void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) {
+    return ZE_RESULT_ERROR_NOT_AVAILABLE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
+    bool isIntegratedDevice = pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    bool isNumChannelsFromTelemetry = false;
 
-    pProperties->location = ZES_MEM_LOC_DEVICE;
+    if (isIntegratedDevice) {
+        pProperties->location = ZES_MEM_LOC_SYSTEM;
+    } else {
+        pProperties->location = ZES_MEM_LOC_DEVICE;
+    }
     pProperties->type = ZES_MEM_TYPE_DDR;
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
@@ -65,27 +79,50 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
             case NEO::DeviceBlobConstants::MemoryType::lpddr5:
                 pProperties->type = ZES_MEM_TYPE_LPDDR5;
                 break;
-            default:
-                pProperties->type = ZES_MEM_TYPE_DDR;
+            case NEO::DeviceBlobConstants::MemoryType::gddr6:
+                pProperties->type = ZES_MEM_TYPE_GDDR6;
                 break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
 
             if (pProperties->type == ZES_MEM_TYPE_HBM) {
-                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannlesPerHbmStack();
+                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannelsPerHbmStack();
+            } else if (pProperties->type == ZES_MEM_TYPE_GDDR6) {
+                uint32_t numChannels = 0;
+                ze_result_t result = this->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+                isNumChannelsFromTelemetry = true;
+                if (result == ZE_RESULT_SUCCESS) {
+                    pProperties->numChannels = numChannels;
+                    pProperties->busWidth = pProperties->numChannels * 32;
+                }
             } else {
                 pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
             }
         }
     }
 
-    pProperties->busWidth = memoryBusWidth;
     pProperties->physicalSize = 0;
+    if (!isNumChannelsFromTelemetry) {
+        pProperties->busWidth = memoryBusWidth;
+    }
+    if (isIntegratedDevice) {
+        pProperties->busWidth = -1;
+        pProperties->numChannels = -1;
+        pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
 
-    if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
+        const std::string memTotalKey = "MemTotal";
+        std::unordered_set<std::string> keys{memTotalKey};
+        auto memInfoValues = LinuxMemoryImp::readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
+            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
+        }
+    } else if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
         if (isSubdevice) {
             std::string memval;
             std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
-            ze_result_t result = pSysFsAccess->read(physicalSizeFile, memval);
+            ze_result_t result = pSysFsAccess->read(std::move(physicalSizeFile), memval);
             uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
             if (ZE_RESULT_SUCCESS != result) {
                 pProperties->physicalSize = 0u;
@@ -135,15 +172,12 @@ bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
-
+zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) {
     zes_freq_throttle_reason_flags_t throttleReasons = 0u;
-    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;
 
-    if (pSysfsAccess->directoryExists(baseDir)) {
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
         baseDirectoryExists = true;
     }
 
@@ -157,20 +191,20 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
         std::string throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
         std::string throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
 
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL1File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL1File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL2File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL2File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL4File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL4File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonThermalFile, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonThermalFile), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
         }
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
     }
 
     return throttleReasons;
@@ -201,7 +235,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
             return false;
         }
         return true;
@@ -223,7 +257,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     std::string key = "SOC_TEMPERATURES";
     uint64_t socTemperature = 0;
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
@@ -258,7 +292,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     uint64_t socTemperature = 0;
     std::string key = "SOC_TEMPERATURES";
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
@@ -358,8 +392,28 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+bool SysmanProductHelperHw<gfxProduct>::isPcieDowngradeSupported() {
     return false;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
+int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
+    return -1;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

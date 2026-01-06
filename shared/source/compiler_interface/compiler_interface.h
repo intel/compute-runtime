@@ -6,17 +6,19 @@
  */
 
 #pragma once
+#include "shared/source/compiler_interface/spec_const_values_map.h"
+#include "shared/source/compiler_interface/translation_error_code.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "cif/common/cif_main.h"
+#include "igc_interface.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
-#include <map>
 #include <unordered_map>
 
 namespace NEO {
@@ -25,8 +27,6 @@ class OsLibrary;
 class CompilerCache;
 class Device;
 struct TargetDevice;
-
-using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
 
 struct TranslationInput {
     TranslationInput(IGC::CodeType::CodeType_t srcType, IGC::CodeType::CodeType_t outType, IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::undefined)
@@ -49,16 +49,6 @@ struct TranslationInput {
 };
 
 struct TranslationOutput {
-    enum class ErrorCode {
-        success = 0,
-        compilerNotAvailable,
-        compilationFailure,
-        buildFailure,
-        linkFailure,
-        alreadyCompiled,
-        unknownError,
-    };
-
     struct MemAndSize {
         std::unique_ptr<char[]> mem;
         size_t size = 0;
@@ -126,32 +116,29 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
         return instance;
     }
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode build(const NEO::Device &device,
-                                                        const TranslationInput &input,
-                                                        TranslationOutput &output);
+    MOCKABLE_VIRTUAL TranslationErrorCode build(const NEO::Device &device,
+                                                const TranslationInput &input,
+                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode compile(const NEO::Device &device,
-                                                          const TranslationInput &input,
-                                                          TranslationOutput &output);
+    MOCKABLE_VIRTUAL TranslationErrorCode compile(const NEO::Device &device,
+                                                  const TranslationInput &input,
+                                                  TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                                       const TranslationInput &input,
-                                                       TranslationOutput &output);
-
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                                       ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
-
-    TranslationOutput::ErrorCode createLibrary(NEO::Device &device,
+    MOCKABLE_VIRTUAL TranslationErrorCode link(const NEO::Device &device,
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
-                                                                     std::vector<char> &stateSaveAreaHeader);
+    MOCKABLE_VIRTUAL TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                               ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
 
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
+    TranslationErrorCode createLibrary(NEO::Device &device,
+                                       const TranslationInput &input,
+                                       TranslationOutput &output);
 
-    bool addOptionDisableZebin(std::string &options, std::string &internalOptions);
-    bool disableZebin(std::string &options, std::string &internalOptions);
+    MOCKABLE_VIRTUAL TranslationErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                             std::vector<char> &stateSaveAreaHeader);
+
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
   protected:
     struct CompilerLibraryEntry {
@@ -175,9 +162,9 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
     }
     std::unique_ptr<CompilerCache> cache;
 
-    using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
-    using finalizerDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
-    using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
+    using igcDevCtxUptr = CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag>;
+    using finalizerDevCtxUptr = CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag>;
+    using fclDevCtxUptr = CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag>;
 
     CompilerLibraryEntry defaultIgc;
     std::mutex customCompilerLibraryLoadMutex;
@@ -186,31 +173,29 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
 
     CompilerLibraryEntry fcl;
     std::unordered_map<const Device *, fclDevCtxUptr> fclDeviceContexts;
-    CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx;
+    CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> fclBaseTranslationCtx;
 
     std::unordered_map<const Device *, finalizerDevCtxUptr> finalizerDeviceContexts;
     IGC::CodeType::CodeType_t finalizerInputType = IGC::CodeType::undefined;
 
-    MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
-    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device);
-    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getFinalizerDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::FclOclDeviceCtxTag *getFclDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::IgcOclDeviceCtxTag *getIgcDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::IgcOclDeviceCtxTag *getFinalizerDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device);
 
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
-                                                                                                IGC::CodeType::CodeType_t inType,
-                                                                                                IGC::CodeType::CodeType_t outType);
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createIgcTranslationCtx(const Device &device,
-                                                                                                IGC::CodeType::CodeType_t inType,
-                                                                                                IGC::CodeType::CodeType_t outType);
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
-                                                                                                      IGC::CodeType::CodeType_t inType,
-                                                                                                      IGC::CodeType::CodeType_t outType);
-    bool isFclAvailable() const {
-        return (fcl.entryPoint.get() != nullptr);
-    }
-
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createFclTranslationCtx(const Device &device,
+                                                                                             IGC::CodeType::CodeType_t inType,
+                                                                                             IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createIgcTranslationCtx(const Device &device,
+                                                                                             IGC::CodeType::CodeType_t inType,
+                                                                                             IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createFinalizerTranslationCtx(const Device &device,
+                                                                                                   IGC::CodeType::CodeType_t inType,
+                                                                                                   IGC::CodeType::CodeType_t outType);
+    bool isFclAvailable(const Device *device);
     bool isIgcAvailable(const Device *device);
     bool isFinalizerAvailable(const Device *device);
+    bool useIgcAsFcl(const Device *device);
 
     const CompilerLibraryEntry *getCustomCompilerLibrary(const char *libName);
 
@@ -241,7 +226,7 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
         bool requiresFcl = (IGC::CodeType::oclC == translationSrc);
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
         bool requiresFinalizer = (finalizerInputType != IGC::CodeType::undefined) && ((translationDst == IGC::CodeType::oclGenBin) || (translationSrc == finalizerInputType));
-        return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
+        return (isFclAvailable(device) || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
     }
 };
 

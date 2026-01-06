@@ -21,6 +21,7 @@ const std::string_view telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 using SysmanXeProductHelperPowerTest = SysmanDevicePowerFixtureXe;
 constexpr uint32_t bmgPowerHandleComponentCount = 4u;
+constexpr uint32_t bmgPowerLimitSupportedCount = 3u;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
 
@@ -65,15 +66,51 @@ inline static int mockStatSuccess(const std::string &filePath, struct stat *stat
     return 0;
 }
 
+HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForCardDomain, IsBMG) {
+    // Loop through all combinations of the three boolean flags (false/true) for the file existence
+    for (bool isEnergyCounterFilePresent : {false, true}) {
+        for (bool isTelemetrySupportAvailable : {false, true}) {
+            for (bool isSustainedPowerLimitFilePresent : {false, true}) {
+                for (bool isCriticalPowerLimitPresent : {false, true}) {
+                    for (bool isBurstPowerLimitPresent : {false, true}) {
+                        // Set the file existence flags based on the current combination
+                        pSysfsAccess->isCardEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pSysfsAccess->isCardSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pSysfsAccess->isCardCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pSysfsAccess->isCardBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+                        pSysfsAccess->isPackageEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pSysfsAccess->isPackageSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pSysfsAccess->isPackageCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pSysfsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+
+                        // The expected result is true if at least one of the files is present
+                        bool expected = (isTelemetrySupportAvailable || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
+                                         isCriticalPowerLimitPresent || isBurstPowerLimitPresent);
+
+                        // Verify if the power module is supported as expected
+                        auto pPowerImpForCard = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
+                        pPowerImpForCard->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        EXPECT_EQ(pPowerImpForCard->isPowerModuleSupported(), expected);
+
+                        auto pPowerImpForPackage = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
+                        pPowerImpForPackage->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        EXPECT_EQ(pPowerImpForPackage->isPowerModuleSupported(), expected);
+                    }
+                }
+            }
+        }
+    }
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenPmtSupportIsAvailableThenValidCountIsReturned, IsBMG) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validOobmsmGuid = "0x5e2f8211";
-        std::string validPunitGuid = "0x1e2f8200";
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
+        constexpr std::string_view validPunitGuid = "0x1e2f8200";
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -128,8 +165,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string dummyGuid = "0xABCDEF";
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view dummyGuid = "0xABCDEF";
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -152,9 +189,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validOobmsmGuid = "0x5e2f8211";
-        std::string validPunitGuid = "0x1e2f8200";
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
+        constexpr std::string_view validPunitGuid = "0x1e2f8200";
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -167,14 +204,18 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
             case 140:
                 count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
                 break;
+            default:
+                break;
             }
         } else if (fd == 8) {
             switch (offset) {
             case 4:
                 count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
                 break;
-            case 128:
+            case 1024:
                 count = (readFailCount == 3) ? -1 : sizeof(uint64_t);
+                break;
+            default:
                 break;
             }
         }
@@ -190,11 +231,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenValidValuesAreReturned, IsBMG) {
-    static uint32_t mockEnergyCounter = 0xabcd;
-    static uint32_t mockXtalFrequency = 0xef;
-    static uint64_t mockTimestamp = 0xabef;
-    static double indexToXtalClockFrequecyMap[4] = {24, 19.2, 38.4, 25};
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenValidValuesAreReturnedFromBothOobmsmAndPunitPath, IsBMG) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -202,8 +239,11 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validOobmsmGuid = "0x5e2f8211";
-        std::string validPunitGuid = "0x1e2f8200";
+        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
+        constexpr std::string_view validPunitGuid = "0x1e2f8200";
+        constexpr uint32_t mockEnergyCounter = 0xabcd;
+        constexpr uint32_t mockXtalFrequency = 0xef;
+        constexpr uint64_t mockTimestamp = 0xabef;
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -217,40 +257,126 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 140:
                 memcpy(buf, &mockEnergyCounter, count);
                 break;
+            default:
+                break;
             }
         } else if (fd == 8) {
             switch (offset) {
             case 4:
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
-            case 128:
+            case 1024:
                 memcpy(buf, &mockTimestamp, count);
                 break;
             case 1628:
             case 1640:
                 memcpy(buf, &mockEnergyCounter, count);
                 break;
+            default:
+                break;
             }
         }
         return count;
     });
 
-    auto handles = getPowerHandles(bmgPowerHandleComponentCount);
+    constexpr uint32_t mockEnergyCounter = 0xabcd;
+    constexpr uint32_t mockXtalFrequency = 0xef;
+    constexpr uint64_t mockTimestamp = 0xabef;
+    constexpr double indexToXtalClockFrequecyMap[4] = {24, 19.2, 38.4, 25};
+
+    auto handles = getPowerHandles();
+    EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
     for (auto handle : handles) {
         zes_power_energy_counter_t energyCounter = {};
         auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        uint32_t integerPart = static_cast<uint32_t>(mockEnergyCounter >> 14);
-        uint32_t decimalBits = static_cast<uint32_t>(mockEnergyCounter & 0x3FFF);
-        double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
-        double finalValue = static_cast<double>(integerPart + decimalPart);
-        uint64_t expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        const uint32_t integerPart = static_cast<uint32_t>(mockEnergyCounter >> 14);
+        const uint32_t decimalBits = static_cast<uint32_t>(mockEnergyCounter & 0x3FFF);
+        const double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
+        const double finalValue = static_cast<double>(integerPart + decimalPart);
+        const uint64_t expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
 
-        double timestamp = mockTimestamp / indexToXtalClockFrequecyMap[mockXtalFrequency & 0x2];
-        uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
+        const double timestamp = mockTimestamp / indexToXtalClockFrequecyMap[mockXtalFrequency & 0x2];
+        const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
+        EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenAllValidValuesAreReturnedFromPunitPath, IsBMG) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
+        constexpr std::string_view validPunitGuid = "0x1e2f8201";
+        constexpr uint32_t mockEnergyCounter = 0xabcd;
+        constexpr uint32_t mockXtalFrequency = 0xef;
+        constexpr uint64_t mockTimestamp = 0xabef;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validOobmsmGuid.data(), count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        } else if (fd == 7) {
+            switch (offset) {
+            case 136:
+            case 140:
+                memcpy(buf, &mockEnergyCounter, count);
+                break;
+            default:
+                break;
+            }
+        } else if (fd == 8) {
+            switch (offset) {
+            case 4:
+                memcpy(buf, &mockXtalFrequency, count);
+                break;
+            case 1024:
+                memcpy(buf, &mockTimestamp, count);
+                break;
+            case 48:
+            case 52:
+            case 1628:
+            case 1640:
+                memcpy(buf, &mockEnergyCounter, count);
+                break;
+            default:
+                break;
+            }
+        }
+        return count;
+    });
+
+    constexpr uint32_t mockEnergyCounter = 0xabcd;
+    constexpr uint32_t mockXtalFrequency = 0xef;
+    constexpr uint64_t mockTimestamp = 0xabef;
+    constexpr double indexToXtalClockFrequecyMap[4] = {24, 19.2, 38.4, 25};
+
+    auto handles = getPowerHandles();
+    EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter = {};
+        auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        const uint32_t integerPart = static_cast<uint32_t>(mockEnergyCounter >> 14);
+        const uint32_t decimalBits = static_cast<uint32_t>(mockEnergyCounter & 0x3FFF);
+        const double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
+        const double finalValue = static_cast<double>(integerPart + decimalPart);
+        const uint64_t expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
+
+        const double timestamp = mockTimestamp / indexToXtalClockFrequecyMap[mockXtalFrequency & 0x2];
+        const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
         EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
     }
 }
@@ -259,12 +385,491 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySup
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_CARD};
     for (const auto &powerDomain : powerDomains) {
         zes_power_energy_counter_t energyCounter = {};
-        std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, powerDomain));
+        std::unique_ptr<XePublicLinuxPowerImp> pLinuxPowerImp(new XePublicLinuxPowerImp(pOsSysman, false, 0, powerDomain));
         pLinuxPowerImp->isTelemetrySupportAvailable = false;
-        uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+        const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+        EXPECT_EQ(energyCounter.energy, xeMockEnergyCounter);
         EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForSustainedPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+            for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+                pSysfsAccess->sustainedReadResult = sustainedLimitResult;
+                pSysfsAccess->sustainedIntervalReadResult = sustainedLimitIntervalResult;
+
+                uint32_t count = 0;
+                EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+                EXPECT_EQ(1u, count);
+
+                std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+                ze_result_t expectedResult = sustainedLimitResult;
+
+                EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+                if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].enabledStateLocked, true);
+                    EXPECT_EQ(allLimits[0].intervalValueLocked, false);
+                    EXPECT_EQ(allLimits[0].limitValueLocked, false);
+                    EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
+                    EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+                    EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
+                    EXPECT_EQ(allLimits[0].interval, (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->sustainedPowerLimitIntervalVal : -1);
+                }
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForSustainedPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+            pSysfsAccess->sustainedIntervalWriteResult = sustainedLimitIntervalResult;
+
+            uint32_t count = 0;
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+            EXPECT_EQ(1u, count);
+
+            std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+            const int32_t testSustainedLimitInterval = 100;
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, allLimits.data()));
+            EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+            allLimits[0].interval = testSustainedLimitInterval;
+
+            ze_result_t expectedResult = sustainedLimitIntervalResult;
+            EXPECT_EQ(expectedResult, pPowerImp->setLimitsExt(&count, allLimits.data()));
+
+            if (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) {
+                EXPECT_EQ(allLimits[0].interval, testSustainedLimitInterval);
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForBurstPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+            for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+                pSysfsAccess->burstReadResult = burstLimitResult;
+                pSysfsAccess->burstIntervalReadResult = burstLimitIntervalResult;
+
+                uint32_t count = 0;
+                EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+                EXPECT_EQ(1u, count);
+
+                std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+                ze_result_t expectedResult = burstLimitResult;
+
+                EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+                if (burstLimitResult == ZE_RESULT_SUCCESS) {
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].enabledStateLocked, true);
+                    EXPECT_EQ(allLimits[0].intervalValueLocked, false);
+                    EXPECT_EQ(allLimits[0].limitValueLocked, false);
+                    EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
+                    EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_BURST);
+                    EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
+                    EXPECT_EQ(allLimits[0].interval, (burstLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->burstPowerLimitIntervalVal : -1);
+                }
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForBurstPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+            pSysfsAccess->burstIntervalWriteResult = burstLimitIntervalResult;
+
+            uint32_t count = 0;
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+            EXPECT_EQ(1u, count);
+
+            std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+            const int32_t testBurstLimitInterval = 100;
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, allLimits.data()));
+            EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_BURST);
+            allLimits[0].interval = testBurstLimitInterval;
+
+            ze_result_t expectedResult = burstLimitIntervalResult;
+            EXPECT_EQ(expectedResult, pPowerImp->setLimitsExt(&count, allLimits.data()));
+
+            if (burstLimitIntervalResult == ZE_RESULT_SUCCESS) {
+                EXPECT_EQ(allLimits[0].interval, testBurstLimitInterval);
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForPeakPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        for (ze_result_t criticalLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
+            pSysfsAccess->criticalReadResult = criticalLimitResult;
+
+            uint32_t count = 0;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+            EXPECT_EQ(1u, count);
+
+            std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+            ze_result_t expectedResult = criticalLimitResult;
+
+            EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+            if (criticalLimitResult == ZE_RESULT_SUCCESS) {
+                EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+                EXPECT_EQ(allLimits[0].enabledStateLocked, true);
+                EXPECT_EQ(allLimits[0].intervalValueLocked, true);
+                EXPECT_EQ(allLimits[0].limitValueLocked, false);
+                EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
+                EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_PEAK);
+                EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
+                EXPECT_EQ(allLimits[0].interval, 0);
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadSucceedsForAllLimitsWhenGetLimitsExtIsCalledThenProperLimitValuesAreReturned, IsBMG) {
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+        EXPECT_EQ(bmgPowerLimitSupportedCount, count);
+
+        std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+        uint8_t index = 0;
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].enabledStateLocked, true);
+        EXPECT_EQ(allLimits[index].intervalValueLocked, false);
+        EXPECT_EQ(allLimits[index].limitValueLocked, false);
+        EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
+        EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
+        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->sustainedPowerLimitIntervalVal);
+
+        index++;
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].enabledStateLocked, true);
+        EXPECT_EQ(allLimits[index].intervalValueLocked, false);
+        EXPECT_EQ(allLimits[index].limitValueLocked, false);
+        EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
+        EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_BURST);
+        EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
+        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->burstPowerLimitIntervalVal);
+
+        index++;
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].enabledStateLocked, true);
+        EXPECT_EQ(allLimits[index].intervalValueLocked, true);
+        EXPECT_EQ(allLimits[index].limitValueLocked, false);
+        EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
+        EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_PEAK);
+        EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
+        EXPECT_EQ(allLimits[index].interval, 0);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainAndSysfsWriteResultsForPowerLimitsWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        uint32_t count = 0u;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
+        EXPECT_EQ(bmgPowerLimitSupportedCount, count);
+
+        for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
+            for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
+                for (ze_result_t peakLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
+                    pSysfsAccess->sustainedReadResult = sustainedLimitResult;
+                    pSysfsAccess->burstReadResult = burstLimitResult;
+                    pSysfsAccess->criticalReadResult = peakLimitResult;
+                    pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
+                    pSysfsAccess->burstWriteResult = burstLimitResult;
+                    pSysfsAccess->criticalWriteResult = peakLimitResult;
+
+                    ze_result_t expectedResult = ((sustainedLimitResult == ZE_RESULT_SUCCESS) && (burstLimitResult == ZE_RESULT_SUCCESS) && (peakLimitResult == ZE_RESULT_SUCCESS))
+                                                     ? ZE_RESULT_SUCCESS
+                                                     : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+                    std::vector<zes_power_limit_ext_desc_t> allLimits(count);
+                    EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+                    uint8_t index = 0;
+                    const uint64_t testLimit = 400000;
+                    const int32_t testSustainedLimitInterval = 500;
+                    const int32_t testBurstLimitInterval = 1000;
+
+                    if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
+                        allLimits[index].limit = testLimit;
+                        allLimits[index].interval = testSustainedLimitInterval;
+                        index++;
+                    }
+                    if (burstLimitResult == ZE_RESULT_SUCCESS) {
+                        allLimits[index].limit = testLimit;
+                        allLimits[index].interval = testBurstLimitInterval;
+                        index++;
+                    }
+                    if (peakLimitResult == ZE_RESULT_SUCCESS) {
+                        allLimits[index].limit = testLimit;
+                        index++;
+                    }
+
+                    EXPECT_EQ(expectedResult, pPowerImp->setLimitsExt(&count, allLimits.data()));
+                    EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
+
+                    index = 0;
+                    if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
+                        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(testLimit));
+                        EXPECT_EQ(allLimits[index].interval, testSustainedLimitInterval);
+                        index++;
+                    }
+                    if (burstLimitResult == ZE_RESULT_SUCCESS) {
+                        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(testLimit));
+                        EXPECT_EQ(allLimits[index].interval, testBurstLimitInterval);
+                        index++;
+                    }
+                    if (peakLimitResult == ZE_RESULT_SUCCESS) {
+                        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(testLimit));
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Request only 1 limit when 3 are available
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request only 2 limits when 3 are available
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithCountGreaterThanAvailableThenAllAvailableLimitsAreReturned, IsBMG) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Request more limits than available
+        uint32_t requestedCount = 10;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, bmgPowerLimitSupportedCount);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+        EXPECT_EQ(limits[2].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlySustainedAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only sustained)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 1u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only burst)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 1u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_BURST);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyPeakAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only peak)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_PEAK);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndSustainedAndBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (sustained and burst)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 2u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request 2 limits
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
     }
 }
 

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/standby/sysman_os_standby.h"
@@ -18,6 +19,8 @@ namespace Sysman {
 class SysmanKmdInterface;
 class SysFsAccessInterface;
 class SysmanProductHelper;
+struct OsSysman;
+
 class LinuxStandbyImp : public OsStandby, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getMode(zes_standby_promo_mode_t &mode) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ static auto coreFamily = IGFX_GEN12LP_CORE;
 
 template <>
 void populateFactoryTable<DebuggerL0Hw<Family>>() {
-    extern DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE];
+    extern DebugerL0CreateFn debuggerL0Factory[NEO::maxCoreEnumValue];
     debuggerL0Factory[coreFamily] = DebuggerL0Hw<Family>::allocate;
 }
 template class DebuggerL0Hw<Family>;

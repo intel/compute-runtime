@@ -9,9 +9,11 @@
 
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <memory>
 
@@ -39,7 +41,7 @@ constexpr bool operator>=(OclCVersion lhs, OclCVersion rhs) {
 }
 
 using CompilerProductHelperCreateFunctionType = std::unique_ptr<CompilerProductHelper> (*)();
-extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT];
+extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[NEO::maxProductEnumValue];
 
 class CompilerProductHelper {
   public:
@@ -60,7 +62,6 @@ class CompilerProductHelper {
     virtual bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
-    virtual bool isDotAccumulateSupported() const = 0;
     virtual bool isDotProductAccumulateSystolicSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isCreateBufferWithPropertiesSupported() const = 0;
     virtual bool isSubgroupNamedBarrierSupported() const = 0;
@@ -68,8 +69,7 @@ class CompilerProductHelper {
     virtual bool isSubgroup2DBlockIOSupported() const = 0;
     virtual bool isSubgroupBufferPrefetchSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
-    virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
-    virtual bool isDotIntegerProductExtensionSupported() const = 0;
+    virtual bool failBuildProgramWithBufferStatefulAccessPreference() const = 0;
     virtual bool oclocEnforceZebinFormat() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
@@ -79,16 +79,18 @@ class CompilerProductHelper {
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
     virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
-    virtual bool isHeaplessModeEnabled() const = 0;
+    virtual bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const = 0;
     virtual void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const = 0;
     virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
     virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
     virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
-    virtual bool isForceBindlessRequired() const = 0;
+    virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
     virtual const char *getFinalizerLibraryName() const = 0;
+    virtual bool useIgcAsFcl() const = 0;
+    virtual IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -114,7 +116,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
     bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const override;
     bool isSubgroupLocalBlockIoSupported() const override;
-    bool isDotAccumulateSupported() const override;
     bool isDotProductAccumulateSystolicSupported(const ReleaseHelper *releaseHelper) const override;
     bool isCreateBufferWithPropertiesSupported() const override;
     bool isSubgroupNamedBarrierSupported() const override;
@@ -122,8 +123,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isSubgroup2DBlockIOSupported() const override;
     bool isSubgroupBufferPrefetchSupported() const override;
     bool isForceToStatelessRequired() const override;
-    bool failBuildProgramWithStatefulAccessPreference() const override;
-    bool isDotIntegerProductExtensionSupported() const override;
+    bool failBuildProgramWithBufferStatefulAccessPreference() const override;
     bool oclocEnforceZebinFormat() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
@@ -133,16 +133,18 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
-    bool isHeaplessModeEnabled() const override;
+    bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override;
     bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const override;
     void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const override;
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
     void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
     bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
-    bool isForceBindlessRequired() const override;
+    bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
     const char *getCustomIgcLibraryName() const override;
     const char *getFinalizerLibraryName() const override;
+    bool useIgcAsFcl() const override;
+    IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const override;
 
     ~CompilerProductHelperHw() override = default;
 

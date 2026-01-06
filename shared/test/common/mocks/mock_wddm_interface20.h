@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class WddmMockInterface20 : public WddmInterface20 {
         return WddmInterface::createMonitoredFence(monitorFence);
     }
 
-    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override {
+    bool createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override {
         return createMonitoredFence(monitorFence);
     };
 

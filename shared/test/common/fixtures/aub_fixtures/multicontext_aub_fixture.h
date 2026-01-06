@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 namespace NEO {
 class Device;
 class MockDevice;
+class SVMAllocsManager;
 
 struct MulticontextAubFixture {
     enum class EnabledCommandStreamers {
@@ -37,14 +38,25 @@ struct MulticontextAubFixture {
     void tearDown() {}
 
     virtual CommandStreamReceiver *getGpgpuCsr(uint32_t tile, uint32_t engine) = 0;
+    virtual CommandStreamReceiver *getRootCsr() = 0;
+
+    bool isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress);
+
+    template <typename FamilyType>
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getRootSimulatedCsr() {
+        return castToSimulatedCsr<FamilyType>(getRootCsr());
+    }
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {
+        return castToSimulatedCsr<FamilyType>(getGpgpuCsr(tile, engine));
+    }
+
+    template <typename FamilyType>
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *castToSimulatedCsr(CommandStreamReceiver *csr) {
         using CsrWithAubDump = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
         using SimulatedCsr = CommandStreamReceiverSimulatedCommonHw<FamilyType>;
         SimulatedCsr *simulatedCsr = nullptr;
-
-        auto csr = getGpgpuCsr(tile, engine);
 
         if (testMode == TestMode::aubTestsWithTbx) {
             auto csrWithAubDump = static_cast<CsrWithAubDump *>(csr);
@@ -59,6 +71,8 @@ struct MulticontextAubFixture {
     template <typename FamilyType>
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t tile, uint32_t engine) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>(tile, engine);
+        // expectMemory should not be used for compressed memory
+        ASSERT_FALSE(isMemoryCompressed(csrSimulated, gfxAddress));
 
         if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
@@ -105,13 +119,15 @@ struct MulticontextAubFixture {
     }
 
     void overridePlatformConfigForAllEnginesSupport(HardwareInfo &localHwInfo);
-    void adjustPlatformOverride(HardwareInfo &localHwInfo, bool &setupCalled);
     DebugManagerStateRestore restore;
 
+    SVMAllocsManager *svmAllocsManager = nullptr;
     const uint32_t rootDeviceIndex = 0u;
     uint32_t numberOfEnabledTiles = 0;
     bool isCcs1Supported = false;
     bool isRenderEngineSupported = true;
+    bool isFirstEngineBcs = false;
     bool skipped = false;
+    DispatchMode dispatchMode = DispatchMode::batchedDispatch;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressC
     debugManager.flags.UseBindlessMode.set(1);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr.get(), &desc);
     auto size = commandQueue->estimateStateBaseAddressCmdSize();
     auto expectedSize = 0u;
 

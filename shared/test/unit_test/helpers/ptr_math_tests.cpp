@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "gtest/gtest.h"

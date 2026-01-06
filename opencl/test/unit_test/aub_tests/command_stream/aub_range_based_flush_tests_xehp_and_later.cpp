@@ -5,23 +5,27 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/helpers/test_traits.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 
-#include "test_traits_common.h"
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
 
 using namespace NEO;
 
@@ -124,7 +128,7 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
     };
     if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
         expectedCommands.push_back(new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}));
-        if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(device->getRootDeviceEnvironment()) > 0) {
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, device->getRootDeviceEnvironment()) > 0) {
             expectedCommands.push_back(new MatchHwCmd<FamilyType, MI_SEMAPHORE_WAIT>(1, Expects{EXPECT_MEMBER(MI_SEMAPHORE_WAIT, getSemaphoreDataDword, EncodeSemaphore<FamilyType>::invalidHardwareTag)}));
         }
     }

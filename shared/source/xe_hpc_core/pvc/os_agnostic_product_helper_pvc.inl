@@ -84,13 +84,18 @@ bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return !PVC::isXlA0(hwInfo);
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
+    return true;
 }
 
 bool isBaseDieA0(const HardwareInfo &hwInfo) {
@@ -148,21 +153,29 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto numberOfCcsEntries = StringHelpers::split(ccsModeString, ",");
 
     for (const auto &entry : numberOfCcsEntries) {
         auto subEntries = StringHelpers::split(entry, ":");
+        if (subEntries.size() < 2) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid ZEX_NUMBER_OF_CCS format - %s\n", ccsModeString.c_str());
+            return false;
+        }
+
         uint32_t rootDeviceIndexParsed = StringHelpers::toUint32t(subEntries[0]);
 
         if (rootDeviceIndexParsed == rootDeviceIndex) {
-            if (subEntries.size() > 1) {
-                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
-                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
-                rootDeviceEnvironment->setNumberOfCcs(maxCcsCount);
+            uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+            if (!rootDeviceEnvironment->setNumberOfCcs(maxCcsCount)) {
+                return false;
             }
+
+            rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
         }
     }
+
+    return true;
 }
 
 template <>
@@ -175,8 +188,18 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
-    return true;
+BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const HardwareInfo &hwInfo) const {
+    constexpr BcsInfoMask oddLinkedCopyEnginesMask = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
+
+    return {
+        .allEngines = oddLinkedCopyEnginesMask,
+        .h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask,
+        .d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask,
+        .perEngineMaxSize = 1, // split evenly on all available engines
+        .minRequiredTotalCsrCount = static_cast<uint32_t>(oddLinkedCopyEnginesMask.count()),
+        .requiredTileCount = 1,
+        .enabled = true,
+    };
 }
 
 template <>

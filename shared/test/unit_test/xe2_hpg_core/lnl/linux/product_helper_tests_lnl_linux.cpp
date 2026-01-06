@@ -64,6 +64,23 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSpli
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenFalseIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.deferMOCSToPatIndex(true));
+}
+
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
+    EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
+}
+
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+}
+
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
+
 using LnlHwInfoLinux = ::testing::Test;
 
 LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
@@ -74,8 +91,9 @@ LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &LnlHwConfig::hwInfo, &LnlHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 

@@ -8,7 +8,6 @@
 #include "opencl/source/mem_obj/image.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -42,13 +41,11 @@
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/sharings/unified/unified_image.h"
 
-#include "igfxfmid.h"
-
-#include <map>
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 
-ImageFactoryFuncs imageFactory[IGFX_MAX_CORE] = {};
+ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue] = {};
 
 namespace ImageFunctions {
 ValidateAndCreateImageFunc validateAndCreateImage = Image::validateAndCreateImage;
@@ -90,10 +87,11 @@ Image::Image(Context *context,
       baseMipLevel(baseMipLevel),
       mipCount(mipCount) {
     magic = objectMagic;
-    if (surfaceOffsets)
+    if (surfaceOffsets) {
         setSurfaceOffsets(surfaceOffsets->offset, surfaceOffsets->xOffset, surfaceOffsets->yOffset, surfaceOffsets->yOffsetForUVplane);
-    else
+    } else {
         setSurfaceOffsets(0, 0, 0, 0);
+    }
 }
 
 Image::~Image() {
@@ -210,7 +208,10 @@ Image *Image::create(Context *context,
     }
 
     auto &clGfxCoreHelper = defaultDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-    bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
+    auto hwInfo = defaultDevice->getRootDeviceEnvironment().getHardwareInfo();
+    bool compressionSupported = !imgInfo.linearStorage && !defaultProductHelper.isCompressionForbidden(*hwInfo);
+
+    bool preferCompression = MemObjHelper::isSuitableForCompression(compressionSupported, memoryProperties,
                                                                     *context, true);
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
     preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->oclImageFormat);
@@ -546,13 +547,11 @@ cl_int Image::validatePlanarYUV(Context *context,
         if (!memoryProperties.flags.hostNoAccess) {
             errorCode = CL_INVALID_VALUE;
             break;
-        } else {
-            if (imageDesc->image_height % 4 ||
-                imageDesc->image_width % 4 ||
-                imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-                errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
-                break;
-            }
+        } else if (imageDesc->image_height % 4 ||
+                   imageDesc->image_width % 4 ||
+                   imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+            errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
+            break;
         }
 
         pClDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
@@ -572,12 +571,10 @@ cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const 
         if (!memoryProperties.flags.readOnly) {
             errorCode = CL_INVALID_VALUE;
             break;
-        } else {
-            if (imageDesc->image_width % 2 != 0 ||
-                imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-                errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
-                break;
-            }
+        } else if (imageDesc->image_width % 2 != 0 ||
+                   imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+            errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
+            break;
         }
         break;
     }
@@ -585,10 +582,11 @@ cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const 
 }
 
 cl_int Image::validateImageTraits(Context *context, const MemoryProperties &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
-    if (isNV12Image(imageFormat))
+    if (isNV12Image(imageFormat)) {
         return validatePlanarYUV(context, memoryProperties, imageDesc, hostPtr);
-    else if (isPackedYuvImage(imageFormat))
+    } else if (isPackedYuvImage(imageFormat)) {
         return validatePackedYUV(memoryProperties, imageDesc);
+    }
 
     return CL_SUCCESS;
 }
@@ -795,7 +793,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         retParam = imageDesc.image_width;
         if (this->baseMipLevel) {
             retParam = imageDesc.image_width >> this->baseMipLevel;
-            retParam = std::max(retParam, (size_t)1);
+            retParam = std::max(retParam, static_cast<size_t>(1));
         }
         srcParam = &retParam;
         break;
@@ -805,7 +803,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         retParam = imageDesc.image_height * !((imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D) || (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) || (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER));
         if ((retParam != 0) && (this->baseMipLevel > 0)) {
             retParam = retParam >> this->baseMipLevel;
-            retParam = std::max(retParam, (size_t)1);
+            retParam = std::max(retParam, static_cast<size_t>(1));
         }
         srcParam = &retParam;
         break;
@@ -815,7 +813,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         retParam = imageDesc.image_depth * (imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D);
         if ((retParam != 0) && (this->baseMipLevel > 0)) {
             retParam = retParam >> this->baseMipLevel;
-            retParam = std::max(retParam, (size_t)1);
+            retParam = std::max(retParam, static_cast<size_t>(1));
         }
         srcParam = &retParam;
         break;
@@ -978,7 +976,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     imageDesc.mem_object = this;
     // get access to the Y plane (CL_R)
     imageDesc.image_depth = 0;
-    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageYPlane(Image::create(
@@ -1003,7 +1001,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     imageFormat.image_channel_order = CL_RG;
 
     hostPtr = static_cast<const void *>(static_cast<const char *>(hostPtr) + (hostPtrRowPitch * this->imageDesc.image_height));
-    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageUVPlane(Image::create(
         context,
@@ -1020,13 +1018,13 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     return retVal;
 }
 
-const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) {
+const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat) {
     if (!imageFormat) {
         DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
 
-    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat, supportsOcl20Features);
+    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat);
 
     for (auto &format : formats) {
         if (format.oclImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
@@ -1156,7 +1154,9 @@ void Image::setImageProperties(Image *image, const cl_image_desc &imageDesc, con
     image->setSurfaceOffsets(imageInfo.offset, imageInfo.xOffset, imageInfo.yOffset, imageInfo.yOffsetForUVPlane);
     image->setMipCount(imageInfo.mipCount);
     image->setPlane(imageInfo.plane);
-
+    if (image->memoryStorage) {
+        image->memoryStorage = ptrOffset(image->memoryStorage, imageInfo.offset);
+    }
     if (parentImage) {
         image->setMediaPlaneType(static_cast<cl_uint>(imageDesc.image_depth));
         image->setParentSharingHandler(parentImage->getSharingHandler());
@@ -1177,9 +1177,9 @@ void Image::adjustImagePropertiesFromParentImage(size_t &width, size_t &height, 
             if (descriptor.image_depth == 1) { // UV Plane
                 width /= 2;
                 height /= 2;
-                imageInfo.plane = GMM_PLANE_U;
+                imageInfo.plane = ImagePlane::planeU;
             } else {
-                imageInfo.plane = GMM_PLANE_Y;
+                imageInfo.plane = ImagePlane::planeY;
             }
         }
 
@@ -1328,7 +1328,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
         return nullptr;
     }
 
-    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
 
     errcodeRet = Image::validate(pContext, memoryProperties, surfaceFormat, imageDesc, hostPtr);
     if (errcodeRet != CL_SUCCESS) {

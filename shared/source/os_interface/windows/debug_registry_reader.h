@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
-#include <stdint.h>
 #include <string>
 
 namespace NEO {

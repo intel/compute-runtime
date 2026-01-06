@@ -1,14 +1,35 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gmm_memory.h"
+#include "shared/source/gmm_helper/windows/gmm_memory.h"
+
+#include "shared/source/helpers/debug_helpers.h"
 
 namespace NEO {
-GmmMemory *GmmMemory::create(GmmClientContext *gmmClientContext) {
-    return new GmmMemory(gmmClientContext);
+bool GmmMemory::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
+                                GMM_ESCAPE_HANDLE hDevice,
+                                GMM_ESCAPE_FUNC_TYPE pfnEscape,
+                                GMM_GFX_SIZE_T svmSize,
+                                BOOLEAN bdwL3Coherency,
+                                uintptr_t &minAddress,
+                                bool obtainMinAddress) {
+    auto retVal = configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, svmSize, bdwL3Coherency);
+    if (obtainMinAddress) {
+        minAddress = getInternalGpuVaRangeLimit();
+    }
+    return retVal;
 }
-} // namespace NEO
+uintptr_t GmmMemory::getInternalGpuVaRangeLimit() {
+    return static_cast<uintptr_t>(clientContext.GetInternalGpuVaRangeLimit());
+}
+
+bool GmmMemory::setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
+    auto status = clientContext.GmmSetDeviceInfo(deviceInfo);
+    DEBUG_BREAK_IF(status != GMM_SUCCESS);
+    return GMM_SUCCESS == status;
+}
+}; // namespace NEO

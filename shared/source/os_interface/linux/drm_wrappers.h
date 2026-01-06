@@ -202,11 +202,51 @@ struct PrimeHandle {
     int32_t fileDescriptor;
 };
 
+struct SyncObjHandle {
+    uint32_t handle;
+    uint32_t flags;
+    int32_t fd;
+    uint32_t pad;
+    uint64_t point;
+};
+
+struct SyncObjWait {
+    uint64_t handles;
+    int64_t timeoutNs;
+    uint32_t countHandles;
+    uint32_t flags;
+    uint32_t firstSignaled;
+    uint32_t pad;
+    uint64_t deadlineNs;
+};
+
+struct SyncObjTimelineWait {
+    uint64_t handles;
+    uint64_t points;
+    int64_t timeoutNs;
+    uint32_t countHandles;
+    uint32_t flags;
+    uint32_t firstSignaled;
+    uint32_t pad;
+    uint64_t deadlineNs;
+};
+
+struct SyncObjArray {
+    uint64_t handles;
+    uint32_t countHandles;
+    uint32_t pad;
+};
+
+struct SyncObjTimelineArray {
+    uint64_t handles;
+    uint64_t points;
+    uint32_t countHandles;
+    uint32_t flags;
+};
+
 struct PrimaryContextHandle {
     uint32_t handle;
-    uint32_t pad;
     int32_t fd;
-    uint32_t pad2;
     uint64_t reserved[2];
 };
 
@@ -273,12 +313,18 @@ enum class DrmIoctl {
     gemClose,
     primeFdToHandle,
     primeHandleToFd,
+    syncObjFdToHandle,
+    syncObjWait,
+    syncObjTimelineWait,
+    syncObjSignal,
+    syncObjTimelineSignal,
     gemVmBind,
     gemVmUnbind,
     gemWaitUserFence,
     dg1GemCreateExt,
     gemCreateExt,
     gemVmAdvise,
+    gemVmGetMemRangeAttr,
     gemVmPrefetch,
     uuidRegister,
     uuidUnregister,
@@ -299,6 +345,10 @@ enum class DrmIoctl {
 };
 
 enum class DrmParam {
+    atomicClassUndefined,
+    atomicClassDevice,
+    atomicClassGlobal,
+    atomicClassSystem,
     contextCreateExtSetparam,
     contextCreateFlagsUseExtensions,
     contextEnginesExtLoadBalance,
@@ -322,6 +372,10 @@ enum class DrmParam {
     execRender,
     memoryClassDevice,
     memoryClassSystem,
+    memoryAdviseLocationDevice,
+    memoryAdviseLocationSystem,
+    memoryAdviseMigrationPolicyAllPages,
+    memoryAdviseMigrationPolicySystemPages,
     mmapOffsetWb,
     mmapOffsetWc,
     paramHasPooledEu,

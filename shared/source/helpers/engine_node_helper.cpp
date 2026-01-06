@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ std::string engineUsageToString(EngineUsage usage) {
         return "Regular";
     case EngineUsage::lowPriority:
         return "LowPriority";
+    case EngineUsage::highPriority:
+        return "HighPriority";
     case EngineUsage::internal:
         return "Internal";
     case EngineUsage::cooperative:
@@ -170,6 +172,9 @@ uint32_t getBcsIndex(aub_stream::EngineType engineType) {
 }
 
 aub_stream::EngineType getBcsEngineAtIdx(uint32_t idx) {
+    if (idx == 0) {
+        return aub_stream::ENGINE_BCS;
+    }
     return static_cast<aub_stream::EngineType>((idx - 1) + aub_stream::ENGINE_BCS1);
 }
 
@@ -205,51 +210,6 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto enableCmdQRoundRobindBcsEngineAssign = false;
-
-    if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
-        enableCmdQRoundRobindBcsEngineAssign = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get();
-    }
-
-    if (enableCmdQRoundRobindBcsEngineAssign) {
-        aub_stream::EngineType engineType;
-
-        auto bcsRoundRobinLimit = EngineHelpers::numLinkedCopyEngines;
-        auto engineOffset = 0u;
-        auto mainCE = false;
-
-        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get() != -1) {
-            engineOffset = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get();
-            mainCE = engineOffset == 0;
-        }
-
-        if (mainCE) {
-            bcsRoundRobinLimit++;
-        }
-
-        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get() != -1) {
-            bcsRoundRobinLimit = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get();
-        }
-
-        do {
-            auto selectEngineValue = (selectorCopyEngine.fetch_add(1u) % bcsRoundRobinLimit) + engineOffset;
-
-            if (mainCE) {
-                if (selectEngineValue == 0u) {
-                    engineType = aub_stream::EngineType::ENGINE_BCS;
-                } else {
-                    engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue - 1);
-                }
-            } else {
-                engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue);
-            }
-
-        } while (!gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                          ? 0
-                                                                                                                                                          : engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
-
-        return engineType;
-    }
 
     const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, aub_stream::ENGINE_BCS1) && aub_stream::ENGINE_BCS1 != productHelper.getDefaultCopyEngine()
                                                ? aub_stream::ENGINE_BCS1
@@ -275,6 +235,17 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
 }
 aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index) {
     return static_cast<aub_stream::EngineType>(index + static_cast<uint32_t>(aub_stream::ENGINE_CCS));
+}
+
+EngineGroupType engineTypeToEngineGroupType(aub_stream::EngineType engineType) {
+    if (isCcs(engineType)) {
+        return EngineGroupType::compute;
+    } else if (isComputeEngine(engineType)) {
+        return EngineGroupType::renderCompute;
+    } else if (engineType == aub_stream::ENGINE_BCS) {
+        return EngineGroupType::copy;
+    }
+    return EngineGroupType::linkedCopy;
 }
 
 } // namespace NEO::EngineHelpers

@@ -10,9 +10,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
-
-#include "per_product_test_definitions.h"
 
 using namespace NEO;
 
@@ -72,8 +71,9 @@ ARLTEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &ArlHwConfig::hwInfo, &ArlHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
@@ -100,12 +100,7 @@ ARLTEST_F(ArlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThe
     EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }
 
-ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenCallConfigureHardwareCustomThenCompressionIsDisabled) {
+ARLTEST_F(ArlProductHelperLinux, givenProductHelperThenCompressionIsForbidden) {
     auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrE2ECompression = true;
-
-    productHelper->configureHardwareCustom(&hwInfo, nullptr);
-
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
 }

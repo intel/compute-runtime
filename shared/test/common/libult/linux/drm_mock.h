@@ -16,9 +16,9 @@
 
 #include <cstdio>
 #include <fstream>
-#include <limits.h>
 #include <map>
 #include <optional>
+#include <queue>
 #include <vector>
 
 using namespace NEO;
@@ -41,6 +41,7 @@ class DrmMock : public Drm {
     using Drm::generateElfUUID;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
+    using Drm::getSharedSystemAllocAddressRange;
     using Drm::ioctlHelper;
     using Drm::isSharedSystemAllocEnabled;
     using Drm::memoryInfo;
@@ -178,10 +179,11 @@ class DrmMock : public Drm {
         return static_cast<uint32_t>(virtualMemoryIds.size());
     }
     bool useVMBindImmediate() const override {
-        if (isVMBindImmediateSupported.has_value())
+        if (isVMBindImmediateSupported.has_value()) {
             return *isVMBindImmediateSupported;
-        else
+        } else {
             return Drm::useVMBindImmediate();
+        }
     }
     int queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) override {
         gttSizeOutput = storedGTTSize;
@@ -239,6 +241,7 @@ class DrmMock : public Drm {
     bool failRetHwIpVersion = false;
     bool returnInvalidHwIpVersionLength = false;
     bool failPerfOpen = false;
+    DeviceDescriptor *overrideDeviceDescriptor = nullptr;
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
@@ -343,6 +346,13 @@ class DrmMock : public Drm {
         }
         return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
     }
+
+    const DeviceDescriptor *getDeviceDescriptor(uint32_t usDeviceId) override {
+        if (overrideDeviceDescriptor) {
+            return overrideDeviceDescriptor;
+        }
+        return Drm::getDeviceDescriptor(usDeviceId);
+    }
 };
 
 class DrmMockNonFailing : public DrmMock {
@@ -373,7 +383,10 @@ class DrmMockEngine : public DrmMock {
     int handleRemainingRequests(DrmIoctl request, void *arg) override;
 
     void handleQueryItem(QueryItem *queryItem);
+    void adjustL3BankGroupsInfo(QueryItem *queryItem);
     bool failQueryDeviceBlob = false;
+    bool dontQueryL3BankGroups = false;
+    bool dontQueryL3BanksPerGroup = false;
 };
 
 class DrmMockResources : public DrmMock {

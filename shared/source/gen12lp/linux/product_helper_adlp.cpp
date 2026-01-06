@@ -14,6 +14,7 @@ constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 
 #include "shared/source/gen12lp/adlp/os_agnostic_product_helper_adlp.inl"
 #include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
+#include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 namespace NEO {
 
 template <>

@@ -8,15 +8,13 @@
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
-#include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
-
-#include <vector>
 
 namespace L0 {
 namespace Sysman {
@@ -46,6 +44,13 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pVfManagementHandleContext = new VfManagementHandleContext(pOsSysman);
 }
 
+SysmanDeviceImp::SysmanDeviceImp() : rootDeviceIndex(0) {
+    pOsSysman = OsSysman::create(this);
+    UNRECOVERABLE_IF(nullptr == pOsSysman);
+    pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pPci = new PciImp(pOsSysman);
+}
+
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pGlobalOperations);
     freeResource(pDiagnosticsHandleContext);
@@ -66,7 +71,9 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
     freeResource(pEvents);
     freeResource(pVfManagementHandleContext);
-    executionEnvironment->decRefInternal();
+    if (executionEnvironment != nullptr) {
+        executionEnvironment->decRefInternal();
+    }
 }
 
 ze_result_t SysmanDeviceImp::init() {
@@ -189,6 +196,10 @@ ze_result_t SysmanDeviceImp::pciGetState(zes_pci_state_t *pState) {
 
 ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
     return pPci->pciGetInitializedBars(pCount, pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    return pPci->pciLinkSpeedUpdateExp(downgradeUpgrade, pendingAction);
 }
 
 ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {

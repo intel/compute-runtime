@@ -9,11 +9,12 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "global_operations.h"
-#include "os_global_operations.h"
 
 #include <mutex>
 
 namespace L0 {
+class OsGlobalOperations;
+struct OsSysman;
 
 class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:

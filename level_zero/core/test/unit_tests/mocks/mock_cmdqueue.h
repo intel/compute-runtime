@@ -18,8 +18,22 @@
 #include <cstddef>
 #include <optional>
 
+namespace NEO {
+class GraphicsAllocation;
+class LinearStream;
+class ScratchSpaceController;
+enum class SubmissionStatus : uint32_t;
+enum class WaitStatus;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+
 namespace ult {
+template <typename Type>
+struct Mock;
+template <typename Type>
+struct WhiteBox;
 
 template <>
 struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
@@ -47,7 +61,9 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using CommandQueue::heaplessStateInitEnabled;
     using CommandQueue::internalUsage;
     using CommandQueue::partitionCount;
+    using CommandQueue::patchingPreamble;
     using CommandQueue::pipelineSelectStateTracking;
+    using CommandQueue::saveWaitForPreamble;
     using CommandQueue::stateBaseAddressTracking;
     using CommandQueue::stateComputeModeTracking;
 
@@ -67,7 +83,7 @@ struct Mock<CommandQueue> : public CommandQueue {
 
     ADDMETHOD_NOBASE(createFence, ze_result_t, ZE_RESULT_SUCCESS, (const ze_fence_desc_t *desc, ze_fence_handle_t *phFence));
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
-    ADDMETHOD_NOBASE(executeCommandLists, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration, NEO::LinearStream *parentImmediateCommandlistLinearStream));
+    ADDMETHOD_NOBASE(executeCommandLists, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration, NEO::LinearStream *parentImmediateCommandlistLinearStream, std::unique_lock<std::mutex> *outerLockForIndirect));
     ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
     ADDMETHOD_NOBASE(getPreemptionCmdProgramming, bool, false, ());
 };
@@ -76,12 +92,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
     using BaseClass::commandStream;
+    using BaseClass::estimateCommandListPatchPreambleWaitSync;
     using BaseClass::estimateStreamSizeForExecuteCommandListsRegularHeapless;
     using BaseClass::executeCommandListsRegularHeapless;
     using BaseClass::forceBbStartJump;
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;
+    using BaseClass::waitForCommandQueueCompletion;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::cmdListHeapAddressModel;
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;
@@ -91,8 +109,10 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::heaplessStateInitEnabled;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::partitionCount;
+    using L0::CommandQueue::patchingPreamble;
     using L0::CommandQueue::pipelineSelectStateTracking;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
+    using L0::CommandQueue::saveWaitForPreamble;
     using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
     using L0::CommandQueueImp::csr;
@@ -144,6 +164,11 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return returnCode;
     }
 
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override {
+        handleIndirectAllocationResidencyCalledTimes++;
+        BaseClass::handleIndirectAllocationResidency(unifiedMemoryControls, lockForIndirect, performMigration);
+    }
+
     NEO::GraphicsAllocation *recordedGlobalStatelessAllocation = nullptr;
     NEO::ScratchSpaceController *recordedScratchController = nullptr;
     uint32_t synchronizedCalled = 0;
@@ -151,6 +176,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
     std::optional<NEO::WaitStatus> reserveLinearStreamSizeReturnValue{};
     std::optional<NEO::SubmissionStatus> submitBatchBufferReturnValue{};
+    uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
     bool recordedLockScratchController = false;
 };
 

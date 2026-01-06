@@ -9,15 +9,18 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include <level_zero/zes_api.h>
+
+#include "neo_igfxfmid.h"
 
 #include <fcntl.h>
 #include <map>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <vector>
 
 namespace L0 {
+class FsAccess;
 
 class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   public:

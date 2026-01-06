@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,9 @@ void Ioctls::reset() {
 }
 
 void DrmMockCustom::testIoctls() {
-    if (this->ioctlExpected.total == -1)
+    if (this->ioctlExpected.total == -1) {
         return;
+    }
 
 #define NEO_IOCTL_EXPECT_EQ(PARAM)                                  \
     if (this->ioctlExpected.PARAM >= 0) {                           \
@@ -137,6 +138,36 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
         ioctlCnt.handleToPrimeFd++;
         if (failOnPrimeHandleToFd == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjFdToHandle: {
+        ioctlCnt.syncObjFdToHandle++;
+        if (failOnSyncObjFdToHandle == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjWait: {
+        ioctlCnt.syncObjWait++;
+        if (failOnSyncObjWait == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjSignal: {
+        ioctlCnt.syncObjSignal++;
+        if (failOnSyncObjSignal == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjTimelineWait: {
+        ioctlCnt.syncObjTimelineWait++;
+        if (failOnSyncObjTimelineWait == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjTimelineSignal: {
+        ioctlCnt.syncObjTimelineSignal++;
+        if (failOnSyncObjTimelineSignal == true) {
             return -1;
         }
     } break;

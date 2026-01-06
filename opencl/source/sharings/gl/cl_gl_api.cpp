@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/api_enter.h"
@@ -189,7 +188,7 @@ cl_int CL_API_CALL clGetGLObjectInfo(cl_mem memobj, cl_gl_object_type *glObjectT
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
-        auto handler = (GlSharing *)pMemObj->peekSharingHandler();
+        auto handler = static_cast<GlSharing *>(pMemObj->peekSharingHandler());
         if (handler != nullptr) {
             handler->getGlObjectInfo(glObjectType, glObjectName);
         } else {
@@ -213,7 +212,7 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
-        auto glTexture = (GlTexture *)pMemObj->peekSharingHandler();
+        auto glTexture = static_cast<GlTexture *>(pMemObj->peekSharingHandler());
         retValue = glTexture->getGlTextureInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
     TRACING_EXIT(ClGetGlTextureInfo, &retValue);
@@ -276,8 +275,8 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
             TRACING_EXIT(ClEnqueueReleaseGlObjects, &retVal);
             return retVal;
         }
+        pCommandQueue->finish(true);
 
-        pCommandQueue->finish();
         retVal = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event,
                                                             CL_COMMAND_RELEASE_GL_OBJECTS);
     }

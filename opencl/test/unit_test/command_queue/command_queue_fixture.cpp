@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,23 +7,23 @@
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 
-#include "shared/source/device/device.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 
 namespace NEO {
 
 // Global table of create functions
-extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
+extern CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue];
 
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
     ClDevice *pDevice,
@@ -38,7 +38,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     const cl_command_queue_properties *properties) {
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
-            this->device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            this->device = new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
             createdDevice = true;
         }
         pDevice = this->device;
@@ -126,6 +126,27 @@ void CommandQueueFixture::tearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }
+
+template <bool ooq>
+void CommandQueueHwBlitTest<ooq>::SetUp() {
+    hwInfo = *::defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableTimestampPacket.set(1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    ClDeviceFixture::setUpImpl(&hwInfo);
+    cl_device_id device = pClDevice;
+    REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
+    ContextFixture::setUp(1, &device);
+    cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
+    CommandQueueHwFixture::setUp(pClDevice, queueProperties);
+}
+
+template void CommandQueueHwBlitTest<false>::SetUp();
+template void CommandQueueHwBlitTest<true>::SetUp();
 
 void OOQueueFixture ::setUp(ClDevice *pDevice, cl_command_queue_properties properties) {
     ASSERT_NE(nullptr, pDevice);

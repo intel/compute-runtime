@@ -23,6 +23,7 @@ class Device;
 class MemoryManager;
 class SVMAllocsManager;
 class GraphicsAllocation;
+class StagingBufferManager;
 struct SvmAllocationData;
 } // namespace NEO
 
@@ -50,7 +51,6 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
 
     virtual NEO::MemoryManager *getMemoryManager() = 0;
     virtual void setMemoryManager(NEO::MemoryManager *memoryManager) = 0;
-    virtual ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) = 0;
     virtual bool findAllocationDataForRange(const void *buffer,
                                             size_t size,
                                             NEO::SvmAllocationData *&allocData) = 0;
@@ -59,6 +59,7 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
                                                                              bool *allocationRangeCovered) = 0;
 
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
+    virtual NEO::StagingBufferManager *getStagingBufferManager() = 0;
     virtual ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
@@ -78,12 +79,17 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
 
     virtual ze_result_t loadRTASLibrary() = 0;
     virtual ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) = 0;
+    virtual ze_result_t createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc, ze_rtas_builder_ext_handle_t *phBuilder) = 0;
     virtual ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) = 0;
+    virtual ze_result_t createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) = 0;
     virtual ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) = 0;
+    virtual ze_result_t formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA, ze_rtas_format_ext_t rtasFormatB) = 0;
 
     virtual int setErrorDescription(const std::string &str) = 0;
     virtual ze_result_t getErrorDescription(const char **ppString) = 0;
     virtual ze_result_t clearErrorDescription() = 0;
+
+    virtual ze_context_handle_t getDefaultContext() const = 0;
 
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }

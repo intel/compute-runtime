@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #include "level_zero/ze_intel_gpu.h"
 
 #include "zello_common.h"
-
-#include <cstring>
-#include <iomanip>
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello DP Support";
@@ -30,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     // Gather Dot Product (DP) support from driver
     ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
-    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
     deviceModProps.pNext = &moduleDpProps;
 
     SUCCESS_OR_TERMINATE(zeDeviceGetModuleProperties(device, &deviceModProps));
@@ -42,8 +39,6 @@ int main(int argc, char *argv[]) {
     if (moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS) {
         std::cout << "DPAS supported" << std::endl;
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

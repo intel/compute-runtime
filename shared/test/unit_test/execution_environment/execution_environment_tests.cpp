@@ -25,7 +25,9 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -122,6 +124,33 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
     EXPECT_NE(nullptr, executionEnvironment.memoryManager);
 }
 
+class TestAubCenter : public AubCenter {
+  public:
+    using AubCenter::AubCenter;
+
+    void resetAubManager() {
+        aubManager.reset(nullptr);
+    }
+};
+TEST(RootDeviceEnvironment, givenNullptrAubManagerWhenInitializeAubCenterIsCalledThenMessErrorIsPrintedAndAbortCalled) {
+    StreamCapture capture;
+    capture.captureStderr();
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+
+    MockAubCenterFixture::setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::aub, true);
+    auto testAubCenter = std::make_unique<TestAubCenter>(*rootDeviceEnvironment, false, "", CommandStreamReceiverType::aub);
+    testAubCenter->resetAubManager();
+    rootDeviceEnvironment->aubCenter = std::move(testAubCenter);
+
+    rootDeviceEnvironment->useMockAubCenter = false;
+    EXPECT_THROW(rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::aub), std::runtime_error);
+
+    std::string output = capture.getCapturedStderr();
+    EXPECT_NE(output.find("ERROR: Simulation mode detected but Aubstream is not available.\n"), std::string::npos);
+}
+
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
@@ -177,24 +206,16 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
     auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
-
-TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
+TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitializedOnce) {
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     auto currentAubCenter = rootDeviceEnvironment->aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
-    auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
-    EXPECT_NE(nullptr, currentAubStreamProvider);
-    auto currentAubFileStream = currentAubStreamProvider->getStream();
-    EXPECT_NE(nullptr, currentAubFileStream);
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     EXPECT_EQ(currentAubCenter, rootDeviceEnvironment->aubCenter.get());
-    EXPECT_EQ(currentAubStreamProvider, rootDeviceEnvironment->aubCenter->getStreamProvider());
-    EXPECT_EQ(currentAubFileStream, rootDeviceEnvironment->aubCenter->getStreamProvider()->getStream());
 }
-
-TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitalizedOnce) {
+TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitializedOnce) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
@@ -342,11 +363,17 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());
-
-#include "shared/source/debug_settings/release_variables.inl"
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
-
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     DebugManagerStateRestore restorer;
@@ -375,11 +402,17 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
             }                                                                          \
         }                                                                              \
     }
-
-#include "shared/source/debug_settings/release_variables.inl"
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
-
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 }
 
@@ -393,7 +426,7 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
     EXPECT_EQ(debugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitialized) {
     MockExecutionEnvironment executionEnvironment{};
     executionEnvironment.initializeMemoryManager();
     ASSERT_NE(nullptr, executionEnvironment.memoryManager);
@@ -415,6 +448,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
+                                                  sizeof(std::mutex) +
                                                   (is64bit ? 22 : 14),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
@@ -428,7 +462,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         }
     };
     struct UnifiedMemoryReuseCleanerMock : public DestructorCounted<UnifiedMemoryReuseCleaner, 7> {
-        UnifiedMemoryReuseCleanerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+        UnifiedMemoryReuseCleanerMock(uint32_t &destructorId) : DestructorCounted(destructorId, false) {}
     };
     struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 6> {
         DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -735,6 +769,62 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetErrorDescriptionIsCal
     executionEnvironment.setErrorDescription(errorString);
     executionEnvironment.getErrorDescription(&pStr);
     EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetDevicePermissionErrorIsCalledThenCorrectValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+
+    EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
+
+    executionEnvironment.setDevicePermissionError(true);
+    EXPECT_TRUE(executionEnvironment.isDevicePermissionError());
+
+    executionEnvironment.setDevicePermissionError(false);
+    EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsValidThenAdjustCcsCountReturnsTrue) {
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsZeroThenAdjustCcsCountReturnsFalse) {
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 0);
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount(0));
+    }
 }
 
 void ExecutionEnvironmentSortTests::SetUp() {

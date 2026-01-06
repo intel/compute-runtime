@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,31 +22,35 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *feature
 }
 
 // Global table of hardware prefixes
-const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
+const char *hardwarePrefix[NEO::maxProductEnumValue] = {
     nullptr,
 };
 
 // Global table of family names
-bool familyEnabled[IGFX_MAX_CORE] = {
+bool familyEnabled[NEO::maxCoreEnumValue] = {
     false,
 };
 
-const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = {
+const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue] = {};
+void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const ReleaseHelper *) = {
+void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, const ReleaseHelper *) = {
     0x0,
 };
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
 
+    if (platform == "unk") {
+        return true;
+    }
     bool ret = false;
-    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-        if (hardwarePrefix[j] == nullptr)
+    for (int j = 0; j < NEO::maxProductEnumValue; j++) {
+        if (hardwarePrefix[j] == nullptr) {
             continue;
+        }
         if (hardwarePrefix[j] == platform) {
             hwInfoIn = hardwareInfoTable[j];
             ret = true;
@@ -130,7 +134,7 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(debugManager.flags.NodeOrdinal.get());
 }
-void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper) {
+void setupDefaultGtSysInfo(HardwareInfo *hwInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->L3CacheSizeInKb = 1;
     gtSysInfo->CCSInfo.IsValid = 1;
@@ -142,14 +146,14 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
         gtSysInfo->SubSliceCount = 8;
         gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
         gtSysInfo->EUCount = 64;
+        gtSysInfo->NumThreadsPerEu = 8u;
+        gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
 
         gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
         gtSysInfo->MaxDualSubSlicesSupported = gtSysInfo->DualSubSliceCount;
     }
-
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
 
 void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
@@ -177,6 +181,13 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Rele
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+}
+
+void applyDebugOverrides(HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
+        hwInfo.gtSystemInfo.NumThreadsPerEu = debugManager.flags.OverrideNumThreadsPerEu.get();
+        hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
+    }
 }
 
 uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo) {

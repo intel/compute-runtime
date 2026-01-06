@@ -8,9 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include "level_zero/sysman/source/api/events/sysman_os_events.h"
-#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

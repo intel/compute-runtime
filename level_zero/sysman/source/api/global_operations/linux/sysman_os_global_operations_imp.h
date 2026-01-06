@@ -6,14 +6,18 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+namespace NEO {
+class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
@@ -21,6 +25,9 @@ class SysFsAccessInterface;
 class FsAccessInterface;
 class ProcFsAccessInterface;
 class SysmanKmdInterface;
+class LinuxSysmanImp;
+struct OsSysman;
+
 constexpr uint32_t maxUuidsPerDevice = 3;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNonMovableClass {
@@ -31,6 +38,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getDriverName(char (&driverName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getRepairStatus(zes_device_state_t *pState) override;
     void getTimerResolution(double *pTimerResolution) override;
     ze_result_t reset(ze_bool_t force) override;

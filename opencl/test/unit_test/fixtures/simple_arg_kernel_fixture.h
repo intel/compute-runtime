@@ -21,6 +21,7 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "CL/cl.h"
+#include "gtest/gtest.h"
 
 #include <type_traits>
 
@@ -87,6 +88,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
   protected:
     void setUp(ClDevice *device, Context *context) {
+        USE_REAL_FILE_SYSTEM();
         ProgramFixture::setUp();
 
         createProgramFromBinary(

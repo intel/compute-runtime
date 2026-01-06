@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "firmware_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
 #include "os_firmware.h"
 
@@ -31,9 +32,9 @@ ze_result_t FirmwareImp::firmwareGetFlashProgress(uint32_t *pCompletionPercent) 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initalizedFwType) {
-    pOsFirmware = OsFirmware::create(pOsSysman, initalizedFwType);
-    fwType = initalizedFwType;
+FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initializedFwType) {
+    pOsFirmware = OsFirmware::create(pOsSysman, initializedFwType);
+    fwType = initializedFwType;
     UNRECOVERABLE_IF(nullptr == pOsFirmware);
 }
 

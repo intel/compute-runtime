@@ -10,11 +10,12 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 
+#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -143,12 +144,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                    DebugPauseState::hasUserStartConfirmation, hwInfo);
     }
 
-    mainKernel->performKernelTuning(commandQueue.getGpgpuCommandStreamReceiver(),
-                                    multiDispatchInfo.begin()->getLocalWorkgroupSize(),
-                                    multiDispatchInfo.begin()->getActualWorkgroupSize(),
-                                    multiDispatchInfo.begin()->getOffset(),
-                                    walkerArgs.currentTimestampPacketNodes);
-
     walkerArgs.currentDispatchIndex = 0;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -161,12 +156,15 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
+    commandQueue.registerWalkerWithProfilingEnqueued(walkerArgs.event);
+
     if (PauseOnGpuProperties::gpuScratchRegWriteAllowed(debugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
         uint32_t registerOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
         uint32_t registerData = debugManager.flags.GpuScratchRegWriteRegisterData.get();
 
         PipeControlArgs args;
         args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
+        args.isWalkerWithProfilingEnqueued = commandQueue.getAndClearIsWalkerWithProfilingEnqueued();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandStream,
             PostSyncMode::noWrite,

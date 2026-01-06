@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,6 @@
 
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
-#include "shared/source/command_stream/create_command_stream_impl.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/os_interface/device_factory.h"
-#include "shared/test/common/helpers/ult_hw_config.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/execution_environment/cl_execution_environment.h"
@@ -20,20 +15,15 @@
 using namespace NEO;
 
 UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount) {
-    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *(new ClExecutionEnvironment));
-
-    for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
-        auto pRootClDevice = new MockClDevice{pRootDevice};
-        for (auto &pClSubDevice : pRootClDevice->subDevices) {
-            subDevices.push_back(pClSubDevice.get());
-        }
-        rootDevices.push_back(pRootClDevice);
-    }
+    initialize(rootDevicesCount, subDevicesCount, new ClExecutionEnvironment());
 }
 
 UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment) {
-    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
+    initialize(rootDevicesCount, subDevicesCount, clExecutionEnvironment);
+}
 
+void UltClDeviceFactory::initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment) {
+    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
     for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
         auto pRootClDevice = new MockClDevice{pRootDevice};
         for (auto &pClSubDevice : pRootClDevice->subDevices) {

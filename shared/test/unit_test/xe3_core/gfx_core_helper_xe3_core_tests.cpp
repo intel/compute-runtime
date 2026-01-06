@@ -1,16 +1,20 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/simd_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/sku_info/sku_info_base.h"
+#include "shared/source/xe3_core/hw_cmds_base.h"
+#include "shared/source/xe3_core/hw_info_xe3_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -18,7 +22,18 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
+
+#include "aubstream/engine_node.h"
+#include "gtest/gtest.h"
+#include "metrics_library_api_1_0.h"
+
+#include <array>
+#include <bitset>
+#include <list>
+#include <memory>
+#include <vector>
 
 using GfxCoreHelperTestsXe3Core = GfxCoreHelperTest;
 
@@ -480,39 +495,51 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenNonBcsEngineIsVerifiedThenReturnFa
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
 
-    auto hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto hwInfo = *defaultHwInfo;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(-1);
+    EXPECT_EQ(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper), !hwInfo.capabilityTable.isIntegratedDevice);
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
+
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -520,14 +547,14 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDebugMemorySynchronizationCommand
     debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -536,7 +563,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationCommandsWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
@@ -548,9 +575,9 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationComma
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(rootDeviceEnvironment) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);
         EXPECT_EQ(1u, hwParser.cmdList.size());
@@ -573,7 +600,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDontProgramGlobalFenceAsMiMemFenc
     LinearStream commandStream(buffer, 128);
     uint64_t gpuAddress = 0x12345678;
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -597,7 +624,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -685,12 +712,17 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenIsBlitterForImage
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
+    EXPECT_EQ(productHelper.isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.deferMOCSToPatIndex());
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(false));
+}
+
+XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnFalse) {
@@ -701,11 +733,6 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForCooperat
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnFalse) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
-}
-
-XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isNewCoherencyModelSupported());
 }
 
 using LriHelperTestsXe3Core = ::testing::Test;
@@ -737,41 +764,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNumGrfAndSimdSizeWhenAdjustingMax
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    std::array<std::array<uint32_t, 4>, 30> values = {{
-        {128u, 16u, 0u, 1024u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {128u, 16u, 1u, 1024u},
-        {128u, 32u, 1u, 1024u},
-        {128u, 32u, 0u, 2048u},
-        {160u, 16u, 0u, 768u},
-        {160u, 16u, 1u, 768u},
-        {160u, 32u, 1u, 1024u},
-        {160u, 32u, 0u, 1536u},
-        {192u, 16u, 0u, 640u},
-        {192u, 16u, 1u, 640u},
-        {192u, 32u, 1u, 1024u},
-        {192u, 32u, 0u, 1280u},
-        {256u, 16u, 0u, 512u},
-        {256u, 16u, 1u, 512u},
-        {256u, 32u, 1u, 1024u},
-        {256u, 32u, 0u, 1024u},
-        {512u, 16u, 0u, 256u},
-        {512u, 16u, 1u, 256u},
-        {512u, 32u, 1u, 512u},
-        {512u, 32u, 0u, 512u},
-        {128u, 1u, 1u, 32u},
-        {128u, 1u, 0u, 64u},
-        {160u, 1u, 1u, 32u},
-        {160u, 1u, 0u, 48u},
-        {192u, 1u, 1u, 32u},
-        {192u, 1u, 0u, 40u},
-        {256u, 1u, 1u, 32u},
-        {256u, 1u, 0u, 32u},
-        {512u, 1u, 1u, 16u},
-        {512u, 1u, 0u, 16u},
+    std::array<std::array<uint32_t, 3>, 15> values = {{
+        {128u, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
+        {128u, 32u, 1024u},
+        {160u, 16u, 768u},
+        {160u, 32u, 1024u},
+        {192u, 16u, 640u},
+        {192u, 32u, 1024u},
+        {256u, 16u, 512u},
+        {256u, 32u, 1024u},
+        {512u, 16u, 256u},
+        {512u, 32u, 512u},
+        {128u, 1u, 64u},
+        {160u, 1u, 48u},
+        {192u, 1u, 40u},
+        {256u, 1u, 32u},
+        {512u, 1u, 16u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, isHwLocalIdGeneration, defaultMaxWorkGroupSize, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
     }
 }
 
@@ -784,41 +796,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenParamsWhenCalculateNumThreadsPerT
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto totalWgSize = 2048u;
-    std::array<std::array<uint32_t, 4>, 30> values = {{
-        {128u, 16u, 0u, 64u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {128u, 16u, 1u, 64u},
-        {128u, 32u, 1u, 32u},
-        {128u, 32u, 0u, 64u},
-        {128u, 1u, 1u, 32u},
-        {128u, 1u, 0u, 64u},
-        {160u, 16u, 0u, 48u},
-        {160u, 16u, 1u, 48u},
-        {160u, 32u, 1u, 32u},
-        {160u, 32u, 0u, 48u},
-        {160u, 1u, 1u, 32u},
-        {160u, 1u, 0u, 48u},
-        {192u, 16u, 0u, 40u},
-        {192u, 16u, 1u, 40u},
-        {192u, 32u, 1u, 32u},
-        {192u, 32u, 0u, 40u},
-        {192u, 1u, 1u, 32u},
-        {192u, 1u, 0u, 40u},
-        {256u, 16u, 0u, 32u},
-        {256u, 16u, 1u, 32u},
-        {256u, 32u, 1u, 32u},
-        {256u, 32u, 0u, 32u},
-        {256u, 1u, 1u, 32u},
-        {256u, 1u, 0u, 32u},
-        {512u, 16u, 0u, 16u},
-        {512u, 16u, 1u, 16u},
-        {512u, 32u, 1u, 16u},
-        {512u, 32u, 0u, 16u},
-        {512u, 1u, 1u, 16u},
-        {512u, 1u, 0u, 16u},
+    std::array<std::array<uint32_t, 3>, 15> values = {{
+        {128u, 16u, 64u}, // Grf Size, SIMT Size, Max Num of threads
+        {128u, 32u, 32u},
+        {128u, 1u, 64u},
+        {160u, 16u, 48u},
+        {160u, 32u, 32u},
+        {160u, 1u, 48u},
+        {192u, 16u, 40u},
+        {192u, 32u, 32u},
+        {192u, 1u, 40u},
+        {256u, 16u, 32u},
+        {256u, 32u, 32u},
+        {256u, 1u, 32u},
+        {512u, 16u, 16u},
+        {512u, 32u, 16u},
+        {512u, 1u, 16u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, isHwLocalIdGeneration, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, rootDeviceEnvironment));
     }
 }
 
@@ -833,6 +830,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenFlagSetAndCallGe
 
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
+}
+
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenUsmCompressionSupportedCalledThenReturnTrue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    EXPECT_FALSE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+    EXPECT_TRUE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    EXPECT_FALSE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    EXPECT_TRUE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
 }
 
 using ProductHelperTestXe3 = ::testing::Test;
@@ -866,3 +883,67 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3CoreWithEnginesCheck, whenGetEnginesCalledTh
     EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }
+
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3WhenSetStallOnlyBarrierThenResourceBarrierProgrammed) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+    EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+}
+
+struct GfxCoreHelperTestsXe3CoreResourceBarrier : public GfxCoreHelperTestsXe3Core,
+                                                  public ::testing::WithParamInterface<uint32_t> {
+};
+
+XE3_CORETEST_P(GfxCoreHelperTestsXe3CoreResourceBarrier, givenXe3WhenSetStallOnlyBarrierWithDebugFlagThenSetL1CacheFlush) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    DebugManagerStateRestore restorer;
+    auto mode = GetParam();
+    debugManager.flags.ResourceBarrierL1FlushMode.set(mode);
+
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    if (mode == 1) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 2) {
+        EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 3) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(GfxCoreHelperTestsXe3CoreResourceBarrierValues,
+                         GfxCoreHelperTestsXe3CoreResourceBarrier,
+                         ::testing::Values(1, 2, 3));

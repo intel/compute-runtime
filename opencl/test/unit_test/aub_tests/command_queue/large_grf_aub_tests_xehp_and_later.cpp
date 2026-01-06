@@ -248,7 +248,7 @@ class LargeGrfTest : public AUBFixture,
 
     Context *getContext() const override { return context; }
 
-    ClDevice *getDevice() const override { return device.get(); }
+    ClDevice *getDevice() const override { return device; }
 
     void SetUp() override {
         testHwInfo = *defaultHwInfo;
@@ -264,7 +264,7 @@ class LargeGrfTest : public AUBFixture,
 
 static bool largeGrfModes[] = {true, false};
 
-HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, IsAtLeastXeCore) {
     createProgramFromBinary(getContext(), getContext()->getDevices(),
                             "simple_kernel_large_grf");
 
@@ -338,12 +338,12 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
     EXPECT_EQ(largeGrfValues.size(), 1u);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(largeGrfValues[0]);
     } else {
         EXPECT_FALSE(largeGrfValues[0]);
@@ -355,7 +355,7 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(destinationBuffer->getGraphicsAllocation(rootDeviceIndex), destinationBuffer->getOffset()), expectedMemory, bufferSize);
 }
 
-HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillAndResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillAndResultsAreCorrect, IsAtLeastXeCore) {
     createKernels(true);
 
     allocateLargeGrfMemory();
@@ -377,12 +377,12 @@ HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillA
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
     EXPECT_EQ(largeGrfValues.size(), 1u);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(largeGrfValues[0]);
     } else {
         EXPECT_FALSE(largeGrfValues[0]);
@@ -396,7 +396,7 @@ HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillA
         expectedMemory, bufferSize);
 }
 
-HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResultsAreCorrect, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CopyHostPtrOnCpu.set(0);
     createKernels(false);
@@ -435,12 +435,12 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
                                   globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
 
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         auto allocation = smallGrfSourceBuffer->getGraphicsAllocation(rootDeviceIndex);
         auto &productHelper = pCmdQ->getDevice().getProductHelper();
         if (allocation->isAllocatedInLocalMemoryPool() && productHelper.isGrfNumReportedWithScm()) {
@@ -501,7 +501,7 @@ class MultiContextLargeGrfKernelAubTest : public MulticontextOclAubFixture, publ
 
 static uint32_t enginesIndices[] = {0, 1};
 
-HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRunOnCcsAndRcsThenResultsAreOk, IsWithinXeGfxFamily) {
+HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRunOnCcsAndRcsThenResultsAreOk, IsXeCore) {
     createKernels(false);
     allocateLargeGrfMemory();
 
@@ -536,8 +536,8 @@ HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRu
                                           nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    largeGrfQueue->finish();
-    smallGrfQueue->finish();
+    largeGrfQueue->finish(false);
+    smallGrfQueue->finish(false);
 
     MulticontextOclAubFixture::expectMemory<FamilyType>(
         AUBFixture::getGpuPointer(destinationBuffer->getGraphicsAllocation(rootDeviceIndex), destinationBuffer->getOffset()),

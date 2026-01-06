@@ -18,7 +18,7 @@ File to cover guidelines for NEO project.
 * avoid includes in headers unless absolutely necessary
 * use of exceptions in driver code needs strong justification
 * prefer static create methods returning std::unique_ptr instead of throwing from constructor
-* inside methods, use an explicit `this->` pointer for refering to non-static class members
+* inside methods, use an explicit `this->` pointer for referring to non-static class members
 * avoid defining global constants with internal-linkage in header files; use inline variables from C++17 instead
 
 # Naming conventions

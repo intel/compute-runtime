@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -28,7 +30,7 @@ class DeviceAllocNodeType {
   public:
     using ValueT = uint64_t;
 
-    static constexpr size_t defaultAllocatorTagCount = 128;
+    static constexpr uint32_t defaultAllocatorTagCount = 128;
 
     static constexpr AllocationType getAllocationType() { return deviceAlloc ? NEO::AllocationType::gpuTimestampDeviceBuffer : NEO::AllocationType::timestampPacketTagBuffer; }
 
@@ -63,12 +65,33 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint64_t getBaseDeviceAddress() const { return deviceAddress; }
     uint64_t getBaseHostGpuAddress() const;
 
+    uint64_t getDeviceNodeGpuAddress() const;
+    uint64_t getHostNodeGpuAddress() const;
+    size_t getDeviceNodeWriteSize() const {
+        if (deviceCounterNode) {
+            const size_t deviceAllocationWriteSize = sizeof(uint64_t) * numDevicePartitionsToWait;
+            return deviceAllocationWriteSize;
+        }
+        return 0;
+    }
+    size_t getHostNodeWriteSize() const {
+        if (hostCounterNode) {
+            const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
+            return hostAllocationWriteSize;
+        }
+        return 0;
+    }
+
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
-    void resetCounterValue() { counterValue = 0; }
+    void resetCounterValue();
 
     uint64_t getRegularCmdListSubmissionCounter() const { return regularCmdListSubmissionCounter; }
     void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
+
+    uint64_t getAggregatedEventUsageCounter() const { return aggregatedEventUsageCounter; }
+    void addAggregatedEventUsageCounter(uint64_t addValue) { aggregatedEventUsageCounter += addValue; }
+    void resetAggregatedEventUsageCounter() { aggregatedEventUsageCounter = 0; }
 
     bool isRegularCmdList() const { return regularCmdList; }
     bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
@@ -83,23 +106,27 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     void reset();
     bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
-    void setLastWaitedCounterValue(uint64_t value) {
+    void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) {
         if (!isExternalMemoryExecInfo()) {
-            lastWaitedCounterValue = std::max(value, lastWaitedCounterValue);
+            NEO::MultiThreadHelpers::interlockedMax(lastWaitedCounterValue[allocationOffset != 0], value);
         }
     }
 
-    bool isCounterAlreadyDone(uint64_t waitValue) const {
-        return lastWaitedCounterValue >= waitValue && this->allocationOffset == 0u;
+    bool isCounterAlreadyDone(uint64_t waitValue, uint32_t allocationOffset) const {
+        return lastWaitedCounterValue[allocationOffset != 0] >= waitValue;
     }
 
     NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
     NEO::GraphicsAllocation *getExternalDeviceAllocation() const { return externalDeviceAllocation; }
 
-    void pushTempTimestampNode(TagNodeBase *node, uint64_t value);
+    void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
 
+    uint64_t getInitialCounterValue() const;
+
   protected:
+    using CounterAndOffsetPairT = std::pair<uint64_t, uint32_t>;
+
     void uploadToTbx(TagNodeBase &node, size_t size);
 
     NEO::Device &device;
@@ -107,24 +134,28 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::TagNodeBase *hostCounterNode = nullptr;
     NEO::GraphicsAllocation *externalHostAllocation = nullptr;
     NEO::GraphicsAllocation *externalDeviceAllocation = nullptr;
-    std::vector<std::pair<NEO::TagNodeBase *, uint64_t>> tempTimestampNodes;
+    std::vector<std::pair<NEO::TagNodeBase *, CounterAndOffsetPairT>> tempTimestampNodes;
 
     std::mutex mutex;
+    std::atomic<uint64_t> lastWaitedCounterValue[2] = {0, 0}; // [0] for offset == 0, [1] for offset != 0
 
     uint64_t counterValue = 0;
-    uint64_t lastWaitedCounterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
+    uint64_t aggregatedEventUsageCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;
     uint32_t allocationOffset = 0;
     uint32_t rootDeviceIndex = 0;
+    uint32_t immWritePostSyncWriteOffset = 0;
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
     bool isTbx = false;
 };
+
+static_assert(NEO::NonCopyable<InOrderExecInfo>);
 
 namespace InOrderPatchCommandHelpers {
 inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
@@ -141,7 +172,11 @@ enum class PatchCmdType {
     sdi,
     semaphore,
     walker,
-    pipeControl
+    pipeControl,
+    xyCopyBlt,
+    xyBlockCopyBlt,
+    xyColorBlt,
+    memSet
 };
 
 template <typename GfxFamily>
@@ -172,6 +207,12 @@ struct PatchCmd {
             break;
         case PatchCmdType::pipeControl:
             patchPipeControl(appendCounterValue);
+            break;
+        case PatchCmdType::xyCopyBlt:
+        case PatchCmdType::xyBlockCopyBlt:
+        case PatchCmdType::xyColorBlt:
+        case PatchCmdType::memSet:
+            patchBlitterCommand(appendCounterValue, patchCmdType);
             break;
         default:
             UNRECOVERABLE_IF(true);
@@ -213,11 +254,11 @@ struct PatchCmd {
             }
         }
 
-        auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd1);
-        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
+        EncodeSemaphore<GfxFamily>::setMiSemaphoreWaitValue(cmd1, static_cast<uint32_t>(baseCounterValue + appendCounterValue));
     }
 
     void patchComputeWalker(uint64_t appendCounterValue);
+    void patchBlitterCommand(uint64_t appendCounterValue, PatchCmdType patchCmdType);
 
     void patchPipeControl(uint64_t appendCounterValue) {
         auto pcCmd = reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(cmd1);

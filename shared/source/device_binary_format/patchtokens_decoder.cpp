@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ inline void assignToken(const T *&dst, const SPatchItemHeader *src) {
     dst = reinterpret_cast<const T *>(src);
 }
 
-inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type = ArgObjectType::none, ArgObjectTypeSpecialized typeSpecialized = ArgObjectTypeSpecialized::none) {
+inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type) {
     if (kernel.tokens.kernelArgs.size() < argNum + 1) {
         kernel.tokens.kernelArgs.resize(argNum + 1);
     }
@@ -67,12 +67,6 @@ inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, siz
         kernel.decodeStatus = DecodeError::invalidBinary;
         DBG_LOG(LogPatchTokens, "\n Mismatched metadata for kernel arg :", argNum);
         DEBUG_BREAK_IF(true);
-    }
-
-    if (arg.objectTypeSpecialized == ArgObjectTypeSpecialized::none) {
-        arg.objectTypeSpecialized = typeSpecialized;
-    } else if (typeSpecialized != ArgObjectTypeSpecialized::none) {
-        UNRECOVERABLE_IF(arg.objectTypeSpecialized != typeSpecialized);
     }
 
     return arg;
@@ -109,9 +103,6 @@ inline void assignArg(KernelFromPatchtokens &kernel, const SPatchItemHeader *src
         break;
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
         argNum = getArgNum<SPatchStatelessConstantMemoryObjectKernelArgument>(src);
-        break;
-    case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
-        argNum = getArgNum<SPatchStatelessDeviceQueueKernelArgument>(src);
         break;
     }
 
@@ -264,19 +255,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
         getKernelArg(out, argNum, ArgObjectType::sampler).metadata.sampler.normalizedCoords = token;
         break;
 
-    case DATA_PARAMETER_VME_MB_BLOCK_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.mbBlockType = token;
-        break;
-    case DATA_PARAMETER_VME_SUBPIXEL_MODE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.subpixelMode = token;
-        break;
-    case DATA_PARAMETER_VME_SAD_ADJUST_MODE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.sadAdjustMode = token;
-        break;
-    case DATA_PARAMETER_VME_SEARCH_PATH_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.searchPathType = token;
-        break;
-
     case DATA_PARAMETER_PARENT_EVENT:
         crossthread.parentEvent = token;
         break;
@@ -306,13 +284,13 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &out) {
     switch (token->Token) {
     default: {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;
     }
     case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
         break;
     case PATCH_TOKEN_SAMPLER_STATE_ARRAY:
         assignToken(out.tokens.samplerStateArray, token);
@@ -356,9 +334,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
     case PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE:
         break;
-    case PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE:
-        assignToken(out.tokens.allocateStatelessDefaultDeviceQueueSurface, token);
-        break;
     case PATCH_TOKEN_STRING:
         assignToken(out.tokens.strings, token);
         break;
@@ -395,7 +370,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
     case PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
-    case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
         assignArg(out, token);
         break;
 
@@ -423,7 +397,7 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
     auto &progTok = out.programScopeTokens;
     switch (token->Token) {
     default: {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;

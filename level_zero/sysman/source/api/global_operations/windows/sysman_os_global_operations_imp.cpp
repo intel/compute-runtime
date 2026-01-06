@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,10 @@
 
 #include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_time.h"
+
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {
@@ -122,6 +123,12 @@ ze_bool_t WddmGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_
 
 ze_result_t WddmGlobalOperationsImp::getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+void WddmGlobalOperationsImp::getDriverName(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    std::string driverName = "WDDM";
+    strncpy_s(driverVersion, ZES_STRING_PROPERTY_SIZE, driverName.c_str(), driverName.size());
+    driverVersion[driverName.size()] = '\0';
 }
 
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {

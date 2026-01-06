@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -21,7 +22,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "encode_surface_state_args.h"
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 using CmdsProgrammingTestsXe3Core = UltCommandStreamReceiverTest;
@@ -44,7 +44,7 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, givenL3ToL1DebugFlagWhenStatelessMoc
 
     auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
@@ -75,7 +75,8 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, whenAppendingRssThenProgramWtL1Cache
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, rssCmd.getL1CacheControlCachePolicy());
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
+    EXPECT_EQ(expectedL1CachePolicy, rssCmd.getL1CacheControlCachePolicy());
 }
 
 XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
@@ -96,13 +97,13 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, givenAlignedCacheableReadOnlyBufferT
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getL1EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
     auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);

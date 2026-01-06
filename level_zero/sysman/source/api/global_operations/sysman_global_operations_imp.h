@@ -15,6 +15,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsGlobalOperations;
+struct OsSysman;
 
 class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:

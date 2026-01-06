@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,11 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -33,7 +32,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
@@ -42,7 +41,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     // Adjust the State Compute Mode which sets FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
     StreamProperties properties{};
     properties.initSupport(rootDeviceEnvironment);
-    properties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, 0, PreemptionMode::Disabled);
+    properties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, 0, PreemptionMode::Disabled, false);
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
                                                                   properties.stateComputeMode, rootDeviceEnvironment);
 
@@ -63,7 +62,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
 GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenDoNotDispatchMMIOCommand) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -84,11 +83,11 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto gmmHelper = cmdContainer.getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     {
         STATE_BASE_ADDRESS sba;
@@ -127,7 +126,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, true);
 
@@ -141,7 +140,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
 GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpectNoCommandsDispatched) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
@@ -152,10 +151,10 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpec
     EXPECT_EQ(itorLRI, commands.end());
 }
 
-using Gen12lpCommandEncodeTest = testing::Test;
-
-GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+GEN12LPTEST_F(CommandEncoderTest, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isFlushBetweenBlitsRequired());
 }
 
 GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSelectIsCalledThenPipelineIsDispatched) {
@@ -163,7 +162,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
 
     size_t barrierSize = 0;
     if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
-        barrierSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+        barrierSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
     }
 
     auto &cmdStream = *cmdContainer->getCommandStream();

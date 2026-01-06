@@ -12,11 +12,15 @@
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "test_files_setup.h"
+
+namespace NEO {
+const char *apiName = "OCL";
+}
 using namespace NEO;
 
 void applyWorkarounds() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
-    platformsImpl->reserve(1);
+    platformsImpl->reserve(8);
 }
 
 void cleanTestHelpers() {

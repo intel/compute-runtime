@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,7 @@
 #include "zello_common.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 bool testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device) {
     const size_t width = 32;
@@ -232,7 +230,7 @@ bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &
     uint32_t groupOrdinal = 0;
     if (useCopyEngine) {
         groupOrdinal = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
-        if (groupOrdinal == std::numeric_limits<uint32_t>::max()) {
+        if (groupOrdinal == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             std::cout << "No Copy queue group found. Skipping testAppendImageCopyExtArray run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
             return true;
         }
@@ -381,8 +379,6 @@ int main(int argc, char *argv[]) {
     }
     result &= result2DArray;
     LevelZeroBlackBoxTests::printResult(aubMode, result1DArray, blackBoxNameExt + " 2DARRAY");
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     result = aubMode ? true : result;
     return (result ? 0 : 1);

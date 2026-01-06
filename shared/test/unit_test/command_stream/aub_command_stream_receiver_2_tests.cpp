@@ -22,7 +22,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
-#include "shared/test/common/mocks/mock_aub_file_stream.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_subcapture_manager.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -39,6 +38,7 @@
 using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
 
 struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
     void SetUp() override {
@@ -121,7 +121,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     size_t sizeBatchBuffer = 0xffffu;
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
-        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::adaptiveDispatch, pDevice->getDeviceBitfield()),
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::deviceDefault, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_EQ(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(0xffffu, sizeBatchBuffer);
@@ -165,22 +165,6 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenRemoveP
 
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().removePatchInfoData(0xB000));
     EXPECT_EQ(0u, aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
-}
-
-HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucStartMessageIsCalledThenBatchBufferAddressIsStoredInPatchInfoCollection) {
-    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    std::unique_ptr<char[]> batchBuffer(new char[1024]);
-    aubCsr->addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer.get())));
-
-    auto &patchInfoCollection = aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection();
-    ASSERT_EQ(1u, patchInfoCollection.size());
-    EXPECT_EQ(patchInfoCollection[0].sourceAllocation, reinterpret_cast<uint64_t>(batchBuffer.get()));
-    EXPECT_EQ(patchInfoCollection[0].targetType, PatchInfoAllocationType::gucStartMessage);
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
@@ -290,7 +274,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    mockGmmResourceParams->Flags.Info.NotLockable = true;
     allocation.setDefaultGmm(&mockGmm);
 
     uint64_t gpuAddress{};
@@ -328,7 +313,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    mockGmm.resourceParams.Flags.Info.NotLockable = false;
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    mockGmmResourceParams->Flags.Info.NotLockable = false;
     allocation.setDefaultGmm(&mockGmm);
 
     uint64_t gpuAddress{};
@@ -346,7 +332,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
@@ -384,7 +370,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
@@ -408,7 +394,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
 
@@ -428,35 +414,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     EXPECT_EQ(1u, mockHelper->flattenBatchBufferCalled);
     EXPECT_EQ(aubCsr->getRootDeviceIndex(), mockHelper->flattenBatchBufferParamsPassed[0].rootDeviceIndex);
     EXPECT_EQ(aubCsr->getOsContext().getDeviceBitfield().to_ulong(), mockHelper->flattenBatchBufferParamsPassed[0].deviceBitfield.to_ulong());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-
-    ResidencyContainer allocationsForResidency;
-
-    aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_EQ(1u, aubCsr->addPatchInfoCommentsCalled);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-
-    ResidencyContainer allocationsForResidency;
-
-    aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_EQ(0u, aubCsr->addPatchInfoCommentsCalled);
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
@@ -616,12 +573,11 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */,
-                                         &imgInfo, AllocationType::image, deviceBitfield};
-
+    AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */, &imgInfo, AllocationType::image, deviceBitfield};
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
-    imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(imageAllocation->getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NotLockable = false;
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));
 
@@ -652,44 +608,6 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenNoDbgDeviceIdFlagWhenAubCsrIsCreatedThenUseDefaultDeviceId) {
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    EXPECT_EQ(pDevice->getHardwareInfo().capabilityTable.aubDeviceId, aubCsr->aubDeviceId);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCreatedThenUseDebugDeviceId) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    EXPECT_EQ(9u, aubCsr->aubDeviceId);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryIsSetAccordingToCsrFeature) {
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    AubGTTData data = {};
-    aubCsr->getGTTData(nullptr, data);
-    EXPECT_TRUE(data.present);
-
-    if (aubCsr->localMemoryEnabled) {
-        EXPECT_TRUE(data.localMemory);
-    } else {
-        EXPECT_FALSE(data.localMemory);
-    }
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCalledThenGttEntrysBitFieldsShouldBePopulated) {
-    typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
-
-    AubMemDump::MiGttEntry entry = {};
-    uint64_t address = 0x0123456789;
-    AubGTTData data = {true, false};
-    AUB::setGttEntry(entry, address, data);
-
-    EXPECT_EQ(entry.pageConfig.physicalAddress, address / 4096);
-    EXPECT_TRUE(entry.pageConfig.present);
-    EXPECT_FALSE(entry.pageConfig.localMemory);
-}
-
 HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorrectBankIsReturned) {
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     aubCsr->localMemoryEnabled = false;
@@ -697,13 +615,6 @@ HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorre
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     auto bank = aubCsr->getMemoryBankForGtt();
     EXPECT_EQ(MemoryBanks::mainBank, bank);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenEntryBitsPresentAndWritableWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceNonLocalIsReturned) {
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-
-    auto space = aubCsr->getAddressSpaceFromPTEBits(PageTableEntry::presentBit | PageTableEntry::writableBit);
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, space);
 }
 
 template <typename GfxFamily>
@@ -797,50 +708,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     EXPECT_FALSE(aubCsr->writeMemoryParametrization.statusToReturn);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
-
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
-    aubCsr->initializeEngine();
-    std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
-
-    PhysicalAddressAllocator allocator;
-    struct PpgttMock : std::conditional<is64bit, PML4, PDPE>::type {
-        PpgttMock(PhysicalAddressAllocator *allocator) : std::conditional<is64bit, PML4, PDPE>::type(allocator) {}
-
-        void pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) override {
-            receivedSize = size;
-        }
-        size_t receivedSize = 0;
-    };
-    auto ppgttMock = new PpgttMock(&allocator);
-
-    aubCsr->ppgtt.reset(ppgttMock);
-
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-    aubCsr->setAubWritable(true, *gfxAllocation);
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gfxAllocation->setDefaultGmm(gmm);
-
-    for (bool compressed : {false, true}) {
-        gmm->setCompressionEnabled(compressed);
-
-        aubCsr->writeMemory(*gfxAllocation);
-
-        if (compressed) {
-            EXPECT_EQ(gfxAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation(), ppgttMock->receivedSize);
-        } else {
-            EXPECT_EQ(gfxAllocation->getUnderlyingBufferSize(), ppgttMock->receivedSize);
-        }
-    }
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
-}
-
 HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     ASSERT_NE(nullptr, aubCsr->ppgtt.get());
@@ -852,158 +719,6 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
 
     physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::mainBank);
     EXPECT_NE(0u, physicalAddress);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineIsInitializedThenDumpHandleIsGenerated) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto engineInstance = gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0];
-    DeviceBitfield deviceBitfield(1);
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(engineInstance, deviceBitfield));
-    executionEnvironment.initializeMemoryManager();
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, executionEnvironment, 0, deviceBitfield);
-    EXPECT_NE(nullptr, aubCsr);
-    EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
-    aubCsr->aubManager = nullptr;
-
-    aubCsr->setupContext(osContext);
-    aubCsr->initializeEngine();
-    EXPECT_NE(0u, aubCsr->handle);
-}
-
-using InjectMmmioTest = Test<DeviceFixture>;
-
-HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set("");
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(0u, stream->mmioList.size());
-}
-
-HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
-    std::string registers("0xdead;0xbeef;and another very long string");
-    MMIOPair mmioPair(0xdead, 0xbeef);
-
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(1u, stream->mmioList.size());
-    EXPECT_TRUE(stream->isOnMmioList(mmioPair));
-};
-
-HWTEST_F(InjectMmmioTest, givenLongSequenceOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
-    std::string registers("1;1;2;2;3;3");
-
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(3u, stream->mmioList.size());
-}
-
-HWTEST_F(InjectMmmioTest, givenSequenceWithIncompletePairOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
-    std::string registers("0x1;0x1;0x2");
-    MMIOPair mmioPair0(0x1, 0x1);
-    MMIOPair mmioPair1(0x2, 0x2);
-
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(1u, stream->mmioList.size());
-    EXPECT_TRUE(stream->isOnMmioList(mmioPair0));
-    EXPECT_FALSE(stream->isOnMmioList(mmioPair1));
-}
-
-HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithSemicolonAtTheEndWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
-    std::string registers("0xdead;0xbeef;");
-    MMIOPair mmioPair(0xdead, 0xbeef);
-
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(1u, stream->mmioList.size());
-    EXPECT_TRUE(stream->isOnMmioList(mmioPair));
-}
-
-HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithInvalidValueWhenInitAdditionalMmioCalledThenMmioIsNotWritten) {
-    std::string registers("0xdead;invalid");
-
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
-
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-    EXPECT_EQ(0u, stream->mmioList.size());
-    aubCsr->initAdditionalMMIO();
-    EXPECT_EQ(0u, stream->mmioList.size());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectationThenPassValidCompareOperationType) {
-    class MyMockAubCsr : public AUBCommandStreamReceiverHw<FamilyType> {
-      public:
-        using AUBCommandStreamReceiverHw<FamilyType>::AUBCommandStreamReceiverHw;
-
-        bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
-            inputCompareOperation = compareOperation;
-            return this->AUBCommandStreamReceiverHw<FamilyType>::expectMemory(gfxAddress, srcAddress, length, compareOperation);
-        }
-        uint32_t inputCompareOperation = 0;
-    };
-    void *mockAddress = reinterpret_cast<void *>(1);
-    uint32_t compareNotEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
-    uint32_t compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
-
-    auto mockStream = std::make_unique<MockAubFileStream>();
-    MyMockAubCsr myMockCsr(std::string(), true, *pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    myMockCsr.setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
-    myMockCsr.stream = mockStream.get();
-    myMockCsr.hardwareContextController.reset(nullptr);
-
-    myMockCsr.expectMemoryNotEqual(mockAddress, mockAddress, 1);
-    EXPECT_EQ(compareNotEqual, myMockCsr.inputCompareOperation);
-    EXPECT_EQ(compareNotEqual, mockStream->compareOperationFromExpectMemory);
-
-    myMockCsr.expectMemoryEqual(mockAddress, mockAddress, 1);
-    EXPECT_EQ(compareEqual, myMockCsr.inputCompareOperation);
-    EXPECT_EQ(compareEqual, mockStream->compareOperationFromExpectMemory);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenObtainingPreferredTagPoolSizeThenReturnOne) {
@@ -1036,6 +751,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithHardwar
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
     EXPECT_NE(nullptr, aubCsr.hardwareContextController);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());

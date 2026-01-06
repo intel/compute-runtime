@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -21,7 +22,7 @@ namespace NEO {
 class MultiRootDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+        deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(3, 0);
         device1 = deviceFactory->rootDevices[1];
         device2 = deviceFactory->rootDevices[2];
 
@@ -37,7 +38,7 @@ class MultiRootDeviceFixture : public ::testing::Test {
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
-    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
     MockClDevice *device1 = nullptr;
     MockClDevice *device2 = nullptr;
     std::unique_ptr<MockContext> context;

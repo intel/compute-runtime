@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
@@ -16,8 +15,12 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "gtest/gtest.h"
+
+#include <memory>
+
 namespace NEO {
-extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
+extern ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue];
 
 struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>
@@ -114,7 +117,7 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
         VariableBackup<ImageCreateFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
         imageFactory[eRenderCoreFamily].createImageFunction = MockImage<FamilyType>::createMockImage;
 
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
 
         cl_int retVal = CL_SUCCESS;
         auto img = Image::create(

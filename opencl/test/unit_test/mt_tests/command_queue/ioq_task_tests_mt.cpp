@@ -5,10 +5,13 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 #include <future>
 
@@ -25,7 +28,7 @@ struct IOQTaskTestsMt : public HelloWorldTest<HelloWorldFixtureFactory> {
         CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(pClDevice, kernelName);
+        KernelFixture::setUp(pClDevice);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;
@@ -57,6 +60,7 @@ struct IOQTaskTestsMt : public HelloWorldTest<HelloWorldFixtureFactory> {
 };
 
 TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncremented) {
+    USE_REAL_FILE_SYSTEM();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
@@ -77,7 +81,7 @@ TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
         ASSERT_EQ(CL_SUCCESS, ret);
     });
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // no task level increasing when cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_TRUE,
@@ -197,7 +201,7 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreComplet
 }
 
 TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreCompleted) {
-    auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context));
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -279,7 +283,7 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
     std::atomic_uint32_t barrier = numThreads;
     std::array<std::future<void>, numThreads> threads;
 
-    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
     REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     MockClDevice clDevice(device);
     auto cmdQ = createCommandQueue(&clDevice);

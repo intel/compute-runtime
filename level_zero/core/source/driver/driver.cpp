@@ -9,23 +9,18 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "driver_version.h"
-#include "log_manager.h"
-
-#include <memory>
 #include <mutex>
-#include <thread>
 
 namespace L0 {
 
@@ -38,8 +33,6 @@ void DriverImp::initialize(ze_result_t *result) {
 
     NEO::EnvironmentVariableReader envReader;
     L0EnvVariables envVariables = {};
-    envVariables.affinityMask =
-        envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
     envVariables.programDebugging =
         envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
     envVariables.metrics =
@@ -53,6 +46,8 @@ void DriverImp::initialize(ze_result_t *result) {
     envVariables.fp64Emulation =
         envReader.getSetting("NEO_FP64_EMULATION", false);
 
+    bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
@@ -61,42 +56,55 @@ void DriverImp::initialize(ze_result_t *result) {
         executionEnvironment->setDebuggingMode(dbgMode);
     }
 
-    // Logging enablement if opted
-    NEO::initLogger();
-
     if (envVariables.fp64Emulation) {
         executionEnvironment->setFP64EmulationEnabled();
     }
 
     executionEnvironment->setMetricsEnabled(envVariables.metrics);
+    executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+    bool isDevicePermissionError = executionEnvironment->isDevicePermissionError();
     executionEnvironment->decRefInternal();
-    if (!neoDevices.empty()) {
-        auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
-        for (auto &devices : deviceGroups) {
-            auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
-            if (driverHandle) {
-                globalDriverHandles->push_back(driverHandle);
-            }
+    if (neoDevices.empty()) {
+        if (isDevicePermissionError) {
+            *result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
+        return;
+    }
 
-        if (globalDriverHandles->size() > 0) {
-            *result = ZE_RESULT_SUCCESS;
+    auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
+    for (auto &devices : deviceGroups) {
+        auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
+        if (driverHandle) {
+            globalDriverHandles->push_back(driverHandle);
 
-            if (envVariables.metrics) {
-                *result = MetricDeviceContext::enableMetricApi();
+            auto &devicesToExpose = static_cast<DriverHandleImp *>(driverHandle)->devicesToExpose;
+            std::vector<NEO::Device *> neoDeviceToExpose;
+            neoDeviceToExpose.reserve(devicesToExpose.size());
+            for (auto deviceToExpose : devicesToExpose) {
+                neoDeviceToExpose.push_back(Device::fromHandle(deviceToExpose)->getNEODevice());
             }
-            if (*result != ZE_RESULT_SUCCESS) {
-                for (auto &driverHandle : *globalDriverHandles) {
-                    delete static_cast<BaseDriver *>(driverHandle);
-                }
-                globalDriverHandles->clear();
-            } else if (envVariables.pin) {
-                std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
-                this->gtPinInitializationNeeded = true;
+
+            NEO::Device::initializePeerAccessForDevices(DeviceImp::queryPeerAccess, DeviceImp::freeMemoryAllocation, neoDeviceToExpose);
+        }
+    }
+
+    if (globalDriverHandles->size() > 0) {
+        *result = ZE_RESULT_SUCCESS;
+
+        if (envVariables.metrics) {
+            *result = MetricDeviceContext::enableMetricApi();
+        }
+        if (*result != ZE_RESULT_SUCCESS) {
+            for (auto &driverHandle : *globalDriverHandles) {
+                delete static_cast<BaseDriver *>(driverHandle);
             }
+            globalDriverHandles->clear();
+        } else if (envVariables.pin) {
+            std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
+            this->gtPinInitializationNeeded = true;
         }
     }
 }

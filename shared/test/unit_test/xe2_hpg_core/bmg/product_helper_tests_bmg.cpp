@@ -6,20 +6,24 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
-
+#include "neo_aot_platforms.h"
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 using namespace NEO;
 
 using BmgProductHelper = ProductHelperTest;
@@ -64,16 +68,23 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-BMGTEST_F(BmgProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
+BMGTEST_F(BmgProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExcept32bitSvmCpu) {
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         EXPECT_TRUE(preferredAllocationMethod.has_value());
-        EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+        if constexpr (is32bit) {
+            if (allocationType == AllocationType::svmCpu) {
+                EXPECT_EQ(GfxMemoryAllocationMethod::useUmdSystemPtr, preferredAllocationMethod.value());
+            } else {
+                EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+            }
+        } else {
+            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+        }
     }
 }
 
@@ -118,13 +129,30 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideT
     EXPECT_EQ(hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 1u);
 }
 
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 BMGTEST_F(BmgProductHelper, whenAdjustScratchSizeThenSizeIsDoubled) {
     constexpr size_t initialScratchSize = 0x1234u;
     size_t scratchSize = initialScratchSize;
     productHelper->adjustScratchSize(scratchSize);
     EXPECT_EQ(initialScratchSize * 2, scratchSize);
+}
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->deferMOCSToPatIndex(true));
+}
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
+}
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
+    EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }

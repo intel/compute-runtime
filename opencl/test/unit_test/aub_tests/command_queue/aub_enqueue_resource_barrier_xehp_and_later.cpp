@@ -1,22 +1,20 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/cmd_buffer_validator.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/helpers/test_traits.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include "test_traits_common.h"
+#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 
 using namespace NEO;
 

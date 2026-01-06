@@ -18,8 +18,9 @@ namespace NEO {
 
 OsLibrary *OsLibrary::load(const OsLibraryCreateProperties &properties) {
     auto ptr = new (std::nothrow) Linux::OsLibrary(properties);
-    if (ptr == nullptr)
+    if (ptr == nullptr) {
         return nullptr;
+    }
 
     if (!ptr->isLoaded()) {
         delete ptr;
@@ -42,12 +43,7 @@ OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
     if (properties.libraryName.empty() || properties.performSelfLoad) {
         this->handle = SysCalls::dlopen(0, RTLD_LAZY);
     } else {
-#ifdef SANITIZER_BUILD
         auto dlopenFlag = RTLD_LAZY;
-#else
-        auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
-        /* Background: https://github.com/intel/compute-runtime/issues/122 */
-#endif
         dlopenFlag = properties.customLoadFlags ? *properties.customLoadFlags : dlopenFlag;
         adjustLibraryFlags(dlopenFlag);
         this->handle = SysCalls::dlopen(properties.libraryName.c_str(), dlopenFlag);

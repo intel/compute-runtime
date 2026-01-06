@@ -1,15 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/gtest_helpers.h"
-
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
-
-#include "patch_g7.h"
 
 TEST_F(KernelDataTest, givenDataParameterPreferredWorkgroupMultipleTokenWhenBinaryIsdecodedThenCorrectOffsetIsAssigned) {
     const uint32_t offset = 0x100;

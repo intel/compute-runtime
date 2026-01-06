@@ -8,7 +8,7 @@
 #pragma once
 
 #include "igad.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
     switch (productFamily) {
@@ -32,6 +32,7 @@ inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
     case IGFX_LUNARLAKE:
         return IGA_XE2;
     case IGFX_PTL:
+    case IGFX_NVL_XE3G:
         return IGA_XE3;
     }
 }

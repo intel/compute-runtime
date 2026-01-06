@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
 #include "shared/source/helpers/hw_ip_version.h"
 
 #include "gtest/gtest.h"
@@ -32,8 +33,19 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsLocalOnlyAllowedCalledThenFalseReturned();
     void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
-    void whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnDebugKey();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
+    void whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
+    void whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
+    void whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
+    void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+    void whenShouldQueryPeerAccessCalledThenFalseReturned();
+    void whenShouldQueryPeerAccessCalledThenTrueReturned();
+    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned();
+    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenTrueReturned();
+    void whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
+    void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
+    void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+    void whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class ImageHostPtrTransferTests : public testing::Test {
 
     template <typename ImageTraits>
     void createImageAndSetTestParams() {
-        image.reset(ImageHelper<ImageUseHostPtr<ImageTraits>>::create(context.get()));
+        image.reset(ImageHelperUlt<ImageUseHostPtr<ImageTraits>>::create(context.get()));
 
         imgDesc = &image->getImageDesc();
 

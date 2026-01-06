@@ -5,16 +5,17 @@
  *
  */
 
+#include "shared/source/xe3_core/hw_info_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
-#include "hw_cmds_xe3_core.h"
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -67,11 +68,6 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, givenL0GfxCoreHelperWhenAskingForUsmCompr
     EXPECT_FALSE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 }
 
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
-}
-
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());
@@ -97,24 +93,29 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingPlatformDefaultHea
     EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
 }
 
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnTrue) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
-}
-
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatThenExpectedFormatIsReturned) {
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExpThenExpectedFormatIsReturned) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormat()));
+    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExp()));
+}
+
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExtThenExpectedFormatIsReturned) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExt()));
 }
 
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(127u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
+}
+
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingRecordReplayGraphCapabilityThenReturnCorrectValue) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(1u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGetRegsetTypeForLargeGrfDetectionIsCalledThenSrRegsetTypeIsRetuned) {

@@ -16,6 +16,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
+#include "implicit_args.h"
 
 namespace L0 {
 
@@ -59,7 +60,7 @@ void CommandListCoreFamily<IGFX_XE_HPG_CORE>::applyMemoryRangesBarrier(uint32_t 
     }
     for (size_t subrangeNumber = 0; subrangeNumber < subranges.size(); subrangeNumber += NEO::maxFlushSubrangeCount) {
         size_t rangeCount = subranges.size() <= subrangeNumber + NEO::maxFlushSubrangeCount ? subranges.size() - subrangeNumber : NEO::maxFlushSubrangeCount;
-        NEO::Range<NEO::L3Range> range = createRange(subranges.begin() + subrangeNumber, rangeCount);
+        std::span<NEO::L3Range> range = {subranges.begin() + subrangeNumber, rangeCount};
 
         NEO::flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, device->getHwInfo());
     }

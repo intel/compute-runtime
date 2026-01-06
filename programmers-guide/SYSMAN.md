@@ -25,7 +25,19 @@ An application can initialize Level Zero Sysman in following modes:
 * [zeInit](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeinit) with [ZES_ENABLE_SYSMAN](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#environment-variables) environment variable (also referenced as "Legacy mode" for brevity in this document).
 * [zesInit](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#zesinit)
 
-Psuedo code for the above can be referenced from [spec](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#sysman-programming-guide).
+Pseudo code for the above can be referenced from [spec](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#sysman-programming-guide).
+
+## No Context Mode
+
+The No Context Mode is a special initialization option available on Windows platforms that prevents the creation of any context on device during Legacy mode initialization. This mode is designed for system management applications that require only telemetry and control capabilities without the need for compute workload submission.
+
+**Key characteristics:**
+- **Platform Support**: Windows only
+- **Usage**: Set environment variable `NEO_L0_SYSMAN_NO_CONTEXT_MODE=1` with Legacy mode initialization (zeInit + ZES_ENABLE_SYSMAN=1)
+- **Compatibility**: Only works with Legacy mode initialization, not supported with zesInit
+- **Functionality**: No Level Zero contexts will be created during initialization
+- **Limitation**: No compute workloads can be submitted by any application or libraries within the same process
+- **Use Case**: Intended for pure system management scenarios where only monitoring and control operations are required
 
 # Support and Limitations
 
@@ -33,9 +45,9 @@ Following table summarizes the effect of using the specified initialization call
 
 | Initialization  Mode                                                                      | Core <-> Sysman Device Handle Casting | Core and Sysman device handle mapping                                                                           | Spec version Support                                                                                                                 | Platform Support                                  |
 |-------------------------------------------------------------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
-| Legacy mode (zeInit +  ZES_ENABLE_SYSMAN)*                                                                               | Supported                             | Core <-> Sysman Device Handle Casting                                                                           | Supported only upto [v1.5](https://spec.oneapi.io/releases/index.html#level-zero-v1-5-0). | Supported up to XeHPC (PVC) and earlier platforms |
-| zesInit only                                                                                   | Not supported                         | [Sysman device mapping](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#sysmandevicemapping-functions) | Up to date with L0 Spec revision.                                                                                                              | Supported for newer platforms than XeHPC (PVC)                            |
-| zesInit + (zeInit W/o ZES_ENABLE_SYSMAN) Or <br> (zeInit W/o ZES_ENABLE_SYSMAN) + zesInit | Not supported                         | [Sysman device mapping](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#sysmandevicemapping-functions) | Up to date with L0 Spec revision.                                                                                                              | Supported for newer platforms than XeHPC (PVC)                           |
+| Legacy mode (zeInit +  ZES_ENABLE_SYSMAN)*                                                                               | Supported                             | Core <-> Sysman Device Handle Casting                                                                           | Supports features only upto v1.5. | Supported up to XeHPC (PVC) and earlier platforms |
+| zesInit only                                                                                   | Not supported                         | [Sysman device mapping](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#sysmandevicemapping-functions) | Up to date with L0 Spec revision.                                                                                                              | Supported for all platforms.|
+| zesInit + (zeInit W/o ZES_ENABLE_SYSMAN) Or <br> (zeInit W/o ZES_ENABLE_SYSMAN) + zesInit | Not supported                         | [Sysman device mapping](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#sysmandevicemapping-functions) | Up to date with L0 Spec revision.                                                                                                              | Supported for all platforms.|
 | zesInit + (Legacy mode) Or <br> (Legacy mode) + zesInit                                   | Not supported                         | Not supported                                                                                                   | Not supported                                                                                                                        | Not supported                                     |
 
 \* Initialization with Legacy mode is supported only if Level Zero Core is operating on [composite device hierarchy](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#device-hierarchy) model.<br>
@@ -99,6 +111,6 @@ Note: Along with mapped sysman device handle, `onSubdevice` and `subdeviceId` ou
 
 # Recommendation
 
-1. Only one initialization of sysman is supported for a process and it is suggested that all libraries using sysman in the same process should use either legacy mode or zesInit based initialization.
-2. We recommend to use legacy mode of sysman till PVC platforms.
+1. Only one initialization of sysman is supported for a process and it is suggested that all libraries using sysman in the same process should use either legacy mode(zeInit + ZES_ENABLE_SYSMAN=1) or zesInit based initialization.
+2. We recommend to use legacy mode(zeInit + ZES_ENABLE_SYSMAN=1) of sysman till PVC platforms.
 3. For post PVC platforms, zesInit based sysman initialization should be used.

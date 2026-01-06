@@ -17,16 +17,19 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getDefaultEngineClass;
     using IoctlHelperXe::getFdFromVmExport;
+    using IoctlHelperXe::getPrimaryContextId;
     using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::isLowLatencyHintAvailable;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::queryGtListData;
+    using IoctlHelperXe::queryHwIpVersion;
     using IoctlHelperXe::setContextProperties;
-    using IoctlHelperXe::supportedFeatures;
     using IoctlHelperXe::tileIdToGtId;
     using IoctlHelperXe::updateBindInfo;
     using IoctlHelperXe::UserFenceExtension;
+    using IoctlHelperXe::xeGetAdviseOperationName;
     using IoctlHelperXe::xeGetBindFlagNames;
     using IoctlHelperXe::xeGetBindOperationName;
     using IoctlHelperXe::xeGetClassName;
@@ -66,6 +69,10 @@ struct MockIoctlHelperXe : IoctlHelperXe {
             return 0;
         }
         return IoctlHelperXe::ioctl(fd, request, arg);
+    }
+
+    void testLog(auto &&...args) {
+        XELOG(args...);
     }
 
     bool failPerfDisable = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct AppResourceTests : public MockExecutionEnvironmentTagTest {
 };
 
 TEST_F(AppResourceTests, givenIncorrectGraphicsAllocationTypeWhenGettingResourceTagThenNOTFOUNDIsReturned) {
-    auto tag = AppResourceHelper::getResourceTagStr(static_cast<AllocationType>(999)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    auto tag = AppResourceHelper::getResourceTagStr(static_cast<AllocationType>(999)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     EXPECT_STREQ(tag, "NOTFOUND");
 }
 
@@ -73,7 +73,6 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::linearStream, "LINRSTRM"},
     {AllocationType::mapAllocation, "MAPALLOC"},
     {AllocationType::mcs, "MCS"},
-    {AllocationType::pipe, "PIPE"},
     {AllocationType::preemption, "PRMPTION"},
     {AllocationType::printfSurface, "PRNTSRFC"},
     {AllocationType::privateSurface, "PRVTSRFC"},
@@ -103,7 +102,8 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::swTagBuffer, "SWTAGBF"},
     {AllocationType::deferredTasksList, "TSKLIST"},
     {AllocationType::assertBuffer, "ASSRTBUF"},
-    {AllocationType::syncDispatchToken, "SYNCTOK"}};
+    {AllocationType::syncDispatchToken, "SYNCTOK"},
+    {AllocationType::hostFunction, "HOSTFUNC"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

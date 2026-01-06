@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"
@@ -42,6 +41,9 @@ class Surface;
 class PrintfHandler;
 class MultiDeviceKernel;
 class LocalIdsCache;
+class ExecutionEnvironment;
+class GfxCoreHelper;
+struct HardwareInfo;
 
 class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -72,18 +74,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         bool isPatched = false;
         bool isStatelessUncacheable = false;
         bool isSetToNullptr = false;
-    };
-
-    enum class TunningStatus {
-        standardTunningInProgress,
-        subdeviceTunningInProgress,
-        tunningDone
-    };
-
-    enum class TunningType {
-        disabled,
-        simple,
-        full
+        bool isImageFromBuffer = false;
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -260,10 +251,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
                          size_t argSize,
                          const void *argVal);
 
-    cl_int setArgAccelerator(uint32_t argIndex,
-                             size_t argSize,
-                             const void *argVal);
-
     void storeKernelArg(uint32_t argIndex,
                         KernelArgType argType,
                         void *argObject,
@@ -276,10 +263,8 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
     bool getAllowNonUniform() const;
-    bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
     bool requiresSystolicPipelineSelectMode() const { return systolicPipelineSelectMode; }
 
-    void performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
     MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const;
     void setInlineSamplers();
 
@@ -289,6 +274,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void resetSharedObjectsPatchAddresses();
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }
+    bool hasImageFromBufferArgs() const { return imageFromBufferArgsCount > 0; }
 
     bool hasPrintfOutput() const;
 
@@ -299,8 +285,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     static uint32_t dummyPatchLocation;
 
     uint32_t allBufferArgsStateful = CL_TRUE;
-
-    bool isBuiltIn = false;
 
     KernelExecutionType getExecutionType() const {
         return executionType;
@@ -350,7 +334,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     // dispatch traits
     void setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ);
     void setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ);
-    void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    MOCKABLE_VIRTUAL void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
     void setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
     void setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
     void setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ);
@@ -388,6 +372,10 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         return anyKernelArgumentUsingSystemMemory;
     }
 
+    bool isAnyKernelArgumentUsingZeroCopyMemory() const {
+        return anyKernelArgumentUsingZeroCopyMemory;
+    }
+
     static bool graphicsAllocationTypeUseSystemMemory(AllocationType type);
     void setDestinationAllocationInSystemMemory(bool value) {
         isDestinationAllocationInSystemMemory = value;
@@ -403,43 +391,11 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     const GfxCoreHelper &getGfxCoreHelper() const {
         return getDevice().getGfxCoreHelper();
     }
+    bool isBuiltInKernel() const {
+        return isBuiltIn;
+    }
 
   protected:
-    struct KernelConfig {
-        Vec3<size_t> gws;
-        Vec3<size_t> lws;
-        Vec3<size_t> offsets;
-        bool operator==(const KernelConfig &other) const { return this->gws == other.gws && this->lws == other.lws && this->offsets == other.offsets; }
-    };
-    struct KernelConfigHash {
-        size_t operator()(KernelConfig const &config) const {
-            auto hash = std::hash<size_t>{};
-            size_t gwsHashX = hash(config.gws.x);
-            size_t gwsHashY = hash(config.gws.y);
-            size_t gwsHashZ = hash(config.gws.z);
-            size_t gwsHash = hashCombine(gwsHashX, gwsHashY, gwsHashZ);
-            size_t lwsHashX = hash(config.lws.x);
-            size_t lwsHashY = hash(config.lws.y);
-            size_t lwsHashZ = hash(config.lws.z);
-            size_t lwsHash = hashCombine(lwsHashX, lwsHashY, lwsHashZ);
-            size_t offsetsHashX = hash(config.offsets.x);
-            size_t offsetsHashY = hash(config.offsets.y);
-            size_t offsetsHashZ = hash(config.offsets.z);
-            size_t offsetsHash = hashCombine(offsetsHashX, offsetsHashY, offsetsHashZ);
-            return hashCombine(gwsHash, lwsHash, offsetsHash);
-        }
-
-        size_t hashCombine(size_t hash1, size_t hash2, size_t hash3) const {
-            return (hash1 ^ (hash2 << 1u)) ^ (hash3 << 2u);
-        }
-    };
-    struct KernelSubmissionData {
-        std::unique_ptr<TimestampPacketContainer> kernelStandardTimestamps;
-        std::unique_ptr<TimestampPacketContainer> kernelSubdeviceTimestamps;
-        TunningStatus status;
-        bool singleSubdevicePreferred = false;
-    };
-
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
 
     void makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
@@ -447,6 +403,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
 
     void patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
+    void patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, void *addressToPatch, size_t sizeToPatch, const ArgDescPointer &arg);
 
     void provideInitializationHints();
 
@@ -462,17 +419,12 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     }
     cl_int patchPrivateSurface();
 
-    bool hasTunningFinished(KernelSubmissionData &submissionData);
-    bool hasRunFinished(TimestampPacketContainer *timestampContainer);
-
     void initializeLocalIdsCache();
     std::unique_ptr<LocalIdsCache> localIdsCache;
 
     UnifiedMemoryControls unifiedMemoryControls{};
 
     std::map<uint32_t, MemObj *> migratableArgsMap{};
-
-    std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;
     std::vector<KernelArgHandler> kernelArgHandlers;
@@ -508,6 +460,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
+    uint32_t imageFromBufferArgsCount = 0;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     uint32_t maxKernelWorkGroupSize = 0;
     uint32_t slmTotalSize = 0u;
@@ -522,10 +475,11 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool auxTranslationRequired = false;
     bool systolicPipelineSelectMode = false;
     bool isUnifiedMemorySyncRequired = true;
-    bool singleSubdevicePreferredInCurrentEnqueue = false;
     bool kernelHasIndirectAccess = true;
     bool anyKernelArgumentUsingSystemMemory = false;
+    bool anyKernelArgumentUsingZeroCopyMemory = false;
     bool isDestinationAllocationInSystemMemory = false;
+    bool isBuiltIn = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Kernel>);

@@ -26,7 +26,7 @@ const std::string mockRemove("remove");
 const std::string mockRescan("rescan");
 const std::string mockSlotPath("/sys/bus/pci/slots/");
 const std::string mockSlotPath1("/sys/bus/pci/slots/1/");
-const std::string mockCorrectRootAddress("0000:8a:00.0");
+const std::string mockCorrectRootAddress("0000:8a:00");
 const std::string mockWrongRootAddress("0000:7a:00.0");
 
 struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
@@ -60,10 +60,15 @@ struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
     ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
     ADDMETHOD_NOBASE(fwIfrApplied, ze_result_t, ZE_RESULT_SUCCESS, (bool &ifrStatus));
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
-    ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE(fwGetEccAvailable, ze_result_t, ZE_RESULT_SUCCESS, (ze_bool_t * pAvailable));
+    ADDMETHOD_NOBASE(fwGetEccConfigurable, ze_result_t, ZE_RESULT_SUCCESS, (ze_bool_t * pConfigurable));
+    ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState, uint8_t *defaultState));
     ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE(fwSetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> inBuf, std::vector<uint8_t> &outBuf));
+    ADDMETHOD_NOBASE(fwGetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> &outBuf));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
+    ADDMETHOD_NOBASE_VOIDRETURN(getLateBindingSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 struct MockGlobalOperationsEngineHandleContext : public L0::Sysman::EngineHandleContext {
     MockGlobalOperationsEngineHandleContext(L0::Sysman::OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
@@ -77,13 +82,11 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
     int checkErrorAfterCount = 0;
     std::string mockRootAddress = mockCorrectRootAddress;
 
-    ze_result_t write(const std::string file, std::string val) override {
+    ze_result_t write(const std::string &file, std::string val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockWriteError != ZE_RESULT_SUCCESS) {
-                return mockWriteError;
-            }
+        } else if (mockWriteError != ZE_RESULT_SUCCESS) {
+            return mockWriteError;
         }
         if (!file.compare(mockSlotPath1 + "power")) {
             return ZE_RESULT_SUCCESS;
@@ -128,7 +131,7 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
 struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int checkErrorAfterCount = 0;
-    ze_result_t getRealPath(const std::string file, std::string &val) override {
+    ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (mockError != ZE_RESULT_SUCCESS) {
             return mockError;
         }
@@ -140,13 +143,11 @@ struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t write(const std::string file, const int val) override {
+    ze_result_t write(const std::string &file, const int val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockError != ZE_RESULT_SUCCESS) {
-                return mockError;
-            }
+        } else if (mockError != ZE_RESULT_SUCCESS) {
+            return mockError;
         }
         if (std::string::npos != file.find(mockQuiescentGpuFile)) {
             if (checkErrorAfterCount) {

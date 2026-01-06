@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -16,8 +18,6 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 
@@ -44,7 +44,7 @@ XE3_CORETEST_F(SystemMemFenceViaMiMemFenceXe3Core, WhenGeneratedAsMiMemFenceComm
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 
@@ -92,7 +92,7 @@ XE3_CORETEST_F(SystemMemFenceViaComputeWalkerXe3Core, WhenGeneratedAsPostSyncOpe
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 
@@ -133,8 +133,8 @@ class SystemMemFenceWithBlitterXe3Core : public MulticontextOclAubFixture,
         if (!productHelper.obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
-
-        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
+        auto releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, releaseHelper->getFtrXe2Compression());
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();
@@ -155,7 +155,9 @@ XE3_CORETEST_F(SystemMemFenceWithBlitterXe3Core, givenSystemMemFenceWhenGenerate
     retVal = clEnqueueMemcpyINTEL(commandQueues[0][0].get(), true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
+    if (!tileDevices[0]->getDevice().getReleaseHelper()->getFtrXe2Compression()) {
+        expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
+    }
 
     auto hostMemAlloc = clHostMemAllocINTEL(context.get(), nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

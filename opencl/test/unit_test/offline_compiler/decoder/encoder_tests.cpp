@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/array_count.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include "opencl/test/unit_test/offline_compiler/environment.h"
 
@@ -17,7 +15,6 @@
 
 #include <array>
 #include <cstdint>
-#include <fstream>
 #include <sstream>
 
 extern Environment *gEnvironment;
@@ -50,9 +47,10 @@ TEST(EncoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
         constexpr auto suppressMessages{false};
         MockEncoder encoder{suppressMessages};
 
-        ::testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         const auto result = encoder.validateInput(args);
-        const auto output{::testing::internal::GetCapturedStdout()};
+        const auto output{capture.getCapturedStdout()};
 
         EXPECT_EQ(-1, result);
 
@@ -111,9 +109,10 @@ TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValid
 
     encoder.mockArgHelper->hasOutput = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto result = encoder.validateInput(args);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(0, result);
     EXPECT_TRUE(output.empty()) << output;
@@ -126,9 +125,10 @@ TEST(EncoderTests, GivenMissingPTMFileWhenEncodingThenErrorIsReturnedAndLogIsPri
     constexpr auto suppressMessages{false};
     MockEncoder encoder{suppressMessages};
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto result = encoder.encode();
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(-1, result);
     EXPECT_EQ("Error! Couldn't find PTM.txt", output);

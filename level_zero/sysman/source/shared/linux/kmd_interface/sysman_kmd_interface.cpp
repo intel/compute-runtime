@@ -62,10 +62,10 @@ ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
     std::string deviceName;
     auto result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
-    pSysfsAccess = SysFsAccessInterface::create(deviceName);
+    pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
     return result;
 }
 
@@ -105,6 +105,12 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
 
         std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
+        if (level0EngineType == sysfsEngineMapToLevel0EngineType.end()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
+                         ZE_RESULT_ERROR_UNKNOWN);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
         auto ret = mapOfEngines.find(level0EngineType->second);
         if (ret != mapOfEngines.end()) {
             ret->second.push_back(sysfsEngineDirNode);
@@ -120,12 +126,12 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
 ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                                       SysFsAccessInterface *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};
-    auto result = pSysfsAccess->scanDirEntries(engineDir, localListOfAllEngines);
+    auto result = pSysfsAccess->scanDirEntries(std::move(engineDir), localListOfAllEngines);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
@@ -175,7 +181,7 @@ uint32_t SysmanKmdInterface::getEventType() {
     auto pFsAccess = getFsAccess();
     const std::string eventTypeSysfsNode = std::string(sysDevicesDir) + sysmanDeviceDirName + "/" + "type";
     auto eventTypeVal = 0u;
-    if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
+    if (ZE_RESULT_SUCCESS != pFsAccess->read(std::move(eventTypeSysfsNode), eventTypeVal)) {
         return 0;
     }
     return eventTypeVal;
@@ -199,28 +205,29 @@ void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, ze
 
 ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t SysmanKmdInterface::getDeviceDirName(std::string &dirName, const bool isIntegratedDevice) {
+void SysmanKmdInterface::updateSysmanDeviceDirName(std::string &dirName) {
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    if (!isIntegratedDevice) {
-        auto pSysFsAccess = getSysFsAccess();
-        std::string bdfDir;
-        result = pSysFsAccess->readSymLink(std::string(deviceDir), bdfDir);
-        if (ZE_RESULT_SUCCESS != result) {
-            return result;
-        }
-        const auto loc = bdfDir.find_last_of('/');
-        auto bdf = bdfDir.substr(loc + 1);
-        std::replace(bdf.begin(), bdf.end(), ':', '_');
-        dirName = dirName + "_" + bdf;
+    std::string bdfDir = "";
+    auto pSysfsAccess = getSysFsAccess();
+    auto result = pSysfsAccess->readSymLink(std::string(deviceDir), bdfDir);
+    if (ZE_RESULT_SUCCESS != result) {
+        dirName = "";
+        return;
     }
-    return result;
+    const auto loc = bdfDir.find_last_of('/');      // Gives the location of the last occurence of '/' in the bdfDir path. Eg: bdfDir = ../../../0000:03:00.0
+    auto bdf = bdfDir.substr(loc + 1);              // The bdf will start after the last location of '/'. Eg: bdf = 0000:03:00.0
+    std::replace(bdf.begin(), bdf.end(), ':', '_'); // The ':' is replaced by '_'. Eg: bdf = 0000_03_00.0
+    dirName = dirName + "_" + bdf;                  // The final dirName has bdf name appended to the dirName. Eg: i915_0000_03_00.0 or xe_0000_03_00.0
+}
+
+const std::string SysmanKmdInterface::getSysmanDeviceDirName() const {
+    return sysmanDeviceDirName;
 }
 
 std::string SysmanKmdInterfaceI915::getBasePathI915(uint32_t subDeviceId) {

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 
 #include "aubstream/product_family.h"
@@ -14,13 +15,13 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
-    return allocationData.type == AllocationType::commandBuffer || this->overrideCacheableForDcFlushMitigation(allocationData.type);
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationData.type);
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount() && !queueCsr.directSubmissionRelaxedOrderingEnabled();
+    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
@@ -38,65 +39,22 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBuffer) const {
     return isWriteToImageFromBuffer;
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
-template <>
-TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
-    TimeoutParams params{};
-    if (acLineConnected) {
-        switch (queueThrottle) {
-        case NEO::LOW:
-            params.maxTimeout = std::chrono::microseconds{500};
-            params.timeout = std::chrono::microseconds{500};
-            break;
-        case NEO::MEDIUM:
-            params.maxTimeout = std::chrono::microseconds{4'500};
-            params.timeout = std::chrono::microseconds{4'500};
-            break;
-        case NEO::HIGH:
-            params.maxTimeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
-            params.timeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
-            break;
-        default:
-            break;
-        }
-    } else {
-        switch (queueThrottle) {
-        case NEO::LOW:
-            params.maxTimeout = std::chrono::microseconds{500};
-            params.timeout = std::chrono::microseconds{500};
-            break;
-        case NEO::MEDIUM:
-            params.maxTimeout = std::chrono::microseconds{2'000};
-            params.timeout = std::chrono::microseconds{2'000};
-            break;
-        case NEO::HIGH:
-            params.maxTimeout = std::chrono::microseconds{3'000};
-            params.timeout = std::chrono::microseconds{3'000};
-            break;
-        default:
-            break;
-        }
-    }
-    params.timeoutDivisor = 1;
-    params.directSubmissionEnabled = true;
-    return params;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return true;
 }
 

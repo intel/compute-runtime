@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,13 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
+
+#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "implicit_args.h"
 
 namespace L0 {
 namespace ult {

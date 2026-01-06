@@ -86,8 +86,14 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
-    bool ret = wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(ringFence, *this->osContextWin);
+    bool ret = wddm->getWddmInterface()->createFenceForDirectSubmission(ringFence, *this->osContextWin);
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
+
+    this->ringBufferEndCompletionTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
+    this->ringBufferEndCompletionTagData.tagValue = 0u;
+
+    DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();
+
     return ret;
 }
 
@@ -120,22 +126,13 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
-    if (this->disableMonitorFence) {
-        updateTagValueImpl(this->currentRingBuffer);
-    }
+    updateTagValueImplForSwitchRingBuffer(this->currentRingBuffer);
+    updateTagValueImpl(this->currentRingBuffer);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    if (this->disableMonitorFence) {
-        if (allocationsForResidency) {
-            auto lock = osContextWin->getResidencyController().acquireLock();
-            updateTagValueImpl(this->previousRingBuffer);
-            updateMonitorFenceValueForResidencyList(allocationsForResidency);
-        } else {
-            updateTagValueImpl(this->previousRingBuffer);
-        }
-    }
+    updateTagValueImplForSwitchRingBuffer(this->previousRingBuffer);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -153,24 +150,29 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
     if (requireMonitorFence) {
         return this->updateTagValueImpl(this->currentRingBuffer);
     }
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
     return currentFence.currentFenceValue;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool requireMonitorFence) {
-    return !this->disableMonitorFence || requireMonitorFence;
+    return requireMonitorFence;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImpl(uint32_t completionBufferIndex) {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
 
     currentFence.lastSubmittedFence = currentFence.currentFenceValue;
     currentFence.currentFenceValue++;
     this->ringBuffers[completionBufferIndex].completionFence = currentFence.lastSubmittedFence;
 
     return currentFence.lastSubmittedFence;
+}
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImplForSwitchRingBuffer(uint32_t completionBufferIndex) {
+    this->ringBufferEndCompletionTagData.tagValue++;
+    this->ringBuffers[completionBufferIndex].completionFenceForSwitch = this->ringBufferEndCompletionTagData.tagValue;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -180,7 +182,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(uint64_t
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
     auto gmmHelper = wddm->getRootDeviceEnvironment().getGmmHelper();
 
     tagData.tagAddress = gmmHelper->canonize(currentFence.gpuAddress);
@@ -188,11 +190,33 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &ta
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValueForRingSwitch(TagData &tagData) {
+    tagData.tagAddress = this->ringBufferEndCompletionTagData.tagAddress;
+    tagData.tagValue = this->ringBufferEndCompletionTagData.tagValue + 1;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
+    TagData currentTagData = {};
+    getTagAddressValueForRingSwitch(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+    getTagAddressValue(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSectionSize() {
+    return 2 * Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment);
+}
+template <typename GfxFamily, typename Dispatcher>
 inline bool WddmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t ringBufferIndex) {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
-    auto lastSubmittedFence = this->ringBuffers[ringBufferIndex].completionFence;
-    if (lastSubmittedFence > *currentFence.cpuAddress) {
-        return false;
+    auto taskCount = this->ringBuffers[ringBufferIndex].completionFenceForSwitch;
+    auto pollAddress = this->tagAddress;
+    for (uint32_t i = 0; i < this->activeTiles; i++) {
+        if (*pollAddress < taskCount) {
+            return false;
+        }
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);
     }
     return true;
 }
@@ -202,7 +226,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResi
     if (allocationsForResidency == nullptr) {
         return;
     }
-    const auto currentFence = osContextWin->getResidencyController().getMonitoredFence().currentFenceValue;
+    const auto currentFence = osContextWin->getMonitoredFence().currentFenceValue;
     auto contextId = osContextWin->getContextId();
     for (uint32_t i = 0; i < allocationsForResidency->size(); i++) {
         WddmAllocation *allocation = static_cast<WddmAllocation *>((*allocationsForResidency)[i]);
@@ -220,6 +244,8 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResi
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {
     this->wddm->waitOnPagingFenceFromCpu(pagingFenceValue, true);
+
+    typename DirectSubmissionHw<GfxFamily, Dispatcher>::SemaphoreFenceHelper fence(*this);
     this->semaphoreData->pagingFenceCounter = static_cast<uint32_t>(*this->wddm->getPagingFenceAddress());
 }
 

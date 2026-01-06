@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_ocloc_concat.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <array>
 
@@ -24,9 +24,9 @@ TEST(OclocConcatTest, GivenNoArgumentsWhenInitializingThenErrorIsReturned) {
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     std::vector<std::string> args = {"ocloc", "concat"};
 
-    ::testing::internal::CaptureStdout();
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     auto error = oclocConcat.initialize(args);
-    const auto output = ::testing::internal::GetCapturedStdout();
+    const auto output = mockArgHelper.getLog();
 
     EXPECT_EQ(static_cast<uint32_t>(OCLOC_INVALID_COMMAND_LINE), error);
     const std::string expectedOutput = "No files to concatenate were provided.\n";
@@ -39,9 +39,9 @@ TEST(OclocConcatTest, GivenMissingFilesWhenInitializingThenErrorIsReturned) {
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     std::vector<std::string> args = {"ocloc", "concat", "fatBinary1.ar", "fatBinary2.ar"};
 
-    ::testing::internal::CaptureStdout();
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     auto error = oclocConcat.initialize(args);
-    const auto output = ::testing::internal::GetCapturedStdout();
+    const auto output = mockArgHelper.getLog();
 
     EXPECT_EQ(static_cast<uint32_t>(OCLOC_INVALID_COMMAND_LINE), error);
     const std::string expectedOutput = "fatBinary1.ar doesn't exist!\nfatBinary2.ar doesn't exist!\n";
@@ -56,9 +56,9 @@ TEST(OclocConcatTest, GivenValidArgsWhenInitializingThenFileNamesToConcatAndOutp
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     std::vector<std::string> args = {"ocloc", "concat", "fatBinary1.ar", "fatBinary2.ar", "-out", "fatBinary.ar"};
 
-    ::testing::internal::CaptureStdout();
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     auto error = oclocConcat.initialize(args);
-    const auto output = ::testing::internal::GetCapturedStdout();
+    const auto output = mockArgHelper.getLog();
 
     EXPECT_EQ(static_cast<uint32_t>(OCLOC_SUCCESS), error);
     EXPECT_TRUE(output.empty());
@@ -68,15 +68,15 @@ TEST(OclocConcatTest, GivenValidArgsWhenInitializingThenFileNamesToConcatAndOutp
     EXPECT_EQ(args[5], oclocConcat.fatBinaryName);
 }
 
-TEST(OclocConcatTest, GivenMissingOutFileNameAfterOutArgumentWhenInitalizingThenErrorIsReturned) {
+TEST(OclocConcatTest, GivenMissingOutFileNameAfterOutArgumentWhenInitializingThenErrorIsReturned) {
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     std::vector<std::string> args = {"ocloc", "concat", "fatBinary1.ar", "fatBinary2.ar", "-out"};
 
-    ::testing::internal::CaptureStdout();
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     auto error = oclocConcat.initialize(args);
-    const auto output = ::testing::internal::GetCapturedStdout();
+    const auto output = mockArgHelper.getLog();
 
     EXPECT_EQ(static_cast<uint32_t>(OCLOC_INVALID_COMMAND_LINE), error);
     const std::string expectedOutput = "Missing out file name after \"-out\" argument\n";

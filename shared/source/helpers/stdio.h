@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 #ifndef __STDC_LIB_EXT1__
 #if __STDC_WANT_LIB_EXT1__ != 1
 
+#include <cerrno>
 #include <cstdio>
-#include <errno.h>
 
 inline int fopen_s(FILE **pFile, const char *filename, const char *mode) { // NOLINT(readability-identifier-naming)
     if ((pFile == nullptr) || (filename == nullptr) || (mode == nullptr)) {

@@ -13,8 +13,7 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t VfImp::vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
-    *pCapability = capability;
-    return ZE_RESULT_SUCCESS;
+    return pOsVf->vfOsGetCapabilities(pCapability);
 }
 
 ze_result_t VfImp::vfGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) {
@@ -25,14 +24,9 @@ ze_result_t VfImp::vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_e
     return pOsVf->vfOsGetEngineUtilization(pCount, pEngineUtil);
 }
 
-void VfImp::init() {
-    pOsVf->vfOsGetCapabilities(&capability);
-}
-
 VfImp::VfImp(OsSysman *pOsSysman, uint32_t vfId) {
     pOsVf = OsVf::create(pOsSysman, vfId);
     UNRECOVERABLE_IF(nullptr == pOsVf);
-    init();
 };
 
 VfImp::~VfImp() = default;

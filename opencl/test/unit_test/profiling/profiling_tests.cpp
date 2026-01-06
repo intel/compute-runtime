@@ -5,19 +5,26 @@
  *
  */
 
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/os_time.h"
+#include "shared/source/program/heap_info.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -465,8 +472,9 @@ HWTEST_F(ProfilingTests, givenBarrierEnqueueWhenNonBlockedEnqueueThenSetGpuPath)
     cl_event event;
     pCmdQ->enqueueBarrierWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
+    eventObj->setStartTimeStamp();
     EXPECT_FALSE(eventObj->isCPUProfilingPath());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit;
     cl_int retVal;
@@ -486,8 +494,9 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenNonBlockedEnqueueThenSetGpuPath) 
     cl_event event;
     pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
+    eventObj->setStartTimeStamp();
     EXPECT_FALSE(eventObj->isCPUProfilingPath());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit;
     cl_int retVal;
@@ -558,7 +567,7 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
         &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit, start, end;
 
@@ -624,22 +633,23 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
     queue->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
     auto container = queue->timestampPacketContainer.get();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
-    Range<CopyEngineState> copyEngineStates;
+    std::span<CopyEngineState> copyEngineStates;
     WaitStatus status;
 
     container->add(node.get());
 
     queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
     EXPECT_NE(output.npos, output.find("Waiting for TS completed"));
     EXPECT_EQ(output.npos, output.find("Waiting for TS failed"));
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
 
     auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queue->getGpgpuCommandStreamReceiver());
     csr.forceReturnGpuHang = true;
@@ -647,7 +657,7 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
     node->storage = 1;
     queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
 
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
     EXPECT_EQ(output.npos, output.find("Waiting for TS completed"));
@@ -658,20 +668,20 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
 
     event.timestampPacketContainer->add(node.get());
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     node->failCountdown = 2;
     node->storage = 1;
     event.areTimestampsCompleted();
 
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Checking TS 0x"));
     EXPECT_EQ(output.npos, output.find("TS ready"));
     EXPECT_NE(output.npos, output.find("TS not ready"));
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     event.areTimestampsCompleted();
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Checking TS 0x"));
     EXPECT_NE(output.npos, output.find("TS ready"));
@@ -750,10 +760,10 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTests, givenRawTimestampsDebugModeW
     event.timeStampNode = &timestampNode;
     event.calcProfilingData();
 
-    cl_ulong queued, submited, start, end, complete;
+    cl_ulong queued, submitted, start, end, complete;
 
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
@@ -761,7 +771,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTests, givenRawTimestampsDebugModeW
     EXPECT_EQ(timestamp.contextCompleteTS, complete);
     EXPECT_EQ(timestamp.contextEndTS, end);
     EXPECT_EQ(timestamp.contextStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submited);
+    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submitted);
     EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
     event.timeStampNode = nullptr;
 }
@@ -795,18 +805,18 @@ TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculati
     event.timeStampNode = &timestampNode;
 
     cl_ulong queued = 0ul;
-    cl_ulong submited = 0ul;
+    cl_ulong submitted = 0ul;
     cl_ulong start = 0ul;
     cl_ulong end = 0ul;
 
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
 
     EXPECT_LT(0ull, queued);
-    EXPECT_LT(queued, submited);
-    EXPECT_LT(submited, start);
+    EXPECT_LT(queued, submitted);
+    EXPECT_LT(submitted, start);
     EXPECT_LT(start, end);
 
     event.timeStampNode = nullptr;
@@ -1108,7 +1118,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
 
     DebugManagerStateRestore restorer{};
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     pCmdQ->setPerfCountersEnabled();
 
@@ -1420,7 +1430,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
     ev->timeStampNode = nullptr;
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
     uint32_t globalStart[16] = {0};
     uint32_t globalEnd[16] = {0};
     uint32_t contextStart[16] = {0};
@@ -1428,7 +1438,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     initTimestampNodeMultiOsContextData(globalStart, globalEnd, 16u);
     addTimestampNodeMultiOsContext(globalStart, globalEnd, contextStart, contextEnd, 16u);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     ev->calcProfilingData();
@@ -1436,7 +1446,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     EXPECT_EQ(350u, ev->endTimeStamp.gpuTimeStamp);
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
     uint32_t globalStart0 = 20;
     uint32_t globalEnd0 = 51;
     uint32_t contextStart0 = 21;
@@ -1450,7 +1460,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
     addTimestampNodeMultiOsContext(&globalStart0, &globalEnd0, &contextStart0, &contextEnd0, 1);
     addTimestampNodeMultiOsContext(&globalStart1, &globalEnd1, &contextStart1, &contextEnd1, 1);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     ev->timestampPacketContainer->peekNodes()[1]->setProfilingCapable(false);
@@ -1460,13 +1470,14 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
     EXPECT_EQ(static_cast<uint64_t>(globalEnd0), ev->endTimeStamp.gpuTimeStamp);
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintTimestampPacketContents.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     uint32_t globalStart[16] = {0};
@@ -1483,7 +1494,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
 
     ev->calcProfilingData();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expected;
 
     expected << "Timestamp 0, cmd type: " << ev->getCommandType() << ", ";

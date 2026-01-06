@@ -6,8 +6,7 @@
 
 set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/address_range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/allocation_type.h
@@ -59,6 +58,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse_cleaner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse_cleaner.h
@@ -67,6 +67,8 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/prefetch_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/prefetch_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_params.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_params.cpp
 )
 
 if(ENABLE_DYNAMIC_MEMORY_TRACKING)

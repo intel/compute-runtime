@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/event.h"
@@ -15,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include <algorithm>
@@ -135,7 +137,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenEventIsUpdated) {
     EXPECT_NE(nullptr, eventReturned);
 
     auto eventObject = castToObject<Event>(eventReturned);
-    EXPECT_EQ(0u, eventObject->peekTaskCount());
+    EXPECT_EQ(pCmdQ->taskCount, eventObject->peekTaskCount());
     EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     clReleaseEvent(eventReturned);
@@ -249,7 +251,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBefor
     DebugManagerStateRestore restore;
     debugManager.flags.DisableZeroCopyForBuffers.set(true);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(BufferDefaults::context));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(BufferDefaults::context));
 
     class MyMockCommandQueue : public MockCommandQueue {
       public:

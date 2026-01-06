@@ -27,7 +27,7 @@ class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
         uint64_t offset;
     };
 
-    static bool getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
+    static bool getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, const std::string &guid, std::map<std::string, uint64_t> &keyOffsetMap);
     static bool getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir);
     static bool getTelemData(const std::map<uint32_t, std::string> telemNodesInPciPath, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     static bool getTelemDataForTileAggregator(const std::map<uint32_t, std::string> telemNodesInPciPath, uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);

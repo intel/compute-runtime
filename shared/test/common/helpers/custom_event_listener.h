@@ -18,7 +18,8 @@
 extern std::string lastTest;
 namespace NEO {
 extern const char *executionName;
-}
+extern const char *apiName;
+} // namespace NEO
 
 class CCustomEventListener : public ::testing::TestEventListener {
   public:
@@ -114,28 +115,28 @@ class CCustomEventListener : public ::testing::TestEventListener {
         if (unitTest.Failed()) {
             ultStatus = "FAILED";
         }
-        auto executionNameLen = strlen(NEO::executionName);
+        auto targetNameLen = strlen(NEO::apiName) + 1 + strlen(NEO::executionName);
 
         if (hardwarePrefix != "---") {
-            paddingS = std::string(hardwarePrefix.length() + executionNameLen, ' ');
-            paddingE = std::string(hardwarePrefix.length() + executionNameLen, '=');
+            paddingS = std::string(hardwarePrefix.length() + targetNameLen, ' ');
+            paddingE = std::string(hardwarePrefix.length() + targetNameLen, '=');
 
             fprintf(
                 stdout,
                 "\n"
                 "%s==================\n"
-                "==  %s %ss %s   ==\n"
+                "==  %s %s %ss %s   ==\n"
                 "%s==================\n",
-                paddingE.c_str(), hardwarePrefix.c_str(), NEO::executionName, ultStatus.c_str(), paddingE.c_str());
+                paddingE.c_str(), hardwarePrefix.c_str(), NEO::apiName, NEO::executionName, ultStatus.c_str(), paddingE.c_str());
         } else {
-            paddingE = std::string(executionNameLen, '=');
+            paddingE = std::string(targetNameLen, '=');
             fprintf(
                 stdout,
                 "\n"
                 "%s==================\n"
-                "==   %ss %s   ==\n"
+                "==   %s %ss %s   ==\n"
                 "%s==================\n",
-                paddingE.c_str(), NEO::executionName, ultStatus.c_str(), paddingE.c_str());
+                paddingE.c_str(), NEO::apiName, NEO::executionName, ultStatus.c_str(), paddingE.c_str());
         }
 
         fprintf(
@@ -146,11 +147,12 @@ class CCustomEventListener : public ::testing::TestEventListener {
             testsRun,
             testsPassed,
             testsSkipped);
-        if (testsFailed > 0)
+        if (testsFailed > 0) {
             fprintf(
                 stdout,
                 "Tests failed:   %d\n",
                 testsFailed);
+        }
 
         fprintf(
             stdout,
@@ -161,14 +163,16 @@ class CCustomEventListener : public ::testing::TestEventListener {
             timeElapsed,
             paddingE.c_str());
 
-        for (auto failure : testFailures)
+        for (auto failure : testFailures) {
             fprintf(
                 stdout,
                 "[  FAILED  ][ %s ][ %u ] %s\n", hardwarePrefix.c_str(), failure.second, failure.first.c_str());
-        if (unitTest.Failed())
+        }
+        if (unitTest.Failed()) {
             fprintf(
                 stdout,
                 "\n");
+        }
 
         fflush(stdout);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,6 @@ bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const 
 
 template <>
 bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
     return true;
 }
 
@@ -63,5 +58,8 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
     }};
     return sizeToPreferredSlmValue;
 }
-
+template <>
+bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
+    return true;
+}
 } // namespace NEO

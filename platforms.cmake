@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -193,6 +193,12 @@ macro(DISABLE_32BIT_FLAGS_FOR CORE_TYPE)
   DISABLE_FLAGS_FOR(${CORE_TYPE} ${ARGN})
 endmacro()
 
+macro(DISABLE_OCLOC_FLAGS_FOR)
+  foreach(SKU_NAME ${ARGN})
+    set(OCLOC_DISABLE_${SKU_NAME} TRUE CACHE BOOL "Disable ${SKU_NAME} in ocloc" FORCE)
+  endforeach()
+endmacro()
+
 macro(DISABLE_WDDM_LINUX_FOR CORE_TYPE)
   if(SUPPORT_${CORE_TYPE})
     foreach(SKU_NAME ${ARGN})
@@ -283,23 +289,3 @@ if(DEFAULT_TESTED_PLATFORM)
 else()
   set(NEO_SKIP_UNIT_TESTS TRUE)
 endif()
-
-if(NOT DEFAULT_TESTED_FAMILY_NAME)
-  if(DEFINED PREFERRED_FAMILY_NAME)
-    list(FIND ALL_TESTED_FAMILY_NAME ${PREFERRED_FAMILY_NAME} CORE_IDX)
-    if(${CORE_IDX} GREATER -1)
-      set(DEFAULT_TESTED_FAMILY_NAME ${PREFERRED_FAMILY_NAME})
-    endif()
-  endif()
-  if(NOT DEFINED DEFAULT_TESTED_FAMILY_NAME)
-    foreach(CORE_TYPE ${ALL_CORE_TYPES_REVERSED})
-      FIND_IDX_FOR_CORE_TYPE(${CORE_TYPE} CORE_IDX)
-      list(GET ALL_TESTED_FAMILY_NAME ${CORE_IDX} CORE_FAMILY_NAME)
-      if(NOT CORE_FAMILY_NAME STREQUAL " ")
-        set(DEFAULT_TESTED_FAMILY_NAME ${CORE_FAMILY_NAME})
-        break()
-      endif()
-    endforeach()
-  endif()
-endif()
-message(STATUS "Default tested family name: ${DEFAULT_TESTED_FAMILY_NAME}")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,22 +75,16 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    {
-        // revision is sha-1 hash
-        igcRevision.resize(41);
-        igcRevision[0] = '\0';
-        auto igcDeviceCtx3 = createIgcDeviceContext3();
-        if (igcDeviceCtx3) {
-            const char *revision = igcDeviceCtx3->GetIGCRevision();
-            strncpy_s(igcRevision.data(), 41, revision, 40);
-        }
-    }
-
     igcDeviceCtx = createIgcDeviceContext();
     if (!igcDeviceCtx) {
         argHelper->printf("Error! Cannot create IGC device context!\n");
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
+    // revision is sha-1 hash
+    igcRevision.resize(41);
+    igcRevision[0] = '\0';
+    const char *revision = igcDeviceCtx->GetIGCRevision();
+    strncpy_s(igcRevision.data(), 41, revision, 40);
 
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
@@ -138,27 +132,23 @@ bool OclocIgcFacade::isPatchtokenInterfaceSupported() const {
     return igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> OclocIgcFacade::createIgcDeviceContext() const {
-    return igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> OclocIgcFacade::createIgcDeviceContext() const {
+    return igcMain->CreateInterface<NEO::IgcOclDeviceCtxTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> OclocIgcFacade::createIgcDeviceContext3() const {
-    return igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
+CIF::RAII::UPtr_t<NEO::PlatformTag> OclocIgcFacade::getIgcPlatformHandle() const {
+    return igcDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OclocIgcFacade::getIgcPlatformHandle() const {
-    return igcDeviceCtx->GetPlatformHandle();
+CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> OclocIgcFacade::getGTSystemInfoHandle() const {
+    return igcDeviceCtx->GetGTSystemInfoHandle<NEO::GTSystemInfoTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> OclocIgcFacade::getGTSystemInfoHandle() const {
-    return igcDeviceCtx->GetGTSystemInfoHandle();
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
+    return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
-    return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-}
-
-void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
+void OclocIgcFacade::populateWithFeatures(NEO::IgcFeaturesAndWorkaroundsTag *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
     if (compilerProductHelper) {
         handle->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     }
@@ -183,12 +173,55 @@ CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcFacade::createConstBuffer
     return CIF::Builtins::CreateConstBuffer(igcMain.get(), data, size);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> OclocIgcFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
-    return igcDeviceCtx->CreateTranslationCtx(inType, outType);
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> OclocIgcFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+    return igcDeviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
 bool OclocIgcFacade::isInitialized() const {
     return initialized;
+}
+
+OclocIgcAsFcl::OclocIgcAsFcl(OclocArgHelper *argHelper) : igc(std::make_unique<OclocIgcFacade>(argHelper)) {}
+OclocIgcAsFcl::~OclocIgcAsFcl() = default;
+
+int OclocIgcAsFcl::initialize(const HardwareInfo &hwInfo) {
+    auto ret = igc->initialize(hwInfo);
+    if (OCLOC_SUCCESS != ret) {
+        return ret;
+    }
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    if (!compilerProductHelper) {
+        return OCLOC_INVALID_DEVICE;
+    }
+    this->preferredIntermediateRepresentation = compilerProductHelper->getPreferredIntermediateRepresentation();
+    return OCLOC_SUCCESS;
+}
+
+bool OclocIgcAsFcl::isInitialized() const {
+    return igc->isInitialized();
+}
+IGC::CodeType::CodeType_t OclocIgcAsFcl::getPreferredIntermediateRepresentation() const {
+    return this->preferredIntermediateRepresentation;
+}
+
+CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcAsFcl::createConstBuffer(const void *data, size_t size) {
+    return igc->createConstBuffer(data, size);
+}
+
+CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocIgcAsFcl::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                                         CIF::Builtins::BufferSimple *src,
+                                                                         CIF::Builtins::BufferSimple *options,
+                                                                         CIF::Builtins::BufferSimple *internalOptions,
+                                                                         CIF::Builtins::BufferSimple *tracingOptions,
+                                                                         uint32_t tracingOptionsCount) {
+
+    auto translationCtx = igc->createTranslationContext(inType, outType);
+
+    if ((nullptr != error->GetMemory<char>()) || (nullptr == translationCtx)) {
+        return nullptr;
+    }
+
+    return translationCtx->Translate(src, options, internalOptions, nullptr, 0);
 }
 
 } // namespace NEO

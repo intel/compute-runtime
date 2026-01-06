@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
-#include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 

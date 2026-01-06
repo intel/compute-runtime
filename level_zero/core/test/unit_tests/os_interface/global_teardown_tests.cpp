@@ -195,21 +195,19 @@ TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledTh
 TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownAreCalledThenPerApiValidFlagsAreChanged) {
     VariableBackup<DriverDispatch> globalDispatchBackup{&globalDriverDispatch};
 
-    globalDriverDispatch.core.isValidFlag = false;
-    globalDriverDispatch.tools.isValidFlag = false;
-    globalDriverDispatch.sysman.isValidFlag = false;
-
     globalDriverSetup();
 
     EXPECT_TRUE(globalDriverDispatch.core.isValidFlag);
     EXPECT_TRUE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_TRUE(globalDriverDispatch.sysman.isValidFlag);
+    EXPECT_TRUE(globalDriverDispatch.runtime.isValidFlag);
 
     globalDriverTeardown();
 
     EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
+    EXPECT_FALSE(globalDriverDispatch.runtime.isValidFlag);
 }
 } // namespace ult
 } // namespace L0

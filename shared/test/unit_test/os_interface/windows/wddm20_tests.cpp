@@ -19,7 +19,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -254,7 +254,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     delete gmm;
 }
 
-TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
+TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParametersThenAddressInRangeIsReturend) {
     auto sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     D3DGPU_VIRTUAL_ADDRESS reservationAddress;
     auto status = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
@@ -334,7 +334,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenInvalidCpuAddressWhenCheckingForGpuHangThenFalseIsReturned) {
-    osContext->getResidencyController().getMonitoredFence().cpuAddress = nullptr;
+    osContext->getMonitoredFence().cpuAddress = nullptr;
     EXPECT_FALSE(wddm->isGpuHangDetected(*osContext));
 }
 
@@ -342,20 +342,20 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenCpuValueDifferentThanGpuHangIndicationWhe
     constexpr auto cpuValue{777u};
     ASSERT_NE(NEO::Wddm::gpuHangIndication, cpuValue);
 
-    *osContext->getResidencyController().getMonitoredFence().cpuAddress = cpuValue;
+    *osContext->getMonitoredFence().cpuAddress = cpuValue;
     EXPECT_FALSE(wddm->isGpuHangDetected(*osContext));
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, whencreateMonitoredFenceForDirectSubmissionThenCreateFence) {
     MonitoredFence fence{};
-    wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(fence, *osContext);
+    wddm->getWddmInterface()->createFenceForDirectSubmission(fence, *osContext);
     EXPECT_EQ(wddmMockInterface->createMonitoredFenceCalled, 1u);
     EXPECT_NE(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
     wddm->getWddmInterface()->destroyMonitorFence(fence);
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenGpuHangIndicationWhenCheckingForGpuHangThenTrueIsReturned) {
-    auto fenceCpuAddress = osContext->getResidencyController().getMonitoredFence().cpuAddress;
+    auto fenceCpuAddress = osContext->getMonitoredFence().cpuAddress;
     VariableBackup<volatile uint64_t> backupWddmMonitorFence(fenceCpuAddress);
 
     *fenceCpuAddress = NEO::Wddm::gpuHangIndication;
@@ -536,6 +536,20 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     EXPECT_NE(0u, handle);
 }
 
+TEST_F(WddmTestWithMockGdiDll, whenCreateDeviceFailsThenGmmIsNotInitialized) {
+    VariableBackup backupFailDevice(&failCreateDevice, true);
+    wddm->rootDeviceEnvironment.gmmHelper.reset();
+    EXPECT_FALSE(wddm->init());
+    EXPECT_EQ(nullptr, wddm->rootDeviceEnvironment.gmmHelper.get());
+}
+
+TEST_F(WddmTestWithMockGdiDll, whenCreatePagingQueueFailsThenGmmIsNotInitialized) {
+    VariableBackup backupFailDevice(&failCreatePagingQueue, true);
+    wddm->rootDeviceEnvironment.gmmHelper.reset();
+    EXPECT_FALSE(wddm->init());
+    EXPECT_EQ(nullptr, wddm->rootDeviceEnvironment.gmmHelper.get());
+}
+
 TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     auto gmmHelper = getGmmHelper();
@@ -600,10 +614,11 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandlesWhenCreateGraphicsAllocation
 
         EXPECT_EQ(4096u, wddmAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation());
 
-        if (i % 2)
+        if (i % 2) {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, reinterpret_cast<MockGmmResourceInfo *>(wddmAllocation->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
-        else
+        } else {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, reinterpret_cast<MockGmmResourceInfo *>(wddmAllocation->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
+        }
 
         mm.freeGraphicsMemory(graphicsAllocation);
         auto destroyWithResourceHandleCalled = 0u;
@@ -833,6 +848,29 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     EXPECT_TRUE(!!privateData->NoRingFlushes);
 }
 
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenInitIsCalledThenProperOrdinalIsSet) {
+    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.NodeOrdinal.set(4);
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    EXPECT_EQ(createContextParams->NodeOrdinal, GPUNODE_CCS0);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenOverrideIsCalledThenProperOrdinalIsSet) {
+    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.NodeOrdinal.set(4);
+    debugManager.flags.NodeOrdinalOverrideForCCS.set(8);
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    EXPECT_EQ(createContextParams->NodeOrdinal, 8u);
+}
+
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenCreateContextIsCalledThenDummyPageBackingEnabledFlagIsDisabled) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
@@ -863,7 +901,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) 
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoCallGdiDestroy) {
-    auto fenceHandle = osContext->getResidencyController().getMonitoredFence().fenceHandle;
+    auto fenceHandle = osContext->getMonitoredFence().fenceHandle;
 
     osContext.reset(nullptr);
     EXPECT_EQ(1u, wddmMockInterface->destroyMonitorFenceCalled);
@@ -963,7 +1001,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -989,7 +1027,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -997,7 +1035,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(10, osContext->getResidencyController().getMonitoredFence(), true);
+    auto status = wddm->waitFromCpu(10, osContext->getMonitoredFence(), true);
 
     EXPECT_TRUE(status);
 
@@ -1012,7 +1050,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -1020,7 +1058,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(20, osContext->getResidencyController().getMonitoredFence(), true);
+    auto status = wddm->waitFromCpu(20, osContext->getMonitoredFence(), true);
 
     EXPECT_TRUE(status);
 
@@ -1038,7 +1076,7 @@ TEST_F(Wddm20Tests, WhenCreatingMonitoredFenceThenItIsInitializedWithFenceValueZ
     wddm->wddmInterface->createMonitoredFence(*osContext);
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
-    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContext->getMonitoredFence().currentFenceValue);
 }
 
 NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
@@ -1124,8 +1162,7 @@ TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCal
 TEST_F(Wddm20Tests, givenTrimCallbackRegistrationIsDisabledInDebugVariableWhenRegisteringCallbackThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.DoNotRegisterTrimCallback.set(true);
-    WddmResidencyController residencyController{*wddm, 0u};
-    EXPECT_EQ(nullptr, wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, residencyController));
+    EXPECT_EQ(nullptr, wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}));
 }
 
 using WddmLockWithMakeResidentTests = Wddm20Tests;
@@ -1136,12 +1173,21 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatDoesntNeedMakeResidentB
     wddm->lockResource(ALLOCATION_HANDLE, false, 0x1000);
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    wddm->unlockResource(ALLOCATION_HANDLE);
+    wddm->unlockResource(ALLOCATION_HANDLE, false);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBeforeLockWhenLockThenCallBlockingMakeResident) {
     wddm->lockResource(ALLOCATION_HANDLE, true, 0x1000);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
+}
+
+TEST_F(WddmLockWithMakeResidentTests, givenAllocationAndForcePagingFenceTrueWhenApplyBlockingMakeResidentThenWaitOnPagingFenceFromCpuIsCalledWithIsKmdWaitNeededAsFalse) {
+    auto allocHandle = ALLOCATION_HANDLE;
+    const bool forcePagingFence = true;
+    wddm->temporaryResources->makeResidentResources(&allocHandle, 1u, 0x1000, forcePagingFence);
+    EXPECT_EQ(1u, mockTemporaryResources->acquireLockResult.called);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(&mockTemporaryResources->resourcesLock), mockTemporaryResources->acquireLockResult.uint64ParamPassed);
+    EXPECT_NE(forcePagingFence, wddm->waitOnPagingFenceFromCpuResult.isKmdWaitNeededPassed);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenAcquireUniqueLock) {
@@ -1469,7 +1515,7 @@ TEST_F(Wddm20WithMockGdiDllTests, WhenDestroyingSeparateMonitorFenceThenExpectGd
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
 
-    auto mockGmmMemory = new MockGmmMemoryBase(getGmmClientContext());
+    auto mockGmmMemory = new MockGmmMemory(getGmmClientContext());
     mockGmmMemory->setDeviceInfoResult = false;
 
     wddm->gmmMemory.reset(mockGmmMemory);
@@ -1482,7 +1528,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAd
     if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
-    auto gmmMemory = new MockGmmMemoryBase(getGmmClientContext());
+    auto gmmMemory = new MockGmmMemory(getGmmClientContext());
     wddm->gmmMemory.reset(gmmMemory);
 
     wddm->init();
@@ -1795,7 +1841,7 @@ TEST_F(WddmTestWithMockGdiDll, givenValidInputwhenSettingAllocationPriorityThenT
     EXPECT_EQ(static_cast<uint32_t>(DXGI_RESOURCE_PRIORITY_NORMAL), getLastPriorityFcn());
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsSuccesThenPciBusInfoIsValid) {
+TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsSuccessThenPciBusInfoIsValid) {
     ADAPTER_BDF queryAdapterBDF{};
     queryAdapterBDF.Bus = 1;
     queryAdapterBDF.Device = 2;
@@ -1834,6 +1880,34 @@ TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperD
     EXPECT_TRUE(wddm->queryAdapterInfo());
     uint16_t expectedDeviceId = 0x1234u;
     EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenForceProductFamilyWhenQueryAdapterInfoThenProperProductFamily) {
+    DebugManagerStateRestore restorer{};
+
+    debugManager.flags.ForceProductFamily.set("1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    auto expectedProductFamily = static_cast<PRODUCT_FAMILY>(1234);
+    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+
+    debugManager.flags.ForceProductFamily.set("0x1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    expectedProductFamily = static_cast<PRODUCT_FAMILY>(0x1234);
+    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenForceCoreFamilyWhenQueryAdapterInfoThenProperCoreFamily) {
+    DebugManagerStateRestore restorer{};
+
+    debugManager.flags.ForceCoreFamily.set("1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    auto expectedCoreFamily = static_cast<GFXCORE_FAMILY>(1234);
+    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
+
+    debugManager.flags.ForceCoreFamily.set("0x1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    expectedCoreFamily = static_cast<GFXCORE_FAMILY>(0x1234);
+    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
 }
 
 TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsNotSet) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <memory>
+
 using namespace NEO;
 
 // Tests for cl_khr_image2d_from_buffer
@@ -62,8 +63,7 @@ class ImageFromSubBufferTest : public ClDeviceFixture, public ::testing::Test {
 
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(
-            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         return Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                              flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
@@ -115,5 +115,6 @@ TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatin
     EXPECT_EQ(0u, surfaceOffsets.xOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
+    EXPECT_EQ(subBufferWithBigOffset->getCpuAddress(), imageFromSubBuffer->getCpuAddress());
     subBufferWithBigOffset->release();
 }

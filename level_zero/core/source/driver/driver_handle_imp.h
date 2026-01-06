@@ -9,16 +9,24 @@
 
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_pooling.h"
-#include "shared/source/os_interface/os_library.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/ze_intel_gpu.h"
 
 #include <map>
 #include <mutex>
 #include <unordered_map>
+
+namespace NEO {
+class Device;
+class MemoryManager;
+class OsLibrary;
+class UsmMemAllocPool;
+class UsmMemAllocPoolsManager;
+enum class AllocationType;
+struct SvmAllocationData;
+} // namespace NEO
 
 namespace L0 {
 class HostPointerManager;
@@ -26,25 +34,6 @@ struct FabricVertex;
 struct FabricEdge;
 struct Image;
 class ExternalSemaphoreController;
-
-#pragma pack(1)
-struct IpcMemoryData {
-    uint64_t handle = 0;
-    uint64_t poolOffset = 0;
-    uint8_t type = 0;
-};
-#pragma pack()
-static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
-struct IpcHandleTracking {
-    uint64_t refcnt = 0;
-    NEO::GraphicsAllocation *alloc = nullptr;
-    uint32_t handleId = 0;
-    uint64_t handle = 0;
-    uint64_t ptr = 0;
-    struct IpcMemoryData ipcData = {};
-};
-
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
     DriverHandleImp();
@@ -67,9 +56,9 @@ struct DriverHandleImp : public DriverHandle {
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
     MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
     MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
-    MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType);
-    ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
+    MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId);
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
+    NEO::StagingBufferManager *getStagingBufferManager() override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
@@ -104,7 +93,6 @@ struct DriverHandleImp : public DriverHandle {
     void initializeVertexes();
     ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) override;
     void createHostPointerManager();
-    void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
     bool isRemoteImageNeeded(Image *image, Device *device);
     bool isRemoteResourceNeeded(void *ptr,
@@ -118,12 +106,19 @@ struct DriverHandleImp : public DriverHandle {
 
     ze_result_t loadRTASLibrary() override;
     ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) override;
+    ze_result_t createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc, ze_rtas_builder_ext_handle_t *phBuilder) override;
     ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) override;
+    ze_result_t createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) override;
     ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) override;
+    ze_result_t formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA, ze_rtas_format_ext_t rtasFormatB) override;
 
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
     void initHostUsmAllocPool();
+    void initHostUsmAllocPoolOnce();
+    void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
+    void initDeviceUsmAllocPoolOnce();
+    NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
 
@@ -131,6 +126,7 @@ struct DriverHandleImp : public DriverHandle {
     std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;
 
     std::vector<Device *> devices;
+    std::vector<ze_device_handle_t> devicesToExpose;
     std::vector<FabricVertex *> fabricVertices;
     std::vector<FabricEdge *> fabricEdges;
     std::vector<FabricEdge *> fabricIndirectEdges;
@@ -145,7 +141,10 @@ struct DriverHandleImp : public DriverHandle {
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-    NEO::UsmMemAllocPool usmHostMemAllocPool;
+    std::unique_ptr<NEO::UsmMemAllocPool> usmHostMemAllocPool;
+    std::unique_ptr<NEO::UsmMemAllocPoolsManager> usmHostMemAllocPoolManager;
+    ze_context_handle_t defaultContext = nullptr;
+    std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
@@ -166,15 +165,23 @@ struct DriverHandleImp : public DriverHandle {
     NEO::DebuggingMode enableProgramDebugging = NEO::DebuggingMode::disabled;
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
+    bool lazyInitUsmPools = false;
+    std::once_flag hostUsmPoolOnceFlag;
+    std::once_flag deviceUsmPoolOnceFlag;
     uint8_t powerHint = 0;
 
-    // Error messages per thread, variable initialized / destoryed per thread,
+    // Error messages per thread, variable initialized / destroyed per thread,
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
     int setErrorDescription(const std::string &str) override;
     ze_result_t getErrorDescription(const char **ppString) override;
     ze_result_t clearErrorDescription() override;
+
+    ze_context_handle_t getDefaultContext() const override {
+        return defaultContext;
+    }
+    void setupDevicesToExpose();
 
   protected:
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -295,6 +295,19 @@ struct LocalIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int, 
         }
     }
 
+    bool isSimdSupported(const RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto &gfxHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        bool isSimdSupported = false;
+        for (auto size : gfxHelper.getDeviceSubGroupSizes()) {
+            if (size == simd) {
+                isSimdSupported = true;
+                break;
+            }
+        }
+
+        return isSimdSupported;
+    }
+
     // Test parameters
     uint32_t localWorkSizeX;
     uint32_t localWorkSizeY;
@@ -314,6 +327,10 @@ struct LocalIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int, 
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    if (!isSimdSupported(rootDeviceEnvironment)) {
+        GTEST_SKIP();
+    }
+
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, numGrf, rootDeviceEnvironment);
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
@@ -322,6 +339,10 @@ HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    if (!isSimdSupported(rootDeviceEnvironment)) {
+        GTEST_SKIP();
+    }
+
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, numGrf, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
@@ -331,6 +352,10 @@ HWTEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    if (!isSimdSupported(rootDeviceEnvironment)) {
+        GTEST_SKIP();
+    }
+
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize, numGrf, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
@@ -341,6 +366,10 @@ HWTEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    if (!isSimdSupported(rootDeviceEnvironment)) {
+        GTEST_SKIP();
+    }
+
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize, numGrf, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
@@ -351,6 +380,10 @@ HWTEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    if (!isSimdSupported(rootDeviceEnvironment)) {
+        GTEST_SKIP();
+    }
+
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize, numGrf, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
@@ -407,8 +440,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
             uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
             uint16_t currentX = baseX;
             for (int j = 1; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 if (simd == 32u && baseY + 8u > localWorkSize.at(1) && j == 16u) {
                     baseX += xDelta;
                     if (baseX == localWorkSize.at(0)) {
@@ -421,8 +455,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
 
             // validate Y row
             for (int j = 0; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
                 if (expectedY >= localWorkSize.at(1)) {
                     expectedY -= (localWorkSize.at(1) - baseY);
@@ -432,8 +467,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
 
             // validate Z row
             for (int j = 0; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], 0u);
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <memory>
 #include <string>
@@ -27,8 +27,9 @@ struct HardwareInfo;
 struct KernelInfo;
 struct MultiDispatchInfo;
 struct RootDeviceEnvironment;
-
 class ClGfxCoreHelper;
+enum class EngineGroupType : uint32_t;
+
 using createClGfxCoreHelperFunctionType = std::unique_ptr<ClGfxCoreHelper> (*)();
 
 class ClGfxCoreHelper : public ApiGfxCoreHelper {
@@ -40,7 +41,6 @@ class ClGfxCoreHelper : public ApiGfxCoreHelper {
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
     virtual cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const = 0;
     virtual bool getQueueFamilyName(std::string &name, EngineGroupType type) const = 0;
-    virtual bool preferBlitterForLocalToLocalTransfers() const = 0;
     virtual bool isSupportedKernelThreadArbitrationPolicy() const = 0;
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
     virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -68,7 +68,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
     cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const override;
     bool getQueueFamilyName(std::string &name, EngineGroupType type) const override;
-    bool preferBlitterForLocalToLocalTransfers() const override;
     bool isSupportedKernelThreadArbitrationPolicy() const override;
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
     cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
@@ -81,6 +80,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     ClGfxCoreHelperHw() = default;
 };
 
-extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 } // namespace NEO

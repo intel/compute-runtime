@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "common/gtsysinfo.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "test_files_setup.h"
+
+#include <cstdint>
 
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,3 +29,7 @@ const char *sysFsPciPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/devices/";
 const char *pciDevicesDirectory = NEO_SHARED_TEST_FILES_DIR "/linux/by-path";
 const char *sysFsProcPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/proc/";
 } // namespace Os
+
+namespace ContextGroup {
+uint32_t maxContextCount = 8;
+}

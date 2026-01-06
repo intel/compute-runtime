@@ -9,7 +9,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/release_helper/release_helper_base.inl"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 #include "release_definitions.h"
 
 namespace NEO {
@@ -22,14 +22,6 @@ bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
 template <>
 std::vector<uint32_t> ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
-}
-
-template <>
-uint32_t ReleaseHelperHw<release>::getNumThreadsPerEu() const {
-    if (debugManager.flags.Enable10ThreadsPerEu.get() == 0) {
-        return 8u;
-    }
-    return 10;
 }
 
 template <>

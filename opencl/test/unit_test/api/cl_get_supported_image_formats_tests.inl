@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device/device.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/source/device/root_device.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "cl_api_tests.h"
 
@@ -55,8 +58,9 @@ TEST_F(ClGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportIma
 TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSupportImageFormatsThenCLSuccessReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id clDevice = device.get();
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0)};
+    auto device = deviceFactory.rootDevices[0];
+    cl_device_id clDevice = device;
     cl_int retVal;
     auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -77,8 +81,9 @@ TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSu
 TEST(clGetSupportedImageFormatsTest, givenPlatformNotSupportingReadWriteImagesWhenGettingSupportedImageFormatsThenCLSuccessIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id clDevice = device.get();
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0)};
+    auto device = deviceFactory.rootDevices[0];
+    cl_device_id clDevice = device;
     cl_int retVal;
     auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -99,8 +104,9 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformNotSupportingReadWriteImagesWh
 TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageAndNullPointerToNumFormatsWhenGettingSupportImageFormatsThenCLSuccessReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id clDevice = device.get();
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0)};
+    auto device = deviceFactory.rootDevices[0];
+    cl_device_id clDevice = device;
     cl_int retVal;
     auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -127,7 +133,7 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformWithoutDevicesWhenClGetSupport
     }
     cl_device_id clDevice = device.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<MockContext>(MockContext::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());

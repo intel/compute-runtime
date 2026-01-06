@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
@@ -49,11 +50,11 @@ constexpr size_t heapRegularSize = reservedRangeSize - heapFrontWindowSize;
 using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
 BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : rootDevice(rootDevice),
-                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
                                                                                              memManager(rootDevice->getMemoryManager()),
-                                                                                             isMultiOsContextCapable(isMultiOsContextCapable),
+                                                                                             deviceBitfield(rootDevice->getDeviceBitfield()),
+                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
-                                                                                             deviceBitfield(rootDevice->getDeviceBitfield()) {
+                                                                                             isMultiOsContextCapable(isMultiOsContextCapable) {
 
     for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
@@ -77,6 +78,9 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
     memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
     float borderColorAlpha[4] = {0, 0, 0, 1.0};
     memcpy_s(ptrOffset(borderColorStates->getUnderlyingBuffer(), borderColorAlphaOffset), sizeof(borderColorAlpha), borderColorAlpha, sizeof(borderColorDefault));
+
+    auto &hwInfo = *rootDevice->getRootDeviceEnvironment().getHardwareInfo();
+    this->heaplessEnabled = rootDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
 }
 
 std::optional<AddressRange> BindlessHeapsHelper::reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex) {
@@ -235,6 +239,10 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         memset(ptrInHeap, 0, ssSize);
         auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
 
+        if (this->heaplessEnabled) {
+            bindlessOffset += heap->getGraphicsAllocation()->getGpuBaseAddress();
+        }
+
         bindlesInfo = SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap, ssSize};
     }
 
@@ -285,7 +293,7 @@ void BindlessHeapsHelper::releaseSSToReusePool(const SurfaceStateInHeapInfo &sur
     if (surfStateInfo.heapAllocation != nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
         int index = getReusedSshVectorIndex(surfStateInfo.ssSize);
-        surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(std::move(surfStateInfo));
+        surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(surfStateInfo);
     }
 
     return;

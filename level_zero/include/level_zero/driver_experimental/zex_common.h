@@ -10,6 +10,7 @@
 #if defined(__cplusplus)
 #pragma once
 #endif
+#include "level_zero/ze_stypes.h"
 #include <level_zero/ze_api.h>
 
 #if defined(__cplusplus)
@@ -25,6 +26,12 @@ typedef ze_command_list_handle_t zex_command_list_handle_t;
 typedef ze_event_handle_t zex_event_handle_t;
 
 #define ZEX_BIT(_i) (1 << _i)
+
+#if defined(__cplusplus)
+#define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#else
+#define EXTENDED_ENUM(ENUM_T, VALUE) ((ENUM_T)VALUE)
+#endif
 
 typedef uint32_t zex_mem_action_scope_flags_t;
 typedef enum _zex_mem_action_scope_flag_t {
@@ -87,7 +94,7 @@ typedef struct _ze_synchronized_dispatch_exp_desc_t ze_synchronized_dispatch_exp
 /// @brief Command queue or command list descriptor for synchronized dispatch. This structure may be
 ///        passed as pNext member of ::ze_command_queue_desc_t. or ::ze_command_list_desc_t.
 typedef struct _ze_synchronized_dispatch_exp_desc_t {
-    ze_structure_type_t stype;                  ///< [in] type of this structure
+    ze_structure_type_ext_t stype;              ///< [in] type of this structure
     const void *pNext;                          ///< [in][optional] must be null or a pointer to an extension-specific
                                                 ///< structure (i.e. contains stype and pNext).
     ze_synchronized_dispatch_exp_flags_t flags; ///< [in] mode flags.
@@ -102,7 +109,7 @@ typedef struct _ze_intel_media_communication_desc_t ze_intel_media_communication
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief ze_intel_media_communication_desc_t
 typedef struct _ze_intel_media_communication_desc_t {
-    ze_structure_type_t stype;              ///< [in] type of this structure
+    ze_structure_type_ext_t stype;          ///< [in] type of this structure
     void *pNext;                            ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
     void *controlSharedMemoryBuffer;        ///< [in] control shared memory buffer pointer, must be USM address
     uint32_t controlSharedMemoryBufferSize; ///< [in] control shared memory buffer size
@@ -118,9 +125,9 @@ typedef struct _ze_intel_media_doorbell_handle_desc_t ze_intel_media_doorbell_ha
 /// @brief ze_intel_media_doorbell_handle_desc_t
 /// @details Handle of the doorbell. This structure is passed as argument of zeIntelMediaCommunicationCreate and zeIntelMediaCommunicationDestroy
 typedef struct _ze_intel_media_doorbell_handle_desc_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    void *pNext;               ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
-    void *doorbell;            ///< [in,out] handle of the doorbell
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                   ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
+    void *doorbell;                ///< [in,out] handle of the doorbell
 } ze_intel_media_doorbell_handle_desc_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,7 +146,7 @@ typedef struct _ze_intel_device_media_exp_properties_t ze_intel_device_media_exp
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief  May be passed to ze_device_properties_t through pNext.
 typedef struct _ze_intel_device_media_exp_properties_t {
-    ze_structure_type_t stype;               ///< [in] type of this structure
+    ze_structure_type_ext_t stype;           ///< [in] type of this structure
     const void *pNext;                       ///< [in][optional] must be null or a pointer to an extension-specific
     ze_intel_device_media_exp_flags_t flags; ///< [out] device media flags
     uint32_t numEncoderCores;                ///< [out] number of encoder cores
@@ -177,12 +184,15 @@ typedef enum _zex_counter_based_event_exp_flag_t {
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP = ZE_BIT(4),        ///< Event contains kernel timestamps
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP = ZE_BIT(5), ///< Event contains kernel timestamps synchronized to host time domain.
                                                                       ///< Cannot be combined with::ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP
+    ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL = ZE_BIT(6),                ///< Events with this flag, when used in graph record and replay or
+                                                                      ///< in a cloned command list, can also be used for external synchronization,
+                                                                      ///< for example, as a wait event outside of a graph or for a host synchronization.
     ZEX_COUNTER_BASED_EVENT_FLAG_FORCE_UINT32 = 0x7fffffff
 
 } zex_counter_based_event_exp_flag_t;
 
 typedef struct _zex_counter_based_event_desc_t {
-    ze_structure_type_t stype;                 ///< [in] type of this structure
+    ze_structure_type_ext_t stype;             ///< [in] type of this structure
     const void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
     zex_counter_based_event_exp_flags_t flags; ///< [in] counter based event flags.
                                                ///< Must be 0 (default) or a valid combination of ::zex_counter_based_event_exp_flag_t
@@ -198,27 +208,43 @@ typedef struct _zex_counter_based_event_desc_t {
                                                ///< additional cache hierarchies are invalidated.
 } zex_counter_based_event_desc_t;
 
+static const zex_counter_based_event_desc_t defaultIntelCounterBasedEventDesc = {
+    ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, // stype
+    nullptr,                                // pNext
+    ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE, // flags
+    ZE_EVENT_SCOPE_FLAG_HOST,                      // signalScope
+    ZE_EVENT_SCOPE_FLAG_DEVICE                     // waitScope
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Initial Counter Based Event synchronization parameters. This structure may be
 ///        passed as pNext member of ::zex_counter_based_event_desc_t.
 typedef struct _zex_counter_based_event_external_sync_alloc_properties_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
-    uint64_t *deviceAddress;   ///< [in] device address for external synchronization allocation
-    uint64_t *hostAddress;     ///< [in] host address for external synchronization allocation
-    uint64_t completionValue;  ///< [in] completion value for external synchronization allocation
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+    uint64_t *deviceAddress;       ///< [in] device address for external synchronization allocation
+    uint64_t *hostAddress;         ///< [in] host address for external synchronization allocation
+    uint64_t completionValue;      ///< [in] completion value for external synchronization allocation
 } zex_counter_based_event_external_sync_alloc_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Initial Counter Based Event synchronization parameters. This structure may be
 ///        passed as pNext member of ::zex_counter_based_event_desc_t.
 typedef struct _zex_counter_based_event_external_storage_properties_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
-    uint64_t *deviceAddress;   ///< [in] device address that would be updated with atomic_add upon signaling of this event, must be device USM memory
-    uint64_t incrementValue;   ///< [in] value which would by atomically added upon each completion
-    uint64_t completionValue;  ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+    uint64_t *deviceAddress;       ///< [in] device address that would be updated with atomic_add upon signaling of this event, must be device USM memory
+    uint64_t incrementValue;       ///< [in] value which would by atomically added upon each completion
+    uint64_t completionValue;      ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed
 } zex_counter_based_event_external_storage_properties_t;
+
+typedef enum _zex_verify_memory_compare_type_t {
+    ZEX_VERIFY_MEMORY_COMPARE_EQUAL = 0,                // compare memory for equality
+    ZEX_VERIFY_MEMORY_COMPARE_NOT_EQUAL = 1,            // compare memory for inequality
+    ZEX_VERIFY_MEMORY_COMPARE_FORCE_UINT32 = 0x7fffffff ///< Value marking end of ZEX_VERIFY_MEMORY_COMPARE* ENUMs
+} zex_verify_memory_compare_type_t;
 
 #if defined(__cplusplus)
 } // extern "C"

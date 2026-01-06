@@ -5,8 +5,8 @@
  *
  */
 
-#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -16,13 +16,15 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/enqueue_read_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 
 using namespace NEO;
 
@@ -92,7 +94,7 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageThenBuiltinKernelIsResolved) 
     EXPECT_TRUE(pCommand->peekKernel()->isPatched());
     userEvent.setStatus(CL_COMPLETE);
     pEvent->release();
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }
 
 template <typename GfxFamily>
@@ -112,7 +114,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfa
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
 
-    auto srcImage = Image2dHelper<>::create(context);
+    auto srcImage = Image2dHelperUlt<>::create(context);
     auto retVal = cmdQ.enqueueReadImage(srcImage, CL_FALSE,
                                         EnqueueReadImageTraits::origin,
                                         EnqueueReadImageTraits::region,
@@ -136,7 +138,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfa
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
 
-    auto srcImage = Image2dHelper<>::create(context);
+    auto srcImage = Image2dHelperUlt<>::create(context);
     auto retVal = cmdQ.enqueueReadImage(srcImage, CL_TRUE,
                                         EnqueueReadImageTraits::origin,
                                         EnqueueReadImageTraits::region,
@@ -167,12 +169,7 @@ struct CreateAllocationForHostSurfaceCsr : public CommandStreamReceiverHw<GfxFam
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        return CompletionStamp{0u, 0u, static_cast<FlushStamp>(0u)};
-    }
 
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         return CompletionStamp{0u, 0u, static_cast<FlushStamp>(0u)};
     }
 };
@@ -230,7 +227,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThen
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
-    auto pImage = Image2dHelper<>::create(&context);
+    auto pImage = Image2dHelperUlt<>::create(&context);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
     UserEvent userEvent{};
@@ -269,7 +266,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThen
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -280,7 +277,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
-    auto pImage = Image2dHelper<>::create(&context);
+    auto pImage = Image2dHelperUlt<>::create(&context);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
     UserEvent userEvent{};
@@ -350,7 +347,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent0->release();
     pEvent1->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -360,7 +357,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
-    auto pImage = Image2dHelper<>::create(&context);
+    auto pImage = Image2dHelperUlt<>::create(&context);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ1->getGpgpuCommandStreamReceiver());
 
@@ -373,7 +370,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
     EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
     EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
     EXPECT_LT(currentTaskCount, ultCsr.peekTaskCount());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -385,14 +382,14 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
-    auto pImage = Image2dHelper<>::create(&context);
+    auto pImage = Image2dHelperUlt<>::create(&context);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
     EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
 
     {
         HardwareParse hwParser;
@@ -421,7 +418,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
     auto pCmdQ2 = createCommandQueue(context.getDevice(1), nullptr, &context);
 
-    auto pImage = Image2dHelper<>::create(&context);
+    auto pImage = Image2dHelperUlt<>::create(&context);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
     auto &ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ1->getGpgpuCommandStreamReceiver());
     auto &ultCsr2 = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ2->getGpgpuCommandStreamReceiver());
@@ -447,7 +444,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_TRUE(ultCsr1.flushTagUpdateCalled);
     EXPECT_FALSE(ultCsr2.flushBatchedSubmissionsCalled);
     EXPECT_LT(currentTaskCount1, ultCsr1.peekTaskCount());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ2, pImage, CL_FALSE,
                                                EnqueueReadImageTraits::origin,
@@ -464,7 +461,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_TRUE(ultCsr2.flushBatchedSubmissionsCalled);
     EXPECT_TRUE(ultCsr2.flushTagUpdateCalled);
     EXPECT_LT(currentTaskCount2, ultCsr2.peekTaskCount());
-    pCmdQ2->finish();
+    pCmdQ2->finish(false);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE,
                                                EnqueueReadImageTraits::origin,
@@ -478,13 +475,13 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
                                                nullptr);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pCmdQ2->release();
     pImage->release();
 }
 
-HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration, MatchAny) {
+HWTEST_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration) {
 
     MockDefaultContext context{true};
 
@@ -502,7 +499,7 @@ HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnq
     imageDesc.mem_object = clBuffer;
 
     EXPECT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
-    auto pImage = Image2dHelper<>::create(&context, &imageDesc);
+    auto pImage = Image2dHelperUlt<>::create(&context, &imageDesc);
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
     UserEvent userEvent{};
@@ -539,7 +536,7 @@ HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnq
 
     EXPECT_EQ(0u, pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
     pBuffer->release();
@@ -672,7 +669,7 @@ HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(srcAllocation->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenPipelineSelectIsProgrammed, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenPipelineSelectIsProgrammed, IsAtMostXeCore) {
     enqueueReadImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -711,7 +708,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, GivenBlockingEnqueueWhenRea
 }
 
 HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtrSizeIsCalculatedProperly) {
-    std::unique_ptr<Image> srcImage(Image1dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image1dArrayHelperUlt<>::create(context));
     auto &imageDesc = srcImage->getImageDesc();
     auto imageSize = imageDesc.image_width * imageDesc.image_array_size * 4;
     size_t origin[] = {0, 0, 0};
@@ -730,18 +727,19 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitchIsSetToSlicePitch) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
+
+    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled());
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
-    std::unique_ptr<Image> srcImage(Image1dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image1dArrayHelperUlt<>::create(context));
     auto &imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_array_size, 1};
@@ -756,15 +754,14 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
     EXPECT_EQ(params->dstRowPitch, slicePitch);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }
 
 HWTEST_F(EnqueueReadImageTest, GivenImage2DarrayWhenReadImageIsCalledThenHostPtrSizeIsCalculatedProperly) {
-    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image2dArrayHelperUlt<>::create(context));
     auto &imageDesc = srcImage->getImageDesc();
     auto imageSize = imageDesc.image_width * imageDesc.image_height * imageDesc.image_array_size * 4;
     size_t origin[] = {0, 0, 0};
@@ -782,7 +779,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage2DarrayWhenReadImageIsCalledThenHostPtr
 
 HWTEST_F(EnqueueReadImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadReadImageIsCalledThenImageIsNotRead) {
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Image> dstImage2(Image1dHelper<>::create(context));
+    std::unique_ptr<Image> dstImage2(Image1dHelperUlt<>::create(context));
     auto &imageDesc = dstImage2->getImageDesc();
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     size_t origin[] = {0, 0, 0};
@@ -811,7 +808,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPt
 
 HWTEST_F(EnqueueReadImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithHostPtrWhenReadReadImageIsCalledThenImageIsNotRead) {
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Image> dstImage2(Image1dArrayHelper<>::create(context));
+    std::unique_ptr<Image> dstImage2(Image1dArrayHelperUlt<>::create(context));
     auto &imageDesc = dstImage2->getImageDesc();
     size_t origin[] = {imageDesc.image_width / 2, imageDesc.image_array_size / 2, 0};
     size_t region[] = {imageDesc.image_width - (imageDesc.image_width / 2), imageDesc.image_array_size - (imageDesc.image_array_size / 2), 1};
@@ -839,7 +836,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithH
 
 HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSamePointerAndOutputEventIsPassedThenEventHasCorrectCommandTypeSet) {
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Image> dstImage(Image1dHelper<>::create(context));
+    std::unique_ptr<Image> dstImage(Image1dHelperUlt<>::create(context));
     auto &imageDesc = dstImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
@@ -881,7 +878,7 @@ struct EnqueueReadImageTestWithBcs : EnqueueReadImageTest {
 
 HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageIsCalledThenItCallsNotifyFunction) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image2dArrayHelperUlt<>::create(context));
     auto &imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
@@ -893,7 +890,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageIsCalledThen
 
 HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageWithMapAllocationIsCalledThenItDoesntCallNotifyFunction) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image2dArrayHelperUlt<>::create(context));
     auto &imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
@@ -910,7 +907,7 @@ HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageBlockingWhenAUBDumpAllocsOnE
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
-    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image2dArrayHelperUlt<>::create(context));
     srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto &imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
@@ -927,7 +924,7 @@ HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageNonBlockingWhenAUBDumpAllocs
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
-    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    std::unique_ptr<Image> srcImage(Image2dArrayHelperUlt<>::create(context));
     srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto &imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
@@ -945,15 +942,16 @@ typedef EnqueueReadImageMipMapTest MipMapReadImageTest;
 HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalledThenProperMipLevelIsSet) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
+
+    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled());
     auto imageType = (cl_mem_object_type)GetParam();
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         eBuiltInOp,
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         eBuiltInOp,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
@@ -971,25 +969,25 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     switch (imageType) {
     case CL_MEM_OBJECT_IMAGE1D:
         origin[1] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &imageDesc));
+        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context, &imageDesc));
         break;
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:
         imageDesc.image_array_size = 2;
         origin[2] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(context, &imageDesc));
+        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
         break;
     case CL_MEM_OBJECT_IMAGE2D:
         origin[2] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &imageDesc));
+        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
         break;
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
         imageDesc.image_array_size = 2;
         origin[3] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &imageDesc));
+        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
         break;
     case CL_MEM_OBJECT_IMAGE3D:
         origin[3] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+        image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
         break;
     }
     EXPECT_NE(nullptr, image.get());
@@ -1016,8 +1014,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     EXPECT_EQ(expectedMipLevel, params->srcMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         eBuiltInOp,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
@@ -1077,13 +1074,9 @@ HWTEST_F(OneMipLevelReadImageTests, GivenNotMippedImageWhenReadingImageThenDoNot
 }
 
 HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAllocation) {
-    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
-    if (!svmSupported) {
-        GTEST_SKIP();
-    }
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
 
@@ -1097,7 +1090,7 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAlloc
                                                0u,
                                                nullptr,
                                                nullptr);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
@@ -1106,21 +1099,18 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAlloc
 
 struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueReadImageTest::SetUp();
         ptr = new unsigned char[readSize];
-        device.reset(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+        device.reset(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     }
 
     void TearDown() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            return;
-        }
         delete[] ptr;
         EnqueueReadImageTest::TearDown();
     }
 
-    static constexpr size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    static constexpr size_t stagingBufferSize = MemoryConstants::pageSize;
+    static constexpr size_t pitchSize = stagingBufferSize / 2;
     static constexpr size_t readSize = stagingBufferSize * 4;
     unsigned char *ptr;
     size_t origin[3] = {0, 0, 0};
@@ -1131,7 +1121,7 @@ struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
 
 HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
     EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
@@ -1139,10 +1129,10 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledThenReturn
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
 
-HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRowPitchThenReturnSuccess) {
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRowPitchNorSlicePitchThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    region[0] = MemoryConstants::megaByte / srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, 0u, MemoryConstants::megaByte, ptr, nullptr);
+    region[0] = pitchSize / srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
@@ -1152,7 +1142,7 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRow
 
 HWTEST_F(ReadImageStagingBufferTest, whenBlockingEnqueueStagingReadImageCalledThenFinishCalled) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, true, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, true, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(1u, mockCommandQueueHw.finishCalledCount);
@@ -1162,7 +1152,7 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithEventT
     constexpr cl_command_type expectedCmd = CL_COMMAND_READ_IMAGE;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(expectedCmd, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(expectedCmd, srcImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -1176,7 +1166,7 @@ HWTEST_F(ReadImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingReadI
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -1192,7 +1182,7 @@ HWTEST_F(ReadImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingReadI
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
     region[1] = 1;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -1206,7 +1196,7 @@ HWTEST_F(ReadImageStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagin
     cl_event event;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.setProfilingEnabled();
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -1219,7 +1209,7 @@ HWTEST_F(ReadImageStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagin
 HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageFailedThenPropagateErrorCode) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.enqueueReadImageCallBase = false;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueReadImageCounter);
@@ -1230,8 +1220,85 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithGpuHan
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_IMAGE, srcImage, nullptr, pDevice->getRootDeviceIndex(), region, nullptr, origin};
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&mockCommandQueueHw.selectCsrForBuiltinOperation(csrSelectionArgs));
     ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_OUT_OF_RESOURCES);
     EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledFor3DImageThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.num_mip_levels = 0;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 4;
+    imageDesc.image_depth = 64;
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 4};
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
+
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, image.get(), false, origin, region, 4u, pitchSize, ptr, nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    // (2, 2, 4) split into (2, 2, 2) * 2
+    EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(EnqueueReadImageTest, given4gbImageAndIsForceStatelessIsFalseWhenEnqueueReadImageCallThenSuccessIsReturned) {
+    struct FourGbMockImage : MockImageBase {
+        size_t getSize() const override { return static_cast<size_t>(4ull * MemoryConstants::gigaByte); }
+    };
+
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
+    mockCmdQ->isForceStateless = false;
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+    FourGbMockImage srcImage;
+    auto imageDesc = srcImage.getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char ptr[1] = {};
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    auto status = mockCmdQ->enqueueReadImage(&srcImage,
+                                             CL_FALSE,
+                                             origin,
+                                             region,
+                                             0,
+                                             0,
+                                             ptr,
+                                             nullptr,
+                                             0,
+                                             0,
+                                             nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
 }

@@ -8,7 +8,6 @@
 #include "shared/test/unit_test/os_interface/aub_memory_operations_handler_tests.h"
 
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -242,7 +241,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAllocationWhenMakeResidentCalledThe
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
-    EXPECT_EQ(aubManager.hintToWriteMemory, AubMemDump::DataTypeHintValues::TraceNotype);
+    EXPECT_EQ(aubManager.hintToWriteMemory, aub_stream::DataTypeHintValues::TraceNotype);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenIsResidentCalledThenFalseReturned) {
     MockAubManager aubManager;

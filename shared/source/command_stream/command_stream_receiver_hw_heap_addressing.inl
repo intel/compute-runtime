@@ -25,7 +25,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 }
 
 template <typename GfxFamily>
-CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     LinearStream &commandStream, size_t commandStreamStart,
     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {
@@ -52,11 +52,6 @@ template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::programHeaplessProlog(Device &device) {
     UNRECOVERABLE_IF(true);
     return SubmissionStatus::unsupported;
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressHeapless(Device &device, LinearStream &commandStream) {
-    UNRECOVERABLE_IF(true);
 }
 
 template <typename GfxFamily>

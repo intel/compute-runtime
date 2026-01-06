@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
-
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/sysman_const.h"
 
@@ -44,6 +42,22 @@ ze_result_t RasImp::rasClearStateExp(zes_ras_error_category_exp_t category) {
 
 void RasImp::init() {
     pOsRas->osRasGetProperties(rasProperties);
+}
+
+ze_result_t RasImp::rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
+    return pOsRas->osRasGetSupportedCategoriesExp(pCount, pCategories);
+}
+
+ze_result_t RasImp::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    return pOsRas->osRasGetConfigExp(count, pConfig);
+}
+
+ze_result_t RasImp::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    return pOsRas->osRasSetConfigExp(count, pConfig);
+}
+
+ze_result_t RasImp::rasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
+    return pOsRas->osRasGetStateExp(count, pState);
 }
 
 RasImp::RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t isSubDevice, uint32_t subDeviceId) {

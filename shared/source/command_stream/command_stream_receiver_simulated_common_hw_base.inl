@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hardware_context_controller.h"
-#include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -27,22 +26,13 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO() {
-    if (debugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
-        auto mmioList = AubHelper::getAdditionalMmioList();
-        for (auto &mmioPair : mmioList) {
-            stream->writeMMIO(mmioPair.first, mmioPair.second);
-        }
-    }
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &osContext) {
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
-    auto engineType = osContext.getEngineType();
     uint32_t flags = 0;
-    getCsTraits(engineType).setContextSaveRestoreFlags(flags);
+    if (NEO::debugManager.flags.ForceRunAloneContext.get() == 1) {
+        flags |= aub_stream::hardwareContextFlags::runAlone;
+    }
 
     if (osContext.isPartOfContextGroup()) {
         constexpr uint32_t contextGroupBit = aub_stream::hardwareContextFlags::contextGroup;
@@ -53,10 +43,6 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
         flags |= aub_stream::hardwareContextFlags::highPriority;
     } else if (osContext.isLowPriority()) {
         flags |= aub_stream::hardwareContextFlags::lowPriority;
-    }
-
-    if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {
-        flags |= static_cast<uint32_t>(debugManager.flags.AppendAubStreamContextFlags.get());
     }
 
     if (aubManager) {
@@ -74,8 +60,9 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(G
         size = graphicsAllocation.getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     }
 
-    if (size == 0)
+    if (size == 0) {
         return false;
+    }
 
     if (cpuAddress == nullptr && graphicsAllocation.isAllocationLockable()) {
         cpuAddress = this->getMemoryManager()->lockResource(&graphicsAllocation);
@@ -85,40 +72,27 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(G
 
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
-    return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+    auto gpuAddress = this->peekGmmHelper()->decanonize(castToUint64(gfxAddress));
+    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
+                              aub_stream::CompareOperationValues::CompareEqual);
 }
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
-    return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+    auto gpuAddress = this->peekGmmHelper()->decanonize(castToUint64(gfxAddress));
+    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {
-    return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::freeEngineInfo(AddressMapper &gttRemap) {
-    alignedFree(engineInfo.pLRCA);
-    gttRemap.unmap(engineInfo.pLRCA);
-    engineInfo.pLRCA = nullptr;
-
-    alignedFree(engineInfo.pGlobalHWStatusPage);
-    gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
-    engineInfo.pGlobalHWStatusPage = nullptr;
-
-    alignedFree(engineInfo.pRingBuffer);
-    gttRemap.unmap(engineInfo.pRingBuffer);
-    engineInfo.pRingBuffer = nullptr;
+    auto gpuAddress = this->peekGmmHelper()->decanonize(castToUint64(gfxAddress));
+    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
         dumpAllocation(gfxAllocation);
-        this->getEvictionAllocations().push_back(&gfxAllocation);
         gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
     }
 }

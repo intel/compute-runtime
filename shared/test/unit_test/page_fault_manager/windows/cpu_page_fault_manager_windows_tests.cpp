@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -134,26 +135,26 @@ TEST_F(PageFaultManagerTest,
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     csr->setupContext(*osContext);
-    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(executionEnvironment.memoryManager.get(), false);
+    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(executionEnvironment.memoryManager.get());
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
 
     OSInterface osInterface;
     RootDeviceIndicesContainer rootDeviceIndices = {0};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{0, 0b1}};
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager->createUnifiedAllocationWithDeviceStorage(4096u, {}, unifiedMemoryProperties);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), cmdQ, {});
 
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
     pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
 
     pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
 
     pageFaultManager->allowCPUMemoryEvictionImpl(false, ptr, *csr, &osInterface);
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
 
     unifiedMemoryManager->freeSVMAlloc(ptr);
 }

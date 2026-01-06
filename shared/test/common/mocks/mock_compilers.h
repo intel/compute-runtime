@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,26 @@
 
 #pragma once
 
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/test/common/mocks/mock_cif.h"
 
+#include "cif/builtins/memory/buffer/buffer.h"
+#include "cif/common/cif.h"
+#include "cif/common/id.h"
+#include "igc_interface.h"
+#include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/fcl_ocl_translation_ctx.h"
+#include "ocl_igc_interface/gt_system_info.h"
+#include "ocl_igc_interface/igc_features_and_workarounds.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
+#include "ocl_igc_interface/igc_ocl_translation_ctx.h"
+#include "ocl_igc_interface/ocl_translation_output.h"
+#include "ocl_igc_interface/platform.h"
 
-#include <functional>
-#include <map>
+#include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace NEO {
 
@@ -79,7 +90,7 @@ void clearIgcDebugVars();
 MockCompilerDebugVars getFclDebugVars();
 MockCompilerDebugVars getIgcDebugVars();
 
-struct MockCIFPlatform : MockCIF<IGC::PlatformTagOCL> {
+struct MockCIFPlatform : MockCIF<NEO::PlatformTag> {
     IGC::TypeErasedEnum GetProductFamily() const override {
         return productFamily;
     }
@@ -98,7 +109,7 @@ struct MockCIFPlatform : MockCIF<IGC::PlatformTagOCL> {
     IGC::TypeErasedEnum renderCoreFamily;
 };
 
-struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
+struct MockGTSystemInfo : MockCIF<NEO::GTSystemInfoTag> {
     uint32_t GetEUCount() const override {
         return this->euCount;
     }
@@ -131,7 +142,7 @@ struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
     uint32_t subsliceCount;
 };
 
-struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTagOCL> {
+struct MockIgcFeaturesAndWorkarounds : MockCIF<NEO::IgcFeaturesAndWorkaroundsTag> {
     uint32_t GetMaxOCLParamSize() const override {
         return this->maxOCLParamSize;
     };
@@ -139,8 +150,8 @@ struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTag
     uint32_t maxOCLParamSize = 0;
 };
 
-struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
-    using MockCIF<IGC::IgcOclTranslationCtxTagOCL>::TranslateImpl;
+struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
+    using MockCIF<NEO::IgcOclTranslationCtxTag>::TranslateImpl;
     MockIgcOclTranslationCtx();
     ~MockIgcOclTranslationCtx() override;
 
@@ -178,7 +189,7 @@ struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
         void *gtPinInput) override;
 };
 
-struct MockOclTranslationOutput : MockCIF<IGC::OclTranslationOutputTagOCL> {
+struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
     MockOclTranslationOutput();
     ~MockOclTranslationOutput() override;
     CIF::Builtins::BufferBase *GetBuildLogImpl(CIF::Version_t bufferVersion) override;
@@ -253,7 +264,7 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
     std::vector<TranslationOpT> requestedTranslationCtxs;
 };
 
-struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
+struct MockFclOclTranslationCtx : MockCIF<NEO::FclOclTranslationCtxTag> {
     MockFclOclTranslationCtx();
     ~MockFclOclTranslationCtx() override;
 
@@ -266,7 +277,7 @@ struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
         uint32_t tracingOptionsCount) override;
 };
 
-struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
+struct MockFclOclDeviceCtx : MockCIF<NEO::FclOclDeviceCtxTag> {
     MockFclOclDeviceCtx();
     ~MockFclOclDeviceCtx() override;
 

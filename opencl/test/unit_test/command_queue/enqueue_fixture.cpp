@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,10 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 
 #include "shared/source/helpers/ptr_math.h"
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
 
 // clang-format off
 // EnqueueTraits

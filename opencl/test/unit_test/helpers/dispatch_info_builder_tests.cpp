@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -271,7 +271,7 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue)
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         ASSERT_EQ(pKernel, dispatchInfo.getKernel());
-        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
+        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
 
     delete diBuilder;
@@ -295,7 +295,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
 
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
-        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
+        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
 
     // 2D
@@ -305,7 +305,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
     diBuilder2D->bake(mdi2D);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
-        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
+        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
 
     // 3D
@@ -316,7 +316,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
 
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
-        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
+        EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
 
     delete diBuilder3D;

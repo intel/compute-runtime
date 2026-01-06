@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,8 @@ constexpr uint32_t slmSizePerSs = 73;
 constexpr uint32_t numHbmStacksPerTile = 74;
 constexpr uint32_t numChannelsPerHbmStack = 75;
 constexpr uint32_t numRegions = 83;
+constexpr uint32_t numL3BanksPerGroup = 84;
+constexpr uint32_t numL3BankGroups = 85;
 
 enum MemoryType {
     lpddr4,
@@ -59,8 +61,10 @@ struct SystemInfo {
     uint32_t getL3BankSizeInKb() const { return l3BankSizeInKb; }
     uint32_t getSlmSizePerDss() const { return slmSizePerDss; }
     uint32_t getNumHbmStacksPerTile() const { return numHbmStacksPerTile; }
-    uint32_t getNumChannlesPerHbmStack() const { return numChannelsPerHbmStack; }
+    uint32_t getNumChannelsPerHbmStack() const { return numChannelsPerHbmStack; }
     uint32_t getNumRegions() const { return numRegions; }
+    uint32_t getNumL3BanksPerGroup() const { return numL3BanksPerGroup; }
+    uint32_t getNumL3BankGroups() const { return numL3BankGroups; }
 
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
@@ -81,6 +85,8 @@ struct SystemInfo {
     uint32_t numHbmStacksPerTile = 0;
     uint32_t numChannelsPerHbmStack = 0;
     uint32_t numRegions = 0;
+    uint32_t numL3BanksPerGroup = 0;
+    uint32_t numL3BankGroups = 0;
 };
 
 } // namespace NEO

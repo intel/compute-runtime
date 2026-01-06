@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEn
     }
     if (slmTotalSize > 0) {
         if (localMemSize < slmTotalSize) {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         }
         UNRECOVERABLE_IF(localMemSize < slmTotalSize);
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
@@ -71,6 +71,10 @@ void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
         targetRatio = yTilingRatioValue;
         useStrictRatio = true;
     }
+}
+
+void WorkSizeInfo::setPreferredWgCountPerSubslice(uint32_t preferredWgCount) {
+    preferredWgCountPerSubSlice = preferredWgCount;
 }
 
 } // namespace NEO

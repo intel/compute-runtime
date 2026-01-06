@@ -20,6 +20,7 @@ class SkuInfoReceiver {
   protected:
     static void receiveFtrTableFromAdapterInfoBase(FeatureTable *ftrTable, ADAPTER_INFO_KMD *adapterInfo) {
         ftrTable->flags.ftrWddmHwQueues = adapterInfo->SkuTable.FtrHwScheduling;
+        ftrTable->flags.ftrHeaplessMode = adapterInfo->SkuTable.FtrEfficient64BitAddressing;
 
 #define RECEIVE_FTR(VAL_NAME) ftrTable->flags.ftr##VAL_NAME = adapterInfo->SkuTable.Ftr##VAL_NAME
         RECEIVE_FTR(GpGpuMidBatchPreempt);

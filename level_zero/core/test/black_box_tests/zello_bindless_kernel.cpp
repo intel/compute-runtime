@@ -6,16 +6,13 @@
  */
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
-#include "level_zero/driver_experimental/ze_bindless_image_exp.h"
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
 #include "zello_compile.h"
 
-#include <array>
 #include <cstring>
 #include <iostream>
-#include <numeric>
 #include <sstream>
 
 namespace {
@@ -1423,7 +1420,7 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
             SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImageFunctionPtr(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
 
             if (LevelZeroBlackBoxTests::verbose) {
-                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimesions
+                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimensions
                     "\n\t imageWidth = " << imageWidth <<                                 //
                     "\n\t imageHeight = " << imageHeight <<                               //
                     "\n\t elementSizeInBytes = " << elementSizeInBytes <<                 //
@@ -1770,8 +1767,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     if (outputValidated) {
         std::cout << "\nZello  bindless kernel PASSED " << std::endl;

@@ -8,20 +8,26 @@
 #pragma once
 
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
-#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 namespace NEO {
+class DispatchInfo;
 class Surface;
 struct RootDeviceEnvironment;
 
 template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
+
+struct FlushL3Args {
+    bool containsPrintBuffer;
+    bool usingSharedObjects;
+    bool signalEvent;
+    bool blocking;
+    bool usingSystemAllocation;
+};
 
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
@@ -71,10 +77,7 @@ class GpgpuWalkerHelper {
 
     template <typename WalkerType>
     static void setupTimestampPacketFlushL3(
-        WalkerType *walkerCmd,
-        const ProductHelper &productHelper,
-        bool flushL3AfterPostSyncForHostUsm,
-        bool flushL3AfterPostSyncForExternalAllocation);
+        WalkerType &walkerCmd, CommandQueue &commandQueue, const FlushL3Args &args);
 
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 
@@ -120,8 +123,9 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     }
     // clang-format on
 
-    if (ih == nullptr)
+    if (ih == nullptr) {
         ih = &commandQueue.getIndirectHeap(heapType, expectedSize);
+    }
 
     return *ih;
 }

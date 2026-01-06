@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/memory_manager/allocation_type.h"
 
 #include "aubstream/product_family.h"
 
@@ -27,17 +29,17 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    if constexpr (is32bit) {
+        if (allocationType == AllocationType::svmCpu) { // no heap SVM in allocateByKmd on 32 bit
+            return GfxMemoryAllocationMethod::useUmdSystemPtr;
+        }
+    }
     return GfxMemoryAllocationMethod::allocateByKmd;
 }
 
 template <>
 void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    return true;
 }
 
 template <>
@@ -48,6 +50,26 @@ bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &
 template <>
 void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
     requiredScratchSize *= 2;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
+    return false;
 }
 
 } // namespace NEO

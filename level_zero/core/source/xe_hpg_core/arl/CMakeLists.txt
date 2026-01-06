@@ -11,6 +11,7 @@ if(SUPPORT_ARL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_arl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_arl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_arl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_arl.cpp
   )
   add_subdirectories()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,20 +26,6 @@ inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     std::vector<uint8_t> binaryFile(length);
     stream.read(reinterpret_cast<char *>(binaryFile.data()), length);
     return binaryFile;
-}
-
-void createImmediateCommandList(ze_device_handle_t &device,
-                                ze_context_handle_t &context,
-                                bool syncMode,
-                                ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.pNext = nullptr;
-    cmdQueueDesc.flags = 0;
-    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
 void createCmdQueueAndCmdList(ze_context_handle_t &context,
@@ -72,21 +58,6 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context,
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
-}
-
-void createImmediateCommandList(ze_device_handle_t &device,
-                                ze_context_handle_t &context,
-                                uint32_t queueGroupOrdinal,
-                                bool syncMode,
-                                ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.pNext = nullptr;
-    cmdQueueDesc.flags = 0;
-    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = queueGroupOrdinal;
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
 bool testWriteGlobalTimestamp(int argc, char *argv[],
@@ -228,7 +199,7 @@ bool testKernelTimestampHostQuery(int argc, char *argv[],
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -336,7 +307,7 @@ bool testKernelTimestampAppendQuery(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0u, nullptr));
@@ -485,7 +456,7 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
 
-        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
 
         return true;
@@ -620,13 +591,13 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
 
     ze_event_handle_t kernelTsEvent[maxEventUsageCount];
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     (ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP), false, nullptr, nullptr,
+                                                     (ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP), false, nullptr,
                                                      maxEventUsageCount, kernelTsEvent,
                                                      ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST);
 
     // Create commandQueue and cmdList
     if (useImmediate) {
-        createImmediateCommandList(device, context, false, cmdList);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
     } else {
         createCmdQueueAndCmdList(context, device, cmdQueue, cmdList);
     }
@@ -840,7 +811,6 @@ int main(int argc, char *argv[]) {
         auto device = devices[0];
 
         result = supportedTests[test](argc, argv, context, driverHandle, device);
-        SUCCESS_OR_TERMINATE(zeContextDestroy(context));
         LevelZeroBlackBoxTests::printResult(aubMode, result, blackBoxName, test);
     }
     result = aubMode ? true : result;

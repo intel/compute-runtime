@@ -77,7 +77,7 @@ When implicit is enabled, only part of each tile is used for the split workgroup
 
 # Interaction with Affinity Mask
 
-Folowing is applicable only for PVC.
+Following is applicable only for PVC.
 
 `ZE_AFFINITY_MASK` is read by the Level Zero driver prior to `ZEX_NUMBER_OF_CCS`. Therefore, mask can hide some root devices and change its indexes and `ZEX_NUMBER_OF_CCS` would apply for root device indexes after masking. For instance, in a 4-PVC system, we could have:
 

@@ -4,12 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(KMDAF_HEADERS_DIR AND WIN32)
-  set(KMDAF_FILE_SUFFIX "")
-else()
-  set(KMDAF_FILE_SUFFIX "_stub")
-endif()
-
 set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
@@ -20,7 +14,6 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
@@ -35,7 +28,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/power_settings.cpp
@@ -46,7 +39,9 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_with_fallback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/definitions/gdi_interface_logging.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/read_preemption_regkey.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/${BRANCH_DIR_SUFFIX}/perf_wddm.cpp
 )
@@ -75,8 +70,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/init_wddm_os_interface.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/max_chunk_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
@@ -98,7 +91,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/max_mem_alloc_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/helper_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/skip_resource_cleanup_${DRIVER_MODEL}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}map_tile_instanced_allocation_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h
@@ -128,7 +120,20 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/init_context_private_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_debug_interface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_features_extra.cpp
 )
+
+if(SUPPORT_XE2_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_wddm.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPC_AND_BEFORE)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2_wddm.inl
+  )
+endif()
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM

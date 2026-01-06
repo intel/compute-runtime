@@ -18,7 +18,6 @@
 #pragma clang diagnostic ignored "-Wpragma-pack"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wmacro-redefined"
-#define UNICODE
 #endif
 
 #include <Pdh.h>
@@ -61,7 +60,7 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     bool pdhInitialized = false;
     bool pdhCounterAdded = false;
     PDH_HQUERY gpuQuery = nullptr;
-    PDH_HCOUNTER dedicatedUsage = nullptr;
+    PDH_HCOUNTER usage = nullptr;
     HINSTANCE hGetProcPDH = nullptr;
 };
 

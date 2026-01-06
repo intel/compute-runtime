@@ -11,6 +11,7 @@
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "aubstream/aubstream.h"
 
@@ -32,6 +33,8 @@ void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     injectFcnSnapshot = debugManager.injectFcn;
 
     referencedHwInfo = *defaultHwInfo;
+    stateSaveAreaHeaderSnapshot = MockSipData::mockSipKernel->getStateSaveAreaHeader();
+
     testStart = std::chrono::steady_clock::now();
 }
 
@@ -46,11 +49,17 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     EXPECT_EQ(debugVarSnapshot.variableName.getRef(), debugManager.flags.variableName.getRef());
-
-#include "shared/source/debug_settings/release_variables.inl"
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
-
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     EXPECT_EQ(injectFcnSnapshot, debugManager.injectFcn);
@@ -65,5 +74,8 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     EXPECT_EQ(1, referencedHwInfo.workaroundTable.asHash() == defaultHwInfo->workaroundTable.asHash());
     EXPECT_EQ(1, referencedHwInfo.capabilityTable == defaultHwInfo->capabilityTable);
     MemoryManager::maxOsContextCount = maxOsContextCountBackup;
+
+    EXPECT_EQ(stateSaveAreaHeaderSnapshot.size(), MockSipData::mockSipKernel->getStateSaveAreaHeader().size());
+    EXPECT_EQ(0, memcmp(stateSaveAreaHeaderSnapshot.data(), MockSipData::mockSipKernel->getStateSaveAreaHeader().data(), stateSaveAreaHeaderSnapshot.size()));
 }
 } // namespace NEO

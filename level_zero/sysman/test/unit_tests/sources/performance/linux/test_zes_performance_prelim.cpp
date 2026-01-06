@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ class ZesPerformanceFixtureI915Prelim : public SysmanMultiDeviceFixture {
     }
 };
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumPerformanceFactorDomains(pSysmanDevice->toHandle(), &count, NULL);
@@ -130,7 +130,7 @@ TEST_F(ZesPerformanceFixtureI915Prelim, GivenIncorrectConditionsWhenGettingPerfH
     pLinuxPerformanceImp = nullptr;
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
@@ -145,7 +145,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerfor
     EXPECT_EQ(properties.subdeviceId, subdeviceId);
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingConfigThenSuccessIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingConfigThenSuccessIsReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
@@ -156,7 +156,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingConfig
     }
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenInvalidMultiplierValuesAreReturnedBySysfsInterfaceThenUnknownErrorIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenInvalidMultiplierValuesAreReturnedBySysfsInterfaceThenUnknownErrorIsReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
         delete handle;
@@ -172,7 +172,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenInvalidMulti
     }
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenBaseAndMediaFreqFactorNodesAreAbsentThenUnsupportedFeatureIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenBaseAndMediaFreqFactorNodesAreAbsentThenUnsupportedFeatureIsReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {
         delete handle;
@@ -188,7 +188,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesWhenBaseAndMedia
     }
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenSettingConfigThenSuccessIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenSettingConfigThenSuccessIsReturned, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
@@ -276,7 +276,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenSettingMediaC
     }
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesButSysfsReadsFailAtDifferentBrancesWhenSettingPerfConfigThenPerfGetConfigFails, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesButSysfsReadsFailAtDifferentBrancesWhenSettingPerfConfigThenPerfGetConfigFails, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto handles = getPerfHandles(mockHandleCount);
     double factor = 0;
@@ -293,7 +293,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesButSysfsReadsFai
     delete pLinuxPerformanceImp;
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerfConfigForOtherDomainAndSysfsReadReturnsInvalidValueThenPerfGetConfigFails, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerfConfigForOtherDomainAndSysfsReadReturnsInvalidValueThenPerfGetConfigFails, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto handles = getPerfHandles(mockHandleCount);
     double factor = 0;
@@ -305,7 +305,7 @@ HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandleWhenGettingPerfCo
     delete pLinuxPerformanceImp;
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesButSysfsReadsFailAtDifferentBrancesWhenSettingPerfConfigThenPerfSetConfigFails, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915Prelim, GivenValidPerfHandlesButSysfsReadsFailAtDifferentBrancesWhenSettingPerfConfigThenPerfSetConfigFails, IsXeCore) {
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {

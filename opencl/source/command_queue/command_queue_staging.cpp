@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
@@ -15,6 +16,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 
@@ -23,15 +25,23 @@
 namespace NEO {
 
 cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event) {
+    auto isRead = context->getSVMAllocsManager()->getSVMAlloc(dstPtr) == nullptr;
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
-    csrSelectionArgs.direction = TransferDirection::hostToLocal;
+    csrSelectionArgs.direction = isRead ? TransferDirection::localToHost : TransferDirection::hostToLocal;
     auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
     cl_event profilingEvent = nullptr;
 
     bool isSingleTransfer = false;
-    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
+    ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, void *usmBuffer, size_t chunkSize) -> int32_t {
+        auto chunkSrc = stagingBuffer;
+        auto chunkDst = usmBuffer;
         auto isFirstTransfer = (chunkDst == dstPtr);
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
+        if (isRead) {
+            std::swap(chunkSrc, chunkDst);
+            isFirstTransfer = (chunkSrc == srcPtr);
+            isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(srcPtr, size);
+        }
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
@@ -41,7 +51,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     };
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr, isRead);
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_SVM_MEMCPY);
 }
 
@@ -54,8 +64,10 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
 
     bool isSingleTransfer = false;
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
-        auto isFirstTransfer = (globalOrigin[1] == origin[1]);
-        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]);
+        auto isFirstTransfer = (globalOrigin[1] == origin[1] && globalOrigin[2] == origin[2]);
+
+        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]) &&
+                              (globalOrigin[2] + globalRegion[2] == origin[2] + region[2]);
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
         cl_int ret = 0;
@@ -69,9 +81,11 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
     };
     auto bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
+    auto dstSlicePitch = inputSlicePitch ? inputSlicePitch : globalRegion[1] * dstRowPitch;
+    auto isMipMap3D = isMipMapped(image->getImageDesc()) && image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE3D;
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, bytesPerPixel, chunkWrite, &csr, isRead);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, dstSlicePitch, bytesPerPixel, isMipMap3D, chunkWrite, &csr, isRead);
 
     if (isRead && context->isProvidingPerformanceHints()) {
         auto hostPtrSize = calculateHostPtrSizeForImage(globalRegion, inputRowPitch, inputSlicePitch, image);
@@ -160,25 +174,25 @@ cl_int CommandQueue::postStagingTransferSync(const StagingTransferStatus &status
     }
 
     if (isBlocking) {
-        ret = this->finish();
+        ret = this->finish(false);
     }
     return ret;
 }
 
 bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies) {
-    GraphicsAllocation *allocation = nullptr;
-    context->tryGetExistingMapAllocation(srcPtr, size, allocation);
-    if (allocation != nullptr) {
-        // Direct transfer from mapped allocation is faster than staging buffer
+    GraphicsAllocation *srcAllocation = nullptr;
+    GraphicsAllocation *dstAllocation = nullptr;
+    context->tryGetExistingMapAllocation(srcPtr, size, srcAllocation);
+    context->tryGetExistingMapAllocation(dstPtr, size, dstAllocation);
+    if (srcAllocation != nullptr || dstAllocation != nullptr) {
+        // Direct transfer from/to mapped allocation is faster than staging buffer
         return false;
     }
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, nullptr};
     csrSelectionArgs.direction = TransferDirection::hostToLocal;
-    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
-    auto osContextId = csr->getOsContext().getContextId();
     auto stagingBufferManager = context->getStagingBufferManager();
     UNRECOVERABLE_IF(stagingBufferManager == nullptr);
-    return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
+    return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies);
 }
 
 bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, size_t size, cl_command_type commandType, bool isBlocking, bool hasDependencies) {
@@ -198,6 +212,7 @@ bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, si
         return isValidForStaging && !this->bufferCpuCopyAllowed(castToObject<Buffer>(memObj), commandType, isBlocking, size, const_cast<void *>(ptr), 0, nullptr);
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
+    case CL_MEM_OBJECT_IMAGE3D:
         return isValidForStaging;
     default:
         return false;

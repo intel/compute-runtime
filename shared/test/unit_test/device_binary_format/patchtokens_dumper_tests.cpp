@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ Program-scope tokens section size : )==="
    |      uint32_t   Size;// = )==="
              << progWithConst.unhandledTokens[1]->Size << R"===(
    |  };
-  Inline Costant Surface(s) [2] :
+  Inline Constant Surface(s) [2] :
    + [0]:
    |  struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :
    |         SPatchItemHeader (Token=42(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO), Size=)==="
@@ -184,7 +184,7 @@ Program-scope tokens section size : )==="
    |      uint32_t   ConstantBufferIndex;// = 1
    |      uint32_t   InlineDataSize;// = 256
    |  }
-  Inline Costant Surface - self relocations [2] :
+  Inline Constant Surface - self relocations [2] :
    + [0]:
    |  struct SPatchConstantPointerProgramBinaryInfo :
    |         SPatchItemHeader (Token=48(PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO), Size=)==="
@@ -534,7 +534,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     auto allocateStatelessConstantMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessConstantMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessGlobalMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessPrintfSurface = initToken<SPatchAllocateStatelessPrintfSurface>(PATCH_TOKEN_ALLOCATE_PRINTF_SURFACE);
-    auto allocateStatelessDefaultDeviceQueueSurface = initToken<SPatchAllocateStatelessDefaultDeviceQueueSurface>(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
     auto inlineVmeSamplerInfo = initToken<SPatchItemHeader>(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO);
     auto gtpinFreeGrfInfo = initToken<SPatchGtpinFreeGRFInfo>(PATCH_TOKEN_GTPIN_FREE_GRF_INFO);
     auto stateSip = initToken<SPatchStateSIP>(PATCH_TOKEN_STATE_SIP);
@@ -559,7 +558,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     kernel.tokens.allocateStatelessConstantMemorySurfaceWithInitialization = &allocateStatelessConstantMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization = &allocateStatelessGlobalMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessPrintfSurface = &allocateStatelessPrintfSurface;
-    kernel.tokens.allocateStatelessDefaultDeviceQueueSurface = &allocateStatelessDefaultDeviceQueueSurface;
     kernel.tokens.inlineVmeSamplerInfo = &inlineVmeSamplerInfo;
     kernel.tokens.gtpinFreeGrfInfo = &gtpinFreeGrfInfo;
     kernel.tokens.stateSip = &stateSip;
@@ -730,14 +728,6 @@ Kernel-scope tokens section size : )==="
              << sizeof(SPatchAllocateStatelessPrintfSurface) << R"===()
   {
       uint32_t   PrintfSurfaceIndex;// = 0
-      uint32_t   SurfaceStateHeapOffset;// = 0
-      uint32_t   DataParamOffset;// = 0
-      uint32_t   DataParamSize;// = 0
-  }
-  struct SPatchAllocateStatelessDefaultDeviceQueueSurface :
-         SPatchItemHeader (Token=46(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT), Size=)==="
-             << sizeof(SPatchAllocateStatelessDefaultDeviceQueueSurface) << R"===()
-  {
       uint32_t   SurfaceStateHeapOffset;// = 0
       uint32_t   DataParamOffset;// = 0
       uint32_t   DataParamSize;// = 0
@@ -1550,31 +1540,6 @@ TEST(KernelArgDumper, givenStatelessConstantMemoryObjectKernelArgThenProperlyCre
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
 
-TEST(KernelArgDumper, givenStatelessDeviceQueueObjectKernelArgThenProperlyCreatesDump) {
-    NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchStatelessDeviceQueueKernelArgument>(iOpenCL::PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
-    kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
-    auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
-    std::stringstream expected;
-    expected << R"===(  | Kernel argument of type BUFFER
-  |   struct SPatchStatelessDeviceQueueKernelArgument :
-  |          SPatchItemHeader (Token=46(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT), Size=)==="
-             << sizeof(objectArg) << R"===()
-  |   {
-  |       uint32_t   ArgumentNumber;// = 0
-  |       uint32_t   SurfaceStateHeapOffset;// = 0
-  |       uint32_t   DataParamOffset;// = 0
-  |       uint32_t   DataParamSize;// = 0
-  |       uint32_t   LocationIndex;// = 0
-  |       uint32_t   LocationIndex2;// = 0
-  |       uint32_t   IsEmulationArgument;// = 0
-  |   }
-  |   Buffer Metadata:
-)===";
-    EXPECT_STREQ(expected.str().c_str(), generated.c_str());
-}
-
 TEST(KernelArgDumper, givenBufferKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
@@ -1890,80 +1855,6 @@ TEST(KernelArgDumper, givenSlmKernelArgWithMetadataTokensThenProperlyCreatesDump
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
 
-TEST(KernelArgDumper, givenVmeKernelArgWithMetadataTokensThenProperlyCreatesDump) {
-    NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::image;
-    kernelArg.objectTypeSpecialized = NEO::PatchTokenBinary::ArgObjectTypeSpecialized::vme;
-    auto mbBlockType = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE);
-    auto subpixelMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE);
-    auto sadAdjustMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE);
-    auto searchPathType = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SEARCH_PATH_TYPE);
-
-    kernelArg.metadataSpecialized.vme.mbBlockType = &mbBlockType;
-    kernelArg.metadataSpecialized.vme.subpixelMode = &subpixelMode;
-    kernelArg.metadataSpecialized.vme.sadAdjustMode = &sadAdjustMode;
-    kernelArg.metadataSpecialized.vme.searchPathType = &searchPathType;
-    auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
-    std::stringstream expected;
-    expected << R"===(  | Kernel argument of type IMAGE [ VME ]
-  |   Image Metadata:
-  |   Vme Metadata:
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 23(DATA_PARAMETER_VME_MB_BLOCK_TYPE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 25(DATA_PARAMETER_VME_SAD_ADJUST_MODE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 26(DATA_PARAMETER_VME_SEARCH_PATH_TYPE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 24(DATA_PARAMETER_VME_SUBPIXEL_MODE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-)===";
-    EXPECT_STREQ(expected.str().c_str(), generated.c_str());
-}
-
 TEST(PatchTokenDumper, givenAnyTokenThenDumpingIsHandled) {
     constexpr uint32_t maxTokenSize = 4096;
 
@@ -2039,7 +1930,14 @@ TEST(PatchTokenDumper, givenAnyTokenThenDumpingIsHandled) {
                                                     iOpenCL::DATA_PARAMETER_STAGE_IN_GRID_ORIGIN,
                                                     iOpenCL::DATA_PARAMETER_STAGE_IN_GRID_SIZE};
 
+    auto ignoreToken = [](int token) { return token == iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SEARCH_PATH_TYPE; };
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
+        if (ignoreToken(i)) {
+            continue;
+        }
         kernelDataParamToken->Type = i;
         decodedKernel = {};
         NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToDecode.blobs.kernelInfo, decodedKernel);

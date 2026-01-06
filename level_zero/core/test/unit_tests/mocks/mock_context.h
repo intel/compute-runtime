@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 namespace L0 {
@@ -19,6 +20,12 @@ template <>
 struct WhiteBox<::L0::Context> : public ::L0::Context {};
 
 using Context = WhiteBox<::L0::Context>;
+
+template <>
+struct WhiteBox<::L0::ContextImp> : public ::L0::ContextImp {
+    using ::L0::ContextImp::devices;
+    using ::L0::ContextImp::numDevices;
+};
 
 template <>
 struct Mock<Context> : public Context {
@@ -49,6 +56,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(activateMetricGroups, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_handle_t hDevice, uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     ADDMETHOD_NOBASE(reserveVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *pStart, size_t size, void **pptr));
     ADDMETHOD_NOBASE(freeVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size));
+    ADDMETHOD_NOBASE(queryVirtualMemPageSizeWithStartAddress, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *pStart, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(queryVirtualMemPageSize, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(createPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory));
     ADDMETHOD_NOBASE(destroyPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory));
@@ -59,11 +67,97 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(openEventPoolIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle));
     ADDMETHOD_NOBASE(createEventPool, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_pool_desc_t *desc, uint32_t numDevices, ze_device_handle_t *phDevices, ze_event_pool_handle_t *phEventPool));
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage));
+    ADDMETHOD_NOBASE_OVERLOAD(freeMem, _BL, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, bool blocking));
+    ADDMETHOD_NOBASE(freeMemExt, ze_result_t, ZE_RESULT_SUCCESS, (const ze_memory_free_ext_desc_t *pMemFreeDesc, void *ptr));
+    ADDMETHOD_NOBASE(registerMemoryFreeCallback, ze_result_t, ZE_RESULT_SUCCESS, (zex_memory_free_callback_ext_desc_t * pfnCallbackDesc, void *ptr));
+    ADDMETHOD_NOBASE(getIpcMemHandles, ze_result_t, ZE_RESULT_SUCCESS, (const void *, uint32_t *, ze_ipc_mem_handle_t *));
+    ADDMETHOD_NOBASE(putIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
+    ADDMETHOD_NOBASE(getIpcHandleFromFd, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle));
+    ADDMETHOD_NOBASE(getFdFromIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle));
+    ADDMETHOD_NOBASE(openIpcMemHandles, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, uint32_t, ze_ipc_mem_handle_t *, ze_ipc_memory_flags_t, void **));
+    ADDMETHOD_NOBASE(getImageAllocProperties, ze_result_t, ZE_RESULT_SUCCESS, (L0::Image *, ze_image_allocation_ext_properties_t *));
+    ADDMETHOD_NOBASE(setAtomicAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr));
+    ADDMETHOD_NOBASE(getAtomicAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr));
+    ADDMETHOD_NOBASE(getVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, ze_ipc_mem_handle_t *));
+    ADDMETHOD_NOBASE(putVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
+    ADDMETHOD_NOBASE(lockMemory, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size));
+    ADDMETHOD_NOBASE(isShareableMemory, bool, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle));
+    ADDMETHOD_NOBASE(isOpaqueHandleSupported, bool, true, (IpcHandleType * handleType));
+    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags));
+    ADDMETHOD_NOBASE_VOIDRETURN(getDataFromIpcHandle, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset));
+    ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
+    ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
+    ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice));
+    ADDMETHOD_NOBASE(mapDeviceMemToHost, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, void **pptr, void *pNext));
+};
+
+template <>
+struct Mock<ContextImp> : public ContextImp {
+    Mock(DriverHandle *driverHandle) : ContextImp(driverHandle){};
+    ~Mock() override = default;
+    using BaseClass = ContextImp;
+
+    ADDMETHOD(destroy, ze_result_t, false, ZE_RESULT_SUCCESS, (), ());
+    ADDMETHOD(getStatus, ze_result_t, false, ZE_RESULT_SUCCESS, (), ());
+    ADDMETHOD(getDriverHandle, DriverHandle *, false, nullptr, (), ());
+    ADDMETHOD(allocHostMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **ptr), (hostDesc, size, alignment, ptr));
+    ADDMETHOD(allocDeviceMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size, size_t alignment, void **ptr), (hDevice, deviceDesc, size, alignment, ptr));
+    ADDMETHOD(allocSharedMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **ptr), (hDevice, deviceDesc, hostDesc, size, alignment, ptr));
+    ADDMETHOD(makeMemoryResident, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size), (hDevice, ptr, size));
+    ADDMETHOD(evictMemory, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size), (hDevice, ptr, size));
+    ADDMETHOD(makeImageResident, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_image_handle_t hImage), (hDevice, hImage));
+    ADDMETHOD(evictImage, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_image_handle_t hImage), (hDevice, hImage));
+    ADDMETHOD(freeMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr), (ptr));
+    ADDMETHOD(getMemAllocProperties, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice), (ptr, pMemAllocProperties, phDevice));
+    ADDMETHOD(getMemAddressRange, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, void **pBase, size_t *pSize), (ptr, pBase, pSize));
+    ADDMETHOD(getIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, ze_ipc_mem_handle_t *pIpcHandle), (ptr, pIpcHandle));
+    ADDMETHOD(closeIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr), (ptr));
+    ADDMETHOD(openIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &handle, ze_ipc_memory_flags_t flags, void **ptr), (hDevice, handle, flags, ptr));
+    ADDMETHOD(createModule, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog), (hDevice, desc, phModule, phBuildLog));
+    ADDMETHOD(createSampler, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler), (hDevice, pDesc, phSampler));
+    ADDMETHOD(createCommandQueue, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue), (hDevice, desc, commandQueue));
+    ADDMETHOD(createCommandList, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList), (hDevice, desc, commandList));
+    ADDMETHOD(createCommandListImmediate, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList), (hDevice, desc, commandList));
+    ADDMETHOD(activateMetricGroups, ze_result_t, false, ZE_RESULT_SUCCESS, (zet_device_handle_t hDevice, uint32_t count, zet_metric_group_handle_t *phMetricGroups), (hDevice, count, phMetricGroups));
+    ADDMETHOD(reserveVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *pStart, size_t size, void **pptr), (pStart, size, pptr));
+    ADDMETHOD(freeVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size), (ptr, size));
+    ADDMETHOD(queryVirtualMemPageSizeWithStartAddress, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *pStart, size_t size, size_t *pagesize), (hDevice, pStart, size, pagesize));
+    ADDMETHOD(queryVirtualMemPageSize, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t size, size_t *pagesize), (hDevice, size, pagesize));
+    ADDMETHOD(createPhysicalMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory), (hDevice, desc, phPhysicalMemory));
+    ADDMETHOD(destroyPhysicalMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory), (hPhysicalMemory));
+    ADDMETHOD(mapVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access), (ptr, size, hPhysicalMemory, offset, access));
+    ADDMETHOD(unMapVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size), (ptr, size));
+    ADDMETHOD(setVirtualMemAccessAttribute, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_memory_access_attribute_t access), (ptr, size, access));
+    ADDMETHOD(getVirtualMemAccessAttribute, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_memory_access_attribute_t *access, size_t *outSize), (ptr, size, access, outSize));
+    ADDMETHOD(openEventPoolIpcHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle), (ipcEventPoolHandle, eventPoolHandle));
+    ADDMETHOD(createEventPool, ze_result_t, false, ZE_RESULT_SUCCESS, (const ze_event_pool_desc_t *desc, uint32_t numDevices, ze_device_handle_t *phDevices, ze_event_pool_handle_t *phEventPool), (desc, numDevices, phDevices, phEventPool));
+    ADDMETHOD(createImage, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage), (hDevice, desc, phImage));
+    ADDMETHOD_OVERLOAD(freeMem, _BL, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, bool blocking), (ptr, blocking));
+    ADDMETHOD(freeMemExt, ze_result_t, false, ZE_RESULT_SUCCESS, (const ze_memory_free_ext_desc_t *pMemFreeDesc, void *ptr), (pMemFreeDesc, ptr));
+    ADDMETHOD(registerMemoryFreeCallback, ze_result_t, false, ZE_RESULT_SUCCESS, (zex_memory_free_callback_ext_desc_t * pfnCallbackDesc, void *ptr), (pfnCallbackDesc, ptr));
+    ADDMETHOD(getIpcMemHandles, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *p, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles), (p, numIpcHandles, pIpcHandles));
+    ADDMETHOD(putIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle), (ipcHandle));
+    ADDMETHOD(getIpcHandleFromFd, ze_result_t, false, ZE_RESULT_SUCCESS, (uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle), (handle, pIpcHandle));
+    ADDMETHOD(getFdFromIpcHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle), (ipcHandle, pHandle));
+    ADDMETHOD(openIpcMemHandles, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, uint32_t numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles, ze_ipc_memory_flags_t flags, void **pptr), (hDevice, numIpcHandles, pIpcHandles, flags, pptr));
+    ADDMETHOD(getImageAllocProperties, ze_result_t, false, ZE_RESULT_SUCCESS, (L0::Image * image, ze_image_allocation_ext_properties_t *pAllocProperties), (image, pAllocProperties));
+    ADDMETHOD(setAtomicAccessAttribute, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr), (hDevice, ptr, size, attr));
+    ADDMETHOD(getAtomicAccessAttribute, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr), (hDevice, ptr, size, pAttr));
+    ADDMETHOD(getVirtualAddressSpaceIpcHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_ipc_mem_handle_t *pIpcHandle), (hDevice, pIpcHandle));
+    ADDMETHOD(putVirtualAddressSpaceIpcHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle), (ipcHandle));
+    ADDMETHOD(lockMemory, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size), (hDevice, ptr, size));
+    ADDMETHOD(isShareableMemory, bool, false, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle), (exportDesc, exportableMemory, neoDevice, shareableWithoutNTHandle));
+    ADDMETHOD(isOpaqueHandleSupported, bool, false, true, (IpcHandleType * handleType), (handleType));
+    ADDMETHOD(getMemHandlePtr, void *, false, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags), (hDevice, handle, allocationType, processId, flags));
+    ADDMETHOD_VOIDRETURN(getDataFromIpcHandle, false, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset), (hDevice, ipcHandle, handle, type, processId, poolOffset));
+    ADDMETHOD(getPitchFor2dImage, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t imageWidth, size_t imageHeight, unsigned int elementSizeInBytes, size_t *rowPitch), (hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch));
+    ADDMETHOD(getContextExt, ContextExt *, false, nullptr, (), ());
+    ADDMETHOD(systemBarrier, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice), (hDevice));
 };
 
 struct ContextShareableMock : public L0::ContextImp {
     ContextShareableMock(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
         return true;
     }
 };

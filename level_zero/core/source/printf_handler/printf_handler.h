@@ -21,6 +21,7 @@ class GraphicsAllocation;
 
 namespace L0 {
 struct Device;
+struct KernelImmutableData;
 
 struct PrintfHandler : NEO::NonCopyableAndNonMovableClass {
     static NEO::GraphicsAllocation *createPrintfBuffer(Device *device);

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include <atomic>
 #include <cstdint>
@@ -13,8 +14,13 @@
 #include <iostream>
 #include <poll.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
+extern "C" {
+extern char **environ;
+}
 namespace NEO {
 namespace SysCalls {
 
@@ -49,6 +55,10 @@ extern struct dirent *(*sysCallsReaddir)(DIR *dir);
 extern int (*sysCallsClosedir)(DIR *dir);
 extern int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize);
 extern int (*sysCallsClose)(int fileDescriptor);
+extern int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags);
+extern int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags);
+extern int (*sysCallsPrctl)(int option, unsigned long arg);
+extern off_t (*sysCallsLseek)(int fd, off_t offset, int whence);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;
@@ -60,9 +70,6 @@ extern int closeFuncRetVal;
 extern int closeFuncArgPassed;
 extern const char *drmVersion;
 constexpr int fakeFileDescriptor = 123;
-extern int passedFileDescriptorFlagsToSet;
-extern int getFileDescriptorFlagsCalled;
-extern int setFileDescriptorFlagsCalled;
 extern uint32_t closeFuncCalled;
 extern bool exitCalled;
 extern int latestExitCode;
@@ -83,6 +90,9 @@ extern bool failFcntl;
 extern bool failFcntl1;
 extern bool failAccess;
 extern int setErrno;
+extern int pidfdopenCalled;
+extern int pidfdgetfdCalled;
+extern int prctlCalled;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;
@@ -98,5 +108,22 @@ extern std::string dlOpenFilePathPassed;
 extern std::string mkfifoPathNamePassed;
 
 extern long sysconfReturn;
+char **getEnviron();
 } // namespace SysCalls
+namespace ULT {
+char **getCurrentEnviron();
+void setMockEnviron(char **mock);
+
+class MockEnvironBackup {
+  public:
+    MockEnvironBackup(char **newEnviron);
+    ~MockEnvironBackup() = default;
+
+    static int defaultStatMock(const std::string &filePath, struct stat *statbuf) noexcept;
+    static std::vector<char *> buildEnvironFromMap(const std::unordered_map<std::string, std::string> &envs, std::vector<std::string> &storage);
+
+  private:
+    VariableBackup<char **> mockEnvironBackup;
+};
+} // namespace ULT
 } // namespace NEO

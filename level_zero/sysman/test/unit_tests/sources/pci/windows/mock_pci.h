@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/windows/sysman_os_pci_imp.h"
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
@@ -125,10 +124,37 @@ struct PciKmdSysManager : public MockKmdSysManager {
     }
 };
 
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
+class PciWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
   public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
+    PciWddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : WddmSysmanImp(pParentSysmanDeviceImp) {}
+
+    bool isPciBdfInfoPointerNull = false;
+    bool isPciBdfInfoObjectInitialized = true;
+
+    uint32_t testPciBus = 0x00;
+    uint32_t testPciDomain = 0x4A;
+    uint32_t testPciFunction = 0x00;
+    uint32_t testPciDevice = 0x02;
+
+    std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override {
+        if (isPciBdfInfoPointerNull) {
+            return nullptr;
+        }
+
+        auto pPciBdfInfo = std::make_unique<NEO::PhysicalDevicePciBusInfo>();
+
+        if (!isPciBdfInfoObjectInitialized) {
+            pPciBdfInfo->pciDomain = NEO::PhysicalDevicePciBusInfo::invalidValue;
+            return pPciBdfInfo;
+        }
+
+        pPciBdfInfo->pciBus = testPciBus;
+        pPciBdfInfo->pciDomain = testPciDomain;
+        pPciBdfInfo->pciFunction = testPciFunction;
+        pPciBdfInfo->pciDevice = testPciDevice;
+
+        return pPciBdfInfo;
+    }
 };
 
 } // namespace ult

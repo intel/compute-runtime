@@ -6,18 +6,21 @@
  */
 
 #pragma once
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/vf_management/vf_imp.h"
 
 #include <set>
-#include <string>
+
+namespace NEO {
+struct EngineInfo;
+} // namespace NEO
 
 namespace L0 {
 class SysfsAccess;
+class LinuxSysmanImp;
+struct OsSysman;
 
 class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
   public:

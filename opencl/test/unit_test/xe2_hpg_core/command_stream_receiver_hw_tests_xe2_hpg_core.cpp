@@ -5,34 +5,47 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/helpers/fence_type.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/pipeline_select_args.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
+#include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/event.h"
-#include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include <type_traits>
+#include "gtest/gtest.h"
+
+#include <cstdint>
+#include <memory>
 
 using namespace NEO;
 
@@ -42,6 +55,7 @@ struct MemorySynchronizationViaMiSemaphoreWaitTest : public UltCommandStreamRece
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -161,6 +175,7 @@ struct SystemMemoryFenceInDisabledConfigurationTest : public UltCommandStreamRec
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -247,13 +262,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe2HpgCore, givenSystemMemo
     commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 struct SystemMemoryFenceViaComputeWalkerTest : public UltCommandStreamReceiverTest {
@@ -283,13 +300,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemM
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemMemoryFenceGeneratedAsPostSyncOperationInComputeWalkerWhenDispatchWalkerIsCalledThenSystemMemoryFenceRequestInPostSyncDataIsProgrammed) {
@@ -347,13 +366,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaKernelInstructionTestXe2HpgCore, givenSys
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamReceiverTest {
@@ -374,6 +395,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -397,7 +421,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
@@ -411,6 +435,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -435,7 +462,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
@@ -449,6 +476,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -473,92 +503,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
-        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-        ASSERT_NE(nullptr, fenceCmd);
-        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
-    }
-
-    auto event = castToObject<Event>(kernelEvent);
-    event->release();
-}
-
-XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
-                   givenEventProvidedWhenEnqueueKernelUsingSystemMemoryThenPostSyncFenceRequestDispatched) {
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    MockKernelWithInternals kernel(*pClDevice);
-    MockContext context(pClDevice);
-    MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
-    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    size_t globalWorkSize[3] = {1, 1, 1};
-    cl_event kernelEvent{};
-    kernel.mockKernel->anyKernelArgumentUsingSystemMemory = true;
-    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, &kernelEvent);
-
-    ClHardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue);
-
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-
-    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
-    auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
-        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-        ASSERT_NE(nullptr, fenceCmd);
-        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
-    }
-
-    auto event = castToObject<Event>(kernelEvent);
-    event->release();
-}
-
-XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
-                   givenEventProvidedWhenEnqueueBuiltinKernelUsingSystemMemoryInDestinationArgumentThenPostSyncFenceRequestDispatched) {
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    MockKernelWithInternals kernel(*pClDevice);
-    MockContext context(pClDevice);
-    MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
-    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    size_t globalWorkSize[3] = {1, 1, 1};
-    cl_event kernelEvent{};
-    kernel.mockKernel->isBuiltIn = true;
-    kernel.mockKernel->setDestinationAllocationInSystemMemory(true);
-    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, &kernelEvent);
-
-    ClHardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue);
-
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-
-    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
-    auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
@@ -622,8 +567,6 @@ XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenNotExistPolicyWh
 XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenLastSystolicPipelineSelectModeWhenFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = false;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
 
     flushTask(commandStreamReceiver);
@@ -649,6 +592,9 @@ struct Xe2BcsTests : public UltCommandStreamReceiverTest {
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferUsesStatelessCompressedSettings) {
     using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
+
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(0x1);
+
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
     MockGraphicsAllocation clearColorAlloc;
@@ -659,24 +605,24 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressio
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe2HpgCoreFamily::cmdInitXyCopyBlt;
 
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
 
     BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer<MEM_COPY>(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get()), bltCmd->getCompressionFormat());
 }
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferUsesStatelessCompressedSettings) {
     using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
 
-    debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(0x1);
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(0x1);
 
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
@@ -691,8 +637,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenSt
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(allocationDst->getMemoryPool()));
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocationSrc->getMemoryPool()));
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocationDst, allocationSrc,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocationDst, 0,
+        allocationSrc, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe2HpgCoreFamily::cmdInitXyCopyBlt;
 
@@ -700,33 +648,7 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenSt
 
     BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
-}
-
-XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferDoesntUseStatelessCompressedSettings) {
-    using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    MockGraphicsAllocation clearColorAlloc;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, MemoryConstants::pageSize64k, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-    auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
-    *bltCmd = Xe2HpgCoreFamily::cmdInitXyCopyBlt;
-
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
-
-    BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
-
-    EXPECT_EQ(0u, bltCmd->getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get()), bltCmd->getCompressionFormat());
 }
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsForBufferCalledThenSetCompressionFormat) {
@@ -749,16 +671,17 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommand
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(dstAllocation->getDefaultGmm()->isCompressionEnabled());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation, srcAllocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        dstAllocation, 0,
+        srcAllocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
     const auto &rootDeviceEnvironment = context->getDevice(0)->getRootDeviceEnvironment();
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
-    auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-    auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    auto compressionFormat = 2;
 
     EXPECT_EQ(compressionFormat, bltCmd->getCompressionFormat());
 }
@@ -783,16 +706,17 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommand
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     dstAllocation->getDefaultGmm()->setCompressionEnabled(false);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation, srcAllocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        dstAllocation, 0,
+        srcAllocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
     const auto &rootDeviceEnvironment = context->getDevice(0)->getRootDeviceEnvironment();
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
-    auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-    auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    auto compressionFormat = 2;
 
     EXPECT_EQ(compressionFormat, bltCmd->getCompressionFormat());
 }
@@ -817,8 +741,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommand
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     dstAllocation->getDefaultGmm()->setCompressionEnabled(false);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation, srcAllocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        dstAllocation, 0,
+        srcAllocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -853,8 +779,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommand
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(dstAllocation->getDefaultGmm()->isCompressionEnabled());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation, srcAllocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        dstAllocation, 0,
+        srcAllocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -883,8 +811,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleBuffersWhenBufferCompressionFor
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -914,8 +844,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenNotCompressibleBuffersWhenBufferCompression
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     allocation->getDefaultGmm()->setCompressionEnabled(false);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -944,8 +876,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenOverriddenBlitterTargetToZeroWhenAppendBlit
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -971,8 +905,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenOverriddenBlitterTargetToOneWhenAppendBlitC
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -998,8 +934,10 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenOverriddenBlitterTargetToTwoWhenAppendBlitC
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -1023,14 +961,16 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenOverriddenMocksValueWhenAppendBlitCommandsB
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation, 0, 0,
-                                                                     {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        allocation, 0,
+        allocation, 0,
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
     bltCmd->setDestinationY2CoordinateBottom(1);
 
-    uint32_t mockValue = context->getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    uint32_t mockValue = context->getDevice(0)->getGmmHelper()->getL3EnabledMOCS();
     uint32_t newValue = mockValue + 1;
     debugManager.flags.OverrideBlitterMocs.set(newValue);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
@@ -30,12 +29,18 @@ struct PowerKmdSysManager : public MockKmdSysManager {
     int32_t mockAcPowerPeak = 0;
     int32_t mockDcPowerPeak = 0;
     uint32_t mockEnergyThreshold = 0;
+    uint32_t mockEnergyThresholdProcessId = 12345;
     uint32_t mockEnergyCounter = 3231121;
     uint32_t mockTimeStamp = 1123412412;
     uint32_t mockEnergyUnit = 14;
     uint64_t mockEnergyCounter64Bit = 32323232323232;
     uint32_t mockFrequencyTimeStamp = 38400000;
     uint32_t mockPowerFailure[KmdSysman::Requests::Power::MaxPowerRequests] = {0};
+
+    uint32_t getCurrentProcessId() {
+        // For testing, we'll use a simulated value that can be verified
+        return 999; // Test process ID
+    }
 
     void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -138,9 +143,11 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         } break;
         case KmdSysman::Requests::Power::CurrentEnergyThreshold: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            uint32_t *pProcessId = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
             *pValue = mockEnergyThreshold;
+            *pProcessId = mockEnergyThresholdProcessId;
             pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
-            pResponse->outDataSize = sizeof(uint32_t);
+            pResponse->outDataSize = sizeof(uint32_t) + sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Power::CurrentEnergyCounter: {
             uint32_t *pValueCounter = reinterpret_cast<uint32_t *>(pBuffer);
@@ -214,9 +221,13 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         } break;
         case KmdSysman::Requests::Power::CurrentEnergyThreshold: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            mockEnergyThreshold = *pValue;
-            pResponse->outDataSize = 0;
             pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
+            if (!pResponse->outReturnCode) {
+                mockEnergyThreshold = *pValue;
+                // Simulate capturing the process ID of the setting process
+                mockEnergyThresholdProcessId = getCurrentProcessId();
+                pResponse->outDataSize = 0;
+            }
         } break;
         default: {
             pResponse->outDataSize = 0;
@@ -224,12 +235,6 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         } break;
         }
     }
-};
-
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
-  public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,9 @@ int MultiCommand::singleBuild(const std::vector<std::string> &args) {
         outFileName += ".bin";
     }
     if (retVal == OCLOC_SUCCESS) {
-        if (!quiet)
+        if (!quiet) {
             argHelper->printf("Build succeeded.\n");
+        }
     } else {
         argHelper->printf("Build failed with error code: %d\n", retVal);
     }
@@ -90,8 +91,9 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
         outFileName = "build_no_" + std::to_string(buildId + 1);
         singleLineWithArguments.push_back(outFileName);
     }
-    if (quiet)
+    if (quiet) {
         singleLineWithArguments.push_back("-q");
+    }
 }
 
 int MultiCommand::initialize(const std::vector<std::string> &args) {

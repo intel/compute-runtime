@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
 
 #include "shared/source/os_interface/os_library.h"
+
+class OclocArgHelper;
 
 namespace NEO {
 
@@ -62,7 +64,7 @@ bool MockOclocIgcFacade::isPatchtokenInterfaceSupported() const {
     }
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> MockOclocIgcFacade::createIgcDeviceContext() const {
+CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> MockOclocIgcFacade::createIgcDeviceContext() const {
     if (shouldFailCreationOfIgcDeviceContext) {
         return nullptr;
     } else {
@@ -70,15 +72,7 @@ CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> MockOclocIgcFacade::createIgcDevic
     }
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> MockOclocIgcFacade::createIgcDeviceContext3() const {
-    if (shouldFailCreationOfIgcDeviceContext3) {
-        return nullptr;
-    } else {
-        return OclocIgcFacade::createIgcDeviceContext3();
-    }
-}
-
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocIgcFacade::getIgcPlatformHandle() const {
+CIF::RAII::UPtr_t<NEO::PlatformTag> MockOclocIgcFacade::getIgcPlatformHandle() const {
     if (shouldReturnInvalidIgcPlatformHandle) {
         return nullptr;
     } else {
@@ -86,7 +80,7 @@ CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocIgcFacade::getIgcPlatformHandle(
     }
 }
 
-CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> MockOclocIgcFacade::getGTSystemInfoHandle() const {
+CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> MockOclocIgcFacade::getGTSystemInfoHandle() const {
     if (shouldReturnInvalidGTSystemInfoHandle) {
         return nullptr;
     } else {
@@ -94,7 +88,7 @@ CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> MockOclocIgcFacade::getGTSystemInfoHa
     }
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> MockOclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> MockOclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
     if (shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle) {
         return nullptr;
     } else {

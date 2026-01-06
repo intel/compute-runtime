@@ -9,8 +9,11 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include <map>
 
@@ -25,6 +28,8 @@ ADAPTER_BDF gAdapterBDF{};
 D3DKMT_DEVICEEXECUTION_STATE gExecutionState = D3DKMT_DEVICEEXECUTION_ACTIVE;
 NTSTATUS gGetDeviceStateExecutionReturnValue = STATUS_SUCCESS;
 NTSTATUS gGetDeviceStatePageFaultReturnValue = STATUS_SUCCESS;
+bool failCreateDevice = false;
+bool failCreatePagingQueue = false;
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -47,6 +52,7 @@ void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uin
     if (pGTSystemInfo != NULL) {
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;
     }
+    NEO::SkuInfoTransfer::transferFtrTableForGmm(&gAdapterInfo.SkuTable, &NEO::defaultHwInfo->featureTable);
     gGpuAddressSpace = gpuAddressSpace;
     initGfxPartition();
 }
@@ -65,6 +71,9 @@ NTSTATUS __stdcall mockD3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTER
 }
 
 NTSTATUS __stdcall mockD3DKMTCreateDevice(IN OUT D3DKMT_CREATEDEVICE *createDevice) {
+    if (failCreateDevice) {
+        return STATUS_UNSUCCESSFUL;
+    }
     if (createDevice == nullptr || createDevice->hAdapter != ADAPTER_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -81,6 +90,9 @@ NTSTATUS __stdcall mockD3DKMTDestroyDevice(IN CONST D3DKMT_DESTROYDEVICE *destor
 }
 
 NTSTATUS __stdcall mockD3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *createQueue) {
+    if (failCreatePagingQueue) {
+        return STATUS_UNSUCCESSFUL;
+    }
     if (createQueue == nullptr || (createQueue->hDevice != DEVICE_HANDLE)) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -384,6 +396,8 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->GfxMemorySize = 2181038080;
         adapterInfo->SystemSharedMemory = 4249540608;
         adapterInfo->SystemVideoMemory = 0;
+        adapterInfo->DedicatedVideoMemory = 0x123467800;
+        adapterInfo->LMemBarSize = 0x123467A0;
         adapterInfo->GfxTimeStampFreq = 1;
 
         adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
@@ -401,6 +415,10 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->GfxPartition.Heap32[2].Limit = gAdapterInfo.GfxPartition.Heap32[2].Limit;
         adapterInfo->GfxPartition.Heap32[3].Base = gAdapterInfo.GfxPartition.Heap32[3].Base;
         adapterInfo->GfxPartition.Heap32[3].Limit = gAdapterInfo.GfxPartition.Heap32[3].Limit;
+
+        adapterInfo->SegmentId[0] = 0x12;
+        adapterInfo->SegmentId[1] = 0x34;
+        adapterInfo->SegmentId[2] = 0x56;
 
         adapterInfo->stAdapterBDF.Data = gAdapterBDF.Data;
         return STATUS_SUCCESS;
@@ -556,6 +574,10 @@ NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESY
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall mockD3DKMTCreateNativeFence(IN OUT D3DKMT_CREATENATIVEFENCE *synchObject) {
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS __stdcall mockD3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIORITY *setAllocationPriority) {
     if (setAllocationPriority == nullptr || setAllocationPriority->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
@@ -579,6 +601,7 @@ NTSTATUS __stdcall mockD3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATION
 }
 
 static D3DKMT_CREATEHWQUEUE createHwQueueData{};
+static CREATEHWQUEUE_PVTDATA createHwQueuePrivateData{};
 
 NTSTATUS __stdcall mockD3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueue) {
     createHwQueue->hHwQueueProgressFence = 1;
@@ -586,6 +609,11 @@ NTSTATUS __stdcall mockD3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHw
     createHwQueue->HwQueueProgressFenceGPUVirtualAddress = 3;
     createHwQueue->hHwQueue = 4;
     createHwQueueData = *createHwQueue;
+
+    if (createHwQueue->PrivateDriverDataSize == sizeof(CREATEHWQUEUE_PVTDATA) && createHwQueue->pPrivateDriverData) {
+        createHwQueuePrivateData = *((CREATEHWQUEUE_PVTDATA *)createHwQueue->pPrivateDriverData);
+        createHwQueueData.pPrivateDriverData = &createHwQueuePrivateData;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -593,6 +621,8 @@ static D3DKMT_DESTROYHWQUEUE destroyHwQueueData{};
 
 NTSTATUS __stdcall mockD3DKMTDestroyHwQueue(IN CONST D3DKMT_DESTROYHWQUEUE *destroyHwQueue) {
     destroyHwQueueData = *destroyHwQueue;
+    createHwQueueData.pPrivateDriverData = nullptr;
+    createHwQueueData.PrivateDriverDataSize = 0;
     return STATUS_SUCCESS;
 }
 

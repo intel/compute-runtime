@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/ecc/sysman_ecc.h"
-#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {

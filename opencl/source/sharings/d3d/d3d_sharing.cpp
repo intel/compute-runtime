@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,8 +71,8 @@ void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePl
 }
 
 template <typename D3D>
-const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
-    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, supportsOcl20Features);
+const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool packedSupported) {
+    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags);
     for (auto &format : formats) {
         if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
             return &format;

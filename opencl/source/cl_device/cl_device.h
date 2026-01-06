@@ -14,7 +14,7 @@
 #include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <mutex>
 #include <vector>
@@ -43,6 +43,10 @@ struct SelectorCopyEngine;
 class GfxCoreHelper;
 class ProductHelper;
 class GTPinGfxCoreHelper;
+class CompilerProductHelper;
+class BuiltinDispatchInfoBuilder;
+
+enum class EngineGroupType : uint32_t;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -59,9 +63,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     void incRefInternal();
     unique_ptr_if_unused<ClDevice> decRefInternal();
-
-    unsigned int getEnabledClVersion() const { return enabledClVersion; };
-    bool areOcl21FeaturesEnabled() const { return ocl21FeaturesEnabled; };
 
     void retainApi();
     unique_ptr_if_unused<ClDevice> releaseApi();
@@ -138,11 +139,15 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
     cl_version getExtensionVersion(std::string name);
 
+    using BuilderT = std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag>;
+    BuilderT *peekBuilders() { return rootClDevice.builtinOpsBuilders.get(); }
+
   protected:
     void initializeCaps();
     void initializeExtensionsWithVersion();
     void initializeOpenclCAllVersions();
     void initializeILsWithVersion();
+    void initializeSpirvQueries();
     void initializeOsSpecificCaps();
     void initializeMaxPoolCount();
     void initGTPinHelper();
@@ -156,13 +161,13 @@ class ClDevice : public BaseObject<_cl_device_id> {
     cl_platform_id platformId;
     std::string name;
     std::unique_ptr<DriverInfo> driverInfo;
-    unsigned int enabledClVersion = 0u;
-    bool ocl21FeaturesEnabled = false;
     std::string deviceExtensions;
     std::string exposedBuiltinKernels = "";
+    std::unique_ptr<BuilderT[]> builtinOpsBuilders;
 
     ClDeviceInfo deviceInfo = {};
     std::once_flag initializeExtensionsWithVersionOnce;
+    std::once_flag initializeSpirvQueriesOnce;
 
     std::vector<unsigned int> simultaneousInterops = {0};
     std::string compilerExtensions;

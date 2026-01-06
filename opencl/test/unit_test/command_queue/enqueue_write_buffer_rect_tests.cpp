@@ -5,10 +5,9 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -20,6 +19,7 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 using namespace NEO;
 
@@ -78,7 +78,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWh
     size_t dstOrigin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
 
-    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
@@ -295,7 +295,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThen
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenOnePipelineSelectIsProgrammed, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenOnePipelineSelectIsProgrammed, IsAtMostXeCore) {
     enqueueWriteBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -530,7 +530,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTh
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDiffrentStorageWithHostWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDifferentStorageWithHostWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     cl_int retVal = CL_SUCCESS;
     void *ptr = buffer->getCpuAddressForMemoryTransfer();
     size_t bufferOrigin[] = {0, 0, 0};
@@ -603,7 +603,7 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     ASSERT_NE(0u, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
 
-    cmdQ->finish();
+    cmdQ->finish(false);
 
     parseCommands<FamilyType>(*cmdQ);
     auto &kernelInfo = kernel->getKernelInfo();
@@ -625,12 +625,12 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
         }
     }
 
-    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
+    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 2 * sizeof(uint32_t)) { // size of  uint2 SrcOrigin
         auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
                                       kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].offset);
         EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *dstOffset);
     } else {
-        // SrcOrigin arg should be 16 bytes in size, if that changes, above if path should be modified
+        // SrcOrigin arg should be 8 bytes in size, if that changes, above if path should be modified
         EXPECT_TRUE(false);
     }
 }
@@ -669,7 +669,7 @@ struct EnqueueWriteBufferRectHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 
@@ -714,7 +714,7 @@ HWTEST_F(EnqueueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThen
 
 using EnqueueWriteBufferRectStatefulTest = EnqueueWriteBufferRectHw;
 
-HWTEST_F(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (pCmdQ->getHeaplessModeEnabled()) {

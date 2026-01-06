@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT] = {};
+CompilerProductHelperCreateFunctionType compilerProductHelperFactory[NEO::maxProductEnumValue] = {};
 
 uint32_t CompilerProductHelper::getHwIpVersion(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.OverrideHwIpVersion.get() != -1) {

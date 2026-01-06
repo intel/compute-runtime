@@ -1,20 +1,16 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -79,16 +75,16 @@ TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
 }
 
 TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstructionCacheFlushInCsrThatUsedTheAllocation) {
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
 
-    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
-
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
     module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
@@ -98,10 +94,10 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
     kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
     module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
-    module->initializeKernelImmutableDatas();
-    auto &kernelImmDatas = module->getKernelImmutableDataVector();
+    module->initializeKernelImmutableData();
+    auto &kernelImmData = module->getKernelImmutableDataVector();
     auto csr = deviceImp.getNEODevice()->getEngine(0).commandStreamReceiver;
-    csr->makeResident(*kernelImmDatas[0]->getIsaParentAllocation());
+    csr->makeResident(*kernelImmData[0]->getIsaParentAllocation());
 
     module->destroy();
 
@@ -109,16 +105,16 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
 }
 
 TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModuleDestroyedThenRequiresInstructionCacheFlushIsNotSetInCsr) {
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
 
-    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
-
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
     module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
@@ -128,10 +124,10 @@ TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModul
     kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
     module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
-    module->initializeKernelImmutableDatas();
-    auto &kernelImmDatas = module->getKernelImmutableDataVector();
-    for (auto &kernelImmData : kernelImmDatas) {
-        kernelImmData->setIsaParentAllocation(nullptr);
+    module->initializeKernelImmutableData();
+    auto &kernelImmData = module->getKernelImmutableDataVector();
+    for (auto &data : kernelImmData) {
+        data->setIsaParentAllocation(nullptr);
     }
 
     module->destroy();

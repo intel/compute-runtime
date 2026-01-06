@@ -6,12 +6,11 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 
@@ -43,7 +42,7 @@ XE3_CORETEST_F(ImageSurfaceStateTestsXe3Core, givenNotMediaCompressedImageWhenAp
 
     auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
 
-    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, GMM_NO_PLANE);
+    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, ImagePlane::noPlane);
 
     EXPECT_EQ(gmmClientContext->compressionFormatToReturn, rss.getCompressionFormat());
 }

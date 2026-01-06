@@ -39,14 +39,13 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_with_aub_dump.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_allocation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_debug_surface_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_descriptor.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
@@ -86,7 +85,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
@@ -111,14 +110,28 @@ if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl)
 endif()
 
+if(SUPPORT_XE2_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_drm_slm.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPC_AND_BEFORE)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2_drm_slm.inl
+  )
+endif()
+
 if(DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm_stub.cpp
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/sys_calls_win.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/compatible_driver_store.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/definitions/gdi_interface_logging.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/sys_calls_win.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/wddm_interface_extra.cpp
   )
 endif()
 

@@ -60,6 +60,9 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     const BindlessToSurfaceStateMap &getBindlessOffsetToSurfaceState() const {
         return bindlessArgsMap;
     }
+    uint16_t getPerThreadDataOffset() const {
+        return kernelAttributes.crossThreadDataSize - std::min(kernelAttributes.crossThreadDataSize, kernelAttributes.inlineDataPayloadSize);
+    }
 
     struct KernelAttributes {
         uint32_t slmInlineSize = 0U;
@@ -80,12 +83,14 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = GrfConfig::defaultGrfNumber;
         uint16_t numArgsStateful = 0U;
+        uint16_t numBindlessImages = 0U;
         uint8_t barrierCount = 0u;
         bool hasNonKernelArgLoad = false;
         bool hasNonKernelArgStore = false;
         bool hasNonKernelArgAtomic = false;
         bool hasIndirectStatelessAccess = false;
         bool hasIndirectAccessInImplicitArg = false;
+        bool hasImageWriteArg = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;
@@ -118,19 +123,18 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesFencesForReadWriteImages : 1;
                 bool usesFlattenedLocalIds : 1;
                 bool usesPrivateMemory : 1;
-                bool usesVme : 1;
                 bool usesImages : 1;
-                // 1
                 bool usesSamplers : 1;
+                // 1
                 bool usesSyncBuffer : 1;
-                bool deprecatedDoNotUse : 1;
+                bool hasIndirectCalls : 1;
                 bool usesStatelessWrites : 1;
                 bool passInlineData : 1;
                 bool perThreadDataHeaderIsPresent : 1;
                 bool perThreadDataUnusedGrfIsPresent : 1;
                 bool requiresDisabledEUFusion : 1;
-                // 2
                 bool requiresDisabledMidThreadPreemption : 1;
+                // 2
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
@@ -138,10 +142,10 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool hasRTCalls : 1;
                 bool isInvalid : 1;
                 bool hasSample : 1;
-                // 3
                 bool usesAssert : 1;
+                // 3
                 bool usesRegionGroupBarrier : 1;
-                bool reserved : 6;
+                bool reserved : 7;
             };
             std::array<bool, 4> packed;
         } flags = {};
@@ -212,8 +216,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             ArgDescInlineDataPointer indirectDataPointerAddress;
             ArgDescInlineDataPointer scratchPointerAddress;
         } implicitArgs;
-
-        std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;
     } payloadMappings;
 
     StackVec<const ArgDescPointer *, 8> getImplicitArgBindlessCandidatesVec() const {
@@ -265,6 +267,8 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
 
         uint16_t compiledSubGroupsNumber = 0U;
         uint8_t requiredSubGroupSize = 0U;
+        uint8_t requiredThreadGroupDispatchSize = 0U;
+        uint8_t indirectAccessBuffer = 0u;
         bool isGeneratedByIgc = true;
     } kernelMetadata;
 

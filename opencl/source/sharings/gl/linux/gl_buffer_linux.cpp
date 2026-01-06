@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -227,7 +228,8 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         if (bufferInfo.pGmmResInfo) {
             DEBUG_BREAK_IF(graphicsAllocation->getDefaultGmm() != nullptr);
             auto helper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
-            graphicsAllocation->setDefaultGmm(new Gmm(helper, bufferInfo.pGmmResInfo));
+            auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(helper->getClientContext(), bufferInfo.pGmmResInfo));
+            graphicsAllocation->setDefaultGmm(new Gmm(helper, gmmResourceInfo.get()));
         } else {
             auto helper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
             StorageInfo storageInfo = {};

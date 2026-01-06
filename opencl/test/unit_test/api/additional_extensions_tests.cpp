@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,4 +14,8 @@ using namespace NEO;
 TEST(AdditionalExtension, GivenFuncNameWhenGetingFunctionAddressThenReturnNullptr) {
     auto address = getAdditionalExtensionFunctionAddress("clFunction");
     EXPECT_EQ(nullptr, address);
+}
+
+TEST(AdditionalExtension, whenCheckDoNotReportClPlatformThenReturnProperValue) {
+    EXPECT_FALSE(doNotReportClPlatform());
 }

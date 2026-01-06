@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/module_imp.h"
 
 namespace L0 {
@@ -19,13 +20,13 @@ void KernelImpSuggestMaxCooperativeGroupCountFixture::setUp() {
     kernelInfo.kernelDescriptor = &kernelDescriptor;
     auto &hardwareInfo = device->getHwInfo();
     auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, numGrf);
+    availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, numGrf, device->getNEODevice()->getRootDeviceEnvironment());
 
     dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
-    availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize;
+    availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.maxProgrammableSlmSize;
     maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
     kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
@@ -37,13 +38,13 @@ uint32_t KernelImpSuggestMaxCooperativeGroupCountFixture::getMaxWorkGroupCount()
     kernelInfo.kernelDescriptor->kernelAttributes.barrierCount = usesBarriers;
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
     kernel.module = module.get();
-    kernel.implicitScalingEnabled = device->getNEODevice()->getDeviceBitfield().count() > 1;
-    kernel.groupSize[0] = lws[0];
-    kernel.groupSize[1] = lws[1];
-    kernel.groupSize[2] = lws[2];
+    kernel.sharedState->implicitScalingEnabled = device->getNEODevice()->getDeviceBitfield().count() > 1;
+    kernel.privateState.groupSize[0] = lws[0];
+    kernel.privateState.groupSize[1] = lws[1];
+    kernel.privateState.groupSize[2] = lws[2];
     uint32_t totalGroupCount = kernel.KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, false);
     return totalGroupCount;
 }

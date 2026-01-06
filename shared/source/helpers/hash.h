@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,8 +49,9 @@ class Hash {
     }
 
     void update(const char *buff, size_t size) {
-        if (buff == nullptr)
+        if (buff == nullptr) {
             return;
+        }
 
         if ((reinterpret_cast<uintptr_t>(buff) & 0x3) != 0) {
             const unsigned char *tmp = (const unsigned char *)buff;

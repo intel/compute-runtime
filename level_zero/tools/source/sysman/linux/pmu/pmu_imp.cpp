@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,10 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 
@@ -40,7 +43,7 @@ uint32_t PmuInterfaceImp::getEventType() {
     // 18
     const std::string eventTypeSysfsNode = sysDevicesDir + i915DirName + "/" + "type";
     auto eventTypeVal = 0u;
-    if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
+    if (ZE_RESULT_SUCCESS != pFsAccess->read(std::move(eventTypeSysfsNode), eventTypeVal)) {
         return 0;
     }
     return eventTypeVal;

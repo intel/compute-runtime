@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,13 @@
 
 #include "fabric_device_access_stub.h"
 
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-
 namespace L0 {
 
 ze_result_t FabricDeviceAccessStub::getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FabricDeviceAccessStub::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) {
+ze_result_t FabricDeviceAccessStub::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) {
     return ZE_RESULT_SUCCESS;
 }
 

@@ -7,9 +7,9 @@
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
@@ -36,11 +36,12 @@ void MetricContextFixture::setUp() {
         std::unique_ptr<MetricIpSamplingOsInterface>(mockIpSamplingOsInterface);
     auto &ipMetricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
     ipMetricSource.setMetricOsInterface(metricIpSamplingOsInterface);
+    device->getMetricDeviceContext().setMetricsCollectionAllowed(true);
 
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
-    mockMetricsLibrary->handle = new MockOsLibrary();
+    mockMetricsLibrary->handle = std::make_unique<MockOsLibrary>();
 
     //  Mock metric enumeration.
     mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
@@ -55,7 +56,6 @@ void MetricContextFixture::setUp() {
 void MetricContextFixture::tearDown() {
 
     // Restore original metrics library
-    delete mockMetricsLibrary->handle;
     mockMetricsLibrary->setMockedApi(nullptr);
     mockMetricsLibrary.reset();
 
@@ -100,11 +100,12 @@ void MetricMultiDeviceFixture::setUp() {
     // Initialize metric api.
     auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     metricSource.setInitializationState(ZE_RESULT_SUCCESS);
+    devices[0]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
 
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
-    mockMetricsLibrary->handle = new MockOsLibrary();
+    mockMetricsLibrary->handle = std::make_unique<MockOsLibrary>();
 
     //  Mock metric enumeration.
     mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
@@ -124,9 +125,10 @@ void MetricMultiDeviceFixture::setUp() {
 
         mockMetricsLibrarySubDevices[i] = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricsSubDeviceContext));
         mockMetricsLibrarySubDevices[i]->setMockedApi(&mockMetricsLibraryApi);
-        mockMetricsLibrarySubDevices[i]->handle = new MockOsLibrary();
+        mockMetricsLibrarySubDevices[i]->handle = std::make_unique<MockOsLibrary>();
 
         metricsSubDeviceContext.setInitializationState(ZE_RESULT_SUCCESS);
+        deviceImp.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
     }
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
@@ -143,7 +145,6 @@ void MetricMultiDeviceFixture::tearDown() {
         mockMetricEnumerationSubDevices[i]->setMockedApi(nullptr);
         mockMetricEnumerationSubDevices[i].reset();
 
-        delete mockMetricsLibrarySubDevices[i]->handle;
         mockMetricsLibrarySubDevices[i]->setMockedApi(nullptr);
         mockMetricsLibrarySubDevices[i].reset();
     }
@@ -152,7 +153,6 @@ void MetricMultiDeviceFixture::tearDown() {
     mockMetricsLibrarySubDevices.clear();
 
     // Restore original metrics library
-    delete mockMetricsLibrary->handle;
     mockMetricsLibrary->setMockedApi(nullptr);
     mockMetricsLibrary.reset();
 

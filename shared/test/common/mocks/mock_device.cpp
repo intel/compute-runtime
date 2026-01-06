@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,15 +11,16 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/tests_configuration.h"
+
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -85,6 +86,10 @@ void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
     executionEnvironment->memoryManager.reset(memoryManager);
 }
 
+void MockDevice::setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
+    performanceCounters = std::move(perfCounters);
+}
+
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     resetCommandStreamReceiver(newCsr, defaultEngineIndex);
 }
@@ -143,8 +148,9 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
 }
 
 bool MockDevice::verifyAdapterLuid() {
-    if (callBaseVerifyAdapterLuid)
+    if (callBaseVerifyAdapterLuid) {
         return Device::verifyAdapterLuid();
+    }
     return verifyAdapterLuidReturnValue;
 }
 
@@ -197,11 +203,23 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
-EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) {
+EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) {
     if (disableSecondaryEngines) {
         return nullptr;
     }
-    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, allocateInterrupt);
+    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel, allocateInterrupt);
+}
+
+std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {
+    return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
+}
+
+MockSubDevice::~MockSubDevice() {
+    EXPECT_EQ(nullptr, this->getDebugSurface());
+}
+
+std::unique_ptr<CommandStreamReceiver> MockSubDevice::createCommandStreamReceiver() const {
+    return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
 }
 
 bool MockSubDevice::createEngine(EngineTypeUsage engineTypeUsage) {

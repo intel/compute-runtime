@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,4 +15,8 @@ extern decltype(&zelSetDriverTeardown) setDriverTeardownFunc;
 
 void globalDriverTeardown();
 void globalDriverSetup();
+
+void additionalSetup();
+void additionalTeardown();
+
 } // namespace L0

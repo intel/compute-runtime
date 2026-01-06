@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[NEO::maxCoreEnumValue] = {};
 
 std::unique_ptr<ClGfxCoreHelper> ClGfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
     auto createClGfxCoreHelperFunc = clGfxCoreHelperFactory[gfxCore];

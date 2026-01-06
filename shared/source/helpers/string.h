@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,6 @@
 #if defined(__linux__)
 
 #include <cstring>
-#include <errno.h>
 #include <string>
 
 inline int strcpy_s(char *dst, size_t dstSize, const char *src) { // NOLINT(readability-identifier-naming)
@@ -37,8 +36,9 @@ inline size_t strnlen_s(const char *str, size_t count) { // NOLINT(readability-i
     }
 
     for (size_t i = 0; i < count; ++i) {
-        if (str[i] == '\0')
+        if (str[i] == '\0') {
             return i;
+        }
     }
 
     return count;

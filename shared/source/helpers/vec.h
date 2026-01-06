@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/is_pod_v.h"
 
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 template <typename T>
 struct Vec3 {

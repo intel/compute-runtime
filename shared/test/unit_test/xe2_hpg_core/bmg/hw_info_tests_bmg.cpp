@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,7 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3TransientDataFlush);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPml5Support);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
     }
 }
 
@@ -96,8 +97,6 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         case aub_stream::ENGINE_CCS1:
         case aub_stream::ENGINE_BCS:
@@ -105,16 +104,12 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
         }
     }
 }

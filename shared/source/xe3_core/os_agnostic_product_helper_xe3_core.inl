@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/product_helper.inl"
+#include "shared/source/os_interface/product_helper_from_xe_hpc_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpc_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
+#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 namespace NEO {
 
@@ -19,8 +22,13 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
 }
 
 template <>
@@ -44,15 +52,45 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
     if (pipelinedEuThreadArbitration) {
         propertiesSupport.pipelinedEuThreadArbitration = true;
     }
-}
 
-template <>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return true;
+    propertiesSupport.enableL1FlushUavCoherencyMode = GfxProduct::StateComputeModeStateSupport::enableL1FlushUavCoherencyMode;
+    if (debugManager.flags.EnableL1FlushUavCoherencyMode.get() != -1) {
+        propertiesSupport.enableL1FlushUavCoherencyMode = !!debugManager.flags.EnableL1FlushUavCoherencyMode.get();
+    }
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
+    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
+    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
+    return false;
+}
+
 } // namespace NEO

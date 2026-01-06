@@ -70,16 +70,18 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
                 continue;
             }
 
-            while (isConversionSpecifier(formatString[end++]) == false && end < length)
+            while (isConversionSpecifier(formatString[end++]) == false && end < length) {
                 ;
+            }
 
             memcpy_s(dataFormat.get(), length, formatString + i, end - i);
             dataFormat[end - i] = '\0';
 
-            if (formatString[end - 1] == 's')
+            if (formatString[end - 1] == 's') {
                 cursor += printStringToken(output.get() + cursor, maxSinglePrintStringLength - cursor, dataFormat.get());
-            else
+            } else {
                 cursor += printToken(output.get() + cursor, maxSinglePrintStringLength - cursor, dataFormat.get());
+            }
 
             i = end - 1;
         } else {

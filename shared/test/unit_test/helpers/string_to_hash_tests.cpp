@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,11 @@
 #include "gtest/gtest.h"
 
 using NEO::Hash;
+
+TEST(ToLower, GiventStringThenChangeItToLowerCase) {
+    std::string ls = StringHelpers::toLower("SomeTEXT");
+    EXPECT_STREQ("sometext", ls.c_str());
+}
 
 TEST(CreateCombinedStrings, GivenSingleStringWhenCreatingCombinedStringThenDstStringMatchesSrcString) {
     std::string dstString;

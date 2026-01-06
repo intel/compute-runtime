@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/standby/linux/sysman_os_standby_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
 namespace Sysman {
@@ -30,7 +31,7 @@ struct MockStandbySysfsAccessInterface : public L0::Sysman::SysFsAccessInterface
         return getVal(file, val);
     }
 
-    ze_result_t write(const std::string file, int val) override {
+    ze_result_t write(const std::string &file, int val) override {
         return setVal(file, val);
     }
 

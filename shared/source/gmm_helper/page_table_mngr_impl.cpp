@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,12 +12,6 @@
 #include "shared/source/gmm_helper/resource_info.h"
 
 namespace NEO {
-GmmPageTableMngr::~GmmPageTableMngr() {
-    if (clientContext) {
-        clientContext->DestroyPageTblMgrObject(pageTableManager);
-    }
-}
-
 bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     ddiUpdateAuxTable.BaseGpuVA = gpuVa;

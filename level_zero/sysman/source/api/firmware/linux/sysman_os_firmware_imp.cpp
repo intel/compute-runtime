@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,49 +7,37 @@
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
-
-#include <algorithm>
 
 namespace L0 {
 namespace Sysman {
 
-static const std::string mtdDescriptor("/proc/mtd");
+static const std::string fdoFwType = "Flash_Override";
 
 void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    std::vector<std ::string> deviceSupportedFwTypes = {};
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     supportedFwTypes.clear();
+    bool isDeviceInSurvivabilityMode = pLinuxSysmanImp->isDeviceInSurvivabilityMode();
+
+    if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
+        supportedFwTypes.push_back(fdoFwType);
+        return;
+    }
+
     if (pFwInterface != nullptr) {
-        auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, deviceSupportedFwTypes);
-    }
-
-    if (deviceSupportedFwTypes.empty()) {
-        return;
-    }
-
-    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    std::vector<std::string> mtdDescriptorStrings = {};
-    ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
-        return;
-    }
-    for (const auto &readByteLine : mtdDescriptorStrings) {
-        for (const auto &fwType : deviceSupportedFwTypes) {
-            if (std::string::npos != readByteLine.find(fwType)) {
-                if (std::find(supportedFwTypes.begin(), supportedFwTypes.end(), fwType) == supportedFwTypes.end()) {
-                    supportedFwTypes.push_back(fwType);
-                }
-            }
+        if (isDeviceInSurvivabilityMode) {
+            pFwInterface->getDeviceSupportedFwTypes(supportedFwTypes);
+        } else {
+            auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+            pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
+            // get supported late binding fw handles
+            pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
         }
     }
 }
@@ -62,6 +50,9 @@ void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties)
 }
 
 ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
+    if (osFwType == fdoFwType) {
+        return osFirmwareFlashExtended(pImage, size);
+    }
     return pFwInterface->flashFirmware(osFwType, pImage, size);
 }
 
@@ -82,8 +73,10 @@ ze_result_t LinuxFirmwareImp::osGetFirmwareFlashProgress(uint32_t *pCompletionPe
 }
 
 LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    if (!pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
+        pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    }
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 

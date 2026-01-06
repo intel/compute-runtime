@@ -45,7 +45,7 @@ struct CsrSelectionArgs {
         if (dst) {
             processResource(*dst, rootDeviceIndex, this->dstResource);
         }
-        this->direction = createTransferDirection(srcResource.isLocal, dstResource.isLocal);
+        this->direction = createTransferDirection(srcResource.isLocal, dstResource.isLocal, false);
     }
 
     CsrSelectionArgs(cl_command_type cmdType, Image *src, Image *dst, uint32_t rootDeviceIndex, const size_t *size, const size_t *srcOrigin, const size_t *dstOrigin)

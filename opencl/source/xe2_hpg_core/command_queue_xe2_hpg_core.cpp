@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,18 +23,8 @@ namespace NEO {
 
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {
-    extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
+    extern CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
-}
-
-template <>
-bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
-    if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
-        return !!debugManager.flags.ForceCacheFlushForBcs.get();
-    }
-
-    const auto &productHelper = this->device->getProductHelper();
-    return productHelper.isDcFlushAllowed();
 }
 
 } // namespace NEO

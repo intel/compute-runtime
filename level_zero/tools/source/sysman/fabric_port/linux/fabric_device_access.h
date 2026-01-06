@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/zes_api.h"
 
+#include <string>
 #include <vector>
 
 namespace L0 {
@@ -20,7 +20,7 @@ struct OsSysman;
 class FabricDeviceAccess : NEO::NonCopyableAndNonMovableClass {
   public:
     virtual ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) = 0;
-    virtual ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) = 0;
+    virtual ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) = 0;
 
     virtual ze_result_t getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled) = 0;
     virtual ze_result_t getPortBeaconState(const zes_fabric_port_id_t portId, bool &enabled) = 0;

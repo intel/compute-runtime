@@ -7,9 +7,11 @@
 
 #include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "level_zero/core/source/device/device.h"
 
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+namespace NEO {
+struct HardwareInfo;
+} // namespace NEO
 
 using namespace L0;
 using namespace ult;

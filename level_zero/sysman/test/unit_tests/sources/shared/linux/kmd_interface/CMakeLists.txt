@@ -11,6 +11,7 @@ set(L0_SYSMAN_SHARED_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_kmd_interface_i915_prelim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_kmd_interface_i915_upstream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_kmd_interface_xe.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}test_sysman_kmd_interface_xe_extended.cpp
 )
 
 if(UNIX)

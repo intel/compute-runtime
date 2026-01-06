@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -22,8 +23,12 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/directory.h"
+#include "shared/source/utilities/logger.h"
 
-#include <fcntl.h>
+#include <ios>
+#include <ostream>
 #include <sstream>
 
 namespace NEO {
@@ -181,11 +186,13 @@ std::vector<EngineCapabilities> IoctlHelperI915::translateToEngineCaps(const std
 }
 
 std::vector<MemoryRegion> IoctlHelperI915::translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) {
+
     auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
     auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
         memRegions[i].probedSize = data->regions[i].probed_size;
         memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
+        memRegions[i].cpuVisibleSize = data->regions[i].probed_cpu_visible_size;
         memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
         memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
     }
@@ -452,7 +459,28 @@ std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int tileId)
     return "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
 }
 
-bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+void IoctlHelperI915::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                                       std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) {
+
+    // On i915 path to ccs_mode is /sys/class/drm/card0/gt/gt*/
+    for (const auto &file : files) {
+        if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
+            continue;
+        }
+
+        std::string gtPath = file + "/gt";
+        auto gtFiles = Directory::getFiles(gtPath.c_str());
+        auto expectedGtFilePrefix = gtPath + "/gt";
+        for (const auto &gtFile : gtFiles) {
+            if (gtFile.find(expectedGtFilePrefix.c_str()) == std::string::npos) {
+                continue;
+            }
+            writeCcsMode(gtFile, ccsMode, deviceCcsModeVec);
+        }
+    }
+}
+
+bool IoctlHelperI915::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
     auto request = this->getDrmParamValue(DrmParam::queryTopologyInfo);
     auto dataQuery = drm.query<uint64_t>(request, 0);
@@ -466,7 +494,7 @@ bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQuery
 
     topologyMap.clear();
     if (!mapping.sliceIndices.empty()) {
-        topologyMap[0] = mapping;
+        topologyMap[0] = std::move(mapping);
     }
 
     return retVal;
@@ -587,7 +615,7 @@ bool getGpuTime36(::NEO::Drm &drm, uint64_t *timestamp) {
     return true;
 }
 
-bool getGpuTimeSplitted(::NEO::Drm &drm, uint64_t *timestamp) {
+bool getGpuTimeSplit(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead regHi = {};
     RegisterRead regLo = {};
     uint64_t tmpHi;
@@ -623,7 +651,7 @@ void IoctlHelperI915::initializeGetGpuTimeFunction() {
         if (err) {
             this->getGpuTime = &getGpuTime32;
         } else {
-            this->getGpuTime = &getGpuTimeSplitted;
+            this->getGpuTime = &getGpuTimeSplit;
         }
     } else {
         this->getGpuTime = &getGpuTime36;
@@ -670,11 +698,11 @@ bool IoctlHelperI915::isPreemptionSupported() {
     getParam.value = &schedulerCap;
 
     int retVal = ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: %d, retCode:% d\n",
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: %d, retCode:% d\n",
+                 *getParam.value,
+                 retVal);
+
     return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
 }
 
@@ -685,13 +713,64 @@ bool IoctlHelperI915::hasContextFreqHint() {
     getParam.value = &param;
 
     int retVal = ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_CONTEXT_FREQ_HINT, output value: %d, retCode:% d\n",
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_CONTEXT_FREQ_HINT, output value: %d, retCode:% d\n",
+                 *getParam.value,
+                 retVal);
+
     return retVal == 0 && (param == 1);
 }
+
+bool IoctlHelperI915::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    constexpr uint64_t mmapOffsetFixed = 4;
+    constexpr uint64_t mmapOffsetCoherent = I915_MMAP_OFFSET_WB;
+    constexpr uint64_t mmapOffsetNonCoherent = I915_MMAP_OFFSET_WC;
+
+    GemMmapOffset mmapOffset = {};
+    mmapOffset.handle = bo.peekHandle();
+
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    auto memoryManager = rootDeviceEnvironment.executionEnvironment.memoryManager.get();
+
+    if (memoryManager->isLocalMemorySupported(bo.getRootDeviceIndex())) {
+        mmapOffset.flags = mmapOffsetFixed;
+    } else {
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            switch (bo.peekBOType()) {
+            case NEO::BufferObject::BOType::nonCoherent:
+                mmapOffset.flags = mmapOffsetNonCoherent;
+                break;
+            case NEO::BufferObject::BOType::legacy:
+            case NEO::BufferObject::BOType::coherent:
+            default:
+                mmapOffset.flags = mmapOffsetCoherent;
+            }
+        } else {
+            mmapOffset.flags = flags;
+        }
+    }
+
+    auto ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    if (ret != 0 && memoryManager->isLocalMemorySupported(bo.getRootDeviceIndex())) {
+        mmapOffset.flags = flags;
+        ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    }
+    if (ret != 0) {
+        int err = drm.getErrno();
+
+        CREATE_DEBUG_STRING(str, "ioctl(%s) failed with %d. errno=%d(%s)\n",
+                            getIoctlString(DrmIoctl::gemMmapOffset).c_str(), ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        DEBUG_BREAK_IF(true);
+
+        return false;
+    }
+
+    offset = mmapOffset.offset;
+    return true;
+};
 
 void IoctlHelperI915::fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) {
     extSetparam.base.name = getDrmParamValue(DrmParam::contextCreateExtSetparam);
@@ -712,7 +791,7 @@ bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
 
     int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
     if (ret) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
         return false;
     }
 
@@ -722,7 +801,7 @@ bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
     ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
 
     if (ret != 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
         return false;
     }
 

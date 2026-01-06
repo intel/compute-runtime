@@ -11,9 +11,7 @@
 #include "zello_compile.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Function Pointers CL";
@@ -171,7 +169,6 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,6 @@ TEST(getInfoStatusMapper, GivenValidGetInfoStatusWhenTranslatingThenExpectedClCo
 }
 
 TEST(getInfoStatusMapper, GivenInvalidGetInfoStatusWhenTranslatingThenClInvalidValueIsReturned) {
-    auto getInfoStatus = changeGetInfoStatusToCLResultType(static_cast<GetInfoStatus>(1)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    auto getInfoStatus = changeGetInfoStatusToCLResultType(static_cast<GetInfoStatus>(1)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     EXPECT_EQ(CL_INVALID_VALUE, getInfoStatus);
 }

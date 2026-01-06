@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,12 +8,10 @@ set(CORE_SRCS_COREX_H_BASE
     hw_cmds.h
     hw_info.h
     hw_cmds_base.h
-    aub_mapper.h
 )
 
 set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
     aub_command_stream_receiver
-    aub_mem_dump
     command_encoder
     command_stream_receiver_hw
     command_stream_receiver_simulated_common_hw
@@ -21,8 +19,10 @@ set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
     debugger
     direct_submission
     experimental_command_buffer
+    host_function
     implicit_scaling
     gfx_core_helper
+    gmm_callbacks
     hw_info
     preamble
     preemption
@@ -33,7 +33,6 @@ set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
 set(CORE_RUNTIME_SRCS_COREX_CPP_WDDM
     windows/command_stream_receiver
     windows/direct_submission
-    windows/gmm_callbacks
 )
 
 set(CORE_RUNTIME_SRCS_COREX_CPP_LINUX

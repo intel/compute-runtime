@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/source/api/memory/windows/sysman_os_memory_imp.h"
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/windows/mock_memory_manager.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
@@ -186,6 +185,11 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
     }
 
+    void clearMemHandleListAndReinit() {
+        pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
+        pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
+    }
+
     std::vector<zes_mem_handle_t> getMemoryHandles(uint32_t count) {
         std::vector<zes_mem_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
@@ -198,12 +202,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 class PublicWddmPowerImp : public L0::Sysman::WddmMemoryImp {
   public:
     using WddmMemoryImp::pKmdSysManager;
-};
-
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
-  public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 struct MockSysmanProductHelperMemory : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {

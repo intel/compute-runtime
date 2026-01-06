@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -451,6 +451,38 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSyn
     EXPECT_FALSE(syncInfo.waitCalled);
     serverWaitForArbSyncObject(*osInterface, syncInfo);
     EXPECT_FALSE(syncInfo.waitCalled);
+}
+
+TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSingleObjectFailsThenWaitFlagDoesNotGetSet) {
+    CL_GL_SYNC_INFO syncInfo = {};
+    syncInfo.hContextToBlock = 0x4cU;
+
+    VariableBackup<decltype(SysCalls::sysCallsWaitForSingleObject)> mockSysCallsWaitForSingleObject(&SysCalls::sysCallsWaitForSingleObject, [](HANDLE hHandle, DWORD dwMilliseconds) -> DWORD {
+        return WAIT_FAILED;
+    });
+
+    EXPECT_FALSE(syncInfo.waitCalled);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
+    EXPECT_FALSE(syncInfo.waitCalled);
+}
+
+TEST_F(GlArbSyncEventOsTest, whenWaitOnServerForArbSyncObjectThenUseCpuSubmissionEvent) {
+    CL_GL_SYNC_INFO syncInfo = {};
+    syncInfo.hContextToBlock = 0x4cU;
+    syncInfo.submissionEvent = reinterpret_cast<HANDLE>(1);
+    syncInfo.event = reinterpret_cast<HANDLE>(2);
+    syncInfo.submissionSynchronizationObject = static_cast<D3DKMT_HANDLE>(3u);
+    syncInfo.clientSynchronizationObject = static_cast<D3DKMT_HANDLE>(4u);
+    syncInfo.serverSynchronizationObject = static_cast<D3DKMT_HANDLE>(5u);
+
+    VariableBackup<decltype(SysCalls::sysCallsWaitForSingleObject)> mockSysCallsWaitForSingleObject(&SysCalls::sysCallsWaitForSingleObject, [](HANDLE hHandle, DWORD dwMilliseconds) -> DWORD {
+        EXPECT_EQ(hHandle, reinterpret_cast<HANDLE>(1));
+        return WAIT_OBJECT_0;
+    });
+
+    EXPECT_FALSE(syncInfo.waitCalled);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
+    EXPECT_TRUE(syncInfo.waitCalled);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectSucceedsThenWaitFlagGetsSet) {

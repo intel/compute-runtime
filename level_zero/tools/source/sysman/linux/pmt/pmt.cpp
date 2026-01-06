@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,11 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <algorithm>
-#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 
 namespace L0 {
 const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt");
@@ -74,7 +73,7 @@ bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
 // Check if Telemetry node(say /sys/class/intel_pmt/telem1) and gpuUpstreamPortPath share same PCI Root port
 static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, const std::string sysfsTelemNode) {
     std::string realPathOfTelemNode;
-    auto result = pFsAccess->getRealPath(sysfsTelemNode, realPathOfTelemNode);
+    auto result = pFsAccess->getRealPath(std::move(sysfsTelemNode), realPathOfTelemNode);
     if (result != ZE_RESULT_SUCCESS) {
         return false;
     }
@@ -97,13 +96,15 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
 
     // listOfTelemNodes vector could contain non "telem" entries which are not interested to us.
     // Lets refactor listOfTelemNodes vector as below
-    for (auto iterator = listOfTelemNodes.begin(); iterator != listOfTelemNodes.end(); iterator++) {
+    for (auto iterator = listOfTelemNodes.begin(); iterator != listOfTelemNodes.end();) {
         if (iterator->compare(0, telem.size(), telem) != 0) {
-            listOfTelemNodes.erase(iterator--); // Remove entry if its suffix is not "telem"
+            iterator = listOfTelemNodes.erase(iterator); // Remove entry if its suffix is not "telem"
+        } else {
+            iterator++;
         }
     }
 
-    // Exmaple: For below directory
+    // Example: For below directory
     // # /sys/class/intel_pmt$ ls
     // telem1  telem2  telem3
     // Then listOfTelemNodes would contain telem1, telem2, telem3
@@ -137,8 +138,8 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
 
     telemetryDeviceEntry = baseTelemSysFSNode + "/" + telem;
     if (!pFsAccess->fileExists(telemetryDeviceEntry)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry support not available. No file %s\n", telemetryDeviceEntry.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry support not available. No file %s\n", telemetryDeviceEntry.c_str());
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -146,21 +147,21 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     std::string guidPath = baseTelemSysFSNode + std::string("/guid");
     ze_result_t result = pFsAccess->read(guidPath, guid);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry sysfs entry not available %s\n", guidPath.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
+    result = PlatformMonitoringTech::getKeyOffsetMap(std::move(guid), keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
-        // We didnt have any entry for this guid in guidToKeyOffsetMap
+        // We did not have any entry for this guid in guidToKeyOffsetMap
         return result;
     }
 
     std::string offsetPath = baseTelemSysFSNode + std::string("/offset");
     result = pFsAccess->read(offsetPath, baseOffset);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry sysfs entry not available %s\n", offsetPath.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry sysfs entry not available %s\n", offsetPath.c_str());
         return result;
     }
 

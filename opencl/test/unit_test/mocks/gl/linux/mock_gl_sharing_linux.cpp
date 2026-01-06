@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/mocks/gl/linux/mock_gl_sharing_linux.h"
-
-#include "config.h"
 
 namespace NEO {
 void GlSharingFunctionsMock::initMembers() {

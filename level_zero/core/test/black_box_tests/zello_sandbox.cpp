@@ -1,15 +1,27 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/include/level_zero/ze_intel_gpu.h"
 
 #include "zello_common.h"
 #include "zello_compile.h"
 
 #include <cstring>
 #include <sstream>
+
+template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
+constexpr inline TNoRef alignUp(T before, size_t alignment) {
+    TNoRef mask = static_cast<TNoRef>(alignment - 1);
+    return (before + mask) & ~mask;
+}
+template <typename T>
+constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
+    return reinterpret_cast<T *>(alignUp(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
+}
 
 void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_device_handle_t &device,
                                             bool &outputValidationSuccessful, bool aubMode, bool asyncMode) {
@@ -107,7 +119,7 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t events[3];
-    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr, 3, events, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, 3, events, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, deviceMemory, sourceSystemMemory.data(), regularCmdlistBufSize, events[1], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, destSystemMemory.data(), deviceMemory, regularCmdlistBufSize, events[2], 1, &events[1]));
@@ -200,7 +212,7 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
     std::vector<ze_event_handle_t> events(numEvents);
     ze_event_pool_flags_t eventPoolFlags = flags;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     eventPoolFlags, false, nullptr, nullptr,
+                                                     eventPoolFlags, false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      ZE_EVENT_SCOPE_FLAG_HOST);
@@ -327,7 +339,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
 
     uint32_t queueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
-    uint32_t subDeviceCopyQueueGroup = std::numeric_limits<uint32_t>::max();
+    uint32_t subDeviceCopyQueueGroup = LevelZeroBlackBoxTests::undefinedQueueOrdinal;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = queueGroup;
@@ -352,7 +364,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         uint32_t subDeviceQueueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(subDevice, false);
 
         subDeviceCopyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(subDevice);
-        if (subDeviceCopyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+        if (subDeviceCopyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             copyQueueGroup = subDeviceCopyQueueGroup;
         }
 
@@ -365,13 +377,13 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         }
     }
 
-    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
+    if (copyQueueGroup == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
         if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "Skipping compute - copy sync" << std::endl;
         }
     } else {
         copyDevice = device;
-        if (subDeviceCopyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+        if (subDeviceCopyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             copyDevice = subDevice;
             if (LevelZeroBlackBoxTests::verbose) {
                 std::cout << "Using subdevice for copy engine" << std::endl;
@@ -544,10 +556,53 @@ std::string testEventSyncForMultiTileAndCopy(bool immediate, bool tsEvent) {
     return testStream.str();
 }
 
+void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_handle_t &device,
+                                     bool &outputValidationSuccessful, bool aubMode) {
+    ze_command_list_handle_t cmdList = nullptr;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, true, false, cmdList);
+
+    constexpr size_t allocSize = 0x1000;
+    const uint8_t value = 0x55;
+
+    auto memory = malloc(2 * allocSize);
+    auto alignedMemory = alignUp(memory, 0x1000);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, alignedMemory, allocSize};
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = 0;
+    hostDesc.pNext = &sysMemDesc;
+
+    void *buffer1 = nullptr;
+    void *buffer2 = nullptr;
+
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer1));
+    hostDesc.pNext = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer2));
+
+    memset(buffer1, value, allocSize);
+    memset(buffer2, 0, allocSize);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer2, buffer1, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+
+    // Validate
+    if (!aubMode) {
+        outputValidationSuccessful = LevelZeroBlackBoxTests::validateToValue<uint8_t>(value, buffer2, allocSize);
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer2));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    free(memory);
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMemoryTransfer5x = 0u;
     constexpr uint32_t bitNumberTestEventSyncForMultiTileAndCopy = 1u;
     constexpr uint32_t bitNumberTestImmediateAndRegularCommandLists = 2u;
+    constexpr uint32_t bitNumberTestSystemMemory = 3u;
 
     const std::string blackBoxName = "Zello Sandbox";
     std::string currentTest;
@@ -650,7 +705,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+    if (testMask.test(bitNumberTestSystemMemory)) {
+        if (outputValidationSuccessful || aubMode) {
+            currentTest = "executeMemoryCopyOnSystemMemory\n";
+            executeMemoryCopyOnSystemMemory(context, device, outputValidationSuccessful, aubMode);
+            LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+    }
 
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;

@@ -15,6 +15,8 @@
 #include <memory>
 
 namespace L0 {
+class OsVf;
+struct OsSysman;
 
 class VfImp : public VfManagement, NEO::NonCopyableAndNonMovableClass {
   public:

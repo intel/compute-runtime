@@ -8,14 +8,15 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 
@@ -23,6 +24,10 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
     NEO::AllocationProperties properties(
         device->getRootDeviceIndex(), PrintfHandler::printfBufferSize, NEO::AllocationType::printfSurface, device->getNEODevice()->getDeviceBitfield());
     properties.alignment = MemoryConstants::pageSize64k;
+
+    DEBUG_BREAK_IF(device->getNEODevice()->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(properties.size, MemoryConstants::pageSize2M));
+
     auto allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
     *reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) =
@@ -62,7 +67,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
 
             const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, *selectedDevice);
             if (newTaskCount == NEO::CompletionStamp::gpuHang) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
                 printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
             }
         }

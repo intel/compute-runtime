@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -386,20 +386,21 @@ void BinaryDecoder::processKernel(const void *&ptr, size_t sectionSize, std::str
 
     ptmFile << "KernelBinaryHeader:\n";
     for (const auto &v : kernelHeader.fields) {
-        if (v.name == kernelPatchListSize.name)
+        if (v.name == kernelPatchListSize.name) {
             kernelPatchListSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == kernelNameSize.name)
+        } else if (v.name == kernelNameSize.name) {
             kernelNameSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == kernelHeapSize.name)
+        } else if (v.name == kernelHeapSize.name) {
             kernelHeapSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == kernelHeapUnpaddedSize.name)
+        } else if (v.name == kernelHeapUnpaddedSize.name) {
             kernelHeapUnpaddedSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == generalStateHeapSize.name)
+        } else if (v.name == generalStateHeapSize.name) {
             generalStateHeapSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == dynamicStateHeapSize.name)
+        } else if (v.name == dynamicStateHeapSize.name) {
             dynamicStateHeapSize.size = readUnaligned<uint32_t>(ptr);
-        else if (v.name == surfaceStateHeapSize.name)
+        } else if (v.name == surfaceStateHeapSize.name) {
             surfaceStateHeapSize.size = readUnaligned<uint32_t>(ptr);
+        }
 
         dumpField(ptr, v, ptmFile);
     }
@@ -567,7 +568,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
     }
     if (!argHelper->outputEnabled()) {
         if (pathToDump.empty()) {
-            argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            argHelper->printf("Warning : Path to dump folder not specified - using ./dump as default.\n");
             pathToDump = std::string("dump/");
         }
         NEO::Directory::createDirectory(pathToDump);

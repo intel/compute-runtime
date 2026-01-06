@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "opencl/source/event/async_events_handler.h"
 
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "opencl/source/event/event.h"

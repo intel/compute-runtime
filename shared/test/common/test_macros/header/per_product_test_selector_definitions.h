@@ -42,3 +42,11 @@
 #define XE3_TYPED_TEST(method)
 #define XE3_SUPPORTED_TEST(cmdSetBase) false
 #endif
+
+#ifdef TESTS_XE3P_CORE
+#define XE3P_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE3P_CORE>::GfxFamily>();
+#define XE3P_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE3P_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
+#else
+#define XE3P_TYPED_TEST(method)
+#define XE3P_SUPPORTED_TEST(cmdSetBase) false
+#endif

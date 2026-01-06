@@ -9,10 +9,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/memory/memory.h"
-#include "level_zero/tools/source/sysman/memory/os_memory.h"
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+class OsMemory;
+struct OsSysman;
 
 class MemoryImp : public Memory, NEO::NonCopyableAndNonMovableClass {
   public:

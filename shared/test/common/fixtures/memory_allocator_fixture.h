@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -30,15 +31,9 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->calculateMaxOsContextCount();
 
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
-        memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
-        executionEnvironment->memoryManager.reset(memoryManager);
-        csr = &device->getGpgpuCommandStreamReceiver();
+        memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
 
-        auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto engineType = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment())[0].first;
-        auto osContext = memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular},
-                                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-        csr->setupContext(*osContext);
+        csr = &device->getGpgpuCommandStreamReceiver();
     }
 
     void tearDown() {

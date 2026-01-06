@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
@@ -31,49 +30,40 @@ const PLATFORM MTL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable MTL::capabilityTable{
-    EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_CCS, {true, false, false, true}}}, // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,                          // gpuAddressSpace
-    0,                                                         // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    "",                                                        // deviceName
-    nullptr,                                                   // preferredPlatformName
-    PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                                    // defaultEngineType
-    0,                                                         // maxRenderFrequency
-    30,                                                        // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Mtl,             // aubDeviceId
-    0,                                                         // extraQuantityThreadsPerEU
-    64,                                                        // slmSize
-    sizeof(MTL::GRF),                                          // grfSize
-    36u,                                                       // timestampValidBits
-    32u,                                                       // kernelTimestampValidBits
-    false,                                                     // blitterOperationsSupported
-    true,                                                      // ftrSupportsInteger64BitAtomics
-    true,                                                      // ftrSupportsFP64
-    false,                                                     // ftrSupportsFP64Emulation
-    true,                                                      // ftrSupports64BitMath
-    true,                                                      // ftrSvm
-    false,                                                     // ftrSupportsCoherency
-    false,                                                     // ftrRenderCompressedBuffers
-    false,                                                     // ftrRenderCompressedImages
-    true,                                                      // ftr64KBpages
-    true,                                                      // instrumentationEnabled
-    true,                                                      // supportCacheFlushAfterWalker
-    true,                                                      // supportsImages
-    true,                                                      // supportsOcl21Features
-    false,                                                     // supportsOnDemandPageFaults
-    false,                                                     // supportsIndependentForwardProgress
-    false,                                                     // hostPtrTrackingEnabled
-    true,                                                      // isIntegratedDevice
-    true,                                                      // supportsMediaBlock
-    false,                                                     // p2pAccessSupported
-    false,                                                     // p2pAtomicAccessSupported
-    true,                                                      // fusedEuEnabled
-    true,                                                      // l0DebuggerSupported
-    true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
+
+    }),
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = MemoryConstants::max48BitAddress,
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::ThreadGroup,
+    .defaultEngineType = aub_stream::ENGINE_CCS,
+    .maxRenderFrequency = 0,
+    .extraQuantityThreadsPerEU = 0,
+    .maxProgrammableSlmSize = 64,
+    .grfSize = sizeof(MTL::GRF),
+    .timestampValidBits = 36u,
+    .kernelTimestampValidBits = 32u,
+    .blitterOperationsSupported = false,
+    .ftrSupportsFP64 = true,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = true,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = true,
+    .supportsImages = true,
+    .supportsOnDemandPageFaults = false,
+    .supportsIndependentForwardProgress = false,
+    .isIntegratedDevice = true,
+    .supportsMediaBlock = true,
+    .fusedEuEnabled = true,
+    .l0DebuggerSupported = true,
 };
 
 WorkaroundTable MTL::workaroundTable = {};
@@ -91,11 +81,16 @@ void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
 };
 
 void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupDefaultGtSysInfo(hwInfo, releaseHelper);
+    setupDefaultGtSysInfo(hwInfo);
+
+    hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo MtlHwConfig::hwInfo = {

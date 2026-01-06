@@ -28,7 +28,7 @@ unsigned int IoctlHelperXe::getIoctlRequestValueDebugger(DrmIoctl ioctlRequest) 
 int IoctlHelperXe::debuggerOpenIoctl(DrmIoctl request, void *arg) {
     EuDebugConnect *connect = static_cast<EuDebugConnect *>(arg);
     auto ret = IoctlHelper::ioctl(request, arg);
-    xeLog(" -> IoctlHelperXe::ioctl debuggerOpen pid=%llu r=%d\n",
+    XELOG(" -> IoctlHelperXe::ioctl debuggerOpen pid=%llu r=%d\n",
           connect->pid, ret);
     return ret;
 }
@@ -36,7 +36,7 @@ int IoctlHelperXe::debuggerOpenIoctl(DrmIoctl request, void *arg) {
 int IoctlHelperXe::debuggerMetadataCreateIoctl(DrmIoctl request, void *arg) {
     DebugMetadataCreate *metadata = static_cast<DebugMetadataCreate *>(arg);
     auto ret = IoctlHelper::ioctl(request, arg);
-    xeLog(" -> IoctlHelperXe::ioctl metadataCreate type=%llu user_addr=%uul len=%uul\n id=%uul ret=%d, errno=%d\n",
+    XELOG(" -> IoctlHelperXe::ioctl metadataCreate type=%llu user_addr=%uul len=%uul\n id=%uul ret=%d, errno=%d\n",
           metadata->type, metadata->userAddr, metadata->len, metadata->metadataId, ret, errno);
     return ret;
 }
@@ -44,7 +44,7 @@ int IoctlHelperXe::debuggerMetadataCreateIoctl(DrmIoctl request, void *arg) {
 int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
     DebugMetadataDestroy *metadata = static_cast<DebugMetadataDestroy *>(arg);
     auto ret = IoctlHelper::ioctl(request, arg);
-    xeLog(" -> IoctlHelperXe::ioctl metadataDestroy id=%llu r=%d\n",
+    XELOG(" -> IoctlHelperXe::ioctl metadataDestroy id=%llu r=%d\n",
           metadata->metadataId, ret);
     return ret;
 }
@@ -66,6 +66,10 @@ int IoctlHelperXe::getEuDebugSysFsEnable() {
 }
 
 uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void *data, size_t size) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return 0;
+    }
+
     DebugMetadataCreate metadata = {};
     if (classType == DrmResourceClass::elf) {
         metadata.type = euDebugInterface->getParamValue(EuDebugParam::metadataElfBinary);
@@ -98,6 +102,9 @@ uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void 
 }
 
 void IoctlHelperXe::unregisterResource(uint32_t handle) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return;
+    }
     DebugMetadataDestroy metadata = {};
     metadata.metadataId = handle;
     [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataDestroy, &metadata);
@@ -106,6 +113,9 @@ void IoctlHelperXe::unregisterResource(uint32_t handle) {
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return nullptr;
+    }
 
     static_assert(std::is_trivially_destructible_v<VmBindOpExtAttachDebug>,
                   "Storage must be allowed to be reused without calling the destructor!");
@@ -113,7 +123,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32
     static_assert(alignof(VmBindOpExtAttachDebug) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
                   "Alignment of a buffer returned via new[] operator must allow storing the required type!");
 
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     const auto bufferSize{sizeof(VmBindOpExtAttachDebug) * bindExtHandles.size()};
     std::unique_ptr<uint8_t[]> extensionsBuffer{new uint8_t[bufferSize]};
 

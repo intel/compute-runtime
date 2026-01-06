@@ -14,6 +14,7 @@
 #include "standby.h"
 
 namespace L0 {
+struct OsSysman;
 
 class StandbyImp : public Standby, NEO::NonCopyableAndNonMovableClass {
   public:

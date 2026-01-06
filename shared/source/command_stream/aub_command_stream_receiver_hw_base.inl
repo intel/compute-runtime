@@ -7,41 +7,40 @@
 
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub/aub_stream_provider.h"
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
-#include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hash.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/page_table.h"
-#include "shared/source/os_interface/aub_memory_operations_handler.h"
-#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "aubstream/aubstream.h"
 
-#include <cstring>
+#include <cstdint>
+#include <limits>
+#include <type_traits>
+#include <utility>
 
 namespace NEO {
 
@@ -70,27 +69,13 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     }
     auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
     UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);
-
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator);
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator);
-
-    gttRemap = aubCenter->getAddressMapper();
-    UNRECOVERABLE_IF(nullptr == gttRemap);
-
-    auto streamProvider = aubCenter->getStreamProvider();
-    UNRECOVERABLE_IF(nullptr == streamProvider);
-
-    stream = streamProvider->getStream();
-    UNRECOVERABLE_IF(nullptr == stream);
 
     if (debugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
 
-    auto debugDeviceId = debugManager.flags.OverrideAubDeviceId.get();
-    this->aubDeviceId = debugDeviceId == -1
-                            ? this->peekHwInfo().capabilityTable.aubDeviceId
-                            : static_cast<uint32_t>(debugDeviceId);
     this->defaultSshSize = 64 * MemoryConstants::kiloByte;
 }
 
@@ -99,23 +84,21 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
     if (osContext) {
         pollForCompletion();
     }
-    this->freeEngineInfo(*gttRemap);
 }
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::openFile(const std::string &fileName) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
     initFile(fileName);
 }
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileName) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (isFileOpen()) {
         if (fileName != getFileName()) {
             closeFile();
-            this->freeEngineInfo(*gttRemap);
         }
     }
     if (!isFileOpen()) {
@@ -148,154 +131,37 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
         }
         return;
     }
-
-    if (!getAubStream()->isOpen()) {
-        // Open our file
-        stream->open(fileName.c_str());
-
-        if (!getAubStream()->isOpen()) {
-            // This UNRECOVERABLE_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
-            // try adding <familycodename>_aub
-            UNRECOVERABLE_IF(true);
-        }
-        // Add the file header
-        auto &hwInfo = this->peekHwInfo();
-        const auto &productHelper = this->getProductHelper();
-        stream->init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), aubDeviceId);
-    }
 }
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::closeFile() {
-    aubManager ? aubManager->close() : stream->close();
+    if (aubManager && aubManager->isOpen()) {
+        aubManager->close();
+    }
 }
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::isFileOpen() const {
-    return aubManager ? aubManager->isOpen() : getAubStream()->isOpen();
+    return aubManager ? aubManager->isOpen() : false;
 }
 
 template <typename GfxFamily>
 const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
-    return aubManager ? aubManager->getFileName() : getAubStream()->getFileName();
+    return aubManager ? aubManager->getFileName() : std::string{};
 }
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    auto streamLocked = getAubStream()->lockStream();
-    isEngineInitialized = true;
-
-    if (hardwareContextController) {
-        hardwareContextController->initialize();
-        return;
-    }
-
-    auto csTraits = this->getCsTraits(osContext->getEngineType());
-
-    if (engineInfo.pLRCA) {
-        return;
-    }
-
-    this->initGlobalMMIO();
-    this->initEngineMMIO();
-    this->initAdditionalMMIO();
-
-    // Write driver version
-    {
-        std::ostringstream str;
-        str << "driver version: " << driverVersion;
-        getAubStream()->addComment(str.str().c_str());
-    }
-
-    // Global HW Status Page
-    {
-        const size_t sizeHWSP = 0x1000;
-        const size_t alignHWSP = 0x1000;
-        engineInfo.pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
-        engineInfo.ggttHWSP = gttRemap->map(engineInfo.pGlobalHWStatusPage, sizeHWSP);
-
-        auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, this->getGTTBits(), this->getMemoryBankForGtt());
-
-        // Write our GHWSP
-        {
-            std::ostringstream str;
-            str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttHWSP;
-            getAubStream()->addComment(str.str().c_str());
+    if (!isEngineInitialized) {
+        auto streamLocked = lockStream();
+        if (!isEngineInitialized) {
+            isEngineInitialized = true;
+            if (hardwareContextController) {
+                hardwareContextController->createHardwareContexts(*aubManager);
+                hardwareContextController->initialize();
+            }
         }
-
-        AubGTTData data = {0};
-        this->getGTTData(reinterpret_cast<void *>(physHWSP), data);
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP, data);
-        stream->writeMMIO(AubMemDump::computeRegisterOffset(csTraits.mmioBase, 0x2080), engineInfo.ggttHWSP);
     }
-
-    // Allocate the LRCA
-    const size_t sizeLRCA = csTraits.sizeLRCA;
-    const size_t alignLRCA = csTraits.alignLRCA;
-    auto pLRCABase = alignedMalloc(sizeLRCA, alignLRCA);
-    engineInfo.pLRCA = pLRCABase;
-
-    // Initialize the LRCA to a known state
-    csTraits.initialize(pLRCABase);
-
-    // Reserve the ring buffer
-    engineInfo.sizeRingBuffer = 0x4 * 0x1000;
-    {
-        const size_t alignRingBuffer = 0x1000;
-        engineInfo.pRingBuffer = alignedMalloc(engineInfo.sizeRingBuffer, alignRingBuffer);
-        engineInfo.ggttRingBuffer = gttRemap->map(engineInfo.pRingBuffer, engineInfo.sizeRingBuffer);
-        auto physRingBuffer = ggtt->map(engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, this->getGTTBits(), this->getMemoryBankForGtt());
-
-        {
-            std::ostringstream str;
-            str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttRingBuffer;
-            getAubStream()->addComment(str.str().c_str());
-        }
-
-        AubGTTData data = {0};
-        this->getGTTData(reinterpret_cast<void *>(physRingBuffer), data);
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, physRingBuffer, data);
-    }
-
-    // Initialize the ring MMIO registers
-    {
-        uint32_t ringHead = 0x000;
-        uint32_t ringTail = 0x000;
-        auto ringBase = engineInfo.ggttRingBuffer;
-        auto ringCtrl = (uint32_t)((engineInfo.sizeRingBuffer - 0x1000) | 1);
-        csTraits.setRingHead(pLRCABase, ringHead);
-        csTraits.setRingTail(pLRCABase, ringTail);
-        csTraits.setRingBase(pLRCABase, ringBase);
-        csTraits.setRingCtrl(pLRCABase, ringCtrl);
-    }
-
-    // Write our LRCA
-    {
-        engineInfo.ggttLRCA = gttRemap->map(engineInfo.pLRCA, sizeLRCA);
-        auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, this->getGTTBits(), this->getMemoryBankForGtt());
-
-        {
-            std::ostringstream str;
-            str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA;
-            getAubStream()->addComment(str.str().c_str());
-        }
-
-        AubGTTData data = {0};
-        this->getGTTData(reinterpret_cast<void *>(lrcAddressPhys), data);
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys, data);
-        AUB::addMemoryWrite(
-            *stream,
-            lrcAddressPhys,
-            pLRCABase,
-            sizeLRCA,
-            this->getAddressSpace(csTraits.aubHintLRCA),
-            csTraits.aubHintLRCA);
-    }
-
-    // Create a context to facilitate AUB dumping of memory using PPGTT
-    addContextToken(getDumpHandle());
-
-    DEBUG_BREAK_IF(!engineInfo.pLRCA);
 }
 
 template <typename GfxFamily>
@@ -377,209 +243,19 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         batchBuffer.commandBufferAllocation = commandBufferAllocationBackup;
     }
 
-    getAubStream()->flush();
     return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
-    std::map<uint64_t, uint64_t> allocationsMap;
 
-    std::ostringstream str;
-    str << "PatchInfoData" << std::endl;
-    for (auto &patchInfoData : this->flatBatchBufferHelper->getPatchInfoCollection()) {
-        str << std::hex << patchInfoData.sourceAllocation << ";";
-        str << std::hex << patchInfoData.sourceAllocationOffset << ";";
-        str << std::hex << patchInfoData.sourceType << ";";
-        str << std::hex << patchInfoData.targetAllocation << ";";
-        str << std::hex << patchInfoData.targetAllocationOffset << ";";
-        str << std::hex << patchInfoData.targetType << ";";
-        str << std::endl;
-
-        if (patchInfoData.sourceAllocation) {
-            allocationsMap.insert(std::pair<uint64_t, uint64_t>(patchInfoData.sourceAllocation,
-                                                                ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1, 0, MemoryBanks::mainBank)));
-        }
-
-        if (patchInfoData.targetAllocation) {
-            allocationsMap.insert(std::pair<uint64_t, uintptr_t>(patchInfoData.targetAllocation,
-                                                                 ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::mainBank)));
-        }
-    }
-    bool result = getAubStream()->addComment(str.str().c_str());
-    this->flatBatchBufferHelper->getPatchInfoCollection().clear();
-    if (!result) {
-        return false;
-    }
-
-    std::ostringstream allocationStr;
-    allocationStr << "AllocationsList" << std::endl;
-    for (auto &element : allocationsMap) {
-        allocationStr << std::hex << element.first << ";" << element.second << std::endl;
-    }
-    result = getAubStream()->addComment(allocationStr.str().c_str());
-    if (!result) {
-        return false;
-    }
-    return true;
-}
-
-template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         if (batchBufferSize) {
             hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k, false);
         }
         return;
-    }
-
-    auto csTraits = this->getCsTraits(osContext->getEngineType());
-
-    {
-        {
-            std::ostringstream str;
-            str << "ppgtt: " << std::hex << std::showbase << batchBuffer;
-            getAubStream()->addComment(str.str().c_str());
-        }
-
-        auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, entryBits, memoryBank);
-        AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
-        AUB::reserveAddressPPGTT(*stream, static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, physBatchBuffer,
-                                 entryBits, aubHelperHw);
-
-        AUB::addMemoryWrite(
-            *stream,
-            physBatchBuffer,
-            batchBuffer,
-            batchBufferSize,
-            this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary),
-            AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
-    }
-
-    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer)));
-        addPatchInfoComments();
-    }
-
-    // Add a batch buffer start to the ring buffer
-    auto previousTail = engineInfo.tailRingBuffer;
-    {
-        typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-        typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-        typedef typename GfxFamily::MI_NOOP MI_NOOP;
-
-        auto pTail = ptrOffset(engineInfo.pRingBuffer, engineInfo.tailRingBuffer);
-        auto ggttTail = ptrOffset(engineInfo.ggttRingBuffer, engineInfo.tailRingBuffer);
-
-        auto sizeNeeded =
-            sizeof(MI_BATCH_BUFFER_START) +
-            sizeof(MI_LOAD_REGISTER_IMM);
-
-        auto tailAlignment = sizeof(uint64_t);
-        sizeNeeded = alignUp(sizeNeeded, tailAlignment);
-
-        if (engineInfo.tailRingBuffer + sizeNeeded >= engineInfo.sizeRingBuffer) {
-            // Pad the remaining ring with NOOPs
-            auto sizeToWrap = engineInfo.sizeRingBuffer - engineInfo.tailRingBuffer;
-            memset(pTail, 0, sizeToWrap);
-            // write remaining ring
-
-            auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, this->getGTTBits(), this->getMemoryBankForGtt());
-            AUB::addMemoryWrite(
-                *stream,
-                physDumpStart,
-                pTail,
-                sizeToWrap,
-                this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
-                AubMemDump::DataTypeHintValues::TraceCommandBuffer);
-            previousTail = 0;
-            engineInfo.tailRingBuffer = 0;
-            pTail = engineInfo.pRingBuffer;
-        } else if (engineInfo.tailRingBuffer == 0) {
-            // Add a LRI if this is our first submission
-            auto lri = GfxFamily::cmdInitLoadRegisterImm;
-            lri.setRegisterOffset(AubMemDump::computeRegisterOffset(csTraits.mmioBase, 0x2244));
-            lri.setDataDword(0x00010000);
-            *(MI_LOAD_REGISTER_IMM *)pTail = lri;
-            pTail = ((MI_LOAD_REGISTER_IMM *)pTail) + 1;
-        }
-
-        // Add our BBS
-        auto bbs = GfxFamily::cmdInitBatchBufferStart;
-        bbs.setBatchBufferStartAddress(static_cast<uint64_t>(batchBufferGpuAddress));
-        bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
-        *(MI_BATCH_BUFFER_START *)pTail = bbs;
-        pTail = ((MI_BATCH_BUFFER_START *)pTail) + 1;
-
-        // Compute our new ring tail.
-        engineInfo.tailRingBuffer = (uint32_t)ptrDiff(pTail, engineInfo.pRingBuffer);
-
-        // Add NOOPs as needed as our tail needs to be aligned
-        while (engineInfo.tailRingBuffer % tailAlignment) {
-            *(MI_NOOP *)pTail = GfxFamily::cmdInitNoop;
-            pTail = ((MI_NOOP *)pTail) + 1;
-            engineInfo.tailRingBuffer = (uint32_t)ptrDiff(pTail, engineInfo.pRingBuffer);
-        }
-        UNRECOVERABLE_IF((engineInfo.tailRingBuffer % tailAlignment) != 0);
-
-        // Only dump the new commands
-        auto ggttDumpStart = ptrOffset(engineInfo.ggttRingBuffer, previousTail);
-        auto dumpStart = ptrOffset(engineInfo.pRingBuffer, previousTail);
-        auto dumpLength = engineInfo.tailRingBuffer - previousTail;
-
-        // write ring
-        {
-            std::ostringstream str;
-            str << "ggtt: " << std::hex << std::showbase << ggttDumpStart;
-            getAubStream()->addComment(str.str().c_str());
-        }
-
-        auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, this->getGTTBits(), this->getMemoryBankForGtt());
-        AUB::addMemoryWrite(
-            *stream,
-            physDumpStart,
-            dumpStart,
-            dumpLength,
-            this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
-            AubMemDump::DataTypeHintValues::TraceCommandBuffer);
-
-        // update the ring mmio tail in the LRCA
-        {
-            std::ostringstream str;
-            str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA + 0x101c;
-            getAubStream()->addComment(str.str().c_str());
-        }
-
-        auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRingBuffer), this->getGTTBits(), this->getMemoryBankForGtt());
-        AUB::addMemoryWrite(
-            *stream,
-            physLRCA + 0x101c,
-            &engineInfo.tailRingBuffer,
-            sizeof(engineInfo.tailRingBuffer),
-            this->getAddressSpace(csTraits.aubHintLRCA));
-
-        DEBUG_BREAK_IF(engineInfo.tailRingBuffer >= engineInfo.sizeRingBuffer);
-    }
-
-    // Submit our execlist by submitting to the execlist submit ports
-    {
-        typename AUB::MiContextDescriptorReg contextDescriptor = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-
-        contextDescriptor.sData.valid = true;
-        contextDescriptor.sData.forcePageDirRestore = false;
-        contextDescriptor.sData.forceRestore = false;
-        contextDescriptor.sData.legacy = true;
-        contextDescriptor.sData.faultSupport = 0;
-        contextDescriptor.sData.privilegeAccessOrPPGTT = true;
-        contextDescriptor.sData.aDor64bitSupport = AUB::Traits::addressingBits > 32;
-
-        auto ggttLRCA = engineInfo.ggttLRCA;
-        contextDescriptor.sData.logicalRingCtxAddress = ggttLRCA / 4096;
-        contextDescriptor.sData.contextID = 0;
-
-        this->submitLRCA(contextDescriptor);
     }
 }
 
@@ -602,23 +278,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
         }
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
         return;
     }
-
-    const auto mmioBase = this->getCsTraits(osContext->getEngineType()).mmioBase;
-    const bool pollNotEqual = false;
-    const uint32_t mask = getMaskAndValueForPollForCompletion();
-    const uint32_t value = mask;
-    stream->registerPoll(
-        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), // EXECLIST_STATUS
-        mask,
-        value,
-        pollNotEqual,
-        AubMemDump::CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
 }
 
 template <typename GfxFamily>
@@ -643,25 +308,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
         }
     }
 }
-
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
     UNRECOVERABLE_IF(!isEngineInitialized);
-
-    {
-        std::ostringstream str;
-        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " size: " << std::dec << size;
-        getAubStream()->addComment(str.str().c_str());
-    }
-
-    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
-
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, entryBits,
-                                              aubHelperHw);
-    };
-
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, entryBits, walker, memoryBank);
 }
 
 template <typename GfxFamily>
@@ -670,9 +319,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         return false;
     }
 
-    if (!isEngineInitialized) {
-        initializeEngine();
-    }
+    initializeEngine();
 
     bool ownsLock = !gfxAllocation.isLocked();
     uint64_t gpuAddress;
@@ -682,13 +329,12 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         return false;
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (aubManager) {
         this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     } else {
         UNRECOVERABLE_IF(isChunkCopy);
-        writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 
     streamLocked.unlock();
@@ -712,7 +358,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t value) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->writeMMIO(offset, value);
@@ -725,7 +371,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
         // Add support for expectMMIO to AubStream
         return;
     }
-    this->getAubStream()->expectMMIO(mmioRegister, expectedValue);
 }
 
 template <typename GfxFamily>
@@ -733,25 +378,37 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
                                                          size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
         return true;
     }
+    return false;
+}
 
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        UNRECOVERABLE_IF(offset > length);
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {
+    auto &gfxAllocation = *sharedPoolAllocation.getGraphicsAllocation();
 
-        this->getAubStream()->expectMemory(physAddress,
-                                           ptrOffset(srcAddress, offset),
-                                           size,
-                                           this->getAddressSpaceFromPTEBits(entryBits),
-                                           compareOperation);
+    auto writeMemoryOperation = [&]() {
+        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+        if (initFullPageTables && gfxAllocation.isAubWritable(allBanks)) {
+            writeMemory(gfxAllocation, false, 0, 0);
+        }
+
+        gfxAllocation.setAubWritable(true, allBanks);
+        [[maybe_unused]] const auto writeMemoryStatus = writeMemory(gfxAllocation, true, sharedPoolAllocation.getOffset(), sharedPoolAllocation.getSize());
+        DEBUG_BREAK_IF(!writeMemoryStatus);
+        gfxAllocation.setAubWritable(false, allBanks);
     };
 
-    this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::bankNotSpecified);
-    return true;
+    if (auto mutex = sharedPoolAllocation.getMutex(); mutex) {
+        std::lock_guard<std::mutex> lock(*mutex);
+        writeMemoryOperation();
+    } else {
+        writeMemoryOperation();
+    }
 }
 
 template <typename GfxFamily>
@@ -807,7 +464,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         pollForCompletion();
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, *this->peekGmmHelper(), dumpFormat));
@@ -816,8 +473,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         }
         return;
     }
-
-    AubAllocDump::dumpAllocation<GfxFamily>(dumpFormat, gfxAllocation, getAubStream(), getDumpHandle());
 }
 
 template <typename GfxFamily>
@@ -838,56 +493,15 @@ AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(const char *message) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
     if (aubManager) {
         aubManager->addComment(message);
         return;
     }
-    getAubStream()->addComment(message);
 }
 
 template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getDumpHandle() {
     return hashPtrToU32(this);
 }
-
-template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress) {
-    typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-
-    auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
-    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
-
-    std::unique_ptr<void, std::function<void(void *)>> buffer(this->getMemoryManager()->alignedMallocWrapper(bufferSize, MemoryConstants::pageSize), [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
-    LinearStream linearStream(buffer.get(), bufferSize);
-
-    uint32_t *header = static_cast<uint32_t *>(linearStream.getSpace(sizeof(uint32_t)));
-    *header = getGUCWorkQueueItemHeader();
-
-    MI_BATCH_BUFFER_START *miBatchBufferStartSpace = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
-    auto miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
-    miBatchBufferStart.setBatchBufferStartAddress(AUB::ptrToPPGTT(buffer.get()));
-    miBatchBufferStart.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
-    *miBatchBufferStartSpace = miBatchBufferStart;
-
-    auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize,
-                                       this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
-                                       MemoryBanks::mainBank);
-
-    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres,
-                             this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
-                             aubHelperHw);
-
-    AUB::addMemoryWrite(
-        *stream,
-        physBufferAddres,
-        buffer.get(),
-        bufferSize,
-        this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
-
-    PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::defaultType, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::gucStartMessage);
-    this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
-}
-
 } // namespace NEO

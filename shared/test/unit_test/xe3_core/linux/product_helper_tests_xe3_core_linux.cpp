@@ -6,13 +6,12 @@
  */
 
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

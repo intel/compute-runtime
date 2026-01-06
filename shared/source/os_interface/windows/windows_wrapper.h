@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,11 @@
 #pragma clang diagnostic ignored "-Wpragma-pack"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wmacro-redefined"
-#define UNICODE
 #endif
 
 #include <Windows.h>
 
+#include <SetupAPI.h>
 #include <ShlObj.h>
 #include <cfgmgr32.h>
 #include <winternl.h>

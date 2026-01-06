@@ -83,24 +83,24 @@ EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::Engin
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        if (debugManager.flags.ForceL1Caching.get() == 0) {
-            if (l1enabled) {
-                return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
-            }
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-        } else {
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+        if (debugManager.flags.ForceL1Caching.get() != 1) {
+            l1enabled = static_cast<bool>(debugManager.flags.ForceL1Caching.get());
         }
+        if (l1enabled) {
+            return gmmHelper.getL1EnabledMOCS() >> 1;
+        }
+        return gmmHelper.getL3EnabledMOCS() >> 1;
     }
 
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (kernelDescriptor.kernelAttributes.simdSize != 32 && kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::largeGrfNumber) {
         defaultMaxGroupSize >>= 1;
     }
+    defaultMaxGroupSize = adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, defaultMaxGroupSize, rootDeviceEnvironment);
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 

@@ -103,7 +103,7 @@ TEST_F(ClEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInval
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-class EnqueueReadBufferFlagsTest : public ApiFixture<>,
+class EnqueueReadBufferFlagsTest : public ApiFixture,
                                    public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   protected:
     void SetUp() override {

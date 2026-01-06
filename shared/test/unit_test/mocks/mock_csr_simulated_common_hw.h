@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,9 @@ class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
     void pollForCompletion(bool skipTaskCountCheck) override {
     }
     void initializeEngine() override {
+        if (aubManager) {
+            hardwareContextController->createHardwareContexts(*aubManager);
+        }
     }
     bool writeMemory(GraphicsAllocation &gfxAllocation) override {
         return true;

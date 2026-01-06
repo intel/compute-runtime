@@ -26,7 +26,7 @@
 # test1:               -> run definition for test1 blackbox test
 #   platform1:         -> 1 run on platform1 with default parameters
 #
-#   platform2:         -> 2 diffrent runs on platform2 with custom parameters, default parameters are ignored
+#   platform2:         -> 2 different runs on platform2 with custom parameters, default parameters are ignored
 #     - --other1
 #     - --other2
 #
@@ -45,6 +45,19 @@ _default_config:
       EnableDebugBreak: '0'
     params:
       - --verbose
+  bmg:
+    envs:
+      SetCommandStreamReceiver: '2'
+      NEOReadDebugKeys: '1'
+      PrintDebugMessages: '1'
+      EnableDebugBreak: '0'
+      ForcePreemptionMode: '1'
+      ForceKernelPreemptionMode: '1'
+
+zello_arg_slm:
+  bmg:
+  dg2:
+  pvc.b0:
 
 zello_atomic_inc:
   dg2:
@@ -75,10 +88,6 @@ zello_copy_kernel_printf:
   pvc.b0:
 
 zello_copy_only:
-  dg2:
-  pvc.b0:
-
-zello_copy_tracing:
   dg2:
   pvc.b0:
 
@@ -121,6 +130,9 @@ zello_function_pointers_cl:
 zello_global_bindless_kernel:
   dg2:
   pvc.b0:
+
+zello_graph:
+  bmg:
 
 zello_host_pointer:
   dg2:

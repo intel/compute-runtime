@@ -7,21 +7,30 @@
 
 #include "shared/source/command_stream/stream_property.h"
 
+#include <optional>
+
 namespace NEO {
 enum PreemptionMode : uint32_t;
-struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 struct StateComputeModePropertiesSupport {
-    bool coherencyRequired = false;
-    bool largeGrfMode = false;
-    bool zPassAsyncComputeThreadLimit = false;
-    bool pixelAsyncComputeThreadLimit = false;
-    bool threadArbitrationPolicy = false;
-    bool devicePreemptionMode = false;
-    bool allocationForScratchAndMidthreadPreemption = false;
-    bool enableVariableRegisterSizeAllocation = false;
-    bool pipelinedEuThreadArbitration = false;
+    bool coherencyRequired : 1 = false;
+    bool largeGrfMode : 1 = false;
+    bool zPassAsyncComputeThreadLimit : 1 = false;
+    bool pixelAsyncComputeThreadLimit : 1 = false;
+    bool threadArbitrationPolicy : 1 = false;
+    bool devicePreemptionMode : 1 = false;
+    bool allocationForScratchAndMidthreadPreemption : 1 = false;
+    bool enableVariableRegisterSizeAllocation : 1 = false;
+    bool pipelinedEuThreadArbitration : 1 = false;
+    bool enableL1FlushUavCoherencyMode : 1 = false;
+    bool lscSamplerBackingThreshold : 1 = false;
+    bool enableOutOfBoundariesInTranslationException : 1 = false;
+    bool enablePageFaultException : 1 = false;
+    bool enableSystemMemoryReadFence : 1 = false;
+    bool enableMemoryException : 1 = false;
+    bool enableBreakpoints : 1 = false;
+    bool enableForceExternalHaltAndForceException : 1 = false;
 };
 
 struct StateComputeModeProperties {
@@ -33,21 +42,32 @@ struct StateComputeModeProperties {
     StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
     StreamProperty enableVariableRegisterSizeAllocation{};
+    StreamProperty pipelinedEuThreadArbitration{};
+    StreamProperty enableL1FlushUavCoherencyMode{};
+    StreamProperty lscSamplerBackingThreshold{};
+    StreamProperty enableOutOfBoundariesInTranslationException{};
+    StreamProperty enablePageFaultException{};
+    StreamProperty enableSystemMemoryReadFence{};
+    StreamProperty enableMemoryException{};
+    StreamProperty enableBreakpoints{};
+    StreamProperty enableForceExternalHaltAndForceException{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
 
-    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
-    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
+    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess);
+    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
-    void setPipelinedEuThreadArbitration();
-    bool isPipelinedEuThreadArbitrationEnabled() const;
 
     bool isDirty() const;
     void clearIsDirty();
+
+    bool isPipelinedEuThreadArbitrationEnabled() const {
+        return this->scmPropertiesSupport.pipelinedEuThreadArbitration;
+    }
 
   protected:
     void clearIsDirtyPerContext();
@@ -67,14 +87,13 @@ struct StateComputeModeProperties {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
     int32_t defaultThreadArbitrationPolicy = 0;
     bool propertiesSupportLoaded = false;
-    bool pipelinedEuThreadArbitration = false;
 };
 
 struct FrontEndPropertiesSupport {
-    bool computeDispatchAllWalker = false;
-    bool disableEuFusion = false;
-    bool disableOverdispatch = false;
-    bool singleSliceDispatchCcsMode = false;
+    bool computeDispatchAllWalker : 1 = false;
+    bool disableEuFusion : 1 = false;
+    bool disableOverdispatch : 1 = false;
+    bool singleSliceDispatchCcsMode : 1 = false;
 };
 
 struct FrontEndProperties {
@@ -99,34 +118,6 @@ struct FrontEndProperties {
 
   protected:
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
-    bool propertiesSupportLoaded = false;
-};
-
-struct PipelineSelectPropertiesSupport {
-    bool mediaSamplerDopClockGate = false;
-    bool systolicMode = false;
-};
-
-struct PipelineSelectProperties {
-    StreamProperty modeSelected{};
-    StreamProperty mediaSamplerDopClockGate{};
-    StreamProperty systolicMode{};
-
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
-    void resetState();
-
-    void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode);
-    void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState);
-    void setPropertySystolicMode(bool systolicMode);
-
-    void copyPropertiesAll(const PipelineSelectProperties &properties);
-    void copyPropertiesSystolicMode(const PipelineSelectProperties &properties);
-
-    bool isDirty() const;
-    void clearIsDirty();
-
-  protected:
-    PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
 };
 

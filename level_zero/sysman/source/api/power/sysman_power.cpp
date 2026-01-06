@@ -7,8 +7,6 @@
 
 #include "level_zero/sysman/source/api/power/sysman_power.h"
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/sysman/source/api/power/sysman_os_power.h"
 #include "level_zero/sysman/source/api/power/sysman_power_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"

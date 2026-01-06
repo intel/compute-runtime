@@ -10,7 +10,6 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.h
@@ -30,6 +29,19 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}command_stream_receiver_hw_ext.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}stream_properties.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_enablers.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_counting_semaphore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_counting_semaphore.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_scheduler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_scheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_thread_pool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_thread_pool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp
@@ -53,7 +65,6 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/queue_throttle.h
     ${CMAKE_CURRENT_SOURCE_DIR}/queue_throttle.cpp
@@ -93,6 +104,12 @@ endif()
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_STREAM
        ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xe2_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_heapless_addressing.inl
   )
 endif()
 

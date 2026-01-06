@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/sharings/unified/enable_unified.h"
-
-#include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"

@@ -62,28 +62,28 @@ int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, si
     }
 
     if (debugManager.flags.PrintBOCreateDestroyResult.get()) {
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
-                         allocSize);
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
+                     allocSize);
 
         for (uint32_t i = 0; i < regionsSize; i++) {
             auto region = regions[i];
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
-                             region.memory_class, region.memory_instance);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
+                         region.memory_class, region.memory_instance);
         }
 
         if (useSetPat) {
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", pat index: %lu", patIndex);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", pat index: %lu", patIndex);
         }
 
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
     auto ret = ioctl(DrmIoctl::gemCreateExt, &createExt);
     handle = createExt.handle;
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
-                     (useSetPat) ? " with EXT_SET_PAT" : "",
-                     ret, createExt.handle, createExt.size);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
+                 (useSetPat) ? " with EXT_SET_PAT" : "",
+                 ret, createExt.handle, createExt.size);
 
     return ret;
 }
@@ -111,8 +111,8 @@ void IoctlHelperUpstream::detectExtSetPatSupport() {
         }
     }
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "EXT_SET_PAT support is: %s\n",
-                     this->isSetPatSupported ? "enabled" : "disabled");
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "EXT_SET_PAT support is: %s\n",
+                 this->isSetPatSupported ? "enabled" : "disabled");
 }
 
 CacheRegion IoctlHelperUpstream::closAlloc(CacheLevel cacheLevel) {
@@ -137,6 +137,10 @@ uint32_t IoctlHelperUpstream::getAtomicAdvise(bool isNonAtomic) {
 }
 
 uint32_t IoctlHelperUpstream::getAtomicAccess(AtomicAccessMode mode) {
+    return 0;
+}
+
+uint64_t IoctlHelperUpstream::getPreferredLocationArgs(MemAdvise memAdviseOp) {
     return 0;
 }
 
@@ -307,11 +311,8 @@ bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency,
     return false;
 }
 
-bool IoctlHelperUpstream::isWaitBeforeBindRequired(bool bind) const {
-    bool userFenceOnUnbind = false;
-    if (debugManager.flags.EnableUserFenceUponUnbind.get() != -1) {
-        userFenceOnUnbind = !!debugManager.flags.EnableUserFenceUponUnbind.get();
-    }
-    return userFenceOnUnbind;
+bool IoctlHelperUpstream::requiresUserFenceSetup(bool bind) const {
+    return false;
 }
+
 } // namespace NEO

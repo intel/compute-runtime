@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,11 @@
 
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics_imp.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_os_diagnostics.h"
-#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {
-class OsDiagnostics;
 
 DiagnosticsHandleContext::~DiagnosticsHandleContext() {
     releaseDiagnosticsHandles();

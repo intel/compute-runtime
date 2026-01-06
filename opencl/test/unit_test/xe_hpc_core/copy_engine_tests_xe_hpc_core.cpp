@@ -66,8 +66,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenProgrammingBltCom
     MockGraphicsAllocation clearColorAlloc;
 
     {
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                         bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
         flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -86,8 +86,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenProgrammingBltCom
 
     {
         auto offset = csr->commandStream.getUsed();
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                         bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
         flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -114,8 +114,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -144,8 +144,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsPro
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     size_t transferSize = static_cast<size_t>(clDevice->getHardwareInfo().gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2 + 1);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {transferSize, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -157,7 +157,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsPro
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
 
-    auto mocsL3disabled = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocsL3disabled = clDevice->getGmmHelper()->getUncachedMOCS();
     EXPECT_EQ(mocsL3disabled, bltCmd->getDestinationMOCS());
     EXPECT_EQ(mocsL3disabled, bltCmd->getSourceMOCS());
 }
@@ -175,8 +175,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -234,7 +234,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
     size_t offset = 0;
     {
         // 1D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
@@ -255,7 +255,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
 
     {
         // 2D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
@@ -270,33 +270,4 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
 
         EXPECT_EQ(MEM_COPY::COPY_TYPE::COPY_TYPE_MATRIX_COPY, bltCmd->getCopyType());
     }
-}
-
-HWTEST_EXCLUDE_PRODUCT(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue, IGFX_XE_HPC_CORE);
-
-using XeHpcCoreCopyEngineTests = ::testing::Test;
-XE_HPC_CORETEST_F(XeHpcCoreCopyEngineTests, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnFalse) {
-    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockContext context(clDevice.get());
-
-    cl_int retVal = CL_SUCCESS;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
-    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    EXPECT_FALSE(commandQueueHw->isCacheFlushForBcsRequired());
-}
-XE_HPC_CORETEST_F(XeHpcCoreCopyEngineTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValueForGen12p8) {
-    DebugManagerStateRestore restorer;
-    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockContext context(clDevice.get());
-
-    cl_int retVal = CL_SUCCESS;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
-    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(0);
-    EXPECT_FALSE(commandQueueHw->isCacheFlushForBcsRequired());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(1);
-    EXPECT_TRUE(commandQueueHw->isCacheFlushForBcsRequired());
 }

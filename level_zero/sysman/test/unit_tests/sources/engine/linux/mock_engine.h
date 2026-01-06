@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ struct MockEngineNeoDrm : public Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
+        this->engineInfo = std::make_unique<NEO::EngineInfo>(this, engineInfosPerTile);
         return true;
     }
 };

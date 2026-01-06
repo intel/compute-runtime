@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "gtest/gtest.h"
 
-#include <time.h>
 #include <unistd.h>
 
 std::string lastTest("");
@@ -17,6 +16,7 @@ std::string lastTest("");
 namespace NEO {
 extern const unsigned int ultIterationMaxTimeInS;
 extern const char *executionName;
+extern const char *apiName;
 } // namespace NEO
 
 int newStdOut = -1;
@@ -26,7 +26,7 @@ void handleSIGABRT(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGABRT in " << NEO::executionName << ", on: " << lastTest << std::endl;
+    std::cout << "SIGABRT in " << NEO::apiName << " " << NEO::executionName << ", on: " << lastTest << std::endl;
     if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
         std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
         std::cout << "FATAL: try SEGV" << std::endl;
@@ -40,24 +40,24 @@ void handleSIGABRT(int signal) {
 
 struct timespec startTimeSpec = {};
 struct timespec alrmTimeSpec = {};
+auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
+
 void handleSIGALRM(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "Tests timeout in " << NEO::executionName << ", ";
+    uint32_t elapsedTime = currentUltIterationMaxTimeInS;
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &alrmTimeSpec) == 0) {
-        auto deltaSec = alrmTimeSpec.tv_sec - startTimeSpec.tv_sec;
-        std::cout << " after: " << deltaSec << " seconds";
+        elapsedTime = static_cast<uint32_t>(alrmTimeSpec.tv_sec - startTimeSpec.tv_sec);
     }
-    std::cout << " on: " << lastTest << std::endl;
-    abort();
+    handleTestsTimeout(lastTest, elapsedTime);
 }
 
 void handleSIGSEGV(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGSEGV in " << NEO::executionName << ", on: " << lastTest << std::endl;
+    std::cout << "SIGSEGV in " << NEO::apiName << " " << NEO::executionName << ", on: " << lastTest << std::endl;
     abort();
 }
 
@@ -92,7 +92,6 @@ int setAlarm(bool enableAlarm) {
             startTimeSpec.tv_sec = 0;
         }
 
-        auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
         std::string envVar = std::string("NEO_") + NEO::executionName + "_ITERATION_MAX_TIME";
         auto ultIterationMaxTimeInSEnv = getenv(envVar.c_str());
         if (ultIterationMaxTimeInSEnv != nullptr) {

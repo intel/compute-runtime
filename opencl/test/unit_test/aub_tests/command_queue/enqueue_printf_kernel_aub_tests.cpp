@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-
-#include "command_enqueue_fixture.h"
 
 using namespace NEO;
 
@@ -23,8 +24,8 @@ class AUBPrintfKernelFixture : public AUBFixture,
 
     void SetUp() override {
         AUBFixture::setUp(nullptr);
-        ASSERT_NE(nullptr, device.get());
-        HelloWorldKernelFixture::setUp(device.get(), programFile, kernelName);
+        ASSERT_NE(nullptr, device);
+        HelloWorldKernelFixture::setUp(device, programFile, kernelName);
     }
     void TearDown() override {
         if (IsSkipped()) {
@@ -56,5 +57,5 @@ HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {
         &bufferMem);
 
     pCmdQ->enqueueKernel(pKernel, 1, offset, gws, lws, 0, 0, 0);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }

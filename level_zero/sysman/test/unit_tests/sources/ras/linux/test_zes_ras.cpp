@@ -5,14 +5,9 @@
  *
  */
 
-#include "shared/test/common/libult/linux/drm_mock.h"
-
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
-#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
-
-class OsRas;
 
 namespace L0 {
 namespace Sysman {
@@ -155,7 +150,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasE
     EXPECT_EQ(testcount, 0u);
 }
 
-HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated, IsNotPVC) {
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated, IsPVC) {
     pRasFwUtilInterface->mockMemorySuccess = true;
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
 

@@ -140,6 +140,8 @@ class WddmResidencyLogger : NonCopyableAndNonMovableClass {
     bool makeResidentCall = false;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<WddmResidencyLogger>);
+
 inline void perfLogResidencyMakeResident(WddmResidencyLogger *log, bool pendingMakeResident, UINT64 makeResidentPagingFence) {
     if constexpr (wddmResidencyLoggingAvailable) {
         if (log) {

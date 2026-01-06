@@ -5,18 +5,20 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/idlist.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -26,6 +28,9 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 using namespace NEO;
 
@@ -98,7 +103,14 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(EBuiltInOps::fillBuffer),
+    auto builtInType = EBuiltInOps::fillBuffer;
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
+        builtInType = EBuiltInOps::fillBufferStateless;
+    }
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(builtInType),
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -122,8 +134,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     auto crossThreadDatSize = kernel->getCrossThreadDataSize();
     auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(isHeaplessEnabled);
     bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
+    bool isUsingImplicitArgs = kernel->getImplicitArgs() != nullptr;
 
-    if (crossThreadDataFitsInInlineData) {
+    if (crossThreadDataFitsInInlineData && !isUsingImplicitArgs) {
         EXPECT_EQ(iohBefore, pIOH->getUsed());
     } else {
         EXPECT_NE(iohBefore, pIOH->getUsed());
@@ -159,7 +172,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferRightLeftoverStateless" : "FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -187,7 +200,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -215,7 +228,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferLeftLeftoverStateless" : "FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -279,7 +292,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueFillBufferCmdTests, WhenFillingBufferThenI
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueFillBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -319,7 +332,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 0u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
 
-    EXPECT_EQ(addrToPtr(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset())), *pArgument);
+    if (pArgument) {
+        EXPECT_TRUE(memoryEqualsPointer(pArgument, static_cast<uintptr_t>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()))));
+    }
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -351,12 +366,15 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
 
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 2u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
-    EXPECT_NE(nullptr, *pArgument);
+
+    if (pArgument) {
+        EXPECT_FALSE(memoryZeroed(pArgument, sizeof(void *)));
+    }
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupportedMatcher) {
+HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -390,14 +408,14 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
     auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
     auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
 
-    EXPECT_EQ(0u, indirectDataPointerAddress.offset);
-    if (indirectDataPointerAddress.pointerSize != 0) {
+    if (NEO::isDefined(indirectDataPointerAddress.pointerSize)) {
+        EXPECT_EQ(0u, indirectDataPointerAddress.offset);
         EXPECT_EQ(8u, indirectDataPointerAddress.pointerSize);
     }
-    if (scratchPointerAddress.offset != 0) {
+    if (NEO::isDefined(scratchPointerAddress.offset)) {
         EXPECT_EQ(8u, scratchPointerAddress.offset);
+        EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
     }
-    EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -633,7 +651,7 @@ struct EnqueueFillBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 
@@ -668,7 +686,7 @@ HWTEST_F(EnqueueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessT
 
 using EnqueueFillBufferStatefulTest = EnqueueFillBufferHw;
 
-HWTEST_F(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
@@ -685,4 +703,45 @@ HWTEST_F(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThe
         nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueFillBufferCmdTests, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueFillBufferCallThenStatelessIsUsed) {
+    struct FourGbMockBuffer : MockBuffer {
+        size_t getSize() const override { return static_cast<size_t>(4ull * MemoryConstants::gigaByte); }
+    };
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
+    mockCmdQ->isForceStateless = false;
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+    FourGbMockBuffer buffer;
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, &buffer);
+
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
 }

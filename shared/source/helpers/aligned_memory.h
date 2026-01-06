@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,10 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/logger.h"
 
-#include <algorithm>
 #include <functional>
+#include <new>
+#include <type_traits>
+#include <utility>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))
@@ -117,6 +119,13 @@ inline bool isAligned(T *ptr) {
     // alignment requirement (returned by alignof) is always a power of 2
     return (reinterpret_cast<uintptr_t>(ptr) & (alignof(T) - 1)) == 0;
 }
+
+// Variadic template to check if all values are aligned
+template <size_t alignment, typename... Ts>
+inline constexpr bool isAligned(Ts... vals) {
+    return (isAligned<alignment>(vals) && ...);
+}
+
 inline auto allocateAlignedMemory(size_t bytes, size_t alignment) {
     return std::unique_ptr<void, std::function<decltype(alignedFree)>>(alignedMalloc(bytes, alignment), alignedFree);
 }

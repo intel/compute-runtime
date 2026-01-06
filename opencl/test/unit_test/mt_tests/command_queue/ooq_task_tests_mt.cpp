@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 #include <future>
 
@@ -23,6 +26,7 @@ struct OOQTaskTypedTestsMt : public HelloWorldTest<OOQFixtureFactory> {
 typedef OOQTaskTypedTestsMt<EnqueueKernelHelper<>> OOQTaskTestsMt;
 
 TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
+    USE_REAL_FILE_SYSTEM();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
@@ -43,7 +47,7 @@ TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
         ASSERT_EQ(CL_SUCCESS, ret);
     });
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // no task level increasing when cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_TRUE,
@@ -106,7 +110,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
     std::atomic_uint32_t barrier = numThreads;
     std::array<std::future<void>, numThreads> threads;
 
-    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
     REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     MockClDevice clDevice(device);

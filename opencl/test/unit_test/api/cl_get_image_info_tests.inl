@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct ClGetImageInfoTests : public ApiFixture<>,
+struct ClGetImageInfoTests : public ApiFixture,
                              public ::testing::Test {
 
     void SetUp() override {

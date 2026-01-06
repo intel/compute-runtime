@@ -19,7 +19,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 struct ClCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
     void SetUp() override {
@@ -108,7 +108,7 @@ TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);
@@ -121,6 +121,9 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSli
     auto mockCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*mdevice->executionEnvironment, rootDeviceIndex, 1);
     mockCsr->flushInternalCallBase = false;
     mdevice->resetCommandStreamReceiver(mockCsr);
+    if (mockCsr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     cl_command_queue cmdQ = clCreateCommandQueueWithProperties(context.get(), clDevice, properties, &retVal);
 
@@ -153,7 +156,7 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSli
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
 
@@ -199,7 +202,7 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecently
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);

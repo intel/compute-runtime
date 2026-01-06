@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -203,6 +203,12 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
 TEST_F(ZesEngineFixture, GivenPerfEventOpenFailsWhenEnumeratingHandlesThenFailureIsObserved) {
     pPmuInterface->mockPerfEventFailureReturnValue = -1;
     std::unique_ptr<LinuxEngineImp> engineImp = std::make_unique<LinuxEngineImp>(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 1, 0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, engineImp->isEngineModuleSupported());
+}
+
+TEST_F(ZesEngineFixture, GivenPerfEventOpenFailsWhenEnumeratingHandlesUnsupportedEngineClassIsPassedThenFailureIsObserved) {
+    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+    std::unique_ptr<LinuxEngineImp> engineImp = std::make_unique<LinuxEngineImp>(pOsSysman, ZES_ENGINE_GROUP_RENDER_ALL, 1, 0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, engineImp->isEngineModuleSupported());
 }
 

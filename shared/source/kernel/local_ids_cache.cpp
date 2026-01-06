@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ size_t LocalIdsCache::getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const
         return static_cast<size_t>(numElementsInGroup * localIdsSizePerThread);
     }
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-    const auto numberOfThreads = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simdSize, numElementsInGroup, grfCount, false, rootDeviceEnvironment);
+    const auto numberOfThreads = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simdSize, numElementsInGroup, grfCount, rootDeviceEnvironment);
     return static_cast<size_t>(numberOfThreads * localIdsSizePerThread);
 }
 

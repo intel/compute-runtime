@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ MultiGraphicsAllocation::MultiGraphicsAllocation(const MultiGraphicsAllocation &
         migrationSyncData->incRefInternal();
     }
 }
-MultiGraphicsAllocation::MultiGraphicsAllocation(MultiGraphicsAllocation &&multiGraphicsAllocation) {
+MultiGraphicsAllocation::MultiGraphicsAllocation(MultiGraphicsAllocation &&multiGraphicsAllocation) noexcept {
     this->graphicsAllocations = std::move(multiGraphicsAllocation.graphicsAllocations);
     std::swap(this->migrationSyncData, multiGraphicsAllocation.migrationSyncData);
     this->isMultiStorage = multiGraphicsAllocation.isMultiStorage;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,5 +19,9 @@ class MockDebugger : public Debugger {
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         return 0;
     }
+    bool getSingleAddressSpaceSbaTracking() const override {
+        return singleAddressSpaceSbaTracking;
+    }
+    bool singleAddressSpaceSbaTracking = false;
 };
 } // namespace NEO

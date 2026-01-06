@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,12 +102,10 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCo
     const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
 
     cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        if (hwInfo.capabilityTable.ftrSupportsCoherency != 0) {
-            expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-        } else {
-            expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-        }
+    if (hwInfo.capabilityTable.ftrSupportsCoherency != 0) {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+    } else {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     }
     EXPECT_EQ(svmCaps, expectedCaps);
 }
@@ -167,10 +165,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-    }
+    cl_device_svm_capabilities expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     EXPECT_EQ(svmCaps, expectedCaps);
 }
 
@@ -192,10 +187,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-    }
+    cl_device_svm_capabilities expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
     EXPECT_EQ(svmCaps, expectedCaps);
 }
 
@@ -266,7 +258,6 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_intel_subgroups ",
         "cl_intel_required_subgroup_size ",
         "cl_intel_subgroups_short ",
-        "cl_khr_spir ",
         "cl_intel_accelerator ",
         "cl_intel_driver_diagnostics ",
         "cl_khr_priority_hints ",
@@ -292,7 +283,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     }
 }
 
-TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv10To13IsReturned) {
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv10To15IsReturned) {
     size_t paramRetSize = 0;
 
     cl_int retVal = clGetDeviceInfo(
@@ -314,7 +305,94 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThe
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", paramValue.get());
+    EXPECT_STREQ("SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", paramValue.get());
+}
+
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtensionsReturnsSpirvExtensions) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<const char *> spirvExtensions(paramRetSize / sizeof(const char *));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        paramRetSize,
+        spirvExtensions.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto extension : spirvExtensions) {
+        EXPECT_EQ(0, std::strncmp(extension, "SPV_", 4));
+    }
+}
+
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtendedInstructionSetsReturnsSpirvExtendedInstructionSets) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<const char *> spirvExtendedInstructionSets(paramRetSize / sizeof(const char *));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR,
+        paramRetSize,
+        spirvExtendedInstructionSets.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bool found = paramRetSize == 0;
+    for (auto extinst : spirvExtendedInstructionSets) {
+        if (std::strcmp(extinst, "OpenCL.std") == 0) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvCapabilitiesReturnsSpirvCapabilities) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<cl_uint> spirvCapabilities(paramRetSize / sizeof(cl_uint));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        paramRetSize,
+        spirvCapabilities.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    constexpr cl_uint spirvCapabilityKernel = 6;
+
+    bool found = paramRetSize == 0;
+    for (auto cap : spirvCapabilities) {
+        if (cap == spirvCapabilityKernel) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
 }
 
 using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
@@ -362,7 +440,7 @@ HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInte
 }
 
 //------------------------------------------------------------------------------
-struct GetDeviceInfoP : public ApiFixture<>,
+struct GetDeviceInfoP : public ApiFixture,
                         public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
@@ -466,8 +544,7 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDotCapsThenCorrec
         sizeof(integerDotCapabilities),
         &integerDotCapabilities,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR)), compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR)));
 }
 
 TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPropertiesThenCorrectValuesAreSet) {
@@ -480,13 +557,12 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitProperties
         sizeof(integerDotAccelerationProperties8Bit),
         &integerDotAccelerationProperties8Bit,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.unsigned_accelerated);
 }
 
 TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedPropertiesThenCorrectValuesAreSet) {
@@ -499,12 +575,11 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedProp
         sizeof(integerDotAccelerationProperties8BitPacked),
         &integerDotAccelerationProperties8BitPacked,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.unsigned_accelerated);
 }
 } // namespace ULT

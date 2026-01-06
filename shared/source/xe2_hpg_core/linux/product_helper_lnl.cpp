@@ -13,6 +13,7 @@
 constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
+#include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm_slm.inl"
 #include "shared/source/xe2_hpg_core/lnl/os_agnostic_product_helper_lnl.inl"
 #include "shared/source/xe2_hpg_core/os_agnostic_product_helper_xe2_hpg_core.inl"
 
@@ -22,8 +23,6 @@ namespace NEO {
 
 template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
-
     hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
 
     enableBlitterOperationsSupport(hwInfo);
@@ -34,6 +33,26 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 template <>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
+    return !isWddmOnLinux;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    return false;
+}
+
+template <>
+uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
+    return 1;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
+    return false;
 }
 
 template class ProductHelperHw<gfxProduct>;

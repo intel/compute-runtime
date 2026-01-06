@@ -16,6 +16,23 @@
 
 using namespace NEO;
 
+struct PtlProductHelperLinux : ProductHelperTestLinux {
+    void SetUp() override {
+        ProductHelperTestLinux::SetUp();
+
+        drm = new DrmMockExtended(*executionEnvironment->rootDeviceEnvironments[0]);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    }
+};
+
+PTLTEST_F(PtlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
+    EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
+}
+
+PTLTEST_F(PtlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+}
+
 using PtlHwInfoLinux = ::testing::Test;
 
 PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
@@ -26,8 +43,9 @@ PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &PtlHwConfig::hwInfo, &PtlHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
@@ -40,4 +58,10 @@ PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+}
+
+using PtlProductHelperTest = ProductHelperTest;
+
+PTLTEST_F(PtlProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }

@@ -1,15 +1,13 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/aub/aub_stream_provider.h"
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
 #include "aubstream/aub_manager.h"
@@ -32,14 +30,6 @@ class AubCenter {
         return physicalAddressAllocator.get();
     }
 
-    AddressMapper *getAddressMapper() const {
-        return addressMapper.get();
-    }
-
-    AubStreamProvider *getStreamProvider() const {
-        return streamProvider.get();
-    }
-
     AubSubCaptureCommon *getSubCaptureCommon() const {
         return subCaptureCommon.get();
     }
@@ -52,8 +42,6 @@ class AubCenter {
 
   protected:
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
-    std::unique_ptr<AddressMapper> addressMapper;
-    std::unique_ptr<AubStreamProvider> streamProvider;
 
     std::unique_ptr<AubSubCaptureCommon> subCaptureCommon;
     std::unique_ptr<aub_stream::AubManager> aubManager;

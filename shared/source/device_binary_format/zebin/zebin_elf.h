@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ enum RelocTypeZebin : uint32_t {
 };
 
 namespace SectionNames {
+inline constexpr ConstStringRef text = ".text";
 inline constexpr ConstStringRef textPrefix = ".text.";
 inline constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
 inline constexpr ConstStringRef dataConst = ".data.const";
@@ -67,7 +68,8 @@ enum IntelGTSectionType : uint32_t {
     vISAAbiVersion = 5, // for debugger only
     productConfig = 6,
     indirectAccessDetectionVersion = 7,
-    lastSupported = indirectAccessDetectionVersion
+    indirectAccessBufferMajorVersion = 8,
+    lastSupported = indirectAccessBufferMajorVersion
 };
 struct IntelGTNote {
     IntelGTSectionType type;
@@ -79,7 +81,7 @@ struct ZebinTargetFlags {
             // bit[7:0]: dedicated for specific generator (meaning based on generatorId)
             uint8_t generatorSpecificFlags : 8;
 
-            // bit[12:8]: values [0-31], min compatbile device revision Id (stepping)
+            // bit[12:8]: values [0-31], min compatible device revision Id (stepping)
             uint8_t minHwRevisionId : 5;
 
             // bit[13:13]:
@@ -97,7 +99,7 @@ struct ZebinTargetFlags {
             // 1 - elfFileHeader::machine is GFXCORE_FAMILY
             bool machineEntryUsesGfxCoreInsteadOfProductFamily : 1;
 
-            // bit[20:16]:  max compatbile device revision Id (stepping)
+            // bit[20:16]:  max compatible device revision Id (stepping)
             uint8_t maxHwRevisionId : 5;
 
             // bit[23:21]: generator of this device binary

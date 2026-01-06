@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include <string>
 
@@ -19,21 +21,22 @@ namespace NEO {
 class StdoutCapturer {
   public:
     StdoutCapturer() {
-        ::testing::internal::CaptureStdout();
+        capture.captureStdout();
     }
 
     ~StdoutCapturer() {
         if (!outputAcquired) {
-            ::testing::internal::GetCapturedStdout();
+            capture.getCapturedStdout();
         }
     }
 
     std::string acquireOutput() {
         outputAcquired = true;
-        return ::testing::internal::GetCapturedStdout();
+        return capture.getCapturedStdout();
     }
 
   private:
+    StreamCapture capture;
     bool outputAcquired{false};
 };
 

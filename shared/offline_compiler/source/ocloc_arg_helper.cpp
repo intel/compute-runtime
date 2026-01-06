@@ -14,7 +14,7 @@
 #include "shared/source/release_helper/release_helper.h"
 
 #include "hw_cmds.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
 #include <cstring>
@@ -68,6 +68,7 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     }
 
     productConfigHelper = std::make_unique<ProductConfigHelper>();
+    formerProductConfigHelper = std::make_unique<FormerProductConfigHelper>();
 }
 
 OclocArgHelper::OclocArgHelper() : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
@@ -210,6 +211,6 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
     if (outputEnabled()) {
         addOutput(filename, pData, dataSize);
     } else {
-        writeDataToFile(filename.c_str(), pData, dataSize);
+        writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize));
     }
 }

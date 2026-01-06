@@ -39,8 +39,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
         }
         createScratchSpaceAllocation();
         vfeStateDirty = true;
-        force32BitAllocation = getMemoryManager()->peekForce32BitAllocations();
-        if (is64bit && !force32BitAllocation) {
+        if (is64bit) {
             stateBaseAddressDirty = true;
         }
     }
@@ -64,10 +63,11 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     //             and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
     uint64_t scratchAddress = 0;
     if (scratchSlot0Allocation) {
-        scratchAddress = scratchSlot0Allocation->getGpuAddressToPatch();
-        if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            // this is to avoid scractch allocation offset "0"
+        if (is64bit) {
+            // this is to avoid scratch allocation offset "0"
             scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
+        } else {
+            scratchAddress = scratchSlot0Allocation->getGpuAddressToPatch();
         }
     }
     return scratchAddress;

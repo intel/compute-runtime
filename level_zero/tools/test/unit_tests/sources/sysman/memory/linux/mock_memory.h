@@ -6,13 +6,13 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
@@ -77,6 +77,10 @@ constexpr uint64_t mockIdiWriteVal = 9u;
 constexpr uint64_t mockDisplayVc1ReadVal = 10u;
 constexpr uint64_t numberMcChannels = 16;
 constexpr uint64_t transactionSize = 32;
+
+constexpr uint64_t mockIntegratedDeviceAvailableMemory = 8192 * 1024;
+constexpr uint64_t mockIntegratedDeviceFreeMemory = 4096 * 1024;
+constexpr uint64_t mockIntegratedDevicePhysicalSize = 16384 * 1024;
 
 namespace L0 {
 namespace ult {
@@ -201,10 +205,6 @@ struct MockMemorySysfsAccess : public SysfsAccess {
     }
 };
 
-struct MockMemoryManagerSysman : public MemoryManagerMock {
-    MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
-};
-
 struct MockMemoryNeoDrm : public Drm {
     using Drm::ioctlHelper;
     const int mockFd = 33;
@@ -221,6 +221,10 @@ struct MockMemoryNeoDrm : public Drm {
         return {};
     }
 
+    void resetSystemInfo() {
+        systemInfo.reset(nullptr);
+    }
+
     bool querySystemInfo() override {
         bool returnValue = true;
         if (!mockQuerySystemInfoReturnValue.empty()) {
@@ -228,6 +232,7 @@ struct MockMemoryNeoDrm : public Drm {
             if (isRepeated != true) {
                 mockQuerySystemInfoReturnValue.erase(mockQuerySystemInfoReturnValue.begin());
             }
+            resetSystemInfo();
             return returnValue;
         }
 
@@ -467,6 +472,20 @@ struct MockMemoryFsAccess : public FsAccess {
 
     ze_result_t getRealPathFailure(const std::string path, std::string &buf) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    std::vector<std::string> customMemInfo;
+    ze_result_t read(std::string file, std::vector<std::string> &val) override {
+        if (file == "/proc/meminfo") {
+            if (!customMemInfo.empty()) {
+                val = customMemInfo;
+            } else {
+                val.push_back("MemTotal: 16384 kB");
+                val.push_back("MemFree: 4096 kB");
+                val.push_back("MemAvailable: 8192 kB");
+            }
+        }
+        return ZE_RESULT_SUCCESS;
     }
 
     MockMemoryFsAccess() = default;

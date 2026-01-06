@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
+#include <cstdint>
 #include <initguid.h>
 
 namespace L0 {
@@ -21,6 +24,7 @@ constexpr uint32_t FileReadAccess = 0x0001;
 
 // Intel PMT Telemetry Interface GUID {3dfb2563-5c44-4c59-8d80-baea7d06e6b8}
 constexpr GUID GuidIntefacePmtTelemetry = {0x3dfb2563, 0x5c44, 0x4c59, {0x8d, 0x80, 0xba, 0xea, 0x7d, 0x06, 0xe6, 0xb8}};
+constexpr GUID GuidIntefaceDisplayAdapter = {0x4d36e968, 0xe325, 0x11ce, {0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18}};
 
 inline constexpr uint32_t getCtlCode(uint32_t code) {
     return CTL_CODE(FileDeviceIntelPmt, code, MethodBuffered, FileReadAccess);
@@ -43,7 +47,7 @@ struct PmtTelemetryEntry {
 struct PmtTelemetryDiscovery {
     unsigned long version;                     // Structure version
     unsigned long count;                       // Count of telemetry interfaces
-    PmtTelemetryEntry telemetry[AnySizeArray]; // Array to hold enries for each inteface.
+    PmtTelemetryEntry telemetry[AnySizeArray]; // Array to hold enries for each interface.
 };
 
 struct PmtTelemetryRead {

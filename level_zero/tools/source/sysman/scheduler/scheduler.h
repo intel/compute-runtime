@@ -9,15 +9,16 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
 
 namespace L0 {
 struct OsSysman;
+
 class Scheduler : _zes_sched_handle_t {
   public:
     virtual ~Scheduler() = default;

@@ -62,7 +62,7 @@ IncludeCategories:
     Priority:        5
   - Regex:           '^.(third_party|llvm|llvm-c|clang|clang-c|gtest|isl|json)/'
     Priority:        5
-  - Regex:           '^.(gmock|cl|gl|d3d)'
+  - Regex:           '^.(cl|gl|d3d)'
     Priority:        5
   - Regex:           '^<.*>$'
     Priority:        10
@@ -71,6 +71,7 @@ IncludeCategories:
 IndentCaseLabels: false
 IndentWidth:     4
 IndentWrappedFunctionNames: false
+InsertBraces: true
 KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
@@ -98,7 +99,7 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard:        Cpp11
+Standard:        c++20
 TabWidth:        8
 UseTab:          Never
 ...

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,14 @@ class ClEventWrapper {
     ClEventWrapper() { mMem = NULL; }
     ClEventWrapper(cl_event mem) { mMem = mem; }
     ClEventWrapper(const ClEventWrapper &rhs) : mMem(rhs.mMem) {
-        if (mMem != NULL)
+        if (mMem != NULL) {
             clRetainEvent(mMem);
+        }
     }
     ~ClEventWrapper() {
-        if (mMem != NULL)
+        if (mMem != NULL) {
             clReleaseEvent(mMem);
+        }
     }
     ClEventWrapper &operator=(const cl_event &rhs) {
         mMem = rhs;
@@ -56,8 +58,8 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
         EnqueueWaitlistFixture::setUp();
         buffer = BufferHelper<>::create();
         bufferNonZeroCopy = new UnalignedBuffer(BufferDefaults::context, &bufferNonZeroCopyAlloc);
-        image = Image1dHelper<>::create(BufferDefaults::context);
-        imageNonZeroCopy = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
+        image = Image1dHelperUlt<>::create(BufferDefaults::context);
+        imageNonZeroCopy = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
     }
 
     void TearDown() override {

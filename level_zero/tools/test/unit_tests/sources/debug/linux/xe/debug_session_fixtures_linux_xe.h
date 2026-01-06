@@ -5,7 +5,9 @@
  *
  */
 
+#pragma once
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -23,7 +25,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <atomic>
 #include <queue>
@@ -133,7 +135,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
         EuControlArg() : euControlBitmask(nullptr) {
             memset(&euControl, 0, sizeof(euControl));
         }
-        EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
+        EuControlArg(EuControlArg &&in) noexcept : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
         NEO::EuDebugEuControl euControl = {};
         std::unique_ptr<uint8_t[]> euControlBitmask;
         size_t euControlBitmaskSize = 0;
@@ -178,8 +180,12 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ClientConnectionXe;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
+    using L0::DebugSessionLinuxXe::convertToApi;
+    using L0::DebugSessionLinuxXe::convertToPhysicalWithinDevice;
+    using L0::DebugSessionLinuxXe::convertToThreadId;
     using L0::DebugSessionLinuxXe::debugArea;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
+    using L0::DebugSessionLinuxXe::euDebugInterface;
     using L0::DebugSessionLinuxXe::eventTypeIsAttention;
     using L0::DebugSessionLinuxXe::getEuControlCmdUnlock;
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
@@ -200,7 +206,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::threadControl;
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
 
-    MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, params) {
+    MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, std::make_unique<MockEuDebugInterface>(), params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe);
         clientHandle = mockClientHandle;
         createEuThreads();
@@ -241,6 +247,29 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
         numThreadsPassedToThreadControl = threads.size();
+        threadControlCallCount++;
+        if (reachSteadyStateCount) {
+            reachSteadyStateCount--;
+            std::vector<EuThread::ThreadId> threads;
+            uint32_t lastThread = threadControlCallCount;
+            if (reachSteadyStateCount == 0) {
+                lastThread = threadControlCallCount - 1;
+            }
+
+            for (uint32_t i = 0; i < lastThread; i++) {
+                threads.push_back({0, 0, 0, 0, i});
+            }
+
+            std::unique_ptr<uint8_t[]> attBitmask;
+            size_t attBitmaskSize = 0;
+            auto &hwInfo = this->getConnectedDevice()->getNEODevice()->getHardwareInfo();
+            auto &l0GfxCoreHelper = this->getConnectedDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+            l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, attBitmask, attBitmaskSize);
+            bitmask = std::move(attBitmask);
+            bitmaskSize = attBitmaskSize;
+            return 0;
+        }
         return L0::DebugSessionLinuxXe::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
@@ -300,6 +329,16 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     void handlePageFaultEvent(PageFaultEvent &pfEvent) override {
         handlePageFaultEventCalled++;
+        if (callHandlePageFaultBase) {
+            return DebugSessionLinux::handlePageFaultEvent(pfEvent);
+        }
+    }
+
+    ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override {
+        if (callReadGpuMemoryBase) {
+            return DebugSessionLinux::readGpuMemory(vmHandle, output, size, gpuVa);
+        }
+        return ZE_RESULT_SUCCESS;
     }
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
@@ -312,6 +351,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     uint32_t readSystemRoutineIdentCallCount = 0;
     uint32_t processPendingVmBindEventsCallCount = 0;
+    uint32_t threadControlCallCount = 0;
     uint32_t handleVmBindCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
@@ -324,7 +364,10 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
     int64_t returnTimeDiff = -1;
     uint32_t handleAttentionEventCalled = 0;
+    bool callHandlePageFaultBase = false;
+    bool callReadGpuMemoryBase = true;
     uint32_t handlePageFaultEventCalled = 0;
+    uint32_t reachSteadyStateCount = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {

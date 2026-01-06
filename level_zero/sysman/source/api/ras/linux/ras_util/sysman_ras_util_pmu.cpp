@@ -84,7 +84,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Symlink from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Symlink from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     const auto loc = bdfDir.find_last_of('/');
@@ -98,13 +98,13 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     result = pFsAccess->listDirectory(sysfsNode, listOfEvents);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directories from %s and returning error:0x%x \n", __FUNCTION__, sysfsNode.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directories from %s and returning error:0x%x \n", __FUNCTION__, sysfsNode.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return ZE_RESULT_SUCCESS;
 }
 
-static uint64_t convertHexToUint64(std::string strVal) {
+static uint64_t convertHexToUint64(const std::string &strVal) {
     auto loc = strVal.find('=');
     std::stringstream ss;
     ss << std::hex << strVal.substr(loc + 1);
@@ -258,7 +258,7 @@ ze_result_t PmuRasUtil::getConfig(
     std::string &pmuConfig) {
     auto findErrorInList = std::find(listOfEvents.begin(), listOfEvents.end(), errorFileToGetConfig);
     if (findErrorInList == listOfEvents.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find %s from list of events and returning error:0x%x \n", __FUNCTION__, errorFileToGetConfig.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find %s from list of events and returning error:0x%x \n", __FUNCTION__, errorFileToGetConfig.c_str(), ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return pFsAccess->read(eventDirectory + "/" + errorFileToGetConfig, pmuConfig);

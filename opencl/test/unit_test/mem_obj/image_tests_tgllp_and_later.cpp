@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -21,7 +20,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     void SetUp() override {
         ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice);
-        srcImage = std::unique_ptr<Image>(Image3dHelper<>::create(context.get()));
+        srcImage = std::unique_ptr<Image>(Image3dHelperUlt<>::create(context.get()));
     }
 
     void TearDown() override {

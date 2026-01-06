@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
+#include "shared/source/utilities/tag_allocator.h"
 
-#include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 namespace L0 {
@@ -35,17 +35,21 @@ ze_result_t Mock<DriverHandle>::getDevice(uint32_t *pCount, ze_device_handle_t *
         return ZE_RESULT_SUCCESS;
     }
 
-    if (phDevices == nullptr) // User is expected to allocate space
+    if (phDevices == nullptr) { // User is expected to allocate space
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
-    phDevices[0] = this->devices.front();
+    auto numDevices = std::min(pCount ? *pCount : 1u, static_cast<uint32_t>(this->devices.size()));
+    for (auto i = 0u; i < numDevices; i++) {
+        phDevices[i] = this->devices[i];
+    }
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t Mock<DriverHandle>::allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                                size_t size, size_t alignment, void **ptr) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, deviceBitfields);
 
     auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 

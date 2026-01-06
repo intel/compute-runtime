@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ std::string SehException::getExceptionDescription(unsigned int code) {
     case EXCEPTION_ACCESS_VIOLATION:
         return "Access violation";
     case EXCEPTION_DATATYPE_MISALIGNMENT:
-        return "Datatype misalignement";
+        return "Datatype misalignment";
     case EXCEPTION_FLT_DIVIDE_BY_ZERO:
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
         return "Divide by zero";

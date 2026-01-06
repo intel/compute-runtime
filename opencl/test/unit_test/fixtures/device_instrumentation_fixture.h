@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ struct HardwareInfo;
 struct DeviceInstrumentationFixture {
     void setUp(bool instrumentation);
 
-    std::unique_ptr<ClDevice> device = nullptr;
+    std::unique_ptr<ClDevice> device;
     HardwareInfo *hwInfo = nullptr;
 };
 } // namespace NEO

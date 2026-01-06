@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/sysman/temperature/temperature_imp.h"
 
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {

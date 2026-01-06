@@ -6,12 +6,12 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
 
-#include "igfxfmid.h"
 namespace L0 {
 namespace Sysman {
 
@@ -19,6 +19,7 @@ class LinuxSysmanImp;
 class SysmanKmdInterface;
 class SysmanProductHelper;
 class SysFsAccessInterface;
+struct OsSysman;
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableAndNonMovableClass {
   public:

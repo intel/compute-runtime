@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -20,6 +21,7 @@
 constexpr auto *oclocStdoutLogName = "stdout.log";
 
 struct ProductConfigHelper;
+struct FormerProductConfigHelper;
 namespace NEO {
 class CompilerProductHelper;
 class ReleaseHelper;
@@ -136,8 +138,9 @@ class OclocArgHelper {
         std::ostringstream os;
         for (const auto *acronyms : {std::addressof(args)...}) {
             for (const auto &acronym : *acronyms) {
-                if (os.tellp())
+                if (os.tellp()) {
                     os << ", ";
+                }
                 os << acronym.str();
             }
         }
@@ -145,4 +148,14 @@ class OclocArgHelper {
     }
 
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
+    std::unique_ptr<FormerProductConfigHelper> formerProductConfigHelper;
+
+    uint32_t getNumSources() const { return static_cast<uint32_t>(inputs.size()); }
+    uint32_t getNumHeaders() const { return static_cast<uint32_t>(headers.size()); }
+
+    const std::vector<Source> &getInputs() const { return inputs; }
+    uint32_t *getNumOutputsPtr() const { return numOutputs; }
+    char ***getNameOutputsPtr() const { return nameOutputs; }
+    uint8_t ***getDataOutputsPtr() const { return dataOutputs; }
+    uint64_t **getLenOutputsPtr() const { return lenOutputs; }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
+TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[NEO::maxCoreEnumValue] = {};
 
 CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseName,
                                                         bool withAubDump,
@@ -24,7 +24,7 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseN
                                                         const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-    if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {
+    if (hwInfo->platform.eRenderCoreFamily >= NEO::maxCoreEnumValue) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
     }

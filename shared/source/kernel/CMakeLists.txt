@@ -9,11 +9,12 @@ set(NEO_CORE_KERNEL
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_kernel_encoder_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/grf_config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}implicit_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor_extended_vme.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_metadata.h
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}kernel_descriptor_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor.cpp

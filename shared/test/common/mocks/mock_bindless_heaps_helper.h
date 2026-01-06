@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::globalBindlessDsh;
     using BaseClass::growHeap;
     using BaseClass::heapFrontWindow;
+    using BaseClass::heaplessEnabled;
     using BaseClass::heapRegular;
     using BaseClass::initializeReservedMemory;
     using BaseClass::isMultiOsContextCapable;

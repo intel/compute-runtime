@@ -5,20 +5,9 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/source/unified_memory/usm_memory_support.h"
-
-#include <algorithm>
 
 namespace NEO {
-
-template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {
-    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.flags.ftrXe2Compression;
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.flags.ftrXe2Compression;
-}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
@@ -26,7 +15,7 @@ bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex() const {
+bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
     return true;
 }
 
@@ -47,6 +36,55 @@ std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t p
         return true;
     }
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {
+    hwInfo.capabilityTable.ftrRenderCompressedImages = hwInfo.featureTable.flags.ftrXe2Compression;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = hwInfo.featureTable.flags.ftrXe2Compression;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return isCompressionForbiddenCommon(false);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isResourceUncachedForCS(AllocationType allocationType) const {
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationType);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isNonCoherentTimestampsModeEnabled() const {
+    if (debugManager.flags.ForceNonCoherentModeForTimestamps.get() != -1) {
+        return debugManager.flags.ForceNonCoherentModeForTimestamps.get();
+    }
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPidFdOrSocketForIpcSupported() const {
+    if (debugManager.flags.EnablePidFdOrSocketsForIpc.get() != -1) {
+        return debugManager.flags.EnablePidFdOrSocketsForIpc.get();
+    }
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+    timeoutUs = 1'000;
+    maxTimeoutUs = 1'000;
+    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
+        timeoutUs = debugManager.flags.DirectSubmissionControllerTimeout.get();
+    }
+    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
+        maxTimeoutUs = debugManager.flags.DirectSubmissionControllerMaxTimeout.get();
+    }
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
 }
 
 } // namespace NEO

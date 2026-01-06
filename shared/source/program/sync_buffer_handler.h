@@ -40,4 +40,6 @@ class SyncBufferHandler : NonCopyableAndNonMovableClass {
     std::mutex mutex;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<SyncBufferHandler>);
+
 } // namespace NEO

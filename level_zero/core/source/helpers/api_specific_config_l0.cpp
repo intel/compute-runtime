@@ -17,7 +17,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 #include <string>
-#include <vector>
 
 namespace NEO {
 StackVec<const char *, 4> validL0Prefixes;
@@ -34,7 +33,7 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isForceBindlessRequired()) {
+    if (device.getCompilerProductHelper().isForceBindlessRequired(device.getHardwareInfo())) {
         return true;
     }
 
@@ -52,11 +51,11 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
-    return false;
+    return true;
 }
 
 bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
-    return false;
+    return true;
 }
 
 bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
@@ -64,7 +63,7 @@ bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
 }
 
 bool ApiSpecificConfig::isHostUsmPoolingEnabled() {
-    return false;
+    return true;
 }
 
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {

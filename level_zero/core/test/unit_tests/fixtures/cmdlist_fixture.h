@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,13 @@
 
 #pragma once
 
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
@@ -72,6 +76,15 @@ void validateTimestampRegisters(GenCmdList &cmdList,
                                 uint64_t secondStoreRegMemAddress,
                                 bool workloadPartition,
                                 bool useMask);
+template <typename FamilyType>
+void validateTimestampLongRegisters(GenCmdList &cmdList,
+                                    GenCmdList::iterator &startIt,
+                                    uint32_t firstLoadRegisterRegSrcAddress,
+                                    uint64_t firstStoreRegMemAddress,
+                                    uint32_t secondLoadRegisterRegSrcAddress,
+                                    uint64_t secondStoreRegMemAddress,
+                                    bool workloadPartition,
+                                    bool useMask);
 
 struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     void setUp() {
@@ -217,6 +230,7 @@ class AppendFillFixture : public DeviceFixture {
                                         NEO::SvmAllocationData *&allocData) override;
 
         const uint32_t rootDeviceIndex = 0u;
+        bool forceFalseFromfindAllocationDataForRange = false;
         std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
         NEO::SvmAllocationData data{rootDeviceIndex};
     };
@@ -385,7 +399,7 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     uint64_t getExpectedScratchPatchAddress(uint64_t controllerScratchAddress);
 
     template <typename FamilyType>
-    void testScratchInline(bool useImmediate);
+    void testScratchInline(bool useImmediate, bool patchPreamble);
 
     template <typename FamilyType>
     void testScratchGrowingPatching();
@@ -404,6 +418,9 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
 
     template <typename FamilyType>
     void testExternalScratchPatching();
+
+    template <typename FamilyType>
+    void testScratchUndefinedPatching();
 
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;

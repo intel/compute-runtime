@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,7 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         surfaceFormatInfo = &tempSurface;
     }
 
-    iterate(SurfaceFormats::readOnly12());
-    iterate(SurfaceFormats::readOnly20());
+    iterate(SurfaceFormats::readOnly());
     iterate(SurfaceFormats::writeOnly());
     iterate(SurfaceFormats::readWrite());
 

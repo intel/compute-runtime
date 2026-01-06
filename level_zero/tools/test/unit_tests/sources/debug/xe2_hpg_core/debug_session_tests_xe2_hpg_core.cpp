@@ -39,7 +39,7 @@ HWTEST2_F(Xe2HpgCoreDebugSessionTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.sr;
     uint32_t sr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     sr0[1] = 0x80006000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, sr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, sr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
@@ -67,7 +67,7 @@ HWTEST2_F(Xe2HpgCoreDebugSessionTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.sr;
     uint32_t sr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     sr0[1] = 0x80003000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, sr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, sr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));

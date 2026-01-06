@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 
 TEST_F(KernelDataTest, GivenKernelNameWhenBuildingThenProgramIsCorrect) {
@@ -181,24 +179,6 @@ TEST_F(KernelDataTest, GivenSamplerArgumentWhenBuildingThenProgramIsCorrect) {
     buildAndDecode();
 
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::argTSampler>());
-    EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
-}
-
-TEST_F(KernelDataTest, GivenAcceleratorArgumentWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchSamplerKernelArgument samplerData;
-    samplerData.Token = PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
-    samplerData.ArgumentNumber = 3;
-    samplerData.Offset = 0x40;
-    samplerData.Type = iOpenCL::SAMPLER_OBJECT_VME;
-    samplerData.Size = sizeof(samplerData);
-
-    pPatchList = &samplerData;
-    patchListSize = samplerData.Size;
-
-    buildAndDecode();
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::argTSampler>());
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
 }
 
@@ -1108,122 +1088,6 @@ TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrivateMemoryWhenBuilding
     EXPECT_EQ_VAL(token.DataParamOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
     EXPECT_EQ_VAL(token.DataParamSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
     EXPECT_EQ_VAL(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(token, pKernelInfo->kernelDescriptor.kernelAttributes.simdSize), pKernelInfo->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
-}
-
-TEST_F(KernelDataTest, GivenDataParameterVmeMbBlockTypeWhenBuildingThenProgramIsCorrect) {
-    uint32_t argumentNumber = 1;
-    uint32_t alignment = 16;
-    uint32_t offsetVmeMbBlockType = 0xaa;
-
-    SPatchDataParameterBuffer dataParameterToken;
-    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
-    dataParameterToken.Type = DATA_PARAMETER_VME_MB_BLOCK_TYPE;
-    dataParameterToken.ArgumentNumber = argumentNumber;
-    dataParameterToken.Offset = offsetVmeMbBlockType;
-    dataParameterToken.DataSize = sizeof(uint32_t);
-    dataParameterToken.SourceOffset = alignment;
-    dataParameterToken.LocationIndex = 0x0;
-    dataParameterToken.LocationIndex2 = 0x0;
-
-    pPatchList = &dataParameterToken;
-    patchListSize = dataParameterToken.Size;
-
-    buildAndDecode();
-
-    ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.size());
-    auto vmeArgDesc = reinterpret_cast<NEO::ArgDescVme *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[1].get());
-    EXPECT_EQ(offsetVmeMbBlockType, vmeArgDesc->mbBlockType);
-}
-
-TEST_F(KernelDataTest, GivenDataParameterDataVmeSubpixelModeWhenBuildingThenProgramIsCorrect) {
-    uint32_t argumentNumber = 1;
-    uint32_t alignment = 17;
-    uint32_t offsetVmeSubpixelMode = 0xab;
-
-    SPatchDataParameterBuffer dataParameterToken;
-    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
-    dataParameterToken.Type = DATA_PARAMETER_VME_SUBPIXEL_MODE;
-    dataParameterToken.ArgumentNumber = argumentNumber;
-    dataParameterToken.Offset = offsetVmeSubpixelMode;
-    dataParameterToken.DataSize = sizeof(uint32_t);
-    dataParameterToken.SourceOffset = alignment;
-    dataParameterToken.LocationIndex = 0x0;
-    dataParameterToken.LocationIndex2 = 0x0;
-
-    pPatchList = &dataParameterToken;
-    patchListSize = dataParameterToken.Size;
-
-    buildAndDecode();
-
-    ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.size());
-    auto vmeArgDesc = reinterpret_cast<NEO::ArgDescVme *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[1].get());
-    EXPECT_EQ(offsetVmeSubpixelMode, vmeArgDesc->subpixelMode);
-}
-
-TEST_F(KernelDataTest, GivenDataParameterVmeSadAdjustModeWhenBuildingThenProgramIsCorrect) {
-    uint32_t argumentNumber = 1;
-    uint32_t alignment = 18;
-    uint32_t offsetVmeSadAdjustMode = 0xac;
-
-    SPatchDataParameterBuffer dataParameterToken;
-    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
-    dataParameterToken.Type = DATA_PARAMETER_VME_SAD_ADJUST_MODE;
-    dataParameterToken.ArgumentNumber = argumentNumber;
-    dataParameterToken.Offset = offsetVmeSadAdjustMode;
-    dataParameterToken.DataSize = sizeof(uint32_t);
-    dataParameterToken.SourceOffset = alignment;
-    dataParameterToken.LocationIndex = 0x0;
-    dataParameterToken.LocationIndex2 = 0x0;
-
-    pPatchList = &dataParameterToken;
-    patchListSize = dataParameterToken.Size;
-
-    buildAndDecode();
-
-    ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.size());
-    auto vmeArgDesc = reinterpret_cast<NEO::ArgDescVme *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[1].get());
-    EXPECT_EQ(offsetVmeSadAdjustMode, vmeArgDesc->sadAdjustMode);
-}
-
-TEST_F(KernelDataTest, GivenDataParameterVmeSearchPathTypeWhenBuildingThenProgramIsCorrect) {
-    uint32_t argumentNumber = 1;
-    uint32_t alignment = 19;
-    uint32_t offsetVmeSearchPathType = 0xad;
-
-    SPatchDataParameterBuffer dataParameterToken;
-    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
-    dataParameterToken.Type = DATA_PARAMETER_VME_SEARCH_PATH_TYPE;
-    dataParameterToken.ArgumentNumber = argumentNumber;
-    dataParameterToken.Offset = offsetVmeSearchPathType;
-    dataParameterToken.DataSize = sizeof(uint32_t);
-    dataParameterToken.SourceOffset = alignment;
-    dataParameterToken.LocationIndex = 0x0;
-    dataParameterToken.LocationIndex2 = 0x0;
-
-    pPatchList = &dataParameterToken;
-    patchListSize = dataParameterToken.Size;
-
-    buildAndDecode();
-
-    ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.size());
-    auto vmeArgDesc = reinterpret_cast<NEO::ArgDescVme *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[1].get());
-    EXPECT_EQ(offsetVmeSearchPathType, vmeArgDesc->searchPathType);
 }
 
 TEST_F(KernelDataTest, GivenPatchTokenStateSipWhenBuildingThenProgramIsCorrect) {

@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -101,7 +102,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
             for (uint32_t i = 0; i <= expectedExitCounter + 3; i++) {
                 SysCalls::exitCalled = false;
 
-                csr->flushTask(cs, 0u, &ih, &ih, &ih, 0u, dispatchFlags, *device);
+                csr->flushTask(cs, 16u, &ih, &ih, &ih, 0u, dispatchFlags, *device);
 
                 bool enabled = (i >= expectedExitCounter);
 
@@ -122,7 +123,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
             }
         }
     }
-    memoryManager->peekGemCloseWorker()->close(true);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentThenSucceeds) {
@@ -200,7 +200,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotCh
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
 
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -220,7 +220,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
@@ -229,7 +230,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
                   << " (" << engineType << ", " << engineUsage << ")\n";
-    EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStdout(), expectedValue.str()));
+    EXPECT_TRUE(hasSubstr(capture.getCapturedStdout(), expectedValue.str()));
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuffersAndObjects) {
@@ -289,7 +290,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -335,7 +336,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyBbWhenFlushingThenSucceeds
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -357,7 +358,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThe
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -385,7 +386,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -410,7 +411,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckFlagsWhenFlushingThenSucceeds
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSucceeds) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
     mock->returnHandle = 17;
 
     auto &cs = csr->getCS();
@@ -436,7 +437,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
     mock->ioctlTearDownExpected.gemClose = 1;
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpects = true;
 
     EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
@@ -479,7 +480,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
     mock->ioctlTearDownExpected.gemClose = 1;
-    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemWait = 1;
     mock->ioctlTearDownExpects = true;
 
     EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
@@ -542,12 +543,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;
     testedCsr->useGpuIdleImplicitFlush = false;
+    testedCsr->heaplessStateInitialized = true;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     IndirectHeap cs(commandBuffer);
+    cs.getSpace(4u); // use some bytes
 
     csr->makeResident(*dummyAllocation);
 
@@ -584,7 +587,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), allocations->getGraphicsAllocation(0u));
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
-    EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
+    if (testedCsr->getHeaplessStateInitEnabled()) {
+        EXPECT_EQ(cs.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
+    } else {
+        EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
+    }
 
     int ioctlUserPtrCnt = 3;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
@@ -609,10 +616,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;
     testedCsr->useGpuIdleImplicitFlush = false;
+    testedCsr->heaplessStateInitialized = true;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);
-
+    // use some bytes
+    cs.getSpace(4u);
     auto allocations = device->getDefaultEngine().commandStreamReceiver->getTagsMultiAllocation();
 
     csr->setTagAllocation(static_cast<DrmAllocation *>(allocations->getGraphicsAllocation(csr->getRootDeviceIndex())));
@@ -637,8 +646,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
-    auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
-    EXPECT_TRUE(commandBufferGraphicsAllocation->isResident(csr->getOsContext().getContextId()));
+    if (!csr->getHeaplessStateInitEnabled()) {
+        auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
+        EXPECT_TRUE(commandBufferGraphicsAllocation->isResident(csr->getOsContext().getContextId()));
+    }
 
     // preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -646,10 +657,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount += device->getRTMemoryBackedBuffer() ? 1u : 0u;
 
-    // validate that submited command buffer has what we want
+    // validate that submitted command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.getBufferCount());
-    EXPECT_EQ(4u, this->mock->execBuffer.getBatchStartOffset());
-    EXPECT_EQ(submittedCommandBuffer.getUsed(), this->mock->execBuffer.getBatchLen());
+
+    EXPECT_EQ(csr->getHeaplessStateInitEnabled() ? 0u : 4u, this->mock->execBuffer.getBatchStartOffset());
+    EXPECT_EQ(csr->getHeaplessStateInitEnabled() ? cs.getUsed() : submittedCommandBuffer.getUsed(), this->mock->execBuffer.getBatchLen());
 
     auto *execObjects = reinterpret_cast<MockExecObject *>(this->mock->execBuffer.getBuffersPtr());
 
@@ -689,11 +701,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenProcessResidencyFailingOnO
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->processResidencyCallBase = false;
     testedCsr->processResidencyResult = SubmissionStatus::outOfMemory;
+    auto flushInternalCalledBeforeFlush = testedCsr->flushInternalCalled;
+    auto processResidencyCalledBeforeFlush = testedCsr->processResidencyCalled;
 
     SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::outOfMemory, ret);
-    EXPECT_EQ(testedCsr->flushInternalCalled, 1u);
-    EXPECT_EQ(testedCsr->processResidencyCalled, 1u);
+    EXPECT_EQ(testedCsr->flushInternalCalled, flushInternalCalledBeforeFlush + 1);
+    EXPECT_EQ(testedCsr->processResidencyCalled, processResidencyCalledBeforeFlush + 1);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(commandBuffer);
 }
@@ -711,11 +725,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenProcessResidencyFailingOnO
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->processResidencyCallBase = false;
     testedCsr->processResidencyResult = SubmissionStatus::outOfHostMemory;
+    auto flushInternalCalledBeforeFlush = testedCsr->flushInternalCalled;
+    auto processResidencyCalledBeforeFlush = testedCsr->processResidencyCalled;
 
     SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, ret);
-    EXPECT_EQ(testedCsr->flushInternalCalled, 1u);
-    EXPECT_EQ(testedCsr->processResidencyCalled, 1u);
+    EXPECT_EQ(testedCsr->flushInternalCalled, flushInternalCalledBeforeFlush + 1);
+    EXPECT_EQ(testedCsr->processResidencyCalled, processResidencyCalledBeforeFlush + 1);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(commandBuffer);
 }
@@ -735,12 +751,15 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingExecWhenFlushingThe
     testedCsr->processResidencyResult = SubmissionStatus::success;
     testedCsr->execCallBase = false;
     testedCsr->execResult = -1;
+    auto flushInternalCalledBeforeFlush = testedCsr->flushInternalCalled;
+    auto processResidencyCalledBeforeFlush = testedCsr->processResidencyCalled;
+    auto execCalledBeforeFlush = testedCsr->execCalled;
 
     SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::failed, ret);
-    EXPECT_EQ(testedCsr->flushInternalCalled, 1u);
-    EXPECT_EQ(testedCsr->processResidencyCalled, 1u);
-    EXPECT_EQ(testedCsr->execCalled, 1u);
+    EXPECT_EQ(testedCsr->flushInternalCalled, flushInternalCalledBeforeFlush + 1);
+    EXPECT_EQ(testedCsr->processResidencyCalled, processResidencyCalledBeforeFlush + 1);
+    EXPECT_EQ(testedCsr->execCalled, execCalledBeforeFlush + 1);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(commandBuffer);
 }
@@ -806,15 +825,13 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenCheckingIsKmdWaitOnTaskCountAllowedThenTrueIsReturned) {
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = true;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = true;
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isKmdWaitOnTaskCountAllowed());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionAndDisabledBindWhenCheckingIsKmdWaitOnTaskCountAllowedThenFalseIsReturned) {
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = false;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = false;
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isKmdWaitOnTaskCountAllowed());
 }
@@ -880,6 +897,7 @@ struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSub
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFailsThenFlushReturnsError) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->completionFenceValuePointer = nullptr;
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
     auto directSubmission = testedCsr->directSubmission.get();
     static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferResult = false;
@@ -901,6 +919,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFa
 HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDirectSubmissionFailsThenFlushReturnsError) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->completionFenceValuePointer = nullptr;
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*csr);
     auto blitterDirectSubmission = testedCsr->blitterDirectSubmission.get();
     static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferResult = false;
@@ -921,8 +940,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDire
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenNewResourcesAddedThenAddToResidencyContainer) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->completionFenceValuePointer = nullptr;
     testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
+    testedCsr->heaplessStateInitialized = true;
     auto oldMemoryOperationsInterface = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.release();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandlerDefault>(device->getRootDeviceIndex());
 
@@ -947,6 +968,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenMakeResidentThenDoNotAddToCsrResidencyContainer) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission.reset();
     csr->initDirectSubmission();
     EXPECT_FALSE(testedCsr->pushAllocationsForMakeResident);
@@ -977,6 +999,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     uint8_t bbStart[64];
     batchBuffer.endCmdPtr = &bbStart[0];
     static_cast<DrmMockCustom *>(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->drm)->isVmBindAvailableCall.callParent = false;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = true;
 
     auto flushStamp = csr->obtainCurrentFlushStamp();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
@@ -1048,15 +1071,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDire
     EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableManagerIsCalledThenCreatePageTableManager) {
-    executionEnvironment.prepareRootDeviceEnvironments(2);
-    executionEnvironment.rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[1]->initGmm();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]));
-    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1);
-    auto pageTableManager = csr->createPageTableManager();
-    EXPECT_EQ(csr->pageTableManager.get(), pageTableManager);
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableManagerIsCalledThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, csr->createPageTableManager());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmCsrThenEnableBatching) {
@@ -1085,36 +1101,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
     }
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
-    auto mockMngr = new MockGmmPageTableMngr();
-    csr->pageTableManager.reset(mockMngr);
-    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), true);
-    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
-    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
-    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
-
-    EXPECT_TRUE(result);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
-    auto mockMngr = new MockGmmPageTableMngr();
-    csr->pageTableManager.reset(mockMngr);
-    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), false);
-    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
-    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
-    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
-    EXPECT_EQ(0u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
-
-    EXPECT_TRUE(result);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrintThenProperValuesArePrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintBOsForSubmit.set(true);
@@ -1130,11 +1116,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrint
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::success, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     std::vector<BufferObject *> bos;
     allocation1.makeBOsResident(&csr->getOsContext(), 0, &bos, true, false);
@@ -1168,11 +1155,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(output.empty());
 }
 
@@ -1193,10 +1181,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(output.empty());
 }

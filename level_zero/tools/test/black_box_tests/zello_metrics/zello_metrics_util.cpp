@@ -70,6 +70,19 @@ bool getTestMachineConfiguration(TestMachineConfiguration &machineConfig) {
     deviceProperties.pNext = nullptr;
     VALIDATECALL(zeDeviceGetProperties(devices[0], &deviceProperties));
     machineConfig.deviceId = deviceProperties.deviceId;
+
+    uint32_t extensionsCount = 0;
+    VALIDATECALL(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, nullptr));
+    if (extensionsCount != 0) {
+        machineConfig.driverExtensionsProperties.resize(extensionsCount);
+        VALIDATECALL(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, machineConfig.driverExtensionsProperties.data()));
+
+        for (uint32_t i = 0; i < extensionsCount; i++) {
+            uint32_t supportedVersion = machineConfig.driverExtensionsProperties[i].version;
+            LOG(LogLevel::DEBUG) << "Extension #" << i << " name: " << machineConfig.driverExtensionsProperties[i].name << " version: " << ZE_MAJOR_VERSION(supportedVersion) << "." << ZE_MINOR_VERSION(supportedVersion) << std::endl;
+        }
+    }
+
     return true;
 }
 
@@ -257,7 +270,7 @@ void sleep(uint32_t milliseconds) {
 }
 
 zet_metric_group_handle_t findMetricGroup(const char *groupName,
-                                          const zet_metric_group_sampling_type_flag_t samplingType,
+                                          const zet_metric_group_sampling_type_flags_t samplingType,
                                           ze_device_handle_t deviceHandle) {
 
     uint32_t metricGroupCount = 0;
@@ -501,8 +514,9 @@ void TestSettings::readMetricNames(char *optArg) {
 
 bool isEnvVariableSet(const char *name) {
     const char *env = getenv(name);
-    if ((nullptr == env) || (0 == strcmp("0", env)))
+    if ((nullptr == env) || (0 == strcmp("0", env))) {
         return false;
+    }
     return (0 == strcmp("1", env));
 }
 
@@ -522,7 +536,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -d,   --device <deviceId>             device ID to run the test"
                      "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
                      "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug)"
-                     "\n  -m,   --metricName <name1,name2,..>   metric names seperated by a comma"
+                     "\n  -m,   --metricName <name1,name2,..>   metric names separated by a comma"
                      "\n  -M,   --metricGroupName <name>        metric group name"
                      "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"

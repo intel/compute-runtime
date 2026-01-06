@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include <level_zero/zet_api.h>
 
 namespace L0 {
-ze_result_t zetModuleGetDebugInfo(
+ze_result_t ZE_APICALL zetModuleGetDebugInfo(
     zet_module_handle_t hModule,
     zet_module_debug_info_format_t format,
     size_t *pSize,
@@ -20,7 +20,7 @@ ze_result_t zetModuleGetDebugInfo(
     return L0::Module::fromHandle(hModule)->getDebugInfo(pSize, pDebugInfo);
 }
 
-ze_result_t zetKernelGetProfileInfo(
+ze_result_t ZE_APICALL zetKernelGetProfileInfo(
     zet_kernel_handle_t hKernel,
     zet_profile_properties_t *pProfileProperties) {
     return L0::Kernel::fromHandle(hKernel)->getProfileInfo(pProfileProperties);

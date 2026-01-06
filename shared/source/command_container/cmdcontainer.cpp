@@ -228,6 +228,7 @@ void CommandContainer::reset() {
     nextIddInBlock = this->getNumIddPerBlock();
     lastPipelineSelectModeRequired = false;
     endCmdPtr = nullptr;
+    endCmdGpuAddress = 0;
     alignedPrimarySize = 0;
 }
 
@@ -380,6 +381,7 @@ void CommandContainer::alignPrimaryEnding(void *endPtr, size_t exactUsedSize) {
 
 void CommandContainer::endAlignedPrimaryBuffer() {
     this->endCmdPtr = commandStream->getSpace(0u);
+    this->endCmdGpuAddress = commandStream->getCurrentGpuAddressPosition();
     alignPrimaryEnding(this->endCmdPtr, commandStream->getUsed());
 }
 
@@ -570,9 +572,6 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);
     }
-    if (device->getProductHelper().isDcFlushMitigated()) {
-        this->immediateCmdListCsr->registerDcFlushForDcMitigation();
-    }
     this->immediateCmdListCsr->flushTagUpdate();
 }
 
@@ -598,11 +597,11 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
 }
 
 size_t CommandContainer::getHeapSize(HeapType heapType) {
-    size_t defaultHeapSize = HeapSize::defaultHeapSize;
+    size_t defaultHeapSize = HeapSize::getDefaultHeapSize(heapType);
     if (HeapType::surfaceState == heapType) {
         defaultHeapSize = this->defaultSshSize;
     }
-    return HeapSize::getDefaultHeapSize(defaultHeapSize);
+    return HeapSize::getHeapSize(defaultHeapSize);
 }
 
 void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {

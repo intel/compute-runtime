@@ -1,17 +1,25 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/image_aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <tuple>
+#include <vector>
 
 using namespace NEO;
 
@@ -109,7 +117,7 @@ struct AUBWriteImage
 
         auto retVal = CL_INVALID_VALUE;
         cl_mem_flags flags = 0;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         dstImage.reset(Image::create(
             context,
             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
@@ -149,7 +157,7 @@ struct AUBWriteImage
         retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = pCmdQ->finish();
+        retVal = pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto pDstMemory = readMemory;
@@ -231,7 +239,7 @@ struct AUBWriteImage
         auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         auto image = std::unique_ptr<Image>(Image::create(
             context,
@@ -269,7 +277,7 @@ struct AUBWriteImage
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        pCmdQ->finish();
+        pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto imageRowPitch = image->getImageDesc().image_row_pitch;
@@ -290,7 +298,7 @@ struct AUBWriteImage
 
 using AUBWriteImageCCS = AUBWriteImage<false>;
 
-HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -304,7 +312,7 @@ HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectatio
     }
 }
 
-HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreMet, ImageSupport) {
     testWriteImageUnaligned<FamilyType>();
 }
 
@@ -319,7 +327,7 @@ INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageCCS,
 
 using AUBWriteImageBCS = AUBWriteImage<true>;
 
-HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -334,7 +342,7 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
     }
 }
 
-HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     auto &productHelper = pCmdQ->getDevice().getProductHelper();
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
         !(productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {

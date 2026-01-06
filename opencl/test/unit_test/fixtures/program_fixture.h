@@ -16,6 +16,7 @@ class MockContext;
 class MockProgram;
 class ClDevice;
 class MockNeoProgram;
+
 using cl_int = int;
 
 class NEOProgramFixture {
@@ -50,6 +51,8 @@ class ProgramFixture {
 
     void createProgramWithSource(Context *pContext,
                                  const std::string &sourceFileName);
+
+    void createProgramWithSource(Context *pContext);
 
   protected:
     void setUp() {

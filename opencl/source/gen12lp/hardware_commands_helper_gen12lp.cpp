@@ -19,11 +19,12 @@ namespace NEO {
 using FamilyType = Gen12LpFamily;
 
 template <typename GfxFamily>
-typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
+template <typename InterfaceDescriptorType>
+InterfaceDescriptorType *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
-    return static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
+    InterfaceDescriptorType *inlineInterfaceDescriptor) {
+    return static_cast<InterfaceDescriptorType *>(ptrOffset(indirectHeap.getCpuBase(), static_cast<size_t>(offsetInterfaceDescriptor)));
 }
 
 template <typename GfxFamily>
@@ -101,6 +102,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     }
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *pDest = nullptr;
+
+    DEBUG_BREAK_IF(indirectHeap.getUsed() % 64 != 0);
 
     pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@
 #include "shared/test/common/mocks/mock_wddm_interface20.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
@@ -192,7 +192,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
         executionEnvironment = pDevice->getExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-        gmmMem = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
+        gmmMem = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
@@ -202,7 +202,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
     }
 
     WddmMock *wddm;
-    MockGmmMemoryBase *gmmMem = nullptr;
+    MockGmmMemory *gmmMem = nullptr;
     ExecutionEnvironment *executionEnvironment;
 };
 

@@ -21,7 +21,7 @@
 
 namespace NEO {
 
-DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
+DebugerL0CreateFn debuggerL0Factory[NEO::maxCoreEnumValue] = {};
 
 DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
     const auto deviceCount = std::max(1u, device->getNumSubDevices());

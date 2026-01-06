@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,9 +44,9 @@ ze_result_t FirmwareImp::firmwareGetConsoleLogs(size_t *pSize, char *pFirmwareLo
     return pOsFirmware->osGetConsoleLogs(pSize, pFirmwareLog);
 }
 
-FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initalizedFwType) {
-    pOsFirmware = OsFirmware::create(pOsSysman, initalizedFwType);
-    fwType = initalizedFwType;
+FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initializedFwType) {
+    pOsFirmware = OsFirmware::create(pOsSysman, initializedFwType);
+    fwType = initializedFwType;
     UNRECOVERABLE_IF(nullptr == pOsFirmware);
 }
 

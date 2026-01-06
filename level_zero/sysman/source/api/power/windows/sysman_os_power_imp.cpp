@@ -7,10 +7,11 @@
 
 #include "level_zero/sysman/source/api/power/windows/sysman_os_power_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {
@@ -290,8 +291,6 @@ ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold)
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
-    pThreshold->processId = 0;
-
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
     request.requestId = KmdSysman::Requests::Power::CurrentEnergyThreshold;
@@ -306,8 +305,11 @@ ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold)
     memset(pThreshold, 0, sizeof(zes_energy_threshold_t));
 
     uint32_t value = 0;
+    uint32_t processId = 0;
     memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    memcpy_s(&processId, sizeof(uint32_t), response.dataBuffer + sizeof(uint32_t), sizeof(uint32_t));
     pThreshold->threshold = static_cast<double>(value);
+    pThreshold->processId = processId;
     pThreshold->enable = true;
 
     return status;
@@ -625,8 +627,8 @@ std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsS
 
     std::vector<zes_power_domain_t> powerDomains;
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "No power domains are supported, power handles will not be created.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "No power domains are supported, power handles will not be created.\n");
     } else {
         uint32_t supportedPowerDomains = 0;
         memcpy_s(&supportedPowerDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
@@ -640,8 +642,8 @@ std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsS
             powerDomains.push_back(ZES_POWER_DOMAIN_CARD);
             break;
         default:
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Unexpected value returned by KMD. KMD based power handles will not be created.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Unexpected value returned by KMD. KMD based power handles will not be created.\n");
             break;
         }
     }

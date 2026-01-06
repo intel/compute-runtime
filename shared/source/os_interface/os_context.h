@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,11 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
+#include <optional>
 
 namespace NEO {
 class OSInterface;
+class ProductHelper;
 
 struct DirectSubmissionProperties;
 struct HardwareInfo;
@@ -33,9 +35,19 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     const aub_stream::EngineType &getEngineType() const { return engineType; }
-    EngineUsage getEngineUsage() { return engineUsage; }
+    EngineUsage getEngineUsage() const { return engineUsage; }
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
+    void overridePriority(uint32_t newPriority) {
+        if (!priorityLevel.has_value()) {
+            priorityLevel = newPriority;
+        }
+    }
 
+    bool hasPriorityLevel() const { return priorityLevel.has_value(); }
+    uint32_t getPriorityLevel() const {
+        UNRECOVERABLE_IF(!priorityLevel.has_value());
+        return priorityLevel.value();
+    }
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
@@ -55,6 +67,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
                                              bool &startOnInit,
                                              bool &startInContext);
     virtual void reInitializeContext() {}
+
+    static constexpr uint8_t getUmdPowerHintMax() { return NEO::OsContext::powerHintMax; }
     uint8_t getUmdPowerHintValue() { return powerHintValue; }
     void setUmdPowerHintValue(uint8_t powerHintValue) { this->powerHintValue = powerHintValue; }
 
@@ -75,7 +89,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     void setPrimaryContext(const OsContext *primary) {
         primaryContext = primary;
-        isContextGroup = true;
+        contextGroupCount = primary->contextGroupCount;
     }
     const OsContext *getPrimaryContext() const {
         return primaryContext;
@@ -92,12 +106,16 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool getIsDefaultEngine() const {
         return this->isDefaultEngine;
     }
-    void setContextGroup(bool value) {
-        isContextGroup = value;
+    void setContextGroupCount(uint32_t contextGroupCount) {
+        this->contextGroupCount = contextGroupCount;
+    }
+    uint32_t getContextGroupCount() {
+        return contextGroupCount;
     }
     bool isPartOfContextGroup() const {
-        return isContextGroup;
+        return contextGroupCount > 0;
     }
+    void adjustSettings(const ProductHelper &productHelper);
     virtual bool isDirectSubmissionLightActive() const { return false; }
 
   protected:
@@ -113,15 +131,18 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const uint32_t numSupportedDevices;
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
     EngineUsage engineUsage;
+    std::optional<uint32_t> priorityLevel = std::nullopt;
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
     bool debuggableContext = false;
+    bool initializeInternalEngineImmediately = true;
     uint8_t powerHintValue = 0;
+    static constexpr inline uint8_t powerHintMax = 100u; // by definition: 100% power-saving
 
-    bool isContextGroup = false;
+    uint32_t contextGroupCount = 0;
     const OsContext *primaryContext = nullptr;
     bool isPrimaryEngine = false;
     bool isDefaultEngine = false;

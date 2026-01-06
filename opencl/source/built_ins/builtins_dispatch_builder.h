@@ -21,6 +21,11 @@
 
 namespace NEO {
 struct BuiltinCode;
+class BuiltIns;
+class GraphicsAllocation;
+class Kernel;
+struct KernelInfo;
+
 typedef std::vector<char> BuiltinResourceT;
 
 class ClDeviceVector;
@@ -96,7 +101,6 @@ class BuiltinDispatchInfoBuilder {
         kernelInfos.resize(rootDeviceIndex + 1);
         kernelInfos[rootDeviceIndex] = kernelInfo;
         kernelDst = MultiDeviceKernel::create(prog.get(), kernelInfos, err);
-        kernelDst->getKernel(rootDeviceIndex)->isBuiltIn = true;
         usedKernels.push_back(std::unique_ptr<MultiDeviceKernel>(kernelDst));
         grabKernels(std::forward<KernelsDescArgsT>(kernelsDesc)...);
     }

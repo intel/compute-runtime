@@ -43,7 +43,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                      bool useQuickKmdSleep, QueueThrottle throttle) override;
 
-    size_t getPreferredTagPoolSize() const override { return 1; }
+    uint32_t getPreferredTagPoolSize() const override { return 1; }
 
     void addAubComment(const char *comment) override;
 
@@ -54,6 +54,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
                       size_t length, uint32_t compareOperation) override;
 
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;
 
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };

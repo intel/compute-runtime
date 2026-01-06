@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,20 @@
 namespace NEO {
 
 template <typename Family>
-bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
+    if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 1) ||
+        (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 1) ||
+        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 1) ||
+        (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1)) {
+        return true;
+    }
     if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
         (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
-        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
+        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0) &&
+        (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0)) {
         return false;
     }
-    return true;
+    return !hwInfo.capabilityTable.isIntegratedDevice;
 }
 
 template <typename Family>

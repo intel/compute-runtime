@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@
 
 #endif
 
-#include "GmmLib.h"
+#include "neo_gmmlib.h"
 
 #if __clang__
 #pragma clang diagnostic pop

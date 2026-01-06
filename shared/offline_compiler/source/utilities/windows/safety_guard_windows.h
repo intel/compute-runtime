@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/offline_compiler/source/utilities/windows/seh_exception.h"
 #include "shared/source/helpers/abort.h"
 
-#include <setjmp.h>
+#include <csetjmp>
 
 static jmp_buf jmpbuf;
 

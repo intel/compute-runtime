@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,7 @@ TEST(ArgDescPointer, WhenDefaultInitializedThenOffsetsAreUndefined) {
     EXPECT_TRUE(NEO::isUndefinedOffset(argPtr.stateless));
     EXPECT_TRUE(NEO::isUndefinedOffset(argPtr.bindless));
     EXPECT_TRUE(NEO::isUndefinedOffset(argPtr.bufferOffset));
+    EXPECT_TRUE(NEO::isUndefinedOffset(argPtr.bufferSize));
     EXPECT_TRUE(NEO::isUndefinedOffset(argPtr.slmOffset));
 
     EXPECT_EQ(0U, argPtr.requiredSlmAlignment);
@@ -301,7 +302,7 @@ TEST(ArgDescriptorAs, GivenMismatchedArgTypeThenAborts) {
 
 TEST(ArgDescriptorCopyAssign, WhenCopyAssignedThenCopiesExtendedTypeInfo) {
     NEO::ArgDescriptor arg0;
-    arg0.getExtendedTypeInfo().isAccelerator = true;
+    arg0.getExtendedTypeInfo().isMediaBlockImage = true;
 
     NEO::ArgDescriptor arg1{arg0};
     NEO::ArgDescriptor arg2;
@@ -331,6 +332,7 @@ TEST(ArgDescriptorCopyAssign, GivenPointerArgWhenCopyAssignedThenCopiesDataBased
     argPointer.stateless = 3;
     argPointer.bindless = 5;
     argPointer.bufferOffset = 7;
+    argPointer.bufferSize = 9;
     argPointer.slmOffset = 11;
     argPointer.requiredSlmAlignment = 13;
     argPointer.pointerSize = 17;
@@ -342,6 +344,7 @@ TEST(ArgDescriptorCopyAssign, GivenPointerArgWhenCopyAssignedThenCopiesDataBased
     EXPECT_EQ(argPointer.stateless, arg2.as<NEO::ArgDescPointer>().stateless);
     EXPECT_EQ(argPointer.bindless, arg2.as<NEO::ArgDescPointer>().bindless);
     EXPECT_EQ(argPointer.bufferOffset, arg2.as<NEO::ArgDescPointer>().bufferOffset);
+    EXPECT_EQ(argPointer.bufferSize, arg2.as<NEO::ArgDescPointer>().bufferSize);
     EXPECT_EQ(argPointer.slmOffset, arg2.as<NEO::ArgDescPointer>().slmOffset);
     EXPECT_EQ(argPointer.requiredSlmAlignment, arg2.as<NEO::ArgDescPointer>().requiredSlmAlignment);
     EXPECT_EQ(argPointer.pointerSize, arg2.as<NEO::ArgDescPointer>().pointerSize);

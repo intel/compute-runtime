@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/memory_banks.h"
 
-#include "aub_mapper_common.h"
 #include "aubstream/hardware_context.h"
 
 namespace aub_stream {
@@ -25,11 +24,8 @@ template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
     using CommandStreamReceiverHw<GfxFamily>::osContext;
-    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
-    using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     bool getParametersForMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
-    void freeEngineInfo(AddressMapper &gttRemap);
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
   public:
@@ -41,17 +37,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
                                            uint32_t rootDeviceIndex,
                                            const DeviceBitfield deviceBitfield);
     ~CommandStreamReceiverSimulatedCommonHw() override;
-    uint64_t getGTTBits() const {
-        return 0u;
-    }
-    void initGlobalMMIO();
-    void initAdditionalMMIO();
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
-    void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
-    static const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType);
-    void initEngineMMIO();
-    void submitLRCA(const MiContextDescriptorReg &contextDescriptor);
     void setupContext(OsContext &osContext) override;
     virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
@@ -61,6 +48,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
     void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {
+        UNRECOVERABLE_IF(nullptr == hardwareContextController);
         hardwareContextController->writeMemory(allocationParams);
     }
 
@@ -73,7 +61,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
-    size_t getPreferredTagPoolSize() const override { return 1; }
+    uint32_t getPreferredTagPoolSize() const override { return 1; }
 
     aub_stream::AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContextController> hardwareContextController;
@@ -89,7 +77,5 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
     } engineInfo = {};
-
-    AubMemDump::AubStream *stream;
 };
 } // namespace NEO

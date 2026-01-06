@@ -19,10 +19,11 @@
 namespace NEO {
 
 template <typename GfxFamily>
-typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
+template <typename InterfaceDescriptorType>
+InterfaceDescriptorType *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    InterfaceDescriptorType *inlineInterfaceDescriptor) {
     return inlineInterfaceDescriptor;
 }
 
@@ -80,6 +81,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             localWorkSize[0] = pImplicitArgs->v1.localSizeX;
             localWorkSize[1] = pImplicitArgs->v1.localSizeY;
             localWorkSize[2] = pImplicitArgs->v1.localSizeZ;
+        } else if (pImplicitArgs->v2.header.structVersion == 2) {
+            localWorkSize[0] = pImplicitArgs->v2.localSizeX;
+            localWorkSize[1] = pImplicitArgs->v2.localSizeY;
+            localWorkSize[2] = pImplicitArgs->v2.localSizeZ;
         } else {
             UNRECOVERABLE_IF(true);
         }
@@ -107,7 +112,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
         EncodeDispatchKernel<GfxFamily>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddress, true);
 
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(!generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
     }
 
     uint32_t sizeToCopy = sizeCrossThreadData;
@@ -130,6 +135,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     }
 
     if (sizeCrossThreadData > 0) {
+        if constexpr (!heaplessModeEnabled) {
+            DEBUG_BREAK_IF(indirectHeap.getUsed() % 64 != 0);
+        }
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
     }

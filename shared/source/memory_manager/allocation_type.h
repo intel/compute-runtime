@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,6 @@ enum class AllocationType {
     linearStream,
     mapAllocation,
     mcs,
-    pipe,
     preemption,
     printfSurface,
     privateSurface,
@@ -60,6 +59,7 @@ enum class AllocationType {
     deferredTasksList,
     assertBuffer,
     syncDispatchToken,
+    hostFunction,
     count
 };
 

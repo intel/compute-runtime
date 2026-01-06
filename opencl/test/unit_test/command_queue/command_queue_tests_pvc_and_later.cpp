@@ -5,23 +5,38 @@
  *
  */
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/cl_device/cl_device_vector.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "CL/cl_ext.h"
 
 using namespace NEO;
 
@@ -251,7 +266,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWh
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto queue = std::make_unique<MockCommandQueue>(*context);
@@ -271,7 +286,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenConta
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto queue = std::make_unique<MockCommandQueue>(*context);
     EXPECT_EQ(0u, queue->countBcsEngines());
@@ -299,7 +314,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenBidirectionalMasksWhenConstructBcsE
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto queue = std::make_unique<MockCommandQueue>(*context);
     EXPECT_EQ(0u, queue->countBcsEngines());
@@ -325,7 +340,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEngines
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto queue = std::make_unique<MockCommandQueue>(*context);
     EXPECT_EQ(0u, queue->countBcsEngines());
@@ -355,7 +370,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenRet
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto queue = std::make_unique<MockCommandQueue>(*context);
     EXPECT_EQ(0u, queue->countBcsEngines());
@@ -381,7 +396,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSet
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto queue = std::make_unique<MockCommandQueue>(*context);
     EXPECT_EQ(0u, queue->countBcsEngines());
@@ -439,7 +454,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledW
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto queue = std::make_unique<MockCommandQueue>(*context);
@@ -458,7 +473,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &productHelper = device->getProductHelper();
@@ -531,7 +546,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabled
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto queue = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), &clDevice, nullptr);
@@ -550,7 +565,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisable
     cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
     ClDeviceVector clDevices{&clDeviceId, 1u};
     cl_int retVal{};
-    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    auto context = std::unique_ptr<Context>{Context::create<MockContext>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto queue = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), &clDevice, nullptr);
@@ -1019,4 +1034,25 @@ HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDR
 
     const auto memFenceStateItor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
     EXPECT_NE(ccsHwParser.cmdList.end(), memFenceStateItor);
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenCmdQueueWhenStatelessPlatformThenStatelessIsEnabled, IsAtLeastXeHpcCore) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_TRUE(mockCmdQ->isForceStateless);
+}
+
+using CommandQueueWithinXeHpcAndXe3Tests = ::testing::Test;
+
+HWTEST2_F(CommandQueueWithinXeHpcAndXe3Tests, givenCmdQueueWhenPlatformWithStatelessDisableWithDebugKeyThenStatelessIsDisabled, IsWithinXeHpcCoreAndXe3Core) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableForceToStateless.set(1);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_FALSE(mockCmdQ->isForceStateless);
 }

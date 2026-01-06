@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/os_interface/product_helper.inl"
+#include "shared/source/os_interface/product_helper_from_xe_hpc_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpc_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
+#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 namespace NEO {
 
@@ -19,8 +21,18 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const {
+    return false;
 }
 
 template <>
@@ -39,15 +51,25 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 
     fillScmPropertiesSupportStructureBase(propertiesSupport);
     propertiesSupport.allocationForScratchAndMidthreadPreemption = GfxProduct::StateComputeModeStateSupport::allocationForScratchAndMidthreadPreemption;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return true;
+    propertiesSupport.enableL1FlushUavCoherencyMode = GfxProduct::StateComputeModeStateSupport::enableL1FlushUavCoherencyMode;
+    if (debugManager.flags.EnableL1FlushUavCoherencyMode.get() != -1) {
+        propertiesSupport.enableL1FlushUavCoherencyMode = !!debugManager.flags.EnableL1FlushUavCoherencyMode.get();
+    }
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
 } // namespace NEO

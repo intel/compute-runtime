@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,9 @@
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/helpers/local_work_size.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/logger.h"
 
 #include "opencl/source/context/context.h"
@@ -101,6 +100,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
 
     wsInfo.setIfUseImg(kernelInfo);
+    wsInfo.setPreferredWgCountPerSubslice(device.getProductHelper().getPreferredWorkgroupCountPerSubslice());
 
     return wsInfo;
 }

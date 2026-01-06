@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@ typedef XeHpgCoreFamily Family;
 
 constexpr auto gfxCore = IGFX_XE_HPG_CORE;
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 template <>
 void populateFactoryTable<UltCommandStreamReceiver<Family>>() {
-    commandStreamReceiverFactory[IGFX_MAX_CORE + gfxCore] = UltCommandStreamReceiver<Family>::create;
+    commandStreamReceiverFactory[NEO::maxCoreEnumValue + gfxCore] = UltCommandStreamReceiver<Family>::create;
 }
 
 struct EnableXeHpgCore {

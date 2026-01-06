@@ -5,16 +5,13 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/command_container/command_encoder.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/enqueue_barrier.h"
-#include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -49,7 +46,7 @@ HWTEST_F(GetSizeRequiredTest, WhenFinishingThenHeapsAndCommandBufferAreNotConsum
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, commandStream.getUsed() - usedBeforeCS);
@@ -58,10 +55,7 @@ HWTEST_F(GetSizeRequiredTest, WhenFinishingThenHeapsAndCommandBufferAreNotConsum
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNotConsumed) {
-    auto &commandStream = pCmdQ->getCS(1024);
-    auto usedBeforeCS = commandStream.getUsed();
-
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAreNotConsumed) {
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     cl_event eventBeingWaitedOn = &event1;
     cl_event eventReturned = nullptr;
@@ -70,14 +64,6 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
         &eventBeingWaitedOn,
         &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    size_t expectedStreamSize = 0;
-    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && (!pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled())) {
-        expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                         pDevice->getRootDeviceEnvironment(), false),
-                                     MemoryConstants::cacheLineSize);
-    }
-    EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
     EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
     EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
@@ -85,10 +71,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
     clReleaseEvent(eventReturned);
 }
 
-HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNotConsumed) {
-    auto &commandStream = pCmdQ->getCS(1024);
-    auto usedBeforeCS = commandStream.getUsed();
-
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAreNotConsumed) {
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     cl_event eventBeingWaitedOn = &event1;
     cl_event eventReturned = nullptr;
@@ -97,16 +80,9 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNo
         &eventBeingWaitedOn,
         &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    size_t expectedStreamSize = 0;
-    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        auto unalignedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
-                             EncodeStoreMemory<FamilyType>::getStoreDataImmSize() +
-                             sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
-        expectedStreamSize = alignUp(unalignedSize, MemoryConstants::cacheLineSize);
-    }
-
-    EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
+    EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
+    EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
+    EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 
     clReleaseEvent(eventReturned);
 }

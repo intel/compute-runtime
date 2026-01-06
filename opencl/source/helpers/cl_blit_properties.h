@@ -24,7 +24,6 @@ struct ClBlitProperties {
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
         BlitProperties blitProperties{};
-
         if (BlitterConstants::BlitDirection::bufferToBuffer == blitDirection ||
             BlitterConstants::BlitDirection::imageToImage == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
@@ -44,14 +43,14 @@ struct ClBlitProperties {
                 srcOffset += ptrDiff(builtinOpParams.srcPtr, srcAllocation->getGpuAddress());
             }
 
-            blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation,
-                                                                        srcAllocation,
-                                                                        {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
-                                                                        {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
-                                                                        builtinOpParams.size,
-                                                                        builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
-                                                                        builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
-
+            blitProperties = BlitProperties::constructPropertiesForCopy(
+                dstAllocation, dstAllocation->getGpuAddress(),
+                srcAllocation, srcAllocation->getGpuAddress(),
+                {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
+                {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
+                builtinOpParams.size,
+                builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
+                builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
             if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);
@@ -90,9 +89,12 @@ struct ClBlitProperties {
             if (builtinOpParams.dstSvmAlloc) {
                 gpuAllocation = builtinOpParams.dstSvmAlloc;
                 hostAllocation = builtinOpParams.srcSvmAlloc;
-            } else {
+            } else if (builtinOpParams.dstMemObj) {
                 gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.dstMemObj->getOffset());
+            } else {
+                gpuAllocation = nullptr;
+                hostAllocation = builtinOpParams.srcSvmAlloc;
             }
 
             hostRowPitch = builtinOpParams.srcRowPitch;
@@ -115,9 +117,12 @@ struct ClBlitProperties {
             if (builtinOpParams.srcSvmAlloc) {
                 gpuAllocation = builtinOpParams.srcSvmAlloc;
                 hostAllocation = builtinOpParams.dstSvmAlloc;
-            } else {
+            } else if (builtinOpParams.srcMemObj) {
                 gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.srcMemObj->getOffset());
+            } else {
+                gpuAllocation = nullptr;
+                hostAllocation = builtinOpParams.dstSvmAlloc;
             }
 
             hostRowPitch = builtinOpParams.dstRowPitch;

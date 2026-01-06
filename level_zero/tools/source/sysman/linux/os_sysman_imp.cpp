@@ -19,8 +19,11 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
+#include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_utils.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
@@ -53,7 +56,7 @@ ze_result_t LinuxSysmanImp::init() {
     }
 
     if (pSysfsAccess == nullptr) {
-        pSysfsAccess = SysfsAccess::create(myDeviceName);
+        pSysfsAccess = SysfsAccess::create(std::move(myDeviceName));
     }
     DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
@@ -83,7 +86,7 @@ ze_result_t LinuxSysmanImp::createPmtHandles() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    auto gpuUpstreamPortPath = getPciCardBusDirectoryPath(gtDevicePCIPath);
+    auto gpuUpstreamPortPath = getPciCardBusDirectoryPath(std::move(gtDevicePCIPath));
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
     return result;
 }
@@ -181,7 +184,7 @@ std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath)
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 3rd PCI address from the gt tile
-    return modifyPathOnLevel(realPciPath, 3);
+    return modifyPathOnLevel(std::move(realPciPath), 3);
 }
 
 std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) {
@@ -197,7 +200,7 @@ std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) 
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 2nd PCI address from the gt tile.
-    return modifyPathOnLevel(realPciPath, 2);
+    return modifyPathOnLevel(std::move(realPciPath), 2);
 }
 
 PlatformMonitoringTech *LinuxSysmanImp::getPlatformMonitoringTechAccess(uint32_t subDeviceId) {
@@ -263,7 +266,7 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAc
             // Process closed this file. Not an error. Just ignore.
             continue;
         }
-        if (pSysfsAccess->isMyDeviceFile(file)) {
+        if (pSysfsAccess->isMyDeviceFile(std::move(file))) {
             deviceFds.push_back(fd);
         }
     }
@@ -275,8 +278,8 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
     std::vector<int> myPidFds;
     ze_result_t result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
         return result;
     }
 
@@ -293,7 +296,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
             if (force) {
                 pProcfsAccess->kill(pid);
             } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -426,28 +429,28 @@ ze_result_t LinuxSysmanImp::resizeVfBar(uint8_t size) {
 
     auto fdConfig = NEO::FileDescriptor(pciConfigNode.c_str(), O_RDWR);
     if (fdConfig < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Config node open failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "Config node open failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     std::unique_ptr<uint8_t[]> configMemory = std::make_unique<uint8_t[]>(PCI_CFG_SPACE_EXP_SIZE);
     memset(configMemory.get(), 0, PCI_CFG_SPACE_EXP_SIZE);
     if (this->preadFunction(fdConfig, configMemory.get(), PCI_CFG_SPACE_EXP_SIZE, 0) < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Read to get config space failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "Read to get config space failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     auto reBarCapPos = L0::LinuxPciImp::getRebarCapabilityPos(configMemory.get(), true);
     if (!reBarCapPos) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "VF BAR capability not found\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "VF BAR capability not found\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     auto barSizePos = reBarCapPos + PCI_REBAR_CTRL + 1; // position of VF(0) BAR SIZE.
     if (this->pwriteFunction(fdConfig, &size, 0x01, barSizePos) < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Write to change VF bar size failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "Write to change VF bar size failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
@@ -492,8 +495,8 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         if (NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get() != -1) {
             delayDurationForPPR = NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get();
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
         NEO::sleep(std::chrono::seconds(delayDurationForPPR * 60));
     } else {
         NEO::sleep(std::chrono::seconds(10)); // Sleep for 10 seconds to make sure writing to bridge control offset is propagated.
@@ -518,16 +521,16 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
 
         result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                                  "Card Bus remove after resizing VF bar failed\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                         "Card Bus remove after resizing VF bar failed\n");
             return result;
         }
         NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly.
 
         result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                                  "Rescanning root port failed after resizing VF bar failed\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                         "Rescanning root port failed after resizing VF bar failed\n");
             return result;
         }
         NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
@@ -535,18 +538,20 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     return result;
 }
 
-std::string LinuxSysmanImp::getAddressFromPath(std::string &rootPortPath) {
+std::string LinuxSysmanImp::getAddressFromPath(std::string &cardBusPath) {
     size_t loc;
-    loc = rootPortPath.find_last_of('/'); // we get the pci address of the root port  from rootPortPath
-    return rootPortPath.substr(loc + 1, std::string::npos);
+    loc = cardBusPath.find_last_of('/'); // we get the pci address of the upstream port from card bus Path
+    auto uspAddress = cardBusPath.substr(loc + 1, std::string::npos);
+    loc = uspAddress.find_last_of('.'); // we remove the function number from the pci address
+    return uspAddress.substr(0, loc);
 }
 
 ze_result_t LinuxSysmanImp::osColdReset() {
     const std::string slotPath("/sys/bus/pci/slots/"); // holds the directories matching to the number of slots in the PC
     std::string cardBusPath;                           // will hold the PCIe Root port directory path (the address of the PCIe slot).                                           // will hold the absolute real path (not symlink) to the selected Device
 
-    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);    // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
-    std::string rootAddress = getAddressFromPath(cardBusPath); // e.g rootAddress = 0000:8a:00.0
+    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);   // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0
+    std::string uspAddress = getAddressFromPath(cardBusPath); // e.g upstreamPortAddress = 0000:8a:00
 
     std::vector<std::string> dir;
     ze_result_t result = pFsAccess->listDirectory(slotPath, dir); // get list of slot directories from  /sys/bus/pci/slots/
@@ -559,7 +564,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
         if (ZE_RESULT_SUCCESS != result) {
             return result;
         }
-        if (slotAddress.compare(rootAddress) == 0) {                      // compare slot address to root port address
+        if (slotAddress.compare(uspAddress) == 0) {                       // compare slot address to upstream port address
             result = pFsAccess->write((slotPath + slot + "/power"), "0"); // turn off power
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
@@ -572,7 +577,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
             return ZE_RESULT_SUCCESS;
         }
     }
-    return ZE_RESULT_ERROR_DEVICE_LOST; // incase the reset fails inform upper layers.
+    return ZE_RESULT_ERROR_DEVICE_LOST; // in case the reset fails inform upper layers.
 }
 
 uint32_t LinuxSysmanImp::getMemoryType() {

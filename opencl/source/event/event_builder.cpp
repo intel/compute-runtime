@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,7 @@
 #include "opencl/source/event/event_builder.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/timestamp_packet.h"
 
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/event/user_event.h"
 
 namespace NEO {

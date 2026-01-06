@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 namespace Sysman {
@@ -338,7 +338,7 @@ struct MockFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t write(const std::string file, double val) override {
+    ze_result_t write(const std::string &file, double val) override {
         if (isLegacy) {
             return setValLegacy(file, val);
         }

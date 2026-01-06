@@ -6,14 +6,19 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
@@ -30,8 +35,7 @@ using namespace NEO;
 using MultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;
 
 HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
-    REQUIRE_SVM_OR_SKIP(device1);
-    REQUIRE_SVM_OR_SKIP(device2);
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     cl_int retVal = 0;
@@ -41,9 +45,14 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
     auto pCmdQ1 = context->getSpecialQueue(1u);
     auto pCmdQ2 = context->getSpecialQueue(2u);
 
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
-    program->build(program->getDevices(), nullptr);
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), retVal));
+    MockZebinWrapper<>::Descriptor desc{};
+    desc.isStateless = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily)->isForceToStatelessRequired();
+    MockZebinWrapper mockZebin{*defaultHwInfo, desc};
+    mockZebin.setAsMockCompilerReturnedBinary();
+
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context.get(), context->getDevices(), &retVal));
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t svmSize = 4096;
@@ -143,18 +152,13 @@ using MultiRootDeviceCommandStreamReceiverTests = CommandStreamReceiverFlushTask
 HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithoutSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
+
     auto deviceFactory = std::make_unique<UltClDeviceFactory>(4, 0);
     auto device1 = deviceFactory->rootDevices[1];
     auto device2 = deviceFactory->rootDevices[2];
     auto device3 = deviceFactory->rootDevices[3];
-
-    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
-    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
-    auto mockCsr3 = new MockCommandStreamReceiver(*device3->executionEnvironment, device3->getRootDeviceIndex(), device3->getDeviceBitfield());
-
-    device1->resetCommandStreamReceiver(mockCsr1);
-    device2->resetCommandStreamReceiver(mockCsr2);
-    device3->resetCommandStreamReceiver(mockCsr3);
 
     cl_device_id devices[] = {device1, device2, device3};
 
@@ -428,8 +432,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(0u, semaphores.size());
     }
     userEvent1.setStatus(CL_COMPLETE);
-    pCmdQ1->finish();
-    pCmdQ2->finish();
+    pCmdQ1->finish(false);
+    pCmdQ2->finish(false);
     {
         HardwareParse csHwParser;
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
@@ -515,7 +519,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     userEvent1.setStatus(CL_COMPLETE);
     event1->release();
     event2->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     {
         HardwareParse csHwParser;
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
@@ -615,8 +619,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(0u, semaphores.size());
     }
     userEvent1.setStatus(CL_COMPLETE);
-    pCmdQ1->finish();
-    pCmdQ2->finish();
+    pCmdQ1->finish(false);
+    pCmdQ2->finish(false);
 
     {
         HardwareParse csHwParser;
@@ -695,8 +699,8 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenUnflushedQueueAndEventI
     EXPECT_TRUE(pCmdQ1->getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed());
     castToObject<Event>(inputEvent)->release();
     castToObject<Event>(outputEvent)->release();
-    pCmdQ1->finish();
-    pCmdQ2->finish();
+    pCmdQ1->finish(false);
+    pCmdQ2->finish(false);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {
@@ -802,14 +806,15 @@ extern volatile TagAddressType *pauseAddress;
 extern TaskCountType pauseValue;
 } // namespace CpuIntrinsicsTests
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
+using CommandStreamReceiverFlushTaskTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;
+
+HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     TaskCountType taskCountToWait = 2u;
 
@@ -822,14 +827,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     EXPECT_EQ(NEO::WaitStatus::ready, ret);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
+HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     TaskCountType taskCountToWait = 2u;
 
@@ -992,7 +996,7 @@ HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueRea
     retVal = cmdQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cmdQueue->finish();
+    cmdQueue->finish(false);
 
     EXPECT_TRUE(cmdQueue->migrateMultiGraphicsAllocationsIfRequiredCalled);
 

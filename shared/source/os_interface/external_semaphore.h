@@ -41,7 +41,7 @@ class ExternalSemaphore {
         Signaled
     };
 
-    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd);
+    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name);
 
     virtual ~ExternalSemaphore() = default;
 

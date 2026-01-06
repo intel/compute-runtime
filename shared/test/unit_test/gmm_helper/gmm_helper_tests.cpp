@@ -5,14 +5,15 @@
  *
  */
 
+#include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/device_factory.h"
-#include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -57,7 +58,8 @@ TEST_F(GmmHelperTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
     void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer();
-    EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
 
     mm->freeSystemMemory(pSysMem);
@@ -75,9 +77,10 @@ TEST_F(GmmHelperTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
     void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer();
-    EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, gmm->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, gmmResourceParams->Usage);
 
     mm->freeSystemMemory(pSysMem);
 }
@@ -91,7 +94,8 @@ TEST_F(GmmHelperTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedThenItHa
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), address, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    EXPECT_EQ(gmm->resourceParams.pExistingSysMem, expectedAddress);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->pExistingSysMem, expectedAddress);
 }
 
 TEST_F(GmmHelperTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmmResourceIsCreatedWithNoRestrictionsFlag) {
@@ -107,7 +111,8 @@ TEST_F(GmmHelperTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationT
 
     ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    EXPECT_EQ(gmmRes->resourceParams.Flags.Gpu.NoRestriction, 1u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmmRes->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 1u);
 
     mm->freeSystemMemory(pSysMem);
     delete gmmRes;
@@ -122,8 +127,8 @@ TEST_F(GmmHelperTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleasePar
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmmRes = new Gmm(getGmmHelper(), incomingPtr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto gmmRes2 = new Gmm(getGmmHelper(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
-    auto gmmRes3 = new Gmm(getGmmHelper(), gmmRes2->gmmResourceInfo->peekGmmResourceInfo(), false);
+    auto gmmRes2 = new Gmm(getGmmHelper(), gmmRes->gmmResourceInfo.get());
+    auto gmmRes3 = new Gmm(getGmmHelper(), gmmRes2->gmmResourceInfo.get(), false);
 
     // copy is being made
     EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
@@ -183,18 +188,19 @@ TEST_F(GmmHelperTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
 
     auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
 
-    EXPECT_EQ(queryGmm->resourceParams.Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
-    EXPECT_EQ(queryGmm->resourceParams.NoGfxMemory, 1u);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(queryGmmResourceParams->Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
+    EXPECT_EQ(queryGmmResourceParams->NoGfxMemory, 1u);
 
-    EXPECT_EQ(queryGmm->resourceParams.Usage, GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
-    EXPECT_EQ(static_cast<uint32_t>(queryGmm->resourceParams.Format),
+    EXPECT_EQ(queryGmmResourceParams->Usage, GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_EQ(static_cast<uint32_t>(queryGmmResourceParams->Format),
               static_cast<uint32_t>(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM));
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Gpu.Texture, 1u);
-    EXPECT_EQ(queryGmm->resourceParams.BaseWidth64, 17u);
-    EXPECT_EQ(queryGmm->resourceParams.BaseHeight, 17u);
-    EXPECT_EQ(queryGmm->resourceParams.Depth, 17u);
-    EXPECT_EQ(queryGmm->resourceParams.ArraySize, 1u);
-    EXPECT_EQ(!!queryGmm->resourceParams.Flags.Wa.__ForceOtherHVALIGN4, gfxCoreHelper.hvAlign4Required());
+    EXPECT_EQ(queryGmmResourceParams->Flags.Gpu.Texture, 1u);
+    EXPECT_EQ(queryGmmResourceParams->BaseWidth64, 17u);
+    EXPECT_EQ(queryGmmResourceParams->BaseHeight, 17u);
+    EXPECT_EQ(queryGmmResourceParams->Depth, 17u);
+    EXPECT_EQ(queryGmmResourceParams->ArraySize, 1u);
+    EXPECT_EQ(!!queryGmmResourceParams->Flags.Wa.__ForceOtherHVALIGN4, gfxCoreHelper.hvAlign4Required());
 }
 
 TEST_F(GmmHelperTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {
@@ -204,7 +210,8 @@ TEST_F(GmmHelperTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), dummyPtr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(static_cast<uint64_t>(allocationSize), gmm.resourceParams.BaseWidth64);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(static_cast<uint64_t>(allocationSize), gmmResourceParams->BaseWidth64);
 }
 
 TEST_F(GmmHelperTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
@@ -214,7 +221,8 @@ TEST_F(GmmHelperTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsPr
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
 
-    EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 1u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->NoGfxMemory, 1u);
 }
 
 HWTEST_F(GmmHelperTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse) {
@@ -224,7 +232,8 @@ HWTEST_F(GmmHelperTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse) {
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
 
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Info.NonLocalOnly, 0u);
 }
 
 TEST_F(GmmHelperTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
@@ -234,7 +243,8 @@ TEST_F(GmmHelperTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProper
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
 
-    EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->NoGfxMemory, 0u);
 }
 
 TEST_F(GmmHelperTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried) {
@@ -271,8 +281,9 @@ TEST_F(GmmHelperTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFla
     imgInfo.linearStorage = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
 
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 0u);
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Info.Linear, 0u);
+    EXPECT_EQ(gmmResourceParams->Flags.Info.TiledY, 0u);
 }
 
 TEST_F(GmmHelperTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet) {
@@ -286,8 +297,9 @@ TEST_F(GmmHelperTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlag
     imgInfo.linearStorage = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
 
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 1u);
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->Flags.Info.Linear, 1u);
+    EXPECT_EQ(gmmResourceParams->Flags.Info.TiledY, 0u);
 }
 
 using GmmCanonizeTests = GmmHelperTests;
@@ -419,7 +431,8 @@ TEST_F(GmmHelperTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIs
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
 
-    EXPECT_EQ(static_cast<int>(queryGmm->resourceParams.MaxLod), mipLevel);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(static_cast<int>(queryGmmResourceParams->MaxLod), mipLevel);
 }
 
 struct GmmMediaCompressedTests : public GmmHelperTests {
@@ -549,16 +562,18 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompression
     DebugManagerStateRestore restore;
     debugManager.flags.PrintGmmCompressionParams.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     StorageInfo storageInfo;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    auto &flags = gmm->resourceParams.Flags;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    auto &flags = gmmResourceParams->Flags;
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     char expectedStr[512] = {};
@@ -578,14 +593,16 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingImageResourceThenPrintCompre
     imgDesc.imageHeight = 17;
     imgDesc.imageDepth = 17;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
-    auto &flags = gmm->resourceParams.Flags;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    auto &flags = gmmResourceParams->Flags;
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     char expectedStr[512] = {};
@@ -601,7 +618,8 @@ TEST_F(GmmHelperTests, givenAlignmentValueWhenConstructingGmmThenSetAlignmentInR
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm{getGmmHelper(), nullptr, 1, alignment, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements};
-    EXPECT_EQ(alignment, gmm.resourceParams.BaseAlignment);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(alignment, gmmResourceParams->BaseAlignment);
 }
 
 TEST_F(GmmHelperTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
@@ -631,7 +649,8 @@ TEST_F(GmmHelperTests, whenLargePagesAreExplicitlyAllowedAndUserPtrIsNullThenAll
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_FALSE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.NoOptimizationPadding);
 }
 
 TEST_F(GmmHelperTests, whenLargePagesAreExplicitlyDisallowedButUserPtrIsNotNullThenAllowOptimizationPadding) {
@@ -641,7 +660,8 @@ TEST_F(GmmHelperTests, whenLargePagesAreExplicitlyDisallowedButUserPtrIsNotNullT
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), dummyPtr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_FALSE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.NoOptimizationPadding);
 }
 
 TEST_F(GmmHelperTests, whenLargePagesAreExplicitlyDisallowedAndUserPtrIsNullThenDisableOptimizationPadding) {
@@ -650,7 +670,8 @@ TEST_F(GmmHelperTests, whenLargePagesAreExplicitlyDisallowedAndUserPtrIsNullThen
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_TRUE(gmm.resourceParams.Flags.Info.NoOptimizationPadding);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.NoOptimizationPadding);
 }
 
 TEST_F(GmmHelperTests, givenSizeIsMisallignedTo64kbWhenForceDisablingLargePagesThenSizeIsPreserved) {
@@ -660,7 +681,8 @@ TEST_F(GmmHelperTests, givenSizeIsMisallignedTo64kbWhenForceDisablingLargePagesT
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), dummyPtr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(allocationSize, gmm.resourceParams.BaseWidth64);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(allocationSize, gmmResourceParams->BaseWidth64);
 }
 
 TEST_F(GmmHelperTests, givenSizeIsAllignedTo64kbWhenForceDisablingLargePagesThenSizeIsAlteredToBreak64kbAlignment) {
@@ -669,7 +691,24 @@ TEST_F(GmmHelperTests, givenSizeIsAllignedTo64kbWhenForceDisablingLargePagesThen
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(allocationSize + MemoryConstants::pageSize, gmm.resourceParams.BaseWidth64);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(allocationSize + MemoryConstants::pageSize, gmmResourceParams->BaseWidth64);
+}
+
+TEST_F(GmmHelperTests, givenAdapterBdfWhenComparingMemoryLayoutThenDataMatchesOriginalStruct) {
+    AdapterBdf local{};
+    ADAPTER_BDF original{};
+
+    local.bus = 0xAA;
+    original.Bus = 0xAA;
+    local.device = 0xBB;
+    original.Device = 0xBB;
+    local.function = 0xCC;
+    original.Function = 0xCC;
+    local.reserved = 0xDD;
+    original.Reserved = 0xDD;
+
+    EXPECT_EQ(local.data, original.Data);
 }
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
@@ -681,15 +720,14 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (productHelper.isDcFlushMitigated()) {
-        GTEST_SKIP();
-    }
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.isIntegratedDevice = false;
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
         auto uncachedGmmUsageType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
         for (auto forceUncached : {true, false}) {
-            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper);
+            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper, &hwInfo);
             auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
             switch (allocationType) {
@@ -708,19 +746,88 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::timestampPacketTagBuffer:
-                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? uncachedGmmUsageType
-                                                                                    : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                expectedUsage = (forceUncached || !productHelper.isNonCoherentTimestampsModeEnabled()) ? uncachedGmmUsageType
+                                                                                                       : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
-            case AllocationType::externalHostPtr:
             case AllocationType::bufferHostMemory:
+            case AllocationType::externalHostPtr:
+            case AllocationType::fillPattern:
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
-            case AllocationType::fillPattern:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
+            case AllocationType::printfSurface:
+            case AllocationType::hostFunction:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
+            default:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            }
+
+            EXPECT_EQ(expectedUsage, usage);
+        }
+    }
+
+    hwInfo.capabilityTable.isIntegratedDevice = true;
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        auto uncachedGmmUsageType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        for (auto forceUncached : {true, false}) {
+            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper, &hwInfo);
+            auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
+
+            switch (allocationType) {
+            case AllocationType::constantSurface:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+                break;
+            case AllocationType::image:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_IMAGE;
+                break;
+            case AllocationType::preemption:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            case AllocationType::internalHeap:
+            case AllocationType::linearStream:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+                break;
+            case AllocationType::gpuTimestampDeviceBuffer:
+            case AllocationType::timestampPacketTagBuffer:
+                expectedUsage = (forceUncached || !productHelper.isNonCoherentTimestampsModeEnabled()) ? uncachedGmmUsageType
+                                                                                                       : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            case AllocationType::bufferHostMemory:
+            case AllocationType::externalHostPtr:
+            case AllocationType::fillPattern:
+            case AllocationType::internalHostMemory:
+            case AllocationType::mapAllocation:
+            case AllocationType::svmCpu:
+            case AllocationType::svmZeroCopy:
+            case AllocationType::printfSurface:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                break;
+            case AllocationType::tagBuffer:
+            case AllocationType::hostFunction:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+                break;
+            case AllocationType::semaphoreBuffer:
+            case AllocationType::ringBuffer:
+            case AllocationType::commandBuffer:
+                if (forceUncached) {
+                    expectedUsage = uncachedGmmUsageType;
+                    break;
+                }
+
+                if (productHelper.isResourceUncachedForCS(allocationType)) {
+                    expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+                    break;
+                } else if (allocationType == AllocationType::semaphoreBuffer) {
+                    expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                    break;
+                }
+                [[fallthrough]];
             default:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
@@ -736,84 +843,117 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
     debugManager.flags.AllowDcFlush.set(0);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.isIntegratedDevice = false;
+
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
-        auto uncachedGmmUsageType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
-        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, &hwInfo);
         auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
-        if (productHelper.isDcFlushMitigated()) {
-            switch (allocationType) {
-            case AllocationType::externalHostPtr:
-            case AllocationType::mapAllocation:
-            case AllocationType::svmCpu:
-            case AllocationType::svmZeroCopy:
-            case AllocationType::internalHostMemory:
-            case AllocationType::timestampPacketTagBuffer:
-            case AllocationType::gpuTimestampDeviceBuffer:
-            case AllocationType::bufferHostMemory:
-            case AllocationType::tagBuffer:
-            case AllocationType::printfSurface:
-                expectedUsage = uncachedGmmUsageType;
-                break;
+        switch (allocationType) {
+        case AllocationType::constantSurface:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+            break;
+        case AllocationType::image:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
+            break;
+        case AllocationType::internalHeap:
+        case AllocationType::linearStream:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+            break;
+        case AllocationType::bufferHostMemory:
+        case AllocationType::externalHostPtr:
+        case AllocationType::fillPattern:
+        case AllocationType::internalHostMemory:
+        case AllocationType::mapAllocation:
+        case AllocationType::svmCpu:
+        case AllocationType::svmZeroCopy:
+        case AllocationType::tagBuffer:
+        case AllocationType::printfSurface:
+        case AllocationType::hostFunction:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+            break;
+        default:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+            break;
+        }
 
-            case AllocationType::linearStream:
-            case AllocationType::internalHeap:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+        EXPECT_EQ(expectedUsage, usage);
+    }
+
+    hwInfo.capabilityTable.isIntegratedDevice = true;
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, &hwInfo);
+        auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
+
+        switch (allocationType) {
+        case AllocationType::constantSurface:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+            break;
+        case AllocationType::image:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
+            break;
+        case AllocationType::internalHeap:
+        case AllocationType::linearStream:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+            break;
+        case AllocationType::bufferHostMemory:
+        case AllocationType::externalHostPtr:
+        case AllocationType::fillPattern:
+        case AllocationType::internalHostMemory:
+        case AllocationType::mapAllocation:
+        case AllocationType::svmCpu:
+        case AllocationType::svmZeroCopy:
+        case AllocationType::printfSurface:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+            break;
+        case AllocationType::tagBuffer:
+        case AllocationType::hostFunction:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+            break;
+        case AllocationType::semaphoreBuffer:
+        case AllocationType::ringBuffer:
+        case AllocationType::commandBuffer:
+            if (productHelper.isResourceUncachedForCS(allocationType)) {
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
                 break;
-            case AllocationType::constantSurface:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
-                break;
-            case AllocationType::image:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
-                break;
-            case AllocationType::fillPattern:
+            } else if (allocationType == AllocationType::semaphoreBuffer) {
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
-            default:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-                break;
             }
-        } else {
-            switch (allocationType) {
-            case AllocationType::constantSurface:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
-                break;
-            case AllocationType::image:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
-                break;
-            case AllocationType::internalHeap:
-            case AllocationType::linearStream:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
-                break;
-            case AllocationType::externalHostPtr:
-            case AllocationType::bufferHostMemory:
-            case AllocationType::internalHostMemory:
-            case AllocationType::mapAllocation:
-            case AllocationType::fillPattern:
-            case AllocationType::svmCpu:
-            case AllocationType::svmZeroCopy:
-            case AllocationType::tagBuffer:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-                break;
-            default:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-                break;
-            }
+            [[fallthrough]];
+        default:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+            break;
         }
 
         EXPECT_EQ(expectedUsage, usage);
     }
 }
 
-TEST(GmmTest, givenDebugFlagWhenTimestampAllocationsAreQueriedThenBufferPolicyIsReturned) {
+TEST(GmmTest, whenTimestampAllocationsAreQueriedThenCorrectBufferPolicyIsReturned) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceNonCoherentModeForTimestamps.set(1);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-    EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper));
-    EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper));
+    auto uncachedType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    auto expectedUsage = uncachedType;
+    if (productHelper.isNonCoherentTimestampsModeEnabled()) {
+        expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    }
+    EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
+    EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
+
+    debugManager.flags.ForceNonCoherentModeForTimestamps.set(0);
+    EXPECT_EQ(uncachedType, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
+    EXPECT_EQ(uncachedType, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
+
+    debugManager.flags.ForceNonCoherentModeForTimestamps.set(1);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
 }
 
 TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {
@@ -825,7 +965,7 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
 
-        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, defaultHwInfo.get());
 
         auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
         if (productHelper.isNewCoherencyModelSupported()) {
@@ -842,7 +982,7 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
     }
 }
 
-TEST(GmmTest, givenUsageTypeWhenAskingIfUncachableThenReturnCorrectValue) {
+TEST(GmmTest, givenUsageTypeWhenAskingIfUncacheableThenReturnCorrectValue) {
     for (GMM_RESOURCE_USAGE_TYPE_ENUM usage : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                                GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                                GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
@@ -867,10 +1007,10 @@ TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncache
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, false, productHelper);
+    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, false, productHelper, defaultHwInfo.get());
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 
-    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::linearStream, false, productHelper);
+    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::linearStream, false, productHelper, defaultHwInfo.get());
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 }
 
@@ -884,7 +1024,7 @@ TEST(GmmTest, givenConstSurfaceWhenDebugFlagIsSetThenReturnUncachedType) {
         expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
     }
     EXPECT_EQ(expectedUncachedGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::constantSurface, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::constantSurface, false, productHelper, defaultHwInfo.get()));
 }
 
 TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncached) {
@@ -892,10 +1032,6 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    if (productHelper.isDcFlushMitigated()) {
-        GTEST_SKIP();
-    }
 
     constexpr int64_t bufferMask = 1 << (static_cast<int64_t>(AllocationType::buffer) - 1);
     constexpr int64_t imageMask = 1 << (static_cast<int64_t>(AllocationType::image) - 1);
@@ -906,13 +1042,13 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
         expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
     }
     EXPECT_EQ(expectedUncachedGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper, defaultHwInfo.get()));
 
     EXPECT_EQ(expectedUncachedGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, defaultHwInfo.get()));
 
     EXPECT_NE(expectedUncachedGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::bufferHostMemory, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::bufferHostMemory, false, productHelper, defaultHwInfo.get()));
 }
 
 TEST(GmmTest, givenFlagForceGmmSystemMemoryBufferForAllocationsWhenCallGetGmmUsageTypeThenReturnSystemMemoryBuffer) {
@@ -927,17 +1063,17 @@ TEST(GmmTest, givenFlagForceGmmSystemMemoryBufferForAllocationsWhenCallGetGmmUsa
     auto defaultGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
 
     EXPECT_EQ(defaultGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper, defaultHwInfo.get()));
     EXPECT_EQ(defaultGmmUsageType,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper, defaultHwInfo.get()));
 
     debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.set(bufferMask | globalFence);
     auto expectedGmmUsageTypeAfterForcingFlag = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
 
     EXPECT_EQ(expectedGmmUsageTypeAfterForcingFlag,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper, defaultHwInfo.get()));
     EXPECT_EQ(expectedGmmUsageTypeAfterForcingFlag,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper, defaultHwInfo.get()));
 }
 
 TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
@@ -961,7 +1097,7 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
                            AllocationType::svmZeroCopy,
                            AllocationType::unifiedSharedMemory}) {
 
-        EXPECT_EQ(expectedUncachedGmmUsageType, CacheSettingsHelper::getGmmUsageType(allocType, false, productHelper));
+        EXPECT_EQ(expectedUncachedGmmUsageType, CacheSettingsHelper::getGmmUsageType(allocType, false, productHelper, defaultHwInfo.get()));
     }
 }
 
@@ -975,16 +1111,16 @@ TEST_F(GmmHelperTests, whenGmmIsCreatedAndForceAllResourcesUncachedIsSetThenReso
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm1 = std::make_unique<Gmm>(getGmmHelper(), incomingPtr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm1->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm1->getResourceUsageType());
 
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::image1D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto gmm2 = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm2->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm2->getResourceUsageType());
 
-    auto gmm3 = std::make_unique<Gmm>(getGmmHelper(), gmm1->gmmResourceInfo->peekGmmResourceInfo());
-    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm3->resourceParams.Usage);
+    auto gmm3 = std::make_unique<Gmm>(getGmmHelper(), gmm1->gmmResourceInfo.get());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm3->getResourceUsageType());
 }
 
 TEST_F(GmmHelperTests, whenResourceIsCreatedThenHandleItsOwnership) {
@@ -1035,59 +1171,13 @@ TEST_F(GmmEnvironmentTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMu
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
 }
 
-TEST_F(GmmEnvironmentTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
-    ASSERT_NE(nullptr, getGmmHelper());
-    EXPECT_NE(nullptr, getGmmClientContext()->getHandle());
-}
-TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceThenInitializationDoesntCrashAndProperParametersArePassed) {
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
-
+TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
     auto hwInfo = defaultHwInfo.get();
-    SKU_FEATURE_TABLE expectedFtrTable = {};
-    WA_TABLE expectedWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
-    SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
-
     MockExecutionEnvironment executionEnvironment{hwInfo};
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get());
-    EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
-    EXPECT_EQ(0, memcmp(&hwInfo->gtSystemInfo, &passedGtSystemInfo, sizeof(GT_SYSTEM_INFO)));
-    EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
-    EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
-    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
-}
-TEST(GmmHelperTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperValueIsPassedToGmmlib) {
-    DebugManagerStateRestore restorer;
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
-
-    auto hwInfo = defaultHwInfo.get();
-    {
-        MockExecutionEnvironment executionEnvironment{hwInfo};
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(-1);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(0);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(1);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
-        EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
-    }
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    ASSERT_NE(nullptr, rootDeviceEnvironment.getGmmHelper());
+    ASSERT_NE(nullptr, rootDeviceEnvironment.getGmmClientContext());
+    EXPECT_EQ(1u, static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext())->initializeCalled);
 }
 
 TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
@@ -1095,17 +1185,18 @@ TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     MockExecutionEnvironment executionEnvironment{};
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-    if (!gmmHelper->deferMOCSToPatIndex()) {
+    auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0];
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    if (!rootDeviceEnvironment->getProductHelper().deferMOCSToPatIndex(rootDeviceEnvironment->isWddmOnLinux())) {
         GTEST_SKIP();
     }
 
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(0u, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(0u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(0u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
@@ -1121,24 +1212,24 @@ TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsRet
     }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto uncachedMocs = gmmHelper->getUncachedMOCS();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(8u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(8u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(16u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     gmmHelper->forceAllResourcesUncached();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
 }
@@ -1153,25 +1244,26 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto uncachedMocs = gmmHelper->getUncachedMOCS();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(8u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(8u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(16u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     DebugManagerStateRestore restore;
     debugManager.flags.ForceAllResourcesUncached.set(true);
+    gmmHelper->initMocsDefaults();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
 }
@@ -1198,7 +1290,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
-        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+        imgInfo.plane = ImagePlane::noPlane;
     }
 
     HardwareInfo *localPlatformDevice = nullptr;
@@ -1211,14 +1303,14 @@ TEST_F(GmmCompressionTests, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffer
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm->applyAuxFlagsForBuffer(false);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm->isCompressionEnabled());
 }
 
@@ -1227,40 +1319,41 @@ TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersT
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
 
     gmm->applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm->isCompressionEnabled());
 }
 
 HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+    EXPECT_TRUE(imgInfo.plane == ImagePlane::noPlane);
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_GT(compressionFormat, 0u);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.TiledY);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.TiledY);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_TRUE(queryGmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+    EXPECT_TRUE(imgInfo.plane == ImagePlane::noPlane);
 
     imgInfo.useLocalMemory = false;
 
@@ -1269,10 +1362,11 @@ TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryi
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_GT(compressionFormat, 0u);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
@@ -1280,11 +1374,12 @@ TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetA
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
@@ -1294,21 +1389,23 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQ
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_TRUE(queryGmm->isCompressionEnabled());
 
     debugManager.flags.RenderCompressedImagesEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
     queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
@@ -1319,15 +1416,15 @@ TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisa
 }
 
 TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
-    GMM_YUV_PLANE gmmPlane[4] = {GMM_YUV_PLANE::GMM_NO_PLANE, GMM_YUV_PLANE::GMM_PLANE_U,
-                                 GMM_YUV_PLANE::GMM_PLANE_V, GMM_YUV_PLANE::GMM_PLANE_Y};
+    ImagePlane gmmPlane[4] = {ImagePlane::noPlane, ImagePlane::planeU,
+                              ImagePlane::planeV, ImagePlane::planeY};
 
     for (auto &plane : gmmPlane) {
         imgInfo.plane = plane;
         auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
         EXPECT_EQ(queryGmm->isCompressionEnabled(),
-                  plane == GMM_YUV_PLANE::GMM_NO_PLANE);
+                  plane == ImagePlane::noPlane);
     }
 }
 
@@ -1336,14 +1433,17 @@ HWTEST_F(GmmCompressionTests, whenConstructedWithPreferCompressionFlagThenApplyA
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm1(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(0u, gmm1.resourceParams.Flags.Info.RenderCompressed);
+    auto *gmmResourceParams1 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm1.resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams1->Flags.Info.RenderCompressed);
 
     Gmm gmm2(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(0u, gmm2.resourceParams.Flags.Info.RenderCompressed);
+    auto *gmmResourceParams2 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm2.resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams2->Flags.Info.RenderCompressed);
 
     gmmRequirements.preferCompressed = true;
     Gmm gmm3(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    EXPECT_EQ(1u, gmm3.resourceParams.Flags.Info.RenderCompressed);
+    auto *gmmResourceParams3 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm3.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams3->Flags.Info.RenderCompressed);
 }
 
 TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
@@ -1351,11 +1451,50 @@ TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.resourceParams.Flags.Info.MediaCompressed = true;
-    gmm.resourceParams.Flags.Info.RenderCompressed = false;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.MediaCompressed = true;
+    gmmResourceParams->Flags.Info.RenderCompressed = false;
     gmm.setupImageResourceParams(imgInfo, true);
 
     EXPECT_TRUE(gmm.isCompressionEnabled());
+}
+
+HWTEST2_F(GmmCompressionTests, givenGmmCreatedFromExistingGmmWithRenderCompressionThenCompressionFalseForSecondResource, IsAtMostXeCore) {
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto flags = gmm.gmmResourceInfo->getResourceFlags();
+    flags->Gpu.CCS = true;
+    flags->Gpu.UnifiedAuxSurface = true;
+    flags->Info.MediaCompressed = true;
+    flags->Info.RenderCompressed = false;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.MediaCompressed = false;
+    gmmResourceParams->Flags.Info.RenderCompressed = true;
+    gmm.setupImageResourceParams(imgInfo, true);
+
+    EXPECT_TRUE(gmm.isCompressionEnabled());
+
+    auto gmmRes2 = std::make_unique<Gmm>(getGmmHelper(), gmm.gmmResourceInfo.get(), false);
+    EXPECT_FALSE(gmmRes2->isCompressionEnabled());
+}
+
+HWTEST2_F(GmmCompressionTests, givenGmmCreatedFromExistingGmmWithCompressionDisabledThenCompressionFalseForSecondResource, IsAtMostXeCore) {
+    localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.MediaCompressed = false;
+    gmmResourceParams->Flags.Info.RenderCompressed = false;
+    gmm.setupImageResourceParams(imgInfo, false);
+
+    EXPECT_FALSE(gmm.isCompressionEnabled());
+
+    auto gmmRes2 = std::make_unique<Gmm>(getGmmHelper(), gmm.gmmResourceInfo.get(), false);
+    EXPECT_FALSE(gmmRes2->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
@@ -1363,8 +1502,9 @@ TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenS
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.resourceParams.Flags.Info.MediaCompressed = false;
-    gmm.resourceParams.Flags.Info.RenderCompressed = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.MediaCompressed = false;
+    gmmResourceParams->Flags.Info.RenderCompressed = true;
     gmm.setupImageResourceParams(imgInfo, true);
 
     EXPECT_TRUE(gmm.isCompressionEnabled());
@@ -1375,14 +1515,14 @@ HWTEST_F(GmmCompressionTests, givenEnabledAndPreferredE2ECWhenApplyingForBuffers
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm->applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_TRUE(gmm->isCompressionEnabled());
 }
 
@@ -1392,26 +1532,27 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.resourceParams = {};
 
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
 
     gmm.applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(1u, gmm.resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_TRUE(gmm.isCompressionEnabled());
 
-    gmm.resourceParams = {};
+    *gmmResourceParams = GMM_RESCREATE_PARAMS{};
     gmm.setCompressionEnabled(false);
     debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm.applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(0u, gmm.resourceParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm.isCompressionEnabled());
 }
 
@@ -1442,8 +1583,9 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsTrueThenNonL
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
 }
 
 TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryAndAllocationIsLockableThenAllFlagsAreCleared) {
@@ -1455,9 +1597,10 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryAndAllocation
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotLockable);
 }
 
 TEST_F(GmmHelperTests, givenNotLockableAllocationWhenCreatingGmmThenNotLockableFlagsIsSetAndLocalAndNonLocalOnlyAreNotSet) {
@@ -1469,9 +1612,10 @@ TEST_F(GmmHelperTests, givenNotLockableAllocationWhenCreatingGmmThenNotLockableF
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndNotLockableAllocationAndStorageInfoWithLocalOnlyRequiredWhenPreparingFlagsForGmmThenNotLockableAndLocalOnlyIsSet) {
@@ -1485,8 +1629,9 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndNotLockableAllocationAndStorageIn
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredWhenPreparingFlagsForGmmThenNotLockableAndLocalOnlyAreSet) {
@@ -1503,8 +1648,9 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredW
     for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::hardware); csrMode < static_cast<int32_t>(CommandStreamReceiverType::typesNum); csrMode++) {
         debugManager.flags.SetCommandStreamReceiver.set(csrMode);
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
-        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_EQ(1u, gmmResourceParams->Flags.Info.LocalOnly);
+        EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
     }
 }
 
@@ -1515,8 +1661,9 @@ TEST_F(GmmLocalMemoryTests, givenSystemMemoryAndStorageInfoWithLocalOnlyRequired
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
 }
 
 TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithoutLocalOnlyRequiredWhenPreparingFlagsForGmmThenLocalOnlyIsNotSet) {
@@ -1526,8 +1673,9 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithoutLocalOnlyRequir
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
 }
 
 TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationIsNotLockableThenNotLockableAndLocalOnlyFlagsAreSetAndNonLocalOnlyIsNotSet) {
@@ -1542,9 +1690,10 @@ TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationI
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
     EXPECT_TRUE(gmm->isCompressionEnabled());
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(defaultHwInfo->featureTable.flags.ftrLocalMemory, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(defaultHwInfo->featureTable.flags.ftrLocalMemory, gmmResourceParams->Flags.Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
 }
 
 TEST_F(GmmHelperTests, givenCompressionSupportedWhenAllocationIsLockableThenGmmHasNoCompression) {
@@ -1559,7 +1708,8 @@ TEST_F(GmmHelperTests, givenCompressionSupportedWhenAllocationIsLockableThenGmmH
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
     EXPECT_FALSE(gmm->isCompressionEnabled());
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllocationIsNotLockableThenLocalAndNonLocalOnlyAndNotLockableFlagsAreNotSet) {
@@ -1574,9 +1724,10 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllo
         storageInfo.systemMemoryPlacement = false;
         storageInfo.isLockable = false;
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-        EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-        EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
-        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
+        EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
+        EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
     }
 }
 
@@ -1588,8 +1739,9 @@ TEST_F(MultiTileGmmTests, givenMultiTileAllocationWhenGmmIsCreatedWithEmptyMempo
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, givenMultiTileAllocationWithoutCloningWhenGmmIsCreatedThenSetMinimumOneTile) {
@@ -1602,11 +1754,12 @@ TEST_F(MultiTileGmmTests, givenMultiTileAllocationWithoutCloningWhenGmmIsCreated
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithNonLocalMemoryThenMultitileArchIsPropertlyFilled) {
@@ -1616,11 +1769,12 @@ TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithNonLocalMemoryThenMu
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(customTileMask, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(customTileMask, gmmResourceParams->MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithSpecificMemoryBanksThenMultitileArchIsEnabled) {
@@ -1633,11 +1787,12 @@ TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithSpecificMemoryBanksT
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
-    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
-    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(storageInfo.memoryBanks, gmmResourceParams->MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmmResourceParams->MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmmResourceParams->MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithCloningEnabledThenGpuVaMappingDependsOnPageTablesVisibityBitfield) {
@@ -1651,11 +1806,12 @@ TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithCloningEnabledThenGp
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemPreferredSet);
-    EXPECT_EQ(storageInfo.pageTablesVisibility, gmm.resourceParams.MultiTileArch.GpuVaMappingSet);
-    EXPECT_EQ(storageInfo.memoryBanks, gmm.resourceParams.MultiTileArch.LocalMemEligibilitySet);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(storageInfo.memoryBanks, gmmResourceParams->MultiTileArch.LocalMemPreferredSet);
+    EXPECT_EQ(storageInfo.pageTablesVisibility, gmmResourceParams->MultiTileArch.GpuVaMappingSet);
+    EXPECT_EQ(storageInfo.memoryBanks, gmmResourceParams->MultiTileArch.LocalMemEligibilitySet);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithoutClonningPageTablesThenResourceParamsHaveTileInstancedEnabled) {
@@ -1669,8 +1825,9 @@ TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithoutClonningPageTables
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.TileInstanced);
 }
 
 TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithClonningPageTablesThenResourceParamsHaveTileInstancedDisabled) {
@@ -1682,6 +1839,7 @@ TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithClonningPageTablesThe
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
 
-    EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
-    EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
+    EXPECT_EQ(0u, gmmResourceParams->MultiTileArch.TileInstanced);
 }

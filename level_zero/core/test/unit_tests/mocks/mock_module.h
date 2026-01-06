@@ -6,8 +6,10 @@
  */
 
 #pragma once
+
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -17,8 +19,21 @@
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+struct KernelImmutableData;
+struct ModuleBuildLog;
+
 namespace ult {
+template <typename Type>
+struct Mock;
+template <typename Type>
+struct WhiteBox;
 
 struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     using BaseClass = L0::ModuleTranslationUnit;
@@ -58,12 +73,13 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
+    using BaseClass::getIsaAllocationPageSize;
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isaSegmentsForPatching;
     using BaseClass::isFullyLinked;
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
-    using BaseClass::kernelImmDatas;
+    using BaseClass::kernelImmData;
     using BaseClass::setIsaGraphicsAllocations;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
@@ -77,8 +93,8 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
 
     ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
 
-    NEO::GraphicsAllocation *mockGlobalVarBuffer = nullptr;
-    NEO::GraphicsAllocation *mockGlobalConstBuffer = nullptr;
+    std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalVarBuffer = nullptr;
+    std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalConstBuffer = nullptr;
 };
 
 using Module = WhiteBox<::L0::Module>;
@@ -103,20 +119,19 @@ struct Mock<Module> : public Module {
     ADDMETHOD(initializeTranslationUnit, ze_result_t, true, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, NEO::Device *neoDevice), (desc, neoDevice));
     ADDMETHOD_NOBASE_VOIDRETURN(updateBuildLog, (NEO::Device * neoDevice));
     ADDMETHOD(allocateKernelsIsaMemory, NEO::GraphicsAllocation *, true, nullptr, (size_t isaSize), (isaSize));
-    ADDMETHOD(computeKernelIsaAllocationAlignedSizeWithPadding, size_t, true, 0ul, (size_t isaSize, bool lastKernel), (isaSize, lastKernel));
 };
 
 struct MockModule : public L0::ModuleImp {
-    using ModuleImp::allocateKernelImmutableDatas;
+    using ModuleImp::allocateKernelImmutableData;
     using ModuleImp::allocateKernelsIsaMemory;
-    using ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding;
     using ModuleImp::debugModuleHandle;
+    using ModuleImp::getIsaAllocationPageSize;
     using ModuleImp::getModuleAllocations;
-    using ModuleImp::initializeKernelImmutableDatas;
+    using ModuleImp::initializeKernelImmutableData;
     using ModuleImp::isaAllocationPageSize;
     using ModuleImp::isFunctionSymbolExportEnabled;
     using ModuleImp::isGlobalSymbolExportEnabled;
-    using ModuleImp::kernelImmDatas;
+    using ModuleImp::kernelImmData;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::setIsaGraphicsAllocations;
     using ModuleImp::symbols;
@@ -131,18 +146,18 @@ struct MockModule : public L0::ModuleImp {
     ~MockModule() override = default;
 
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
-        return kernelImmData;
+        return data;
     }
 
-    std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVectorRef() { return kernelImmDatas; }
+    std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVectorRef() { return kernelImmData; }
 
-    KernelImmutableData *kernelImmData = nullptr;
+    KernelImmutableData *data = nullptr;
 };
 
 struct MockCompilerInterface : public NEO::CompilerInterface {
-    NEO::TranslationOutput::ErrorCode build(const NEO::Device &device,
-                                            const NEO::TranslationInput &input,
-                                            NEO::TranslationOutput &output) override {
+    NEO::TranslationErrorCode build(const NEO::Device &device,
+                                    const NEO::TranslationInput &input,
+                                    NEO::TranslationOutput &output) override {
 
         receivedApiOptions = input.apiOptions.begin();
         inputInternalOptions = input.internalOptions.begin();
@@ -150,18 +165,18 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
         cachingPassed = input.allowCaching;
 
         if (failBuild) {
-            return NEO::TranslationOutput::ErrorCode::buildFailure;
+            return NEO::TranslationErrorCode::buildFailure;
         }
-        return NEO::TranslationOutput::ErrorCode::success;
+        return NEO::TranslationErrorCode::success;
     }
-    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                           const NEO::TranslationInput &input,
-                                           NEO::TranslationOutput &output) override {
+    NEO::TranslationErrorCode link(const NEO::Device &device,
+                                   const NEO::TranslationInput &input,
+                                   NEO::TranslationOutput &output) override {
 
         receivedApiOptions = input.apiOptions.begin();
         inputInternalOptions = input.internalOptions.begin();
 
-        return NEO::TranslationOutput::ErrorCode::success;
+        return NEO::TranslationErrorCode::success;
     }
 
     std::string receivedApiOptions;
@@ -173,32 +188,32 @@ template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     MockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : moduleNumSpecConstants(moduleNumSpecConstants) {
     }
-    NEO::TranslationOutput::ErrorCode build(const NEO::Device &device,
-                                            const NEO::TranslationInput &input,
-                                            NEO::TranslationOutput &output) override {
+    NEO::TranslationErrorCode build(const NEO::Device &device,
+                                    const NEO::TranslationInput &input,
+                                    NEO::TranslationOutput &output) override {
 
         EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
 
-        return NEO::TranslationOutput::ErrorCode::success;
+        return NEO::TranslationErrorCode::success;
     }
-    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                           const NEO::TranslationInput &input,
-                                           NEO::TranslationOutput &output) override {
+    NEO::TranslationErrorCode link(const NEO::Device &device,
+                                   const NEO::TranslationInput &input,
+                                   NEO::TranslationOutput &output) override {
 
         EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
 
-        return NEO::TranslationOutput::ErrorCode::success;
+        return NEO::TranslationErrorCode::success;
     }
 
-    NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                           ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
+    NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                   ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
         output.idsBuffer.reset(new NEO::MockCIFBuffer());
         output.sizesBuffer.reset(new NEO::MockCIFBuffer());
         for (uint32_t i = 0; i < moduleNumSpecConstants; i++) {
             output.idsBuffer->PushBackRawCopy(moduleSpecConstantsIds[i]);
             output.sizesBuffer->PushBackRawCopy(moduleSpecConstantsSizes[i]);
         }
-        return NEO::TranslationOutput::ErrorCode::success;
+        return NEO::TranslationErrorCode::success;
     }
     uint32_t moduleNumSpecConstants = 0u;
     const std::vector<uint32_t> moduleSpecConstantsIds{2, 0, 1, 3, 5, 4};
@@ -209,11 +224,11 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
 };
 
 struct MockCompilerInterfaceLinkFailure : public NEO::CompilerInterface {
-    NEO::TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                           const NEO::TranslationInput &input,
-                                           NEO::TranslationOutput &output) override {
+    NEO::TranslationErrorCode link(const NEO::Device &device,
+                                   const NEO::TranslationInput &input,
+                                   NEO::TranslationOutput &output) override {
 
-        return NEO::TranslationOutput::ErrorCode::buildFailure;
+        return NEO::TranslationErrorCode::buildFailure;
     }
 };
 

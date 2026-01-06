@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
@@ -14,9 +13,9 @@ using namespace NEO;
 template <>
 PreemptionTestHwDetails getPreemptionTestHwDetails<XeHpcCoreFamily>() {
     PreemptionTestHwDetails ret;
-    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = threadGroupMode;
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = midBatchMode;
+    ret.modeToRegValueMap[PreemptionMode::MidThread] = midThreadMode;
     ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
     ret.regAddress = 0x2580u;
     return ret;

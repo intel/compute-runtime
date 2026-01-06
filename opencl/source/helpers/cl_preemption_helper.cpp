@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/helpers/cl_preemption_helper.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "opencl/source/context/context.h"
@@ -31,8 +32,8 @@ PreemptionMode ClPreemptionHelper::taskPreemptionMode(Device &device, const Mult
         if (devMode > taskMode) {
             devMode = taskMode;
         }
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
-                           static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
+                     static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
     }
     return devMode;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "level_zero/tools/source/sysman/fan/fan_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+
+#include "level_zero/tools/source/sysman/fan/os_fan.h"
 
 namespace L0 {
 

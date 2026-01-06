@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,27 +12,11 @@
 #include <chrono>
 #include <cstring>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <memory>
 
-void createImmediateCommandList(ze_device_handle_t &device,
-                                ze_context_handle_t &context,
-                                uint32_t queueGroupOrdinal,
-                                bool syncMode,
-                                ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.pNext = nullptr;
-    cmdQueueDesc.flags = 0;
-    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = queueGroupOrdinal;
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
-}
-
-void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, int32_t copyQueueGroup, bool &validRet, bool useEventBasedSync) {
+void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, uint32_t copyQueueGroup, bool &validRet, bool useEventBasedSync) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *hostBuffer = nullptr;
     void *deviceBuffer = nullptr;
@@ -40,7 +24,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
     const bool isEventsUsed = useEventBasedSync && !syncMode;
 
-    createImmediateCommandList(device, context, copyQueueGroup, syncMode, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
+                                                           copyQueueGroup, syncMode, cmdList);
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
@@ -65,12 +50,12 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> deviceEvents(numEvents), hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolDevice,
-                                                     0, false, nullptr, nullptr,
+                                                     0, false, nullptr,
                                                      numEvents, deviceEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
                                                      0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -117,8 +102,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful, bool useEventBasedSync) {
     ze_command_list_handle_t cmdList;
 
-    uint32_t computeOrdinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    createImmediateCommandList(device, context, computeOrdinal, syncMode, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
+                                                           syncMode, false, cmdList);
     const auto isEventsUsed = useEventBasedSync && !syncMode;
 
     // Create two shared buffers
@@ -150,7 +135,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -272,12 +257,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Find copy queue in root device, if not found, try subdevices
-    uint32_t copyQueueGroup = 0;
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::undefinedQueueOrdinal;
     bool copyQueueFound = false;
     auto copyQueueDev = devices[0];
     for (auto &rd : devices) {
         copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(rd);
-        if (copyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+        if (copyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             copyQueueFound = true;
             copyQueueDev = rd;
             if (LevelZeroBlackBoxTests::verbose) {
@@ -291,7 +276,7 @@ int main(int argc, char *argv[]) {
         if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "\nNo Copy queue group found in root device. Checking subdevices now...\n";
         }
-        copyQueueGroup = 0;
+        copyQueueGroup = LevelZeroBlackBoxTests::undefinedQueueOrdinal;
         for (auto &rd : devices) {
             uint32_t subDevCount = 0;
             auto subdevs = LevelZeroBlackBoxTests::zelloGetSubDevices(rd, subDevCount);
@@ -303,7 +288,7 @@ int main(int argc, char *argv[]) {
             // Find subdev that has a copy engine. If not skip tests
             for (auto &sd : subdevs) {
                 copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(sd);
-                if (copyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+                if (copyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
                     copyQueueFound = true;
                     copyQueueDev = sd;
                     break;
@@ -333,8 +318,6 @@ int main(int argc, char *argv[]) {
             testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful, useEventBasedSync);
         }
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

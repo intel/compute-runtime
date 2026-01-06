@@ -11,6 +11,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -22,7 +23,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
-    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(dispatchMode));
     debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
@@ -68,12 +69,15 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
     isRenderEngineSupported = (renderEngine != aub_stream::NUM_ENGINES);
     auto firstEngine = isRenderEngineSupported ? renderEngine : aub_stream::ENGINE_CCS;
+    if (isFirstEngineBcs) {
+        firstEngine = aub_stream::ENGINE_BCS;
+    }
 
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_";
-    auto firstEngineName = gfxCoreHelper.getCsTraits(firstEngine).name;
-    auto secondEngineName = gfxCoreHelper.getCsTraits(aub_stream::ENGINE_CCS).name;
+    auto firstEngineName = EngineHelpers::engineTypeToString(firstEngine);
+    auto secondEngineName = EngineHelpers::engineTypeToString(aub_stream::ENGINE_CCS);
     if (EnabledCommandStreamers::single == enabledCommandStreamers) { // name_RCS.aub or name_CCCS.aub or name_CCS.aub
         strfilename << firstEngineName;
     } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) { // name_RCS_CCS.aub or name_CCCS_CCS.aub or name_CCS0_1.aub
@@ -112,11 +116,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     auto releaseHelper = ReleaseHelper::create(localHwInfo.ipVersion);
 
-    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPC_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE2_HPG_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE3_CORE) {
-
+    if (localHwInfo.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
         setupCalled = true;
         hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true, 0u, releaseHelper.get());
 
@@ -148,9 +148,20 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 #endif
     }
 
-    adjustPlatformOverride(localHwInfo, setupCalled);
-
     ASSERT_TRUE(setupCalled);
+}
+
+bool MulticontextAubFixture::isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress) {
+    auto releaseHelper = csr->getReleaseHelper();
+    if (!releaseHelper || !releaseHelper->getFtrXe2Compression()) {
+        return false;
+    }
+    auto svmAllocs = svmAllocsManager->getSVMAlloc(gfxAddress);
+    if (!svmAllocs) {
+        return false;
+    }
+    auto alloc = svmAllocs->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    return alloc->isCompressionEnabled();
 }
 
 } // namespace NEO

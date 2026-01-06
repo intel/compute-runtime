@@ -18,4 +18,8 @@ bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
 bool Wddm::isReadOnlyFlagFallbackSupported() const {
     return false;
 }
+HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
+    HANDLE sharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
+    return sharedNtHandle;
+}
 } // namespace NEO

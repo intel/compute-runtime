@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,6 +138,12 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidency
     EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount + 1u, 0u));
 }
 
+TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenUpdatingResidencyTaskCountForUnusedContextIdThenDoEarlyReturn) {
+    MockGraphicsAllocation graphicsAllocation;
+    auto contextId = static_cast<uint32_t>(graphicsAllocation.usageInfos.size());
+    graphicsAllocation.updateResidencyTaskCount(1u, contextId);
+}
+
 TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThenReturnTrue) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocType = static_cast<AllocationType>(i);
@@ -148,7 +154,6 @@ TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThe
         case AllocationType::globalSurface:
         case AllocationType::internalHeap:
         case AllocationType::linearStream:
-        case AllocationType::pipe:
         case AllocationType::printfSurface:
         case AllocationType::timestampPacketTagBuffer:
         case AllocationType::ringBuffer:
@@ -208,6 +213,24 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsSharedResourceCopyThenAllocatio
 
 TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockable) {
     EXPECT_FALSE(GraphicsAllocation::isLockable(AllocationType::image));
+}
+
+TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingIs2MBPageAllocationTypeThenReturnTrue) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+
+        switch (allocType) {
+        case AllocationType::timestampPacketTagBuffer:
+        case AllocationType::gpuTimestampDeviceBuffer:
+        case AllocationType::profilingTagBuffer:
+        case AllocationType::printfSurface:
+            EXPECT_TRUE(GraphicsAllocation::is2MBPageAllocationType(allocType));
+            break;
+        default:
+            EXPECT_FALSE(GraphicsAllocation::is2MBPageAllocationType(allocType));
+            break;
+        }
+    }
 }
 
 TEST(GraphicsAllocationTest, givenNumMemoryBanksWhenGettingNumHandlesForKmdSharedAllocationThenReturnCorrectValue) {
@@ -357,7 +380,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAssignedTaskCountAb
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.hostPtrTaskCountAssignment = 1;
@@ -370,7 +393,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountHigherTha
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(10u, 0u);
     *csr.getTagAddress() = 5;
@@ -384,7 +407,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;
@@ -398,7 +421,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountNotUsedLo
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(GraphicsAllocation::objectNotResident, 0u);
     csr.taskCount = 10;
@@ -412,7 +435,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;
@@ -531,4 +554,13 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsRingBuf
     graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
     graphicsAllocation.allocationType = AllocationType::ringBuffer;
     EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
+}
+TEST(GraphicsAllocationTest, givenOtherThanPreemptionAllocationTypeWhenIsZeroInitRequiredIsCalledThenFalseReturned) {
+    for (std::underlying_type_t<AllocationType> allocType = 0; allocType < static_cast<std::underlying_type_t<AllocationType>>(AllocationType::count); allocType++) {
+        if (static_cast<AllocationType>(allocType) == AllocationType::preemption) {
+            EXPECT_TRUE(GraphicsAllocation::isZeroInitRequired(static_cast<AllocationType>(allocType)));
+        } else {
+            EXPECT_FALSE(GraphicsAllocation::isZeroInitRequired(static_cast<AllocationType>(allocType)));
+        }
+    }
 }

@@ -26,6 +26,9 @@
 
 namespace NEO {
 
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+
 template <typename T>
 static std::string toString(const T &arg) {
     if constexpr (std::is_convertible_v<std::string, T>) {
@@ -39,12 +42,16 @@ template <DebugFunctionalityLevel debugLevel>
 DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
     ApiSpecificConfig::initPrefixes();
+    for (auto prefixType : ApiSpecificConfig::getPrefixTypes()) {
+        this->scope |= getDebugVarScopeMaskFor(prefixType);
+    }
     injectSettingsFromReader();
     dumpFlags();
     translateDebugSettings(flags);
 
-    while (isLoopAtDriverInitEnabled())
+    while (isLoopAtDriverInitEnabled()) {
         ;
+    }
 }
 
 template <DebugFunctionalityLevel debugLevel>
@@ -70,6 +77,8 @@ static const char *convPrefixToString(DebugVarPrefix prefix) {
         return "NEO_L0_";
     } else if (prefix == DebugVarPrefix::neoOcl) {
         return "NEO_OCL_";
+    } else if (prefix == DebugVarPrefix::neoOcloc) {
+        return "NEO_OCLOC_";
     } else {
         return "";
     }
@@ -100,20 +109,29 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
         allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
         dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                   \
+        DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
+    }
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
-
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                               \
     {                                                                                                             \
         std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
         neoKey += #variableName;                                                                                  \
         allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
         dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                     \
+        DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
+    }
 #include "release_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
 
     allFlags = allFlagsStream.str();
     changedFlags = changedFlagsStream.str();
@@ -132,7 +150,7 @@ void DebugSettingsManager<debugLevel>::dumpFlags() const {
     std::string changedFlags;
 
     getStringWithFlags(allFlags, changedFlags);
-    PRINT_DEBUG_STRING(true, stdout, "%s", changedFlags.c_str());
+    PRINT_STRING(true, stdout, "%s", changedFlags.c_str());
 
     settingsDumpFile << allFlags;
 }
@@ -145,25 +163,39 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
         DebugVarPrefix type;                                                                 \
         constexpr auto keyName = getNonReleaseKeyName(#variableName);                        \
         dataType tempData = readerImpl->getSetting(keyName, flags.variableName.get(), type); \
-        flags.variableName.setPrefixType(type);                                              \
-        flags.variableName.set(tempData);                                                    \
+        if (0 != (this->scope & flags.variableName.getScopeMask())) {                        \
+            flags.variableName.setPrefixType(type);                                          \
+            flags.variableName.set(tempData);                                                \
+        }                                                                                    \
+    }
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                   \
+        DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
 
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
-
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                  \
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \
     {                                                                                              \
         DebugVarPrefix type;                                                                       \
         dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
-        flags.variableName.setPrefixType(type);                                                    \
-        flags.variableName.set(tempData);                                                          \
+        if (0 != (this->scope & flags.variableName.getScopeMask())) {                              \
+            flags.variableName.setPrefixType(type);                                                \
+            flags.variableName.set(tempData);                                                      \
+        }                                                                                          \
+    }
+
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                     \
+        DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
 #include "release_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
-}
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+} // namespace NEO
 
 void logDebugString(std::string_view debugString) {
     NEO::fileLoggerInstance().logDebugString(true, debugString);
@@ -178,6 +210,21 @@ std::string DurationLog::getTimeString() {
     std::snprintf(buffer, sizeof(buffer), "[%5" PRId64 ".%06" PRId64 "]",
                   static_cast<int64_t>(seconds), static_cast<int64_t>(remainingMicroSeconds));
     return std::string(buffer);
+}
+
+std::string DurationLog::getTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
+
+    tm timeInfo = *std::localtime(&nowTime);
+
+    std::stringstream ss;
+
+    char buffer[32]{};
+    std::strftime(buffer, sizeof(buffer), "[%Y-%m-%d %H:%M:%S] ", &timeInfo);
+    ss << buffer;
+
+    return ss.str();
 }
 
 template class DebugSettingsManager<DebugFunctionalityLevel::none>;

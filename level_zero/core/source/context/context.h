@@ -8,14 +8,19 @@
 #pragma once
 
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/driver_experimental/zex_context.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
+
+struct _ze_physical_mem_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_PHYSICAL_MEM> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_physical_mem_handle_t>);
 
 namespace NEO {
 class Device;
@@ -27,14 +32,50 @@ struct Image;
 
 class ContextExt;
 
+#pragma pack(1)
+struct IpcMemoryData {
+    uint64_t handle = 0;
+    uint64_t poolOffset = 0;
+    uint8_t type = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+#pragma pack(1)
+struct IpcOpaqueMemoryData {
+    union IpcHandle {
+        int fd;
+        uint64_t reserved;
+    };
+    IpcHandle handle = {};
+    uint64_t poolOffset = 0;
+    unsigned int processId = 0;
+    IpcHandleType type = IpcHandleType::maxHandle;
+    uint8_t memoryType = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+struct IpcHandleTracking {
+    uint64_t refcnt = 0;
+    NEO::GraphicsAllocation *alloc = nullptr;
+    uint32_t handleId = 0;
+    uint64_t handle = 0;
+    uint64_t ptr = 0;
+    struct IpcMemoryData ipcData = {};
+    struct IpcOpaqueMemoryData opaqueData = {};
+};
+
 struct Context : _ze_context_handle_t {
     inline static ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
         switch (memoryType) {
         case InternalMemoryType::sharedUnifiedMemory:
             return ZE_MEMORY_TYPE_SHARED;
         case InternalMemoryType::deviceUnifiedMemory:
+        case InternalMemoryType::reservedDeviceMemory:
             return ZE_MEMORY_TYPE_DEVICE;
         case InternalMemoryType::hostUnifiedMemory:
+        case InternalMemoryType::reservedHostMemory:
             return ZE_MEMORY_TYPE_HOST;
         default:
             return ZE_MEMORY_TYPE_UNKNOWN;
@@ -65,6 +106,7 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t freeMem(const void *ptr, bool blocking) = 0;
     virtual ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
                                    void *ptr) = 0;
+    virtual ze_result_t registerMemoryFreeCallback(zex_memory_free_callback_ext_desc_t *pfnCallbackDesc, void *ptr) = 0;
     virtual ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                            void *ptr,
                                            size_t size) = 0;
@@ -131,6 +173,10 @@ struct Context : _ze_context_handle_t {
                                           void **pptr) = 0;
     virtual ze_result_t freeVirtualMem(const void *ptr,
                                        size_t size) = 0;
+    virtual ze_result_t queryVirtualMemPageSizeWithStartAddress(ze_device_handle_t hDevice,
+                                                                const void *pStart,
+                                                                size_t size,
+                                                                size_t *pagesize) = 0;
     virtual ze_result_t queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                                 size_t size,
                                                 size_t *pagesize) = 0;
@@ -165,8 +211,11 @@ struct Context : _ze_context_handle_t {
                                                         ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) = 0;
-    virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) = 0;
-    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) = 0;
+    virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) = 0;
+    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) = 0;
+    virtual void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) = 0;
+    virtual bool isOpaqueHandleSupported(IpcHandleType *handleType) = 0;
+    virtual ze_result_t mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext) = 0;
 
     virtual ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,
@@ -179,6 +228,7 @@ struct Context : _ze_context_handle_t {
     inline ze_context_handle_t toHandle() { return this; }
 
     virtual ContextExt *getContextExt() = 0;
+    virtual ze_result_t systemBarrier(ze_device_handle_t hDevice) = 0;
 };
 
 } // namespace L0

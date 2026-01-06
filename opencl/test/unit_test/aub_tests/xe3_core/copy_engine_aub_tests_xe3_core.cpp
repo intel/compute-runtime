@@ -5,13 +5,12 @@
  *
  */
 
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/copy_engine_aub_tests_xehp_and_later.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

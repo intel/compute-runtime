@@ -17,39 +17,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct MockIoctlHelperXe : public NEO::IoctlHelperXe {
-
-    MockIoctlHelperXe(NEO::Drm &drmArg) : NEO::IoctlHelperXe(drmArg) {}
-
-    int getTileIdFromGtId(int gtId) const override {
-        return 0;
-    }
-};
-
-struct MockXeEngineInfo : public NEO::EngineInfo {
-
-    using NEO::EngineInfo::tileToEngineMap;
-    uint32_t count = 2;
-
-    MockXeEngineInfo(NEO::Drm *drm, StackVec<std::vector<NEO::EngineCapabilities>, 2> &engineInfosPerTile) : NEO::EngineInfo(drm, engineInfosPerTile) {
-
-        std::vector<NEO::EngineCapabilities> mockEngineCapabilities(4);
-        mockEngineCapabilities[0].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
-        mockEngineCapabilities[0].engine.engineInstance = 0;
-        mockEngineCapabilities[1].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
-        mockEngineCapabilities[1].engine.engineInstance = 0;
-        mockEngineCapabilities[2].engine.engineClass = EngineClass::ENGINE_CLASS_COMPUTE;
-        mockEngineCapabilities[2].engine.engineInstance = 0;
-        mockEngineCapabilities[3].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
-        mockEngineCapabilities[3].engine.engineInstance = 0;
-
-        tileToEngineMap.emplace(0, mockEngineCapabilities[0].engine);
-        tileToEngineMap.emplace(0, mockEngineCapabilities[1].engine);
-        tileToEngineMap.emplace(0, mockEngineCapabilities[2].engine);
-        tileToEngineMap.emplace(1, mockEngineCapabilities[3].engine);
-    }
-};
-
 struct MockNeoDrm : public NEO::Drm {
 
   public:
@@ -61,8 +28,19 @@ struct MockNeoDrm : public NEO::Drm {
 
     bool sysmanQueryEngineInfo() override {
 
-        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{};
-        this->engineInfo.reset(new MockXeEngineInfo(this, engineInfosPerTile));
+        std::vector<NEO::EngineCapabilities> queryEngineInfo(4);
+        queryEngineInfo[0].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
+        queryEngineInfo[0].engine.engineInstance = 0;
+        queryEngineInfo[1].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
+        queryEngineInfo[1].engine.engineInstance = 0;
+        queryEngineInfo[2].engine.engineClass = EngineClass::ENGINE_CLASS_COMPUTE;
+        queryEngineInfo[2].engine.engineInstance = 0;
+        queryEngineInfo[3].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
+        queryEngineInfo[3].engine.engineInstance = 0;
+
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{queryEngineInfo};
+
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));
         return true;
     }
 };

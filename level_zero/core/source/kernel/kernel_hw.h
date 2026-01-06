@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,21 +7,29 @@
 
 #pragma once
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/memory_properties_flags.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module.h"
 
 #include "encode_surface_state_args.h"
-#include "igfxfmid.h"
+
+#include <cstdarg>
+#include <vector>
 
 namespace L0 {
 
@@ -32,10 +40,9 @@ struct KernelHw : public KernelImp {
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         uint64_t baseAddress = alloc->getGpuAddressToPatch();
-        auto sshAlignmentMask = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignmentMask();
 
         // Remove misaligned bytes, accounted for in bufferOffset patch token
-        baseAddress &= sshAlignmentMask;
+        baseAddress &= this->sharedState->surfaceStateAlignmentMask;
         auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
@@ -43,16 +50,16 @@ struct KernelHw : public KernelImp {
         Device *device = module->getDevice();
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
 
-        auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
+        auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
-        bool offsetedAddress = false;
+        bool offsetAddress = false;
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
-            offsetedAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
+            offsetAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
             baseAddress = reinterpret_cast<uintptr_t>(address);
             bufferSizeForSsh -= offset;
-            DEBUG_BREAK_IF(baseAddress != (baseAddress & sshAlignmentMask));
+            DEBUG_BREAK_IF(baseAddress != (baseAddress & this->sharedState->surfaceStateAlignmentMask));
 
             offset = 0;
         }
@@ -60,25 +67,25 @@ struct KernelHw : public KernelImp {
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         if (NEO::isValidOffset(argInfo.bindful)) {
-            surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceStateAddress = &getSurfaceStateHeapDataSpan()[argInfo.bindful];
             surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         } else if (NEO::isValidOffset(argInfo.bindless)) {
-            isBindlessOffsetSet[argIndex] = false;
-            usingSurfaceStateHeap[argIndex] = false;
-            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
+            privateState.isBindlessOffsetSet[argIndex] = false;
+            privateState.usingSurfaceStateHeap[argIndex] = false;
+            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetAddress) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
-                isBindlessOffsetSet[argIndex] = true;
+                privateState.isBindlessOffsetSet[argIndex] = true;
             } else {
-                usingSurfaceStateHeap[argIndex] = true;
-                surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
+                privateState.usingSurfaceStateHeap[argIndex] = true;
+                const auto surfaceStateOffset = getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
+                surfaceStateAddress = &getSurfaceStateHeapDataSpan()[surfaceStateOffset];
             }
         }
 
         uint64_t bufferAddressForSsh = baseAddress;
-        auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
         bufferSizeForSsh += misalignedSize;
-        bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
+        bufferSizeForSsh = alignUp(bufferSizeForSsh, this->sharedState->surfaceStateAlignment);
 
         bool l3Enabled = true;
         // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.
@@ -92,7 +99,7 @@ struct KernelHw : public KernelImp {
         }
 
         if (l3Enabled == false) {
-            this->kernelRequiresQueueUncachedMocsCount++;
+            this->privateState.kernelRequiresQueueUncachedMocsCount++;
         }
         auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
@@ -113,24 +120,6 @@ struct KernelHw : public KernelImp {
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         UNRECOVERABLE_IF(surfaceStateAddress == nullptr);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
-    }
-
-    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
-        size_t localWorkSizes[3];
-        localWorkSizes[0] = this->groupSize[0];
-        localWorkSizes[1] = this->groupSize[1];
-        localWorkSizes[2] = this->groupSize[2];
-
-        kernelRequiresGenerationOfLocalIdsByRuntime = NEO::EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
-            kernelDescriptor.kernelAttributes.numLocalIdChannels,
-            localWorkSizes,
-            std::array<uint8_t, 3>{
-                {kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
-                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
-                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
-            kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
-            requiredWorkgroupOrder,
-            kernelDescriptor.kernelAttributes.simdSize);
     }
 };
 

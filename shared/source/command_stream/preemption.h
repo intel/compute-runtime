@@ -29,12 +29,10 @@ struct PreemptionFlags {
     union {
         struct {
             uint32_t disabledMidThreadPreemptionKernel : 1;
-            uint32_t vmeKernel : 1;
-            uint32_t deviceSupportsVmePreemption : 1;
             uint32_t disablePerCtxtPreemptionGranularityControl : 1;
             uint32_t usesFencesForReadWriteImages : 1;
             uint32_t disableLSQCROPERFforOCL : 1;
-            uint32_t reserved : 26;
+            uint32_t reserved : 28;
         } flags;
         uint32_t data;
     };

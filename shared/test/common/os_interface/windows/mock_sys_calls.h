@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ struct MockGlobalSysCallRestorer {
     }
     MockGlobalSysCallRestorer(const MockGlobalSysCallRestorer &rhs) = delete;
     MockGlobalSysCallRestorer &operator=(const MockGlobalSysCallRestorer &rhs) = delete;
-    MockGlobalSysCallRestorer(MockGlobalSysCallRestorer &&rhs)
+    MockGlobalSysCallRestorer(MockGlobalSysCallRestorer &&rhs) noexcept
         : globalClb(rhs.globalClb), globalClbData(rhs.globalClbData) {
         callbackPrev = rhs.callbackPrev;
         callbackData = rhs.callbackData;
@@ -65,8 +65,20 @@ extern HANDLE (*sysCallsCreateFile)(LPCWSTR lpFileName, DWORD dwDesiredAccess, D
 extern BOOL (*sysCallsDeviceIoControl)(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 extern CONFIGRET (*sysCallsCmGetDeviceInterfaceListSize)(PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags);
 extern CONFIGRET (*sysCallsCmGetDeviceInterfaceList)(LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags);
+extern CONFIGRET (*sysCallsCmGetDeviceIdSize)(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags);
+extern CONFIGRET (*sysCallsCmGetDeviceId)(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags);
+extern CONFIGRET (*sysCallsCmGetChild)(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags);
+extern CONFIGRET (*sysCallsCmGetSibling)(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags);
+extern BOOL (*sysCallsSetupDiGetDeviceRegistryProperty)(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize);
+extern BOOL (*sysCallsSetupDiOpenDeviceInfo)(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData);
+extern BOOL (*sysCallsSetupDiEnumDeviceInfo)(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData);
+extern BOOL (*sysCallsSetupDiDestroyDeviceInfoList)(HDEVINFO deviceInfoSet);
+extern HDEVINFO (*sysCallsSetupDiGetClassDevs)(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags);
 extern LPVOID (*sysCallsHeapAlloc)(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
 extern BOOL (*sysCallsHeapFree)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
+extern BOOL (*sysCallsDuplicateHandle)(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
+extern HANDLE (*sysCallsOpenProcess)(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId);
+extern DWORD (*sysCallsWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
 
 extern BOOL (*sysCallsGetModuleHandleExW)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 extern DWORD (*sysCallsGetModuleFileNameW)(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);

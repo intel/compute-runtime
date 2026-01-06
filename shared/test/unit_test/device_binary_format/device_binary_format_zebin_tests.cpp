@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,10 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -119,6 +121,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
 }
 
 TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinaryThenEachTimeZebinIsDumpedToFile) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.DumpZEBin.set(true);
 
@@ -174,7 +178,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
     zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_XE2_HPG_CORE);
     NEO::Zebin::Elf::ZebinTargetFlags targetFlags;
     targetDevice.productFamily = IGFX_UNKNOWN;
-    targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     targetFlags.machineEntryUsesGfxCoreInsteadOfProductFamily = true;
     zebin.flags = targetFlags.packed;
     unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
@@ -380,16 +384,16 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
     elfNoteSections.at(1).type = NEO::Zebin::Elf::IntelGTSectionType::gfxCore;
     elfNoteSections.at(2).type = NEO::Zebin::Elf::IntelGTSectionType::targetMetadata;
 
-    std::vector<uint8_t *> descDatas;
+    std::vector<uint8_t *> descData;
     uint8_t platformData[4u];
     memcpy_s(platformData, 4u, &targetDevice.productFamily, 4u);
-    descDatas.push_back(platformData);
+    descData.push_back(platformData);
     uint8_t coreData[4u];
     memcpy_s(coreData, 4u, &targetDevice.coreFamily, 4u);
-    descDatas.push_back(coreData);
+    descData.push_back(coreData);
     uint8_t metadataPackedData[4u];
     memcpy_s(metadataPackedData, 4u, &targetMetadata.packed, 4u);
-    descDatas.push_back(metadataPackedData);
+    descData.push_back(metadataPackedData);
 
     const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
                                                  [](auto totalSize, const auto &elfNoteSection) {
@@ -402,7 +406,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
         sectionDataPointer = ptrOffset(sectionDataPointer, sizeof(NEO::Elf::ElfNoteSection));
         strcpy_s(reinterpret_cast<char *>(sectionDataPointer), elfNoteSections.at(i).nameSize, NEO::Zebin::Elf::intelGTNoteOwnerName.str().c_str());
         sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).nameSize);
-        memcpy_s(sectionDataPointer, elfNoteSections.at(i).descSize, descDatas.at(i), elfNoteSections.at(i).descSize);
+        memcpy_s(sectionDataPointer, elfNoteSections.at(i).descSize, descData.at(i), elfNoteSections.at(i).descSize);
         sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).descSize);
     }
 

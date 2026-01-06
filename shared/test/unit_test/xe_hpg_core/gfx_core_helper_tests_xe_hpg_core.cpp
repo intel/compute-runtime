@@ -147,42 +147,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    DebugManagerStateRestore restore;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
-
-    constexpr size_t bufferSize = 128u;
-    uint8_t buffer[bufferSize];
-    LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
-    EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
-}
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnFalseAndDoNotProgramPipeControl) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
-
-    constexpr size_t bufferSize = 128u;
-    uint8_t buffer[bufferSize];
-    LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
-    EXPECT_EQ(0u, cmdStream.getUsed());
-}
-
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());
@@ -296,31 +260,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThro
         hardwareInfo.featureTable.flags.ftrLocalMemory = true;
         mockProductHelper.returnedIsUnlockingLockedPtrNecessary = true;
         EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hardwareInfo, mockProductHelper));
-    }
-}
-
-constexpr ComputeSlmTestInput computeSlmValuesXeHpgTestsInput[] = {
-    {0, 0 * MemoryConstants::kiloByte},
-    {1, 0 * MemoryConstants::kiloByte + 1},
-    {1, 1 * MemoryConstants::kiloByte},
-    {2, 1 * MemoryConstants::kiloByte + 1},
-    {2, 2 * MemoryConstants::kiloByte},
-    {3, 2 * MemoryConstants::kiloByte + 1},
-    {3, 4 * MemoryConstants::kiloByte},
-    {4, 4 * MemoryConstants::kiloByte + 1},
-    {4, 8 * MemoryConstants::kiloByte},
-    {5, 8 * MemoryConstants::kiloByte + 1},
-    {5, 16 * MemoryConstants::kiloByte},
-    {6, 16 * MemoryConstants::kiloByte + 1},
-    {6, 32 * MemoryConstants::kiloByte},
-    {7, 32 * MemoryConstants::kiloByte + 1},
-    {7, 64 * MemoryConstants::kiloByte}};
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hardwareInfo = *defaultHwInfo;
-    for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize, nullptr, false));
     }
 }
 

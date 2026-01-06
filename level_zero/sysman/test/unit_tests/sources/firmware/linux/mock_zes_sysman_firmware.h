@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,32 +18,21 @@ constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
+const std::string mocklateBindingVersion("1.2.3.4");
 const std::string mockUnknownVersion("unknown");
-std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
-std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
-std::string mockEmpty = {};
+const std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+const std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
+const std::string mockEmpty = {};
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
 class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
 class FirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
-struct MockFirmwareFsAccess : public FirmwareFsAccess {
-    ze_bool_t isReadFwTypes = true;
-    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
-        if (isReadFwTypes) {
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-            val.push_back("mtd4: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
-            val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.PSC\"");
-        } else {
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-};
+struct MockFirmwareFsAccess : public FirmwareFsAccess {};
 
 struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t readResult = ZE_RESULT_SUCCESS;
+    ze_result_t canReadResult = ZE_RESULT_SUCCESS;
     ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_bool_t isNullDirEntries = false;
 
@@ -55,6 +44,9 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
         if (!file.compare("device/iaf.31/pscbin_version") || !file.compare("device/iaf.0/pscbin_version")) {
             val = mockPscVersion;
+        }
+        if (!file.compare("device/lb_voltage_regulator_version") || !file.compare("device/lb_fan_control_version")) {
+            val = mocklateBindingVersion;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -75,6 +67,12 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t canRead(const std::string file) override {
+        if (canReadResult != ZE_RESULT_SUCCESS) {
+            return canReadResult;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 
     MockFirmwareSysfsAccess() = default;
     ~MockFirmwareSysfsAccess() override = default;
@@ -83,6 +81,7 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 struct MockFirmwareInterface : public FirmwareInterface {
 
     ze_result_t getFwVersionResult = ZE_RESULT_SUCCESS;
+    ze_bool_t isFirmwareVersionsSupported = true;
 
     ze_result_t mockFwGetVersion(std::string &fwVersion) {
         return ZE_RESULT_SUCCESS;
@@ -112,7 +111,13 @@ struct MockFirmwareInterface : public FirmwareInterface {
     }
 
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override {
-        fwTypes = mockSupportedFirmwareTypes;
+        if (isFirmwareVersionsSupported) {
+            fwTypes = mockSupportedFirmwareTypes;
+        }
+    }
+
+    void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override {
+        fwTypes.insert(fwTypes.end(), lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end());
     }
 
     MockFirmwareInterface() = default;
@@ -124,8 +129,12 @@ struct MockFirmwareInterface : public FirmwareInterface {
     ADDMETHOD_NOBASE(fwSupportedDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::vector<std::string> & supportedDiagTests));
     ADDMETHOD_NOBASE(fwRunDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::string & osDiagType, zes_diag_result_t *pResult));
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
-    ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE(fwGetEccAvailable, ze_result_t, ZE_RESULT_SUCCESS, (ze_bool_t * pAvailable));
+    ADDMETHOD_NOBASE(fwGetEccConfigurable, ze_result_t, ZE_RESULT_SUCCESS, (ze_bool_t * pConfigurable));
+    ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState, uint8_t *defaultState));
     ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE(fwSetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> inBuf, std::vector<uint8_t> &outBuf));
+    ADDMETHOD_NOBASE(fwGetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> &outBuf));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
 };
 

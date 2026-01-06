@@ -102,7 +102,7 @@ bool OsContextLinux::isDirectSubmissionSupported() const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     const auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
-    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && releaseHelper && releaseHelper->isDirectSubmissionLightSupported())) && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
+    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && releaseHelper && releaseHelper->isDirectSubmissionLightSupported())) && productHelper.isDirectSubmissionSupported();
 }
 
 Drm &OsContextLinux::getDrm() const {

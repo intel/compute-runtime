@@ -128,7 +128,7 @@ HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAddi
 
 HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
@@ -137,7 +137,7 @@ HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMa
 
 HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToRequestedNumber) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     debugManager.flags.MaxHwThreadsPercent.set(80);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
@@ -148,7 +148,7 @@ HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNum
 
 HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToMatchRequestedNumber) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     debugManager.flags.MinHwThreadsUnoccupied.set(2);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
@@ -159,6 +159,7 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrectVfeStateAddressIsReturned) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     char buffer[64];
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
@@ -166,7 +167,10 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorr
     uint64_t addressToPatch = 0xC0DEC0DE;
     uint64_t expectedAddress = 0xC0DEC000;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    uint64_t expectedGpuAddress = preambleStream.getCurrentGpuAddressPosition() + sizeof(PIPE_CONTROL);
+    uint64_t cmdBufferGpuAddress = 0;
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, &cmdBufferGpuAddress);
+    EXPECT_EQ(expectedGpuAddress, cmdBufferGpuAddress);
     StreamProperties emptyProperties{};
     MockExecutionEnvironment executionEnvironment{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 1024u, addressToPatch, 10u, emptyProperties);
@@ -190,7 +194,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetFor
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::renderCompute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, mockDevice->getRootDeviceEnvironment(), 1024u, addressToPatch, 10u, emptyProperties);
 
@@ -250,7 +254,7 @@ HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSema
     ASSERT_EQ(0u, cmdList.size());
 }
 
-HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsWithinXeGfxFamily) {
+HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -283,14 +287,14 @@ HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsC
     EXPECT_EQ(2u, numPipelineSelect);
 }
 
-HWTEST2_F(PreambleTest, GivenAtLeastXeHpCoreWhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleTest, GivenAtLeastXeHpCoreWhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect, IsAtLeastXeCore) {
     uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
     EXPECT_EQ(0u, actualVal);
 }
 
 using PreambleHwTest = PreambleFixture;
 
-HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeCommandThenExpectNothingToAdd, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeCommandThenExpectNothingToAdd, IsAtLeastXeCore) {
     constexpr size_t bufferSize = 64;
     uint8_t buffer[bufferSize];
     LinearStream stream(buffer, bufferSize);
@@ -301,7 +305,7 @@ HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeC
     EXPECT_EQ(0u, stream.getUsed());
 }
 
-HWTEST2_F(PreambleHwTest, givenHwWithForcedHeaplessModeWhenCallingSetSingleSliceDispatchModeThenDoNothing, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleHwTest, givenHwWithForcedHeaplessModeWhenCallingSetSingleSliceDispatchModeThenDoNothing, IsAtLeastXeCore) {
     if (FamilyType::isHeaplessRequired() == false) {
         GTEST_SKIP();
     }

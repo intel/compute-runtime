@@ -18,8 +18,6 @@
 
 #include <gtest/gtest.h>
 
-#include <errno.h>
-
 namespace {
 
 constexpr std::array<uint64_t, 9> copyEnginesCapsMap = {{

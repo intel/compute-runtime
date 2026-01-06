@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
-
 #include "third_party/opencl_headers/CL/cl_ext.h"
+
+#include <cstdint>
 
 namespace NEO {
 enum SurfaceFormat : unsigned short {
@@ -198,8 +198,10 @@ enum class ImagePlane {
     planeUV
 };
 
+using GmmResourceFormat = int32_t;
+
 struct SurfaceFormatInfo {
-    GMM_RESOURCE_FORMAT gmmSurfaceFormat;
+    GmmResourceFormat gmmSurfaceFormat;
     SurfaceFormat genxSurfaceFormat;
     uint32_t gmmTileWalk;
     uint32_t numChannels;
@@ -231,14 +233,14 @@ struct ImageDescriptor {
 };
 
 enum class ImageTilingMode {
-    tiledAuto = 0,
-    tiledW,
     tiledX,
     tiledY,
-    tiledYf,
-    tiledYs,
+    tiledW,
+    notTiled,
     tiled4,
     tiled64,
+    tiledYf,
+    tiledYs,
 };
 
 struct ImageInfo {
@@ -252,13 +254,13 @@ struct ImageInfo {
     uint32_t xOffset;
     uint32_t yOffset;
     uint32_t yOffsetForUVPlane;
-    GMM_YUV_PLANE_ENUM plane;
+    ImagePlane plane;
     uint32_t baseMipLevel;
     uint32_t mipCount;
     bool linearStorage;
     bool useLocalMemory;
     bool isDisplayable;
-    ImageTilingMode forceTiling;
+    ImageTilingMode forceTiling = ImageTilingMode::notTiled;
 };
 
 struct ImageImplicitArgs {
@@ -294,5 +296,8 @@ struct SurfaceOffsets {
     uint32_t yOffset;
     uint32_t yOffsetForUVplane;
 };
+
+using GmmCubeFace = int32_t;
+constexpr GmmCubeFace gmmNoCubeMap = 7;
 
 } // namespace NEO

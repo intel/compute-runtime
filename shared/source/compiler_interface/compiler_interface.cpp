@@ -46,18 +46,18 @@ void TranslationOutput::makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *s
 
 CompilerInterface::CompilerInterface()
     : cache() {
-    if (debugManager.flags.FinalizerInputType.get() != 0) {
-        this->finalizerInputType = debugManager.flags.FinalizerInputType.get();
+    if (debugManager.flags.FinalizerInputType.get() != "unk") {
+        this->finalizerInputType = IGC::CodeType::CodeTypeCoder::Enc(debugManager.flags.FinalizerInputType.get().c_str());
     }
 }
 CompilerInterface::~CompilerInterface() = default;
 
-TranslationOutput::ErrorCode CompilerInterface::build(
+TranslationErrorCode CompilerInterface::build(
     const NEO::Device &device,
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isCompilerAvailable(&device, input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     IGC::CodeType::CodeType_t srcCodeType = input.srcType;
@@ -79,7 +79,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
         bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
         if (success) {
-            return TranslationOutput::ErrorCode::success;
+            return TranslationErrorCode::success;
         }
     }
 
@@ -102,18 +102,25 @@ TranslationOutput::ErrorCode CompilerInterface::build(
             intermediateCodeType = getPreferredIntermediateRepresentation(device);
         }
 
-        auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
-        auto fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
-                                   fclOptions.get(), fclInternalOptions.get());
+        CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
+        if (this->useIgcAsFcl(&device)) {
+            auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, intermediateCodeType);
+            fclOutput = translate(igcTranslationCtx.get(), inSrc.get(),
+                                  fclOptions.get(), fclInternalOptions.get());
+        } else {
+            auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
+            fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
+                                  fclOptions.get(), fclInternalOptions.get());
+        }
 
         if (fclOutput == nullptr) {
-            return TranslationOutput::ErrorCode::unknownError;
+            return TranslationErrorCode::unknownError;
         }
 
         TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
 
         if (fclOutput->Successful() == false) {
-            return TranslationOutput::ErrorCode::buildFailure;
+            return TranslationErrorCode::buildFailure;
         }
 
         output.intermediateCodeType = intermediateCodeType;
@@ -138,7 +145,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
         bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
         if (success) {
-            return TranslationOutput::ErrorCode::success;
+            return TranslationErrorCode::success;
         }
     }
 
@@ -153,13 +160,13 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                  fclOptions.get(), fclInternalOptions.get(), input.gtPinInput);
 
     if (buildOutput == nullptr) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.backendCompilerLog, buildOutput->GetBuildLog());
 
     if (buildOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::buildFailure;
+        return TranslationErrorCode::buildFailure;
     }
 
     if (igcOutputType == this->finalizerInputType) {
@@ -173,7 +180,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
         TranslationOutput::append(output.backendCompilerLog, buildOutput->GetBuildLog(), "\n", 0);
         if (buildOutput->Successful() == false) {
-            return TranslationOutput::ErrorCode::buildFailure;
+            return TranslationErrorCode::buildFailure;
         }
     }
 
@@ -184,60 +191,74 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         CompilerCacheHelper::packAndCacheBinary(*cache, kernelFileHash, NEO::getTargetDevice(device.getRootDeviceEnvironment()), output);
     }
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::compile(
+TranslationErrorCode CompilerInterface::compile(
     const NEO::Device &device,
     const TranslationInput &input,
     TranslationOutput &output) {
 
     if ((IGC::CodeType::oclC != input.srcType) && (IGC::CodeType::elf != input.srcType)) {
-        return TranslationOutput::ErrorCode::alreadyCompiled;
+        return TranslationErrorCode::alreadyCompiled;
     }
 
     if (false == isCompilerAvailable(&device, input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     auto outType = input.outType;
 
     if (outType == IGC::CodeType::undefined) {
         outType = getPreferredIntermediateRepresentation(device);
+        if (outType != IGC::CodeType::spirV) {
+            outType = IGC::CodeType::llvmBc;
+        }
     }
 
-    auto *fclMain = fcl.entryPoint.get();
+    CIF::CIFMain *fclMain = nullptr;
+    if (this->useIgcAsFcl(&device)) {
+        fclMain = getIgc(&device)->entryPoint.get();
+    } else {
+        fclMain = fcl.entryPoint.get();
+    }
     auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain, input.src.begin(), input.src.size());
     auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.apiOptions.begin(), input.apiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.internalOptions.begin(), input.internalOptions.size());
 
-    auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
-
-    auto fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
-                               fclOptions.get(), fclInternalOptions.get());
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
+    if (this->useIgcAsFcl(&device)) {
+        auto igcTranslationCtx = createIgcTranslationCtx(device, input.srcType, outType);
+        fclOutput = translate(igcTranslationCtx.get(), fclSrc.get(),
+                              fclOptions.get(), fclInternalOptions.get());
+    } else {
+        auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
+        fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
+                              fclOptions.get(), fclInternalOptions.get());
+    }
 
     if (fclOutput == nullptr) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
 
     if (fclOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::compilationFailure;
+        return TranslationErrorCode::compilationFailure;
     }
 
     output.intermediateCodeType = outType;
     TranslationOutput::makeCopy(output.intermediateRepresentation, fclOutput->GetOutput());
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::link(
+TranslationErrorCode CompilerInterface::link(
     const NEO::Device &device,
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isCompilerAvailable(&device, input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     auto *igcMain = getIgc(&device)->entryPoint.get();
@@ -246,10 +267,10 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain, input.internalOptions.begin(), input.internalOptions.size());
 
     if (inSrc == nullptr) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> currOut;
     inSrc->Retain(); // shared with currSrc
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
     IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
@@ -263,12 +284,12 @@ TranslationOutput::ErrorCode CompilerInterface::link(
                             igcOptions.get(), igcInternalOptions.get(), input.gtPinInput);
 
         if (currOut == nullptr) {
-            return TranslationOutput::ErrorCode::unknownError;
+            return TranslationErrorCode::unknownError;
         }
 
         if (currOut->Successful() == false) {
             TranslationOutput::makeCopy(output.backendCompilerLog, currOut->GetBuildLog());
-            return TranslationOutput::ErrorCode::linkFailure;
+            return TranslationErrorCode::linkFailure;
         }
 
         currOut->GetOutput()->Retain(); // shared with currSrc
@@ -279,12 +300,12 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     TranslationOutput::makeCopy(output.deviceBinary, currOut->GetOutput());
     TranslationOutput::makeCopy(output.debugData, currOut->GetDebugData());
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) {
+TranslationErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) {
     if (false == isIgcAvailable(&device)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
@@ -297,18 +318,18 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
     auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), output.idsBuffer.get(), output.sizesBuffer.get());
 
     if (!retVal) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::createLibrary(
+TranslationErrorCode CompilerInterface::createLibrary(
     NEO::Device &device,
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isIgcAvailable(&device)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     auto *igcMain = getIgc(&device)->entryPoint.get();
@@ -323,25 +344,25 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
                                igcOptions.get(), igcInternalOptions.get());
 
     if (igcOutput == nullptr) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.backendCompilerLog, igcOutput->GetBuildLog());
 
     if (igcOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::linkFailure;
+        return TranslationErrorCode::linkFailure;
     }
 
     output.intermediateCodeType = intermediateRepresentation;
     TranslationOutput::makeCopy(output.intermediateRepresentation, igcOutput->GetOutput());
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
-                                                                   std::vector<char> &stateSaveAreaHeader) {
+TranslationErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                           std::vector<char> &stateSaveAreaHeader) {
     if (false == isIgcAvailable(&device)) {
-        return TranslationOutput::ErrorCode::compilerNotAvailable;
+        return TranslationErrorCode::compilerNotAvailable;
     }
 
     bool bindlessSip = false;
@@ -371,7 +392,7 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     auto deviceCtx = getIgcDeviceCtx(device);
 
     if (deviceCtx == nullptr) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
     auto *igcMain = getIgc(&device)->entryPoint.get();
@@ -384,17 +405,17 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
                                               stateSaveAreaBuffer.get());
 
     if (!result) {
-        return TranslationOutput::ErrorCode::unknownError;
+        return TranslationErrorCode::unknownError;
     }
 
     retBinary.assign(systemRoutineBuffer->GetMemory<char>(), systemRoutineBuffer->GetMemory<char>() + systemRoutineBuffer->GetSizeRaw());
     stateSaveAreaHeader.assign(stateSaveAreaBuffer->GetMemory<char>(), stateSaveAreaBuffer->GetMemory<char>() + stateSaveAreaBuffer->GetSizeRaw());
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
-    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle();
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
+    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
 }
 
 bool CompilerInterface::loadFcl() {
@@ -418,15 +439,17 @@ bool CompilerInterface::loadIgcBasedCompiler(CompilerLibraryEntry &entry, const 
 }
 
 bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
-    bool fclAvailable = requireFcl ? this->loadFcl() : false;
+    if (requireFcl) {
+        this->loadFcl();
+    }
     bool igcAvailable = this->loadIgcBasedCompiler(defaultIgc, Os::igcDllName);
 
     this->cache.swap(cache);
 
-    return this->cache && igcAvailable && (fclAvailable || (false == requireFcl));
+    return this->cache && igcAvailable;
 }
 
-IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {
+NEO::FclOclDeviceCtxTag *CompilerInterface::getFclDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = fclDeviceContexts.find(&device);
     if (it != fclDeviceContexts.end()) {
@@ -438,12 +461,12 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
         return nullptr;
     }
 
-    auto newDeviceCtx = fcl.entryPoint->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = fcl.entryPoint->CreateInterface<NEO::FclOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
-    newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
+    newDeviceCtx->SetOclApiVersion(ocl30ApiVersion);
     if (newDeviceCtx->GetUnderlyingVersion() > 4U) {
         auto igcPlatform = newDeviceCtx->GetPlatformHandle();
         if (nullptr == igcPlatform.get()) {
@@ -458,7 +481,7 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
     return fclDeviceContexts[&device].get();
 }
 
-IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &device) {
+NEO::IgcOclDeviceCtxTag *CompilerInterface::getIgcDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = igcDeviceContexts.find(&device);
     if (it != igcDeviceContexts.end()) {
@@ -472,7 +495,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     }
     auto *igcMain = igc->entryPoint.get();
 
-    auto newDeviceCtx = igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = igcMain->CreateInterface<NEO::IgcOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
@@ -504,7 +527,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     return igcDeviceContexts[&device].get();
 }
 
-IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Device &device) {
+NEO::IgcOclDeviceCtxTag *CompilerInterface::getFinalizerDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = finalizerDeviceContexts.find(&device);
     if (it != finalizerDeviceContexts.end()) {
@@ -517,7 +540,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Devic
         return nullptr;
     }
 
-    auto newDeviceCtx = finalizer->entryPoint->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = finalizer->entryPoint->CreateInterface<NEO::IgcOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
@@ -550,10 +573,14 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Devic
 }
 
 IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentation(const Device &device) {
-    return getFclDeviceCtx(device)->GetPreferredIntermediateRepresentation();
+    if (useIgcAsFcl(&device)) {
+        return device.getCompilerProductHelper().getPreferredIntermediateRepresentation();
+    } else {
+        return getFclDeviceCtx(device)->GetPreferredIntermediateRepresentation();
+    }
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getFclDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
@@ -563,40 +590,35 @@ CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclT
     if (fclBaseTranslationCtx == nullptr) {
         auto ulock = this->lock();
         if (fclBaseTranslationCtx == nullptr) {
-            fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx(inType, outType);
+            fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx<NEO::FclOclTranslationCtxTag>(inType, outType);
         }
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::FclOclTranslationCtxTag>(inType, outType);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getIgcDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createFinalizerTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> CompilerInterface::createFinalizerTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getFinalizerDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
-bool CompilerInterface::addOptionDisableZebin(std::string &options, std::string &internalOptions) {
-    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
-    return true;
-}
-
-bool CompilerInterface::disableZebin(std::string &options, std::string &internalOptions) {
-    return addOptionDisableZebin(options, internalOptions);
+bool CompilerInterface::isFclAvailable(const Device *device) {
+    return useIgcAsFcl(device) ? isIgcAvailable(device) : static_cast<bool>(fcl.entryPoint);
 }
 
 bool CompilerInterface::isIgcAvailable(const Device *device) {
@@ -605,6 +627,22 @@ bool CompilerInterface::isIgcAvailable(const Device *device) {
 
 bool CompilerInterface::isFinalizerAvailable(const Device *device) {
     return nullptr != getFinalizer(device);
+}
+
+bool CompilerInterface::useIgcAsFcl(const Device *device) {
+    if (0 != debugManager.flags.UseIgcAsFcl.get()) {
+        if (1 == debugManager.flags.UseIgcAsFcl.get()) {
+            return true;
+        } else if (2 == debugManager.flags.UseIgcAsFcl.get()) {
+            return false;
+        }
+    }
+
+    if (nullptr == device) {
+        return false;
+    }
+
+    return device->getCompilerProductHelper().useIgcAsFcl();
 }
 
 const CompilerInterface::CompilerLibraryEntry *CompilerInterface::getIgc(const Device *device) {

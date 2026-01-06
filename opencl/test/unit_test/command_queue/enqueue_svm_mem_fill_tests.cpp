@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -17,8 +19,9 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -29,7 +32,6 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
     void setUp() {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
-        REQUIRE_SVM_OR_SKIP(pDevice);
         SVMAllocsManager::SvmAllocationProperties svmProperties;
         svmProperties.coherent = true;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -40,7 +42,8 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
         ASSERT_NE(nullptr, svmAlloc);
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        this->useHeapless = compilerProductHelper.isHeaplessModeEnabled();
+        this->useHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+        this->useStateless = compilerProductHelper.isForceToStatelessRequired();
     }
 
     void tearDown() {
@@ -59,11 +62,15 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
     EBuiltInOps::Type getAdjustedFillBufferBuiltIn() {
         if (useHeapless) {
             return EBuiltInOps::fillBufferStatelessHeapless;
+        } else if (useStateless) {
+            return EBuiltInOps::fillBufferStateless;
         }
 
         return EBuiltInOps::fillBuffer;
     }
+
     bool useHeapless = false;
+    bool useStateless = false;
 };
 
 using BaseEnqueueSvmMemFillTest = Test<BaseEnqueueSvmMemFillFixture>;
@@ -89,8 +96,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     ASSERT_NE(nullptr, &origBuilder);
 
     // note that we need to store the returned value, as it is an unique pointer storing original builder, which will be later invoked
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
 
@@ -137,7 +143,6 @@ struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
 
     void SetUp() override {
         BaseEnqueueSvmMemFillFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
     }
@@ -174,8 +179,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
@@ -193,8 +197,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
@@ -229,7 +232,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = di->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isHeapless(builtIn) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 }
 
 INSTANTIATE_TEST_SUITE_P(size_t,
@@ -240,7 +243,7 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
 
     void SetUp() override {
 
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         if (is32bit || !device->isFullRangeSvm()) {
             GTEST_SKIP();
         }
@@ -290,9 +293,13 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
         nullptr                       // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(csr.peekTaskCount(), cmdQ->taskCount);
+    EXPECT_EQ(csr.peekTaskLevel(), cmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
+HWTEST2_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (cmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
@@ -313,4 +320,56 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLoc
         nullptr                         // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemFillThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    void *systemPtr = malloc(256);
+
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        systemPtr,   // void *svm_ptr
+        pattern,     // const void *pattern
+        patternSize, // size_t pattern_size
+        256,         // size_t size
+        0,           // cl_uint num_events_in_wait_list
+        nullptr,     // cl_event *event_wait_list
+        nullptr      // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    free(systemPtr);
+}
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemNotEnabledWhenEnqueueSVMMemFillThenInvalidValueErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0x0;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    void *systemPtr = malloc(256);
+
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        systemPtr,   // void *svm_ptr
+        pattern,     // const void *pattern
+        patternSize, // size_t pattern_size
+        256,         // size_t size
+        0,           // cl_uint num_events_in_wait_list
+        nullptr,     // cl_event *event_wait_list
+        nullptr      // cL_event *event
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    free(systemPtr);
 }

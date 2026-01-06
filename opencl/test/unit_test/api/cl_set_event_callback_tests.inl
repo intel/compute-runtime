@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/event/event.h"
 
 #include "cl_api_tests.h"
+
 using namespace NEO;
 
 namespace ClSetEventCallbackTests {
@@ -21,7 +23,7 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-struct ClSetEventCallbackTests : public ApiFixture<>,
+struct ClSetEventCallbackTests : public ApiFixture,
                                  public ::testing::Test {
 
     void SetUp() override {

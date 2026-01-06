@@ -13,10 +13,9 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/sleep.h"
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -58,6 +57,28 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
     } else {
         debugSession->startAsyncThread();
     }
+
+    auto neoDevice = device->getNEODevice();
+    if (neoDevice->getSipExternalLibInterface()) {
+        std::vector<char> sipBinary;
+        std::vector<char> stateSaveAreaHeader;
+        auto sipLibInterface = neoDevice->getSipExternalLibInterface();
+
+        auto ret = sipLibInterface->getSipKernelBinary(*neoDevice, NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader);
+        if (ret != 0) {
+            debugSession->closeConnection();
+            delete debugSession;
+            debugSession = nullptr;
+            return debugSession;
+        }
+
+        if (!sipLibInterface->createRegisterDescriptorMap()) {
+            debugSession->closeConnection();
+            delete debugSession;
+            debugSession = nullptr;
+        }
+    }
+
     return debugSession;
 }
 
@@ -72,7 +93,11 @@ ze_result_t DebugSessionLinux::translateDebuggerOpenErrno(int error) {
         result = ZE_RESULT_ERROR_NOT_AVAILABLE;
         break;
     case EACCES:
+    case EPERM:
         result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+        break;
+    case ENOMEM:
+        result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         break;
     }
     return result;
@@ -168,7 +193,7 @@ bool DebugSessionLinux::checkAllEventsCollected() {
             allEventsCollected = true;
         }
     }
-    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %ull\n", static_cast<int>(allEventsCollected), this->clientHandle);
+    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %llu\n", static_cast<int>(allEventsCollected), this->clientHandle);
     return allEventsCollected;
 }
 
@@ -257,7 +282,7 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
 
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
     auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    auto regDesc = typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    auto regDesc = typeToRegsetDesc(getStateSaveAreaHeader(), ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, connectedDevice);
 
     for (auto &threadId : threadsToCheck) {
         SIP::sr_ident srMagic = {{0}};
@@ -438,6 +463,13 @@ ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t DebugSessionLinux::readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    if (getSlmAccessProtocol() == SlmAccessProtocol::v2) {
+        return slmMemoryReadV2(threadId, desc, size, buffer);
+    }
+    return slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
+}
+
 ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
@@ -445,13 +477,13 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
     }
 
     if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        status = readDefaultMemory(thread, desc, size, buffer);
-    } else {
-        auto threadId = convertToThreadId(thread);
-        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
+        return readDefaultMemory(thread, desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        return readSlm(convertToThreadId(thread), desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER) {
+        return readBarrierMemory(convertToThreadId(thread), desc, size, buffer);
     }
-
-    return status;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
@@ -480,6 +512,13 @@ ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, cons
     return readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
 }
 
+ze_result_t DebugSessionLinux::writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    if (getSlmAccessProtocol() == SlmAccessProtocol::v2) {
+        return slmMemoryWriteV2(threadId, desc, size, buffer);
+    }
+    return slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+}
+
 ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
@@ -487,13 +526,11 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
     }
 
     if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        status = writeDefaultMemory(thread, desc, size, buffer);
-    } else {
-        auto threadId = convertToThreadId(thread);
-        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+        return writeDefaultMemory(thread, desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        return writeSlm(convertToThreadId(thread), desc, size, buffer);
     }
-
-    return status;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t DebugSessionLinux::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
@@ -684,10 +721,10 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     return status;
 }
 
-void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
+ze_result_t DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto vmHandle = getVmHandleFromClientAndlrcHandle(attention.clientHandle, attention.lrcHandle);
     if (vmHandle == invalidHandle) {
-        return;
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     auto hwInfo = connectedDevice->getHwInfo();
@@ -745,6 +782,7 @@ void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const Attentio
     } else {
         checkTriggerEventsForAttention();
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
@@ -1095,6 +1133,10 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
             }
         }
         for (auto &threadId : stoppedThreads) {
+            AttentionEventFields attention = {};
+            attention.lrcHandle = pfEvent.lrcHandle;
+            attention.contextHandle = pfEvent.execQueueHandle;
+            updateContextAndLrcHandlesForThreadsWithAttention(threadId, attention);
             if (tileSessionsEnabled) {
                 addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, pfEvent.vmHandle, stateSaveAreaMemory.data(), pfEvent.tileIndex);
             } else {
@@ -1109,6 +1151,32 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
         checkTriggerEventsForAttention();
     }
     return;
+}
+
+void DebugSessionLinux::scanThreadsWithAttRaisedUntilSteadyState(uint32_t tileIndex, std::vector<L0::EuThread::ThreadId> &threadsWithAttention) {
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize;
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    constexpr int maxScanAttempts = 10;
+    size_t previousCount = 0u;
+
+    for (int i = 0; i < maxScanAttempts; i++) {
+        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
+
+        if (attReadResult == 0) {
+            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
+            PRINT_DEBUGGER_INFO_LOG("Threads with attention: %d", (int)threadsWithAttention.size());
+
+            if (threadsWithAttention.size() == previousCount) {
+                break;
+            }
+            NEO::sleep(std::chrono::milliseconds(10));
+            previousCount = threadsWithAttention.size();
+        }
+    }
 }
 
 } // namespace L0

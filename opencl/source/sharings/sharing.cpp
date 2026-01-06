@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include "CL/cl.h"
-
-#include <memory>
 
 namespace NEO {
 

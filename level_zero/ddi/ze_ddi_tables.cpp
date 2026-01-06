@@ -10,6 +10,7 @@
 #include "level_zero/api/core/ze_core_all_api_entrypoints.h"
 #include "level_zero/api/driver_experimental/tracing/zet_tracing.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/api/runtime/ze_runtime_all_api_entrypoints.h"
 #include "level_zero/api/sysman/zes_sysman_all_api_entrypoints.h"
 #include "level_zero/api/tools/zet_tools_all_api_entrypoints.h"
 
@@ -18,9 +19,12 @@ namespace L0 {
 DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
-    this->core.version = ZE_API_VERSION_1_12;
+    this->core.isValidFlag = true;
+    this->core.version = ZE_API_VERSION_1_14;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
+    this->core.RTASBuilder = &this->coreRTASBuilder;
     this->core.RTASParallelOperationExp = &this->coreRTASParallelOperationExp;
+    this->core.RTASParallelOperation = &this->coreRTASParallelOperation;
     this->core.Global = &this->coreGlobal;
     this->core.Driver = &this->coreDriver;
     this->core.DriverExp = &this->coreDriverExp;
@@ -48,7 +52,8 @@ DriverDispatch::DriverDispatch() {
     this->core.FabricVertexExp = &this->coreFabricVertexExp;
     this->core.FabricEdgeExp = &this->coreFabricEdgeExp;
 
-    this->tools.version = ZE_API_VERSION_1_12;
+    this->tools.isValidFlag = true;
+    this->tools.version = ZE_API_VERSION_1_13;
     this->tools.MetricProgrammableExp = &this->toolsMetricProgrammableExp;
     this->tools.MetricTracerExp = &this->toolsMetricTracerExp;
     this->tools.MetricDecoderExp = &this->toolsMetricDecoderExp;
@@ -56,6 +61,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.DeviceExp = &this->toolsDeviceExp;
     this->tools.Context = &this->toolsContext;
     this->tools.CommandList = &this->toolsCommandList;
+    this->tools.CommandListExp = &this->toolsCommandListExp;
     this->tools.Module = &this->toolsModule;
     this->tools.Kernel = &this->toolsKernel;
     this->tools.Metric = &this->toolsMetric;
@@ -68,6 +74,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.TracerExp = &this->toolsTracerExp;
     this->tools.Debug = &this->toolsDebug;
 
+    this->sysman.isValidFlag = true;
     this->sysman.version = ZE_API_VERSION_1_12;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
@@ -94,6 +101,15 @@ DriverDispatch::DriverDispatch() {
     this->sysman.Diagnostics = &this->sysmanDiagnostics;
     this->sysman.VFManagementExp = &this->sysmanVFManagementExp;
 
+    this->runtime.isValidFlag = true;
+    this->runtime.version = ZE_API_VERSION_1_14;
+    this->runtime.Global = &this->runtimeGlobal;
+
+    this->coreRTASBuilder.pfnCreateExt = L0::zeRTASBuilderCreateExt;
+    this->coreRTASBuilder.pfnGetBuildPropertiesExt = L0::zeRTASBuilderGetBuildPropertiesExt;
+    this->coreRTASBuilder.pfnBuildExt = L0::zeRTASBuilderBuildExt;
+    this->coreRTASBuilder.pfnDestroyExt = L0::zeRTASBuilderDestroyExt;
+    this->coreRTASBuilder.pfnCommandListAppendCopyExt = L0::zeRTASBuilderCommandListAppendCopyExt;
     this->coreRTASBuilderExp.pfnCreateExp = L0::zeRTASBuilderCreateExp;
     this->coreRTASBuilderExp.pfnGetBuildPropertiesExp = L0::zeRTASBuilderGetBuildPropertiesExp;
     this->coreRTASBuilderExp.pfnBuildExp = L0::zeRTASBuilderBuildExp;
@@ -102,6 +118,10 @@ DriverDispatch::DriverDispatch() {
     this->coreRTASParallelOperationExp.pfnGetPropertiesExp = L0::zeRTASParallelOperationGetPropertiesExp;
     this->coreRTASParallelOperationExp.pfnJoinExp = L0::zeRTASParallelOperationJoinExp;
     this->coreRTASParallelOperationExp.pfnDestroyExp = L0::zeRTASParallelOperationDestroyExp;
+    this->coreRTASParallelOperation.pfnCreateExt = L0::zeRTASParallelOperationCreateExt;
+    this->coreRTASParallelOperation.pfnGetPropertiesExt = L0::zeRTASParallelOperationGetPropertiesExt;
+    this->coreRTASParallelOperation.pfnJoinExt = L0::zeRTASParallelOperationJoinExt;
+    this->coreRTASParallelOperation.pfnDestroyExt = L0::zeRTASParallelOperationDestroyExt;
     this->coreGlobal.pfnInit = L0::zeInit;
     this->coreGlobal.pfnInitDrivers = L0::zeInitDrivers;
     this->coreDriver.pfnGet = L0::zeDriverGet;
@@ -111,6 +131,8 @@ DriverDispatch::DriverDispatch() {
     this->coreDriver.pfnGetExtensionProperties = L0::zeDriverGetExtensionProperties;
     this->coreDriver.pfnGetExtensionFunctionAddress = L0::zeDriverGetExtensionFunctionAddress;
     this->coreDriver.pfnGetLastErrorDescription = L0::zeDriverGetLastErrorDescription;
+    this->coreDriver.pfnRTASFormatCompatibilityCheckExt = L0::zeDriverRTASFormatCompatibilityCheckExt;
+    this->coreDriver.pfnGetDefaultContext = L0::zeDriverGetDefaultContext;
     this->coreDriverExp.pfnRTASFormatCompatibilityCheckExp = L0::zeDriverRTASFormatCompatibilityCheckExp;
     this->coreDevice.pfnGet = L0::zeDeviceGet;
     this->coreDevice.pfnGetSubDevices = L0::zeDeviceGetSubDevices;
@@ -131,8 +153,10 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnSetCacheAdviceExt = L0::zeDeviceSetCacheAdviceExt;
     this->coreDevice.pfnPciGetPropertiesExt = L0::zeDevicePciGetPropertiesExt;
     this->coreDevice.pfnGetRootDevice = L0::zeDeviceGetRootDevice;
-    this->coreDevice.pfnImportExternalSemaphoreExt = nullptr;
-    this->coreDevice.pfnReleaseExternalSemaphoreExt = nullptr;
+    this->coreDevice.pfnImportExternalSemaphoreExt = L0::zeDeviceImportExternalSemaphoreExt;
+    this->coreDevice.pfnReleaseExternalSemaphoreExt = L0::zeDeviceReleaseExternalSemaphoreExt;
+    this->coreDevice.pfnGetVectorWidthPropertiesExt = L0::zeDeviceGetVectorWidthPropertiesExt;
+    this->coreDevice.pfnSynchronize = L0::zeDeviceSynchronize;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;
@@ -183,9 +207,11 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnGetOrdinal = L0::zeCommandListGetOrdinal;
     this->coreCommandList.pfnImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
     this->coreCommandList.pfnIsImmediate = L0::zeCommandListIsImmediate;
-    this->coreCommandList.pfnAppendSignalExternalSemaphoreExt = nullptr;
-    this->coreCommandList.pfnAppendWaitExternalSemaphoreExt = nullptr;
-    this->coreCommandListExp.pfnCreateCloneExp = nullptr;
+    this->coreCommandList.pfnAppendSignalExternalSemaphoreExt = L0::zeCommandListAppendSignalExternalSemaphoreExt;
+    this->coreCommandList.pfnAppendWaitExternalSemaphoreExt = L0::zeCommandListAppendWaitExternalSemaphoreExt;
+    this->coreCommandList.pfnAppendLaunchKernelWithParameters = L0::zeCommandListAppendLaunchKernelWithParameters;
+    this->coreCommandList.pfnAppendLaunchKernelWithArguments = L0::zeCommandListAppendLaunchKernelWithArguments;
+    this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;
     this->coreCommandListExp.pfnUpdateMutableCommandsExp = L0::zeCommandListUpdateMutableCommandsExp;
@@ -227,7 +253,7 @@ DriverDispatch::DriverDispatch() {
     this->coreEventPool.pfnGetIpcHandle = L0::zeEventPoolGetIpcHandle;
     this->coreEventPool.pfnOpenIpcHandle = L0::zeEventPoolOpenIpcHandle;
     this->coreEventPool.pfnCloseIpcHandle = L0::zeEventPoolCloseIpcHandle;
-    this->coreEventPool.pfnPutIpcHandle = nullptr;
+    this->coreEventPool.pfnPutIpcHandle = L0::zeEventPoolPutIpcHandle;
     this->coreEventPool.pfnGetContextHandle = L0::zeEventPoolGetContextHandle;
     this->coreEventPool.pfnGetFlags = L0::zeEventPoolGetFlags;
     this->coreEvent.pfnCreate = L0::zeEventCreate;
@@ -268,6 +294,7 @@ DriverDispatch::DriverDispatch() {
     this->coreKernelExp.pfnSetGlobalOffsetExp = L0::zeKernelSetGlobalOffsetExp;
     this->coreKernelExp.pfnSchedulingHintExp = L0::zeKernelSchedulingHintExp;
     this->coreKernelExp.pfnGetBinaryExp = L0::zeKernelGetBinaryExp;
+    this->coreKernelExp.pfnGetAllocationPropertiesExp = L0::zeKernelGetAllocationPropertiesExp;
     this->coreSampler.pfnCreate = L0::zeSamplerCreate;
     this->coreSampler.pfnDestroy = L0::zeSamplerDestroy;
     this->corePhysicalMem.pfnCreate = L0::zePhysicalMemCreate;
@@ -303,11 +330,14 @@ DriverDispatch::DriverDispatch() {
     this->toolsDevice.pfnGetDebugProperties = L0::zetDeviceGetDebugProperties;
     this->toolsDeviceExp.pfnGetConcurrentMetricGroupsExp = L0::zetDeviceGetConcurrentMetricGroupsExp;
     this->toolsDeviceExp.pfnCreateMetricGroupsFromMetricsExp = L0::zetDeviceCreateMetricGroupsFromMetricsExp;
+    this->toolsDeviceExp.pfnEnableMetricsExp = L0::zetDeviceEnableMetricsExp;
+    this->toolsDeviceExp.pfnDisableMetricsExp = L0::zetDeviceDisableMetricsExp;
     this->toolsContext.pfnActivateMetricGroups = L0::zetContextActivateMetricGroups;
     this->toolsCommandList.pfnAppendMetricStreamerMarker = L0::zetCommandListAppendMetricStreamerMarker;
     this->toolsCommandList.pfnAppendMetricQueryBegin = L0::zetCommandListAppendMetricQueryBegin;
     this->toolsCommandList.pfnAppendMetricQueryEnd = L0::zetCommandListAppendMetricQueryEnd;
     this->toolsCommandList.pfnAppendMetricMemoryBarrier = L0::zetCommandListAppendMetricMemoryBarrier;
+    this->toolsCommandListExp.pfnAppendMarkerExp = L0::zetCommandListAppendMarkerExp;
     this->toolsModule.pfnGetDebugInfo = L0::zetModuleGetDebugInfo;
     this->toolsKernel.pfnGetProfileInfo = L0::zetKernelGetProfileInfo;
     this->toolsMetric.pfnGet = L0::zetMetricGet;
@@ -321,7 +351,7 @@ DriverDispatch::DriverDispatch() {
     this->toolsMetricGroupExp.pfnCalculateMultipleMetricValuesExp = L0::zetMetricGroupCalculateMultipleMetricValuesExp;
     this->toolsMetricGroupExp.pfnGetGlobalTimestampsExp = L0::zetMetricGroupGetGlobalTimestampsExp;
     this->toolsMetricGroupExp.pfnGetExportDataExp = L0::zetMetricGroupGetExportDataExp;
-    this->toolsMetricGroupExp.pfnCalculateMetricExportDataExp = L0::zetDriverCalculateMetricExportDataExp;
+    this->toolsMetricGroupExp.pfnCalculateMetricExportDataExp = L0::zetMetricGroupCalculateMetricExportDataExp;
     this->toolsMetricGroupExp.pfnCreateExp = L0::zetMetricGroupCreateExp;
     this->toolsMetricGroupExp.pfnAddMetricExp = L0::zetMetricGroupAddMetricExp;
     this->toolsMetricGroupExp.pfnRemoveMetricExp = L0::zetMetricGroupRemoveMetricExp;
@@ -525,5 +555,10 @@ DriverDispatch::DriverDispatch() {
     this->sysmanVFManagementExp.pfnGetVFMemoryUtilizationExp2 = L0::zesVFManagementGetVFMemoryUtilizationExp2;
     this->sysmanVFManagementExp.pfnGetVFEngineUtilizationExp2 = L0::zesVFManagementGetVFEngineUtilizationExp2;
     this->sysmanVFManagementExp.pfnGetVFCapabilitiesExp2 = L0::zesVFManagementGetVFCapabilitiesExp2;
+
+    this->runtimeGlobal.pfnGetLastErrorDescription = L0::zerGetLastErrorDescription;
+    this->runtimeGlobal.pfnTranslateDeviceHandleToIdentifier = L0::zerTranslateDeviceHandleToIdentifier;
+    this->runtimeGlobal.pfnTranslateIdentifierToDeviceHandle = L0::zerTranslateIdentifierToDeviceHandle;
+    this->runtimeGlobal.pfnGetDefaultContext = L0::zerGetDefaultContext;
 }
 } // namespace L0

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,7 @@ NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
 NEO_LEGACY_PLATFORMS_SUPPORT=${NEO_LEGACY_PLATFORMS_SUPPORT:-FALSE}
 NEO_CURRENT_PLATFORMS_SUPPORT=${NEO_CURRENT_PLATFORMS_SUPPORT:-TRUE}
+NEO_STRICT_DEPENDENCIES=${NEO_STRICT_DEPENDENCIES:-TRUE}
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
@@ -73,7 +74,7 @@ if [ ! -z "${LEVEL_ZERO_DEVEL_VERSION}" ]; then
     perl -pi -e "s/^ level-zero-devel(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
 fi
 
-if [ -z "${BRANCH_SUFFIX}" ]; then
+if [[ -z "${BRANCH_SUFFIX}" ]] && [[ "${NEO_STRICT_DEPENDENCIES}" == "TRUE" ]]; then
     GMM_VERSION=$(apt-cache policy libigdgmm12 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${GMM_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm12(?=,|$)/ libigdgmm12 (>=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
@@ -82,10 +83,9 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-
-    IGC_VERSION=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+    IGC_CORE_VERSION=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | xargs)
+    if [ ! -z "${IGC_CORE_VERSION}" ]; then
+        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (>=$IGC_CORE_VERSION), intel-igc-core-2 (<<$IGC_CORE_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
 fi
 

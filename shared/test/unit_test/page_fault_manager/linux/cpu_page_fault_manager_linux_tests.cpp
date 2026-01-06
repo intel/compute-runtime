@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,78 +30,6 @@ TEST_F(PageFaultManagerLinuxTest, whenPageFaultIsRaisedWithFaultHandlerRegistere
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
 }
 
-struct MockOperationsInterface : public MockMemoryOperationsHandler {
-    bool evictCalled = false;
-    MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
-        this->evictCalled = true;
-        return MemoryOperationsStatus::unsupported;
-    }
-};
-
-TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaEnabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsCalled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDirectSubmission.set(true);
-    debugManager.flags.USMEvictAfterMigration.set(true);
-
-    auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface = std::make_unique<MockOperationsInterface>();
-    auto operationInterface = static_cast<MockOperationsInterface *>(device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface.get());
-    MockGraphicsAllocation allocation;
-
-    EXPECT_FALSE(operationInterface->evictCalled);
-    pageFaultManager->evictMemoryAfterImplCopy(&allocation, device.get());
-    EXPECT_TRUE(operationInterface->evictCalled);
-}
-
-TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionEnabledAndUSMEvictWaDisabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDirectSubmission.set(true);
-    debugManager.flags.USMEvictAfterMigration.set(false);
-
-    auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface = std::make_unique<MockOperationsInterface>();
-    auto operationInterface = static_cast<MockOperationsInterface *>(device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface.get());
-    MockGraphicsAllocation allocation;
-
-    EXPECT_FALSE(operationInterface->evictCalled);
-    pageFaultManager->evictMemoryAfterImplCopy(&allocation, device.get());
-    EXPECT_FALSE(operationInterface->evictCalled);
-}
-
-TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaDisabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDirectSubmission.set(false);
-    debugManager.flags.USMEvictAfterMigration.set(false);
-
-    auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface = std::make_unique<MockOperationsInterface>();
-    auto operationInterface = static_cast<MockOperationsInterface *>(device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface.get());
-    MockGraphicsAllocation allocation;
-
-    EXPECT_FALSE(operationInterface->evictCalled);
-    pageFaultManager->evictMemoryAfterImplCopy(&allocation, device.get());
-    EXPECT_FALSE(operationInterface->evictCalled);
-}
-
-TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionDisabledAndUSMEvictWaEnabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDirectSubmission.set(false);
-    debugManager.flags.USMEvictAfterMigration.set(true);
-
-    auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface = std::make_unique<MockOperationsInterface>();
-    auto operationInterface = static_cast<MockOperationsInterface *>(device->getExecutionEnvironment()->rootDeviceEnvironments[0u]->memoryOperationsInterface.get());
-    MockGraphicsAllocation allocation;
-
-    EXPECT_FALSE(operationInterface->evictCalled);
-    pageFaultManager->evictMemoryAfterImplCopy(&allocation, device.get());
-    EXPECT_FALSE(operationInterface->evictCalled);
-}
-
 TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWithFaultHandlerRegisteredWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     pageFaultManager->allowCPUMemoryAccessOnPageFault = true;
@@ -115,6 +43,7 @@ TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWithFaultHandlerRegistered
 
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     ptr[0] = 10;
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
     EXPECT_EQ(ptr[0], 10);
 }

@@ -26,11 +26,14 @@ enum class WaitpkgUse : int32_t {
     tpause
 };
 
-constexpr int64_t defaultWaitPkgThresholdInMicroSeconds = 12;
+constexpr int64_t defaultWaitPkgThresholdInMicroSeconds = 20;
 constexpr int64_t defaultWaitPkgThresholdForDiscreteInMicroSeconds = 28;
-constexpr uint64_t defaultCounterValue = 16000;
+constexpr uint64_t defaultCounterValue = 12000;
 constexpr uint32_t defaultControlValue = 0;
 constexpr uint32_t defaultWaitCount = 1u;
+
+constexpr int64_t defaultWaitPkgThresholdForUllsLightInMicroSeconds = 1;
+constexpr uint64_t defaultCounterValueForUllsLight = 16000;
 
 extern WaitpkgUse waitpkgUse;
 extern int64_t waitPkgThresholdInMicroSeconds;
@@ -76,11 +79,24 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
     return false;
 }
 
+inline void waitFunctionWithoutPredicate(int64_t timeElapsedSinceWaitStarted) {
+    if (waitpkgUse == WaitpkgUse::tpause && timeElapsedSinceWaitStarted > waitPkgThresholdInMicroSeconds) {
+        tpause();
+    } else {
+        for (uint32_t i = 0; i < waitCount; i++) {
+            CpuIntrinsics::pause();
+        }
+    }
+}
+
 inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType expectedValue, int64_t timeElapsedSinceWaitStarted) {
     return waitFunctionWithPredicate<TaskCountType>(pollAddress, expectedValue, std::greater_equal<TaskCountType>(), timeElapsedSinceWaitStarted);
 }
 
 void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo);
+void overrideWaitpkgParams();
+void adjustWaitpkgParamsForUllsLight();
+
 } // namespace WaitUtils
 
 } // namespace NEO

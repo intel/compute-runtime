@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,13 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_callbacks.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/gmm_helper/windows/gmm_memory.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -23,8 +24,6 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-
-#include "gmm_memory.h"
 
 namespace NEO {
 
@@ -99,11 +98,9 @@ bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gp
 
     if (false == readPartitionLayoutWithinProcess(wddm, partitionLayout)) {
         return false;
-    } else {
-        if (partitionLayout.Standard64KB.Limit != 0) {
-            // already partitioned
-            return true;
-        }
+    } else if (partitionLayout.Standard64KB.Limit != 0) {
+        // already partitioned
+        return true;
     }
 
     partitionLayout.SVM.Base = minAllowedAddress;

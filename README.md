@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2018-2023 Intel Corporation
+Copyright (C) 2018-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -32,14 +32,38 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-|Platform|OpenCL|Level Zero|
-|--------|:----:|:--------:|
-|Intel Core Processors with Gen8 graphics devices (formerly Broadwell)| 3.0 | - |
-|Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 3.0 | Y |
-|Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 3.0 | - |
-|Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 3.0 | Y |
-|Intel Atom Processors with Gen11 graphics devices (formerly Elkhart Lake)| 3.0 | - |
-|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake, Rocket Lake, Alder Lake)| 3.0 | Y |
+|Platform|OpenCL|Level Zero|WSL
+|--------|:----:|:-----:|:-:|
+|DG1| 3.0 | 1.14 | Y |
+|Alchemist| 3.0 | 1.14 | Y |
+|Battlemage| 3.0 | 1.14 | Y |
+|Tiger Lake| 3.0 | 1.14 | Y |
+|Rocket Lake| 3.0 | 1.14 | Y |
+|Alder Lake| 3.0 | 1.14 | Y |
+|Raptor Lake| 3.0 | 1.14 | Y |
+|Meteor Lake| 3.0 | 1.14 | Y |
+|Arrow Lake| 3.0 | 1.14 | Y |
+|Lunar Lake| 3.0 | 1.14 | Y |
+|Panther Lake| 3.0 | 1.14 | Y |
+
+_No code changes may be introduced that would regress support for any currently supported hardware. All contributions must ensure continued compatibility and functionality across all supported hardware platforms. Failure to maintain hardware compatibility may result in the rejection or reversion of the contribution. Any deliberate modifications or removal of hardware support will be transparently communicated in the release notes._
+
+_Debug parameters, environmental variables, and internal data structures are considered as internal implementation detail and may be changed or removed at any time._
+
+## Support for legacy platforms
+
+Support for Gen8, Gen9 and Gen11 devices is delivered via packages with legacy1 suffix, more details [here](LEGACY_PLATFORMS.md)
+
+## Legacy Platforms
+
+|Platform|OpenCL|Level Zero|WSL|
+|--------|:----:|:--------:|:-:|
+|Intel Core Processors with Gen8 graphics devices (formerly Broadwell)| 3.0 | - | - |
+|Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake)| 3.0 | 1.5 | - |
+|Intel Core Processors with Gen9 graphics devices (formerly Coffee Lake)| 3.0 | 1.5 | Y |
+|Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 3.0 | - | - |
+|Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 3.0 | 1.5 | Y |
+|Intel Atom Processors with Gen11 graphics devices (formerly Elkhart Lake)| 3.0 | - | Y |
 
 ## Release cadence
 
@@ -52,6 +76,9 @@ _Release cadence changed from weekly to monthly late 2022_
 * We publish and document a monthly release from the tip of that branch. 
 * During subsequent weeks of a given month, we continue to cherry-pick fixes to that branch and may publish a hotfix release. 
 * Quality level of the driver (per platform) will be provided in the Release Notes.
+* Once a monthly release is posted on compute-runtime GitHub, it may propagate to secondary release channels and/or be repackaged / rebuilt for convenience (e.g., [intel-graphics](https://launchpad.net/~kobuk-team/+archive/ubuntu/intel-graphics)). Users should choose package origin (GitHub/PPA) that is most convenient for them.
+* A secondary channel must not release a version that was not released on GitHub prior.
+ 
 
 ## Installation Options
 
@@ -104,6 +131,7 @@ for more details.
 
 * [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 * [Programmers Guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
+* [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md)
 * [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/FAQ.md)
 
 ### Level Zero specific

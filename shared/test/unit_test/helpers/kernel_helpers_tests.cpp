@@ -50,7 +50,7 @@ struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
     uint32_t getMaxWorkGroupCount() {
         auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
-        hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
+        hwInfo->capabilityTable.maxProgrammableSlmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
 
         if (numSubdevices > 1) {
             forceSingleTileQuery = false;
@@ -72,7 +72,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
 
     uint32_t workGroupSize = static_cast<uint32_t>(lws[0] * lws[1] * lws[2]);
-    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf, *rootDeviceEnvironment) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
 
     expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
@@ -103,7 +103,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, givenMultipleSubdevicesWenCalculatingMaxW
     }
 }
 
-HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount, MatchAny) {
+HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount, HasDispatchAllSupport) {
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*rootDeviceEnvironment);
     raii.mockProductHelper->isCooperativeEngineSupportedValue = false;
     lws[0] = 1;
@@ -121,7 +121,7 @@ HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGro
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
-HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize, MatchAny) {
+HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize, HasDispatchAllSupport) {
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*rootDeviceEnvironment);
     raii.mockProductHelper->isCooperativeEngineSupportedValue = false;
     usedSlm = 0;
@@ -157,7 +157,7 @@ HWTEST_F(KernelHelperMaxWorkGroupsTests, givenZeroBarriersAndSlmNotUsedWhenCalcu
     EXPECT_EQ(raiiFactory.mockGfxCoreHelper->alignThreadGroupCountToDssSizeCalledTimes, 0u);
 }
 
-TEST_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned) {
+HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned, HasDispatchAllSupport) {
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
 
     engineType = EngineGroupType::cooperativeCompute;
@@ -334,4 +334,42 @@ TEST_F(KernelHelperTest, GivenThreadGroupCountWhenGetRegionGroupBarrierSizeThenP
 
     constexpr size_t minOffset = 64;
     EXPECT_EQ(minOffset, offset);
+}
+
+TEST_F(KernelHelperTest, givenVariousIsaSizesWhenComputingAlignedSizeWithPaddingThenResultIsAlignedToMaxOfKernelAlignAndCacheLineSize) {
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto &productHelper = pDevice->getProductHelper();
+
+    const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+    const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+    const size_t alignment = std::max(kernelAlign, cacheLine);
+    const size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+
+    std::vector<size_t> testSizes = {1u, 64u, 128u, 256u, 1024u};
+
+    for (auto isaSize : testSizes) {
+        // Last kernel - with padding
+        auto sizeWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, true);
+        auto expectedWithPadding = alignUp(isaSize + isaPadding, alignment);
+
+        EXPECT_EQ(sizeWithPadding, expectedWithPadding);
+        EXPECT_GE(sizeWithPadding, isaSize + isaPadding);
+
+        // Not last kernel - without padding
+        auto sizeWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, false);
+        auto expectedWithoutPadding = alignUp(isaSize, alignment);
+
+        EXPECT_EQ(sizeWithoutPadding, expectedWithoutPadding);
+        EXPECT_GE(sizeWithoutPadding, isaSize);
+
+        EXPECT_GE(sizeWithPadding, sizeWithoutPadding);
+    }
+
+    // Test already aligned size
+    size_t alignedIsaSize = alignment * 4;
+    auto alignedWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, false);
+    EXPECT_EQ(alignedIsaSize, alignedWithoutPadding);
+
+    auto alignedWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, true);
+    EXPECT_EQ(alignUp(alignedIsaSize + isaPadding, alignment), alignedWithPadding);
 }

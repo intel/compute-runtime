@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,11 +68,11 @@ struct GlArbSyncEventTest : public ::testing::Test {
     }
 
     void SetUp() override {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCommandStreamReceiver>();
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(*executionEnvironment);
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
-        device->resetCommandStreamReceiver(mockCsr);
         ctx.reset(new MockContext);
         cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr, false));
         sharing = new GlSharingFunctionsMock();

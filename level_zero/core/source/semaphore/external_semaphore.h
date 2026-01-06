@@ -19,9 +19,8 @@
 #include <memory>
 #include <mutex>
 
-struct _ze_external_semaphore_ext_handle_t {
-    const uint64_t objMagic = objMagicValue;
-};
+struct _ze_external_semaphore_ext_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_external_semaphore_ext_handle_t>);
 
 namespace L0 {
 

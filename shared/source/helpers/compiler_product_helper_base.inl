@@ -9,7 +9,6 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -45,7 +44,7 @@ const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool is
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPreference() const {
+bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithBufferStatefulAccessPreference() const {
     return false;
 }
 
@@ -68,7 +67,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_intel_subgroups "
                              "cl_intel_required_subgroup_size "
                              "cl_intel_subgroups_short "
-                             "cl_khr_spir "
                              "cl_intel_accelerator "
                              "cl_intel_driver_diagnostics "
                              "cl_khr_priority_hints "
@@ -89,7 +87,16 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_expect_assume "
                              "cl_khr_extended_bit_ops "
                              "cl_khr_suggested_local_work_size "
-                             "cl_intel_split_work_group_barrier ";
+                             "cl_intel_split_work_group_barrier "
+                             "cl_khr_int64_base_atomics "
+                             "cl_khr_int64_extended_atomics "
+                             "cl_khr_integer_dot_product "
+                             "cl_intel_spirv_subgroups "
+                             "cl_khr_spirv_linkonce_odr "
+                             "cl_khr_spirv_no_integer_wrap_decoration "
+                             "cl_khr_spirv_queries "
+                             "cl_intel_unified_shared_memory "
+                             "cl_ext_float_atomics ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
     if (debugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
@@ -103,32 +110,15 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_khr_subgroups ";
     }
 
-    auto enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
-    if (debugManager.flags.ForceOCLVersion.get() != 0) {
-        enabledClVersion = debugManager.flags.ForceOCLVersion.get();
-    }
-    auto ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
-
-    if (ocl21FeaturesEnabled) {
-
-        if (hwInfo.capabilityTable.supportsMediaBlock) {
-            extensions += "cl_intel_spirv_media_block_io ";
-        }
-        extensions += "cl_intel_spirv_subgroups ";
-        extensions += "cl_khr_spirv_linkonce_odr ";
-        extensions += "cl_khr_spirv_no_integer_wrap_decoration ";
-
-        extensions += "cl_intel_unified_shared_memory ";
-        if (hwInfo.capabilityTable.supportsImages) {
-            extensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
-        }
+    if (hwInfo.capabilityTable.supportsMediaBlock) {
+        extensions += "cl_intel_spirv_media_block_io ";
     }
 
-    if (enabledClVersion >= 20) {
-        extensions += "cl_ext_float_atomics ";
+    if (hwInfo.capabilityTable.supportsImages) {
+        extensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
     }
 
-    if (enabledClVersion >= 30 && debugManager.flags.ClKhrExternalMemoryExtension.get()) {
+    if (debugManager.flags.ClKhrExternalMemoryExtension.get()) {
         extensions += "cl_khr_external_memory ";
     }
 
@@ -137,11 +127,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     }
     if (debugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_packed_yuv ";
-    }
-
-    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        extensions += "cl_khr_int64_base_atomics ";
-        extensions += "cl_khr_int64_extended_atomics ";
     }
 
     if (hwInfo.capabilityTable.supportsImages) {
@@ -191,9 +176,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     if (isSubgroupBufferPrefetchSupported()) {
         extensions += "cl_intel_subgroup_buffer_prefetch ";
     }
-    if (isDotIntegerProductExtensionSupported()) {
-        extensions += "cl_khr_integer_dot_product ";
-    }
+
     return extensions;
 }
 
@@ -211,7 +194,7 @@ StackVec<OclCVersion, 5> CompilerProductHelperHw<gfxProduct>::getDeviceOpenCLCVe
         {OclCVersion{1, 0}, true},
         {OclCVersion{1, 1}, true},
         {OclCVersion{1, 2}, true},
-        {OclCVersion{3, 0}, hwInfo.capabilityTable.clVersionSupport == 30}};
+        {OclCVersion{3, 0}, true}};
 
     StackVec<OclCVersion, 5> ret;
     for (const auto &version : supportedVersionsMatrix) {
@@ -224,7 +207,7 @@ StackVec<OclCVersion, 5> CompilerProductHelperHw<gfxProduct>::getDeviceOpenCLCVe
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled() const {
+bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -310,18 +293,31 @@ bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const Rel
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired() const {
-    return this->isHeaplessModeEnabled();
+bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired(const HardwareInfo &hwInfo) const {
+    return this->isHeaplessModeEnabled(hwInfo);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCustomIgcLibraryName() const {
+    if (debugManager.flags.IgcLibraryName.get() != "unk") {
+        return debugManager.flags.IgcLibraryName.getRef().c_str();
+    }
     return nullptr;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::useIgcAsFcl() const {
+    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getFinalizerLibraryName() const {
     return nullptr;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+IGC::CodeType::CodeType_t CompilerProductHelperHw<gfxProduct>::getPreferredIntermediateRepresentation() const {
+    return IGC::CodeType::spirV;
 }
 
 } // namespace NEO

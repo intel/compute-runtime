@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,19 @@
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
+namespace NEO {
+class EuDebugInterface;
+struct EuDebugConnect;
+} // namespace NEO
+
 namespace L0 {
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
+ze_result_t openConnectionUpstreamHelper(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd);
 
 namespace ult {
 
 using CreateDebugSessionHelperFunc = decltype(&L0::createDebugSessionHelper);
+using OpenConnectionUpstreamHelperFunc = std::function<ze_result_t(int, L0::Device *, NEO::EuDebugInterface &, NEO::EuDebugConnect *, int &)>;
 
 class OsInterfaceWithDebugAttach : public NEO::OSInterface {
   public:
@@ -124,6 +131,17 @@ struct DebugSessionMock : public L0::DebugSession {
         return 0;
     }
 
+    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device) {
+        return DebugSessionImp::typeToRegsetDesc(pStateSaveAreaHeader, type, device);
+    }
+
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
+        registerAccessPropertiesCalled = true;
+        return true; // ignore parameters for mock
+    }
+
+    bool registerAccessPropertiesCalled = false;
+
     void detachTileDebugSession(DebugSession *tileSession) override {}
     bool areAllTileDebugSessionDetached() override { return true; }
 
@@ -135,6 +153,18 @@ struct DebugSessionMock : public L0::DebugSession {
 
     const NEO::TopologyMap &getTopologyMap() override {
         return this->topologyMap;
+    }
+
+    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override {
+        return true;
+    }
+
+    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override {
+        return true;
+    }
+
+    void closeExternalSipHandles() override {
+        // Mock implementation - no-op
     }
 
     NEO::TopologyMap topologyMap;
@@ -155,11 +185,15 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
+    using L0::DebugSessionImp::cmdRegisterAccessHelper;
+    using L0::DebugSessionImp::dumpDebugSurfaceToFile;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
     using L0::DebugSessionImp::generateEventsAndResumeStoppedThreads;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
+    using L0::DebugSessionImp::getSipCommandRegisterValues;
+    using L0::DebugSessionImp::getSlmAccessProtocol;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidNode;
@@ -191,9 +225,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::minSlmSipVersion;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
+    using L0::DebugSessionImp::readBarrierMemory;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
     using L0::DebugSessionImp::sipSupportsSlm;
+    using L0::DebugSessionImp::SlmAccessProtocol;
     using L0::DebugSessionImp::slmMemoryAccess;
+    using L0::DebugSessionImp::slmMemoryReadV2;
+    using L0::DebugSessionImp::slmMemoryWriteV2;
     using L0::DebugSessionImp::slmSipVersionCheck;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
@@ -351,7 +389,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readThreadScratchRegisters(thread, start, count, pRegisterValues);
     }
 
-    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
+    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override { return ZE_RESULT_SUCCESS; }
     void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) override {
         resumeAccidentallyStoppedCalled++;
         return DebugSessionImp::resumeAccidentallyStoppedThreads(threadIds);
@@ -359,6 +397,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     void startAsyncThread() override {}
     bool readModuleDebugArea() override { return true; }
+
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
+        registerAccessPropertiesCalled = true;
+        return true; // simulate successful retrieval for tests that validate SIP path usage
+    }
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         apiEvents.push(debugEvent);
@@ -418,28 +461,28 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::waitForCmdReady(threadId, 1);
     }
 
-    ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) override {
+    ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write) override {
 
         ze_result_t status = ZE_RESULT_SUCCESS;
 
         if (slmTesting) {
-            uint32_t size = command.size * slmSendBytesSize;
+            uint32_t size = command.sip_commandValues.size * slmSendBytesSize;
 
             // initial wait for ready
             if (!write && slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
                 if (!memcmp(slmMemory, "FailWaiting", strlen("FailWaiting"))) {
                     return ZE_RESULT_FORCE_UINT32;
                 }
-                command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
+                command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
                 status = ZE_RESULT_SUCCESS;
             } else {
                 if (write) { // writing to CMD register
                     if (forceCmdAccessFail) {
                         return ZE_RESULT_FORCE_UINT32;
-                    } else if (command.command == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
-                        memcpy_s(slmMemory + command.offset, size, command.buffer, size);
+                    } else if (command.sip_commandValues.command == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
+                        memcpy_s(slmMemory + command.sip_commandValues.offset, size, command.sip_commandValues.buffer, size);
                     }
-                    slmCmdRegisterCmdvalue = command.command;
+                    slmCmdRegisterCmdvalue = command.sip_commandValues.command;
                 }
 
                 if (slmCmdRegisterCmdvalue != static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
@@ -448,7 +491,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
                 if (slmCmdRegisterAccessCount == slmCmdRegisterAccessReadyCount) { // SIP restores cmd to READY
 
-                    command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
+                    command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
 
                     if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
                         slmCmdRegisterAccessCount = 0;
@@ -458,7 +501,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
                     if (!memcmp(slmMemory, "FailReadingData", strlen("FailReadingData"))) {
                         status = ZE_RESULT_FORCE_UINT32;
                     } else if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmRead)) {
-                        memcpy_s(command.buffer, size, slmMemory + command.offset, size);
+                        memcpy_s(command.sip_commandValues.buffer, size, slmMemory + command.sip_commandValues.offset, size);
+                        command.sip_commandValues.offset = 0;
+                        command.sip_commandValues.size = 0;
                     }
 
                     slmCmdRegisterAccessCount = 0;
@@ -494,8 +539,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     };
 
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
-        if (forceZeroStateSaveAreaSize) {
-            return 0;
+        if (forceStateSaveAreaSize.has_value()) {
+            return forceStateSaveAreaSize.value();
         }
         if (stateSaveAreaHeader.size()) {
             auto header = getStateSaveAreaHeader();
@@ -521,6 +566,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     const NEO::TopologyMap &getTopologyMap() override {
         return this->topologyMap;
+    }
+
+    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device) {
+        return DebugSessionImp::typeToRegsetDesc(pStateSaveAreaHeader, type, device);
     }
 
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override {
@@ -570,6 +619,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
     uint32_t writeGpuMemoryCallCount = 0;
     uint32_t forceWriteGpuMemoryFailOnCount = 0;
 
+    // Instrumentation flag: set when getRegisterAccessProperties is invoked through SIP external lib path
+    bool registerAccessPropertiesCalled = false;
+
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;
 
@@ -589,7 +641,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     int64_t returnTimeDiff = -1;
     bool returnStateSaveAreaGpuVa = true;
-    bool forceZeroStateSaveAreaSize = false;
+    std::optional<size_t> forceStateSaveAreaSize = std::nullopt;
 
     bool attachTileCalled = false;
     bool detachTileCalled = false;

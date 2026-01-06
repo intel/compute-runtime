@@ -9,7 +9,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -18,7 +17,8 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/utilities/arrayref.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -27,7 +27,8 @@
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
-#include "level_zero/core/source/sampler/sampler_imp.h"
+#include "level_zero/core/source/image/image_imp.h"
+#include "level_zero/core/source/sampler/sampler.h"
 
 #include "encode_surface_state_args.h"
 
@@ -76,12 +77,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     case ZE_IMAGE_TYPE_3D:
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
         break;
+    case ZE_IMAGE_TYPE_BUFFER:
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
-    imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
+    imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<NEO::ImagePlane>(lookupTable.imageProperties.planeIndex + 1u) : NEO::ImagePlane::noPlane;
     imgInfo.useLocalMemory = false;
 
     if (lookupTable.bindlessImage && this->device->getNEODevice()->getBindlessHeapsHelper() == nullptr) {
@@ -104,6 +107,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->samplerDesc = *lookupTable.imageProperties.samplerDesc;
         this->samplerDesc.pNext = nullptr;
     }
+
+    NEO::UsmMemAllocPool *usmPool = nullptr;
 
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
@@ -139,6 +144,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 if (usmAllocation == nullptr) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
+
+                usmPool = this->device->getNEODevice()->getUsmPoolOwningPtr(lookupTable.imageProperties.pitchedPtr);
+                if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+
                 allocation = usmAllocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
             }
         }
@@ -157,10 +168,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
         }
         imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
-        imgInfo.size = allocation->getUnderlyingBufferSize();
         imgInfo.qPitch = 0;
-
-        UNRECOVERABLE_IF(imgInfo.offset != 0);
+        if (!isImageView()) {
+            imgInfo.size = imgInfo.slicePitch;
+            imgInfo.offset = ptrDiff(lookupTable.imageProperties.pitchedPtr, allocation->getGpuAddress());
+        }
     }
 
     if (this->bindlessImage) {
@@ -170,6 +182,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         NEO::AllocationProperties imgImplicitArgsAllocProperties(device->getRootDeviceIndex(), NEO::ImageImplicitArgs::getSize(), NEO::AllocationType::buffer, device->getNEODevice()->getDeviceBitfield());
         implicitArgsAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(imgImplicitArgsAllocProperties);
+    } else if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
+        allocateImplicitArgsOnDemand();
     }
 
     auto gmm = this->allocation->getDefaultGmm();
@@ -179,7 +193,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
         if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
             yuvPlaneType = NEO::ImagePlane::planeY;
-            if (imgInfo.plane == GMM_PLANE_U) {
+            if (imgInfo.plane == NEO::ImagePlane::planeU) {
                 yuvPlaneType = NEO::ImagePlane::planeUV;
             }
         }
@@ -228,7 +242,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (this->bindlessImage) {
         auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, false);
+        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false);
 
         if (this->sampledImage) {
             auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
@@ -240,55 +254,24 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
             auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
 
-            sampler->copySamplerStateToDSH(ssInHeap->ssPtr, static_cast<uint32_t>(ssInHeap->ssSize), samplerStateOffset);
+            ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
+            sampler->copySamplerStateToDSH(ssInHeapSpan, samplerStateOffset);
             sampler->destroy();
         }
     }
 
+    const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     if (this->bindlessImage && implicitArgsAllocation) {
         implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
-        auto clChannelType = getClChannelDataType(imageFormatDesc.format);
-        auto clChannelOrder = getClChannelOrder(imageFormatDesc.format);
-
         NEO::ImageImplicitArgs imageImplicitArgs{};
-        imageImplicitArgs.structVersion = 0;
+        populateImageImplicitArgs(imageImplicitArgs);
 
-        imageImplicitArgs.imageWidth = imgInfo.imgDesc.imageWidth;
-        imageImplicitArgs.imageHeight = imgInfo.imgDesc.imageHeight;
-        imageImplicitArgs.imageDepth = imgInfo.imgDesc.imageDepth;
-        imageImplicitArgs.imageArraySize = imgInfo.imgDesc.imageArraySize;
-        imageImplicitArgs.numSamples = imgInfo.imgDesc.numSamples;
-        imageImplicitArgs.channelType = clChannelType;
-        imageImplicitArgs.channelOrder = clChannelOrder;
-        imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
-
-        auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-        imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();
-        imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
-        imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
-        imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
-
-        const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
-
-        {
-            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-
-            NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = &implicitArgsSurfaceState;
-            args.size = NEO::ImageImplicitArgs::getSize();
-            args.graphicsAddress = implicitArgsAllocation->getGpuAddress();
-            args.gmmHelper = gmmHelper;
-            args.allocation = implicitArgsAllocation;
-            args.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
-            args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
-            args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
-            args.implicitScaling = this->device->isImplicitScalingCapable();
-            args.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
-
-            gfxCoreHelper.encodeBufferSurfaceState(args);
-        }
+        this->encodeImplicitArgsSurfaceState();
+        auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize();
+        auto ssInHeap = getBindlessSlot();
+        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
     }
 
     {
@@ -346,48 +329,49 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
+    if (productHelper.isPackedCopyFormatSupported()) {
+        packedSurfaceState = redescribedSurfaceState;
+
+        NEO::EncodeSurfaceState<GfxFamily>::convertSurfaceStateToPacked(&packedSurfaceState, imgInfo);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHeap,
-                                                           const uint32_t surfaceStateOffset,
+                                                           uint32_t surfaceStateOffset,
+                                                           uint32_t bindlessSlot,
                                                            bool isMediaBlockArg) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
-    // Copy the image's surface state into position in the provided surface state heap
-    auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
-    memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
-             &surfaceState, sizeof(RENDER_SURFACE_STATE));
+    const RENDER_SURFACE_STATE *src = nullptr;
+
+    switch (bindlessSlot) {
+    case NEO::BindlessImageSlot::image:
+        src = &surfaceState;
+        break;
+    case NEO::BindlessImageSlot::redescribedImage:
+        src = &redescribedSurfaceState;
+        break;
+    case NEO::BindlessImageSlot::implicitArgs:
+        src = &implicitArgsSurfaceState;
+        break;
+    case NEO::BindlessImageSlot::packedImage:
+        src = &packedSurfaceState;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+    }
+
+    auto dst = ptrOffset(surfaceStateHeap, surfaceStateOffset);
+    memcpy_s(dst, sizeof(RENDER_SURFACE_STATE), src, sizeof(RENDER_SURFACE_STATE));
+
     if (isMediaBlockArg) {
-        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(destSurfaceState);
+        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
         NEO::ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(dstRss, imgInfo);
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void ImageCoreFamily<gfxCoreFamily>::copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap,
-                                                                      const uint32_t surfaceStateOffset) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-
-    // Copy the image's surface state into position in the provided surface state heap
-    auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
-    memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
-             &redescribedSurfaceState, sizeof(RENDER_SURFACE_STATE));
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void ImageCoreFamily<gfxCoreFamily>::copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap,
-                                                                       const uint32_t surfaceStateOffset) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-
-    // Copy the image's surface state into position in the provided surface state heap
-    auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
-    memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
-             &implicitArgsSurfaceState, sizeof(RENDER_SURFACE_STATE));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -402,4 +386,24 @@ bool ImageCoreFamily<gfxCoreFamily>::isSuitableForCompression(const StructuresLo
     return (loGfxCoreHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::encodeImplicitArgsSurfaceState() {
+
+    auto &helper = this->device->getGfxCoreHelper();
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    NEO::EncodeSurfaceStateArgs encodeArgs;
+    encodeArgs.outMemory = &implicitArgsSurfaceState;
+    encodeArgs.size = NEO::ImageImplicitArgs::getSize();
+    encodeArgs.graphicsAddress = implicitArgsAllocation->getGpuAddress();
+    encodeArgs.gmmHelper = gmmHelper;
+    encodeArgs.allocation = implicitArgsAllocation;
+    encodeArgs.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
+    encodeArgs.areMultipleSubDevicesInContext = encodeArgs.numAvailableDevices > 1;
+    encodeArgs.mocs = helper.getMocsIndex(*encodeArgs.gmmHelper, true, false) << 1;
+    encodeArgs.implicitScaling = this->device->isImplicitScalingCapable();
+    encodeArgs.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
+
+    helper.encodeBufferSurfaceState(encodeArgs);
+}
 } // namespace L0

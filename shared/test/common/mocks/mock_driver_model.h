@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <cstdint>
 #include <functional>
@@ -21,8 +22,8 @@ class MockDriverModel : public NEO::DriverModel {
   public:
     MockDriverModel() : MockDriverModel(NEO::DriverModelType::unknown) {}
     MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
-
-    void setGmmInputArgs(void *args) override {}
+    ADDMETHOD_NOBASE_VOIDRETURN(cleanup, ());
+    ADDMETHOD_NOBASE_VOIDRETURN(setGmmInputArgs, (void *));
 
     uint32_t getDeviceHandle() const override { return {}; }
 
@@ -40,6 +41,11 @@ class MockDriverModel : public NEO::DriverModel {
         return isGpuHangDetectedToReturn;
     }
 
+    bool getDeviceState() override {
+        getDeviceStateCalledCount++;
+        return false;
+    }
+
     PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return pciSpeedInfo; }
 
     const HardwareInfo *getHardwareInfo() const override { return nullptr; }
@@ -49,6 +55,7 @@ class MockDriverModel : public NEO::DriverModel {
     bool isGpuHangDetectedToReturn{};
     std::function<void()> isGpuHangDetectedSideEffect{};
     size_t maxAllocSize = 0;
+    uint32_t getDeviceStateCalledCount = 0;
 };
 
 class MockDriverModelWDDM : public MockDriverModel {

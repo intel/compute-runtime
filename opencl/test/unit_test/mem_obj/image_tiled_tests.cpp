@@ -6,15 +6,18 @@
  */
 
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -71,7 +74,7 @@ class CreateTiledImageTest : public ClDeviceFixture,
 HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturnedForTiledImage) {
     MockContext context;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
@@ -98,7 +101,7 @@ TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
-    info.plane = GMM_NO_PLANE;
+    info.plane = ImagePlane::noPlane;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
@@ -138,7 +141,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
-    info.plane = GMM_NO_PLANE;
+    info.plane = ImagePlane::noPlane;
     info.linearStorage = true;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);

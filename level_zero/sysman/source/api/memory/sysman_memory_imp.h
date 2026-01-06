@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsMemory;
+struct OsSysman;
 
 class MemoryImp : public Memory, NEO::NonCopyableAndNonMovableClass {
   public:

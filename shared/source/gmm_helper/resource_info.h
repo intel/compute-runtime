@@ -36,7 +36,9 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL size_t getRenderPitch() { return static_cast<size_t>(resourceInfo->GetRenderPitch()); }
 
-    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits();
+    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits(uint32_t overrideUsage, bool compressionDenied);
+
+    MOCKABLE_VIRTUAL bool isResourceDenyCompressionEnabled();
 
     MOCKABLE_VIRTUAL uint32_t getNumSamples() { return resourceInfo->GetNumSamples(); }
 
@@ -111,4 +113,7 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
     void *handle = nullptr;
     size_t handleSize = 0;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<GmmResourceInfo>);
+
 } // namespace NEO

@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/firmware_util/igsc_wrapper.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 
 #include <string>

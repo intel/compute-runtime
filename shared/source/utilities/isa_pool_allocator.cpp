@@ -8,6 +8,7 @@
 #include "shared/source/utilities/isa_pool_allocator.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -16,20 +17,26 @@ namespace NEO {
 
 ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
     : BaseType(device->getMemoryManager(), nullptr), device(device), isBuiltin(isBuiltin) {
-    this->chunkAllocator.reset(new NEO::HeapAllocator(params.startingOffset, storageSize, MemoryConstants::pageSize, 0u));
+    DEBUG_BREAK_IF(device->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(storageSize, MemoryConstants::pageSize2M));
 
     auto allocationType = isBuiltin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa;
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(),
-                                                                                   storageSize,
-                                                                                   allocationType,
-                                                                                   device->getDeviceBitfield()});
+    AllocationProperties allocProperties = {device->getRootDeviceIndex(),
+                                            storageSize,
+                                            allocationType,
+                                            device->getDeviceBitfield()};
+    allocProperties.isaPaddingIncluded = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
+    this->chunkAllocator.reset(new NEO::HeapAllocator(params.startingOffset,
+                                                      graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u,
+                                                      MemoryConstants::pageSize,
+                                                      0u));
     this->mainStorage.reset(graphicsAllocation);
-
     this->mtx = std::make_unique<std::mutex>();
     this->stackVec.push_back(graphicsAllocation);
 }
 
-ISAPool::ISAPool(ISAPool &&pool) : BaseType(std::move(pool)) {
+ISAPool::ISAPool(ISAPool &&pool) noexcept : BaseType(std::move(pool)) {
     this->isBuiltin = pool.isBuiltin;
     mtx.reset(pool.mtx.release());
     this->stackVec = std::move(pool.stackVec);
@@ -55,6 +62,7 @@ const StackVec<NEO::GraphicsAllocation *, 1> &ISAPool::getAllocationsVector() {
 }
 
 ISAPoolAllocator::ISAPoolAllocator(Device *device) : device(device) {
+    initAllocParams();
 }
 
 /**
@@ -70,29 +78,29 @@ ISAPoolAllocator::ISAPoolAllocator(Device *device) : device(device) {
  *
  * @return returns SharedIsaAllocation or nullptr if allocation didn't succeeded
  */
-SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBuiltin, size_t size) {
+SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBuiltin, size_t sizeWithPadding) {
     std::unique_lock lock(allocatorMtx);
 
     auto maxAllocationSize = getAllocationSize(isBuiltin);
 
-    if (size > maxAllocationSize) {
-        addNewBufferPool(ISAPool(device, isBuiltin, size));
+    if (sizeWithPadding > maxAllocationSize) {
+        addNewBufferPool(ISAPool(device, isBuiltin, alignToPoolSize(sizeWithPadding)));
     }
 
-    auto sharedIsaAllocation = tryAllocateISA(isBuiltin, size);
+    auto sharedIsaAllocation = tryAllocateISA(isBuiltin, sizeWithPadding);
     if (sharedIsaAllocation) {
         return sharedIsaAllocation;
     }
 
     drain();
 
-    sharedIsaAllocation = tryAllocateISA(isBuiltin, size);
+    sharedIsaAllocation = tryAllocateISA(isBuiltin, sizeWithPadding);
     if (sharedIsaAllocation) {
         return sharedIsaAllocation;
     }
 
-    addNewBufferPool(ISAPool(device, isBuiltin, getAllocationSize(isBuiltin)));
-    return tryAllocateISA(isBuiltin, size);
+    addNewBufferPool(ISAPool(device, isBuiltin, alignToPoolSize(getAllocationSize(isBuiltin))));
+    return tryAllocateISA(isBuiltin, sizeWithPadding);
 }
 
 /**
@@ -128,6 +136,21 @@ SharedIsaAllocation *ISAPoolAllocator::tryAllocateISA(bool isBuiltin, size_t siz
         }
     }
     return nullptr;
+}
+
+void ISAPoolAllocator::initAllocParams() {
+    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        userAllocationSize = MemoryConstants::pageSize2M * 2;
+        builtinAllocationSize = MemoryConstants::pageSize2M;
+        poolAlignment = MemoryConstants::pageSize2M;
+    } else {
+        userAllocationSize = MemoryConstants::pageSize2M * 2;
+        builtinAllocationSize = MemoryConstants::pageSize64k;
+    }
+}
+
+size_t ISAPoolAllocator::alignToPoolSize(size_t size) const {
+    return alignUp(size, poolAlignment);
 }
 
 } // namespace NEO

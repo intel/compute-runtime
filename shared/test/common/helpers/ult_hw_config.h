@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 namespace NEO {
 
 class ExecutionEnvironment;
@@ -18,10 +19,10 @@ struct UltHwConfig {
     bool useMockedPrepareDeviceEnvironmentsFunc = true;
     bool forceOsAgnosticMemoryManager = true;
     bool useinitBuiltinsAsyncEnabled = false;
+    bool useGemCloseWorker = false;
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
     bool useFirstSubmissionInitDevice = false;
-    bool useGpuCopyForDcFlushMitigation = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;

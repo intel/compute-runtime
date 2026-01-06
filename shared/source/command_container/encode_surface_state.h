@@ -6,10 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
 class Device;
+enum class ImagePlane;
 class Gmm;
 class GmmHelper;
 class GraphicsAllocation;
@@ -22,6 +24,7 @@ struct HardwareInfo;
 struct PipeControlArgs;
 struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
+struct ImageInfo;
 
 union SurfaceStateBufferLength {
     uint32_t length;
@@ -59,7 +62,7 @@ struct EncodeSurfaceState {
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                             bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane);
+                                             bool imageFromBuffer, ImagePlane plane);
     static void setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType);
     static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
     static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
@@ -72,6 +75,8 @@ struct EncodeSurfaceState {
     static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper);
     static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper);
     static bool shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface);
+    static void convertSurfaceStateToPacked(R_SURFACE_STATE *surfaceState, ImageInfo &imgInfo);
+    static void setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState);
 };
 
 } // namespace NEO

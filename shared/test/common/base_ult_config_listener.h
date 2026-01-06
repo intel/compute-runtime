@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
     HardwareInfo referencedHwInfo;
     std::chrono::steady_clock::time_point testStart{};
     uint32_t maxOsContextCountBackup = 0;
+    std::vector<char> stateSaveAreaHeaderSnapshot{100};
 };
 
 } // namespace NEO

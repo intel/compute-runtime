@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_speed_info.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_speed_info.h
                ${CMAKE_CURRENT_SOURCE_DIR}/device_${DRIVER_MODEL}/test_device.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/device_${DRIVER_MODEL}/test_device_exensions.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_${DRIVER_MODEL}/test_device_extensions.cpp
 )
 add_subdirectories()

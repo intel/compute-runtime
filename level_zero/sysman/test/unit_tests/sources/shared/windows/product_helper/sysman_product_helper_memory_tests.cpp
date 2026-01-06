@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR0_CH0_SOC_32B_WR_REQ_LOWER", {111, 1}},
      {"GDDR0_CH1_SOC_32B_WR_REQ_UPPER", {130, 1}},
      {"GDDR0_CH1_SOC_32B_WR_REQ_LOWER", {131, 1}},
-     {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {92, 1}},
-     {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {93, 1}},
+     {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {93, 1}},
+     {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {92, 1}},
      {"GDDR0_CH0_GT_64B_RD_REQ_UPPER", {96, 1}},
      {"GDDR0_CH0_GT_64B_RD_REQ_LOWER", {97, 1}},
      {"GDDR0_CH1_GT_64B_RD_REQ_UPPER", {116, 1}},
@@ -63,12 +63,11 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR0_CH1_GT_64B_WR_REQ_UPPER", {120, 1}},
      {"GDDR0_CH1_GT_64B_WR_REQ_LOWER", {121, 1}}}};
 
-const std::wstring pmtInterfaceName = L"TEST\0";
-std::vector<wchar_t> deviceInterfaceMemory(pmtInterfaceName.begin(), pmtInterfaceName.end());
 class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockMemoryKmdSysManager> pKmdSysManager;
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -80,8 +79,9 @@ class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfaceMemory, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
@@ -118,14 +118,6 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 131072;
             return true;
-        case 92:
-            *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = 0;
-            return true;
-        case 93:
-            *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = mockMemoryBandwidthTimestamp;
-            return true;
         default:
             *lpBytesReturned = 8;
             if (readRequest->offset % 2 == 0) {
@@ -147,12 +139,12 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
         EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(mockMemoryMaxBandwidth * megaBytesToBytes * 100));
         EXPECT_EQ(bandwidth.readCounter, (6 * mockPmtBandWidthVariableBackupValue * 32) + (6 * mockPmtBandWidthVariableBackupValue * 64));
         EXPECT_EQ(bandwidth.writeCounter, (4 * mockPmtBandWidthVariableBackupValue * 32) + (4 * mockPmtBandWidthVariableBackupValue * 64));
-        EXPECT_EQ(bandwidth.timestamp, mockMemoryBandwidthTimestamp * milliSecsToMicroSecs);
+        EXPECT_GT(bandwidth.timestamp, 0u);
     }
 }
 
 HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBandwidthCoveringNegativePathsThenCallFails, IsBMG) {
-    static uint32_t count = 8;
+    static uint32_t count = 6;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
     });
@@ -167,30 +159,22 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 131072;
             return count == 2 ? false : true;
-        case 92:
-            *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = 0;
-            return count == 3 ? false : true;
-        case 93:
-            *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = 1230000;
-            return count == 4 ? false : true;
         case 94:
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 0;
-            return count == 5 ? false : true;
+            return count == 3 ? false : true;
         case 95:
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 10000000;
-            return count == 6 ? false : true;
+            return count == 4 ? false : true;
         case 110:
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 0;
-            return count == 7 ? false : true;
+            return count == 5 ? false : true;
         case 111:
             *lpBytesReturned = 8;
             *static_cast<uint32_t *>(lpOutBuffer) = 10000000;
-            return count == 8 ? false : true;
+            return count == 6 ? false : true;
         default:
             *lpBytesReturned = 8;
             if (readRequest->offset % 2 == 0) {
@@ -231,17 +215,21 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
 
         ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
 
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(pKmdSysManager->mockMemoryMaxBandwidth) * mbpsToBytesPerSecond);
-        EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidthRead);
-        EXPECT_EQ(bandwidth.writeCounter, pKmdSysManager->mockMemoryCurrentBandwidthWrite);
-        EXPECT_GT(bandwidth.timestamp, 0u);
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        } else {
+            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+            EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(pKmdSysManager->mockMemoryMaxBandwidth) * mbpsToBytesPerSecond);
+            EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidthRead);
+            EXPECT_EQ(bandwidth.writeCounter, pKmdSysManager->mockMemoryCurrentBandwidthWrite);
+            EXPECT_GT(bandwidth.timestamp, 0u);
 
-        std::vector<uint32_t> requestId = {KmdSysman::Requests::Memory::MaxBandwidth, KmdSysman::Requests::Memory::CurrentBandwidthRead, KmdSysman::Requests::Memory::CurrentBandwidthWrite};
-        for (auto it = requestId.begin(); it != requestId.end(); it++) {
-            pKmdSysManager->mockMemoryFailure[*it] = 1;
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesMemoryGetBandwidth(handle, &bandwidth));
-            pKmdSysManager->mockMemoryFailure[*it] = 0;
+            std::vector<uint32_t> requestId = {KmdSysman::Requests::Memory::MaxBandwidth, KmdSysman::Requests::Memory::CurrentBandwidthRead, KmdSysman::Requests::Memory::CurrentBandwidthWrite};
+            for (auto it = requestId.begin(); it != requestId.end(); it++) {
+                pKmdSysManager->mockMemoryFailure[*it] = 1;
+                EXPECT_EQ(ZE_RESULT_SUCCESS, zesMemoryGetBandwidth(handle, &bandwidth));
+                pKmdSysManager->mockMemoryFailure[*it] = 0;
+            }
         }
     }
 }
@@ -253,7 +241,11 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
         zes_mem_bandwidth_t bandwidth;
 
         pKmdSysManager->mockRequestMultiple = true;
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesMemoryGetBandwidth(handle, &bandwidth));
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesMemoryGetBandwidth(handle, &bandwidth));
+        } else {
+            EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesMemoryGetBandwidth(handle, &bandwidth));
+        }
         pKmdSysManager->mockRequestMultiple = false;
     }
 }

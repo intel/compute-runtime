@@ -7,8 +7,6 @@
 
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -84,7 +82,11 @@ ze_result_t HostPointerManager::createHostPointerMultiAllocation(std::vector<Dev
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
-    HostPointerData hostData(static_cast<uint32_t>(devices.size() - 1));
+    uint32_t maxRootDeviceIndex = 0;
+    for (auto device : devices) {
+        maxRootDeviceIndex = std::max(maxRootDeviceIndex, device->getRootDeviceIndex());
+    }
+    HostPointerData hostData(maxRootDeviceIndex);
     hostData.basePtr = ptr;
     hostData.size = size;
     for (auto device : devices) {

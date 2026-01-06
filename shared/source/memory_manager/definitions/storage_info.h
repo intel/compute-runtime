@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/app_resource_defines.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/device_bitfield.h"
 
 #include <cstdint>
 
@@ -35,5 +36,6 @@ struct StorageInfo {
     bool systemMemoryForced = false;
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     bool isChunked = false;
+    bool needsToBeZeroedAtInit = false;
 };
 } // namespace NEO

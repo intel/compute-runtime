@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
@@ -31,7 +32,7 @@ extern std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inpu
 extern std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
 namespace NEO {
-bool getGpuTimeSplitted(Drm &drm, uint64_t *timestamp);
+bool getGpuTimeSplit(Drm &drm, uint64_t *timestamp);
 bool getGpuTime32(Drm &drm, uint64_t *timestamp);
 bool getGpuTime36(Drm &drm, uint64_t *timestamp);
 } // namespace NEO
@@ -51,6 +52,10 @@ struct IoctlPrelimHelperTests : ::testing::Test {
 
 TEST_F(IoctlPrelimHelperTests, whenGettingIfImmediateVmBindIsRequiredThenFalseIsReturned) {
     EXPECT_FALSE(ioctlHelper.isImmediateVmBindRequired());
+}
+
+TEST_F(IoctlPrelimHelperTests, whenGettingIfSmallBarConfigIsAllowedThenTrueIsReturned) {
+    EXPECT_TRUE(ioctlHelper.isSmallBarConfigAllowed());
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
@@ -73,6 +78,11 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::query), static_cast<unsigned int>(DRM_IOCTL_I915_QUERY));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::primeFdToHandle), static_cast<unsigned int>(DRM_IOCTL_PRIME_FD_TO_HANDLE));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::primeHandleToFd), static_cast<unsigned int>(DRM_IOCTL_PRIME_HANDLE_TO_FD));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjFdToHandle), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjWait), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_WAIT));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjSignal), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_SIGNAL));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjTimelineWait), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjTimelineSignal), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemVmBind), static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GEM_VM_BIND));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemVmUnbind), static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemWaitUserFence), static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE));
@@ -125,6 +135,11 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::query).c_str(), "DRM_IOCTL_I915_QUERY");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::primeFdToHandle).c_str(), "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::primeHandleToFd).c_str(), "DRM_IOCTL_PRIME_HANDLE_TO_FD");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjFdToHandle).c_str(), "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjWait).c_str(), "DRM_IOCTL_SYNCOBJ_WAIT");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjSignal).c_str(), "DRM_IOCTL_SYNCOBJ_SIGNAL");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjTimelineWait).c_str(), "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjTimelineSignal).c_str(), "DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemVmBind).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemVmUnbind).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemWaitUserFence).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE");
@@ -194,9 +209,11 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
     expectedMemRegions[0].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM;
     expectedMemRegions[0].region.memoryInstance = 0;
     expectedMemRegions[0].probedSize = 1024;
+    expectedMemRegions[0].cpuVisibleSize = 1024;
     expectedMemRegions[1].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE;
     expectedMemRegions[1].region.memoryInstance = 0;
     expectedMemRegions[1].probedSize = 1024;
+    expectedMemRegions[1].cpuVisibleSize = 256;
 
     auto regionInfo = getRegionInfo(expectedMemRegions);
 
@@ -207,6 +224,7 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
         EXPECT_EQ(expectedMemRegions[i].region.memoryInstance, memRegions[i].region.memoryInstance);
         EXPECT_EQ(expectedMemRegions[i].probedSize, memRegions[i].probedSize);
         EXPECT_EQ(expectedMemRegions[i].unallocatedSize, memRegions[i].unallocatedSize);
+        EXPECT_EQ(expectedMemRegions[i].cpuVisibleSize, memRegions[i].cpuVisibleSize);
     }
 }
 
@@ -292,6 +310,14 @@ TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreRetur
 
 TEST_F(IoctlPrelimHelperTests, givenIoctlHelperisVmBindPatIndexExtSupportedReturnsTrue) {
     ASSERT_EQ(true, ioctlHelper.isVmBindPatIndexExtSupported());
+}
+
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperSetVmSharedSystemMemAdviseReturnsTrue) {
+    ASSERT_EQ(true, ioctlHelper.setVmSharedSystemMemAdvise(0u, 0u, 0u, 0u, {0u}));
+}
+
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperGetVmSharedSystemAtomicAttributeReturnsDefaultNone) {
+    ASSERT_EQ(AtomicAccessMode::none, ioctlHelper.getVmSharedSystemAtomicAttribute(0u, 0u, 0u));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {
@@ -392,6 +418,14 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceParamsIsCalledThenFalse
     EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
 }
 
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceCapsIsCalledThenNulloptIsReturned) {
+    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), std::nullopt);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperWhenCallingoverrideMaxSlicesSupportedThenResultIsFalse) {
+    EXPECT_TRUE(ioctlHelper.overrideMaxSlicesSupported());
+}
+
 struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::createGemExt;
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
@@ -478,7 +512,8 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
 TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolicyThenMemPolicyExtensionsIsAdded) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -494,7 +529,7 @@ TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolic
     mockIoctlHelper.initialize();
     auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, memPolicyMode, memPolicy, false);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedSubstring("memory policy:");
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);
@@ -655,121 +690,6 @@ TEST(IoctlPrelimHelperFabricLatencyTest, givenPrelimWhenGettingFabricLatencyAndI
     drm->mockBandwidth = 0;
     EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency, bandwidth));
 }
-HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCallingIoctlWithGemExecbufferThenShouldNotBreakOnWouldBlock, IsXeHpcCore) {
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemExecbuffer2));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemVmBind));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
-}
-
-HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCallingIoctlWithGemExecbufferAndForceNonblockingExecbufferCallsThenShouldBreakOnWouldBlock, IsXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceNonblockingExecbufferCalls.set(1);
-
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_FALSE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemExecbuffer2));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemVmBind));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
-}
-
-HWTEST2_F(IoctlPrelimHelperTests, givenNonXeHpcWhenCallingIoctlWithGemExecbufferThenShouldBreakOnWouldBlock, IsNotXeHpcCore) {
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemExecbuffer2));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemVmBind));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
-}
-
-HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCreatingIoctlHelperThenProperFlagsAreSetToFileDescriptor, IsXeHpcCore) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::passedFileDescriptorFlagsToSet);
-}
-
-HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCreatingIoctlHelperWithForceNonblockingExecbufferCallsThenProperFlagsAreSetToFileDescriptor, IsXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceNonblockingExecbufferCalls.set(0);
-
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::passedFileDescriptorFlagsToSet);
-}
-
-HWTEST2_F(IoctlPrelimHelperTests, givenNonXeHpcWhenCreatingIoctlHelperThenProperFlagsAreSetToFileDescriptor, IsNotXeHpcCore) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
-}
-
-TEST_F(IoctlPrelimHelperTests, givenDisabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledBlocking) {
-    DebugManagerStateRestore restorer;
-
-    debugManager.flags.ForceNonblockingExecbufferCalls.set(0);
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
-
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemExecbuffer2));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemVmBind));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
-}
-
-TEST_F(IoctlPrelimHelperTests, givenEnabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledNonBlocking) {
-    DebugManagerStateRestore restorer;
-
-    debugManager.flags.ForceNonblockingExecbufferCalls.set(1);
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(1, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(1, SysCalls::setFileDescriptorFlagsCalled);
-    EXPECT_EQ((O_RDWR | O_NONBLOCK), SysCalls::passedFileDescriptorFlagsToSet);
-
-    EXPECT_FALSE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemExecbuffer2));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::gemVmBind));
-    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
-}
 
 TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingThenWaitIsNeededOnlyBeforeBind) {
     MockExecutionEnvironment executionEnvironment{};
@@ -777,8 +697,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingThenWaitIsNeededOnlyBefo
 
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndForcingFenceWaitThenCallReturnsTrueForBindAndUnbind) {
@@ -789,8 +709,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndForcingFenceWaitThenC
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
     debugManager.flags.EnableUserFenceUponUnbind.set(1);
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndNotForcingFenceWaitThenCallReturnsTrueForBindOnly) {
@@ -801,8 +721,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndNotForcingFenceWaitTh
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
     debugManager.flags.EnableUserFenceUponUnbind.set(0);
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorrectMemoryClassAndInstance) {
@@ -833,11 +753,12 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
     EXPECT_EQ(1u, region->memoryInstance);
 }
 
-TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
-    auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
+TEST_F(IoctlPrelimHelperTests, WhenQueryHwIpVersionAndSetupIpVersionAreCalledThenIpVersionIsCorrect) {
+    auto &hwInfo = *drm->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     auto config = compilerProductHelper.getHwIpVersion(hwInfo);
 
+    hwInfo.ipVersion.value = ioctlHelper.queryHwIpVersion(hwInfo.platform.eProductFamily);
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }
@@ -857,7 +778,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingGpuTimeThenSucceeds) {
     success = getGpuTime36(*drm.get(), &time);
     EXPECT_TRUE(success);
     EXPECT_NE(0ULL, time);
-    success = getGpuTimeSplitted(*drm.get(), &time);
+    success = getGpuTimeSplit(*drm.get(), &time);
     EXPECT_TRUE(success);
     EXPECT_NE(0ULL, time);
 }
@@ -875,7 +796,7 @@ TEST_F(IoctlPrelimHelperTests, givenInvalidDrmWhenGettingGpuTimeThenFails) {
     EXPECT_FALSE(success);
     success = getGpuTime36(*drm.get(), &time);
     EXPECT_FALSE(success);
-    success = getGpuTimeSplitted(*drm.get(), &time);
+    success = getGpuTimeSplit(*drm.get(), &time);
     EXPECT_FALSE(success);
 }
 
@@ -903,7 +824,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingTimeThenTimeIsCorrect) {
         drm->ioctlRes = -1;
         drm->ioctlResExt = &ioctlToPass; // 2nd ioctl is successful
         ioctlHelper.initializeGetGpuTimeFunction();
-        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTimeSplitted);
+        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTimeSplit);
         drm->ioctlResExt = &drm->none;
     }
 }
@@ -995,15 +916,26 @@ TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpe
     EXPECT_FALSE(ioctlHelper.validPageFault(0u));
 }
 
-TEST_F(IoctlPrelimHelperTests, whenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {
+TEST_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 ioctlHelper{*drm};
 
-    int32_t gtId = 0;
+    uint32_t gtId = 0;
     EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
     gtId = 1;
     EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
+}
+
+TEST_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetGtIdFromTileIdThenExpectedValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 ioctlHelper{*drm};
+
+    uint32_t tileId = 0u;
+    EXPECT_EQ(tileId, ioctlHelper.getGtIdFromTileId(tileId, I915_ENGINE_CLASS_RENDER));
+    tileId = 1u;
+    EXPECT_EQ(tileId, ioctlHelper.getGtIdFromTileId(tileId, I915_ENGINE_CLASS_VIDEO));
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {

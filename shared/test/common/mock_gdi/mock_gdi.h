@@ -29,6 +29,8 @@
 
 #define GPUVA (static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x80123000000))
 
+typedef struct _D3DKMT_CREATENATIVEFENCE D3DKMT_CREATENATIVEFENCE;
+
 void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace);
 NTSTATUS __stdcall mockD3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *allocation);
 NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation);
@@ -47,6 +49,7 @@ NTSTATUS __stdcall mockD3DKMTQueryResourceInfo(IN OUT D3DKMT_QUERYRESOURCEINFO *
 NTSTATUS __stdcall mockD3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *queryResourceInfo);
 NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *synchObject);
 NTSTATUS __stdcall mockD3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *destroySynchronizationObject);
+NTSTATUS __stdcall mockD3DKMTCreateNativeFence(IN OUT D3DKMT_CREATENATIVEFENCE *synchObject);
 NTSTATUS __stdcall mockD3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *createQueue);
 NTSTATUS __stdcall mockD3DKMTDestroyPagingQueue(IN OUT D3DDDI_DESTROYPAGINGQUEUE *destoryQueue);
 NTSTATUS __stdcall mockD3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2);
@@ -112,3 +115,5 @@ void initGfxPartition();
 void setCapturingCreateAllocationFlags();
 void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCreateAllocationFlags, uint32_t &numCalled);
 void setSupportCreateAllocationWithReadWriteExisitingSysMemory(bool supportValue, bool &previousValue);
+extern bool failCreateDevice;
+extern bool failCreatePagingQueue;

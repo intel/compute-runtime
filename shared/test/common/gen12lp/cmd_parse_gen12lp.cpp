@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,12 +25,14 @@ size_t getAdditionalCommandLengthHwSpecific(void *cmd) {
     using L3_CONTROL_WITHOUT_POST_SYNC = typename GenGfxFamily::L3_CONTROL;
 
     auto pCmdWithPostSync = genCmdCast<L3_CONTROL_WITH_POST_SYNC *>(cmd);
-    if (pCmdWithPostSync)
+    if (pCmdWithPostSync) {
         return pCmdWithPostSync->getBase().TheStructure.Common.Length + 2;
+    }
 
     auto pCmdWithoutPostSync = genCmdCast<L3_CONTROL_WITHOUT_POST_SYNC *>(cmd);
-    if (pCmdWithoutPostSync)
+    if (pCmdWithoutPostSync) {
         return pCmdWithoutPostSync->getBase().TheStructure.Common.Length + 2;
+    }
 
     return 0;
 }
@@ -54,38 +56,45 @@ template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
     {
         auto pCmd = genCmdCast<GPGPU_WALKER *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MEDIA_VFE_STATE *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MEDIA_STATE_FLUSH *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<STATE_COMPUTE_MODE *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<GPGPU_CSR_BASE_ADDRESS *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<STATE_SIP *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
 
     return getAdditionalCommandLengthHwSpecific(cmd);
@@ -132,4 +141,6 @@ template void HardwareParse::findHardwareCommands<Gen12LpFamily>();
 template void HardwareParse::findHardwareCommands<Gen12LpFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<Gen12LpFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 template const typename Gen12LpFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<Gen12LpFamily>(IndirectHeap *ssh, uint32_t index);
+template bool HardwareParse::isStallingBarrier<Gen12LpFamily>(GenCmdList::iterator &iter);
+
 } // namespace NEO

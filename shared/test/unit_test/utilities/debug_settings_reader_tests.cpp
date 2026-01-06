@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/utilities/debug_file_reader.h"
-#include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -19,31 +19,7 @@
 
 using namespace NEO;
 
-class MockSettingsReader : public SettingsReader {
-  public:
-    std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override {
-        return value;
-    }
-    std::string getSetting(const char *settingName, const std::string &value) override {
-        return value;
-    }
-    bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
-    int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
-    int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
-    const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
-};
-
 namespace SettingsReaderTests {
-
-void writeDataToFile(const char *filename, const void *pData, size_t dataSize) {
-    std::ofstream file;
-    file.open(filename);
-    file.write(static_cast<const char *>(pData), dataSize);
-    file.close();
-}
 
 TEST(SettingsReader, WhenCreatingSettingsReaderThenReaderIsCreated) {
     auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
@@ -51,7 +27,7 @@ TEST(SettingsReader, WhenCreatingSettingsReaderThenReaderIsCreated) {
 }
 
 TEST(SettingsReader, GivenNoSettingsFileWhenCreatingSettingsReaderThenOsReaderIsCreated) {
-    ASSERT_FALSE(fileExists(SettingsReader::settingsFileName));
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
 
     auto fileReader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
     EXPECT_EQ(nullptr, fileReader.get());
@@ -61,40 +37,42 @@ TEST(SettingsReader, GivenNoSettingsFileWhenCreatingSettingsReaderThenOsReaderIs
 }
 
 TEST(SettingsReader, GivenSettingsFileExistsWhenCreatingSettingsReaderThenReaderIsCreated) {
-    ASSERT_FALSE(fileExists(SettingsReader::settingsFileName));
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
 
-    const char data[] = "ProductFamilyOverride = test";
-    writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+    constexpr std::string_view data = "ProductFamilyOverride = test";
+    writeDataToFile(SettingsReader::settingsFileName, data);
 
-    auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
+    auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::create(ApiSpecificConfig::getRegistryPath()));
     EXPECT_NE(nullptr, reader.get());
     std::string defaultValue("unk");
     EXPECT_STREQ("test", reader->getSetting("ProductFamilyOverride", defaultValue).c_str());
 
-    std::remove(SettingsReader::settingsFileName);
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(SettingsReader, WhenCreatingFileReaderThenReaderIsCreated) {
-    ASSERT_FALSE(fileExists(SettingsReader::settingsFileName));
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
     char data = 0;
-    writeDataToFile(SettingsReader::settingsFileName, &data, 0);
+    std::string_view emptyView(&data, 0);
+    writeDataToFile(SettingsReader::settingsFileName, emptyView);
 
-    auto reader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
+    auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::createFileReader());
     EXPECT_NE(nullptr, reader.get());
 
-    std::remove(SettingsReader::settingsFileName);
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(SettingsReader, WhenCreatingFileReaderUseNeoFileIfNoDefault) {
-    ASSERT_FALSE(fileExists(SettingsReader::settingsFileName));
-    ASSERT_FALSE(fileExists(SettingsReader::neoSettingsFileName));
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
+    ASSERT_FALSE(virtualFileExists(SettingsReader::neoSettingsFileName));
     char data = 0;
-    writeDataToFile(SettingsReader::neoSettingsFileName, &data, 0);
+    std::string_view emptyView(&data, 0);
+    writeDataToFile(SettingsReader::neoSettingsFileName, emptyView);
 
-    auto reader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
+    auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::createFileReader());
     EXPECT_NE(nullptr, reader.get());
 
-    std::remove(SettingsReader::neoSettingsFileName);
+    removeVirtualFile(SettingsReader::neoSettingsFileName);
 }
 
 TEST(SettingsReader, WhenCreatingOsReaderThenReaderIsCreated) {
@@ -110,17 +88,44 @@ TEST(SettingsReader, GivenRegKeyWhenCreatingOsReaderThenReaderIsCreated) {
 
 TEST(SettingsReader, GivenTrueWhenPrintingDebugStringThenPrintsToOutput) {
     int i = 4;
-    testing::internal::CaptureStdout();
-    PRINT_DEBUG_STRING(true, stdout, "testing error %d", i);
-    std::string output = testing::internal::GetCapturedStdout();
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(true, stdout, "testing error %d", i);
+    std::string output = capture.getCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 }
 
 TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     int i = 4;
-    testing::internal::CaptureStdout();
-    PRINT_DEBUG_STRING(false, stderr, "Error String %d", i);
-    std::string output = testing::internal::GetCapturedStdout();
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(false, stderr, "Error String %d", i);
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
+}
+
+TEST(SettingsReader, GivenDebugMessagesBitmaskWithPidWhenPrintingDebugStringThenPrintsPidToOutput) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugMessagesBitmask.set(DebugMessagesBitmask::withPid);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(true, stdout, "debug string %d", i);
+    std::string output = capture.getCapturedStdout();
+    EXPECT_TRUE(hasSubstr(output, "[PID: "));
+}
+
+TEST(SettingsReader, GivenDebugMessagesBitmaskWithTimestampWhenPrintingDebugStringThenPrintsTimestampToOutput) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugMessagesBitmask.set(DebugMessagesBitmask::withTimestamp);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(true, stdout, "debug string %d", i);
+    std::string output = capture.getCapturedStdout();
+    std::string dateRegex = R"(\[20\d{2}-\d{2}-\d{2})";
+    EXPECT_TRUE(containsRegex(output, dateRegex));
 }
 } // namespace SettingsReaderTests

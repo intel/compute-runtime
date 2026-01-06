@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2014 Intel Corporation
+Copyright (C) 2024-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -27,8 +27,13 @@ Support for Gen8, Gen9 and Gen11 devices will be delivered via packages with _le
 [Ice Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/74979/ice-lake.html) |  3.0 | 1.5 | Yes
 [Elkhart Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/128825/elkhart-lake.html) | 3.0 | -- | Yes
 
-## Maintanance expectations
+## Maintenance expectations
 
 No new features will be added to legacy packages.
 
 In case of critical fixes we plan to deliver them through a new release from [24.35 release branch](https://github.com/intel/compute-runtime/tree/releases/24.35).
+- [24.35.30872.36](https://github.com/intel/compute-runtime/releases/tag/24.35.30872.36)
+
+## Build instructions
+
+To build legacy1 packages follow instructions [here](BUILD.md#optional---building-neo-with-support-for-gen8-gen9-and-gen11-devices).

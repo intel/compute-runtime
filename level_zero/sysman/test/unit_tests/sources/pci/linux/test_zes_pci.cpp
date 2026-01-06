@@ -6,7 +6,6 @@
  */
 
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
-#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/pci/linux/mock_sysfs_pci.h"
 
@@ -244,7 +243,8 @@ class ZesPciFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
-    zes_pci_properties_t properties, propertiesBefore;
+    zes_pci_properties_t properties = {};
+    zes_pci_properties_t propertiesBefore = {};
 
     memset(&properties.address.bus, std::numeric_limits<int>::max(), sizeof(properties.address.bus));
     memset(&properties.address.device, std::numeric_limits<int>::max(), sizeof(properties.address.device));
@@ -273,7 +273,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetProperties
 }
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetSysmanPciGetPropertiesThenVerifyApiCallSucceeds) {
-    zes_pci_properties_t properties, propertiesBefore;
+    zes_pci_properties_t properties = {};
+    zes_pci_properties_t propertiesBefore = {};
     L0::Sysman::OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
     pLinuxPciImpTemp->preadFunction = preadMock;
@@ -311,7 +312,7 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetS
 }
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesAndBdfStringIsEmptyThenVerifyApiCallSucceeds) {
-    zes_pci_properties_t properties;
+    zes_pci_properties_t properties = {};
 
     pSysfsAccess->isStringSymLinkEmpty = true;
 
@@ -603,11 +604,6 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     delete[] pBarProps;
 }
 
-TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenVerifyzetSysmanPciGetStateCallReturnNotSupported) {
-    zes_pci_state_t state;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
-}
-
 TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceAndGetPciStatsFailsFromSysmanProductHelperWhenGetStatsIsCalledThenCallFails) {
     std::unique_ptr<MockSysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
     pMockSysmanProductHelper->mockGetPciStatsResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -703,6 +699,84 @@ TEST_F(ZesPciFixture, GivenValidConfigMemoryDataWhenCallingGetRebarCapabilityPos
     mockBuf[0x400] = 0x18;
     mockBuf[0x402] = 0x01;
     EXPECT_TRUE(pLinuxPciImp->getRebarCapabilityPos(mockBuf, true));
+}
+
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureOni915KmdThenVerifyApiCallFails) {
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    properties.pNext = &extProps;
+
+    ze_result_t result = zesDevicePciGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(ZesPciFixture, GivenPciBdfInfoPointerIsNotInitializedWhenPciGetPropertiesIsInvokedThenErrorIsReturned) {
+    device->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciLinuxSysmanImp>(pSysmanDeviceImp);
+    pMockSysman->isPciBdfInfoPointerNull = true;
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
+}
+
+TEST_F(ZesPciFixture, GivenPciBdfInfoValuesAreInvalidWhenPciGetPropertiesIsInvokedThenErrorIsReturned) {
+    device->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciLinuxSysmanImp>(pSysmanDeviceImp);
+    pMockSysman->isPciBdfInfoObjectInitialized = false;
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
+}
+
+TEST_F(ZesPciFixture, GivenProperPciBdfInfoObjectWhenPciGetPropertiesIsInvokedThenCorrectBdfValuesAreReturned) {
+    device->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciLinuxSysmanImp>(pSysmanDeviceImp);
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pMockSysman->testPciBus, properties.address.bus);
+    EXPECT_EQ(pMockSysman->testPciDomain, properties.address.domain);
+    EXPECT_EQ(pMockSysman->testPciFunction, properties.address.function);
+    EXPECT_EQ(pMockSysman->testPciDevice, properties.address.device);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
 }
 
 } // namespace ult

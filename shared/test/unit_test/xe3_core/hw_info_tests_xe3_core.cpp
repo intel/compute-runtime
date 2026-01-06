@@ -9,13 +9,12 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 
@@ -60,6 +59,7 @@ XE3_CORETEST_F(Xe3CoreHwInfoTest, givenBoolWhenCallXe3CoreHardwareInfoSetupThenF
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
             EXPECT_EQ(false, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
+            EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
         }

@@ -34,9 +34,6 @@ std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManager
 PageFaultManagerLinux::PageFaultManagerLinux() {
     PageFaultManagerLinux::registerFaultHandler();
     UNRECOVERABLE_IF(pageFaultHandler == nullptr);
-
-    this->evictMemoryAfterCopy = debugManager.flags.EnableDirectSubmission.get() &&
-                                 debugManager.flags.USMEvictAfterMigration.get();
 }
 
 PageFaultManagerLinux::~PageFaultManagerLinux() {
@@ -117,12 +114,6 @@ void PageFaultManagerLinux::callPreviousHandler(int signal, siginfo_t *info, voi
         }
     }
     handlerIndex--;
-}
-
-void PageFaultManagerLinux::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {
-    if (evictMemoryAfterCopy) {
-        device->getRootDeviceEnvironment().memoryOperationsInterface->evict(device, *allocation);
-    }
 }
 
 void PageFaultManagerLinux::allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) {}

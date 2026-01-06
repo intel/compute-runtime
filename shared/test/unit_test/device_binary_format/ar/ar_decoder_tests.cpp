@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,7 @@ TEST(ArDecoderReadLongFileName, GivenOffsetThenParsesCorrectString) {
     auto name1 = readLongFileName(names, 6U);
     auto name2 = readLongFileName(names, 10U);
     auto name3 = readLongFileName(names, 40U);
+
     EXPECT_EQ(names, name0.begin());
     EXPECT_EQ(5U, name0.size());
 
@@ -191,7 +192,7 @@ TEST(ArDecoderDecodeAr, GivenOutOfBoundsFileEntryDataThenFailDecoding) {
     EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
-    EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with idenfitier 'a/              '", decodeErrors.c_str());
+    EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with identifier 'a/              '", decodeErrors.c_str());
 }
 
 TEST(ArDecoderDecodeAr, GivenValidTwoFilesEntriesWith2byteAlignedDataThenDecodingSucceeds) {

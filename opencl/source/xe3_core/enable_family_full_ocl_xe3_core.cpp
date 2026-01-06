@@ -5,17 +5,11 @@
  *
  */
 
-#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/cl_gfx_core_helper.h"
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/mem_obj/image.h"
-#include "opencl/source/sampler/sampler.h"
+#include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
-
 using Family = Xe3CoreFamily;
 
 struct EnableOCLXe3Core {

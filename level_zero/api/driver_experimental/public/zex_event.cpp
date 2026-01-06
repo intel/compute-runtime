@@ -8,18 +8,18 @@
 #include "level_zero/driver_experimental/zex_event.h"
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/bcs_split.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 namespace L0 {
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
     auto eventObj = Event::fromHandle(toInternalType(event));
 
@@ -43,21 +43,23 @@ zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uin
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
     constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
+    auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
 
-    if (!hDevice || !desc || !phEvent) {
+    if (!hDevice || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    const bool ipcFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
-    const bool timestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
-    const bool mappedTimestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
+    const bool ipcFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
+    const bool timestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
+    const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
+    const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    uint32_t inputCbFlags = desc->flags & supportedBasedFlags;
+    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
     if (inputCbFlags == 0) {
         inputCbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     }
@@ -66,7 +68,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto signalScope = desc->signalScope;
+    auto signalScope = counterBasedEventDesc->signalScope;
 
     if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
         signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
@@ -74,34 +76,31 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     EventDescriptor eventDescriptor = {
         .eventPoolAllocation = nullptr,
-        .extensions = desc->pNext,
+        .extensions = counterBasedEventDesc->pNext,
         .totalEventSize = 0,
         .maxKernelCount = EventPacketsCount::maxKernelSplit,
         .maxPacketsCount = 1,
         .counterBasedFlags = inputCbFlags,
         .index = 0,
         .signalScope = signalScope,
-        .waitScope = desc->waitScope,
+        .waitScope = counterBasedEventDesc->waitScope,
         .timestampPool = timestampFlag,
         .kernelMappedTsPoolFlag = mappedTimestampFlag,
         .importedIpcPool = false,
         .ipcPool = ipcFlag,
+        .externalEvent = externalEvent,
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
 
-    if (signalScope ^ desc->signalScope) {
-        l0Event->setMitigateHostVisibleSignal();
-    }
-
     *phEvent = l0Event;
 
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, uint64_t *deviceAddress, uint64_t *hostAddress, uint64_t completionValue, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
     constexpr uint32_t counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
 
@@ -109,12 +108,12 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
     externalSyncAllocProperties.completionValue = completionValue;
     externalSyncAllocProperties.deviceAddress = deviceAddress;
     externalSyncAllocProperties.hostAddress = hostAddress;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = counterBasedFlags;
     counterBasedDesc.signalScope = desc->signal;
     counterBasedDesc.waitScope = desc->wait;
@@ -125,10 +124,10 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         counterBasedDesc.pNext = &externalSyncAllocProperties;
     }
 
-    return zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
+    return L0::zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
+ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context) {
@@ -142,7 +141,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
+ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context || !context->getDriverHandle()->getMemoryManager()->releaseInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
@@ -152,7 +151,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_h
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
     auto event = Event::fromHandle(hEvent);
     if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -163,7 +162,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_ha
     return event->getCounterBasedIpcHandle(*ipcData);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     if (!context || !phEvent) {
@@ -175,8 +174,71 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context
     return context->openCounterBasedIpcHandle(*ipcData, phEvent);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
     return Event::fromHandle(hEvent)->destroy();
 }
 
+ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
+    auto device = Device::fromHandle(hDevice);
+    if (!device || !incrementValue) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *incrementValue = device->getAggregatedCopyOffloadIncrementValue();
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexEventGetDeviceAddress(
+    ze_event_handle_t event,
+    uint64_t *completionValue,
+    uint64_t *address) {
+    return L0::zexEventGetDeviceAddress(event, completionValue, address);
+}
+
+// deprecated
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCounterBasedEventCreate(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    uint64_t *deviceAddress,
+    uint64_t *hostAddress,
+    uint64_t completionValue,
+    const ze_event_desc_t *desc,
+    ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventCreate(hContext, hDevice, deviceAddress, hostAddress, completionValue, desc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
+    return L0::zexIntelAllocateNetworkInterrupt(hContext, networkInterruptId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
+    return L0::zexIntelReleaseNetworkInterrupt(hContext, networkInterruptId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventCreate2(hContext, hDevice, desc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+    return L0::zexCounterBasedEventGetIpcHandle(hEvent, phIpc);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventOpenIpcHandle(hContext, hIpc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+    return L0::zexCounterBasedEventCloseIpcHandle(hEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
+    return L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(hDevice, incrementValue);
+}
+
+} // extern "C"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace L0 {
+class OaMetricSourceImp;
 
 struct OaMetricProgrammableImp : public MetricProgrammable {
     OaMetricProgrammableImp() = default;
@@ -47,7 +48,8 @@ struct OaMetricProgrammableImp : public MetricProgrammable {
 
 struct OaMetricFromProgrammable : OaMetricImp, MetricCreated {
     ~OaMetricFromProgrammable() override {}
-    OaMetricFromProgrammable(MetricSource &metricSource) : OaMetricImp(metricSource) {}
+    OaMetricFromProgrammable(MetricSource &metricSource, std::vector<MetricScopeImp *> &scopes)
+        : OaMetricImp(metricSource, scopes) {}
     ze_result_t destroy() override;
     static Metric *create(MetricSource &metricSource, zet_metric_properties_t &properties,
                           MetricsDiscovery::IMetricPrototype_1_13 *pClonedPrototype,

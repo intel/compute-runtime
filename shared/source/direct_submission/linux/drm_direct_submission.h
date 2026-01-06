@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
+#include <chrono>
+
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
@@ -30,12 +32,16 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     bool handleResidency() override;
     void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency) override;
+    void handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency) override;
     void handleStopRingBuffer() override;
 
     void ensureRingCompletion() override;
     void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override;
+    void dispatchStopRingBufferSection() override;
+    size_t dispatchStopRingBufferSectionSize() override;
     uint64_t updateTagValue(bool requireMonitorFence) override;
     void getTagAddressValue(TagData &tagData) override;
+    void getTagAddressValueForRingSwitch(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
     bool isCompletionFenceSupported();
     bool isGpuHangDetected(std::chrono::high_resolution_clock::time_point &lastHangCheckTime);
@@ -44,7 +50,6 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     MOCKABLE_VIRTUAL void wait(TaskCountType taskCountToWait);
 
     TagData currentTagData{};
-    volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct OaMetricStreamerImp : MetricStreamer {
     ze_result_t close() override;
 
     ze_result_t initialize(ze_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup);
-    ze_result_t startMeasurements(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs);
+    ze_result_t updateStreamerDescriptionAndStartMeasurements(zet_metric_streamer_desc_t &desc, const bool isNotificationEnabled);
     Event::State getNotificationState() override;
 
     ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) override;
@@ -28,7 +28,8 @@ struct OaMetricStreamerImp : MetricStreamer {
 
   protected:
     ze_result_t stopMeasurements();
-    uint32_t getOaBufferSize(const uint32_t notifyEveryNReports) const;
+    uint32_t getOaBufferSizeForNotification(const uint32_t notifyEveryNReports) const;
+    uint32_t getOaBufferSizeForReports(const uint32_t maxReportCount) const;
     uint32_t getNotifyEveryNReports(const uint32_t oaBufferSize) const;
     uint32_t getRequiredBufferSize(const uint32_t maxReportCount) const;
 

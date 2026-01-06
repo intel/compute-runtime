@@ -5,12 +5,9 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -44,28 +41,14 @@ void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id 
 
 TEST_F(ClGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
     cl_program pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -95,17 +78,17 @@ TEST_F(ClGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoRe
     char buffer[10240];
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, 0, nullptr, &length);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sourceSize + 1, length);
+    EXPECT_EQ(sampleKernelSize, length);
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, sizeof(buffer), buffer, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(strlen(pSource.get()), strlen(buffer));
+    EXPECT_EQ(strlen(sampleKernel), strlen(buffer));
 
     // try to get program info for invalid program object - should fail
     retVal = clGetProgramInfo(nullptr, CL_PROGRAM_SOURCE, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // set paramValueSizeRet to 0 for IL program queries on non-IL programs
-    size_t sourceSizeRet = sourceSize;
+    size_t sourceSizeRet = sampleKernelSize;
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_IL, 0, nullptr, &sourceSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, sourceSizeRet);
@@ -173,37 +156,12 @@ TEST_F(ClGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
     MockUnrestrictiveContextMultiGPU context;
-
-    auto numDevicesForProgram = 2u;
-    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
-
-    std::unique_ptr<char[]> pBinary0 = nullptr;
-    std::unique_ptr<char[]> pBinary1 = nullptr;
-    size_t binarySize0 = 0;
-    size_t binarySize1 = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
-
-    pBinary0 = loadDataFromFile(
-        testFile.c_str(),
-        binarySize0);
-
-    retrieveBinaryKernelFilename(testFile, "copybuffer_", ".bin");
-
-    pBinary1 = loadDataFromFile(
-        testFile.c_str(),
-        binarySize1);
-    ASSERT_NE(0u, binarySize0);
-    ASSERT_NE(0u, binarySize1);
-    ASSERT_NE(nullptr, pBinary0);
-    ASSERT_NE(nullptr, pBinary1);
-
-    EXPECT_NE(binarySize0, binarySize1);
-
-    const unsigned char *binaries[] = {reinterpret_cast<const unsigned char *>(pBinary0.get()), reinterpret_cast<const unsigned char *>(pBinary1.get())};
-    size_t sizeBinaries[] = {binarySize0, binarySize1};
-
     cl_program pProgram = nullptr;
+    constexpr size_t numDevicesForProgram = 2u;
+    MockZebinWrapper<numDevicesForProgram> zebin(context.getDevice(0)->getHardwareInfo());
+    zebin.setAsMockCompilerReturnedBinary();
+
+    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
 
     cl_int retVal = CL_INVALID_PROGRAM;
     cl_int binaryStaus = CL_INVALID_PROGRAM;
@@ -212,8 +170,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
         &context,
         numDevicesForProgram,
         devicesForProgram,
-        sizeBinaries,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStaus,
         &retVal);
 
@@ -228,37 +186,12 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBinariesThenCorrectBinariesAreReturned) {
     MockUnrestrictiveContextMultiGPU context;
-
-    auto numDevicesForProgram = 2u;
-    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
-
-    std::unique_ptr<char[]> pBinary0 = nullptr;
-    std::unique_ptr<char[]> pBinary1 = nullptr;
-    size_t binarySize0 = 0;
-    size_t binarySize1 = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
-
-    pBinary0 = loadDataFromFile(
-        testFile.c_str(),
-        binarySize0);
-
-    retrieveBinaryKernelFilename(testFile, "copybuffer_", ".bin");
-
-    pBinary1 = loadDataFromFile(
-        testFile.c_str(),
-        binarySize1);
-    ASSERT_NE(0u, binarySize0);
-    ASSERT_NE(0u, binarySize1);
-    ASSERT_NE(nullptr, pBinary0);
-    ASSERT_NE(nullptr, pBinary1);
-
-    EXPECT_NE(binarySize0, binarySize1);
-
-    const unsigned char *binaries[] = {reinterpret_cast<const unsigned char *>(pBinary0.get()), reinterpret_cast<const unsigned char *>(pBinary1.get())};
-    size_t sizeBinaries[] = {binarySize0, binarySize1};
-
     cl_program pProgram = nullptr;
+    constexpr size_t numDevicesForProgram = 2u;
+    MockZebinWrapper<numDevicesForProgram> zebin(context.getDevice(0)->getHardwareInfo());
+    zebin.setAsMockCompilerReturnedBinary();
+
+    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
 
     cl_int retVal = CL_INVALID_PROGRAM;
     cl_int binaryStaus = CL_INVALID_PROGRAM;
@@ -267,8 +200,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBi
         &context,
         numDevicesForProgram,
         devicesForProgram,
-        sizeBinaries,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStaus,
         &retVal);
 
@@ -279,14 +212,14 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBi
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARY_SIZES, numDevicesForProgram * sizeof(size_t), programBinarySizes, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto i = 0u; i < numDevicesForProgram; i++) {
-        EXPECT_EQ(sizeBinaries[i], programBinarySizes[i]);
+        EXPECT_EQ(zebin.binarySizes[i], programBinarySizes[i]);
     }
 
-    auto programBinary0 = std::make_unique<unsigned char[]>(binarySize0);
-    memset(programBinary0.get(), 0, binarySize0);
+    auto programBinary0 = std::make_unique<unsigned char[]>(zebin.binarySizes[0]);
+    memset(programBinary0.get(), 0, zebin.binarySizes[0]);
 
-    auto programBinary1 = std::make_unique<unsigned char[]>(binarySize1);
-    memset(programBinary1.get(), 0, binarySize1);
+    auto programBinary1 = std::make_unique<unsigned char[]>(zebin.binarySizes[0]);
+    memset(programBinary1.get(), 0, zebin.binarySizes[1]);
 
     unsigned char *programBinaries[] = {programBinary0.get(), programBinary1.get()};
 
@@ -294,17 +227,17 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBi
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto i = 0u; i < numDevicesForProgram; i++) {
         for (auto j = 0u; j < programBinarySizes[i]; j++) {
-            EXPECT_EQ(programBinaries[i][j], binaries[i][j]);
+            EXPECT_EQ(programBinaries[i][j], zebin.binaries[i][j]);
         }
     }
 
-    memset(programBinary1.get(), 0, binarySize1);
+    memset(programBinary1.get(), 0, zebin.binarySizes[1]);
     programBinaries[0] = nullptr;
 
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARIES, numDevicesForProgram * sizeof(unsigned char *), programBinaries, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto j = 0u; j < programBinarySizes[1]; j++) {
-        EXPECT_EQ(programBinaries[1][j], binaries[1][j]);
+        EXPECT_EQ(programBinaries[1][j], zebin.binaries[1][j]);
     }
 
     retVal = clReleaseProgram(pProgram);
@@ -370,6 +303,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithILWhenGettingDevice
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
     MockUnrestrictiveContextMultiGPU context;
+    MockZebinWrapper zebin{context.getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     auto expectedNumDevices = context.getNumDevices();
 
@@ -379,22 +314,10 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
         devicesForProgram[i] = context.getDevice(i);
     }
 
-    std::unique_ptr<char[]> pBinary = nullptr;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
-
-    pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-
     cl_program pProgram = nullptr;
 
     cl_int retVal = CL_INVALID_PROGRAM;
-    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary.get(), binarySize, &retVal);
+    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), zebin.data.storage.data(), zebin.data.storage.size(), &retVal);
 
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -407,6 +330,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectBinariesAreReturned) {
     MockUnrestrictiveContextMultiGPU context;
+    MockZebinWrapper zebin{context.getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     auto expectedNumDevices = context.getNumDevices();
 
@@ -416,22 +341,13 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
         devicesForProgram[i] = context.getDevice(i);
     }
 
-    std::unique_ptr<char[]> pBinary = nullptr;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
-
-    pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-
     cl_program pProgram = nullptr;
 
     cl_int retVal = CL_INVALID_PROGRAM;
-    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary.get(), binarySize, &retVal);
+
+    unsigned char *pBinary = zebin.data.storage.data();
+    const size_t binarySize = zebin.data.storage.size();
+    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary, binarySize, &retVal);
 
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -457,7 +373,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARIES, expectedNumDevices * sizeof(unsigned char *), programBinaries.get(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto i = 0u; i < expectedNumDevices; i++) {
-        EXPECT_EQ(0, memcmp(programBinaries[i], pBinary.get(), binarySize));
+        EXPECT_EQ(0, memcmp(programBinaries[i], pBinary, binarySize));
     }
 
     retVal = clReleaseProgram(pProgram);

@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
-#include "shared/source/helpers/cache_policy_tgllp_and_later.inl"
+#include "shared/source/helpers/cache_policy_gen12lp.inl"
 #include "shared/source/helpers/enable_product.inl"
 #include "shared/source/os_interface/product_helper.h"
 

@@ -68,7 +68,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
 
     if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {
         auto lock = device.getMemoryManager()->lockKernelAllocationMap();
-        auto kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
+        const auto &kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
         auto &storedAllocations = device.getMemoryManager()->getKernelAllocationMap();
         auto kernelAllocations = storedAllocations.find(kernelName);
         if (kernelAllocations != storedAllocations.end()) {
@@ -118,6 +118,31 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
     setIfValidOffset(constants.slmWindowSize, implicitArgs.localMemoryStatelessWindowSize);
     setIfValidOffset(privateMemorySize, implicitArgs.privateMemorySize);
     setIfValidOffset(constants.maxWorkGroupSize, implicitArgs.maxWorkGroupSize);
+}
+
+GraphicsAllocation *KernelInfo::getIsaGraphicsAllocation() const {
+    if (auto allocation = this->getIsaParentAllocation(); allocation != nullptr) {
+        DEBUG_BREAK_IF(this->kernelAllocation != nullptr);
+        return allocation;
+    } else {
+        DEBUG_BREAK_IF(this->kernelAllocation == nullptr);
+        return this->kernelAllocation;
+    }
+}
+
+uint32_t KernelInfo::getIsaSize() const {
+    if (this->getIsaParentAllocation()) {
+        DEBUG_BREAK_IF(this->kernelAllocation != nullptr);
+        return static_cast<uint32_t>(this->isaSubAllocationSize);
+    } else {
+        DEBUG_BREAK_IF(this->kernelAllocation == nullptr);
+        return static_cast<uint32_t>(this->kernelAllocation->getUnderlyingBufferSize());
+    }
+}
+
+void KernelInfo::setIsaPerKernelAllocation(GraphicsAllocation *allocation) {
+    DEBUG_BREAK_IF(this->isaParentAllocation != nullptr);
+    this->kernelAllocation = allocation;
 }
 
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {

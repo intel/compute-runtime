@@ -110,7 +110,7 @@ const std::string ClFileLogger<debugLevel>::getEvents(const uintptr_t *input, ui
     for (uint32_t i = 0; i < numOfEvents; i++) {
         if (input != nullptr) {
             cl_event event = (reinterpret_cast<const cl_event *>(input))[i];
-            os << "cl_event " << event << ", Event " << (Event *)event << ", ";
+            os << "cl_event " << event << ", Event " << static_cast<Event *>(event) << ", ";
         }
     }
     return os.str();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,21 +33,21 @@ constexpr bool ignoreInvalidTestExcludes = false;
 #define IS_TEST_EXCLUDED(test_suite_name, test_name) \
     NEO::TestExcludes::isTestExcluded(#test_suite_name #test_name, ::productFamily, ::renderCoreFamily)
 
-#define CALL_IF_MATCH(match_core, match_product, expr)                           \
-    auto matchCore = match_core;                                                 \
-    auto matchProduct = match_product;                                           \
-    if ((::renderCoreFamily == matchCore) &&                                     \
-        (IGFX_MAX_PRODUCT == matchProduct || ::productFamily == matchProduct)) { \
-        expr;                                                                    \
+#define CALL_IF_MATCH(match_core, match_product, expr)                                   \
+    auto matchCore = match_core;                                                         \
+    auto matchProduct = match_product;                                                   \
+    if ((::renderCoreFamily == matchCore) &&                                             \
+        (NEO::maxProductEnumValue == matchProduct || ::productFamily == matchProduct)) { \
+        expr;                                                                            \
     }
 
 #define GENTEST_F(gfx_core, test_fixture, test_name)                 \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
-                     gfx_core, IGFX_MAX_PRODUCT)
+                     gfx_core, NEO::maxProductEnumValue)
 
 #define GENTEST_P(gfx_core, test_suite_name, test_name) \
-    FAMILYTEST_TEST_P(test_suite_name, test_name, gfx_core, IGFX_MAX_PRODUCT)
+    FAMILYTEST_TEST_P(test_suite_name, test_name, gfx_core, NEO::maxProductEnumValue)
 
 #define FAMILYTEST_TEST_(test_suite_name, test_name, parent_class, parent_id, match_core, match_product)                                    \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \

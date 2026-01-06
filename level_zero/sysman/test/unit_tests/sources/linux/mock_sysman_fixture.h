@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
@@ -38,6 +39,7 @@ namespace ult {
 
 class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
+    using LinuxSysmanImp::pciBdfInfo;
     using LinuxSysmanImp::pFsAccess;
     using LinuxSysmanImp::pFwUtilInterface;
     using LinuxSysmanImp::pPmuInterface;

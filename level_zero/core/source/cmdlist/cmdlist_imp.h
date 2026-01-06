@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,19 @@
 
 #pragma once
 #include "shared/source/helpers/in_order_cmd_helpers.h"
-#include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include <memory>
 
+namespace NEO {
+class CommandStreamReceiver;
+class InOrderExecInfo;
+struct StreamProperties;
+} // namespace NEO
+
 namespace L0 {
+struct Event;
 
 struct CommandListImp : public CommandList {
     using CommandList::CommandList;
@@ -44,10 +50,19 @@ struct CommandListImp : public CommandList {
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
     void addRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
+    bool inOrderCmdsPatchingEnabled() const;
+    void clearInOrderExecCounterAllocation();
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
-    void enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc);
+    void enableCopyOperationOffload();
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
+    virtual bool kernelMemoryPrefetchEnabled() const = 0;
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    size_t getInOrderExecDeviceRequiredSize() const;
+    uint64_t getInOrderExecDeviceGpuAddress() const;
+    size_t getInOrderExecHostRequiredSize() const;
+    uint64_t getInOrderExecHostGpuAddress() const;
+    void enableImmediateBcsSplit();
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
@@ -59,8 +74,6 @@ struct CommandListImp : public CommandList {
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
-    static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
-    static constexpr bool cmdListDefaultGlobalAtomics = false;
     std::vector<Event *> mappedTsEventList;
     std::vector<Event *> interruptEvents;
 };

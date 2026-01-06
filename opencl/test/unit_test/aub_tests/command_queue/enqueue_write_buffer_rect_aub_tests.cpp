@@ -1,19 +1,24 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include <cstdint>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 using namespace NEO;
 
@@ -170,7 +175,7 @@ struct AUBWriteBufferRectUnaligned
             nullptr);
 
         EXPECT_EQ(CL_SUCCESS, retVal);
-        pCmdQ->finish();
+        pCmdQ->finish(false);
 
         expectMemory<FamilyType>(pDestMemory, referenceMemory, rowPitch);
         expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1], ptrOffset(srcMemory, offset), size);

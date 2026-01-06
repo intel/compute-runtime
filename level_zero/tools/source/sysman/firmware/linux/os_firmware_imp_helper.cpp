@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"

@@ -29,22 +29,8 @@ struct SmallBuffersParams {
     size_t chunkAlignment{0};
     size_t startingOffset{0};
 
-    static SmallBuffersParams getDefaultParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 1 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
-    static SmallBuffersParams getLargePagesParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 16 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 2 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
+    static SmallBuffersParams getDefaultParams();
+    static SmallBuffersParams getLargePagesParams();
     static inline SmallBuffersParams getPreferredBufferPoolParams(const ProductHelper &productHelper);
 };
 
@@ -56,11 +42,11 @@ struct AbstractBuffersPool : public NonCopyableClass {
     // a BufferType-dependent function reserving chunks within `mainStorage`.
     // Example: see `NEO::Context::BufferPool::allocate()`
     using AllocsVecCRef = const StackVec<NEO::GraphicsAllocation *, 1> &;
-    using OnChunkFreeCallback = void (PoolT::*)(uint64_t offset, size_t size);
+    using OnChunkFreeCallback = std::function<void(PoolT *self, uint64_t offset, size_t size)>;
 
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback, const SmallBuffersParams &params);
-    AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool);
+    AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool) noexcept;
     AbstractBuffersPool &operator=(AbstractBuffersPool &&other) noexcept = delete;
     virtual ~AbstractBuffersPool() = default;
 

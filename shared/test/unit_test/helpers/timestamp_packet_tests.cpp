@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ void setTagToReadyState(TagNodeBase *tagNode) {
 
     typename FamilyType::TimestampPacketType zeros[4] = {};
 
-    for (uint32_t i = 0; i < TimestampPacketConstants::preferredPacketCount; i++) {
+    for (uint32_t i = 0; i < FamilyType::timestampPacketCount; i++) {
         tagNode->assignDataToAllTimestamps(i, zeros);
     }
     tagNode->setPacketsUsed(packetsUsed);
@@ -199,6 +199,31 @@ HWTEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
     EXPECT_EQ(1u, firstNode->getPacketsUsed());
 }
 
+HWTEST_F(TimestampPacketTests, GivenTagNodeWhenCallMarkAsAbortedThenClearTimestamps) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(executionEnvironment);
+    MockTagAllocator<MockTimestampPackets32> allocator(0, &memoryManager, 1);
+
+    using MockNode = TagNode<MockTimestampPackets32>;
+
+    auto firstNode = static_cast<MockNode *>(allocator.getTag());
+    auto initValue = 1u;
+    for (auto &packet : firstNode->tagForCpuAccess->packets) {
+        packet.contextStart = initValue;
+        packet.globalStart = initValue;
+        packet.contextEnd = initValue;
+        packet.globalEnd = initValue;
+    }
+    firstNode->markAsAborted();
+
+    for (const auto &packet : firstNode->tagForCpuAccess->packets) {
+        EXPECT_EQ(0u, packet.contextStart);
+        EXPECT_EQ(0u, packet.globalStart);
+        EXPECT_EQ(0u, packet.contextEnd);
+        EXPECT_EQ(0u, packet.globalEnd);
+    }
+}
+
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPackets32 timestampPacketStorage;
     EXPECT_EQ(TimestampPacketConstants::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
@@ -291,6 +316,21 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
 
         debugManager.flags.OverrideTimestampPacketSize.set(12);
         EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
+    }
+}
+
+HWTEST_F(DeviceTimestampPacketTests, givenTagAllocatorForTimstampAndQueryPacketCountThenResultIsCorrect) {
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
+    {
+        using TimestampPacketType = typename FamilyType::TimestampPacketType;
+        using TimestampPacketsT = NEO::TimestampPackets<TimestampPacketType, FamilyType::timestampPacketCount>;
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
+        uint32_t packetCount = tag->tagForCpuAccess->getPacketCount();
+        EXPECT_EQ(FamilyType::timestampPacketCount, packetCount);
     }
 }
 

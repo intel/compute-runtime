@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,6 +17,7 @@ NEO_SKIP_AUB_TESTS_RUN=${NEO_SKIP_AUB_TESTS_RUN:-TRUE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
 NEO_LEGACY_PLATFORMS_SUPPORT=${NEO_LEGACY_PLATFORMS_SUPPORT:-FALSE}
 NEO_CURRENT_PLATFORMS_SUPPORT=${NEO_CURRENT_PLATFORMS_SUPPORT:-TRUE}
+NEO_STRICT_DEPENDENCIES=${NEO_STRICT_DEPENDENCIES:-TRUE}
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
@@ -68,7 +69,7 @@ if [ -f "${SHLIBS}" ]; then
     cp $SHLIBS $BUILD_DIR/debian/
 fi
 
-if [ -z "${BRANCH_SUFFIX}" ]; then
+if [[ -z "${BRANCH_SUFFIX}" ]] && [[ "${NEO_STRICT_DEPENDENCIES}" == "TRUE" ]]; then
     GMM_VERSION=$(apt-cache policy libigdgmm12 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${GMM_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm12(?=,|$)/ libigdgmm12 (>=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
@@ -77,14 +78,13 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-
     IGC_VERSION=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+	    perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (>=$IGC_VERSION), intel-igc-opencl-2 (<<$IGC_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
     IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (>=$IGC_DEVEL_VERSION), intel-igc-opencl-devel (<<$IGC_DEVEL_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
 fi
 

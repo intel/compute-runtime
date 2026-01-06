@@ -27,6 +27,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/transfer_properties_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_helper_ocl_tests.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)

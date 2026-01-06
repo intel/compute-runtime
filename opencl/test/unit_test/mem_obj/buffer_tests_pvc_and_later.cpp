@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,19 +8,22 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+namespace NEO {
+class Device;
+} // namespace NEO
 
 using namespace NEO;
 
@@ -101,34 +104,4 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromHeapSt
 
     EXPECT_GT(gpuAddress, standard64KbHeapBase);
     EXPECT_LT(gpuAddress, standard64KbHeapLimit);
-}
-
-HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupportedWhenCreatingBufferThenDoNotUseBlitterLogicForLocalMem, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
-        &BlitHelperFunctions::blitMemoryToAllocation};
-    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
-    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pDevice = deviceFactory.rootDevices[0];
-    auto pMockContext = std::make_unique<MockContext>(pDevice);
-
-    if (pDevice->getProductHelper().isDcFlushMitigated()) {
-        debugManager.flags.AllowDcFlush.set(1);
-    }
-
-    static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
-    static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[0] = false;
-
-    blitMemoryToAllocationFuncBackup = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset,
-                                          const void *hostPtr, Vec3<size_t> size) -> NEO::BlitOperationResult {
-        ADD_FAILURE();
-        return BlitOperationResult::fail;
-    };
-    cl_mem_flags flags = CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL;
-    uint32_t hostPtr = 0;
-    cl_int retVal = CL_SUCCESS;
-    auto bufferForBlt = clUniquePtr(Buffer::create(pMockContext.get(), flags, 2000, &hostPtr, retVal));
 }

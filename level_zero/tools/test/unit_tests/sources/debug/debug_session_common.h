@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
-#include "common/StateSaveAreaHeader.h"
-
 namespace L0 {
 namespace ult {
 
@@ -34,7 +32,7 @@ struct DebugApiFixture : public DeviceFixture {
     void setUpV3Header() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     }
-    void setUpV3HeaderHeapless() {
+    void setUpV3HeaderWithoutHeapless() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
         auto pStateSaveArea = reinterpret_cast<NEO::StateSaveAreaHeader *>(mockBuiltins->stateSaveAreaHeader.data());
         pStateSaveArea->regHeaderV3.sip_flags = 0;

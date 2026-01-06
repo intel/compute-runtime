@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_iaf_nl_api.h"
 
 #include "gtest/gtest.h"
-
-#include <limits>
 
 namespace L0 {
 namespace Sysman {

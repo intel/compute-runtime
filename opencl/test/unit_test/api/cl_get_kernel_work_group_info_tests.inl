@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/kernel_work_group_info_fixture.h"
 
@@ -14,7 +14,6 @@ using namespace NEO;
 namespace ULT {
 
 TEST_P(ClGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         kernel,
@@ -29,7 +28,6 @@ TEST_P(ClGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         pMultiDeviceKernel,
@@ -43,7 +41,6 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoF
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         pMultiDeviceKernel,
@@ -57,7 +54,6 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
-
     size_t paramValueSizeRet;
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
@@ -97,8 +93,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWh
     EXPECT_EQ(paramValue, spillMemorySize);
 }
 
-using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, matcher) {
+HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, IsGen12LP) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);

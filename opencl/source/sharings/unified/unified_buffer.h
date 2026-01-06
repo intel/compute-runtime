@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@
 namespace NEO {
 class Buffer;
 class Context;
+enum class UnifiedSharingHandleType;
+struct UnifiedSharingMemoryDescription;
 
 class UnifiedBuffer : public UnifiedSharing {
     using UnifiedSharing::UnifiedSharing;

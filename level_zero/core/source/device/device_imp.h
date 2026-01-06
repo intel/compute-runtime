@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,27 +14,39 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 
 #include <map>
 #include <mutex>
 
+namespace aub_stream {
+enum EngineType : uint32_t;
+} // namespace aub_stream
+
 namespace NEO {
 class AllocationsList;
 class DriverInfo;
+class CommandStreamReceiver;
+class GraphicsAllocation;
+enum class EngineUsage : uint32_t;
+struct HardwareInfo;
 } // namespace NEO
 
 namespace L0 {
+class BcsSplit;
+struct Image;
 struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
+class MetricDeviceContext;
+struct BuiltinFunctionsLib;
+struct DebugSession;
+struct DriverHandle;
+struct Image;
 
 struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     DeviceImp();
     ze_result_t getStatus() override;
-    ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);
-    MOCKABLE_VIRTUAL ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
@@ -60,6 +72,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) override;
     ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) override;
     ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) override;
+    ze_result_t getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vector_width_properties_ext_t *pVectorWidthProperties) override;
     ze_result_t getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) override;
     ze_result_t getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) override;
     ze_result_t reserveCache(size_t cacheLevel, size_t cacheReservationSize) override;
@@ -75,7 +88,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) override;
 
     ze_result_t systemBarrier() override;
-    void *getExecEnvironment() override;
+    ze_result_t synchronize() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
     const NEO::GfxCoreHelper &getGfxCoreHelper() override;
@@ -95,7 +108,9 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t activateMetricGroupsDeferred(uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) override;
 
-    DriverHandle *getDriverHandle() override;
+    DriverHandle *getDriverHandle() final {
+        return this->driverHandle;
+    }
     void setDriverHandle(DriverHandle *driverHandle) override;
     NEO::PreemptionMode getDevicePreemptionMode() const override;
     const NEO::DeviceInfo &getDeviceInfo() const override;
@@ -115,7 +130,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override;
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
-    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, bool allocateInterrupt) override;
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt) override;
     ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) override;
     ze_result_t getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     bool isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly);
@@ -128,14 +143,14 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t getPhysicalSubDeviceId();
 
     bool isSubdevice = false;
-    void *execEnvironment = nullptr;
     std::unique_ptr<BuiltinFunctionsLib> builtins;
     std::unique_ptr<MetricDeviceContext> metricContext;
     std::unique_ptr<CacheReservation> cacheReservation;
+    std::unique_ptr<BcsSplit> bcsSplit;
+
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
-    std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
     FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
@@ -143,8 +158,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     Device *rootDevice = nullptr;
 
     std::mutex printfKernelMutex;
-
-    BcsSplit bcsSplit;
 
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;
@@ -170,16 +183,20 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
-    void getAdditionalMemoryExtProperties(ze_base_properties_t *extProperties, const NEO::HardwareInfo &hwInfo);
     ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
 
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
-    ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     uint32_t getEventMaxPacketCount() const override;
     uint32_t getEventMaxKernelCount() const override;
     uint32_t queryDeviceNodeMask();
     NEO::EngineGroupType getInternalEngineGroupType();
     uint32_t getCopyEngineOrdinal() const;
+    std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
+    void bcsSplitReleaseResources() override;
+    uint32_t getAggregatedCopyOffloadIncrementValue() override;
+
+    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle);
+    static void freeMemoryAllocation(NEO::Device &device, void *memoryAllocation);
 
   protected:
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
@@ -189,7 +206,8 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
-    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
+    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
+    void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     SysmanDevice *pSysmanDevice = nullptr;

@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -47,7 +46,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
         if (oomSetting.oomCS) {
             auto &cs = pCmdQ->getCS(oomSize);
 
-            // CommandStream may be larger than requested so grab what wasnt requested
+            // CommandStream may be larger than requested so grab what was not requested
             cs.getSpace(cs.getAvailableSpace() - oomSize);
             ASSERT_EQ(oomSize, cs.getAvailableSpace());
         }
@@ -55,7 +54,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
         if (oomSetting.oomISH) {
             auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
 
-            // IndirectHeap may be larger than requested so grab what wasnt requested
+            // IndirectHeap may be larger than requested so grab what was not requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
             ASSERT_EQ(oomSize, ish.getAvailableSpace());
         }
@@ -76,7 +75,7 @@ HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();

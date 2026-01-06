@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,8 +58,9 @@ auto getCopyEnginesMappingIterator(const NEO::RootDeviceEnvironment &rootDeviceE
 uint32_t getBcsEngineMaskIndex(const aub_stream::EngineType *mappingCopyEngineIt) {
     if (*mappingCopyEngineIt == aub_stream::EngineType::ENGINE_BCS) {
         return 0u;
-    } else
+    } else {
         return *mappingCopyEngineIt - aub_stream::EngineType::ENGINE_BCS1 + 1;
+    }
 }
 } // namespace
 
@@ -73,9 +74,9 @@ void EngineInfo::mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineCapa
         engineType = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment);
     } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
 
-        auto isIntergrated = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        auto isIntegrated = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
         auto &bcsInfoMask = rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.ftrBcsInfo;
-        assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, isIntergrated), tileId, engine,
+        assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, isIntegrated), tileId, engine,
                          bcsInfoMask, engineCounters, mappingCopyEngineIt);
 
     } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
@@ -227,7 +228,7 @@ aub_stream::EngineType EngineInfo::getBaseCopyEngineType(const IoctlHelper *ioct
             return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
         }
     }
-    // no capabilites check for BCS0, to be backward compatible
+    // no capabilities check for BCS0, to be backward compatible
     return DrmEngineMappingHelper::baseForMainCopyEngine;
 }
 

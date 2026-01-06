@@ -6,11 +6,12 @@
  */
 
 #include "shared/source/helpers/options.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 using namespace NEO;
 
@@ -136,7 +137,7 @@ TEST_F(PageFaultManagerTest, givenNonGpuAllocsContainerWhenMovingToGpuDomainMult
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocsThenAllocationsInGpuDomainAreNotMoved) {
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get());
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
     void *alloc1 = reinterpret_cast<void *>(0x1);
@@ -178,7 +179,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPr
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintUmdSharedMigration.set(1);
 
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get());
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *alloc1 = reinterpret_cast<void *>(0x1);
     void *alloc2 = reinterpret_cast<void *>(0x100);
@@ -191,11 +192,12 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPr
     EXPECT_EQ(pageFaultManager->memoryData.size(), 3u);
     pageFaultManager->memoryData.at(alloc3).domain = CpuPageFaultManager::AllocationDomain::gpu;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
@@ -391,11 +393,12 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainWithPrint
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
@@ -587,7 +590,8 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
@@ -596,7 +600,7 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
     pageFaultManager->verifyAndHandlePageFault(alloc, true);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
@@ -626,7 +630,8 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
@@ -635,7 +640,7 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
 
     pageFaultManager->verifyAndHandlePageFault(alloc, true);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
@@ -765,12 +770,11 @@ TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefau
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledThenAllocIsAubWritable) {
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *alloc1 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
@@ -820,7 +824,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMigratedBetweenCpuAndGpu
 }
 
 TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCalledThenPeekEvictableForCpuAllocReturnCorrectValue) {
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     DebugManagerStateRestore restore;
     debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
@@ -831,7 +834,7 @@ TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCall
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
@@ -888,7 +891,7 @@ TEST_F(PageFaultManagerTest, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandle
 struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
         memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
         pageFaultManager = std::make_unique<MockPageFaultManager>();
         cmdQ = reinterpret_cast<void *>(0xFFFF);
     }
@@ -979,14 +982,14 @@ TEST_F(PageFaultManagerTest, givenNoUsmInitialPlacementFlagsWHenInsertingUsmAllo
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryNotInGpuDomainThenTbxFaultManagerShouldDoNothingBeforeCallingDefaultHandler) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});
@@ -1000,14 +1003,14 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryNotInGpuDomainThenTbxFa
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryInGpuDomainThenTbxFaultManagerShouldAllowCpuAccessBeforeCallingDefaultHandler) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});
@@ -1022,14 +1025,14 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryInGpuDomainThenTbxFault
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryIsManagedWhenHandleFaultIsFalseThenTbxFaultManagerShouldNotHandleFault) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});

@@ -5,12 +5,11 @@
  *
  */
 
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using GetDeviceInfoMemCapabilitiesTestXe3Device = NEO::GetDeviceInfoMemCapabilitiesTest;
 

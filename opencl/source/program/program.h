@@ -6,14 +6,19 @@
  */
 
 #pragma once
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/compiler_interface/spec_const_values_map.h"
+#include "shared/source/compiler_interface/translation_error_code.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/utilities/const_stringref.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
+
+#include "cif/builtins/memory/buffer/buffer.h"
+#include "cif/common/cif.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <functional>
 
@@ -35,6 +40,12 @@ class ExecutionEnvironment;
 class Program;
 struct MetadataGeneration;
 struct KernelInfo;
+enum class DecodeError : uint8_t;
+struct ExternalFunctionInfo;
+class SharedPoolAllocation;
+struct DeviceInfoKernelPayloadConstants;
+class ProductHelper;
+
 template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;
@@ -48,19 +59,19 @@ using CreateFromILFunc = std::function<Program *(Context *ctx,
 extern CreateFromILFunc createFromIL;
 } // namespace ProgramFunctions
 
-constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
+constexpr cl_int asClError(TranslationErrorCode err) {
     switch (err) {
     default:
         return CL_OUT_OF_HOST_MEMORY;
-    case TranslationOutput::ErrorCode::success:
+    case TranslationErrorCode::success:
         return CL_SUCCESS;
-    case TranslationOutput::ErrorCode::compilerNotAvailable:
+    case TranslationErrorCode::compilerNotAvailable:
         return CL_COMPILER_NOT_AVAILABLE;
-    case TranslationOutput::ErrorCode::compilationFailure:
+    case TranslationErrorCode::compilationFailure:
         return CL_COMPILE_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::buildFailure:
+    case TranslationErrorCode::buildFailure:
         return CL_BUILD_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::linkFailure:
+    case TranslationErrorCode::linkFailure:
         return CL_LINK_PROGRAM_FAILURE;
     }
 }
@@ -184,17 +195,33 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
-    GraphicsAllocation *getConstantSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].constantSurface;
-    }
+    void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
 
-    GraphicsAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].globalSurface;
-    }
+    NEO::SharedPoolAllocation *getConstantSurface(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getConstantSurfaceGA(uint32_t rootDeviceIndex) const;
+    NEO::SharedPoolAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getGlobalSurfaceGA(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const;
 
-    GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
-    }
+    MOCKABLE_VIRTUAL bool isIsaPoolingEnabled(Device &neoDevice);
+    cl_int setIsaGraphicsAllocations(
+        Device &neoDevice,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        DeviceInfoKernelPayloadConstants &deviceInfoConstants,
+        uint32_t rootDeviceIndex);
+
+    MOCKABLE_VIRTUAL bool transferIsaSegmentsToAllocation(
+        Device *pDevice,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        const Linker::PatchableSegments *isaSegmentsForPatching,
+        uint32_t rootDeviceIndex);
+
+    std::pair<const void *, size_t> getKernelHeapPointerAndSize(
+        KernelInfo *const &kernelInfo,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        const Linker::PatchableSegments *isaSegmentsForPatching);
+
+    GraphicsAllocation *getKernelsIsaParentAllocation(uint32_t rootDeviceIndex) const;
 
     void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);
 
@@ -246,6 +273,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL std::string getInternalOptions() const;
     uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
     uint32_t getIndirectDetectionVersion() const { return indirectDetectionVersion; }
+    uint32_t getIndirectAccessBufferVersion() const { return indirectAccessBufferMajorVersion; }
     void retainForKernel() {
         std::unique_lock<std::mutex> lock{lockMutex};
         exposedKernels++;
@@ -275,6 +303,7 @@ class Program : public BaseObject<_cl_program> {
     Zebin::Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL cl_int createFromILExt(Context *context, const void *il, size_t length);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
@@ -296,9 +325,6 @@ class Program : public BaseObject<_cl_program> {
 
     void setBuildStatus(cl_build_status status);
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
-
-    bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
-    void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode);
 
     void notifyModuleCreate();
     void notifyModuleDestroy();
@@ -330,8 +356,9 @@ class Program : public BaseObject<_cl_program> {
 
     struct BuildInfo : public NonCopyableClass {
         std::vector<KernelInfo *> kernelInfoArray;
-        GraphicsAllocation *constantSurface = nullptr;
-        GraphicsAllocation *globalSurface = nullptr;
+        std::unique_ptr<NEO::SharedPoolAllocation> constantSurface;
+        std::unique_ptr<NEO::SharedPoolAllocation> globalSurface;
+        std::unique_ptr<NEO::SharedPoolAllocation> sharedIsaAllocation;
         GraphicsAllocation *exportedFunctionsSurface = nullptr;
         size_t globalVarTotalSize = 0U;
         std::unique_ptr<LinkerInput> linkerInput;
@@ -371,6 +398,7 @@ class Program : public BaseObject<_cl_program> {
     ClDeviceVector clDevicesInProgram;
 
     uint32_t indirectDetectionVersion = 0u;
+    uint32_t indirectAccessBufferMajorVersion = 0u;
     bool isBuiltIn = false;
     bool isGeneratedByIgc = true;
 
@@ -389,6 +417,7 @@ class Program : public BaseObject<_cl_program> {
         std::string decodeErrors;
         std::string decodeWarnings;
     } decodedSingleDeviceBinary;
+    IGC::CodeType::CodeType_t intermediateRepresentation = IGC::CodeType::invalid;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Program>);

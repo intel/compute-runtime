@@ -7,29 +7,34 @@
 
 #pragma once
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 
+#include "gtest/gtest.h"
+
 class MockPageFaultManager;
+
 namespace NEO {
 struct UltDeviceFactory;
+class MemoryManager;
 class MockMemoryManager;
 class OsAgnosticMemoryManager;
 class MemoryManagerMemHandleMock;
+class Device;
 } // namespace NEO
 
 namespace L0 {
 struct Context;
 struct Device;
 struct ContextImp;
+struct DeviceImp;
 
 namespace ult {
 class MockBuiltins;
@@ -57,6 +62,8 @@ struct DeviceFixture {
 template <typename T>
 struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     void setUp() {
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         memoryManager = new T(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
@@ -66,7 +73,7 @@ struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
-
+    DebugManagerStateRestore restorer;
     T *memoryManager = nullptr;
 };
 
@@ -78,7 +85,7 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
         return &mockFd;
     }
 
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override {
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override {
         if (failHandleLookup) {
             return nullptr;
         }
@@ -278,6 +285,60 @@ class FalseUnSupportedFeatureGpuCpuTime : public NEO::OSTime {
     static std::unique_ptr<OSTime> create() {
         return std::unique_ptr<OSTime>(new FalseGpuCpuTime());
     }
+};
+
+template <bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
+struct MultiSubDeviceFixture : public DeviceFixture {
+    void setUp() {
+        setUp(nullptr);
+    }
+
+    void setUp(NEO::HardwareInfo *hwInfo) {
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
+        debugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
+
+        if (hwInfo == nullptr) {
+            DeviceFixture::setUp();
+        } else {
+            DeviceFixture::setUpImpl(hwInfo);
+        }
+
+        deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
+        subDevice = neoDevice->getSubDevice(0);
+    }
+
+    L0::DeviceImp *deviceImp = nullptr;
+    NEO::Device *subDevice = nullptr;
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
+};
+
+struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDeviceFixture<true, -1, 1>, public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(8);
+
+        hardwareInfo = *defaultHwInfo;
+        hardwareInfo.featureTable.ftrBcsInfo = 0b1111;
+        hardwareInfo.capabilityTable.blitterOperationsSupported = true;
+
+        MultiSubDeviceFixture<true, -1, 1>::setUp(&hardwareInfo);
+    }
+
+    void TearDown() override {
+        MultiSubDeviceFixture<true, -1, 1>::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    HardwareInfo hardwareInfo;
+};
+
+struct ExtensionFixture : public DeviceFixture {
+    void setUp();
+    void tearDown();
+    void verifyExtensionDefinition(const char *extName, unsigned int extVersion);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties;
 };
 
 } // namespace ult

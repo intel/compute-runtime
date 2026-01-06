@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,17 +18,16 @@ namespace NEO {
 MockAubCenterFixture::MockAubCenterFixture(CommandStreamReceiverType commandStreamReceiverType) : commandStreamReceiverType(commandStreamReceiverType){};
 
 void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment) {
-    setMockAubCenter(rootDeviceEnvironment, CommandStreamReceiverType::aub);
+    setMockAubCenter(rootDeviceEnvironment, CommandStreamReceiverType::aub, true);
 }
-void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
+void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType, bool createMockAubManager = true) {
     if (testMode != TestMode::aubTests && testMode != TestMode::aubTestsWithTbx) {
         rootDeviceEnvironment.initGmm();
         auto mockAubCenter = std::make_unique<MockAubCenter>(rootDeviceEnvironment, false, "", commandStreamReceiverType);
-        if (!mockAubCenter->aubManager) {
+        if (createMockAubManager && !mockAubCenter->aubManager) {
             mockAubCenter->aubManager = std::make_unique<MockAubManager>();
         }
         rootDeviceEnvironment.aubCenter.reset(mockAubCenter.release());
     }
 }
-
 } // namespace NEO

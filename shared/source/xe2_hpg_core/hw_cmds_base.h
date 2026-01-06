@@ -7,13 +7,12 @@
 
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/is_pod_v.h"
 
 #include <cstring>
 #include <igfxfmid.h>
 #include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -25,16 +24,16 @@ struct Xe2HpgCore {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2
+    static constexpr uint32_t stateComputeModeUavCoherencyModeMask = (1u << 6);
     static constexpr uint32_t stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask = (1u << 11);
 
     static constexpr bool isUsingL3Control = false;
-    static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = false;
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
     static constexpr bool isUsingMiMathMocs = true;
-    static constexpr uint32_t bcsEngineCount = 9u;
+    static constexpr uint32_t bcsEngineCount = 1u;
     static constexpr uint32_t timestampPacketCount = 1u;
 
     struct FrontEndStateSupport {
@@ -55,6 +54,7 @@ struct Xe2HpgCore {
         static constexpr bool devicePreemptionMode = false;
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
+        static constexpr bool enableL1FlushUavCoherencyMode = true;
     };
 
     struct StateBaseAddressStateSupport {
@@ -62,7 +62,6 @@ struct Xe2HpgCore {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = false;
     };
 
@@ -102,18 +101,21 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     using Parse = CmdParse<Xe2HpgCoreFamily>;
     using GfxFamily = Xe2HpgCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
+    using PorWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint64_t;
+    using StallingBarrierType = RESOURCE_BARRIER;
     static const COMPUTE_WALKER cmdInitGpgpuWalker;
     static const CFE_STATE cmdInitCfeState;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MI_BATCH_BUFFER_END cmdInitBatchBufferEnd;
     static const MI_BATCH_BUFFER_START cmdInitBatchBufferStart;
     static const PIPE_CONTROL cmdInitPipeControl;
+    static const RESOURCE_BARRIER cmdInitResourceBarrier;
     static const STATE_COMPUTE_MODE cmdInitStateComputeMode;
     static const _3DSTATE_BINDING_TABLE_POOL_ALLOC cmdInitStateBindingTablePoolAlloc;
     static const MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
@@ -149,7 +151,9 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     static const STATE_SYSTEM_MEM_FENCE_ADDRESS cmdInitStateSystemMemFenceAddress;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr bool samplerArbitrationControl = false;
     static constexpr size_t indirectDataAlignment = COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
+    static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_XE2_HPG_CORE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;
@@ -188,8 +192,6 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     static constexpr auto getPostSyncType() {
         return std::decay_t<POSTSYNC_DATA>{};
     }
-
-    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 enum class MemoryCompressionState;

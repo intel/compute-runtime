@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,13 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
@@ -30,13 +29,13 @@ HWTEST2_F(PreambleTest, givenAtLeastXe2HpgCoreAndNotSetDebugFlagWhenPreambleCfeS
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
 
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
 
-    auto &cfeState = *reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto &cfeState = *reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(cfeState.getStackIdControl(), static_cast<STACK_ID_CONTROL>(0b00u));
 }
 
@@ -48,15 +47,19 @@ HWTEST2_F(PreambleTest, givenAtLeastXe2HpgCoreAndSetDebugFlagWhenPreambleCfeStat
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
     DebugManagerStateRestore debugRestore;
 
+    uint64_t expectedBufferGpuAddress = preambleStream.getCurrentGpuAddressPosition();
+    uint64_t cmdBufferGpuAddress = 0;
+
     debugManager.flags.CFEStackIDControl.set(0b10u);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, &cmdBufferGpuAddress);
     StreamProperties streamProperties{};
+    EXPECT_EQ(expectedBufferGpuAddress, cmdBufferGpuAddress);
 
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
 
-    auto &cfeState = *reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto &cfeState = *reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(cfeState.getStackIdControl(), static_cast<STACK_ID_CONTROL>(0b10u));
 }
 

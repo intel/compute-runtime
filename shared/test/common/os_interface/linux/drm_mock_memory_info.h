@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ const std::vector<NEO::MemoryRegion> memoryRegions = {
 
 struct MockMemoryInfo : public NEO::MemoryInfo {
     using NEO::MemoryInfo::localMemoryRegions;
+    using NEO::MemoryInfo::smallBarDetected;
 
     MockMemoryInfo(const NEO::Drm &drm) : MemoryInfo(memoryRegions, drm) {}
 };

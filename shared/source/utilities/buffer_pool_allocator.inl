@@ -11,29 +11,26 @@
 #include "shared/source/utilities/heap_allocator.h"
 
 #include <type_traits>
+#include <utility>
 
 namespace NEO {
 
-inline SmallBuffersParams SmallBuffersParams::getPreferredBufferPoolParams(const ProductHelper &productHelper) {
-    return productHelper.is2MBLocalMemAlignmentEnabled() ? SmallBuffersParams::getLargePagesParams() : SmallBuffersParams::getDefaultParams();
-}
-
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb)
-    : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, onChunkFreeCb, SmallBuffersParams::getDefaultParams()) {}
+    : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, std::move(onChunkFreeCb), SmallBuffersParams::getDefaultParams()) {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb, const SmallBuffersParams &params)
-    : memoryManager{memoryManager}, onChunkFreeCallback{onChunkFreeCb}, params{params} {
+    : memoryManager{memoryManager}, onChunkFreeCallback{std::move(onChunkFreeCb)}, params{params} {
     static_assert(std::is_base_of_v<BufferParentType, BufferType>);
 }
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
-AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool)
+AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool) noexcept
     : memoryManager{bufferPool.memoryManager},
       mainStorage{std::move(bufferPool.mainStorage)},
       chunkAllocator{std::move(bufferPool.chunkAllocator)},
-      onChunkFreeCallback{bufferPool.onChunkFreeCallback},
+      onChunkFreeCallback{std::move(bufferPool.onChunkFreeCallback)},
       params{bufferPool.params} {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
@@ -60,8 +57,8 @@ void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::drain() {
     }
     for (auto &chunk : this->chunksToFree) {
         this->chunkAllocator->free(chunk.first + params.startingOffset, chunk.second);
-        if (static_cast<PoolT *>(this)->onChunkFreeCallback) {
-            (static_cast<PoolT *>(this)->*onChunkFreeCallback)(chunk.first, chunk.second);
+        if (this->onChunkFreeCallback) {
+            this->onChunkFreeCallback(static_cast<PoolT *>(this), chunk.first, chunk.second);
         }
     }
     this->chunksToFree.clear();

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -9,6 +9,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_kernel_info.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -25,7 +26,9 @@ struct ClCreateKernelsInProgramTests : public ApiTests {
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
         auto simd = std::max(16u, pDevice->getGfxCoreHelper().getMinimalSIMDSize());
 
-        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), static_cast<uint8_t>(simd));
+        ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor desc{};
+        desc.execEnv["simd_size"] = std::to_string(simd);
+        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pDevice->getHardwareInfo(), desc);
         const auto &src = zebinData->storage;
         const auto &binarySize = src.size();
 
@@ -149,3 +152,120 @@ TEST_F(ClCreateKernelsInProgramTests, whenKernelCreationFailsOnClCreateKernelsIn
     EXPECT_EQ(nullptr, kernels[0]);
     EXPECT_EQ(nullptr, kernels[1]);
 }
+
+TEST(ClCreateKernelsInProgramTest, givenMultiDeviceProgramWhenNotBuiltThenDevicesInProgramMatchContextDevices) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    cl_int retVal = CL_INVALID_PROGRAM;
+    MockZebinWrapper zebin{context.getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
+
+    const char *sourceKernel = "example_kernel(){}";
+    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
+    const char *sources[1] = {sourceKernel};
+
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceKernelSize,
+        &retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_uint numKernels = 0;
+    retVal = clCreateKernelsInProgram(pProgram, 0, nullptr, &numKernels);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(numKernels, 0u);
+
+    Program *program = castToObject<Program>(pProgram);
+    EXPECT_EQ(context.getDevices().size(), program->getDevices().size());
+    EXPECT_EQ(context.getDevices().size(), program->getDevicesInProgram().size());
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+struct DeviceIndices {
+    std::vector<int> indices;
+};
+
+class ClCreateKernelsInProgramMultiDeviceTests : public ::testing::TestWithParam<DeviceIndices> {};
+
+TEST_P(ClCreateKernelsInProgramMultiDeviceTests, givenMultiDeviceProgramWhenBuiltForVariousDeviceCombinationsThenProgramAndKernelDevicesMatch) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    cl_int retVal = CL_INVALID_PROGRAM;
+    MockZebinWrapper zebin{context.getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
+
+    const char *sourceKernel = "example_kernel(){}";
+    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
+    const char *sources[1] = {sourceKernel};
+
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceKernelSize,
+        &retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<cl_device_id> devices;
+    for (int idx : GetParam().indices) {
+        if (idx == 0) {
+            devices.push_back(context.pRootDevice0);
+        } else if (idx == 1) {
+            devices.push_back(context.pRootDevice1);
+        }
+    }
+
+    retVal = clBuildProgram(
+        pProgram,
+        static_cast<cl_uint>(devices.size()),
+        devices.data(),
+        nullptr,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_uint numKernels = 0;
+    retVal = clCreateKernelsInProgram(pProgram, 0, nullptr, &numKernels);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(numKernels, 1u);
+
+    std::vector<cl_kernel> kernels(numKernels);
+    retVal = clCreateKernelsInProgram(pProgram, numKernels, kernels.data(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (cl_kernel kernel : kernels) {
+        EXPECT_NE(nullptr, kernel);
+    }
+
+    MultiDeviceKernel *multiDeviceKernel = castToObject<MultiDeviceKernel>(kernels[0]);
+    Program *program = castToObject<Program>(pProgram);
+
+    EXPECT_EQ(context.getDevices().size(), program->getDevices().size());
+    EXPECT_EQ(multiDeviceKernel->getDevices(), program->getDevicesInProgram());
+
+    for (cl_kernel kernel : kernels) {
+        retVal = clReleaseKernel(kernel);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    DeviceCombinations,
+    ClCreateKernelsInProgramMultiDeviceTests,
+    ::testing::Values(
+        DeviceIndices{{0}},   // firstDevice
+        DeviceIndices{{1}},   // secondDevice
+        DeviceIndices{{0, 1}} // deviceListBoth
+        ));

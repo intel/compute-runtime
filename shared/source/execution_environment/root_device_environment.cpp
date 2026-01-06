@@ -12,6 +12,7 @@
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/host_function_scheduler.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debugger/debugger.h"
@@ -33,6 +34,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/program/print_formatter.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -54,6 +56,10 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
     if (!aubCenter) {
         UNRECOVERABLE_IF(!getGmmHelper());
         aubCenter.reset(new AubCenter(*this, localMemoryEnabled, aubFileName, csrType));
+    }
+    if (debugManager.flags.UseAubStream.get() && aubCenter->getAubManager() == nullptr) {
+        printToStderr("ERROR: Simulation mode detected but Aubstream is not available.\n");
+        UNRECOVERABLE_IF(true);
     }
 }
 
@@ -134,7 +140,6 @@ void RootDeviceEnvironment::initOsTime() {
     if (!osTime) {
         osTime = OSTime::create(osInterface.get());
         osTime->setDeviceTimerResolution();
-        osTime->setDeviceTimestampWidth(gfxCoreHelper->getDeviceTimestampWidth());
     }
 }
 
@@ -155,7 +160,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
         std::lock_guard<std::mutex> autolock(this->mtx);
         if (this->compilerInterface.get() == nullptr) {
             auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
-            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), ApiSpecificConfig::getApiType() == ApiSpecificConfig::ApiType::OCL));
+            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
         }
     }
     return this->compilerInterface.get();
@@ -242,10 +247,23 @@ BuiltIns *RootDeviceEnvironment::getBuiltIns() {
     return this->builtins.get();
 }
 
-void RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
+bool RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
+    if (numberOfCcs == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid number of CCS - %u\n", numberOfCcs);
+        return false;
+    }
 
     hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = std::min(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, numberOfCcs);
     limitedNumberOfCcs = true;
+    if (aubCenter) {
+        aubCenter->getAubManager()->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    }
+
+    return true;
+}
+
+uint32_t RootDeviceEnvironment::getNumberOfCcs() const {
+    return hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
 }
 
 bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
@@ -285,6 +303,14 @@ GraphicsAllocation *RootDeviceEnvironment::getDummyAllocation() const {
 
 void RootDeviceEnvironment::releaseDummyAllocation() {
     dummyAllocation.reset();
+}
+
+void RootDeviceEnvironment::setHostFunctionScheduler(std::unique_ptr<HostFunctionWorker> &&scheduler) {
+    hostFunctionScheduler = std::move(scheduler);
+}
+
+HostFunctionWorker *RootDeviceEnvironment::getHostFunctionScheduler() const {
+    return hostFunctionScheduler.get();
 }
 
 AssertHandler *RootDeviceEnvironment::getAssertHandler(Device *neoDevice) {

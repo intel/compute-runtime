@@ -134,7 +134,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_EQ(expectedPowerUnit, pSysmanProductHelper->getPowerLimitUnit());
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsSupported, IsXeCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(pSysmanProductHelper->isPowerSetLimitSupported());
 }
@@ -159,8 +159,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0x4f9302";
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
         } else if (fd == 5) {
@@ -183,7 +183,6 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::string invalidGuid = "0x4f9302";
         if (fd == 4) {
             count = -1;
         }
@@ -194,7 +193,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryKeyOffsetMapNotAvailableAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
@@ -203,8 +202,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string invalidGuid = "0xABCDEFG";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view invalidGuid = "0xABCDEFG";
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
         } else if (fd == 5) {
@@ -217,7 +216,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
@@ -227,8 +226,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0x4f9302";
 
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
@@ -267,7 +266,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackagePackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_energy_counter_t energyCounter = {};
@@ -314,7 +313,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenComponentCountZeroWhenEnumeratingPo
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -347,15 +346,17 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWhenCallingSetAndG
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
-
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         uint32_t limitCount = 0;
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+            EXPECT_EQ(limitCount, 0u);
+            continue;
+        }
         const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        limitCount++;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
         EXPECT_EQ(limitCount, mockLimitCount);
 
@@ -401,10 +402,6 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWhenCallingSetAndG
         const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        limitCount++;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
         EXPECT_EQ(limitCount, mockLimitCount);
 
@@ -471,7 +468,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndWritingToPeakLim
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
     zes_power_sustained_limit_t sustainedSet = {};
@@ -484,7 +481,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenF
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenErrorIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenErrorIsReturned, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
 
@@ -497,7 +494,51 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustai
 using SysmanProductHelperPowerMultiDeviceTest = SysmanDevicePowerMultiDeviceFixture;
 constexpr uint32_t powerHandleComponentCountMultiDevice = 3u;
 
-HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWithTelemetrySupportAvailableButNoTelemDataWhenGettingPowerEnergyCounterThenEnergyCounterIsRetrievedThroughSysfsNode, IsPVC) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0xb15a0edd";
+        if (fd == 4) {
+            memcpy(buf, &telem1Offset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validGuid.data(), count);
+        }
+        return count;
+    });
+
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
+
+        zes_power_energy_counter_t energyCounter = {};
+        const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+
+        if (!properties.onSubdevice) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+        } else if (properties.subdeviceId == 0u) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile0);
+        } else if (properties.subdeviceId == 1u) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile1);
+        }
+
+        EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -556,26 +597,19 @@ HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWhenCal
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
             EXPECT_EQ(limitCount, mockLimitCount);
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, &limits));
-            EXPECT_EQ(limitCount, 0u);
-        }
-
-        limitCount++;
-        if (!properties.onSubdevice) {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-            EXPECT_EQ(limitCount, mockLimitCount);
-        } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, &limits));
             EXPECT_EQ(limitCount, 0u);
         }
 
         std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
         if (!properties.onSubdevice) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(limitCount, mockLimitCount);
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
             EXPECT_EQ(limitCount, 0u);
         }
+
         for (uint32_t i = 0; i < limitCount; i++) {
             if (allLimits[i].level == ZES_POWER_LEVEL_SUSTAINED) {
                 EXPECT_FALSE(allLimits[i].limitValueLocked);
@@ -607,7 +641,60 @@ HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWhenCal
             }
         } else {
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(limitCount, 0u);
         }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountThenOnlyRequestedNumberOfLimitsAreReturned, IsPVC) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        // First get total available limits
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, mockLimitCount);
+
+        // Request only 1 limit when multiple are available
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request only 2 limits when 3 are available
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithCountGreaterThanAvailableThenAllAvailableLimitsAreReturned, IsPVC) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+
+        // Request more limits than available
+        uint32_t requestedCount = 10;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+            EXPECT_EQ(requestedCount, 0u);
+            continue;
+        }
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, mockLimitCount);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_PEAK);
     }
 }
 

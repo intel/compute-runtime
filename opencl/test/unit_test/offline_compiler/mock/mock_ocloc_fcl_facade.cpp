@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 
 #include <optional>
 #include <string>
+
+class OclocArgHelper;
 
 namespace NEO {
 
@@ -57,7 +59,7 @@ std::string MockOclocFclFacade::getIncompatibleInterface() const {
     }
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> MockOclocFclFacade::createFclDeviceContext() const {
+CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> MockOclocFclFacade::createFclDeviceContext() const {
     if (shouldFailCreationOfFclDeviceContext) {
         return nullptr;
     } else {
@@ -73,7 +75,7 @@ bool MockOclocFclFacade::shouldPopulateFclInterface() const {
     }
 }
 
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocFclFacade::getPlatformHandle() const {
+CIF::RAII::UPtr_t<NEO::PlatformTag> MockOclocFclFacade::getPlatformHandle() const {
     if (shouldReturnInvalidFclPlatformHandle) {
         return nullptr;
     } else {
@@ -81,7 +83,7 @@ CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocFclFacade::getPlatformHandle() c
     }
 }
 
-void MockOclocFclFacade::populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) {
+void MockOclocFclFacade::populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo) {
     ++populateFclInterfaceCalledCount;
     OclocFclFacade::populateFclInterface(handle, hwInfo);
 }

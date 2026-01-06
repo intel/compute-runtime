@@ -5,24 +5,19 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
-#include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -30,26 +25,30 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
-#include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/driver_experimental/zex_memory.h"
+#include "level_zero/include/level_zero/ze_intel_gpu.h"
+#include "level_zero/include/level_zero/ze_stypes.h"
+#include "level_zero/zer_api.h"
 
 namespace L0 {
+struct ModuleBuildLog;
+
 namespace ult {
 
 TEST_F(MemoryExportImportImplicitScalingTest,
@@ -116,74 +115,110 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandlesWithIpcHandleAndHostTypeAllocationTheninvalidArgumentIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
+struct IpcMemoryImplicitScalingTest : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // set for test execution
+        DebugManagerStateRestore restorer;
+        debugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableWalkerPartition.set(1);
+        debugManager.flags.CreateMultipleSubDevices.set(2u);
 
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocHostMem(&hostDesc,
-                                               size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        }
 
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(numIpcHandles, 2u);
+        deviceFactory = std::make_unique<UltDeviceFactory>(1u, 2u, *executionEnvironment);
 
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
+        }
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
 
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+        device = driverHandle->devices[0];
+        context = std::make_unique<ContextIpcMock>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
 
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+        auto neoDevice = device->getNEODevice();
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerIpcImplicitScalingMock(*executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
 
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
 
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandlesWithIpcHandleThenDeviceAllocationIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
 
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
+    void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+    DebugManagerStateRestore testScopeRestorer;
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    NEO::SVMAllocsManager *currSvmAllocsManager;
 
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(numIpcHandles, 2u);
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    MemoryManagerIpcImplicitScalingMock *currMemoryManager = nullptr;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextIpcMock> context;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+};
 
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+TEST_F(IpcMemoryImplicitScalingTest,
+       whenGettingAllocationProperityOfAnIpcBufferWithImplicitScalingThenTheSameSubDeviceIsNotReturned) {
+    uint32_t nSubDevices = 0;
+    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->getSubDevices(&nSubDevices, nullptr));
+    EXPECT_EQ(2u, nSubDevices);
+    std::vector<ze_device_handle_t> subDevices(nSubDevices);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->getSubDevices(&nSubDevices, subDevices.data()));
 
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    for (auto subDevice : subDevices) {
+        constexpr size_t size = 1ul << 18;
+        ze_device_mem_alloc_desc_t deviceDesc{};
+        void *ptr = nullptr;
 
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(subDevice, &deviceDesc, size, 1ul, &ptr));
+        EXPECT_NE(nullptr, ptr);
 
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        uint32_t numIpcHandles = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, nullptr));
+        EXPECT_EQ(numIpcHandles, 2u);
 
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+
+        void *ipcPtr = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->openIpcMemHandles(subDevice, numIpcHandles, ipcHandles.data(), 0, &ipcPtr));
+        EXPECT_NE(nullptr, ipcPtr);
+
+        ze_device_handle_t registeredDevice = nullptr;
+        ze_memory_allocation_properties_t allocProp{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(ipcPtr, &allocProp, &registeredDevice));
+        EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, allocProp.type);
+        EXPECT_NE(subDevice, registeredDevice);
+        EXPECT_EQ(device->toHandle(), registeredDevice);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcPtr));
+
+        for (auto &ipcHandle : ipcHandles) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcMemHandle(ipcHandle));
+        }
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
 }
 
 TEST_F(MemoryExportImportImplicitScalingTest,
@@ -226,85 +261,6 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 }
 
 TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandleWithIpcHandleThenAllocationCountIsIncremented) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto usmManager = context->getDriverHandle()->getSvmAllocsManager();
-    auto currentAllocationCount = usmManager->allocationsCounter.load();
-
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-
-    result = context->openIpcMemHandle(device->toHandle(), ipcHandles[0], flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto newAllocationCount = usmManager->allocationsCounter.load();
-    EXPECT_GT(newAllocationCount, currentAllocationCount);
-    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), newAllocationCount);
-
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandleWithIpcHandleAndSharedMemoryTypeThenInvalidArgumentIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableImplicitScaling.set(0u);
-
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-    ipcData.type = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
-
-    result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryExportImportImplicitScalingTest,
        whenCallingOpenIpcHandleWithIpcHandleAndHostMemoryTypeThenInvalidArgumentIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableImplicitScaling.set(0u);
@@ -332,144 +288,6 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     currMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
 
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingImportFdHandlesWithAllocationPointerThenAllocationIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(numIpcHandles, 2u);
-
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-
-    std::vector<NEO::osHandle> handles;
-    for (uint32_t i = 0; i < numIpcHandles; i++) {
-        uint64_t handle = 0;
-        memcpy_s(&handle,
-                 sizeof(handle),
-                 reinterpret_cast<void *>(ipcHandles[i].data),
-                 sizeof(handle));
-        handles.push_back(static_cast<NEO::osHandle>(handle));
-    }
-
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-    NEO::GraphicsAllocation *ipcAlloc = nullptr;
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal);
-    EXPECT_NE(ipcPtr, nullptr);
-    EXPECT_NE(ipcAlloc, nullptr);
-
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingImportFdHandlesWithUncachedFlagAllocationPointerThenAllocationIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(numIpcHandles, 2u);
-
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-
-    std::vector<NEO::osHandle> handles;
-    for (uint32_t i = 0; i < numIpcHandles; i++) {
-        uint64_t handle = 0;
-        memcpy_s(&handle,
-                 sizeof(handle),
-                 reinterpret_cast<void *>(ipcHandles[i].data),
-                 sizeof(handle));
-        handles.push_back(static_cast<NEO::osHandle>(handle));
-    }
-
-    ze_ipc_memory_flags_t flags = {ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED};
-    void *ipcPtr;
-    NEO::GraphicsAllocation *ipcAlloc = nullptr;
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal);
-    EXPECT_NE(ipcPtr, nullptr);
-    EXPECT_NE(ipcAlloc, nullptr);
-
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingGetIpcMemHandlesAndImportFailsThenInvalidArgumentFails) {
-    currMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
-
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    uint32_t numIpcHandles = 0;
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(numIpcHandles, 2u);
-
-    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
-    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr;
-    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     result = context->freeMem(ptr);
@@ -515,6 +333,13 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 using MemoryTest = Test<DeviceFixture>;
 
 struct CompressionMemoryTest : public MemoryTest {
+    void SetUp() override {
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
+        debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(0);
+        MemoryTest::SetUp();
+    }
     GraphicsAllocation *allocDeviceMem(size_t size) {
         ptr = nullptr;
         ze_result_t result = context->allocDeviceMem(device->toHandle(),
@@ -536,7 +361,7 @@ struct CompressionMemoryTest : public MemoryTest {
     void *ptr = nullptr;
 };
 
-HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, MatchAny) {
+HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible) {
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
@@ -680,13 +505,19 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
     EXPECT_EQ(deviceHandle, device->toHandle());
-    EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
+    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
+
+    if (usmPool &&
+        usmPool->isInPool(ptr)) {
+        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
+    } else {
+        EXPECT_EQ(memoryProperties.id,
+                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    }
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -710,16 +541,73 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-
+    auto usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr);
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
 
+    if (usmPool && usmPool->isInPool(ptr)) {
+        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
+    } else {
+        EXPECT_EQ(memoryProperties.id,
+                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    }
+
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThenHostPtrMemoryIsUsed) {
+    size_t size = 4096;
+    size_t alignment = 4096;
+    void *ptr = nullptr;
+    auto memory = malloc(size);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, memory, size};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memory, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_device_handle_t deviceHandle;
+
+    result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
+
+    auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(alloc, nullptr);
+    EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), size);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBuffer(), memory);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress(), reinterpret_cast<uint64_t>(memory));
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    free(memory);
+}
+
+TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFailsThenErrorIsReturned) {
+    size_t size = 4096;
+    size_t alignment = 4096;
+    void *ptr = nullptr;
+    auto memory = malloc(size);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, memory, size};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+
+    free(memory);
 }
 
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
@@ -815,6 +703,8 @@ TEST_F(MemoryTest, givenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCr
 }
 
 TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -824,6 +714,9 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
+    auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(alloc, nullptr);
+    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
 
     ze_memory_allocation_properties_t memoryProperties = {};
     ze_device_handle_t deviceHandle;
@@ -833,8 +726,13 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
     EXPECT_EQ(deviceHandle, nullptr);
-    EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    if (usmPool &&
+        usmPool->isInPool(ptr)) {
+        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
+    } else {
+        EXPECT_EQ(memoryProperties.id,
+                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    }
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -906,6 +804,64 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUncachedFlagThenLocallyUncached
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocData);
     EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingHostMemoryWithDefaultDescriptorThenCachedResourceIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocHostMem(&zeDefaultGPUHostMemAllocDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithDefaultDescriptorThenCachedResourceIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &zeDefaultGPUDeviceMemAllocDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDefaultDescriptorsThenCachedResourceWithCpuInitialPlacementIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &zeDefaultGPUDeviceMemAllocDesc,
+                                                 &zeDefaultGPUHostMemAllocDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.allocFlags.usmInitialPlacementCpu, 1u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.allocFlags.usmInitialPlacementGpu, 0u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -983,6 +939,41 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithZeroInputSuccessIsRetu
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithNegativeAttributesInputSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithDeviceNullptrFailureIsReturned) {
 
     size_t size = 10;
@@ -1045,6 +1036,8 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInvalidAllocationPtrEr
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -1084,6 +1077,30 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithNoAtomicsThenSuccessIs
 
     result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInvalidAttributeThenFailureIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_BIT(7);
+
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1175,6 +1192,222 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForDeviceAccessThenSuccess
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeUsingNonSystemSharedMemoryForDeviceAccessWithSystemSharedEnabledThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+
+        uint64_t getDeviceMemCapabilities() const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeUsingNonSystemSharedMemoryForDeviceAccessWithSystemSharedDisabledThenSuccessIsReturned) {
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 0;
+        }
+
+        uint64_t getDeviceMemCapabilities() const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeForDeviceAccessThenSuccessIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+
+        uint64_t getDeviceMemCapabilities() const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionNotDeviceAtomicCabapleWhenCallingSetAtomicAccessAttributeForDeviceAccessThenFailureIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 0;
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeWithZeroInputSuccessIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = 0;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionWithoutConcurrentAtomicAccessCapWhenCallingSetAtomicAccessAttributeWithZeroInputFailureIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = 0;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    free(ptr);
+}
+
 TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIsReturned) {
 
     size_t size = 10;
@@ -1210,6 +1443,74 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIs
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+
+        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemNotHostAtomicCapableAlloctionWhenCallingSetAtomicAccessAttributeForHostAccessThenFailureIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 0;
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    free(ptr);
+}
+
 TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleThenSuccessIsReturned) {
 
     size_t size = 10;
@@ -1243,6 +1544,104 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForSystemAccessSharedSingl
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleThenSuccessIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleWithoutConcurrentAtomicCapThenFailureIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    free(ptr);
+}
+
+TEST_F(MemoryTest, givenSharedSystemAlloctionNotSystemAtomicCapableWhenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleTheFailureIsReturned) {
+
+    struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        MockProductHelperAtomic() = default;
+        uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override {
+            return 0;
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto mockProductHelper = std::make_unique<MockProductHelperAtomic>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    size_t size = 10;
+    void *ptr = nullptr;
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    free(ptr);
 }
 
 TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeThenSuccessIsReturned) {
@@ -1330,6 +1729,8 @@ TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithInvalidAllocationPtrEr
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -1380,6 +1781,106 @@ TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithAttributeNotSetErrorIs
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+// XX
+
+struct SVMAllocsManagerAtomicAccessMock : public NEO::SVMAllocsManager {
+    SVMAllocsManagerAtomicAccessMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
+    NEO::AtomicAccessMode getSharedSystemAtomicAccess(NEO::Device &device, const void *ptr, const size_t size) override {
+        return mode;
+    }
+
+    AtomicAccessMode mode = AtomicAccessMode::none;
+};
+
+struct SystemSharedAtomicAccessTests : public ::testing::Test {
+    void SetUp() override {
+        neoDevice =
+            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerAtomicAccessMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+        device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
+
+    void TearDown() override {
+        if (context) {
+            context->destroy();
+        }
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+    }
+
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    NEO::SVMAllocsManager *currSvmAllocsManager;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    L0::ContextImp *context = nullptr;
+};
+
+TEST_F(SystemSharedAtomicAccessTests, whenCallingGetAtomicAccessAttributeWithSystemAllocatorThenCorrectAttributeIsReturned) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+
+    size_t size = 10;
+    auto ptr = std::make_unique<char[]>(size);
+    ASSERT_NE(nullptr, ptr.get());
+
+    SVMAllocsManagerAtomicAccessMock *memManager = reinterpret_cast<SVMAllocsManagerAtomicAccessMock *>(currSvmAllocsManager);
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    memManager->mode = AtomicAccessMode::device;
+    auto result = context->getAtomicAccessAttribute(device->toHandle(), ptr.get(), size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS, attrGet);
+
+    attrGet = 0;
+    memManager->mode = AtomicAccessMode::host;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr.get(), size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS, attrGet);
+
+    attrGet = 0;
+    memManager->mode = AtomicAccessMode::system;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr.get(), size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS, attrGet);
+
+    attrGet = 0;
+    memManager->mode = AtomicAccessMode::none;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr.get(), size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, attrGet);
+
+    attrGet = 0;
+    memManager->mode = AtomicAccessMode::invalid;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr.get(), size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, attrGet);
 }
 
 TEST_F(MemoryTest, whenAllocatingHostMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
@@ -1522,11 +2023,10 @@ TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingSharedMemoryAsRayTra
 TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48Bits) {
     size_t size = 10;
     size_t alignment = 1u;
-    void *ptr = reinterpret_cast<void *>(0x1234);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = reinterpret_cast<void *>(0x1234);
     ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
-
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
     deviceDesc.pNext = &rtDesc;
 
@@ -1609,7 +2109,7 @@ TEST_F(MemoryTest, givenContextWhenGettingPitchFor2dImageThenCorrectRowPitchIsRe
 }
 
 struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
                                             const UnifiedMemoryProperties &memoryProperties) override {
         hostUnifiedMemoryAllocationTimes++;
@@ -1707,6 +2207,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMe
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
 
     size_t alignment = 8 * MemoryConstants::megaByte;
+    driverHandle->initDeviceUsmAllocPoolOnce();
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
@@ -1732,7 +2233,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryThenAlignmentIsPassedCorrectlyAndMemo
     hostDesc.pNext = nullptr;
 
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-
+    driverHandle->initHostUsmAllocPoolOnce();
     size_t alignment = 8 * MemoryConstants::megaByte;
     do {
         alignment >>= 1;
@@ -1832,8 +2333,54 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithHostInitialPlacementBiasFlagThe
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnNonDG1ThenShareableWithoutNTHandleIsSet, IsNotDG1) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 1u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnDG1ThenShareableWithoutNTHandleIsNotSet, IsDG1) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     bool freeSVMAlloc(void *ptr, bool blocking) override {
         if (blocking) {
             blockingCallsMade++;
@@ -1856,7 +2403,6 @@ struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
 
 struct FreeExtTests : public ::testing::Test {
     void SetUp() override {
-
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -1886,6 +2432,7 @@ struct FreeExtTests : public ::testing::Test {
         if (context) {
             context->destroy();
         }
+        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
@@ -1917,6 +2464,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithBlockingFreePolicyThenBlockingCallIsMade) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1937,6 +2486,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyThenBlockingCallIsNotMade) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1968,6 +2519,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationNotInUseThenMemoryFreeNotDeferred) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1991,6 +2544,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferred) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2045,6 +2600,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledMultipleTimesForSameAllocationWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferredOnlyOnce) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2084,6 +2641,8 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemIsCalledWithDeferredFreeAllocationThenMemoryFreed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2117,6 +2676,9 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2201,6 +2763,11 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
+    // does not make sense for usm pooling, disable for test
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2282,11 +2849,13 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenDestroyContextAnyRemainingDeferFreeMemoryAllocationsAreFreed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
-
-    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    mockMemoryManager->deferAllocInUse = true;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
@@ -2318,10 +2887,12 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(3u, memManager->numDeferFreeAllocs());
     EXPECT_EQ(3u, memManager->deferFreeCallsMade);
-    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    mockMemoryManager->deferAllocInUse = false;
+    EXPECT_EQ(0u, mockMemoryManager->waitForEnginesCompletionCalled);
     context->destroy();
     context = nullptr;
     EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, mockMemoryManager->waitForEnginesCompletionCalled);
 }
 
 TEST_F(FreeExtTests,
@@ -2344,7 +2915,7 @@ TEST_F(FreeExtTests,
 }
 
 struct SVMAllocsManagerOutOFMemoryMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         return nullptr;
@@ -2401,11 +2972,19 @@ TEST_F(OutOfMemoryTests,
 }
 
 struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         validateMemoryProperties(svmProperties);
-        return alignedMalloc(4096u, 4096u);
+        auto retPtr{alignedMalloc(4096u, 4096u)};
+
+        SvmAllocationData allocData(svmProperties.getRootDeviceIndex());
+        mockUnifiedMemoryAllocation.setGpuPtr(reinterpret_cast<uint64_t>(retPtr));
+        mockUnifiedMemoryAllocation.setAllocationOffset(0U);
+        allocData.gpuAllocations.addAllocation(&mockUnifiedMemoryAllocation);
+        insertSVMAlloc(retPtr, allocData);
+
+        return retPtr;
     }
 
     void *createSharedUnifiedMemoryAllocation(size_t size,
@@ -2421,6 +3000,8 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
         return alignedMalloc(4096u, 4096u);
     }
     std::function<void(const UnifiedMemoryProperties &)> validateMemoryProperties = [](const UnifiedMemoryProperties &properties) -> void {};
+
+    MockGraphicsAllocation mockUnifiedMemoryAllocation{};
 };
 
 struct ContextRelaxedSizeMock : public ContextImp {
@@ -2433,7 +3014,9 @@ struct ContextRelaxedSizeMock : public ContextImp {
 
 struct MemoryRelaxedSizeTests : public ::testing::Test {
     void SetUp() override {
-
+        // disable usm pooling, used svm manager mock does not create svmData
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -2465,6 +3048,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextRelaxedSizeMock> context;
+    DebugManagerStateRestore restorer;
 };
 
 TEST_F(MemoryRelaxedSizeTests,
@@ -2742,9 +3326,8 @@ TEST_F(MemoryRelaxedSizeTests,
     EXPECT_EQ(nullptr, ptr);
 }
 
-HWTEST2_F(MemoryRelaxedSizeTests,
-          givenCallToDeviceAllocWithPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails, MatchAny) {
-    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+HWTEST_F(MemoryRelaxedSizeTests, givenCallToDeviceAllocWithPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<IGFX_UNKNOWN>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     size_t size = 1024u + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2762,9 +3345,8 @@ HWTEST2_F(MemoryRelaxedSizeTests,
     EXPECT_EQ(nullptr, ptr);
 }
 
-HWTEST2_F(MemoryRelaxedSizeTests,
-          givenCallToSharedAllocWithNoPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails, MatchAny) {
-    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+HWTEST_F(MemoryRelaxedSizeTests, givenCallToSharedAllocWithNoPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<IGFX_UNKNOWN>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     size_t size = 1024 + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -3132,6 +3714,30 @@ TEST_F(MemoryExportImportFailTest,
 }
 
 TEST_F(MemoryExportImportFailTest,
+       whenParsingMemoryTypeWithValidSpecifidTypeThenCorrectTypeIsReturned) {
+
+    InternalMemoryType memoryType = InternalMemoryType::sharedUnifiedMemory;
+    ze_memory_type_t usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_SHARED);
+
+    memoryType = InternalMemoryType::deviceUnifiedMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_DEVICE);
+
+    memoryType = InternalMemoryType::reservedDeviceMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_DEVICE);
+
+    memoryType = InternalMemoryType::reservedHostMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_HOST);
+
+    memoryType = InternalMemoryType::hostUnifiedMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_HOST);
+}
+
+TEST_F(MemoryExportImportFailTest,
        whenParsingMemoryTypeWithNotSpecifidTypeThenUnknownTypeIsReturned) {
 
     InternalMemoryType memoryType = InternalMemoryType::notSpecified;
@@ -3140,7 +3746,7 @@ TEST_F(MemoryExportImportFailTest,
 }
 
 TEST_F(MemoryExportImportTest,
-       givenCallToDeviceAllocWithExtendedExportDescriptorAndNonSupportedFlagThenUnsuportedEnumerationIsReturned) {
+       givenCallToDeviceAllocWithExtendedExportDescriptorAndNonSupportedFlagThenUnsupportedEnumerationIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -3625,14 +4231,13 @@ TEST_F(MemoryExportImportWinHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(MemoryTest,
-          givenCallToGetImageAllocPropertiesWithNoBackingAllocationErrorIsReturned, MatchAny) {
+HWTEST_F(MemoryTest, givenCallToGetImageAllocPropertiesWithNoBackingAllocationErrorIsReturned) {
 
     ze_image_allocation_ext_properties_t imageProperties = {};
     imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
 
     // uninitialized, so no backing graphics allocation
-    struct ImageCoreFamily<gfxCoreFamily> image = {};
+    struct ImageCoreFamily<FamilyType::gfxCoreFamily> image = {};
 
     ze_result_t result = context->getImageAllocProperties(&image, &imageProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -3905,7 +4510,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
 
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, driverHandle->devices[0]->isImplicitScalingCapable());
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         driverHandle->svmAllocsManager = currSvmAllocsManager;
     }
@@ -3915,11 +4520,16 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         desc.pKernelName = kernelName.c_str();
 
         kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-        kernel->module = module.get();
+        kernel->setModule(module.get());
         kernel->initialize(&desc);
     }
 
     void TearDown() override {
+        // cleanup pool before restoring svm manager
+        for (auto device : driverHandle->devices) {
+            device->getNEODevice()->cleanupUsmAllocationPool();
+            device->getNEODevice()->resetUsmAllocationPool(nullptr);
+        }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
         driverHandle->setMemoryManager(prevMemoryManager);
@@ -3944,9 +4554,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenCallToMPrepareIndirectAllocationForDestructionThenOnlyValidAllocationCountsAreUpdated,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMPrepareIndirectAllocationForDestructionThenOnlyValidAllocationCountsAreUpdated) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -3954,7 +4562,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -3986,9 +4594,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          whenisRemoteResourceNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -3996,7 +4602,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4036,9 +4642,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4046,8 +4650,14 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -4077,9 +4687,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenCallToMakeInternalAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4087,8 +4695,14 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -4118,22 +4732,20 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          whenFreeingNotKnownPointerThenInvalidArgumentIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, whenFreeingNotKnownPointerThenInvalidArgumentIsReturned) {
     void *ptr = calloc(1, 1u);
     ze_result_t result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     free(ptr);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -4145,20 +4757,18 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToAppendBlitFillUsingSameDeviceThenSuccessIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBlitFillUsingSameDeviceThenSuccessIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
 
     size_t size = 1024;
@@ -4171,20 +4781,18 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4198,20 +4806,18 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenSubDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenSubDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
 
     L0::Device *device0 = driverHandle->devices[0];
@@ -4229,20 +4835,18 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToAppendBlitFillUsingDevice0ThenSuccessIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBlitFillUsingDevice0ThenSuccessIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4256,38 +4860,36 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     size_t size = 1024;
     uint8_t *ptr = new uint8_t[size];
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     delete[] ptr;
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToGetAllignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToGetAllignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4303,19 +4905,17 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, ptr, size, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, false, ptr, size, false, false);
     EXPECT_EQ(nullptr, outData.alloc);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4329,19 +4929,17 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, ptr, size, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, false, ptr, size, false, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenSharedAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4357,19 +4955,17 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, ptr, size, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device1, false, ptr, size, false, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4383,19 +4979,17 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device0, ptr, size, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device0, false, ptr, size, false, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          MatchAny) {
+HWTEST_F(MultipleDevicePeerAllocationTest, givenSharedAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4411,10 +5005,10 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device0, ptr, size, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device0, false, ptr, size, false, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
 
     result = context->freeMem(ptr);
@@ -4448,13 +5042,13 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 1u);
 
-    // set argument in device 1's list with ptr1 from device 0: anoter peer allocation is created
+    // set argument in device 1's list with ptr1 from device 0: another peer allocation is created
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
 
     // set argument in device 1's list with ptr from device 0 plus offset: no new peer allocation is created
-    // since a peer allocation is already avialable
+    // since a peer allocation is already available
     void *ptrOffset = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4);
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptrOffset);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4707,6 +5301,9 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     EXPECT_EQ(peerAlloc0, peerAlloc1);
     EXPECT_EQ(peerGpuAddress0, peerGpuAddress1);
+
+    EXPECT_FALSE(peerAlloc0->isCompressionEnabled());
+    EXPECT_FALSE(peerAlloc1->isCompressionEnabled());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5009,70 +5606,6 @@ TEST_F(MemoryTest, givenNoDeviceWhenAllocatingSharedMemoryThenDeviceInAllocation
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithInvalidPointerThenInvalidArgumentIsReturned) {
-    void *ptr = nullptr;
-    ze_result_t res = driverHandle->checkMemoryAccessFromDevice(device, ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
-}
-
-TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithValidDeviceAllocationPointerThenSuccessIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t res = context->allocDeviceMem(device->toHandle(),
-                                              &deviceDesc,
-                                              size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    res = driverHandle->checkMemoryAccessFromDevice(device, ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    res = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithValidSharedAllocationPointerThenSuccessIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t res = context->allocSharedMem(device->toHandle(),
-                                              &deviceDesc,
-                                              &hostDesc,
-                                              size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    res = driverHandle->checkMemoryAccessFromDevice(device, ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    res = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithValidHostAllocationPointerThenSuccessIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t res = context->allocHostMem(&hostDesc,
-                                            size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    res = driverHandle->checkMemoryAccessFromDevice(device, ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    res = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
 struct MemoryBitfieldTest : testing::Test {
     void SetUp() override {
 
@@ -5204,7 +5737,6 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
 
 struct AllocHostMemoryTest : public ::testing::Test {
     void SetUp() override {
-
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -5232,7 +5764,6 @@ struct AllocHostMemoryTest : public ::testing::Test {
         context->destroy();
     }
 
-    DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     const uint32_t numRootDevices = 2u;
     L0::ContextImp *context = nullptr;
@@ -5240,6 +5771,8 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     void *ptr = nullptr;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
@@ -5257,7 +5790,8 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
-
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
 
@@ -5275,7 +5809,8 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
-
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
@@ -5434,12 +5969,12 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoSiz
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForUnknownDeviceAllocationThenResultUnknownIsReturned) {
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForUnknownDeviceAllocationThenResultAddressNotFoundIsReturned) {
     void *base = nullptr;
     size_t size = 0u;
     uint64_t var = 0;
     ze_result_t res = context->getMemAddressRange(&var, &base, &size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_ADDRESS_NOT_FOUND, res);
 }
 
 TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesReturnsUnknownType) {
@@ -5576,7 +6111,7 @@ TEST_F(ImportFdUncachedTests,
 }
 
 struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
                                               void *cmdQ) override {
@@ -5630,7 +6165,7 @@ TEST_F(SharedAllocFailTests, whenAllocatinSharedMemoryAndAllocationFailsThenOutO
 }
 
 struct SVMAllocsManagerSharedAllocMultiDeviceMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocMultiDeviceMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocMultiDeviceMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
                                             const UnifiedMemoryProperties &memoryProperties) override {
         createHostUnifiedMemoryAllocationTimes++;
@@ -5651,7 +6186,7 @@ struct ContextMultiDeviceMock : public L0::ContextImp {
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;
     }
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
         return true;
     }
 };
@@ -5758,6 +6293,11 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     }
 
     void TearDown() override {
+        // cleanup pool before restoring svm manager
+        for (auto device : driverHandle->devices) {
+            device->getNEODevice()->cleanupUsmAllocationPool();
+            device->getNEODevice()->resetUsmAllocationPool(nullptr);
+        }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
@@ -5918,7 +6458,7 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using ImageSupport = IsGen12LP;
 
 HWTEST2_F(MultipleDevicePeerImageTest,
           whenisRemoteImageNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
@@ -6015,14 +6555,14 @@ HWTEST2_F(MultipleDevicePeerImageTest,
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-
-    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams copyParams = {};
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = image0Src->destroy();
@@ -6085,14 +6625,14 @@ HWTEST2_F(MultipleDevicePeerImageTest,
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-
-    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams copyParams = {};
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 
     result = image0Src->destroy();
@@ -6154,7 +6694,7 @@ TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThe
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->is48bResourceNeededForRayTracingResult = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    currSvmAllocsManager->validateMemoryProperties = [](const SVMAllocsManager::UnifiedMemoryProperties &memoryProperties) -> void {
+    currSvmAllocsManager->validateMemoryProperties = [](const UnifiedMemoryProperties &memoryProperties) -> void {
         EXPECT_TRUE(memoryProperties.allocationFlags.flags.resource48Bit);
     };
 
@@ -6205,6 +6745,152 @@ TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThe
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     }
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
+}
+
+TEST_F(MemoryTest, givenDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPointer) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenNotDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnInvalidArgument) {
+    uint64_t ptr = 0;
+    void *cpuPtr = nullptr;
+
+    ze_result_t result = context->mapDeviceMemToHost(&ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+}
+
+TEST_F(MemoryTest, givenCompressedDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnIncompatibleResource) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+    externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    deviceDesc.pNext = &externalMemoryDesc;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    if (!gpuAllocation->isCompressionEnabled()) {
+        gpuAllocation->getDefaultGmm()->setCompressionEnabled(true);
+    }
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenDeviceMemoryAndFailedLockWhenCallingMapDeviceMemToHostThenReturnIncompatibleResource) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    mockMemoryManager->failLockResource = true;
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct AllocUsmPoolMemoryTest : public MemoryTest {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+
+        MemoryTest::SetUp();
+    }
+
+    void TearDown() override {
+        MemoryTest::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(AllocUsmPoolMemoryTest, givenChunkDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPointerWithOffset) {
+    size_t size = 10u;
+    size_t alignment = 512u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), allocData->device->getUsmMemAllocPoolsManager()->getOffsetInPool(ptr));
+    EXPECT_EQ(expectedPtrAddress, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenDeviceMemoryWithExtenstionWhenCallingMapDeviceMemToHostThenReturnUnsupportedFeature) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+    externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, &externalMemoryDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

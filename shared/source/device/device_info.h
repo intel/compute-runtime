@@ -47,7 +47,6 @@ struct DeviceInfo {
     StackVec<uint32_t, 6> threadsPerEUConfigs;
     uint32_t vendorId;
     uint32_t vmeAvcSupportsPreemption;
-    bool force32BitAddresses;
     std::string name;
 };
 

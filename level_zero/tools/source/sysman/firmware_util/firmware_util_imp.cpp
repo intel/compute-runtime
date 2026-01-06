@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/utilities/directory.h"
 
 namespace L0 {
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
@@ -58,7 +57,7 @@ bool FirmwareUtilImp::loadEntryPoints() {
 
 static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
     uint32_t percent = (done * 100) / total;
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
 }
 
 ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {

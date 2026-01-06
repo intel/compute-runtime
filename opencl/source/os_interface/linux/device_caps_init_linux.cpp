@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 
 void ClDevice::initializeOsSpecificCaps() {
-    if (enabledClVersion >= 30 && debugManager.flags.ClKhrExternalMemoryExtension.get()) {
+    if (debugManager.flags.ClKhrExternalMemoryExtension.get()) {
         deviceInfo.externalMemorySharing = CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR;
     }
 }

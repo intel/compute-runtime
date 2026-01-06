@@ -6,20 +6,33 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 namespace NEO {
 
 template <>
 void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {
-    gmm.resourceParams.Flags.Info.NotCompressed = isNotCompressed;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NotCompressed = isNotCompressed;
     if (!isNotCompressed) {
-        gmm.resourceParams.Flags.Info.Cacheable = 0;
+        gmmResourceParams->Flags.Info.Cacheable = 0;
+        gmm.applyExtraAuxInitFlag();
     }
 
-    if (debugManager.flags.PrintGmmCompressionParams.get()) {
-        printf("\n\tFlags.Info.NotCompressed: %u", gmm.resourceParams.Flags.Info.NotCompressed);
+    PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,
+                 "\n\tFlags.Info.NotCompressed: %u", gmmResourceParams->Flags.Info.NotCompressed);
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isCompressionAppliedForImportedResource(Gmm &gmm) const {
+    auto gmmFlags = gmm.gmmResourceInfo->getResourceFlags();
+    auto isResourceDenyCompressionEnabled = gmm.gmmResourceInfo->isResourceDenyCompressionEnabled();
+    if ((gmmFlags->Info.NotCompressed == 0) && (!isResourceDenyCompressionEnabled)) {
+        return true;
     }
+
+    return false;
 }
 
 template <typename GfxFamily>
@@ -81,5 +94,29 @@ void MemorySynchronizationCommands<Family>::encodeAdditionalTimestampOffsets(Lin
     EncodeStoreMMIO<Family>::encode(commandStream, RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextAddress + sizeof(uint32_t), false, nullptr, isBcs);
     EncodeStoreMMIO<Family>::encode(commandStream, RegisterOffsets::globalTimestampUn, globalAddress + sizeof(uint32_t), false, nullptr, isBcs);
 }
+
+template <>
+bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
+    }
+
+    return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
+    return true;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
+    return true;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
+    return false;
+};
 
 } // namespace NEO

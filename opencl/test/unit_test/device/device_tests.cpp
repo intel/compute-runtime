@@ -5,13 +5,14 @@
  *
  */
 
-#include "shared/source/command_stream/tbx_command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -19,19 +20,18 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include <memory>
@@ -48,13 +48,6 @@ TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
 
 TEST_F(DeviceTest, WhenDeviceIsCreatedThenCommandStreamReceiverIsNotNull) {
     EXPECT_NE(nullptr, &pDevice->getGpgpuCommandStreamReceiver());
-}
-
-TEST_F(DeviceTest, WhenDeviceIsCreatedThenEnabledClVersionMatchesHardwareInfo) {
-    auto version = pClDevice->getEnabledClVersion();
-    auto version2 = pDevice->getHardwareInfo().capabilityTable.clVersionSupport;
-
-    EXPECT_EQ(version, version2);
 }
 
 TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
@@ -101,19 +94,6 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenOsTimeIsNotNull) {
 
     OSTime *osTime = pDevice->getOSTime();
     ASSERT_NE(nullptr, osTime);
-}
-
-TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedThenMemoryManagerHasForce32BitFlagSet) {
-    debugManager.flags.Force32bitAddressing.set(true);
-    auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    if constexpr (is64bit) {
-        EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddresses);
-        EXPECT_TRUE(pDevice->getMemoryManager()->peekForce32BitAllocations());
-    } else {
-        EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddresses);
-        EXPECT_FALSE(pDevice->getMemoryManager()->peekForce32BitAllocations());
-    }
-    debugManager.flags.Force32bitAddressing.set(false);
 }
 
 TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
@@ -246,9 +226,10 @@ HWTEST_F(DeviceTest, givenMultiDeviceWhenCreatingContextsThenMemoryManagerDefaul
 }
 
 TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    mockDevice->resetCommandStreamReceiver(csr);
+    MockCommandStreamReceiver *csr = static_cast<MockCommandStreamReceiver *>(&mockDevice->getGpgpuCommandStreamReceiver());
     int flushedBatchedSubmissionsCalledCount = 0;
     csr->flushBatchedSubmissionsCallCounter = &flushedBatchedSubmissionsCalledCount;
     mockDevice.reset(nullptr);
@@ -256,20 +237,7 @@ TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCal
     EXPECT_EQ(1, flushedBatchedSubmissionsCalledCount);
 }
 
-TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIsNotCreated) {
-    DebugManagerStateRestore restore{};
-    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
-    VariableBackup<const char *> frontEndDllName(&Os::frontEndDllName);
-    Os::frontEndDllName = "_fake_fcl1_so";
-
-    auto mockDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    ASSERT_NE(nullptr, mockDevice);
-
-    auto compilerInterface = mockDevice->getCompilerInterface();
-    ASSERT_EQ(nullptr, compilerInterface);
-}
-
-TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
+TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegisteredInMemoryManager) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -351,7 +319,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     }
 }
 
-TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
+TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeparateDeviceIndex) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
@@ -370,7 +338,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     EXPECT_EQ(1u, device2->getRootDeviceIndex());
 }
 
-TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
+TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeparateCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);

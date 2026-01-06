@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,6 @@ if(TESTS_ADLS)
   target_sources(neo_shared_tests PRIVATE
                  ${NEO_CORE_tests_gen12lp_adls_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_adls.cpp
   )
 

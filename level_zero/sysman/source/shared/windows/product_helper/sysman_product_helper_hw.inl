@@ -5,12 +5,17 @@
  *
  */
 
+#include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {
+
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
@@ -189,7 +194,7 @@ std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
     return false;
 }
 

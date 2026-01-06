@@ -47,6 +47,7 @@ class MemoryInfo {
     const RegionContainer &getLocalMemoryRegions() const { return localMemoryRegions; }
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
     bool isMemPolicySupported() const { return memPolicySupported; }
+    bool isSmallBarDetected() const { return smallBarDetected; }
 
   protected:
     const Drm &drm;
@@ -57,6 +58,7 @@ class MemoryInfo {
     int memPolicyMode;
     RegionContainer localMemoryRegions;
     std::array<uint32_t, 4> tileToLocalMemoryRegionIndexMap{};
+    bool smallBarDetected;
 };
 
 } // namespace NEO

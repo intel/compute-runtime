@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,8 +60,6 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "MAPALLOC";
     case AllocationType::mcs:
         return "MCS";
-    case AllocationType::pipe:
-        return "PIPE";
     case AllocationType::preemption:
         return "PRMPTION";
     case AllocationType::printfSurface:
@@ -120,6 +118,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "ASSRTBUF";
     case AllocationType::syncDispatchToken:
         return "SYNCTOK";
+    case AllocationType::hostFunction:
+        return "HOSTFUNC";
     default:
         return "NOTFOUND";
     }

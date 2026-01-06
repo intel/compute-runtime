@@ -7,9 +7,11 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -17,18 +19,32 @@
 
 #include <map>
 
+namespace NEO {
+class GraphicsAllocation;
+enum class HeapIndex : uint32_t;
+struct SvmAllocationData;
+struct VirtualMemoryReservation;
+} // namespace NEO
+
 namespace L0 {
 struct StructuresLookupTable;
 struct DriverHandleImp;
 struct Device;
 struct IpcCounterBasedEventData;
+class ContextExt;
+struct DriverHandle;
 
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
 
+struct ContextSettings {
+    bool useOpaqueHandle = true;
+    bool enableSvmHeapReservation = true;
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+};
+
 struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextImp(DriverHandle *driverHandle);
-    ContextImp(const ContextImp &) = delete;
     ~ContextImp() override;
     ze_result_t destroy() override;
     ze_result_t getStatus() override;
@@ -51,6 +67,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ze_result_t freeMem(const void *ptr, bool blocking) override;
     ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
                            void *ptr) override;
+    ze_result_t registerMemoryFreeCallback(zex_memory_free_callback_ext_desc_t *pfnCallbackDesc, void *ptr) override;
     ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                    void *ptr,
                                    size_t size) override;
@@ -119,6 +136,10 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                                   void **pptr) override;
     ze_result_t freeVirtualMem(const void *ptr,
                                size_t size) override;
+    ze_result_t queryVirtualMemPageSizeWithStartAddress(ze_device_handle_t hDevice,
+                                                        const void *pStart,
+                                                        size_t size,
+                                                        size_t *pagesize) override;
     ze_result_t queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                         size_t size,
                                         size_t *pagesize) override;
@@ -156,6 +177,8 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                                                 ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) override;
 
+    ze_result_t mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext) override;
+
     std::map<uint32_t, ze_device_handle_t> &getDevices() {
         return devices;
     }
@@ -167,10 +190,13 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
+    ContextSettings settings;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
-    bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) override;
+    bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) override;
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) override;
+    bool isOpaqueHandleSupported(IpcHandleType *handleType) override;
 
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
@@ -195,12 +221,65 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextExt *getContextExt() override {
         return contextExt;
     }
+    uint32_t getNumDevices() const {
+        return numDevices;
+    }
+    ze_result_t systemBarrier(ze_device_handle_t hDevice) override;
+    NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type);
+    template <typename IpcDataT>
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType) {
+        std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
+
+        ipcData = {};
+        if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
+            ipcData.handle = handle;
+            ipcData.type = type;
+        }
+        if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
+            ipcData.memoryType = type;
+            ipcData.processId = NEO::SysCalls::getCurrentProcessId();
+            ipcData.type = handleType;
+            if (handleType == IpcHandleType::ntHandle) {
+                ipcData.handle.reserved = handle;
+            } else if (handleType == IpcHandleType::fdHandle) {
+                // For fdHandle, we store the handle as an int
+                ipcData.handle.fd = static_cast<int>(handle);
+            }
+        }
+
+        if (usmPool) {
+            ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
+            ptrAddress = usmPool->getPoolAddress();
+        }
+
+        auto lock = this->driverHandle->lockIPCHandleMap();
+        ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
+        if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
+            ipcHandleIterator->second->refcnt += 1;
+        } else {
+            IpcHandleTracking *handleTracking = new IpcHandleTracking;
+            handleTracking->alloc = graphicsAllocation;
+            handleTracking->refcnt = 1;
+            handleTracking->ptr = ptrAddress;
+            handleTracking->handle = handle;
+            if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
+                handleTracking->ipcData = ipcData;
+            } else {
+                handleTracking->opaqueData = ipcData;
+            }
+            this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
+        }
+    }
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
-    size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
+    size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
+        return getPageAlignedSizeRequired(nullptr, size, heapRequired, pageSizeRequired);
+    }
+
+    size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
+    bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;

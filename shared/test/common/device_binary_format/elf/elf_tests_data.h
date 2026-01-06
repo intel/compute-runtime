@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,12 +54,14 @@ struct MockElfBinaryPatchtokens {
         enc.getElfFileHeader().identity = Elf::ElfFileHeaderIdentity(Elf::EI_CLASS_64);
         enc.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
         enc.appendSection(Elf::SHT_OPENCL_DEV_BINARY, Elf::SectionNamesOpenCl::deviceBinary, ArrayRef<const uint8_t>::fromAny(mockDevBinaryData, mockDevBinaryDataSize));
-        if (irFormat == EnabledIrFormat::spirv)
+        if (irFormat == EnabledIrFormat::spirv) {
             enc.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvBinaryData, mockSpirvBinaryDataSize));
-        else if (irFormat == EnabledIrFormat::llvm)
+        } else if (irFormat == EnabledIrFormat::llvm) {
             enc.appendSection(Elf::SHT_OPENCL_LLVM_BINARY, Elf::SectionNamesOpenCl::llvmObject, ArrayRef<const uint8_t>::fromAny(mockLlvmBinaryData, mockLlvmBinaryDataSize));
-        if (false == buildOptions.empty())
+        }
+        if (false == buildOptions.empty()) {
             enc.appendSection(Elf::SHT_OPENCL_OPTIONS, Elf::SectionNamesOpenCl::buildOptions, ArrayRef<const uint8_t>::fromAny(buildOptions.data(), buildOptions.size()));
+        }
         storage = enc.encode();
     }
     static constexpr size_t mockDataSize = 0x10;

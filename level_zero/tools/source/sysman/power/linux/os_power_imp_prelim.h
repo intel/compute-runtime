@@ -8,18 +8,18 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
-#include <memory>
 #include <string>
 
 namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
+struct OsSysman;
+
 class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;

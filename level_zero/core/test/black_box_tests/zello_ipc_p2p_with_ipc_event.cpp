@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ void runClient(int commSocket) {
     ze_command_list_handle_t cmdListCopy;
     initializeProcess(context, device, cmdQueue, cmdList, cmdQueueCopy, cmdListCopy, false);
 
-    // receieve the IPC handle for the event pool from the other process
+    // receive the IPC handle for the event pool from the other process
     ze_ipc_event_pool_handle_t pIpcEventPoolHandle = {};
     int dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
     if (dmaBufFd < 0) {

@@ -23,6 +23,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using BaseClass::execObjectsStorage;
     using BaseClass::residency;
     using BaseClass::useUserFenceWait;
+    using BaseClass::vmBindAvailable;
     using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
@@ -32,6 +33,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::latestSentTaskCount;
@@ -131,6 +133,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
+        DrmCommandStreamReceiver<GfxFamily>::stopDirectSubmission(blocking, needsLock);
     }
 
     void *latestReadBackAddress = nullptr;

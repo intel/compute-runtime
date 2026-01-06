@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,8 +46,9 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
 }
 
 bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
-    if (contextData.get() == nullptr)
+    if (contextData.get() == nullptr) {
         return true;
+    }
 
     if (contextData->glHGLRCHandle) {
         context.registerSharing(new GLSharingFunctionsWindows(contextData->glHDCType, contextData->glHGLRCHandle,

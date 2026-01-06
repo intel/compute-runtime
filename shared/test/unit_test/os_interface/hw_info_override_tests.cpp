@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 using HwInfoOverrideTest = ::testing::Test;
 
-HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenTrueIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenTrueIsReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.HardwareInfoOverride.set("1x2x3");
 
@@ -31,7 +31,7 @@ HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironment
     EXPECT_EQ(hwInfo->gtSystemInfo.EUCount, 6u);
 }
 
-HWTEST2_F(HwInfoOverrideTest, givenBlitterEnableMaskOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenCorrectBcsInfoMaskIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(HwInfoOverrideTest, givenBlitterEnableMaskOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenCorrectBcsInfoMaskIsReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.BlitterEnableMaskOverride.set(0x6);
 

@@ -6,13 +6,15 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 
@@ -24,11 +26,6 @@ bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo
 template <>
 bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const {
     return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
-    return false;
 }
 
 template <>
@@ -51,7 +48,7 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
     return allocationData.type == AllocationType::commandBuffer;
 }
 
@@ -60,20 +57,11 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
     switch (allocationType) {
     case AllocationType::tagBuffer:
     case AllocationType::timestampPacketTagBuffer:
+    case AllocationType::hostFunction:
         return {};
     default:
         return GfxMemoryAllocationMethod::allocateByKmd;
     }
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return true;
 }
 
 template <>
@@ -88,6 +76,21 @@ std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t p
 template <>
 bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ bool Wddm::perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) {
     return false;
 }
 
-bool Wddm::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) {
+bool Wddm::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) {
     return false;
 }
 

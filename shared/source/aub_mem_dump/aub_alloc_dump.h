@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,7 @@
 
 #pragma once
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -80,22 +78,4 @@ inline bool isImageDumpFormat(DumpFormat dumpFormat) {
 
 template <typename GfxFamily>
 aub_stream::SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, const GmmHelper &gmmHelper, DumpFormat dumpFormat);
-
-template <typename GfxFamily>
-uint32_t getImageSurfaceTypeFromGmmResourceType(GMM_RESOURCE_TYPE gmmResourceType);
-
-template <typename GfxFamily>
-void dumpBufferInBinFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
-
-template <typename GfxFamily>
-void dumpImageInBmpFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
-
-template <typename GfxFamily>
-void dumpBufferInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
-
-template <typename GfxFamily>
-void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
-
-template <typename GfxFamily>
-void dumpAllocation(DumpFormat dumpFormat, GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
 } // namespace AubAllocDump

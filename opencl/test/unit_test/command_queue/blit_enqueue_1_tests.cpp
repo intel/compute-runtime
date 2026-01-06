@@ -7,14 +7,8 @@
 
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
-#include "shared/source/helpers/vec.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/compiler_interface/linker_mock.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -26,15 +20,16 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_queue/blit_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 namespace NEO {
+class ExecutionEnvironment;
+class GraphicsAllocation;
+struct BatchBuffer;
+template <typename GfxFamily>
+class MockCommandQueueHw;
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 using BlitAuxTranslationTests = BlitEnqueueTests<1>;
 
@@ -508,7 +503,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
-    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
 
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 
@@ -868,7 +863,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
 
     char cpuBuffer[bufferSize]{};
     commandQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, bufferSize, cpuBuffer, nullptr, 0, nullptr, nullptr);
-    commandQueue->finish();
+    commandQueue->finish(false);
 
     auto bcsCommands = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
     auto ccsCommands = getCmdList<FamilyType>(commandQueue->getCS(0), 0);
@@ -1133,7 +1128,7 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
 
     template <typename T>
     void setUpT() {
-        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + defaultHwInfo->platform.eRenderCoreFamily];
+        auto csrCreateFcn = &commandStreamReceiverFactory[NEO::maxCoreEnumValue + defaultHwInfo->platform.eRenderCoreFamily];
         variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
         *csrCreateFcn = MyUltCsr<T>::create;
 
@@ -1235,16 +1230,6 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangOnFlushBcsTaskAndBlockedQu
     abortedEvent->release();
 }
 
-HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
-    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(0);
-    EXPECT_FALSE(mockCommandQueue->isCacheFlushForBcsRequired());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(1);
-    EXPECT_TRUE(mockCommandQueue->isCacheFlushForBcsRequired());
-}
-
 using BlitEnqueueTaskCountTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenWaitForSpecificBcsTaskCount) {
@@ -1252,7 +1237,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenW
     uint32_t bcsTaskCount = 123;
 
     CopyEngineState bcsState{bcsCsr->getOsContext().getEngineType(), bcsTaskCount};
-    commandQueue->waitUntilComplete(gpgpuTaskCount, Range{&bcsState}, 0, false);
+    commandQueue->waitUntilComplete(gpgpuTaskCount, std::span{&bcsState, 1}, 0, false);
 
     EXPECT_EQ(gpgpuTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(bcsTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
@@ -1380,11 +1365,11 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEnqueueWithoutKernelWh
     userEvent.setStatus(CL_COMPLETE);
 
     clWaitForEvents(1, &outEvent2);
-    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clWaitForEvents(1, &outEvent1);
-    EXPECT_EQ(0u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clReleaseEvent(outEvent1);
@@ -1481,7 +1466,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenWaitlistWithTimestampPacketWh
     mockCmdQueue->flush();
     EXPECT_EQ(deferredNodesCount, deferredTimestampPackets->peekNodes().size());
 
-    mockCmdQueue->finish();
+    mockCmdQueue->finish(false);
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
@@ -1501,7 +1486,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent1);
-    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_NE(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent1);
@@ -1527,7 +1512,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent2);
-    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_NE(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent2);

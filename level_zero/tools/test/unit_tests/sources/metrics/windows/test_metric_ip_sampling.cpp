@@ -5,13 +5,24 @@
  *
  */
 
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
-#include <level_zero/zet_api.h>
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
+
+#include "igfxfmid.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -43,6 +54,24 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenCorrectArgumentsWhenStartMeasu
     });
     VariableBackup<decltype(NEO::pPerfOpenEuStallStream)> mockPerfOpenEuStallStream(&NEO::pPerfOpenEuStallStream, [](uint32_t sampleRate, uint32_t minBufferSize) -> bool {
         return true;
+    });
+    constexpr uint32_t samplingGranularity = 251u;
+    constexpr uint32_t gpuClockPeriodNs = 1000000000ull;
+    constexpr uint32_t samplingUnit = 1;
+    uint32_t notifyEveryNReports = 0, samplingPeriodNs = samplingGranularity * samplingUnit * gpuClockPeriodNs;
+    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(samplingPeriodNs, samplingGranularity * samplingUnit * gpuClockPeriodNs);
+}
+
+HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenCorrectArgumentsWhenStartMeasurementIsCalledThenCheckIfProperNotifyValueIsSentAndReturnSuccess, IsXe2HpgCore) {
+    VariableBackup<decltype(NEO::pGetTimestampFrequency)> mockGetTimestampFrequency(&NEO::pGetTimestampFrequency, []() -> uint32_t {
+        return 1u;
+    });
+    VariableBackup<decltype(NEO::pPerfOpenEuStallStream)> mockPerfOpenEuStallStream(&NEO::pPerfOpenEuStallStream, [](uint32_t sampleRate, uint32_t minBufferSize) -> bool {
+        if (minBufferSize == 512 * MemoryConstants::kiloByte) {
+            return true;
+        }
+        return false;
     });
     constexpr uint32_t samplingGranularity = 251u;
     constexpr uint32_t gpuClockPeriodNs = 1000000000ull;
@@ -89,7 +118,7 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenPerfDisableEuStallStreamFailsW
 }
 
 HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenReadSucceedsWhenReadDataIsCalledThenReturnSuccess, IsXe2HpgCore) {
-    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize) -> bool {
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
         return true;
     });
     uint8_t pRawData = 0u;
@@ -98,12 +127,55 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenReadSucceedsWhenReadDataIsCall
 }
 
 HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenPerfReadEuStallStreamFailsWhenReadDataIsCalledThenReturnFailure, IsXe2HpgCore) {
-    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize) -> bool {
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
         return false;
     });
     uint8_t pRawData = 0u;
     size_t pRawDataSize = 0;
     EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_ERROR_UNKNOWN);
+}
+
+HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenPerfReadEuStallStreamOverflowsWhenReadDataIsCalledThenReturnCorrectOverflowStatus, IsXe2HpgCore) {
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
+        *pOutRetCode = 13; // GTDI_RET_BUFFER_OVERFLOW
+        return true;
+    });
+    uint8_t pRawData = 0u;
+    size_t pRawDataSize = 0;
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_WARNING_DROPPED_DATA);
+}
+
+HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenPerfReadEuStallStreamOverflowsWhenReadDataIsCalledTwiceThenCorrectReturnStatusAreReturned, IsXe2HpgCore) {
+    static bool overflowRetuned = false;
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
+        if (!overflowRetuned) {
+            overflowRetuned = true;
+            *pOutRetCode = 13; // GTDI_RET_BUFFER_OVERFLOW
+        }
+        return true;
+    });
+    uint8_t pRawData = 0u;
+    size_t pRawDataSize = 0;
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_WARNING_DROPPED_DATA);
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_SUCCESS);
+    overflowRetuned = false;
+}
+
+HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenPerfReadEuStallStreamOverflowsWhenReadDataIsCalledTwiceAndReadDataFailsOnScondCallThenCorrectReturnStatusAreReturned, IsXe2HpgCore) {
+    static bool overflowRetuned = false;
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
+        if (!overflowRetuned) {
+            overflowRetuned = true;
+            *pOutRetCode = 13; // GTDI_RET_BUFFER_OVERFLOW
+            return true;
+        }
+        return false;
+    });
+    uint8_t pRawData = 0u;
+    size_t pRawDataSize = 0;
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_WARNING_DROPPED_DATA);
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_ERROR_UNKNOWN);
+    overflowRetuned = false;
 }
 
 HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, WhenGetRequiredBufferSizeIsCalledThenCorrectSizeIsReturned, IsXe2HpgCore) {
@@ -118,7 +190,7 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, WhenisNReportsAvailableIsCalledAndE
     VariableBackup<decltype(NEO::pPerfOpenEuStallStream)> mockPerfOpenEuStallStream(&NEO::pPerfOpenEuStallStream, [](uint32_t sampleRate, uint32_t minBufferSize) -> bool {
         return true;
     });
-    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize) -> bool {
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
         *pRawDataSize = 64u;
         return true;
     });
@@ -138,7 +210,7 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, WhenisNReportsAvailableIsCalledAndE
     VariableBackup<decltype(NEO::pPerfOpenEuStallStream)> mockPerfOpenEuStallStream(&NEO::pPerfOpenEuStallStream, [](uint32_t sampleRate, uint32_t minBufferSize) -> bool {
         return true;
     });
-    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize) -> bool {
+    VariableBackup<decltype(NEO::pPerfReadEuStallStream)> mockPerfReadEuStallStream(&NEO::pPerfReadEuStallStream, [](uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) -> bool {
         *pRawDataSize = 192u;
         return true;
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
     using BaseClass::allocateGraphicsMemoryWithAlignment;
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
+    using BaseClass::allocateGraphicsMemoryWithHostPtr;
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateMemoryByKMD;
     using BaseClass::allocatePhysicalDeviceMemory;
@@ -66,9 +67,6 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     void setDeferredDeleter(DeferredDeleter *deleter) {
         this->deferredDeleter.reset(deleter);
     }
-    void setForce32bitAllocations(bool newValue) {
-        this->force32bitAllocations = newValue;
-    }
     bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
         return this->validateAllocation(graphicsAllocation);
     }
@@ -90,6 +88,11 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         return BaseClass::copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, handleMask);
     }
 
+    bool memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) override {
+        memsetAllocationBanksCalled++;
+        return BaseClass::memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, handleMask);
+    }
+
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {
         BaseClass::freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
     }
@@ -104,6 +107,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         BaseClass::registerAllocationInOs(gfxAllocation);
     }
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
+    uint32_t memsetAllocationBanksCalled = 0u;
     uint32_t freeGraphicsMemoryImplCalled = 0u;
     uint32_t registerAllocationInOsCalled = 0;
     bool allocationGraphicsMemory64kbCreated = false;

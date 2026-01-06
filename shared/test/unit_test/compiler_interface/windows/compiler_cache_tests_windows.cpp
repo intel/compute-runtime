@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -112,7 +113,7 @@ extern const size_t createFileAResultsCount;
 extern HANDLE createFileAResults[];
 
 extern size_t deleteFileACalled;
-extern std::string deleteFiles[];
+extern char deleteFiles[][256];
 
 extern bool callBaseReadFile;
 extern BOOL readFileResult;
@@ -185,7 +186,7 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
             memset(&SysCalls::findNextFileAFileData[i], 0, sizeof(SysCalls::findNextFileAFileData[i]));
         }
         for (size_t i = 0; i < SysCalls::deleteFileACalled; i++) {
-            SysCalls::deleteFiles[i].~basic_string();
+            memset(SysCalls::deleteFiles[i], 0, sizeof(SysCalls::deleteFiles[0]));
         }
         for (size_t i = 0; i < SysCalls::createFileAResultsCount; i++) {
             SysCalls::createFileAResults[i] = nullptr;
@@ -248,8 +249,8 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
 
     EXPECT_TRUE(result);
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
-    EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
-    EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_1.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[0], "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[1], "somePath\\cl_cache\\file_1.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFilesAnd1DirectoryWhenEvictCacheIsCalledThenDeleteTwoOldestFilesSkippingDirectory) {
@@ -283,8 +284,8 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFiles
 
     EXPECT_TRUE(result);
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
-    EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
-    EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_0.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[0], "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[1], "somePath\\cl_cache\\file_0.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMessageWithErrorIsPrinted) {
@@ -297,9 +298,10 @@ TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMes
 
     uint64_t bytesEvicted{0u};
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.evictCache(bytesEvicted);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: File search failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -348,9 +350,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Lock config file failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -379,9 +382,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: File pointer move failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -415,9 +419,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Read config failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -518,9 +523,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
     UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Create config file failed! error code:");
 
@@ -574,9 +580,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
     UnifiedHandle configFileHandle{nullptr};
     size_t directorySize = 0u;
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Open config file failed! error code:");
 
@@ -621,10 +628,11 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenGetTem
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
     const char *binary = "12345";
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
     cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Creating temporary file name failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -645,10 +653,11 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreate
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
     const char *binary = "12345";
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
     cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Creating temporary file failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -670,10 +679,11 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteF
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
     const char *binary = "12345";
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
     cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Writing to temporary file failed! error code:");
     EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
@@ -696,10 +706,11 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteF
 
     const char *binary = "12345";
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(strlen(binary)) - 1;
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     char tmpFileName[] = "somePath\\cl_cache\\TMP.XXXXXX";
     cache.createUniqueTempFileAndWriteData(tmpFileName, binary, strlen(binary));
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::stringstream expectedStderrSubstr;
     expectedStderrSubstr << "[Cache failure]: Writing to temporary file failed! Incorrect number of bytes written: ";
@@ -821,9 +832,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenE
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t));
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Writing to config file failed! error code:");
 
@@ -862,9 +874,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteFileBytesWrittenMismat
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t)) - 1;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
-    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+    auto capturedStderr = capture.getCapturedStderr();
 
     std::stringstream expectedStderrSubstr;
     expectedStderrSubstr << "[Cache failure]: Writing to config file failed! Incorrect number of bytes written: ";

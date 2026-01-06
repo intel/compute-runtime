@@ -8,21 +8,11 @@
 #pragma once
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
+#include <level_zero/zer_ddi.h>
 #include <level_zero/zes_api.h>
 #include <level_zero/zes_ddi.h>
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_ddi.h>
-
-extern "C" {
-
-typedef struct _ze_gpu_driver_dditable_t {
-    ze_dditable_t coreDdiTable;
-    bool enableTracing;
-} ze_gpu_driver_dditable_t;
-
-extern ze_gpu_driver_dditable_t driverDdiTable;
-
-} // extern "C"
 
 template <typename FuncType>
 inline void fillDdiEntry(FuncType &entry, FuncType function, ze_api_version_t loaderVersion, ze_api_version_t requiredVersion) {
@@ -38,9 +28,12 @@ struct DriverDispatch {
     ze_dditable_driver_t core{};
     zet_dditable_driver_t tools{};
     zes_dditable_driver_t sysman{};
+    zer_dditable_driver_t runtime{};
 
+    ze_rtas_builder_dditable_t coreRTASBuilder{};
     ze_rtas_builder_exp_dditable_t coreRTASBuilderExp{};
     ze_rtas_parallel_operation_exp_dditable_t coreRTASParallelOperationExp{};
+    ze_rtas_parallel_operation_dditable_t coreRTASParallelOperation{};
     ze_global_dditable_t coreGlobal{};
     ze_driver_dditable_t coreDriver{};
     ze_driver_exp_dditable_t coreDriverExp{};
@@ -75,6 +68,7 @@ struct DriverDispatch {
     zet_device_exp_dditable_t toolsDeviceExp{};
     zet_context_dditable_t toolsContext{};
     zet_command_list_dditable_t toolsCommandList{};
+    zet_command_list_exp_dditable_t toolsCommandListExp{};
     zet_module_dditable_t toolsModule{};
     zet_kernel_dditable_t toolsKernel{};
     zet_metric_dditable_t toolsMetric{};
@@ -111,6 +105,8 @@ struct DriverDispatch {
     zes_ras_exp_dditable_t sysmanRasExp{};
     zes_diagnostics_dditable_t sysmanDiagnostics{};
     zes_vf_management_exp_dditable_t sysmanVFManagementExp{};
+
+    zer_global_dditable_t runtimeGlobal{};
 };
 
 extern DriverDispatch globalDriverDispatch;

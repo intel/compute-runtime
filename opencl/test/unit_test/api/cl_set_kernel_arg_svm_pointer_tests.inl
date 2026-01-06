@@ -19,11 +19,10 @@
 
 using namespace NEO;
 
-class KernelArgSvmApiFixture : public ApiFixture<> {
+class KernelArgSvmApiFixture : public ApiFixture {
   protected:
     void setUp() {
         ApiFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -80,23 +79,6 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgTh
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelArgSVMPointerThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = false;
-
-    cl_int retVal{CL_SUCCESS};
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal));
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clSetKernelArgSVMPointer(
-        pMultiDeviceKernel.get(), // cl_kernel kernel
-        0,                        // cl_uint arg_index
-        nullptr                   // const void *arg_value
-    );
-    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-}
-
 TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrLocal);
 
@@ -108,18 +90,71 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettin
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetThenInvalidArgValueErrorIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
     void *ptrHost = malloc(256);
     EXPECT_NE(nullptr, ptrHost);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
+
+    cl_int retVal = clSetKernelArgSVMPointer(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        0,                      // cl_uint arg_index
+        ptrHost                 // const void *arg_value
+    );
+    EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0xF;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0xF;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    retVal = clSetKernelArgSVMPointer(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        0,                      // cl_uint arg_index
+        ptrHost                 // const void *arg_value
+    );
+    EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+
+    free(ptrHost);
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarNotSetThenSuccessIsReturned) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+    void *ptrHost = malloc(256);
+    EXPECT_NE(nullptr, ptrHost);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(-1);
 
     auto retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_uint arg_index
         ptrHost                 // const void *arg_value
     );
-    EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    free(ptrHost);
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetAndSharedSystemCapabilitiesNonZeroThenSuccessIsReturned) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0xF;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0xF;
+    void *ptrHost = malloc(256);
+    EXPECT_NE(nullptr, ptrHost);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto retVal = clSetKernelArgSVMPointer(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        0,                      // cl_uint arg_index
+        ptrHost                 // const void *arg_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     free(ptrHost);
 }
@@ -190,10 +225,13 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKer
     }
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgAndDebugVarSetThenInvalidArgValueErrorIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    DebugManagerStateRestore restore;
+    debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
+
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
@@ -209,6 +247,33 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSet
             (char *)ptrSvm + offset // const void *arg_value
         );
         EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+
+        clSVMFree(pContext, ptrSvm);
+    }
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgAndDebugVarNotSetThenSuccessIsReturned) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    DebugManagerStateRestore restore;
+    debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(-1);
+
+    if (devInfo.svmCapabilities != 0) {
+        void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        ASSERT_NE(nullptr, svmData);
+        auto svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pContext->getDevice(0)->getRootDeviceIndex());
+        EXPECT_NE(nullptr, svmAlloc);
+
+        size_t offset = svmAlloc->getUnderlyingBufferSize() + 1;
+
+        auto retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            (char *)ptrSvm + offset // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
     }
@@ -327,7 +392,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenSettingSameKer
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
         ++mockSvmManager->allocationsCounter;
 
-        pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+        pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
         mockSvmManager->freeSVMAlloc(nextPtrSvm);
         // same values but no svmData - called
         retVal = clSetKernelArgSVMPointer(
@@ -359,7 +424,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenAllocIdCacheHi
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
 
         auto expectedAllocationsCounter = 1u;
-        expectedAllocationsCounter += pContext->getHostMemAllocPool().isInitialized() ? 1u : 0u;
+        expectedAllocationsCounter += pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInitialized() ? 1u : 0u;
         expectedAllocationsCounter += pContext->getDeviceMemAllocPool().isInitialized() ? 1u : 0u;
 
         EXPECT_EQ(expectedAllocationsCounter, mockSvmManager->allocationsCounter);

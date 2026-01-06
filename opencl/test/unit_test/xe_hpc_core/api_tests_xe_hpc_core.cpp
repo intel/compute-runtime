@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;

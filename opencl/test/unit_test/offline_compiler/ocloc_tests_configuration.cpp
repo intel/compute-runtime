@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,5 +11,6 @@ unsigned int ultIterationMaxTimeInS = 90;
 #else
 unsigned int ultIterationMaxTimeInS = 45;
 #endif
-const char *executionName = "OCLOC";
+const char *executionName = "ULT";
+const char *apiName = "OCLOC";
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
-
-#include <sys/stat.h>
+#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 
 namespace L0 {
 

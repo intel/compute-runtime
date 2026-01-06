@@ -1,0 +1,19 @@
+/*
+ * Copyright (C) 2025 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/common/test_macros/hw_test_base.h"
+using namespace NEO;
+
+namespace L0 {
+namespace ult {
+HWTEST_EXCLUDE_PRODUCT(MultiTileCommandListSignalAllocLayoutTest, givenDynamicLayoutEnabledWhenAppendEventForProfilingCalledThenProgramOffsetMmio_IsAtLeastXeCore, IGFX_XE3P_CORE);
+HWTEST_EXCLUDE_PRODUCT(L0DebuggerGlobalStatelessTest, givenGlobalStatelessWhenCmdListExecutedOnQueueThenQueueDispatchesSurfaceStateOnceToGlobalStatelessHeap_IsAtLeastXeCore, IGFX_XE3P_CORE);
+HWTEST_EXCLUDE_PRODUCT(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandListWithDifferentPreemtpionWhenExecutingCommandListThenPipeControlReasonTagIsInserted, IGFX_XE3P_CORE);
+HWTEST_EXCLUDE_PRODUCT(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendingThenProgramTokenCheck, IGFX_XE3P_CORE);
+
+} // namespace ult
+} // namespace L0

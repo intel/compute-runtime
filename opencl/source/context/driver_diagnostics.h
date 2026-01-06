@@ -56,14 +56,14 @@ enum PerformanceHints {
 
 class DriverDiagnostics {
   public:
-    DriverDiagnostics(cl_diagnostics_verbose_level level);
-    bool validFlags(cl_diagnostics_verbose_level flags) const;
+    DriverDiagnostics(cl_diagnostic_verbose_level_intel level);
+    bool validFlags(cl_diagnostic_verbose_level_intel flags) const;
     ~DriverDiagnostics() = default;
     static const char *const hintFormat[];
     static const cl_int maxHintStringSize = 1024;
     PerformanceHints obtainHintForTransferOperation(cl_command_type commandType, bool transferRequired);
 
   protected:
-    cl_diagnostics_verbose_level verboseLevel;
+    cl_diagnostic_verbose_level_intel verboseLevel;
 };
 } // namespace NEO

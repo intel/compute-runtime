@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <algorithm>
@@ -51,7 +52,8 @@ class BaseSortedPointerWithValueVector {
         allocations.erase(removeIt);
     }
 
-    typename Container::iterator getImpl(const void *ptr, bool allowOffset) {
+    template <bool allowOffset>
+    typename Container::iterator getImpl(const void *ptr) {
         if (allocations.size() == 0) {
             return allocations.end();
         }
@@ -83,7 +85,7 @@ class BaseSortedPointerWithValueVector {
 
     std::unique_ptr<ValueType> extract(const void *ptr) {
         std::unique_ptr<ValueType> retVal{};
-        auto it = getImpl(ptr, false);
+        auto it = getImpl<false>(ptr);
         if (it != allocations.end()) {
             retVal.swap(it->second);
             allocations.erase(it);
@@ -92,7 +94,14 @@ class BaseSortedPointerWithValueVector {
     }
 
     ValueType *get(const void *ptr) {
-        auto it = getImpl(ptr, true);
+        // try non offset path if ptr is page aligned
+        if ((reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::page4kEntryMask) == reinterpret_cast<uintptr_t>(ptr)) {
+            auto it = getImpl<false>(ptr);
+            if (it != allocations.end()) {
+                return it->second.get();
+            }
+        }
+        auto it = getImpl<true>(ptr);
         if (it != allocations.end()) {
             return it->second.get();
         }

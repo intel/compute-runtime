@@ -6,16 +6,13 @@
  */
 
 #pragma once
-#include "shared/source/device/device.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
-#include "opencl/source/kernel/kernel.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -32,6 +29,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::setUp;
 
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
+        FORBID_REAL_FILE_SYSTEM_CALLS();
         setUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
     }
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
@@ -82,19 +80,12 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
-    void setUp(ClDevice *pDevice, const char *kernelNameStr) {
+    void setUp(ClDevice *pDevice, MockZebinWrapper<>::Descriptor desc) {
         ProgramFixture::setUp();
-        pKernelName = new std::string(kernelNameStr);
+        pKernelName = new std::string("CopyBuffer");
 
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 32);
-        const auto &src = zebinData->storage;
-
-        ASSERT_NE(nullptr, src.data());
-        ASSERT_NE(0u, src.size());
-
-        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
-        const size_t binarySize = src.size();
+        MockZebinWrapper<1u, numBits> zebin{pDevice->getHardwareInfo(), desc};
 
         auto deviceVector = toClDeviceVector(*pDevice);
         pContext = Context::create<MockContext>(nullptr, deviceVector, nullptr, nullptr, retVal);
@@ -104,8 +95,8 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         createProgramFromBinary(
             pContext,
             deviceVector,
-            binaries,
-            &binarySize);
+            zebin.binaries.data(),
+            zebin.binarySizes.data());
 
         ASSERT_NE(nullptr, pProgram);
 
@@ -121,6 +112,14 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);
         EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    void setUp(ClDevice *pDevice) {
+        auto productHelper = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        MockZebinWrapper<>::Descriptor desc{};
+        desc.isStateless = productHelper->isForceToStatelessRequired();
+
+        setUp(pDevice, desc);
     }
 
     void tearDown() {
@@ -139,5 +138,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 } // namespace NEO

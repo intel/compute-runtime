@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/tools/source/sysman/diagnostics/diagnostics_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 extern bool sysmanUltsEnable;
@@ -500,8 +502,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
 
     pMockDiagProcfsAccess->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDevicePid = getpid();
-    pMockDiagLinuxSysmanImp->ourDeviceFd = ::open("/dev/null", 0);
+    constexpr auto deviceFd = 0xF00;
+    pMockDiagLinuxSysmanImp->ourDeviceFd = deviceFd;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->gpuProcessCleanup(true));
+    EXPECT_EQ(deviceFd, NEO::SysCalls::closeFuncArgPassed);
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFailsThenWaitForQuiescentCompletionsFails) {

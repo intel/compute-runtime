@@ -54,7 +54,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
                                               canonizedGpuAddress);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
-        auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), patternToCommand, patternSize, 0);
+        auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), patternToCommand, patternSize, 0);
 
         BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, device->getRootDeviceEnvironmentRef());
         GenCmdList cmdList;

@@ -11,12 +11,24 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
+#include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "implicit_args.h"
+
+namespace NEO {
+class ExecutionEnvironment;
+struct KernelDescriptor;
+struct KernelInfo;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+struct ModuleBuildLog;
+
 namespace ult {
 
 struct ModuleImmutableDataFixture : public DeviceFixture {
@@ -33,12 +45,15 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     struct MockImmutableData : KernelImmutableData {
+        static constexpr uint32_t defaultIsaSize = 0x1000;
+        static constexpr uintptr_t defaultIsaPtr = 0x1234000;
         using KernelImmutableData::crossThreadDataSize;
         using KernelImmutableData::crossThreadDataTemplate;
         using KernelImmutableData::kernelDescriptor;
         using KernelImmutableData::kernelInfo;
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize);
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size);
+        MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size, uint32_t isaSize, uintptr_t isaPtr);
         void setDevice(L0::Device *inDevice) {
             device = inDevice;
         }
@@ -54,7 +69,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     struct MockModule : public L0::ModuleImp {
         using ModuleImp::allocatePrivateMemoryPerDispatch;
         using ModuleImp::getKernelImmutableDataVector;
-        using ModuleImp::kernelImmDatas;
+        using ModuleImp::kernelImmData;
         using ModuleImp::translationUnit;
         using ModuleImp::type;
 
@@ -77,34 +92,22 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
-        using KernelImp::argumentsResidencyContainer;
-        using KernelImp::crossThreadData;
-        using KernelImp::crossThreadDataSize;
-        using KernelImp::dynamicStateHeapData;
-        using KernelImp::dynamicStateHeapDataSize;
-        using KernelImp::internalResidencyContainer;
-        using KernelImp::kernelArgHandlers;
-        using KernelImp::kernelHasIndirectAccess;
-        using KernelImp::kernelImmData;
-        using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
-        using KernelImp::kernelRequiresUncachedMocsCount;
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
-        using KernelImp::pImplicitArgs;
-        using KernelImp::printfBuffer;
-        using KernelImp::privateMemoryGraphicsAllocation;
-        using KernelImp::requiredWorkgroupOrder;
-        using KernelImp::surfaceStateHeapData;
-        using KernelImp::surfaceStateHeapDataSize;
-        using KernelImp::unifiedMemoryControls;
+        using KernelImp::privateState;
+        using KernelImp::sharedState;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
-            implicitArgsVersion = 0;
+            this->sharedState->implicitArgsVersion = 0;
         }
         void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         }
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
         }
         void setCrossThreadData(uint32_t dataSize);
+
+        uint32_t getIndirectSize() const override {
+            return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+        }
     };
 
     void setUp();
@@ -176,11 +179,12 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         using ModuleImp::getDebugInfo;
         using ModuleImp::getZebinSegments;
         using ModuleImp::isZebinBinary;
-        using ModuleImp::kernelImmDatas;
+        using ModuleImp::kernelImmData;
         using ModuleImp::translationUnit;
         MockModuleWithZebin(L0::Device *device);
 
         void addSegments();
+        void addSegments(bool createWithSharedGlobalConstSurfaces);
 
         void addEmptyZebin();
 

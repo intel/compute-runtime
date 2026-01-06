@@ -13,11 +13,14 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_procfs_access_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysfs_access_fixture.h"
@@ -57,6 +60,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = *device->getOsInterface();
@@ -95,7 +100,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         DeviceFixture::tearDown();
         unsetenv("ZES_ENABLE_SYSMAN");
     }
-
+    DebugManagerStateRestore restorer;
     SysmanDevice *pSysmanDevice = nullptr;
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;
     OsSysman *pOsSysman = nullptr;

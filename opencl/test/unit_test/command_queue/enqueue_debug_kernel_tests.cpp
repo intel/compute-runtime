@@ -1,28 +1,21 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/kernel_filename_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/mock_method_macros.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/program/program.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_debug_program.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/program/program_from_binary.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
 
 using namespace NEO;
 

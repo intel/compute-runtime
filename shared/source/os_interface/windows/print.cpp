@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,8 +66,9 @@ size_t simpleSprintf(char *output, size_t outputSize, const char *format, T valu
         *formatCopy.rbegin() = 'f';
 
         retVal = sprintf_s(output, outputSize, formatCopy.c_str(), value);
-        for (int i = 0; i < retVal; i++)
+        for (int i = 0; i < retVal; i++) {
             output[i] = std::toupper(output[i]);
+        }
     } else {
         retVal = sprintf_s(output, outputSize, format, value);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -127,6 +128,6 @@ struct NonDefaultIoctlsSupported {
         if (productFamily == IGFX_DG1) {
             return true;
         }
-        return IsWithinXeGfxFamily::isMatched<productFamily>();
+        return IsXeCore::isMatched<productFamily>();
     }
 };

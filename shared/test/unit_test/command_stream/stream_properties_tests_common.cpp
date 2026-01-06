@@ -23,6 +23,7 @@
 using namespace NEO;
 
 struct MockStateComputeModeProperties : public StateComputeModeProperties {
+    using StateComputeModeProperties::clearIsDirtyPerContext;
     using StateComputeModeProperties::defaultThreadArbitrationPolicy;
     using StateComputeModeProperties::propertiesSupportLoaded;
     using StateComputeModeProperties::scmPropertiesSupport;
@@ -111,7 +112,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     }
 }
 
-HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, MatchAny) {
+TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
@@ -136,20 +137,28 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
         for (auto requiresCoherency : ::testing::Bool()) {
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode);
-                    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
-                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
-                    }
+                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256u : 128u, threadArbitrationPolicy, preemptionMode, false);
+
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                     } else {
                         EXPECT_EQ(-1, properties.stateComputeMode.isCoherencyRequired.value);
                     }
+
+                    if (scmPropertiesSupport.largeGrfMode) {
+                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
+                    }
+
                     EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
                     EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
-                    EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+
+                    if (scmPropertiesSupport.threadArbitrationPolicy) {
+                        EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.stateComputeMode.threadArbitrationPolicy.value);
+                    }
 
                     if (scmPropertiesSupport.devicePreemptionMode) {
                         EXPECT_EQ(preemptionMode, static_cast<PreemptionMode>(properties.stateComputeMode.devicePreemptionMode.value));
@@ -163,7 +172,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
 
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
         debugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, false);
         if (scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
             EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
         } else {
@@ -173,7 +182,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
         debugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, false);
         if (scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
             EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
         } else {
@@ -183,7 +192,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         debugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, false);
         if (scmPropertiesSupport.threadArbitrationPolicy) {
             EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
         } else {
@@ -193,7 +202,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
 
     for (auto forceScratchAndMTPBufferSizeMode : ::testing::Bool()) {
         debugManager.flags.ForceScratchAndMTPBufferSizeMode.set(forceScratchAndMTPBufferSizeMode);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, false);
         if (scmPropertiesSupport.allocationForScratchAndMidthreadPreemption) {
             EXPECT_EQ(forceScratchAndMTPBufferSizeMode, properties.stateComputeMode.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
         } else {
@@ -301,36 +310,36 @@ TEST(StreamPropertiesTests, givenVariousDevicePreemptionComputeModesWhenSettingP
 
     bool coherencyRequired = false;
     PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
 
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     devicePreemptionMode = PreemptionMode::Initial;
-    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     devicePreemptionMode = PreemptionMode::MidThread;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     clearDirtyState = true;
     devicePreemptionMode = PreemptionMode::ThreadGroup;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 }
@@ -343,35 +352,35 @@ TEST(StreamPropertiesTests, givenVariousCoherencyRequirementsWhenSettingProperty
 
     bool coherencyRequired = false;
     PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
 
     scmProperties.scmPropertiesSupport.coherencyRequired = true;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
 
-    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
 
     coherencyRequired = true;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
 
     clearDirtyState = true;
     coherencyRequired = false;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
 }
@@ -385,20 +394,20 @@ TEST(StreamPropertiesTests, givenVariableRegisterSizeAllocationSettingWhenSettin
     scmProperties.propertiesSupportLoaded = true;
     scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = false;
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
     scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
-    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
-    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 }
@@ -418,7 +427,7 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
 
     scmProperties.scmPropertiesSupport.largeGrfMode = true;
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
-    scmProperties.setPropertiesAll(false, static_cast<uint32_t>(grfNumber), threadArbitration, PreemptionMode::Initial);
+    scmProperties.setPropertiesAll(false, static_cast<uint32_t>(grfNumber), threadArbitration, PreemptionMode::Initial, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
@@ -457,12 +466,13 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
     scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption = true;
     scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
+    scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration = true;
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
     PreemptionMode devicePreemptionMode = PreemptionMode::Initial;
     bool coherency = false;
-    scmProperties.setPropertiesAll(coherency, static_cast<uint32_t>(grfNumber), threadArbitration, devicePreemptionMode);
+    scmProperties.setPropertiesAll(coherency, static_cast<uint32_t>(grfNumber), threadArbitration, devicePreemptionMode, false);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
@@ -470,6 +480,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(2, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
 
     scmProperties.resetState();
     EXPECT_FALSE(scmProperties.isDirty());
@@ -479,6 +490,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(-1, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
+    EXPECT_EQ(-1, scmProperties.pipelinedEuThreadArbitration.value);
 
     EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
@@ -487,6 +499,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
@@ -522,6 +535,38 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
     EXPECT_TRUE(scmPropertiesCopy.isDirty());
     EXPECT_EQ(1, scmPropertiesCopy.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmPropertiesCopy.threadArbitrationPolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenPipelineThreadArbitrationStateComputeModePropertiesWhenSettingContextStateThenExpectCorrectState) {
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration = true;
+
+    constexpr bool clearDirtyState = false;
+
+    scmProperties.setPropertiesPerContext(false, NEO::PreemptionMode::Disabled, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_TRUE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.clearIsDirtyPerContext();
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+
+    scmProperties.setPropertiesPerContext(false, NEO::PreemptionMode::Disabled, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.resetState();
+    EXPECT_EQ(-1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.setPropertiesAll(false, 0, 0, NEO::PreemptionMode::Disabled, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_TRUE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.clearIsDirty();
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
 }
 
 TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeModePropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -759,21 +804,14 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
 
     for (auto modeSelected : ::testing::Bool()) {
-        for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
-            for (auto systolicMode : ::testing::Bool()) {
-                properties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+        for (auto systolicMode : ::testing::Bool()) {
+            properties.pipelineSelect.setPropertiesAll(modeSelected, systolicMode);
 
-                EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
-                if (pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-                    EXPECT_EQ(mediaSamplerDopClockGate, properties.pipelineSelect.mediaSamplerDopClockGate.value);
-                } else {
-                    EXPECT_EQ(-1, properties.pipelineSelect.mediaSamplerDopClockGate.value);
-                }
-                if (pipelineSelectPropertiesSupport.systolicMode) {
-                    EXPECT_EQ(systolicMode, properties.pipelineSelect.systolicMode.value);
-                } else {
-                    EXPECT_EQ(-1, properties.pipelineSelect.systolicMode.value);
-                }
+            EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
+            if (pipelineSelectPropertiesSupport.systolicMode) {
+                EXPECT_EQ(systolicMode, properties.pipelineSelect.systolicMode.value);
+            } else {
+                EXPECT_EQ(-1, properties.pipelineSelect.systolicMode.value);
             }
         }
     }
@@ -782,17 +820,16 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
 TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChangedPropertyAndCheckIfDirtyThenExpectDirtyState) {
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
     pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
 
     constexpr bool constState = false;
     bool changingState = false;
-    pipeProperties.setPropertiesAll(changingState, constState, constState);
+    pipeProperties.setPropertiesAll(changingState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 
     changingState = !changingState;
-    pipeProperties.setPropertiesAll(changingState, constState, constState);
+    pipeProperties.setPropertiesAll(changingState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 }
@@ -800,26 +837,21 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChan
 TEST(StreamPropertiesTests, givenSetAllPipelineSelectPropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockPipelineSelectProperties psProperties{};
     psProperties.propertiesSupportLoaded = true;
-    psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
     psProperties.pipelineSelectPropertiesSupport.systolicMode = true;
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
     bool systolicMode = true;
-    psProperties.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+    psProperties.setPropertiesAll(modeSelected, systolicMode);
     EXPECT_TRUE(psProperties.isDirty());
     EXPECT_EQ(0, psProperties.modeSelected.value);
-    EXPECT_EQ(0, psProperties.mediaSamplerDopClockGate.value);
     EXPECT_EQ(1, psProperties.systolicMode.value);
 
     psProperties.resetState();
     EXPECT_FALSE(psProperties.isDirty());
     EXPECT_EQ(-1, psProperties.modeSelected.value);
-    EXPECT_EQ(-1, psProperties.mediaSamplerDopClockGate.value);
     EXPECT_EQ(-1, psProperties.systolicMode.value);
 
     EXPECT_TRUE(psProperties.propertiesSupportLoaded);
-    EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
     EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.systolicMode);
 }
 
@@ -887,53 +919,29 @@ TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelect
     bool clearDirtyState = false;
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = false;
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(-1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
-
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_TRUE(pipeProperties.isDirty());
-    EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
-
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_FALSE(pipeProperties.isDirty());
-    EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 
     modeSelected = true;
-    mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
-
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_FALSE(pipeProperties.isDirty());
-    EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
     clearDirtyState = true;
     modeSelected = false;
-    mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 }
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {
@@ -1483,7 +1491,7 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
 
     uint32_t grfNumber = 128;
     int32_t threadArbitration = 1;
-    globalStreamProperties.stateComputeMode.setPropertiesAll(false, grfNumber, threadArbitration, PreemptionMode::Initial);
+    globalStreamProperties.stateComputeMode.setPropertiesAll(false, grfNumber, threadArbitration, PreemptionMode::Initial, false);
 
     bool isCooperativeKernel = false;
     bool disableEuFusion = true;
@@ -1491,9 +1499,8 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch);
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
     bool systolicMode = true;
-    globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+    globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, systolicMode);
 
     int32_t statelessMocs = 1;
     int64_t bindingTablePoolBaseAddress = 2;
@@ -1523,7 +1530,6 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     EXPECT_EQ(-1, globalStreamProperties.frontEndState.singleSliceDispatchCcsMode.value);
 
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.modeSelected.value);
-    EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.systolicMode.value);
 
     EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.statelessMocs.value);
@@ -1649,4 +1655,268 @@ TEST(StreamPropertiesTests, givenDynamicStateStateBaseAddressPropertyWhenCopying
     EXPECT_TRUE(sbaPropertiesCopy.isDirty());
     EXPECT_EQ(4, sbaProperties.dynamicStateBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.dynamicStateSize.value);
+}
+
+TEST(StreamPropertiesTests, givenLscSamplerBackingThresholdSettingAndDebugKeyWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    DebugManagerStateRestore restorer;
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = false;
+
+    {
+        DebugManagerStateRestore restorer;
+        for (int debugFlagSetting : {-1, 0, 1}) {
+            debugManager.flags.LSCSamplerBackingThreshold.set(debugFlagSetting);
+            scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+            EXPECT_FALSE(scmProperties.isDirty());
+            EXPECT_EQ(-1, scmProperties.lscSamplerBackingThreshold.value);
+        }
+    }
+
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.lscSamplerBackingThreshold.value);
+
+    debugManager.flags.LSCSamplerBackingThreshold.set(0);
+
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.lscSamplerBackingThreshold.value);
+
+    debugManager.flags.LSCSamplerBackingThreshold.set(1);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+}
+
+TEST(StreamPropertiesTests, givenEnableOutOfBoundariesInTranslationExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.enableOutOfBoundariesInTranslationException = false;
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.scmPropertiesSupport.enableOutOfBoundariesInTranslationException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+}
+
+TEST(StreamPropertiesTests, givenEnablePageFaultExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enablePageFaultException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.scmPropertiesSupport.enablePageFaultException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+}
+TEST(StreamPropertiesTests, givenEnableMemoryExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableMemoryException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableMemoryException.value);
+
+    scmProperties.scmPropertiesSupport.enableMemoryException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+}
+TEST(StreamPropertiesTests, givenEnableBreakpointsSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableBreakpoints = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.scmPropertiesSupport.enableBreakpoints = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+}
+TEST(StreamPropertiesTests, givenEnableForceExternalHaltAndForceExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableForceExternalHaltAndForceException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.scmPropertiesSupport.enableForceExternalHaltAndForceException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+}
+
+TEST(StreamPropertiesTests, givenSystemMemoryReadFenceSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetCorrectly) {
+
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableSystemMemoryReadFence = false;
+
+    std::optional<bool> hasPeerAccessValues[]{
+        std::nullopt, true, false};
+
+    for (auto hasPeerAccess : hasPeerAccessValues) {
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        EXPECT_FALSE(scmProperties.isDirty());
+        EXPECT_EQ(-1, scmProperties.enableSystemMemoryReadFence.value);
+
+        {
+            DebugManagerStateRestore restorer;
+            scmProperties.resetState();
+            for (int debugFlagSetting : {0, 1}) {
+                debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagSetting);
+
+                scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+                EXPECT_FALSE(scmProperties.isDirty());
+                EXPECT_EQ(-1, scmProperties.enableSystemMemoryReadFence.value);
+            }
+        }
+    }
+
+    scmProperties.scmPropertiesSupport.enableSystemMemoryReadFence = true;
+
+    for (auto hasPeerAccess : hasPeerAccessValues) {
+        scmProperties.resetState();
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        if (hasPeerAccess.has_value()) {
+            EXPECT_EQ(hasPeerAccess.value(), scmProperties.enableSystemMemoryReadFence.value);
+            EXPECT_TRUE(scmProperties.isDirty());
+        } else {
+            EXPECT_FALSE(scmProperties.isDirty());
+        }
+
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        EXPECT_FALSE(scmProperties.isDirty());
+        if (hasPeerAccess.has_value()) {
+            EXPECT_EQ(hasPeerAccess.value(), scmProperties.enableSystemMemoryReadFence.value);
+        }
+
+        {
+            DebugManagerStateRestore restorer;
+            scmProperties.resetState();
+            for (int debugFlagSetting : {0, 1}) {
+                debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagSetting);
+
+                scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+                EXPECT_TRUE(scmProperties.isDirty());
+                EXPECT_EQ(debugFlagSetting, scmProperties.enableSystemMemoryReadFence.value);
+            }
+        }
+    }
 }

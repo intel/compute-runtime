@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::string guid, std::map<s
     ze_result_t retVal = ZE_RESULT_ERROR_UNKNOWN;
     auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
     if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
-        // We didnt have any entry for this guid in guidToKeyOffsetMap
+        // We did not have any entry for this guid in guidToKeyOffsetMap
         retVal = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return retVal;
     }

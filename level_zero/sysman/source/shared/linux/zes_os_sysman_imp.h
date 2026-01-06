@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
@@ -22,6 +23,8 @@
 
 namespace NEO {
 class Drm;
+class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -70,6 +73,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
     std::string &getPciRootPath() { return rootPath; }
     std::string &getDeviceName();
+    std::string &getDriverName();
+    void setDriverName(const std::string &driverName) { this->driverName = driverName; }
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
@@ -81,6 +86,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     bool getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) override;
+    bool isDeviceInSurvivabilityMode() override;
+    std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override { return std::make_unique<NEO::PhysicalDevicePciBusInfo>(pciBdfInfo); }
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
@@ -102,6 +110,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
         std::array<uint8_t, NEO::ProductHelper::uuidSize> id{};
     };
     std::vector<Uuid> uuidVec;
+    NEO::PhysicalDevicePciBusInfo pciBdfInfo = {};
 
   private:
     LinuxSysmanImp() = delete;
@@ -112,6 +121,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
     std::string deviceName;
+    std::string driverName;
 };
 
 } // namespace Sysman

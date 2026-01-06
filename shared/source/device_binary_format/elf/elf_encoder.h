@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,12 +95,12 @@ struct ElfEncoder {
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
-        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, sectionData); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, sectionData); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     }
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const std::string &sectionData) {
-        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(sectionData.c_str()), sectionData.size() + 1));
     }
 

@@ -28,11 +28,43 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission.reset();
 
     csr->initDirectSubmission();
 
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    EXPECT_EQ(WaitUtils::waitpkgCounterValue, WaitUtils::defaultCounterValueForUllsLight);
+    EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds);
+
+    CpuInfo::cpuidFunc = savedCpuIdFunc;
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
+    using CpuIdFuncT = void (*)(int *, int);
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.WaitpkgThreshold.set(35);
+    debugManager.flags.WaitpkgCounterValue.set(1000);
+
+    auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
+    VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
+    mockCpuInfo->features = CpuInfo::featureNone;
+
+    CpuIdFuncT savedCpuIdFunc = CpuInfo::cpuidFunc;
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
+
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
+    testedCsr->directSubmission.reset();
+
+    csr->initDirectSubmission();
+
+    EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    EXPECT_EQ(WaitUtils::waitpkgCounterValue, 1000u);
+    EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, 35);
 
     CpuInfo::cpuidFunc = savedCpuIdFunc;
 }

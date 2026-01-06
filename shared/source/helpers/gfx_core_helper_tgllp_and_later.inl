@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,11 +37,6 @@ void *LriHelper<GfxFamily>::program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t addre
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::packedFormatsSupported() const {
     return true;
-}
-
-template <typename GfxFamily>
-size_t GfxCoreHelperHw<GfxFamily>::getMaxFillPaternSizeForCopyEngine() const {
-    return 4 * sizeof(uint32_t);
 }
 
 } // namespace NEO

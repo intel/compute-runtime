@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,24 +17,11 @@ constexpr uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPoll
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle) {
-    AUB::createContext(*stream, dumpHandle);
-}
-
-template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
     if (EngineHelpers::isCcs(osContext->getEngineType())) {
         return 0x00030401;
     }
     return 0x00030001;
-}
-
-template <typename GfxFamily>
-int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
-    if (entryBits & BIT(PageTableEntry::localMemoryBit)) {
-        return AubMemDump::AddressSpaceValues::TraceLocal;
-    }
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
 
 } // namespace NEO

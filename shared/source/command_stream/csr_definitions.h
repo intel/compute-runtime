@@ -127,12 +127,12 @@ struct DispatchFlags {
     bool stateCacheInvalidation = false;
     bool isStallingCommandsOnNextFlushRequired = false;
     bool isDcFlushRequiredOnStallingCommandsOnNextFlush = false;
+    bool isWalkerWithProfilingEnqueued = false;
 };
 
 struct CsrSizeRequestFlags {
     bool l3ConfigChanged = false;
     bool preemptionRequestChanged = false;
-    bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
     bool systolicPipelineSelectMode = false;
     bool activePartitionsChanged = false;
@@ -147,6 +147,7 @@ struct ImmediateDispatchFlags {
     bool requireTaskCountUpdate = false;
     bool hasRelaxedOrderingDependencies = false;
     bool hasStallingCmds = false;
+    bool isWalkerWithProfilingEnqueued = false;
 };
 
 } // namespace NEO

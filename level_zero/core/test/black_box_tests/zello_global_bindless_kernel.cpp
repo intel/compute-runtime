@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,9 @@ std::string getRunPath(char *argv0) {
     std::string res(argv0);
 
     auto pos = res.rfind(fSeparator);
-    if (pos != std::string::npos)
+    if (pos != std::string::npos) {
         res = res.substr(0, pos);
+    }
 
     if (res == "." || pos == std::string::npos) {
         char *cwd;

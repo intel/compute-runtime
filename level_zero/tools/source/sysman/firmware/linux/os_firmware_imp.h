@@ -6,14 +6,15 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/firmware/firmware_imp.h"
 #include "level_zero/tools/source/sysman/firmware/os_firmware.h"
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 class FirmwareUtil;
+class SysfsAccess;
+struct OsSysman;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:

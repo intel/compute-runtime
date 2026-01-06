@@ -5,20 +5,16 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 using namespace NEO;
 
 using Xe2HpgCoreDeviceCaps = Test<DeviceFixture>;
-
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingImageSupportThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
@@ -30,14 +26,6 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingMediaBlockSu
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCoherencySupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
-}
-
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingFloatAtomicsSupportThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
-}
-
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCxlTypeThenReturnZero) {
-    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsMidThread) {
@@ -55,8 +43,12 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesTh
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+    struct ComputeSlmTestInput {
+        uint32_t expected;
+        uint32_t slmSize;
+    };
+
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     ComputeSlmTestInput computeSlmValuesXe2AndLaterTestsInput[] = {
         {0, 0 * MemoryConstants::kiloByte},
@@ -84,8 +76,8 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorre
         {11, 128 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe2AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
 }

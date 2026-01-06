@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
@@ -24,13 +25,17 @@ OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineD
       engineUsage(engineDescriptor.engineTypeUsage.second),
       rootDevice(engineDescriptor.isRootDevice) {}
 
+void OsContext::adjustSettings(const ProductHelper &productHelper) {
+    initializeInternalEngineImmediately = productHelper.initializeInternalEngineImmediately();
+}
+
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
     if (debugManager.flags.DeferOsContextInitialization.get() == 0) {
         return true;
     }
 
     if (engineUsage == EngineUsage::internal) {
-        return true;
+        return initializeInternalEngineImmediately || engineType == aub_stream::EngineType::ENGINE_BCS;
     }
 
     if (isDefaultEngine) {
@@ -46,13 +51,12 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
 
 bool OsContext::ensureContextInitialized(bool allocateInterrupt) {
     std::call_once(contextInitializedFlag, [this, allocateInterrupt] {
-        if (debugManager.flags.PrintOsContextInitializations.get()) {
-            printf("OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d\n",
-                   contextId,
-                   EngineHelpers::engineUsageToString(engineUsage).c_str(),
-                   EngineHelpers::engineTypeToString(engineType).c_str(),
-                   static_cast<int>(rootDevice));
-        }
+        PRINT_STRING(debugManager.flags.PrintOsContextInitializations.get(), stdout,
+                     "OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d\n",
+                     contextId,
+                     EngineHelpers::engineUsageToString(engineUsage).c_str(),
+                     EngineHelpers::engineTypeToString(engineType).c_str(),
+                     static_cast<int>(rootDevice));
 
         if (!initializeContext(allocateInterrupt)) {
             contextInitialized = false;
@@ -64,7 +68,8 @@ bool OsContext::ensureContextInitialized(bool allocateInterrupt) {
 }
 
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {
-    bool enableDirectSubmission = this->isDirectSubmissionSupported();
+    bool enableDirectSubmission = this->isDirectSubmissionSupported() &&
+                                  this->getUmdPowerHintValue() < NEO::OsContext::getUmdPowerHintMax();
 
     if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
         enableDirectSubmission = false;
@@ -80,17 +85,10 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
             hwInfo.capabilityTable.directSubmissionEngines.data[contextEngineType];
 
         bool startDirect = true;
-        if (!this->isDefaultContext()) {
+        if (this->isLowPriority() || this->isInternalEngine()) {
+            startDirect &= false;
+        } else if (!this->isDefaultContext()) {
             startDirect = directSubmissionProperty.useNonDefault;
-        }
-        if (this->isLowPriority()) {
-            startDirect = directSubmissionProperty.useLowPriority;
-        }
-        if (this->isInternalEngine()) {
-            startDirect = directSubmissionProperty.useInternal;
-        }
-        if (this->isRootDevice()) {
-            startDirect = directSubmissionProperty.useRootDevice;
         }
 
         submitOnInit = directSubmissionProperty.submitOnInit;
@@ -117,18 +115,18 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
             supported = blitterOverrideKey == 0 ? false : true;
             startOnInit = blitterOverrideKey == 1 ? true : false;
         }
-    } else if (contextEngineType == aub_stream::ENGINE_RCS) {
-        int32_t renderOverrideKey = debugManager.flags.DirectSubmissionOverrideRenderSupport.get();
-        if (renderOverrideKey != -1) {
-            supported = renderOverrideKey == 0 ? false : true;
-            startOnInit = renderOverrideKey == 1 ? true : false;
-        }
-    } else {
-        // assume else is CCS
+    } else if (EngineHelpers::isCcs(contextEngineType)) {
         int32_t computeOverrideKey = debugManager.flags.DirectSubmissionOverrideComputeSupport.get();
         if (computeOverrideKey != -1) {
             supported = computeOverrideKey == 0 ? false : true;
             startOnInit = computeOverrideKey == 1 ? true : false;
+        }
+    } else {
+        // assume else is RCS
+        int32_t renderOverrideKey = debugManager.flags.DirectSubmissionOverrideRenderSupport.get();
+        if (renderOverrideKey != -1) {
+            supported = renderOverrideKey == 0 ? false : true;
+            startOnInit = renderOverrideKey == 1 ? true : false;
         }
     }
 

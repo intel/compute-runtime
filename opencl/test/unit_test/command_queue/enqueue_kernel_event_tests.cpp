@@ -6,12 +6,13 @@
  */
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 #include "gtest/gtest.h"
 
@@ -97,7 +98,7 @@ TEST_F(EventTests, WhenWaitingForEventThenPipeControlIsNotInserted) {
     }
     EXPECT_EQ(expectedTaskLevel, csr.peekTaskLevel());
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     // Check CL_EVENT_COMMAND_TYPE
     {
@@ -145,7 +146,7 @@ TEST_F(EventTests, GivenTwoEnqueuesWhenWaitingForBothEventsThenTaskLevelIsCorrec
         expectedTaskLevel1++;
     }
     EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
     // Check CL_EVENT_COMMAND_TYPE
     {
@@ -198,7 +199,7 @@ TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
     }
     EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
     // Check CL_EVENT_COMMAND_TYPE
@@ -216,7 +217,7 @@ TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
 
 TEST_F(EventTests, WhenEnqueuingMarkerThenPassedEventHasTheSameLevelAsPreviousCommand) {
     DebugManagerStateRestore restorer{};
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
@@ -281,6 +282,6 @@ HWTEST_F(EventTests, givenEnqueueKernelBlockedOnserEventWhenEnqueueHasOutEventWi
         EXPECT_NE(pipeControlItor, ccsHwParser.cmdList.end());
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
     clReleaseEvent(outEvent);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/app_resource_helper.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
@@ -25,13 +26,19 @@ StorageInfo::StorageInfo() = default;
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     StorageInfo storageInfo{};
     storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::buffer);
+
+    AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
+                                          sizeof(storageInfo.resourceTag));
+
     if (properties.subDevicesBitfield.count() == 0) {
         return storageInfo;
     }
 
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
+    const auto *rootDeviceEnv{executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex].get()};
+
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(rootDeviceEnv->getHardwareInfo());
     const auto leastOccupiedBank = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
-    const auto subDevicesMask = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
+    const auto subDevicesMask = rootDeviceEnv->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
 
     const DeviceBitfield allTilesValue(properties.subDevicesBitfield.count() == 1 ? maxNBitValue(deviceCount) & subDevicesMask : properties.subDevicesBitfield);
     DeviceBitfield preferredTile;
@@ -47,10 +54,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     storageInfo.subDeviceBitfield = properties.subDevicesBitfield;
     storageInfo.cpuVisibleSegment = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
 
-    AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
-                                          sizeof(storageInfo.resourceTag));
-
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getReleaseHelper();
     switch (properties.allocationType) {
     case AllocationType::constantSurface:
     case AllocationType::kernelIsa:
@@ -128,9 +131,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.colouringPolicy = colouringPolicy;
             storageInfo.colouringGranularity = granularity;
         }
-        if (!releaseHelper || releaseHelper->isLocalOnlyAllowed()) {
-            storageInfo.localOnlyRequired = true;
-        }
 
         if (properties.flags.shareable) {
             storageInfo.isLockable = false;
@@ -140,9 +140,23 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     default:
         break;
     }
-    if (properties.flags.preferCompressed && (!releaseHelper || releaseHelper->isLocalOnlyAllowed())) {
-        storageInfo.localOnlyRequired = true;
-    }
+
+    storageInfo.localOnlyRequired = getLocalOnlyRequired(properties.allocationType,
+                                                         rootDeviceEnv->getProductHelper(),
+                                                         rootDeviceEnv->getReleaseHelper(),
+                                                         properties.flags.preferCompressed);
+
+    storageInfo.needsToBeZeroedAtInit = [](NEO::AllocationType allocType) {
+        auto out = GraphicsAllocation::isZeroInitRequired(allocType);
+
+        auto initWithZerosMask = debugManager.flags.InitAllocWithZeros.get();
+        if (initWithZerosMask) {
+            out = isBitSet(initWithZerosMask, static_cast<uint64_t>(allocType) - 1);
+        }
+
+        return out;
+    }(properties.allocationType);
+
     if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceMultiTileAllocPlacement.get()) {

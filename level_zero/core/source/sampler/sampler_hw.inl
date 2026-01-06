@@ -117,15 +117,13 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void SamplerCoreFamily<gfxCoreFamily>::copySamplerStateToDSH(void *dynamicStateHeap,
-                                                             const uint32_t dynamicStateHeapSize,
+void SamplerCoreFamily<gfxCoreFamily>::copySamplerStateToDSH(ArrayRef<uint8_t> dynamicStateHeap,
                                                              const uint32_t samplerOffset) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
-    auto destSamplerState = ptrOffset(dynamicStateHeap, samplerOffset);
-    auto freeSpace = dynamicStateHeapSize - samplerOffset;
-    memcpy_s(destSamplerState, freeSpace, &samplerState, sizeof(SAMPLER_STATE));
+    auto freeSpace = dynamicStateHeap.size() - samplerOffset;
+    memcpy_s(&dynamicStateHeap[samplerOffset], freeSpace, &samplerState, sizeof(SAMPLER_STATE));
 }
 
 } // namespace L0

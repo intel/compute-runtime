@@ -5,28 +5,32 @@
  *
  */
 
-#include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/pin/pin.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
@@ -40,16 +44,14 @@
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/program/create.inl"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/program/program_tests.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 
@@ -61,7 +63,7 @@ using namespace gtpin;
 
 namespace NEO {
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 } // namespace NEO
 
 namespace ULT {
@@ -169,6 +171,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
   public:
     void setUp() {
         debugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
+        debugManager.flags.EnableIsaAllocationPool.set(false);
         setUpImpl();
     }
 
@@ -222,6 +225,9 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     MockMemoryManagerWithFailures *memoryManager = nullptr;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     DebugManagerStateRestore restore;
+    inline static const char *sampleKernel = "example_kernel(){}";
+    inline static size_t sampleKernelSize = std::strlen(sampleKernel) + 1;
+    inline static const char *sampleKernelSrcs[1] = {sampleKernel};
 };
 
 typedef Test<GTPinFixture> GTPinTests;
@@ -668,22 +674,14 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallback
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         (cl_context)((Context *)pContext),
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -697,7 +695,7 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallback
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount = kernelCreateCallbackCount;
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount, kernelCreateCallbackCount);
@@ -734,7 +732,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCallbacksAreCalled) {
-
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
@@ -753,18 +750,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     cl_kernel kernel2 = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -774,12 +764,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -792,9 +781,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Create and submit first instance of "CopyBuffer" kernel
+    // Create and submit first instance of kernel
     int prevCount11 = kernelCreateCallbackCount;
-    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel1 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
@@ -826,9 +815,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(prevCount12 + 1, kernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
 
-    // Create and submit second instance of "CopyBuffer" kernel
+    // Create and submit second instance of kernel
     int prevCount21 = kernelCreateCallbackCount;
-    kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel2 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
@@ -871,8 +860,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseMemObject(buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = clReleaseMemObject(buff11);
@@ -890,7 +877,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGTPinCallbacksAreCalled) {
-
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
@@ -909,18 +895,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     cl_kernel kernel2 = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -930,12 +909,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -948,9 +926,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Create and submit first instance of "CopyBuffer" kernel
+    // Create and submit first instance of kernel
     int prevCount11 = kernelCreateCallbackCount;
-    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel1 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
@@ -984,9 +962,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(prevCount12 + 1, kernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
 
-    // Create and submit second instance of "CopyBuffer" kernel
+    // Create and submit second instance of kernel
     int prevCount21 = kernelCreateCallbackCount;
-    kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel2 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
@@ -1029,8 +1007,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseMemObject(buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = clReleaseMemObject(buff11);
@@ -1048,7 +1024,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwiceThenGTPinCreateKernelCallbackIsCalledOnce) {
-
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
@@ -1067,18 +1042,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     cl_kernel kernel2 = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1088,12 +1056,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1106,9 +1073,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Kernel "CopyBuffer" - called for the first time
+    // Kernel called for the first time
     int prevCount11 = kernelCreateCallbackCount;
-    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel1 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
@@ -1144,9 +1111,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
     EXPECT_EQ(prevCount14, commandBufferCompleteCallbackCount);
 
-    // The same kernel "CopyBuffer" - called second time
+    // The same kernel called second time
     int prevCount21 = kernelCreateCallbackCount;
-    kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel2 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that Kernel Create callback was not called now
@@ -1195,8 +1162,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseMemObject(buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = clReleaseMemObject(buff11);
@@ -1233,18 +1198,11 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     cl_kernel kernel1 = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1254,12 +1212,11 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1272,7 +1229,7 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel1 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1334,8 +1291,6 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1344,7 +1299,6 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKernelSubmitRelatedNotificationsAreCalled) {
-
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
@@ -1364,18 +1318,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1385,12 +1332,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1405,7 +1351,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 
     // Create kernel
     int prevCount1 = kernelCreateCallbackCount;
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, kernelCreateCallbackCount);
@@ -1450,7 +1396,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     kernelExecQueue[0].isResourceResident = false;
 
     // Create second kernel ...
-    cl_kernel kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    cl_kernel kernel2 = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // ... and simulate that it was sent for execution
@@ -1535,8 +1481,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1545,7 +1489,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveralTimesThenCorrectBuffersAreMadeResident) {
-
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
@@ -1565,18 +1508,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1586,12 +1522,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1606,7 +1541,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
 
     // Create kernel
     int prevCount1 = kernelCreateCallbackCount;
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, kernelCreateCallbackCount);
@@ -1720,8 +1655,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pSource.reset();
-
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1740,27 +1673,19 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1774,7 +1699,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create kernel
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
@@ -1857,27 +1782,19 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -1891,7 +1808,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create kernel
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
@@ -2162,15 +2079,6 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
 
 using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
-TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
-    debugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
-    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
-    auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
-    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
-        EXPECT_FALSE(canUseSharedAllocation);
-    }
-}
-
 HWTEST_F(GTPinTests, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCanBeUsed) {
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
@@ -2307,18 +2215,11 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2328,12 +2229,11 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
     ASSERT_NE(nullptr, cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         context,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
     ASSERT_NE(nullptr, pProgram);
 
@@ -2346,7 +2246,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     EXPECT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -278,17 +278,17 @@ class DispatchInfoBuilder {
                 pushSplit(dispatchInfo, target);
             } else {
                 target.push(dispatchInfo);
-                PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
-                                   "DIM:%u\tGWS:(%zu, %zu, %zu)\tELWS:(%zu, %zu, %zu)\tOffset:(%zu, %zu, %zu)\tAGWS:(%zu, %zu, %zu)\tLWS:(%zu, %zu, %zu)\tTWGS:(%zu, %zu, %zu)\tNWGS:(%zu, %zu, %zu)\tSWGS:(%zu, %zu, %zu)\n",
-                                   dispatchInfo.getDim(),
-                                   dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,
-                                   dispatchInfo.getEnqueuedWorkgroupSize().x, dispatchInfo.getEnqueuedWorkgroupSize().y, dispatchInfo.getEnqueuedWorkgroupSize().z,
-                                   dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z,
-                                   dispatchInfo.getActualWorkgroupSize().x, dispatchInfo.getActualWorkgroupSize().y, dispatchInfo.getActualWorkgroupSize().z,
-                                   dispatchInfo.getLocalWorkgroupSize().x, dispatchInfo.getLocalWorkgroupSize().y, dispatchInfo.getLocalWorkgroupSize().z,
-                                   dispatchInfo.getTotalNumberOfWorkgroups().x, dispatchInfo.getTotalNumberOfWorkgroups().y, dispatchInfo.getTotalNumberOfWorkgroups().z,
-                                   dispatchInfo.getNumberOfWorkgroups().x, dispatchInfo.getNumberOfWorkgroups().y, dispatchInfo.getNumberOfWorkgroups().z,
-                                   dispatchInfo.getStartOfWorkgroups().x, dispatchInfo.getStartOfWorkgroups().y, dispatchInfo.getStartOfWorkgroups().z);
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
+                             "DIM:%u\tGWS:(%zu, %zu, %zu)\tELWS:(%zu, %zu, %zu)\tOffset:(%zu, %zu, %zu)\tAGWS:(%zu, %zu, %zu)\tLWS:(%zu, %zu, %zu)\tTWGS:(%zu, %zu, %zu)\tNWGS:(%zu, %zu, %zu)\tSWGS:(%zu, %zu, %zu)\n",
+                             dispatchInfo.getDim(),
+                             dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,
+                             dispatchInfo.getEnqueuedWorkgroupSize().x, dispatchInfo.getEnqueuedWorkgroupSize().y, dispatchInfo.getEnqueuedWorkgroupSize().z,
+                             dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z,
+                             dispatchInfo.getActualWorkgroupSize().x, dispatchInfo.getActualWorkgroupSize().y, dispatchInfo.getActualWorkgroupSize().z,
+                             dispatchInfo.getLocalWorkgroupSize().x, dispatchInfo.getLocalWorkgroupSize().y, dispatchInfo.getLocalWorkgroupSize().z,
+                             dispatchInfo.getTotalNumberOfWorkgroups().x, dispatchInfo.getTotalNumberOfWorkgroups().y, dispatchInfo.getTotalNumberOfWorkgroups().z,
+                             dispatchInfo.getNumberOfWorkgroups().x, dispatchInfo.getNumberOfWorkgroups().y, dispatchInfo.getNumberOfWorkgroups().z,
+                             dispatchInfo.getStartOfWorkgroups().x, dispatchInfo.getStartOfWorkgroups().y, dispatchInfo.getStartOfWorkgroups().z);
             }
         }
     }

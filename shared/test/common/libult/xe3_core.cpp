@@ -15,11 +15,11 @@ namespace NEO {
 using Family = Xe3CoreFamily;
 constexpr auto gfxCore = IGFX_XE3_CORE;
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 template <>
 void populateFactoryTable<UltCommandStreamReceiver<Family>>() {
-    commandStreamReceiverFactory[IGFX_MAX_CORE + gfxCore] = UltCommandStreamReceiver<Family>::create;
+    commandStreamReceiverFactory[NEO::maxCoreEnumValue + gfxCore] = UltCommandStreamReceiver<Family>::create;
 }
 
 struct EnableXe3Core {

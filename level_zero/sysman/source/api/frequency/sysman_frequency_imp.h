@@ -15,6 +15,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsFrequency;
+struct OsSysman;
 
 class FrequencyImp : public Frequency, NEO::NonCopyableAndNonMovableClass {
   public:

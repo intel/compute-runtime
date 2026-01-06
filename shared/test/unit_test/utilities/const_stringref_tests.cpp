@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -208,21 +208,21 @@ TEST(ConstStringRefTruncated, GivenNegativeLengthThenCountFromRight) {
     EXPECT_EQ(7U, substr.length());
 }
 
-TEST(ConstStringRefEqualsCaseInsesitive, WhenSizesDifferThenReturnFalse) {
+TEST(ConstStringRefEqualsCaseInsensitive, WhenSizesDifferThenReturnFalse) {
     ConstStringRef lhs = ConstStringRef::fromArray("\0");
     ConstStringRef rhs = ConstStringRef::fromArray("\0\0");
     EXPECT_FALSE(equalsCaseInsensitive(lhs, rhs));
 }
 
-TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDontMatchThenReturnFalse) {
+TEST(ConstStringRefEqualsCaseInsensitive, WhenStringsDontMatchThenReturnFalse) {
     EXPECT_FALSE(equalsCaseInsensitive(ConstStringRef("abc"), ConstStringRef("abd")));
 }
 
-TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsIdenticalThenReturnTrue) {
+TEST(ConstStringRefEqualsCaseInsensitive, WhenStringsIdenticalThenReturnTrue) {
     EXPECT_TRUE(equalsCaseInsensitive(ConstStringRef("abc"), ConstStringRef("abc")));
 }
 
-TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDifferOnlyByCaseThenReturnTrue) {
+TEST(ConstStringRefEqualsCaseInsensitive, WhenStringsDifferOnlyByCaseThenReturnTrue) {
     EXPECT_TRUE(equalsCaseInsensitive(ConstStringRef("aBc"), ConstStringRef("Abc")));
 }
 

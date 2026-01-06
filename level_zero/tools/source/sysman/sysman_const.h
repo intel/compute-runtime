@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <level_zero/zes_api.h>
+
 #include <chrono>
 #include <string_view>
 
@@ -68,4 +70,9 @@ inline constexpr uint32_t unknownMemoryType = UINT32_MAX;
 inline constexpr uint32_t bits(uint32_t x, uint32_t at, uint32_t width) {
     return (((x) >> (at)) & ((1 << (width)) - 1));
 }
+
+inline constexpr bool isGroupEngineHandle(zes_engine_group_t engineGroup) {
+    return (engineGroup == ZES_ENGINE_GROUP_ALL || engineGroup == ZES_ENGINE_GROUP_MEDIA_ALL || engineGroup == ZES_ENGINE_GROUP_COMPUTE_ALL || engineGroup == ZES_ENGINE_GROUP_RENDER_ALL || engineGroup == ZES_ENGINE_GROUP_COPY_ALL);
+}
+
 } // namespace L0

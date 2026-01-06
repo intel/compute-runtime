@@ -6,48 +6,48 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/path.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/libult/global_environment.h"
-#include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
-#include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 #include "os_inc.h"
-#include "test_traits_common.h"
 
 #include <string>
 
@@ -75,10 +75,20 @@ class BuiltInTests
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
         BuiltInFixture::setUp(pDevice);
+        auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+        bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+        bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
+        copyBufferToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
     }
 
     void TearDown() override {
         allBuiltIns.clear();
+        auto builders = pClDevice->peekBuilders();
+        if (builders) {
+            for (uint32_t i = 0; i < static_cast<uint32_t>(EBuiltInOps::count); ++i) {
+                builders[i].first.reset();
+            }
+        }
         BuiltInFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();
@@ -116,6 +126,7 @@ class BuiltInTests
                left.srcMemObj == right.srcMemObj;
     }
 
+    EBuiltInOps::Type copyBufferToBufferBuiltin;
     DebugManagerStateRestore restore;
     std::string allBuiltIns;
 };
@@ -132,13 +143,6 @@ struct AuxBuiltinsMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported;
-    }
-};
-
-struct HeaplessSupportedMatcher {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
     }
 };
 
@@ -204,7 +208,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
     {
         // read args
         auto argNum = 0;
-        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
         auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
         auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
@@ -219,7 +223,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
     {
         // write args
         auto argNum = 1;
-        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+        auto expectedMocs = pDevice->getGmmHelper()->getL1EnabledMOCS();
         auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
         auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
@@ -233,6 +237,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
 }
 
 TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
+    USE_REAL_FILE_SYSTEM();
     for (auto supportsImages : ::testing::Bool()) {
         allBuiltIns.clear();
         size_t size = 0;
@@ -264,14 +269,13 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
         std::cout << "writing builtins to file: " << hashName << std::endl;
-        const char *pData = allBuiltIns.c_str();
-        writeDataToFile(hashName.c_str(), pData, allBuiltIns.length());
+        writeDataToFile(hashName.c_str(), allBuiltIns);
 #endif
     }
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
     MockBuffer *dstPtr = new MockBuffer();
@@ -338,7 +342,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
     MockBuffer *dstPtr = new MockBuffer();
@@ -559,7 +563,7 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
     EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
 }
 
-TEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
+HWTEST2_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
@@ -590,7 +594,7 @@ HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
     EXPECT_EQ(7u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
-TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
+HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
     mockAuxBuiltInOp.resizeKernelInstances(newSize);
@@ -609,7 +613,7 @@ TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesF
 HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
     BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice);
-    pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(rootDeviceIndex, EBuiltInOps::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
+    pClDevice->setBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
@@ -693,7 +697,7 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSet
     {
         // read args
         auto argNum = 0;
-        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
         auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
         auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
@@ -708,7 +712,7 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSet
     {
         // write args
         auto argNum = 1;
-        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto expectedMocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
         auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
         auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
@@ -740,7 +744,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
     gmm->setCompressionEnabled(true);
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -798,7 +802,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
     gmm->setCompressionEnabled(true);
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
         mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
@@ -832,7 +836,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenSizeIsAlignedToCachLineSize) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
@@ -1081,8 +1085,33 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
     }
 }
 
+TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
+
+    size_t size = 1024 * 1024 * 1024;
+    void *systemPtr = malloc(size);
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = 4; // pattern size
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstPtr = systemPtr;
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {size, 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+
+    free(systemPtr);
+}
+
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
-    REQUIRE_64BIT_OR_SKIP();
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
@@ -1090,7 +1119,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
 
     MockBuffer srcBuffer;
     srcBuffer.size = static_cast<size_t>(bigSize);
-    std ::unique_ptr<Image> pDstImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pDstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pDstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dStateless, *pClDevice);
@@ -1122,7 +1151,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedTh
         GTEST_SKIP();
     }
     MockBuffer buffer;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dHeapless, *pClDevice);
@@ -1149,7 +1178,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedTh
         GTEST_SKIP();
     }
     MockBuffer buffer;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferHeapless, *pClDevice);
@@ -1169,44 +1198,19 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedTh
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
-HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToImageHeaplessIsUsedThenParamsAreCorrect) {
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    if (!heaplessAllowed) {
-        GTEST_SKIP();
-    }
-    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
-    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
-
-    ASSERT_NE(nullptr, srcImage.get());
-    ASSERT_NE(nullptr, dstImage.get());
-
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3dHeapless, *pClDevice);
-
-    BuiltinOpParams dc;
-    dc.srcMemObj = srcImage.get();
-    dc.dstMemObj = dstImage.get();
-
-    dc.srcOffset = {0, 0, 0};
-    dc.dstOffset = {0, 0, 0};
-    dc.size = {1, 1, 1};
-
-    MultiDispatchInfo multiDispatchInfo(dc);
-    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
-    EXPECT_EQ(1u, multiDispatchInfo.size());
-    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
-}
-
 HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
-    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
+    std ::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
 
     ASSERT_NE(nullptr, srcImage.get());
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d, *pClDevice);
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(heaplessAllowed);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
     BuiltinOpParams dc;
     dc.srcMemObj = srcImage.get();
@@ -1222,18 +1226,16 @@ HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
-HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImageHeaplessIsUsedThenParamsAreCorrect) {
+HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    if (!heaplessAllowed) {
-        GTEST_SKIP();
-    }
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3dHeapless, *pClDevice);
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage3d>(heaplessAllowed);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
     BuiltinOpParams dc;
     dc.srcPtr = &fillColor;
@@ -1248,14 +1250,16 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImageHeaplessIsUsedThenParams
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
-HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
+HWTEST_F(BuiltInTests, WhenBuilderFillImage1dBufferIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image1dBufferHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3d, *pClDevice);
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage1dBuffer>(heaplessAllowed);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
     BuiltinOpParams dc;
     dc.srcPtr = &fillColor;
@@ -1281,7 +1285,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);
@@ -1319,7 +1323,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);
@@ -1346,7 +1350,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 }
 
 TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
@@ -1365,7 +1369,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 
     const Kernel *kernel = multiDispatchInfo.begin()->getKernel();
 
-    EXPECT_EQ(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferMiddleMisaligned");
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.starts_with("CopyBufferToBufferMiddleMisaligned"));
 
     const auto crossThreadData = kernel->getCrossThreadData();
     const auto crossThreadOffset = kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].offset;
@@ -1375,7 +1379,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 }
 
 TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer srcMemObj;
     auto size = 10 * MemoryConstants::cacheLineSize;
@@ -1414,7 +1418,7 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
 }
 
 TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
     auto srcPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
@@ -1449,28 +1453,39 @@ TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsA
 }
 
 TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
-    BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
-    BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     EXPECT_EQ(&builder1, &builder2);
 }
 
 HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltInBuilderIsReturned) {
 
-    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(pClDevice->getExecutionEnvironment());
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    bool isForceStateless = pClDevice->getCompilerProductHelper().isForceToStatelessRequired();
 
     auto verifyBuilder = [&](auto operation) {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
-        auto *expectedBuilder = clExecutionEnvironment->peekBuilders(pClDevice->getRootDeviceIndex())[static_cast<uint32_t>(operation)].first.get();
+        auto *expectedBuilder = pClDevice->peekBuilders()[static_cast<uint32_t>(operation)].first.get();
 
         EXPECT_EQ(expectedBuilder, &builder);
     };
 
+    auto verifyBuilderIfSupported = [&](auto operation) {
+        if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
+            return;
+        }
+        if ((!EBuiltInOps::isHeapless(operation) && !EBuiltInOps::isStateless(operation)) && isForceStateless) {
+            return;
+        }
+
+        verifyBuilder(operation);
+    };
+
     EBuiltInOps::Type operationsBuffers[] = {
-        EBuiltInOps::copyBufferToBuffer,
         EBuiltInOps::copyBufferToBufferStateless,
         EBuiltInOps::copyBufferToBufferStatelessHeapless,
+        EBuiltInOps::copyBufferToBuffer,
         EBuiltInOps::copyBufferRect,
         EBuiltInOps::copyBufferRectStateless,
         EBuiltInOps::copyBufferRectStatelessHeapless,
@@ -1488,21 +1503,17 @@ HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltIn
         EBuiltInOps::copyImageToImage3d,
         EBuiltInOps::copyImageToImage3dHeapless,
         EBuiltInOps::fillImage3d,
-        EBuiltInOps::fillImage3dHeapless};
+        EBuiltInOps::fillImage3dHeapless,
+        EBuiltInOps::fillImage1dBuffer,
+        EBuiltInOps::fillImage1dBufferHeapless};
 
     for (auto operation : operationsBuffers) {
-        if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
-            continue;
-        }
-        verifyBuilder(operation);
+        verifyBuilderIfSupported(operation);
     }
 
     if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
         for (auto operation : operationsImages) {
-            if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
-                continue;
-            }
-            verifyBuilder(operation);
+            verifyBuilderIfSupported(operation);
         }
     }
 }
@@ -1653,7 +1664,7 @@ TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::any, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
@@ -1661,7 +1672,7 @@ TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturne
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
@@ -1691,7 +1702,7 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
 
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
@@ -1704,9 +1715,10 @@ HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuilti
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBufferHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
 }
 
-HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
@@ -1728,6 +1740,7 @@ TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourc
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
 }
 
@@ -1745,6 +1758,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBu
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
 
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::binary, *pDevice).size());
 }
@@ -1764,6 +1778,7 @@ TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceForNotRegis
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
 }
 
@@ -1810,7 +1825,7 @@ TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPoi
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1830,31 +1845,6 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPoint
     EXPECT_EQ(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
-}
-
-TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreated) {
-    bool force32BitAddresses = pDevice->getDeviceInfo().force32BitAddresses;
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
-
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
-    ASSERT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
-    ASSERT_NE(nullptr, program.get());
-    auto builtinInternalOptions = program->getInternalOptions();
-    auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit.data());
-    EXPECT_EQ(std::string::npos, it);
-
-    it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-
-    if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
-        EXPECT_NE(std::string::npos, it);
-    } else {
-        EXPECT_EQ(std::string::npos, it);
-    }
-
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = force32BitAddresses;
 }
 
 TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
@@ -1898,7 +1888,7 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
@@ -1913,9 +1903,18 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
+TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSourceCodeTypeIsUsed) {
+    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
+    EXPECT_NE(0u, code.resource.size());
+    EXPECT_EQ(pDevice, code.targetDevice);
+}
+
 using BuiltInOwnershipWrapperTests = BuiltInTests;
 
-TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
+HWTEST2_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
     {
@@ -1930,7 +1929,7 @@ TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnloc
     EXPECT_EQ(nullptr, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
 }
 
-TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
+HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
     {
@@ -1946,7 +1945,7 @@ TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingT
     EXPECT_EQ(nullptr, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
 }
 
-TEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {
+HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp1(*pBuiltIns, *pClDevice);
     MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
@@ -1961,7 +1960,7 @@ HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltInOwnershipWrapperWhenAskedForT
     EXPECT_FALSE(std::is_copy_assignable<BuiltInOwnershipWrapper>::value);
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
 
     if (is32bit) {
         GTEST_SKIP();
@@ -1992,7 +1991,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThen
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2032,7 +2031,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeapless
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2072,7 +2071,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessI
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2107,7 +2106,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenPa
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2140,4 +2139,803 @@ HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenPar
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *srcPtr = alignedBuffer;
+    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = srcPtr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = 1024;
+    srcBuffer.mockGfxAllocation.gpuAddress = 0x1000;
+    ASSERT_EQ(0u, srcBuffer.mockGfxAllocation.gpuAddress & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    uint8_t buffer[bufferSize + 16];
+    void *srcPtr = buffer + 1;
+    ASSERT_NE(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = srcPtr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *dstPtr = alignedBuffer;
+    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstPtr = dstPtr;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    MockBuffer dstBuffer;
+    dstBuffer.size = 1024;
+    dstBuffer.mockGfxAllocation.gpuAddress = 0x2000;
+    ASSERT_EQ(0u, dstBuffer.mockGfxAllocation.gpuAddress & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPtrWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    uint8_t buffer[bufferSize + 16];
+    void *dstPtr = buffer + 1;
+    ASSERT_NE(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstPtr = dstPtr;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsedThenAlignmentCheckIsSkipped) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_R, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *dstPtr = alignedBuffer;
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstPtr = dstPtr;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("4Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") == std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedThenAlignmentCheckIsSkipped) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_R, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *srcPtr = alignedBuffer;
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = srcPtr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("4Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") == std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto dstImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, dstImage);
+
+    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, srcImage);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage;
+    dc.dstMemObj = dstImage;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete dstImage;
+    delete srcImage;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    cl_int retVal = CL_SUCCESS;
+    auto srcBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    ASSERT_NE(nullptr, srcBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcBuffer;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete image;
+    delete srcBuffer;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    cl_int retVal = CL_SUCCESS;
+    auto srcBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    ASSERT_NE(nullptr, srcBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcBuffer;
+    dc.dstMemObj = image;
+    dc.srcOffset = {1, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+    delete srcBuffer;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, srcImage);
+
+    auto dstImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, dstImage);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage;
+    dc.dstMemObj = dstImage;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete srcImage;
+    delete dstImage;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilderIsUsedThenAlignedKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, srcImage);
+
+    constexpr size_t bufferSize = 1024;
+    cl_int retVal = CL_SUCCESS;
+    auto dstBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    ASSERT_NE(nullptr, dstBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage;
+    dc.dstMemObj = dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
+
+    delete srcImage;
+    delete dstBuffer;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, srcImage);
+
+    constexpr size_t bufferSize = 1024;
+    cl_int retVal = CL_SUCCESS;
+    auto dstBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    ASSERT_NE(nullptr, dstBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage;
+    dc.dstMemObj = dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {1, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete srcImage;
+    delete dstBuffer;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *srcPtr = alignedBuffer;
+    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = srcPtr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 68; // 16-byte misaligned row pitch
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *dstPtr = alignedBuffer;
+    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstPtr = dstPtr;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 132; // 16-byte misaligned slice pitch
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    constexpr size_t bufferSize = 1024;
+    alignas(16) uint8_t alignedBuffer[bufferSize];
+    void *srcPtr = alignedBuffer;
+    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = srcPtr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {8, 0, 0}; // 16-byte misaligned offset
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    MockBuffer dstBuffer;
+    dstBuffer.size = 1024;
+    dstBuffer.mockGfxAllocation.gpuAddress = 0;
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image;
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
+}
+
+HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+
+    cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
+    cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
+
+    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    ASSERT_NE(nullptr, image);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = nullptr;
+    dc.srcMemObj = nullptr;
+    dc.dstMemObj = image;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
+
+    delete image;
 }

@@ -8,17 +8,17 @@
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/utilities/directory.h"
 
-#include "level_zero/tools/source/sysman/events/events_imp.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
-
-#include <sys/stat.h>
+#include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
-
 const std::string LinuxEventsUtil::add("add");
 const std::string LinuxEventsUtil::remove("remove");
 const std::string LinuxEventsUtil::change("change");
@@ -37,8 +37,8 @@ ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
     }
 
     if (globalOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Os Sysman driver not initialized\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman driver not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     static_cast<LinuxSysmanDriverImp *>(globalOsSysmanDriver)->eventRegister(events, pLinuxSysmanImp->getSysmanDeviceImp());
@@ -129,8 +129,8 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
     if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
         uint8_t value = 0x00;
         if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "%s", "Write to Pipe failed\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Write to Pipe failed\n");
         }
     }
     eventsMutex.unlock();
@@ -263,16 +263,16 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
                 // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0
                 const auto loc = bdf.find("/devices");
                 if (loc == std::string::npos) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                          "%s", "Invalid device path\n");
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "%s", "Invalid device path\n");
                     continue;
                 }
 
                 bdf = bdf.substr(loc);
                 mapOfDevIndexToDevPath.insert({devIndex, bdf});
             } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                      "%s", "Failed to get real path of device\n");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "%s", "Failed to get real path of device\n");
             }
         }
     }
@@ -328,8 +328,8 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
 
     if (pUdevLib == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "libudev library instantiation failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "libudev library instantiation failed\n");
         return retval;
     }
 
@@ -341,8 +341,8 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
 
     eventsMutex.lock();
     if (NEO::SysCalls::pipe(pipeFd) < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Creation of pipe failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Creation of pipe failed\n");
     }
 
     pfd[1].fd = pipeFd[0];

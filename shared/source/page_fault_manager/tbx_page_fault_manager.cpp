@@ -24,7 +24,7 @@ bool TbxPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) 
             if (allocPtr != nullptr) {
                 auto faultData = memoryData[allocPtr];
                 if (faultData.domain == CpuPageFaultManager::AllocationDomain::gpu) {
-                    this->allowCPUMemoryAccess(ptr, faultData.size);
+                    this->allowCPUMemoryAccess(allocPtr, faultData.size);
                 }
             }
         }

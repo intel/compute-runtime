@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 
 using namespace NEO;

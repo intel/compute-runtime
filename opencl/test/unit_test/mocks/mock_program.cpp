@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,20 +8,9 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "shared/source/compiler_interface/compiler_cache.h"
-#include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/program/program_info_from_patchtokens.h"
-#include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/ult_limits.h"
-#include "shared/test/common/mocks/mock_compiler_interface.h"
-#include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/program/create.inl"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 namespace NEO {
 ClDeviceVector toClDeviceVector(ClDevice &clDevice) {

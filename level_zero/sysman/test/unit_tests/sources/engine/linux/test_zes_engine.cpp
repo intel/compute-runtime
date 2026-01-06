@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
@@ -81,51 +80,6 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
     }
 };
 
-TEST_F(ZesEngineFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-    EXPECT_EQ(count, handleComponentCount);
-
-    uint32_t testcount = count + 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &testcount, NULL));
-    EXPECT_EQ(testcount, count);
-
-    count = 0;
-    std::vector<zes_engine_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, handleComponentCount);
-}
-
-TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
-    zes_engine_properties_t properties;
-    auto handle = getEngineHandles(handleComponentCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-}
-
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
@@ -179,13 +133,13 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivi
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
-    std::set<std::pair<zes_engine_group_t, L0::Sysman::EngineInstanceSubDeviceId>> engineGroupInstance;
+    MapOfEngineInfo mapEngineInfo = {};
 
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     auto *pDrm = osInterface->getDriverModel()->as<MockEngineNeoDrm>();
     pDrm->mockSysmanQueryEngineInfoReturnFalse = false;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
 }
 
 TEST_F(ZesEngineFixtureI915, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {

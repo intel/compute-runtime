@@ -26,9 +26,6 @@ ze_result_t WddmVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_en
 bool WddmVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMmemUsed) {
     return false;
 }
-bool WddmVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
-    return false;
-}
 
 std::unique_ptr<OsVf> OsVf::create(
     OsSysman *pOsSysman, uint32_t vfId) {

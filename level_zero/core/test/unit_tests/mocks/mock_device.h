@@ -37,6 +37,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(getP2PProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_device_p2p_properties_t *pP2PProperties));
     ADDMETHOD_NOBASE(getKernelProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_module_properties_t * pKernelProperties));
     ADDMETHOD_NOBASE(getPciProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_pci_ext_properties_t * pPciProperties));
+    ADDMETHOD_NOBASE(getVectorWidthPropertiesExt, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_vector_width_properties_ext_t *pVectorWidthProperties));
     ADDMETHOD_NOBASE(getMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, ze_device_memory_properties_t *pMemProperties));
     ADDMETHOD_NOBASE(getMemoryAccessProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_memory_access_properties_t * pMemAccessProperties));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_properties_t * pDeviceProperties));
@@ -50,9 +51,9 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(getExternalMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_external_memory_properties_t * pExternalMemoryProperties));
     ADDMETHOD_NOBASE(getGlobalTimestamps, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t * hostTimestamp, uint64_t *deviceTimestamp));
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getRootDevice, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t * phRootDevice));
     // Runtime internal methods
-    ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
     ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
@@ -74,16 +75,18 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(allocateMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (const void *buffer, size_t size, bool hostCopyAllowed));
     ADDMETHOD_NOBASE_VOIDRETURN(setSysmanHandle, (SysmanDevice *));
     ADDMETHOD_NOBASE(getSysmanHandle, SysmanDevice *, nullptr, ());
-    ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, bool allocateInterrupt));
+    ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt));
     ADDMETHOD_NOBASE(getCsrForLowPriority, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, bool copyOnly));
     ADDMETHOD_NOBASE(getDebugProperties, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_debug_properties_t * properties));
     ADDMETHOD_NOBASE(getDebugSession, DebugSession *, nullptr, (const zet_debug_config_t &config));
     ADDMETHOD_NOBASE_VOIDRETURN(removeDebugSession, ());
+    ADDMETHOD_NOBASE_VOIDRETURN(bcsSplitReleaseResources, ());
     ADDMETHOD_NOBASE(obtainReusableAllocation, NEO::GraphicsAllocation *, nullptr, (size_t requiredSize, NEO::AllocationType type))
     ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
     ADDMETHOD_NOBASE(getFabricVertex, ze_result_t, ZE_RESULT_SUCCESS, (ze_fabric_vertex_handle_t * phVertex));
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
     ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
+    ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -103,17 +106,18 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;
+    using Base::freeMemoryAllocation;
     using Base::getNEODevice;
     using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
     using Base::inOrderTimestampAllocator;
     using Base::neoDevice;
+    using Base::queryPeerAccess;
     using Base::subDeviceCopyEngineGroups;
     using Base::syncDispatchTokenAllocation;
 
-    MockDeviceImp(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
+    MockDeviceImp(NEO::Device *device) {
         device->incRefInternal();
-        Base::execEnvironment = execEnv;
         Base::neoDevice = device;
         Base::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     }

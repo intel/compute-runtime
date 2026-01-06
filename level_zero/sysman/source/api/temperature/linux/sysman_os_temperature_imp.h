@@ -10,15 +10,13 @@
 
 #include "level_zero/sysman/source/api/temperature/sysman_os_temperature.h"
 
-#include "igfxfmid.h"
-
-#include <memory>
-
 namespace L0 {
 namespace Sysman {
 
 class LinuxSysmanImp;
 class SysmanProductHelper;
+struct OsSysman;
+
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;

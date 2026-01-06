@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,13 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 namespace NEO {
 
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
@@ -55,9 +56,10 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G10DeviceAndRevisionIdValueWhenInitHw
         deviceIDStr << "0x" << std::hex << deviceID;
         deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(config.value);
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
 
         EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
@@ -84,9 +86,10 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G11DeviceAndRevisionIdValueWhenInitHw
         deviceIDStr << "0x" << std::hex << deviceID;
         deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(config.value);
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
 
         EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
@@ -108,9 +111,10 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G12DeviceAndRevisionIdValueWhenInitHw
     deviceIDStr << "0x" << std::hex << deviceID;
     deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(dg2G12Config.value);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());

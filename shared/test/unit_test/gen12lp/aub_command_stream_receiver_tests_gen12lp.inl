@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "shared/source/gen12lp/hw_info.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -42,33 +44,17 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLo
     MockGraphicsAllocation allocation(nullptr, 0);
     allocation.overrideMemoryPool(MemoryPool::localMemory);
     auto bits = aubCsr->getPPGTTAdditionalBits(&allocation);
-    constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
+    constexpr uint64_t expectedBits = makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit, PageTableEntry::localMemoryBit>();
 
     EXPECT_EQ(expectedBits, bits);
 }
 
-GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
-    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr.setupContext(osContext);
+GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSizeAndNumberOfBanks) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr.stream = stream.get();
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
+    auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
 
-    aubCsr.initEngineMMIO();
-
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB234, 0xD0000020u)));
-}
-
-GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
-    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr.setupContext(osContext);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr.stream = stream.get();
-
-    aubCsr.initEngineMMIO();
-
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB134, 0xD0000020u)));
+    EXPECT_EQ(32 * MemoryConstants::gigaByte, allocator->getBankSize());
+    EXPECT_EQ(1u, allocator->getNumberOfBanks());
 }

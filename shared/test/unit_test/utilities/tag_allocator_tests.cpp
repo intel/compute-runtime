@@ -93,16 +93,16 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using BaseClass::usedTags;
     using BaseClass::TagAllocatorBase::cleanUpResources;
 
-    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
+    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
         : BaseClass(RootDeviceIndicesContainer{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, 0, doNotReleaseNodes, true, deviceBitfield) {
     }
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck, DeviceBitfield deviceBitfield)
+    MockTagAllocator(MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment, bool disableCompletionCheck, DeviceBitfield deviceBitfield)
         : MockTagAllocator(0, memMngr, tagCount, tagAlignment, sizeof(TagType), disableCompletionCheck, deviceBitfield) {
     }
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, DeviceBitfield deviceBitfield)
+    MockTagAllocator(MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment, DeviceBitfield deviceBitfield)
         : MockTagAllocator(memMngr, tagCount, tagAlignment, false, deviceBitfield) {
     }
 
@@ -179,6 +179,7 @@ TEST_F(TagAllocatorTest, WhenGettingAndReturningTagThenFreeAndUsedListsAreUpdate
 TEST_F(TagAllocatorTest, WhenTagAllocatorIsCreatedThenItPopulatesTagsWithProperDeviceBitfield) {
     size_t alignment = 64;
 
+    memoryManager->recentlyPassedDeviceBitfield = 0;
     EXPECT_NE(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment, deviceBitfield);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
@@ -462,7 +463,7 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
     node = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
     EXPECT_NE(nullptr, node);
-    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool wasnt allocated
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool was not allocated
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {

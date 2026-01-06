@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,14 +14,10 @@
 namespace L0 {
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
-}
-
-template <typename Family>
 void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const {
 
     const uint32_t numSubslicesPerSlice = (hwInfo.gtSystemInfo.MaxEuPerSubSlice == 8) ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu;
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
@@ -61,7 +57,7 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
 
     const uint32_t numSubslicesPerSlice = (hwInfo.gtSystemInfo.MaxEuPerSubSlice == 8) ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu;
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
@@ -115,6 +111,58 @@ bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
     return false;
+}
+
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
+    return 0;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumData(std::map<uint64_t, void *> &stallSumIpDataMap) {
+    return;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumDataEntry(std::map<uint64_t, void *>::iterator it) {
+    return;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) {
+    return false;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromMap(std::map<uint64_t, void *> &sourceMap, std::map<uint64_t, void *> &stallSumIpDataMap) {
+    return;
+}
+
+// Order of ipDataValues must match stallSamplingReportList
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) {
+    return;
+}
+
+template <typename Family>
+std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::getStallSamplingReportMetrics() const {
+    std::vector<std::pair<const char *, const char *>> stallSamplingReportList = {};
+    return stallSamplingReportList;
+}
+
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
+    return 0;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
+    return false;
+}
+
+template <typename Family>
+size_t L0GfxCoreHelperHw<Family>::getMaxFillPatternSizeForCopyEngine() const {
+    return 4 * sizeof(uint32_t);
 }
 
 } // namespace L0

@@ -5,20 +5,16 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -31,6 +27,7 @@
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/device/device_caps_test_utils.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -63,10 +60,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), openclCWithVersionIterator->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
-
-        if (clDevice.getEnabledClVersion() == 30) {
-            EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
-        }
+        EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator) << " versions count : " << clDevice.getDeviceInfo().openclCAllVersions.size();
     }
@@ -89,39 +83,31 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_images", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
         }
-        if (hwInfo.capabilityTable.supportsOcl21Features) {
-            EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
-            if (hwInfo.capabilityTable.supportsFloatAtomics) {
-                EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_min_max", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_min_max", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_load_store", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_load_store", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_min_max", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
-            }
-        }
+        EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_add", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_add", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_load_store", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_load_store", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             EXPECT_STREQ("__opencl_c_fp64", (++openclCFeatureIterator)->name);
-            if (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsFloatAtomics) {
-                EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_min_max", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_min_max", (++openclCFeatureIterator)->name);
-            }
+            EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_add", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_add", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_min_max", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_min_max", (++openclCFeatureIterator)->name);
         }
-        if (clDevice.getDevice().getCompilerProductHelper().isDotIntegerProductExtensionSupported()) {
-            EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
-        }
+        EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
         verifyAnyRemainingOpenclCFeatures(releaseHelper, openclCFeatureIterator);
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
@@ -155,7 +141,10 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
     EXPECT_GT(caps.openclCFeatures.size(), 0u);
     EXPECT_EQ(caps.extensionsWithVersion.size(), 0u);
-    EXPECT_STREQ("v2024-02-27-00", caps.latestConformanceVersionPassed);
+    EXPECT_EQ(caps.spirvExtendedInstructionSets.size(), 0u);
+    EXPECT_EQ(caps.spirvExtensions.size(), 0u);
+    EXPECT_EQ(caps.spirvCapabilities.size(), 0u);
+    EXPECT_STREQ("v2025-04-14-00", caps.latestConformanceVersionPassed);
 
     EXPECT_NE(nullptr, caps.spirVersions);
     EXPECT_NE(nullptr, caps.deviceExtensions);
@@ -178,7 +167,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(0u, caps.globalMemCacheSize);
     EXPECT_LT(0u, sharedCaps.globalMemSize);
     EXPECT_EQ(sharedCaps.maxMemAllocSize, caps.maxConstantBufferSize);
-    EXPECT_STREQ("SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", sharedCaps.ilVersion);
+    EXPECT_STREQ("SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", sharedCaps.ilVersion);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsIndependentForwardProgress, caps.independentForwardProgress);
 
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);
@@ -241,7 +230,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize() : 0u;
+    auto expectedMaxNumOfSubGroups = sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize();
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
@@ -268,9 +257,6 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(16384u, sharedCaps.image2DMaxWidth);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
-    if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
-        EXPECT_TRUE(sharedCaps.force32BitAddresses);
-    }
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
@@ -301,102 +287,14 @@ TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAre
     EXPECT_EQ(2048u, sharedCaps.image3DMaxDepth);
 }
 
-TEST_F(DeviceGetCapsTest, givenForceOclVersion30WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(30);
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
     verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceReportsOpenCL21) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(2u, 1u, 0u), caps.numericClVersion);
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceReportsOpenCL12) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportDisabledWhenCapsAreCreatedThenDeviceReportsNoSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(0);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOcl30AndForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(30);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceInvalidOclVersionWhenCapsAreCreatedThenDeviceWillDefaultToOpenCL12) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(1);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceReports32bitAddressingOptimization) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        const auto &caps = device->getDeviceInfo();
-        const auto &sharedCaps = device->getSharedDeviceInfo();
-        const auto memSizePercent = device->getMemoryManager()->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
-        if constexpr (is64bit) {
-            EXPECT_TRUE(sharedCaps.force32BitAddresses);
-        } else {
-            EXPECT_FALSE(sharedCaps.force32BitAddresses);
-        }
-        auto expectedSize = (cl_ulong)(4 * memSizePercent * MemoryConstants::gigaByte);
-        EXPECT_LE(sharedCaps.globalMemSize, expectedSize);
-        EXPECT_LE(sharedCaps.maxMemAllocSize, expectedSize);
-        EXPECT_LE(caps.maxConstantBufferSize, expectedSize);
-        EXPECT_EQ(sharedCaps.addressBits, 32u);
-    }
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
@@ -412,8 +310,7 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
-    bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit;
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
@@ -442,8 +339,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
-    bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit;
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     auto localMem = pMemManager->getLocalMemorySize(0u, static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
@@ -473,6 +369,16 @@ HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndStatelessNotSupportedWhenCalcul
     expectedSize = std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), device->getGfxCoreHelper().getMaxMemAllocSize());
 
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
+}
+
+HWTEST_F(DeviceGetCapsTest, givenDebugFlagSetWhenCreatingDeviceThenOverrideMaxMemAllocSize) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.OverrideMaxMemAllocSizeMb.set(5 * 1024);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    const auto &caps = device->getSharedDeviceInfo();
+
+    EXPECT_EQ(caps.maxMemAllocSize, 5u * 1024u * MemoryConstants::megaByte);
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {
@@ -531,9 +437,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     }
 }
 
-TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const HardwareInfo *hwInfo = defaultHwInfo.get();
@@ -552,55 +456,8 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_subgroups")));
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_linkonce_odr")));
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_queries")));
     }
-}
-
-TEST_F(DeviceGetCapsTest, givenSupportMediaBlockWhenCapsAreCreatedThenDeviceReportsClIntelSpirvMediaBlockIoExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsMediaBlock = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_media_block_io")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotMediaBlockWhenCapsAreCreatedThenDeviceNotReportsClIntelSpirvMediaBlockIoExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsMediaBlock = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_media_block_io")));
-}
-
-TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsClKhr3dImageWritesExtensions) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_3d_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsClKhr3dImageWritesExtensions) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_3d_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesntReportClIntelSpirvExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_subgroups")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_linkonce_odr")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
@@ -678,21 +535,8 @@ TEST_F(DeviceGetCapsTest, WhenCheckingFp64ThenResultIsConsistentWithHardwareCapa
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
-    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
-    } else {
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
-    }
-}
-
-TEST_F(DeviceGetCapsTest, WhenDeviceDoesNotSupportOcl21FeaturesThenDeviceEnqueueAndPipeAreNotSupported) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    if (deviceFactory.rootDevices[0]->areOcl21FeaturesEnabled() == false) {
-        EXPECT_FALSE(deviceFactory.rootDevices[0]->getDeviceInfo().deviceEnqueueSupport);
-        EXPECT_FALSE(deviceFactory.rootDevices[0]->getDeviceInfo().pipeSupport);
-    }
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenPriorityHintsExtensionIsReported) {
@@ -751,9 +595,7 @@ TEST_F(DeviceGetCapsTest, GivenAnyDeviceWhenCheckingExtensionsThenSupportForceHo
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_mem_force_host_memory")));
 }
 
-TEST_F(DeviceGetCapsTest, givenAtleastOCL21DeviceThenExposesMipMapAndUnifiedMemoryExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
+TEST_F(DeviceGetCapsTest, whenGettingDeviceCapsThenExposesMipMapAndUnifiedMemoryExtensions) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
@@ -768,43 +610,7 @@ TEST_F(DeviceGetCapsTest, givenAtleastOCL21DeviceThenExposesMipMapAndUnifiedMemo
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_unified_shared_memory")));
 }
 
-TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsMinMapExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsMinMapExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemoryExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_unified_shared_memory")));
-}
-
 TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCreateExtentionsListThenDeviceReportsImagesExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -815,8 +621,6 @@ TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCreateExtentionsListThenDeviceRe
 }
 
 TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDeviceNotReportsImagesExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -847,6 +651,8 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
         if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), extensionWithVersion.version);
+        } else if (strcmp(extensionWithVersion.name, "cl_intel_unified_shared_memory") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0), extensionWithVersion.version);
         } else if (strcmp(extensionWithVersion.name, "cl_khr_external_memory") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(0, 9u, 1u), extensionWithVersion.version);
         } else {
@@ -866,6 +672,8 @@ TEST_F(DeviceGetCapsTest, givenClDeviceWhenGetExtensionsVersionCalledThenCorrect
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
         if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
+        } else if (strcmp(extensionWithVersion.name, "cl_intel_unified_shared_memory") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
         } else if (strcmp(extensionWithVersion.name, "cl_khr_external_memory") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(0, 9u, 1u), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
         } else {
@@ -878,54 +686,49 @@ TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xB
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     pClDevice->initializeCaps();
-    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) != 0, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) != 0);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xBitPackedCapIsSet) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     pClDevice->initializeCaps();
-    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR) != 0, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR) != 0);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPropertiesAreTrue) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     pClDevice->initializeCaps();
-    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.mixed_signedness_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.signed_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.unsigned_accelerated);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPackedPropertiesAreTrue) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     pClDevice->initializeCaps();
-    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.mixed_signedness_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.signed_accelerated);
+    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.unsigned_accelerated);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenEnableIntegerDotExtensionEnalbedThenDotIntegerExtensionIsInExtensionString) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     pClDevice->initializeCaps();
-    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
     static const char *const supportedExtensions[] = {
         "cl_khr_integer_dot_product "};
     for (auto extension : supportedExtensions) {
         auto foundOffset = pClDevice->deviceExtensions.find(extension);
-        EXPECT_EQ(foundOffset != std::string::npos, compilerHelper.isDotIntegerProductExtensionSupported());
+        EXPECT_TRUE(foundOffset != std::string::npos);
     }
 }
 
@@ -935,67 +738,54 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
     auto hwInfo = *defaultHwInfo;
 
     for (auto isFp64SupportedByHw : ::testing::Bool()) {
-        for (auto isInteger64BitAtomicsSupportedByHw : ::testing::Bool()) {
-            for (auto isFloatAtomicsSupportedByHw : ::testing::Bool()) {
-                hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics = isInteger64BitAtomicsSupportedByHw;
-                hwInfo.capabilityTable.ftrSupportsFP64 = isFp64SupportedByHw;
-                hwInfo.capabilityTable.ftrSupports64BitMath = isFp64SupportedByHw;
-                hwInfo.capabilityTable.supportsFloatAtomics = isFloatAtomicsSupportedByHw;
+        hwInfo.capabilityTable.ftrSupportsFP64 = isFp64SupportedByHw;
+        hwInfo.capabilityTable.ftrSupports64BitMath = isFp64SupportedByHw;
 
-                for (auto overrideDefaultFP64Settings : overrideDefaultFP64SettingsValues) {
-                    debugManager.flags.OverrideDefaultFP64Settings.set(overrideDefaultFP64Settings);
-                    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-                    auto &caps = pClDevice->getDeviceInfo();
-                    std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
+        for (auto overrideDefaultFP64Settings : overrideDefaultFP64SettingsValues) {
+            debugManager.flags.OverrideDefaultFP64Settings.set(overrideDefaultFP64Settings);
+            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+            auto &caps = pClDevice->getDeviceInfo();
+            std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
 
-                    size_t fp64FeaturesCount = 0;
-                    for (auto &openclCFeature : caps.openclCFeatures) {
-                        if (0 == strcmp(openclCFeature.name, "__opencl_c_fp64")) {
-                            fp64FeaturesCount++;
-                        }
-                        if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_add")) {
-                            fp64FeaturesCount++;
-                        }
-                        if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_add")) {
-                            fp64FeaturesCount++;
-                        }
-                        if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_min_max")) {
-                            fp64FeaturesCount++;
-                        }
-                        if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_min_max")) {
-                            fp64FeaturesCount++;
-                        }
-                    }
-
-                    bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
-                    if (expectedFp64Support) {
-                        const size_t expectedFp64FeaturesCount = hwInfo.capabilityTable.supportsOcl21Features && isFloatAtomicsSupportedByHw ? 5u : 1u;
-                        EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-                        EXPECT_NE(0u, caps.doubleFpConfig);
-                        if (hwInfo.capabilityTable.supportsOcl21Features && isFloatAtomicsSupportedByHw) {
-                            const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-                                                                                                                                          CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
-                            EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                        } else if (isFloatAtomicsSupportedByHw || isInteger64BitAtomicsSupportedByHw) {
-                            const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT);
-                            EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                        } else {
-                            EXPECT_EQ(0u, caps.doubleFpAtomicCapabilities);
-                        }
-                        EXPECT_EQ(expectedFp64FeaturesCount, fp64FeaturesCount);
-                        EXPECT_NE(0u, caps.nativeVectorWidthDouble);
-                        EXPECT_NE(0u, caps.preferredVectorWidthDouble);
-                        EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
-                    } else {
-                        EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-                        EXPECT_EQ(0u, caps.doubleFpConfig);
-                        EXPECT_EQ(0u, caps.doubleFpAtomicCapabilities);
-                        EXPECT_EQ(0u, fp64FeaturesCount);
-                        EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
-                        EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
-                        EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
-                    }
+            size_t fp64FeaturesCount = 0;
+            for (auto &openclCFeature : caps.openclCFeatures) {
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_fp64")) {
+                    fp64FeaturesCount++;
                 }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_add")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_add")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_min_max")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_min_max")) {
+                    fp64FeaturesCount++;
+                }
+            }
+
+            bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
+            if (expectedFp64Support) {
+                const size_t expectedFp64FeaturesCount = 5u;
+                EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_NE(0u, caps.doubleFpConfig);
+                const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+                                                                                                                              CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+                EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
+                EXPECT_EQ(expectedFp64FeaturesCount, fp64FeaturesCount);
+                EXPECT_NE(0u, caps.nativeVectorWidthDouble);
+                EXPECT_NE(0u, caps.preferredVectorWidthDouble);
+                EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+            } else {
+                EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_EQ(0u, caps.doubleFpConfig);
+                EXPECT_EQ(0u, caps.doubleFpAtomicCapabilities);
+                EXPECT_EQ(0u, fp64FeaturesCount);
+                EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
+                EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
+                EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             }
         }
     }
@@ -1136,6 +926,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
+    mySysInfo.NumThreadsPerEu = 7;
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -1151,7 +942,8 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxW
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.ThreadCount = 32 * gfxCoreHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
+    mySysInfo.NumThreadsPerEu = gfxCoreHelper.getMinimalSIMDSize();
+    mySysInfo.ThreadCount = 32 * mySysInfo.NumThreadsPerEu; // 128 threads per subslice, in simd 8 gives 1024
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -1282,18 +1074,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorOsAgnostic
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    auto &capabilityTable = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable;
     std::unique_ptr<MemoryManager> memoryManager;
-
-    debugManager.flags.Enable64kbpages.set(-1);
-
-    capabilityTable.ftr64KBpages = false;
-    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
-
-    capabilityTable.ftr64KBpages = true;
-    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 
     debugManager.flags.Enable64kbpages.set(0); // force false
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
@@ -1312,14 +1093,19 @@ TEST_F(DeviceGetCapsTest, whenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly)
 }
 
 TEST_F(DeviceGetCapsTest, givenUnifiedMemorySharedSystemFlagWhenDeviceIsCreatedThenSystemMemoryIsSetCorrectly) {
-
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-    EXPECT_EQ(0u, device->getDeviceInfo().sharedSystemMemCapabilities);
     EXPECT_FALSE(device->areSharedSystemAllocationsAllowed());
 
     device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())});
-    device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    EXPECT_FALSE(device->areSharedSystemAllocationsAllowed());
+
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())});
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_TRUE(device->areSharedSystemAllocationsAllowed());
 }
 
@@ -1413,28 +1199,7 @@ HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNa
     clGfxCoreHelper.release();
 }
 
-using isPreGen12 = IsBeforeGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isPreGen12) {
-    HardwareInfo myHwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
-    PLATFORM &myPlatform = myHwInfo.platform;
-
-    mySysInfo.EUCount = 16;
-    mySysInfo.SubSliceCount = 4;
-    mySysInfo.DualSubSliceCount = 2;
-    mySysInfo.ThreadCount = 16 * 8;
-    myPlatform.usRevId = 0x4;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
-
-    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.SubSliceCount) * minSimd;
-
-    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
-}
-
-using isGen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isGen12Plus) {
+HWTEST_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;

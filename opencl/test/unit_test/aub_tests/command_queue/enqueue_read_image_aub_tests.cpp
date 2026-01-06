@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,10 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/image_aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -114,7 +116,7 @@ struct AUBReadImage
         memset(dstMemoryUnaligned, 0xFF, numPixels * elementSize);
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         srcImage.reset(Image::create(
             context,
@@ -148,7 +150,7 @@ struct AUBReadImage
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = pCmdQ->finish();
+        retVal = pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto imageMemory = srcMemory;
@@ -237,7 +239,7 @@ struct AUBReadImage
         }
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         auto image = std::unique_ptr<Image>(Image::create(
             context,
@@ -275,7 +277,7 @@ struct AUBReadImage
             nullptr);
 
         EXPECT_EQ(CL_SUCCESS, retVal);
-        pCmdQ->finish();
+        pCmdQ->finish(false);
 
         std::vector<uint8_t> referenceMemory(pixelSize * numPixels, 0x0);
 
@@ -292,7 +294,7 @@ struct AUBReadImage
 
 using AUBReadImageCCS = AUBReadImage<false>;
 
-HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -306,7 +308,7 @@ HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectation
     }
 }
 
-HWTEST2_P(AUBReadImageCCS, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBReadImageCCS, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet, ImageSupport) {
     testReadImageUnaligned<FamilyType>();
 }
 
@@ -321,7 +323,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 using AUBReadImageBCS = AUBReadImage<true>;
 
-HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -336,7 +338,7 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
     }
 }
 
-HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
 
     auto &productHelper = pCmdQ->getDevice().getProductHelper();
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&

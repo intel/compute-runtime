@@ -7178,10 +7178,10 @@ struct STATE_PREFETCH {
     }
 
     inline void setPrefetchSize(const uint32_t value) {
-        TheStructure.Common.PrefetchSize = value;
+        TheStructure.Common.PrefetchSize = value - 1; // patched
     }
     inline uint32_t getPrefetchSize() const {
-        return TheStructure.Common.PrefetchSize;
+        return TheStructure.Common.PrefetchSize + 1; // patched
     }
 
     inline void setKernelInstructionPrefetch(const bool value) {

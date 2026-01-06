@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,5 +16,4 @@ if(TESTS_DG1)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_dg1.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_dg1})
-  add_subdirectories()
 endif()

@@ -1,34 +1,42 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
+#include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
-#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/program/program_with_source.h"
 
 using namespace NEO;
 
@@ -63,9 +71,7 @@ class ProgramDataTestBase : public testing::Test,
         ContextFixture::setUp(1, &device);
         ProgramFixture::setUp();
 
-        createProgramWithSource(
-            pContext,
-            "CopyBuffer_simd16.cl");
+        createProgramWithSource(pContext);
     }
 
     void TearDown() override {
@@ -126,6 +132,14 @@ class ProgramDataTestBase : public testing::Test,
         programPatchListSize = static_cast<uint32_t>(allocateGlobalMemorySurface.Size + globalSize);
         return globalSize;
     }
+
+    void disableGlobalConstSurfacePooling() {
+        mockProductHelper = new MockProductHelper;
+        pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    }
+
+    MockProductHelper *mockProductHelper{nullptr};
     std::unique_ptr<cl_char[]> pAllocateConstMemorySurface;
     std::unique_ptr<cl_char[]> pAllocateGlobalMemorySurface;
     char *pCurPtr;
@@ -179,7 +193,7 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
 
 using ProgramDataTest = ProgramDataTestBase;
 
-TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSucessIsReturned) {
+TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSuccessIsReturned) {
     buildAndDecodeProgramPatchList();
 }
 
@@ -189,8 +203,10 @@ TEST_F(ProgramDataTest, WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferI
 
     buildAndDecodeProgramPatchList();
 
-    EXPECT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer(), constSize));
+    auto surface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    EXPECT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(0, memcmp(constValue, surface->getUnderlyingBuffer(), constSize));
 }
 
 TEST_F(ProgramDataTest, givenProgramWhenAllocatingConstantMemorySurfaceThenProperDeviceBitfieldIsPassed) {
@@ -221,8 +237,111 @@ TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm)
     programInfo.linkerInput = std::move(mockLinkerInput);
     this->pProgram->processProgramInfo(programInfo, *pClDevice);
 
-    ASSERT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
+}
+
+TEST_F(ProgramDataTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenGlobalsExportedThenAllocateSurfacesFromUsmPoolAndFreeOnProgramDestroy) {
+    ASSERT_NE(nullptr, this->pContext->getSVMAllocsManager());
+    auto usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
+    auto usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;
+
+    pClDevice->getDevice().resetUsmConstantSurfaceAllocPool(usmConstantSurfaceAllocPool);
+    pClDevice->getDevice().resetUsmGlobalSurfaceAllocPool(usmGlobalSurfaceAllocPool);
+
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    char globalData[128] = {};
+    ProgramInfo programInfo;
+    programInfo.globalConstants.initData = globalData;
+    programInfo.globalConstants.size = sizeof(globalData);
+    programInfo.globalVariables.initData = globalData;
+    programInfo.globalVariables.size = sizeof(globalData);
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    mockLinkerInput->traits.exportsGlobalConstants = true;
+    mockLinkerInput->traits.exportsGlobalVariables = true;
+    programInfo.linkerInput = std::move(mockLinkerInput);
+    this->pProgram->processProgramInfo(programInfo, *pClDevice);
+
+    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
+    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
+
+    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+
+    EXPECT_EQ(0u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
+    EXPECT_EQ(0u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+
+    delete this->pProgram;
+    this->pProgram = nullptr;
+
+    EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
+    EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+}
+
+TEST_F(ProgramDataTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenGlobalsNotExportedThenAllocateSurfacesFromGenericPoolAndFreeOnProgramDestroy) {
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize;
+
+    std::vector<char> constantData(constantDataSize, 7);
+    std::vector<char> globalData(globalDataSize, 9);
+
+    ProgramInfo programInfo;
+    programInfo.globalConstants.initData = constantData.data();
+    programInfo.globalConstants.size = constantDataSize;
+    programInfo.globalVariables.initData = globalData.data();
+    programInfo.globalVariables.size = globalDataSize;
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    mockLinkerInput->traits.exportsGlobalConstants = false;
+    mockLinkerInput->traits.exportsGlobalVariables = false;
+    programInfo.linkerInput = std::move(mockLinkerInput);
+
+    this->pProgram->processProgramInfo(programInfo, *pClDevice);
+
+    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
+    EXPECT_TRUE(constantSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getConstantSurfacePoolAllocator().isPoolBuffer(constantSurface->getGraphicsAllocation()));
+
+    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+    EXPECT_TRUE(globalSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+
+    // Store allocation details for verification
+    auto constantAllocation = constantSurface->getGraphicsAllocation();
+    auto globalAllocation = globalSurface->getGraphicsAllocation();
+
+    delete this->pProgram;
+    this->pProgram = nullptr;
+
+    // Allocate the same sizes again - should get the same chunks
+    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    ASSERT_NE(nullptr, newConstantAlloc);
+    EXPECT_TRUE(newConstantAlloc->isFromPool());
+    EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
+
+    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    ASSERT_NE(nullptr, newGlobalAlloc);
+    EXPECT_TRUE(newGlobalAlloc->isFromPool());
+    EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
+
+    pClDevice->getDevice().getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
+    pClDevice->getDevice().getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
 }
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {
@@ -239,9 +358,10 @@ TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsN
     programInfo.linkerInput = std::move(mockLinkerInput);
     this->pProgram->processProgramInfo(programInfo, *pClDevice);
 
-    ASSERT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(
-                           pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
 }
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
@@ -263,9 +383,10 @@ TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedButContextUnavailableThenA
 
     pProgram->context = pContext;
 
-    ASSERT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(
-                           pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
 }
 
 TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedThenAllocateSurfacesAsSvm) {
@@ -281,8 +402,10 @@ TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedThenAllocateSurfacesAsSvm)
     programInfo.linkerInput = std::move(mockLinkerInput);
     this->pProgram->processProgramInfo(programInfo, *pClDevice);
 
-    ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
 }
 
 TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
@@ -304,8 +427,10 @@ TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedButContextUnavailableThenA
 
     pProgram->context = pContext;
 
-    ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
 }
 
 TEST_F(ProgramDataTest, whenGlobalVariablesAreNotExportedThenAllocateSurfacesAsNonSvm) {
@@ -322,8 +447,10 @@ TEST_F(ProgramDataTest, whenGlobalVariablesAreNotExportedThenAllocateSurfacesAsN
     programInfo.linkerInput = std::move(mockLinkerInput);
     this->pProgram->processProgramInfo(programInfo, *pClDevice);
 
-    ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
 }
 
 using ProgramDataBindlessTest = ProgramDataTest;
@@ -358,15 +485,20 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndConstantsAndVariablesMemor
     programInfo.linkerInput = std::move(mockLinkerInput);
     this->pProgram->processProgramInfo(programInfo, *pClDevice);
 
-    ASSERT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
+    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
 
-    auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+
+    auto globalConstantsAlloc = pProgram->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     auto &ssInHeap1 = globalConstantsAlloc->getBindlessInfo();
 
     EXPECT_NE(nullptr, ssInHeap1.heapAllocation);
 
-    auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto globalVariablesAlloc = pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     auto &ssInHeap2 = globalVariablesAlloc->getBindlessInfo();
 
     EXPECT_NE(nullptr, ssInHeap2.heapAllocation);
@@ -397,7 +529,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalConstantsMemorySurfa
     auto ret = this->pProgram->processProgramInfo(programInfo, *pClDevice);
     EXPECT_EQ(ret, CL_OUT_OF_HOST_MEMORY);
 
-    auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto globalConstantsAlloc = pProgram->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, globalConstantsAlloc);
 
     auto &ssInHeap = globalConstantsAlloc->getBindlessInfo();
@@ -429,7 +561,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
     auto ret = this->pProgram->processProgramInfo(programInfo, *pClDevice);
     EXPECT_EQ(ret, CL_OUT_OF_HOST_MEMORY);
 
-    auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto globalVariablesAlloc = pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, globalVariablesAlloc);
 
     auto &ssInHeap = globalVariablesAlloc->getBindlessInfo();
@@ -437,14 +569,14 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
 }
 
 TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
-
+    disableGlobalConstSurfacePooling();
     setupConstantAllocation();
 
     buildAndDecodeProgramPatchList();
 
     auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
     auto tagAddress = csr.getTagAddress();
-    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto constantSurface = pProgram->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     constantSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
@@ -457,13 +589,14 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
 }
 
 TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
+    disableGlobalConstSurfacePooling();
     setupGlobalAllocation();
 
     buildAndDecodeProgramPatchList();
 
     auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
     auto tagAddress = csr.getTagAddress();
-    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto globalSurface = pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
     globalSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
@@ -475,26 +608,15 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
     EXPECT_EQ(globalSurface, csr.getDeferredAllocations().peekHead());
 }
 
-TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {
-    auto constSize = setupConstantAllocation();
-    this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);
-
-    buildAndDecodeProgramPatchList();
-
-    EXPECT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer(), constSize));
-
-    if constexpr (is64bit) {
-        EXPECT_TRUE(pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
-    }
-}
-
 TEST_F(ProgramDataTest, WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
     auto globalSize = setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
-    EXPECT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(0, memcmp(globalValue, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer(), globalSize));
+    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    EXPECT_NE(nullptr, surface);
+    EXPECT_NE(nullptr, surface->getGraphicsAllocation());
+    EXPECT_EQ(0, memcmp(globalValue, surface->getUnderlyingBuffer(), globalSize));
 }
+
 TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperDeviceBitfieldIsPassed) {
     auto executionEnvironment = pClDevice->getExecutionEnvironment();
     auto memoryManager = new MockMemoryManager(*executionEnvironment);
@@ -506,50 +628,15 @@ TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperD
     setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
     EXPECT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
-}
-
-TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHas32BitStorage) {
-    char globalValue[] = "55667788";
-    size_t globalSize = strlen(globalValue) + 1;
-    this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);
-    EXPECT_EQ(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-
-    SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo allocateGlobalMemorySurface;
-    allocateGlobalMemorySurface.Token = PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO;
-    allocateGlobalMemorySurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-    allocateGlobalMemorySurface.GlobalBufferIndex = 0;
-    allocateGlobalMemorySurface.InlineDataSize = static_cast<uint32_t>(globalSize);
-
-    cl_char *pAllocateGlobalMemorySurface = new cl_char[allocateGlobalMemorySurface.Size + globalSize];
-
-    memcpy_s(pAllocateGlobalMemorySurface,
-             sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo),
-             &allocateGlobalMemorySurface,
-             sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-    memcpy_s((cl_char *)pAllocateGlobalMemorySurface + sizeof(allocateGlobalMemorySurface), globalSize, globalValue, globalSize);
-
-    pProgramPatchList = (void *)pAllocateGlobalMemorySurface;
-    programPatchListSize = static_cast<uint32_t>(allocateGlobalMemorySurface.Size + globalSize);
-
-    buildAndDecodeProgramPatchList();
-
-    EXPECT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(0, memcmp(globalValue, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer(), globalSize));
-    if constexpr (is64bit) {
-        EXPECT_TRUE(pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
-    }
-
-    delete[] pAllocateGlobalMemorySurface;
 }
 
 TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {
     MockExecutionEnvironment execEnv;
     execEnv.incRefInternal();
-    MockClDevice device{new MockDevice(&execEnv, 0)};
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), &execEnv, 0));
     execEnv.memoryManager = std::make_unique<MockMemoryManager>();
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers decodedProgram;
     decodedProgram.globalPointerMutable->GlobalPointerOffset = 0U;
@@ -557,26 +644,29 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
     memset(decodedProgram.globalSurfMutable + 1, 0U, sizeof(uintptr_t));
     memset(decodedProgram.constSurfMutable + 1, 0U, sizeof(uintptr_t));
     ProgramInfo programInfo;
-    MockProgram program(toClDeviceVector(device));
+    MockProgram program(toClDeviceVector(*device));
     NEO::populateProgramInfo(programInfo, decodedProgram);
-    program.processProgramInfo(programInfo, device);
-    auto &buildInfo = program.buildInfos[device.getRootDeviceIndex()];
-    ASSERT_NE(nullptr, buildInfo.globalSurface);
-    ASSERT_NE(nullptr, buildInfo.constantSurface);
-    ASSERT_NE(nullptr, buildInfo.globalSurface->getUnderlyingBuffer());
-    ASSERT_NE(nullptr, buildInfo.constantSurface->getUnderlyingBuffer());
-    EXPECT_EQ(static_cast<uintptr_t>(buildInfo.globalSurface->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(buildInfo.constantSurface->getUnderlyingBuffer()));
-    EXPECT_EQ(static_cast<uintptr_t>(buildInfo.constantSurface->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(buildInfo.globalSurface->getUnderlyingBuffer()));
+    program.processProgramInfo(programInfo, *device);
+    auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
+
+    auto globalSurface = buildInfo.globalSurface.get();
+    auto constantSurface = buildInfo.constantSurface.get();
+
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation()->getUnderlyingBuffer());
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(static_cast<uintptr_t>(globalSurface->getGraphicsAllocation()->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(constantSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
+    EXPECT_EQ(static_cast<uintptr_t>(constantSurface->getGraphicsAllocation()->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(globalSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
-    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
-    ASSERT_NE(nullptr, pProgram);
-
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
-    EXPECT_EQ(nullptr, prog->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
+    EXPECT_EQ(nullptr, prog->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex()));
     ProgramInfo programInfo;
     programInfo.prepareLinkerInputStorage();
 
@@ -617,9 +707,6 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
-    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
-    ASSERT_NE(nullptr, pProgram);
-
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
@@ -703,15 +790,15 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
     auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.kernelDescriptor.kernelMetadata.kernelName});
     EXPECT_TRUE(hasSubstr(buildLog, expectedError));
-    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getIsaGraphicsAllocation());
 }
 
-HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAny) {
+HWTEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
 
     for (bool heaplessModeEnabled : {false, true}) {
 
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeapless(heaplessModeEnabled));
         device->device.getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
@@ -746,11 +833,15 @@ HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAn
         globalConstantsBuffer.resize(32, 7);
         std::vector<char> globalVariablesInitData{32, 0};
         std::vector<char> globalConstantsInitData{32, 0};
-        auto globalSurface = std::make_unique<MockGraphicsAllocation>(globalVariablesBuffer.data(), globalVariablesBuffer.size());
-        auto constantSurface = std::make_unique<MockGraphicsAllocation>(globalConstantsBuffer.data(), globalConstantsBuffer.size());
 
-        buildInfo.globalSurface = globalSurface.get();
-        buildInfo.constantSurface = constantSurface.get();
+        auto globalSurfaceMockGA = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
+        auto constantSurfaceMockGA = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
+
+        auto globalSurface = std::make_unique<SharedPoolAllocation>(globalSurfaceMockGA);
+        auto constantSurface = std::make_unique<SharedPoolAllocation>(constantSurfaceMockGA);
+
+        buildInfo.globalSurface = std::move(globalSurface);
+        buildInfo.constantSurface = std::move(constantSurface);
 
         auto ret = program.linkBinary(&pClDevice->getDevice(), globalConstantsInitData.data(), globalConstantsInitData.size(), globalVariablesInitData.data(), globalVariablesInitData.size(), {}, program.externalFunctions);
         EXPECT_EQ(CL_SUCCESS, ret);
@@ -758,15 +849,19 @@ HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAn
         linkerInput.reset(static_cast<WhiteBox<LinkerInput> *>(buildInfo.linkerInput.release()));
 
         for (size_t i = 0; i < linkerInput->textRelocations.size(); ++i) {
-            auto expectedPatch = buildInfo.globalSurface->getGpuAddress() + linkerInput->symbols[linkerInput->textRelocations[0][0].symbolName].offset;
+            auto expectedPatch = buildInfo.globalSurface->getGraphicsAllocation()->getGpuAddress() + linkerInput->symbols[linkerInput->textRelocations[0][0].symbolName].offset;
             auto relocationAddress = kernelHeap.data() + linkerInput->textRelocations[0][0].offset;
 
             EXPECT_EQ(static_cast<uintptr_t>(expectedPatch), *reinterpret_cast<uintptr_t *>(relocationAddress)) << i;
         }
 
         program.getKernelInfoArray(rootDeviceIndex).clear();
-        buildInfo.globalSurface = nullptr;
-        buildInfo.constantSurface = nullptr;
+        delete buildInfo.globalSurface->getGraphicsAllocation();
+        buildInfo.globalSurface.reset();
+
+        delete buildInfo.constantSurface->getGraphicsAllocation();
+        buildInfo.constantSurface.reset();
+
         device->device.getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
     }
 }
@@ -797,18 +892,18 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     globalConstantsBuffer.resize(32, 7);
     std::vector<char> globalVariablesInitData{32, 0};
     std::vector<char> globalConstantsInitData{32, 0};
-    buildInfo.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
-    buildInfo.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
+    buildInfo.globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size()));
+    buildInfo.constantSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size()));
 
     auto ret = program.linkBinary(&pClDevice->getDevice(), globalConstantsInitData.data(), globalConstantsInitData.size(), globalVariablesInitData.data(), globalVariablesInitData.size(), {}, program.externalFunctions);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_EQ(kernelHeapData, kernelHeap);
 
     program.getKernelInfoArray(rootDeviceIndex).clear();
-    delete buildInfo.globalSurface;
-    buildInfo.globalSurface = nullptr;
-    delete buildInfo.constantSurface;
-    buildInfo.constantSurface = nullptr;
+    delete buildInfo.globalSurface->getGraphicsAllocation();
+    buildInfo.globalSurface.reset();
+    delete buildInfo.constantSurface->getGraphicsAllocation();
+    buildInfo.constantSurface.reset();
 }
 
 TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking) {
@@ -835,7 +930,7 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
 
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
 
-    auto isaCpuPtr = reinterpret_cast<char *>(kernelInfo.getGraphicsAllocation()->getUnderlyingBuffer());
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelInfo.getIsaGraphicsAllocation()->getUnderlyingBuffer());
     auto patchAddr = ptrOffset(isaCpuPtr, 0x8);
 
     const char constStringData[] = "Hello World!\n";
@@ -865,7 +960,7 @@ TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRe
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
+    linkerInput->textRelocations.push_back({{std::string(implicitArgsRelocationSymbolName), 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);
@@ -891,7 +986,7 @@ TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisable
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
+    linkerInput->textRelocations.push_back({{std::string(implicitArgsRelocationSymbolName), 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);

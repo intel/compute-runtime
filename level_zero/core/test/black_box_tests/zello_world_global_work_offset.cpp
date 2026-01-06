@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ void executeKernelAndValidate(ze_context_handle_t &context,
     }
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
@@ -131,15 +131,13 @@ void executeKernelAndValidate(ze_context_handle_t &context,
                 outputValidationSuccessful = false;
                 break;
             }
-        } else {
-            if (dstCharBuffer[i] != srcCharBuffer[i]) {
-                std::cout << "dstBuffer[" << i << "] = "
-                          << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
-                          << "srcBuffer[" << i << "] = "
-                          << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
-                outputValidationSuccessful = false;
-                break;
-            }
+        } else if (dstCharBuffer[i] != srcCharBuffer[i]) {
+            std::cout << "dstBuffer[" << i << "] = "
+                      << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                      << "srcBuffer[" << i << "] = "
+                      << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
+            outputValidationSuccessful = false;
+            break;
         }
     }
 
@@ -197,8 +195,6 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     executeKernelAndValidate(context, device, kernelExpDdiTable, outputValidationSuccessful);
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
+#include <functional>
 #include <memory>
 
 namespace NEO {
@@ -20,11 +22,12 @@ class DeallocateGmm;
 
 class GmmClientContext {
   public:
-    GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment);
+    GmmClientContext();
     MOCKABLE_VIRTUAL ~GmmClientContext();
+    MOCKABLE_VIRTUAL void initialize(const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
-    MOCKABLE_VIRTUAL uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable);
+    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage);
+    MOCKABLE_VIRTUAL uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable);
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams);
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes);
@@ -35,7 +38,9 @@ class GmmClientContext {
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
     static std::unique_ptr<GmmClientContext> create(const RootDeviceEnvironment &rootDeviceEnvironment) {
-        return std::make_unique<T>(rootDeviceEnvironment);
+        auto retVal = std::make_unique<T>();
+        retVal->initialize(rootDeviceEnvironment);
+        return retVal;
     }
 
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
@@ -43,14 +48,16 @@ class GmmClientContext {
 
     void setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator);
 
-    MOCKABLE_VIRTUAL void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
-
     GmmHandleAllocator *getHandleAllocator() {
         return handleAllocator.get();
     }
+    uint64_t getDeviceHandle() const {
+        return deviceHandle;
+    }
 
   protected:
-    GMM_CLIENT_CONTEXT *clientContext;
+    std::unique_ptr<GMM_CLIENT_CONTEXT, std::function<void(GMM_CLIENT_CONTEXT *)>> clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
+    uint64_t deviceHandle = 0;
 };
 } // namespace NEO

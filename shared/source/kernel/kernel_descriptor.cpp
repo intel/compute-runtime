@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,8 @@ void KernelDescriptor::initBindlessOffsetToSurfaceState() {
             case ArgDescriptor::ArgType::argTImage: {
                 auto &argImage = this->payloadMappings.explicitArgs[i].as<ArgDescImage>();
                 if (isValidOffset(argImage.bindless)) {
-                    this->bindlessArgsMap.emplace(std::pair{argImage.bindless, index++});
+                    this->bindlessArgsMap.emplace(std::pair{argImage.bindless, index});
+                    index += 2;
                 }
             } break;
             case ArgDescriptor::ArgType::argTPointer: {

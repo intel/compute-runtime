@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <algorithm>
 #include <sstream>
@@ -48,6 +48,7 @@ struct ProductConfigHelper {
         MismatchedValue = -1,
     };
     static void adjustDeviceName(std::string &device);
+    static void adjustProductConfig(uint32_t &productConfig);
     static std::string parseMajorMinorValue(NEO::HardwareIpVersion config);
     static std::string parseMajorMinorRevisionValue(NEO::HardwareIpVersion config);
     static int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);
@@ -59,10 +60,13 @@ struct ProductConfigHelper {
     }
 
     static std::vector<NEO::ConstStringRef> getDeviceAcronyms();
+    AOT::PRODUCT_CONFIG getLastProductConfigFromFamilyName(AOT::FAMILY family);
+    AOT::PRODUCT_CONFIG getLastProductConfigFromReleaseName(AOT::RELEASE release);
     static NEO::ConstStringRef getAcronymFromAFamily(AOT::FAMILY family);
     static NEO::ConstStringRef getAcronymFromARelease(AOT::RELEASE release);
     static uint32_t getProductConfigFromVersionValue(const std::string &device);
     static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
+    static std::vector<std::string> getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation);
 
     static bool compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1);
 
@@ -122,6 +126,7 @@ struct ProductConfigHelper {
     PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &device) const;
     AOT::RELEASE getReleaseFromDeviceName(const std::string &device) const;
     const std::string getAcronymForProductConfig(uint32_t config) const;
+    uint32_t getDeviceIdFromIpVersion(uint32_t ipVersion) const;
 
   protected:
     std::vector<DeviceAotInfo> deviceAotInfo;

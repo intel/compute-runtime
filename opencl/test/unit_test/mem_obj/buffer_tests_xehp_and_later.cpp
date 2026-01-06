@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -17,8 +18,6 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include <functional>
 
 using namespace NEO;
 
@@ -59,7 +58,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     }
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
@@ -90,14 +89,14 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatel
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, device, false);
 
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));
     EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -121,14 +120,14 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStateles
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
     EXPECT_EQ(0u, surfaceState.getCompressionFormat());
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -154,7 +153,7 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocatio
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
@@ -180,7 +179,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getL1EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 }
@@ -204,7 +203,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getL3EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 }
@@ -226,7 +225,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferWhenArgumentIsC
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, true, true, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getUncachedMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 }
@@ -246,7 +245,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferSetSurfaceThatM
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), mocs);
+    EXPECT_EQ(gmmHelper->getL1EnabledMOCS(), mocs);
 
     alignedFree(ptr);
 }
@@ -269,7 +268,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenAlignedCacheableNonRe
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = context.getDevice(0)->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = context.getDevice(0)->getDevice().getGmmHelper()->getL1EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 

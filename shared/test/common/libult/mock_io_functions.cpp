@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@ namespace NEO {
 namespace IoFunctions {
 fopenFuncPtr fopenPtr = &mockFopen;
 vfprintfFuncPtr vfprintfPtr = &mockVfptrinf;
+vsnprintfFuncPtr vsnprintfPtr = &mockVsnprintf;
 fcloseFuncPtr fclosePtr = &mockFclose;
 getenvFuncPtr getenvPtr = &mockGetenv;
 fseekFuncPtr fseekPtr = &mockFseek;
@@ -19,6 +20,7 @@ rewindFuncPtr rewindPtr = &mockRewind;
 freadFuncPtr freadPtr = &mockFread;
 fwriteFuncPtr fwritePtr = &mockFwrite;
 fflushFuncPtr fflushPtr = &mockFflush;
+mkdirFuncPtr mkdirPtr = &mockMkdir;
 
 uint32_t mockFopenCalled = 0;
 FILE *mockFopenReturned = reinterpret_cast<FILE *>(0x40);
@@ -37,6 +39,7 @@ size_t mockFwriteReturn = 0;
 char *mockFwriteBuffer = nullptr;
 char *mockFreadBuffer = nullptr;
 bool mockVfptrinfUseStdioFunction = false;
+uint32_t mockVsnprintfCalled = 0U;
 
 const char *openCLDriverName = "igdrcl.dll";
 

@@ -8,12 +8,17 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/common/ult_config_listener_l0.h"
+
+struct _ze_driver_handle_t;
 
 namespace L0 {
 extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 }
+namespace NEO {
+const char *apiName = "L0";
+}
+
 using namespace NEO;
 void cleanTestHelpers() {
     delete L0::globalDriverHandles;
@@ -23,13 +28,13 @@ void cleanTestHelpers() {
 bool sysmanUltsEnable = false;
 
 void applyWorkarounds() {
-
     auto sysmanUltsEnableEnv = getenv("NEO_L0_SYSMAN_ULTS_ENABLE");
     if (sysmanUltsEnableEnv != nullptr) {
         sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
     }
     L0::globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     L0::globalDriverHandles->reserve(1);
+    debugManager.flags.EnableUsmPoolLazyInit.set(1);
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,9 @@ GlSharingContextBuilder::GlSharingContextBuilder() = default;
 GlSharingContextBuilder::~GlSharingContextBuilder() = default;
 
 bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
-    if (!contextData)
+    if (!contextData) {
         contextData = std::make_unique<GlCreateContextProperties>();
+    }
 
     switch (propertyType) {
     case CL_GL_CONTEXT_KHR:
@@ -50,8 +51,9 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
 }
 
 bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
-    if (contextData == nullptr)
+    if (contextData == nullptr) {
         return true;
+    }
 
     if (contextData->glHGLRCHandle) {
         context.registerSharing(new GLSharingFunctionsLinux(contextData->glHDCType, contextData->glHGLRCHandle,
@@ -100,7 +102,7 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
     if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
-        return ((void *)(clGetSupportedGLTextureFormatsINTEL));
+        return reinterpret_cast<void *>(clGetSupportedGLTextureFormatsINTEL);
     }
 
     return nullptr;

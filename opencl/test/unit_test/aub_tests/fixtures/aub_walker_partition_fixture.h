@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -33,18 +34,19 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
-        using WalkerVariant = typename FamilyType::WalkerVariant;
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         uint32_t totalWorkgroupCount = 1u;
         uint32_t totalWorkItemsInWorkgroup = 1u;
         uint32_t totalWorkItemsCount = 1;
 
         for (auto dimension = 0u; dimension < workingDimensions; dimension++) {
-            totalWorkgroupCount *= static_cast<uint32_t>(dispatchParamters.globalWorkSize[dimension] / dispatchParamters.localWorkSize[dimension]);
-            totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParamters.localWorkSize[dimension]);
-            totalWorkItemsCount *= static_cast<uint32_t>(dispatchParamters.globalWorkSize[dimension]);
+            totalWorkgroupCount *= static_cast<uint32_t>(dispatchParameters.globalWorkSize[dimension] / dispatchParameters.localWorkSize[dimension]);
+            totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParameters.localWorkSize[dimension]);
+            totalWorkItemsCount *= static_cast<uint32_t>(dispatchParameters.globalWorkSize[dimension]);
         }
 
-        const uint32_t workgroupCount = static_cast<uint32_t>(dispatchParamters.globalWorkSize[partitionType - 1] / dispatchParamters.localWorkSize[partitionType - 1]);
+        const uint32_t workgroupCount = static_cast<uint32_t>(dispatchParameters.globalWorkSize[partitionType - 1] / dispatchParameters.localWorkSize[partitionType - 1]);
         auto partitionSize = Math::divideAndRoundUp(workgroupCount, partitionCount);
 
         if (static_cast<uint32_t>(partitionType) > workingDimensions) {
@@ -54,35 +56,29 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
         hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
         hwParser.findHardwareCommands<FamilyType>();
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+        auto walkerCmd = genCmdCast<WalkerType *>(*hwParser.itorWalker);
 
-        std::visit([&](auto &&walkerCmd) {
-            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
-            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
+        EXPECT_EQ(0u, walkerCmd->getPartitionId());
 
-            EXPECT_EQ(0u, walkerCmd->getPartitionId());
+        if (partitionCount > 1) {
+            EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
+            EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
+            EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
+        } else {
+            EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
+            EXPECT_EQ(0u, walkerCmd->getPartitionSize());
+            EXPECT_EQ(0u, walkerCmd->getPartitionType());
+        }
 
-            if (partitionCount > 1) {
-                EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
-                EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
-                EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
-            } else {
-                EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
-                EXPECT_EQ(0u, walkerCmd->getPartitionSize());
-                EXPECT_EQ(0u, walkerCmd->getPartitionType());
-            }
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+        EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-            EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
+        int notExpectedValue[] = {1, 1, 1, 1};
 
-            int notExpectedValue[] = {1, 1, 1, 1};
-
-            for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
-                expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
-                postSyncAddress += 16; // next post sync needs to be right after the previous one
-            }
-        },
-                   walkerVariant);
+        for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
+            expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
+            postSyncAddress += 16; // next post sync needs to be right after the previous one
+        }
 
         auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
         expectMemory<FamilyType>(dstGpuAddress, &totalWorkItemsCount, sizeof(uint32_t));
@@ -101,11 +97,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     typename FamilyType::PIPE_CONTROL *retrieveSyncPipeControl(void *startAddress,
                                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-        uint8_t buffer[256];
-        LinearStream stream(buffer, 256);
-        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, 0ull, rootDeviceEnvironment);
-        void *syncPipeControlAddress = reinterpret_cast<void *>(reinterpret_cast<size_t>(startAddress) + stream.getUsed());
+        void *syncPipeControlAddress = reinterpret_cast<void *>(reinterpret_cast<size_t>(startAddress));
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(syncPipeControlAddress);
         return pipeControl;
     }
@@ -119,7 +111,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     int32_t partitionType;
 
     HardwareParse hwParser;
-    DispatchParameters dispatchParamters;
+    DispatchParameters dispatchParameters;
 };
 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,

@@ -68,7 +68,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     if (texInfo.pGmmResInfo) {
         DEBUG_BREAK_IF(alloc->getDefaultGmm() != nullptr);
-        alloc->setDefaultGmm(new Gmm(gmmHelper, texInfo.pGmmResInfo));
+
+        auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), texInfo.pGmmResInfo));
+        alloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
     }
 
     auto gmm = alloc->getDefaultGmm();
@@ -108,14 +110,14 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     uint32_t cubeFaceIndex = GmmTypesConverter::getCubeFaceIndex(target);
 
-    auto qPitch = gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType());
+    auto qPitch = gmm->queryQPitch();
 
     if (setClImageFormat(texInfo.glInternalFormat, imgFormat) == false) {
         memoryManager->freeGraphicsMemory(alloc);
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
     }
-    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     if (!surfaceFormatInfoAddress) {
         memoryManager->freeGraphicsMemory(alloc);
         errorCode.set(CL_INVALID_GL_OBJECT);
@@ -134,7 +136,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, true, nullptr);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
-            mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, texInfo.pGmmResInfoMCS));
+            auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), texInfo.pGmmResInfoMCS));
+            mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
         }
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
         mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();
@@ -207,7 +210,7 @@ cl_gl_object_type GlTexture::getClGlObjectType(cl_GLenum glType) {
 }
 
 uint32_t GlTexture::getClObjectType(cl_GLenum glType, bool returnClGlObjectType) {
-    // return cl_gl_object_type if returnClGlObjectType is ture, otherwise cl_mem_object_type
+    // return cl_gl_object_type if returnClGlObjectType is true, otherwise cl_mem_object_type
     uint32_t retValue = 0;
     switch (glType) {
     case GL_TEXTURE_1D:

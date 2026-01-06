@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -19,7 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 using namespace NEO;
 
@@ -65,16 +66,12 @@ HWTEST2_F(XeLpgHwInfoTests, whenCheckDirectSubmissionEnginesThenProperValuesAreS
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
         }
     }
 }
@@ -134,6 +131,7 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
         EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
         EXPECT_FALSE(featureTable.flags.ftrE2ECompression);
         EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
     }
 }
 
@@ -230,7 +228,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamProper
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
@@ -331,7 +328,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpV
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckDirectSubmissionSupportedThenValueFromReleaseHelperIsReturned, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported());
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer, IsXeLpg) {
@@ -339,7 +336,8 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocat
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
+            allocationType == AllocationType::timestampPacketTagBuffer ||
+            allocationType == AllocationType::hostFunction) {
             EXPECT_FALSE(preferredAllocationMethod.has_value());
         } else {
             EXPECT_TRUE(preferredAllocationMethod.has_value());
@@ -348,17 +346,14 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocat
     }
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned, IsXeLpg) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}
-
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatThenFalseIsReturned, IsXeLpg) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(productHelper.deferMOCSToPatIndex());
+    EXPECT_FALSE(productHelper.deferMOCSToPatIndex(false));
+}
+
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenFalseIsReturned, IsXeLpg) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.deferMOCSToPatIndex(true));
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsXeLpg) {

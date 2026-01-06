@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ static constexpr std::string_view nlSocketDisableSeqCheckRoutine = "nl_socket_di
 static constexpr std::string_view nlSocketFreeRoutine = "nl_socket_free";
 static constexpr std::string_view nlSocketModifyCbRoutine = "nl_socket_modify_cb";
 static constexpr std::string_view nlaDataRoutine = "nla_data";
+static constexpr std::string_view nlaGetStringRoutine = "nla_get_string";
 static constexpr std::string_view nlaGetU32Routine = "nla_get_u32";
 static constexpr std::string_view nlaGetU64Routine = "nla_get_u64";
 static constexpr std::string_view nlaGetU8Routine = "nla_get_u8";
@@ -49,14 +50,15 @@ static constexpr std::string_view nlaNestStartRoutine = "nla_nest_start";
 static constexpr std::string_view nlaNestEndRoutine = "nla_nest_end";
 
 template <class T>
-bool NlApi::getSymbolAddr(const std::string_view &name, T &sym) {
+bool NlApi::getSymbolAddr(std::string_view name, T &sym) {
     sym = reinterpret_cast<T>(genlLibraryHandle->getProcAddress(std::string(name)));
     return nullptr != sym;
 }
 
 bool NlApi::loadEntryPoints() {
-    if (!isAvailable())
+    if (!isAvailable()) {
         return false;
+    }
 
     bool ok = true;
     ok = getSymbolAddr(genlConnectRoutine, genlConnectEntry);
@@ -73,6 +75,7 @@ bool NlApi::loadEntryPoints() {
     ok = ok && getSymbolAddr(nlSocketFreeRoutine, nlSocketFreeEntry);
     ok = ok && getSymbolAddr(nlSocketModifyCbRoutine, nlSocketModifyCbEntry);
     ok = ok && getSymbolAddr(nlaDataRoutine, nlaDataEntry);
+    ok = ok && getSymbolAddr(nlaGetStringRoutine, nlaGetStringEntry);
     ok = ok && getSymbolAddr(nlaGetU32Routine, nlaGetU32Entry);
     ok = ok && getSymbolAddr(nlaGetU64Routine, nlaGetU64Entry);
     ok = ok && getSymbolAddr(nlaGetU8Routine, nlaGetU8Entry);
@@ -166,6 +169,11 @@ int NlApi::nlSocketModifyCb(struct nl_sock *sock, enum nl_cb_type type, enum nl_
 void *NlApi::nlaData(const struct nlattr *attr) {
     UNRECOVERABLE_IF(nullptr == nlaDataEntry);
     return (*nlaDataEntry)(attr);
+}
+
+char *NlApi::nlaGetString(const struct nlattr *attr) {
+    UNRECOVERABLE_IF(nullptr == nlaGetStringEntry);
+    return (*nlaGetStringEntry)(attr);
 }
 
 uint32_t NlApi::nlaGetU32(const struct nlattr *attr) {

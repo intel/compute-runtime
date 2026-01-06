@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,17 @@
 
 #pragma once
 #include "shared/source/helpers/abort.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include <csetjmp>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <execinfo.h>
-#include <setjmp.h>
-#include <signal.h>
 
 static jmp_buf jmpbuf;
 
-class SafetyGuardLinux {
+class SafetyGuardLinux : NEO::NonCopyableAndNonMovableClass {
   public:
     SafetyGuardLinux() {
         struct sigaction sigact {};
@@ -75,3 +76,5 @@ class SafetyGuardLinux {
     struct sigaction previousSigSegvAction {};
     struct sigaction previousSigIllvAction {};
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<SafetyGuardLinux>);

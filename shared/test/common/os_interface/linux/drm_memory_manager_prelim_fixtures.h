@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,8 @@ class DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest : public ::testing::Te
 
 class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
   public:
-    void setUp() {
+    template <typename GfxFamily>
+    void setUpT() {
         regionInfo.resize(2);
         regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -130,12 +131,13 @@ class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
         mock = DrmMockCustomPrelim::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
         mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
 
-        DrmMemoryManagerFixture::setUp(mock, true);
+        DrmMemoryManagerFixture::setUpT<GfxFamily>(mock, true);
     }
 
-    void tearDown() {
+    template <typename GfxFamily>
+    void tearDownT() {
         mock->testIoctls();
-        DrmMemoryManagerFixture::tearDown();
+        DrmMemoryManagerFixture::tearDownT<GfxFamily>();
     }
 
     std::vector<MemoryRegion> regionInfo;

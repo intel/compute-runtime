@@ -5,18 +5,19 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t nodeMask);
@@ -598,20 +599,21 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmit
     VariableBackup<volatile uint64_t *> pagingFenceBackup(&wddm->pagingFenceAddress, &pagingFenceValue);
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     WddmSubmitArguments submitArguments{};
     EXPECT_FALSE(wddm->submit(0, 0, nullptr, submitArguments));
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     COMMAND_BUFFER_HEADER commandBufferHeader{};
     MonitoredFence monitoredFence{};
     submitArguments.monitorFence = &monitoredFence;
     EXPECT_TRUE(wddm->submit(0, 0, &commandBufferHeader, submitArguments));
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -623,16 +625,17 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceEx
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -645,17 +648,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
     setMockDeviceExecutionStateFcn(executionState);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, true);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, true);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -667,16 +671,17 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceE
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -771,17 +776,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPag
     wddm->checkDeviceState = true;
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = "Device execution error, page fault\nfaulted gpuva 0xabc000, pipeline stage 0, bind table entry 2, flags 0x1, error code(is device) 1, error code 10\n";
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -793,18 +799,19 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, false);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = "Device execution error, page fault\n";
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, false);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -816,17 +823,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsOth
     auto executionState = D3DKMT_DEVICEEXECUTION_RESET;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = std::string("Device execution error " + std::to_string(executionState) + "\n");
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -1193,6 +1201,15 @@ TEST_F(WddmTests, givenPageAlignedReadOnlyMemoryPassedToCreateAllocationsAndMapG
     EXPECT_FALSE(readWriteExistingSysMemSupportedForTest);
 }
 
+TEST_F(WddmTests, givenOsHandleDataWithoutOpaqueInformationWhenGettingSharedHandleThenReturnOriginalHandle) {
+    uint64_t originalHandle = 0x12345678;
+    MemoryManager::OsHandleData osHandleData(originalHandle);
+
+    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
+
+    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(originalHandle)), sharedHandle);
+}
+
 TEST_F(WddmTests, whenThereIsNoExisitngSysMemoryThenReadOnlyFallbackIsNotAvailable) {
     D3DKMT_CREATEALLOCATION createAllocation{};
     D3DDDI_ALLOCATIONINFO2 allocationInfo2{};
@@ -1224,4 +1241,156 @@ TEST_F(WddmTests, givenSysMemoryPointerAndReadOnlyFlagNotSetInCreateAllocationFl
     auto readOnlyFallbackSupported = wddm->isReadOnlyFlagFallbackSupported();
     EXPECT_EQ(readOnlyFallbackSupported, wddm->isReadOnlyFlagFallbackAvailable(createAllocation));
 }
+
+// Mock class for testing createNTHandle scenarios
+class WddmCreateNTHandleMock : public WddmMock {
+  public:
+    using WddmMock::WddmMock;
+
+    NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle) override {
+        createNTHandleCalled = true;
+        lastResourceHandle = resourceHandle ? *resourceHandle : 0;
+
+        if (shouldCreateNTHandleFail) {
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        *ntHandle = reinterpret_cast<HANDLE>(0x12345678);
+        return STATUS_SUCCESS;
+    }
+
+    bool createNTHandleCalled = false;
+    D3DKMT_HANDLE lastResourceHandle = 0;
+    bool shouldCreateNTHandleFail = false;
+};
+
+class WddmCreateAllocationNTHandleTests : public WddmTestWithMockGdiDll {
+  public:
+    void SetUp() override {
+        WddmTestWithMockGdiDll::SetUp();
+
+        // Replace the wddm with our mock
+        mockWddm = new WddmCreateNTHandleMock(*rootDeviceEnvironment);
+        auto wddmMockInterface = new WddmMockInterface20(*mockWddm);
+        mockWddm->wddmInterface.reset(wddmMockInterface);
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(mockWddm);
+
+        // Initialize the mock WDDM
+        mockWddm->init();
+    }
+
+    void initGmm() {
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = true;
+        gmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(),
+                                    nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    }
+
+    WddmCreateNTHandleMock *mockWddm = nullptr;
+    std::unique_ptr<Gmm> gmm;
+};
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleAndCreateNTHandleTrueThenCreateNTHandleIsCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test the condition: outSharedHandle && createNTHandle (both true)
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_NE(0u, sharedHandle);
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleNullAndCreateNTHandleTrueThenCreateNTHandleIsNotCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+
+    // Test the condition: outSharedHandle is null, createNTHandle is true
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, nullptr, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_FALSE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    // When outSharedHandle is null, CreateResource flag is FALSE, so resourceHandle stays 0
+    EXPECT_EQ(0u, resourceHandle);
+
+    // Cleanup only the handle (no resource handle to clean up)
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, 0));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleAndCreateNTHandleFalseThenCreateNTHandleIsNotCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test the condition: outSharedHandle is valid, createNTHandle is false
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, false);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_FALSE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_EQ(0u, sharedHandle); // Should remain 0 since no NT handle was created
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleFailsThenAllocationIsDestroyedAndHandlesAreReset) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Set up the mock to fail createNTHandle
+    mockWddm->shouldCreateNTHandleFail = true;
+
+    // Test the condition: outSharedHandle && createNTHandle (both true) but createNTHandle fails
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_NE(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_EQ(0u, handle);         // Should be reset to NULL_HANDLE
+    EXPECT_EQ(0u, resourceHandle); // Should be reset to NULL_HANDLE
+    // sharedHandle value is not modified on failure in this path
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleSucceedsThenSharedHandleIsSet) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test successful createNTHandle path
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_EQ(mockWddm->lastResourceHandle, resourceHandle);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_EQ(0x12345678u, sharedHandle); // Should be set to the mock handle value
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
 } // namespace NEO

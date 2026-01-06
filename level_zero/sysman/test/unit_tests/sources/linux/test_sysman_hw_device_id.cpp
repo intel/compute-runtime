@@ -13,9 +13,6 @@
 
 #include "gtest/gtest.h"
 
-#include <bitset>
-#include <cstring>
-
 namespace L0 {
 namespace Sysman {
 namespace ult {

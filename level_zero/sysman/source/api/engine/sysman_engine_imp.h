@@ -12,8 +12,11 @@
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include "level_zero/sysman/source/api/engine/sysman_os_engine.h"
 #include <level_zero/zes_api.h>
+
 namespace L0 {
 namespace Sysman {
+class OsEngine;
+struct OsSysman;
 
 class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -22,7 +25,7 @@ class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
     ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
 
     EngineImp() = default;
-    EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubdevice);
+    EngineImp(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice);
     ~EngineImp() override;
 
     std::unique_ptr<OsEngine> pOsEngine;

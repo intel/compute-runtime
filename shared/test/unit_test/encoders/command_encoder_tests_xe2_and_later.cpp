@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -62,4 +63,55 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenDebugFlagIsDisabledForAdjustPi
 
 HWTEST2_F(ImplicitScalingTests, GivenXeAtLeastHpg2WhenCheckingPipeControlStallRequiredThenExpectTrue, IsAtLeastXe2HpgCore) {
     EXPECT_FALSE(ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingStateComputeModeThenEnableL1FlushUavCoherencyMode, IsAtLeastXe2HpgCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    DebugManagerStateRestore restore;
+
+    uint8_t buffer[sizeof(STATE_COMPUTE_MODE)]{};
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    {
+        // default
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+        EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE::UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1, stateComputeModeCmd.getUavCoherencyMode());
+    }
+
+    {
+        // enabled
+        debugManager.flags.EnableL1FlushUavCoherencyMode.set(1);
+
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+        EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE::UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1, stateComputeModeCmd.getUavCoherencyMode());
+    }
+
+    {
+        // disabled
+        debugManager.flags.EnableL1FlushUavCoherencyMode.set(0);
+
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+        EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE::UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE, stateComputeModeCmd.getUavCoherencyMode());
+    }
 }

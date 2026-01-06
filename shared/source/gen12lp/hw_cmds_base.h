@@ -7,13 +7,12 @@
 
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/is_pod_v.h"
 
 #include <cstring>
 #include <igfxfmid.h>
 #include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -54,7 +53,6 @@ struct Gen12Lp {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = false;
     };
 
@@ -96,11 +94,13 @@ struct Gen12LpFamily : public Gen12Lp {
     using Parse = CmdParse<Gen12LpFamily>;
     using GfxFamily = Gen12LpFamily;
     using DefaultWalkerType = GPGPU_WALKER;
+    using PorWalkerType = GPGPU_WALKER;
     using FrontEndStateCommand = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
+    using StallingBarrierType = PIPE_CONTROL;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
@@ -138,6 +138,7 @@ struct Gen12LpFamily : public Gen12Lp {
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = false;
     static constexpr size_t indirectDataAlignment = GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
+    static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_GEN12LP_CORE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN12LP_CORE;
@@ -171,8 +172,6 @@ struct Gen12LpFamily : public Gen12Lp {
     static WalkerType getInitGpuWalker() {
         return cmdInitGpgpuWalker;
     }
-
-    using WalkerVariant = std::variant<GPGPU_WALKER *>;
 };
 
 } // namespace NEO

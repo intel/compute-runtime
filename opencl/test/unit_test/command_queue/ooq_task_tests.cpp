@@ -5,14 +5,16 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 using namespace NEO;
 
@@ -65,7 +67,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThe
         taskLevelClosed = 0u;
     }
 
-    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }
@@ -91,7 +93,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCo
     auto tagAddress = commandStreamReceiver.getTagAddress();
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
 
-    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }
@@ -129,6 +131,21 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
 
 typedef OOQTaskTypedTests<EnqueueKernelHelper<>> OOQTaskTests;
 
+struct OOQTaskTestsWithMockCsr : public OOQTaskTests {
+    void SetUp() override {}
+    void TearDown() override {}
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsrHw2<FamilyType>>();
+        OOQTaskTests::SetUp();
+    }
+    template <typename FamilyType>
+    void tearDownT() {
+        OOQTaskTests::TearDown();
+    }
+};
+
 TEST_F(OOQTaskTests, WhenEnqueuingKernelThenTaskCountIsIncremented) {
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
@@ -150,9 +167,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmitt
     EXPECT_EQ(100u, this->pCmdQ->taskLevel);
 }
 
-HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChange) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+HWTEST_TEMPLATED_F(OOQTaskTestsWithMockCsr, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChange) {
+    auto *mockCsr = reinterpret_cast<MockCsrHw2<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -167,9 +183,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDone
     EXPECT_EQ(100u, mockCsr->peekTaskLevel());
 }
 
-HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsThenTheyHaveHigherTaskLevel) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+HWTEST_TEMPLATED_F(OOQTaskTestsWithMockCsr, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsThenTheyHaveHigherTaskLevel) {
+    auto *mockCsr = reinterpret_cast<MockCsrHw2<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -188,9 +203,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     EXPECT_EQ(101u, this->pCmdQ->taskLevel);
 }
 
-HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndBarrierThenCsrTaskLevelIncreases) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+HWTEST_TEMPLATED_F(OOQTaskTestsWithMockCsr, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndBarrierThenCsrTaskLevelIncreases) {
+    auto *mockCsr = reinterpret_cast<MockCsrHw2<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -210,9 +224,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     EXPECT_EQ(102u, mockCsr->peekTaskLevel());
 }
 
-HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndMarkerThenCsrTaskLevelIsNotIncreasing) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+HWTEST_TEMPLATED_F(OOQTaskTestsWithMockCsr, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndMarkerThenCsrTaskLevelIsNotIncreasing) {
+    auto *mockCsr = reinterpret_cast<MockCsrHw2<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -232,9 +245,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     EXPECT_EQ(101u, mockCsr->peekTaskLevel());
 }
 
-HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqueueThenSecondHasHigherTaskLevelThenFirst) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+HWTEST_TEMPLATED_F(OOQTaskTestsWithMockCsr, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqueueThenSecondHasHigherTaskLevelThenFirst) {
+    auto *mockCsr = reinterpret_cast<MockCsrHw2<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -295,7 +307,7 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // no task level increasing when cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_FALSE,
@@ -347,29 +359,6 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
 
     EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
     EXPECT_FALSE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
-}
-
-HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBarrierWithWaitListWithEventThenDcFlushSet) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
-
-    const cl_uint numEventsInWaitList = 0;
-    const cl_event *eventWaitList = nullptr;
-    cl_event clEvent{};
-    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
-        numEventsInWaitList,
-        eventWaitList,
-        &clEvent);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
-    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
-    auto outEvent = castToObject<Event>(clEvent);
-    outEvent->release();
 }
 
 HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnqueingBarrierWithWaitListThenDcFlushSet) {

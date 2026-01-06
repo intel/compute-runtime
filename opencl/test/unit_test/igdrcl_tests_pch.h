@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/completion_stamp.h"
@@ -16,6 +17,8 @@
 #include "shared/source/sku_info/sku_info_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
+
+#include "opencl/source/api/dispatch.h"
 
 #include "hw_cmds.h"
 #include "third_party/opencl_headers/CL/cl.h"
@@ -30,6 +33,5 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 #include <vector>

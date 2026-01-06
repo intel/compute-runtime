@@ -15,7 +15,7 @@ L0::L0GfxCoreHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0GfxCoreHelper>(
 
 namespace L0 {
 
-createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[NEO::maxCoreEnumValue] = {};
 
 std::unique_ptr<L0GfxCoreHelper> L0GfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
     auto createL0GfxCoreHelperFunc = l0GfxCoreHelperFactory[gfxCore];
@@ -62,9 +62,7 @@ bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnv
     if (NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
         return !!NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get();
     }
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    bool platformSupport = l0GfxCoreHelper.platformSupportsCmdListHeapSharing();
-    return platformSupport && cmdlistSupport;
+    return cmdlistSupport;
 }
 
 bool L0GfxCoreHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo) {
@@ -105,9 +103,8 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
     return l0GfxCoreHelper.getPlatformHeapAddressModel(rootDeviceEnvironment);
 }
 
-bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary) {
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    bool value = l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList();
+bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(bool allowPrimary) {
+    bool value = true;
     if (NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
         value = !!(NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
     }
@@ -128,6 +125,14 @@ ze_mutable_command_exp_flags_t L0GfxCoreHelper::getCmdListUpdateCapabilities(con
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities();
+}
+
+ze_record_replay_graph_exp_flags_t L0GfxCoreHelper::getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::debugManager.flags.OverrideRecordReplayGraphCapability.get() != -1) {
+        return static_cast<ze_record_replay_graph_exp_flags_t>(NEO::debugManager.flags.OverrideRecordReplayGraphCapability.get());
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities();
 }
 
 } // namespace L0

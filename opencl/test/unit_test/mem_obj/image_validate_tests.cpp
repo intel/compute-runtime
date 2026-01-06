@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -84,16 +85,19 @@ TEST_P(ValidDescriptor, given3dImageFormatWhenGetSupportedFormatIsCalledThenDont
 
     bool depthFound = false;
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
 
     if (!Image::isImage2dOr2dArray(imageDesc.image_type)) {
@@ -112,12 +116,12 @@ TEST(ImageDepthFormatTest, GivenDepthFormatsWhenGettingSurfaceFormatThenCorrectS
     imgFormat.image_channel_order = CL_DEPTH;
     imgFormat.image_channel_data_type = CL_FLOAT;
 
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
@@ -127,12 +131,12 @@ TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThe
     imgFormat.image_channel_order = CL_DEPTH;
     imgFormat.image_channel_data_type = CL_FLOAT;
 
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
@@ -142,13 +146,13 @@ TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenC
     imgFormat.image_channel_order = CL_DEPTH_STENCIL;
     imgFormat.image_channel_data_type = CL_UNORM_INT24;
 
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
 
     imgFormat.image_channel_order = CL_DEPTH_STENCIL;
     imgFormat.image_channel_data_type = CL_FLOAT;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
 }
@@ -773,9 +777,6 @@ struct NullImage : public Image {
         delete this->multiGraphicsAllocation.getGraphicsAllocation(0);
     }
     void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
-    void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override {}
-    void setMediaSurfaceRotation(void *memory) override {}
-    void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) override {}
     void transformImage2dArrayTo3d(void *memory) override {}
     void transformImage3dTo2dArray(void *memory) override {}
 };

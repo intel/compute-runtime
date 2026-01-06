@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include <vector>
 
 namespace L0 {
+class NlApi;
 
 const std::string iafPath = "device/";
 const std::string iafDirectoryLegacy = "iaf.";

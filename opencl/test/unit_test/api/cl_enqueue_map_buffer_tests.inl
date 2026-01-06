@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,7 +132,50 @@ TEST_F(ClEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPoin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class EnqueueMapBufferFlagsTest : public ApiFixture<>,
+TEST_F(ClEnqueueMapBufferTests, GivenFinishFailsWhenMappingBufferThenOutOfResourcesErrorIsReturned) {
+    struct MockCommandQueueWithFinishFailure : public MockCommandQueue {
+        MockCommandQueueWithFinishFailure(Context *context) : MockCommandQueue(*context) {}
+
+        cl_int finish(bool resolvePendingL3Flushes) override {
+            return CL_OUT_OF_RESOURCES;
+        }
+    } mockQueue(pContext);
+
+    unsigned int bufferSize = 16;
+    auto pHostMem = new unsigned char[bufferSize];
+    memset(pHostMem, 0xaa, bufferSize);
+
+    auto buffer = clCreateBuffer(
+        pContext,
+        CL_MEM_USE_HOST_PTR,
+        bufferSize,
+        pHostMem,
+        &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    auto ptrResult = clEnqueueMapBuffer(
+        &mockQueue,
+        buffer,
+        CL_TRUE,
+        CL_MAP_READ,
+        0,
+        8,
+        0,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(nullptr, ptrResult);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete[] pHostMem;
+}
+
+class EnqueueMapBufferFlagsTest : public ApiFixture,
                                   public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueMapBufferFlagsTest() {

@@ -10,9 +10,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/fan/fan.h"
-#include "level_zero/tools/source/sysman/fan/os_fan.h"
 
 namespace L0 {
+class OsFan;
+struct OsSysman;
+
 class FanImp : public Fan, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t fanGetProperties(zes_fan_properties_t *pProperties) override;

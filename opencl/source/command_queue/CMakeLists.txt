@@ -41,6 +41,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hardware_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp
@@ -52,6 +53,13 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_xehp_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND RUNTIME_SRCS_COMMAND_QUEUE
+       ${CMAKE_CURRENT_SOURCE_DIR}/finish_xe3p_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xe3p_and_later.inl
   )
 endif()
 

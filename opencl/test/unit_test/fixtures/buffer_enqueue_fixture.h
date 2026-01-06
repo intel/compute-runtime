@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,6 @@ using namespace NEO;
 
 struct BufferEnqueueFixture : public ClHardwareParse,
                               public ::testing::Test {
-    BufferEnqueueFixture(void)
-        : buffer(nullptr) {
-    }
 
     void SetUp() override {
         executionEnvironment = getClExecutionEnvironmentImpl(hwInfo, 1);

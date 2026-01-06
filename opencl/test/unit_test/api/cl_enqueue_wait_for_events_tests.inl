@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,13 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_defs.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
 
-#include <queue>
+#include <deque>
 
 using namespace NEO;
 
@@ -265,7 +266,7 @@ HWTEST_F(ClEnqueueWaitForEventsTests, givenAlreadyCompletedEventWhenWaitForCompl
 
 struct GTPinMockCommandQueue : MockCommandQueue {
     GTPinMockCommandQueue(Context *context, MockClDevice *device) : MockCommandQueue(context, device, nullptr, false) {}
-    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, std::span<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         return MockCommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true, true);
     }
 

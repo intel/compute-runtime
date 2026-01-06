@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-
-#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 #include <algorithm>
 #include <cmath>

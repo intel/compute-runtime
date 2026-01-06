@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/fan/linux/sysman_os_fan_imp.h"
-
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
-#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {
@@ -36,16 +33,16 @@ ze_result_t LinuxFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-bool LinuxFanImp::isFanModuleSupported() {
-    return false;
+LinuxFanImp::LinuxFanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported) {
 }
 
-LinuxFanImp::LinuxFanImp(OsSysman *pOsSysman) {
-}
-
-std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman) {
-    std::unique_ptr<LinuxFanImp> pLinuxFanImp = std::make_unique<LinuxFanImp>(pOsSysman);
+std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported) {
+    std::unique_ptr<LinuxFanImp> pLinuxFanImp = std::make_unique<LinuxFanImp>(pOsSysman, fanIndex, multipleFansSupported);
     return pLinuxFanImp;
+}
+
+uint32_t OsFan::getSupportedFanCount(OsSysman *pOsSysman) {
+    return 0;
 }
 
 } // namespace Sysman

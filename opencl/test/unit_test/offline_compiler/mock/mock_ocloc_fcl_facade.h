@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 
 #include <optional>
 #include <string>
+
+class OclocArgHelper;
 
 namespace NEO {
 
@@ -40,13 +42,13 @@ class MockOclocFclFacade : public OclocFclFacade {
 
     std::string getIncompatibleInterface() const override;
 
-    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> createFclDeviceContext() const override;
+    CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> createFclDeviceContext() const override;
 
     bool shouldPopulateFclInterface() const override;
 
-    CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getPlatformHandle() const override;
+    CIF::RAII::UPtr_t<NEO::PlatformTag> getPlatformHandle() const override;
 
-    void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) override;
+    void populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo) override;
 };
 
 } // namespace NEO

@@ -91,6 +91,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetState(invalidHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetBars(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetStats(invalidHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciLinkSpeedUpdateExp(invalidHandle, true, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::schedulerGet(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::rasGet(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::memoryGet(invalidHandle, &count, nullptr));
@@ -158,6 +159,16 @@ TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsR
     std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
     bool result = pWddmSysmanImp->getUuid(uuid);
     EXPECT_TRUE(result);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThenNullptrIsReturned) {
+
+    auto hwDeviceId = std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pOsSysman->initSurvivabilityMode(std::move(hwDeviceId)));
+    auto pciBdfInfo = pOsSysman->getPciBdfInfo();
+
+    EXPECT_EQ(nullptr, pciBdfInfo);
 }
 
 } // namespace ult

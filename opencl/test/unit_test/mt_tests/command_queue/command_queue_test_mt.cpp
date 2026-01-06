@@ -1,16 +1,23 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "CL/cl.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -43,8 +50,9 @@ TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenW
         pCmdQ->waitForTimestamps({}, status, const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()), const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()));
         threadFinished = true;
     });
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     EXPECT_FALSE(threadFinished);
     queueOwnership.unlock();
     t.join();

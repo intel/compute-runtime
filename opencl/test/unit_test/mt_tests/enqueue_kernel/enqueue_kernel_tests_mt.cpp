@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,9 @@ TEST_F(EnqueueKernelTestsMt, WhenCallEnqueueKernelsThenAllCallsPass) {
                 }
             });
         }
-        for (auto &t : threads)
+        for (auto &t : threads) {
             t.join();
+        }
         EXPECT_EQ(CL_SUCCESS, result);
     }
 }

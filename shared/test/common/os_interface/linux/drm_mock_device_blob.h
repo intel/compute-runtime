@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 static constexpr uint32_t dummyDeviceBlobData[] = {
@@ -59,6 +60,12 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     1,
     0x08,
     NEO::DeviceBlobConstants::numRegions,
+    1,
+    0x02,
+    NEO::DeviceBlobConstants::numL3BanksPerGroup,
+    1,
+    0x03,
+    NEO::DeviceBlobConstants::numL3BankGroups,
     1,
     0x02,
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,12 +21,11 @@ using ClSVMAllocTests = ApiTests;
 
 namespace ULT {
 
-class ClSvmAllocTemplateTests : public ApiFixture<>,
+class ClSvmAllocTemplateTests : public ApiFixture,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {
         ApiFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(pDevice);
     }
 
     void TearDown() override {
@@ -49,7 +48,7 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     }
     cl_device_id deviceId = clDevice.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<MockContext>(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());
@@ -125,15 +124,7 @@ TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     cl_mem_flags flags = GetParam();
     void *svmPtr = nullptr;
 
-    // 1: no svm - no flags supported
-    pHwInfo->capabilityTable.ftrSvm = false;
-    pHwInfo->capabilityTable.ftrSupportsCoherency = false;
-
-    svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
-    EXPECT_EQ(nullptr, svmPtr);
-
-    // 2: coarse svm - normal flags supported
-    pHwInfo->capabilityTable.ftrSvm = true;
+    // 1: coarse svm - normal flags supported
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
         // fg svm flags not supported
@@ -144,7 +135,7 @@ TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
         clSVMFree(pContext, svmPtr);
     }
 
-    // 3: fg svm - all flags supported
+    // 2: fg svm - all flags supported
     pHwInfo->capabilityTable.ftrSupportsCoherency = true;
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     EXPECT_NE(nullptr, svmPtr);
@@ -195,7 +186,6 @@ TEST_F(ClSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
 }
 
 TEST_F(ClSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBiggerThanMaxMemAllocSize) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     const size_t maxMemAllocSize = 128;
 
@@ -261,10 +251,8 @@ TEST_F(ClSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAlloc
 };
 
 TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocationIsCreated) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
     DebugManagerStateRestore restore{};
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = true;
     hwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     auto allocation = clSVMAlloc(pContext, CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER, 4096 /* Size */, 0 /* alignment */);
@@ -278,7 +266,6 @@ TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocat
 }
 
 TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldIsPassed) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
     UltClDeviceFactory deviceFactory{1, 2};
     auto device = deviceFactory.subDevices[1];
 

@@ -8,21 +8,21 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/utilities/tag_allocator.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 
@@ -34,11 +34,14 @@ CommandList::~CommandList() {
         cmdQImmediateCopyOffload->destroy();
     }
     removeDeallocationContainerData();
-    if (!isImmediateType() || !this->isFlushTaskSubmissionEnabled) {
+    if (!isImmediateType()) {
         removeHostPtrAllocations();
     }
     removeMemoryPrefetchAllocations();
     printfKernelContainer.clear();
+    if (captureTarget && (false == captureTarget->wasPreallocated())) {
+        delete captureTarget;
+    }
 }
 
 void CommandList::storePrintfKernel(Kernel *kernel) {
@@ -78,17 +81,6 @@ void CommandList::removeHostPtrAllocations() {
     hostPtrMap.clear();
 }
 
-void CommandList::forceDcFlushForDcFlushMitigation() {
-    if (this->device && this->device->getProductHelper().isDcFlushMitigated()) {
-        for (const auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines(this->device->getNEODevice()->getRootDeviceIndex())) {
-            if (engine.commandStreamReceiver->isDirectSubmissionEnabled()) {
-                engine.commandStreamReceiver->registerDcFlushForDcMitigation();
-                engine.commandStreamReceiver->flushTagUpdate();
-            }
-        }
-    }
-}
-
 void CommandList::removeMemoryPrefetchAllocations() {
     if (this->performMemoryPrefetch) {
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
@@ -99,11 +91,15 @@ void CommandList::removeMemoryPrefetchAllocations() {
     }
 }
 
-void CommandList::registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr) {
-    if (this->requiresDcFlushForDcMitigation) {
-        csr.registerDcFlushForDcMitigation();
-        this->requiresDcFlushForDcMitigation = false;
+void CommandList::storeFillPatternResourcesForReuse() {
+    for (auto &patternAlloc : this->patternAllocations) {
+        device->storeReusableAllocation(*patternAlloc);
     }
+    this->patternAllocations.clear();
+    for (auto &patternTag : this->patternTags) {
+        patternTag->returnTag();
+    }
+    this->patternTags.clear();
 }
 
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload) {
@@ -119,7 +115,7 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
             return allocation->second;
         }
     }
-    if (this->storeExternalPtrAsTemporary()) {
+    if (isImmediateType()) {
         auto csr = getCsr(copyOffload);
         auto allocation = csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr);
         if (allocation != nullptr) {
@@ -132,14 +128,6 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
     return nullptr;
 }
 
-bool CommandList::isWaitForEventsFromHostEnabled() {
-    bool waitForEventsFromHostEnabled = false;
-    if (NEO::debugManager.flags.EventWaitOnHost.get() != -1) {
-        waitForEventsFromHostEnabled = NEO::debugManager.flags.EventWaitOnHost.get();
-    }
-    return waitForEventsFromHostEnabled;
-}
-
 NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload) {
     NEO::GraphicsAllocation *alloc = getAllocationFromHostPtrMap(buffer, bufferSize, copyOffload);
     if (alloc) {
@@ -149,7 +137,7 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
     if (alloc == nullptr) {
         return nullptr;
     }
-    if (this->storeExternalPtrAsTemporary()) {
+    if (isImmediateType()) {
         alloc->hostPtrTaskCountAssignment++;
         auto csr = getCsr(copyOffload);
         csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, csr->peekTaskCount());
@@ -238,6 +226,84 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
 }
 
 NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
-    return copyOffload ? static_cast<CommandQueueImp *>(this->cmdQImmediateCopyOffload)->getCsr() : static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr();
+    auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+
+    return static_cast<CommandQueueImp *>(queue)->getCsr();
 }
+
+void CommandList::registerWalkerWithProfilingEnqueued(Event *event) {
+    if (this->shouldRegisterEnqueuedWalkerWithProfiling && event && event->isEventTimestampFlagSet()) {
+        this->isWalkerWithProfilingEnqueued = true;
+    }
+}
+
+ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t groupSizes, void **arguments) {
+    if (kernel == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    auto result = kernel->setGroupSize(groupSizes.groupSizeX, groupSizes.groupSizeY, groupSizes.groupSizeZ);
+
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    auto &args = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
+
+    if (args.size() > 0 && !arguments) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    auto lock = static_cast<KernelImp *>(kernel)->getParentModule().getDevice()->getDriverHandle()->getSvmAllocsManager()->obtainReadContainerLock();
+
+    for (auto i = 0u; i < args.size(); i++) {
+
+        auto &arg = args[i];
+        auto argSize = sizeof(void *);
+        auto argValue = arguments[i];
+
+        switch (arg.type) {
+        case NEO::ArgDescriptor::argTPointer:
+            if (arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
+                argSize = *reinterpret_cast<const size_t *>(argValue);
+                argValue = nullptr;
+            }
+            break;
+        case NEO::ArgDescriptor::argTValue:
+            argSize = std::numeric_limits<size_t>::max();
+            break;
+        default:
+            break;
+        }
+        result = kernel->setArgumentValue(i, argSize, argValue);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+uint32_t CommandList::getLimitIsaPrefetchSize() {
+    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
+
+    uint32_t retrievedLimitValue = NEO::debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
+    return retrievedLimitValue;
+}
+
+void CommandList::executeCleanupCallbacks() {
+    std::vector<CleanupCallbackT> callbacksToExecute;
+    callbacksToExecute.swap(this->cleanupCallbacks);
+
+    for (auto &callback : callbacksToExecute) {
+        callback.first(callback.second);
+    }
+}
+
+bool CommandList::verifyMemory(const void *allocationPtr,
+                               const void *expectedData,
+                               size_t sizeOfComparison,
+                               uint32_t comparisonMode) const {
+    return getCsr(false)->expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+}
+
 } // namespace L0

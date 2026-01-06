@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
 
     auto cmdPartitionCount = static_cast<uint32_t>(partitionCount);
 
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -66,20 +67,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
     EXPECT_EQ(cmdPartitionCount + 1, walkersCount);
 
     for (auto &walkerCmd : walkerCmds) {
+        auto walker = genCmdCast<WalkerType *>(*walkerCmd);
+        auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmd);
-
-        std::visit([&](auto &&walkerCmd) {
-            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
-            using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
-
-            auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
-
-            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionId());
-            EXPECT_EQ(cmdPartitionType, walkerCmd->getPartitionType());
-            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
-        },
-                   walkerVariant);
+        EXPECT_EQ(cmdPartitionCount, walker->getPartitionId());
+        EXPECT_EQ(cmdPartitionType, walker->getPartitionType());
+        EXPECT_EQ(cmdPartitionCount, walker->getPartitionSize());
     }
 
     auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
@@ -614,7 +607,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    // this pipe control should't be executed
+    // this pipe control should not be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::immediateData,
@@ -674,7 +667,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    // this pipe control should't be executed
+    // this pipe control should not be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::immediateData,
@@ -766,6 +759,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
     walkerCmd.getPostSync().setDestinationAddress(postSyncAddress);
     walkerCmd.getPostSync().setOperation(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP);
+    if constexpr (FamilyType::template isHeaplessMode<DefaultWalkerType>()) {
+        walkerCmd.setMaximumNumberOfThreads(64);
+    }
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
@@ -942,8 +938,8 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AubWalkerPartitionTest, whenPartitionsAreUsedWithVa
         kernels[5].get(),
         workingDimensions,
         globalWorkOffset,
-        dispatchParamters.globalWorkSize,
-        dispatchParamters.localWorkSize,
+        dispatchParameters.globalWorkSize,
+        dispatchParameters.localWorkSize,
         numEventsInWaitList,
         eventWaitList,
         &event);
@@ -976,12 +972,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionId
     cl_event *eventWaitList = nullptr;
     cl_event event;
     workingDimensions = 3;
-    dispatchParamters.globalWorkSize[0] = 30;
-    dispatchParamters.globalWorkSize[1] = 39;
-    dispatchParamters.globalWorkSize[2] = 5;
-    dispatchParamters.localWorkSize[0] = 10;
-    dispatchParamters.localWorkSize[1] = 3;
-    dispatchParamters.localWorkSize[2] = 1;
+    dispatchParameters.globalWorkSize[0] = 30;
+    dispatchParameters.globalWorkSize[1] = 39;
+    dispatchParameters.globalWorkSize[2] = 5;
+    dispatchParameters.localWorkSize[0] = 10;
+    dispatchParameters.localWorkSize[1] = 3;
+    dispatchParameters.localWorkSize[2] = 1;
 
     partitionType = 3;
 
@@ -995,8 +991,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionId
         kernels[5].get(),
         workingDimensions,
         globalWorkOffset,
-        dispatchParamters.globalWorkSize,
-        dispatchParamters.localWorkSize,
+        dispatchParameters.globalWorkSize,
+        dispatchParameters.localWorkSize,
         numEventsInWaitList,
         eventWaitList,
         &event);

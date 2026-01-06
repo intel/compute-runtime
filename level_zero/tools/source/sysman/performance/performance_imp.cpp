@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include "os_performance.h"
 
 namespace L0 {
 

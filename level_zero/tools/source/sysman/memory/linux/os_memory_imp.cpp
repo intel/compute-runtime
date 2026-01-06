@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -17,10 +19,13 @@
 
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
-#include "igfxfmid.h"
+#include <unordered_set>
 
 namespace L0 {
 
@@ -38,6 +43,31 @@ void LinuxMemoryImp::init() {
     }
 }
 
+static std::unordered_map<std::string, uint64_t> readMemInfoValues(FsAccess &fsAccess, const std::unordered_set<std::string> &keys) {
+    std::unordered_map<std::string, uint64_t> result;
+    const std::string memInfoFile = "/proc/meminfo";
+    std::vector<std::string> memInfo;
+
+    if (fsAccess.read(memInfoFile, memInfo) == ZE_RESULT_SUCCESS) {
+        for (const auto &line : memInfo) {
+            std::istringstream lineStream(line);
+            std::string label, unit;
+            uint64_t value = 0;
+            lineStream >> label >> value >> unit;
+            if (!label.empty() && label.back() == ':') {
+                label.pop_back();
+            }
+            if (keys.count(label)) {
+                result[label] = value;
+                if (result.size() == keys.size()) {
+                    break;
+                }
+            }
+        }
+    }
+    return result;
+}
+
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
@@ -48,10 +78,33 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
-    return pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
+    auto &gfxCoreHelper = pDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        return true;
+    }
+    return gfxCoreHelper.getEnableLocalMemory(hwInfo);
 }
 
 ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    pProperties->physicalSize = 0;
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        const std::string memTotalKey = "MemTotal";
+        std::unordered_set<std::string> keys{memTotalKey};
+        auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
+            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
+        }
+        pProperties->type = ZES_MEM_TYPE_DDR;
+        pProperties->numChannels = -1;
+        pProperties->location = ZES_MEM_LOC_SYSTEM;
+        pProperties->onSubdevice = isSubdevice;
+        pProperties->subdeviceId = subdeviceId;
+        pProperties->busWidth = -1;
+        return ZE_RESULT_SUCCESS;
+    }
+
     pProperties->type = ZES_MEM_TYPE_DDR;
     pProperties->numChannels = -1;
     if (pDrm->querySystemInfo()) {
@@ -81,7 +134,6 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->subdeviceId = subdeviceId;
     pProperties->busWidth = memoryBusWidth; // Hardcode
 
-    pProperties->physicalSize = 0;
     if (isSubdevice) {
         std::string memval;
         ze_result_t result = pSysfsAccess->read(physicalSizeFile, memval);
@@ -101,15 +153,15 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     std::string key = "VF0_VFID";
     auto result = pPmt->readValue(key, vf0VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
     uint32_t vf1VfIdVal = 0;
     key = "VF1_VFID";
-    result = pPmt->readValue(key, vf1VfIdVal);
+    result = pPmt->readValue(std::move(key), vf1VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -119,7 +171,7 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     // Lets assume and report this as a error condition
     if (((vf0VfIdVal == 0) && (vf1VfIdVal == 0)) ||
         ((vf0VfIdVal > 0) && (vf1VfIdVal > 0))) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() VF0 returning 0x%x and VF1 returning 0x%x as both should not be the same \n", __FUNCTION__, vf0VfIdVal, vf1VfIdVal);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() VF0 returning 0x%x and VF1 returning 0x%x as both should not be the same \n", __FUNCTION__, vf0VfIdVal, vf1VfIdVal);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -137,21 +189,21 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
     uint32_t numMcChannels = 16u;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};
-    std::vector<uint64_t> counterValues(3, 0); // Will store the values of counters metioned in nameOfCounters
+    std::vector<uint64_t> counterValues(3, 0); // Will store the values of counters mentioned in nameOfCounters
     for (uint64_t counterIndex = 0; counterIndex < nameOfCounters.size(); counterIndex++) {
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
-            result = pPmt->readValue(readCounterKey, val);
+            result = pPmt->readValue(std::move(readCounterKey), val);
             if (result != ZE_RESULT_SUCCESS) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
                 return result;
             }
             counterValues[counterIndex] += val;
         }
     }
-    // PMT counters returns number of transactions that have occured and each tranaction is of 64 bytes
-    // Multiplying 32(tranaction size) with number of transactions gives the total reads or writes in bytes
+    // PMT counters returns number of transactions that have occurred and each transaction is of 64 bytes
+    // Multiplying 32(transaction size) with number of transactions gives the total reads or writes in bytes
     constexpr uint64_t transactionSize = 32;
     readCounters = (counterValues[0] + counterValues[2]) * transactionSize; // Read counters are summation of total IDI_READS and DISPLAY_VC1_READS
     writeCounters = (counterValues[1]) * transactionSize;                   // Write counters are summation of IDI_WRITES
@@ -166,7 +218,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
             // Calculating bandwidth based on HBM max frequency
             const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
             uint64_t hbmFreqValue = 0;
-            ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
+            ze_result_t result = pSysfsAccess->read(std::move(hbmRP0FreqFile), hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {
                 hbmFrequency = hbmFreqValue * 1000 * 1000; // Converting MHz value to Hz
                 return;
@@ -185,15 +237,15 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
     pBandwidth->maxBandwidth = 0;
     ze_result_t result = readMcChannelCounters(pBandwidth->readCounter, pBandwidth->writeCounter);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
-    result = pSysfsAccess->read(maxBwFile, maxBw);
+    result = pSysfsAccess->read(std::move(maxBwFile), maxBw);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pSysfsAccess->read returning error:0x%x  \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pSysfsAccess->read returning error:0x%x  \n", __FUNCTION__, result);
     }
     pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
@@ -209,7 +261,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     std::string vfId = "";
     result = getVFIDString(vfId);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
@@ -220,9 +272,9 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         uint32_t counterValue = 0;
         // To read counters from VFID 0 and HBM module 0, key would be: VF0_HBM0_READ
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
-        result = pPmt->readValue(readCounterKey, counterValue);
+        result = pPmt->readValue(std::move(readCounterKey), counterValue);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         pBandwidth->readCounter += counterValue;
@@ -230,9 +282,9 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         counterValue = 0;
         // To write counters to VFID 0 and HBM module 0, key would be: VF0_HBM0_Write
         std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
-        result = pPmt->readValue(writeCounterKey, counterValue);
+        result = pPmt->readValue(std::move(writeCounterKey), counterValue);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         pBandwidth->writeCounter += counterValue;
@@ -262,7 +314,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
     std::string vfId = "";
     result = getVFIDString(vfId);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
@@ -274,15 +326,15 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
     std::string readCounterKey = vfId + "_HBM_READ_L";
     result = pPmt->readValue(readCounterKey, readCounterL);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
     uint32_t readCounterH = 0;
     readCounterKey = vfId + "_HBM_READ_H";
-    result = pPmt->readValue(readCounterKey, readCounterH);
+    result = pPmt->readValue(std::move(readCounterKey), readCounterH);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -295,15 +347,15 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
     std::string writeCounterKey = vfId + "_HBM_WRITE_L";
     result = pPmt->readValue(writeCounterKey, writeCounterL);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
     uint32_t writeCounterH = 0;
     writeCounterKey = vfId + "_HBM_WRITE_H";
-    result = pPmt->readValue(writeCounterKey, writeCounterH);
+    result = pPmt->readValue(std::move(writeCounterKey), writeCounterH);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -348,6 +400,22 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        const std::string memFreeKey = "MemFree";
+        const std::string memAvailableKey = "MemAvailable";
+        std::unordered_set<std::string> keys{memFreeKey, memAvailableKey};
+        auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
+            pState->free = memInfoValues[memFreeKey] * 1024;
+            pState->size = memInfoValues[memAvailableKey] * 1024;
+        } else {
+            pState->free = 0;
+            pState->size = 0;
+            status = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return status;
+    }
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto productFamily = SysmanDeviceImp::getProductFamily(pDevice);
     if ((pFwInterface != nullptr) && (IGFX_PVC == productFamily)) {
@@ -365,8 +433,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         if (errno == ENODEV) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
     }
     return status;
 }

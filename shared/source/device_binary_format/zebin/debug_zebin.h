@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@
 namespace NEO {
 
 class GraphicsAllocation;
+class SharedPoolAllocation;
+
 namespace Zebin::Debug {
 struct Segments {
     struct Segment {
@@ -34,7 +36,7 @@ struct Segments {
     CPUSegment stringData;
     KernelNameToSegmentMap nameToSegMap;
     Segments();
-    Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaTupleT> &kernels);
+    Segments(const SharedPoolAllocation *globalVarAlloc, const SharedPoolAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaTupleT> &kernels);
 };
 
 class DebugZebinCreator {

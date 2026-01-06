@@ -33,15 +33,15 @@ struct DrmDebugPrelimTest : public ::testing::Test {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
+struct MockIoctlHelperDebugPrelimResourceRegistration : public IoctlHelperPrelim20 {
   public:
     using IoctlHelperPrelim20::classHandles;
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    MockIoctlHelperDebugPrelimResourceRegistration(Drm &drm) : IoctlHelperPrelim20(drm) {}
 };
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
     auto handle = drm.context.uuidHandle;
 
@@ -61,7 +61,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
 
 TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClassesThenErrorIsReturnedAndClassHandlesAreEmpty) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
     drm.context.uuidControlReturn = -1;
 
@@ -82,7 +82,7 @@ TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRe
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlIsCalled) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
     const auto result = ioctlHelper->registerResourceClasses();
     EXPECT_TRUE(result);
@@ -104,7 +104,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlReturnsWithError) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
     const auto result = ioctlHelper->registerResourceClasses();
     EXPECT_TRUE(result);
@@ -138,7 +138,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
     auto result = ioctlHelper->registerResourceClasses();
     EXPECT_TRUE(result);

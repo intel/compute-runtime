@@ -10,13 +10,71 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <unordered_set>
+
 namespace L0 {
 namespace ult {
 
+class MockMetric : public L0::MetricImp {
+  public:
+    ze_result_t destroyReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ~MockMetric() override = default;
+    MockMetric(MetricSource &metricSource, std::vector<MetricScopeImp *> &scopes)
+        : L0::MetricImp(metricSource, scopes) {}
+    ze_result_t getProperties(zet_metric_properties_t *pProperties) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t destroy() override {
+        return destroyReturn;
+    }
+
+    void setPredefined(bool status) {
+        isPredefined = status;
+    }
+
+    void setMultiDevice(bool status) {
+        isMultiDevice = status;
+    }
+
+    void setScopes(const std::vector<zet_intel_metric_scope_exp_handle_t> &hNewScopes) {
+        std::vector<MetricScopeImp *> newMetricScopes;
+        for (auto &hScope : hNewScopes) {
+            newMetricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(hScope)));
+        }
+        metricScopes = newMetricScopes;
+    }
+};
+
+class MockMetricCalcOp : public MetricCalcOpImp {
+  public:
+    ~MockMetricCalcOp() override = default;
+    MockMetricCalcOp(bool multiDevice, const std::vector<MetricScopeImp *> &metricScopes,
+                     const std::vector<MetricImp *> &metricsInReport,
+                     const std::vector<MetricImp *> &excludedMetrics)
+        : MetricCalcOpImp(multiDevice, metricScopes, metricsInReport, excludedMetrics) {}
+
+    ze_result_t destroy() override {
+        // Remove duplicates before deleting to avoid double-free
+        std::unordered_set<MetricImp *> uniqueMetrics(metricsInReport.begin(), metricsInReport.end());
+        for (auto &metric : uniqueMetrics) {
+            delete metric;
+        }
+        metricsInReport.clear();
+        delete this;
+        return ZE_RESULT_SUCCESS;
+    };
+
+    ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
+                                      bool, size_t *usedSize,
+                                      uint32_t *pTotalMetricReportCount,
+                                      zet_intel_metric_result_exp_t *pMetricResults) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+};
+
 class MockMetricSource : public L0::MetricSource {
   public:
-    uint32_t enableCallCount = 0;
-    bool isAvailableReturn = false;
+    ~MockMetricSource() override = default;
     void enable() override { enableCallCount++; }
     bool isAvailable() override { return isAvailableReturn; }
     ze_result_t appendMetricMemoryBarrier(L0::CommandList &commandList) override { return ZE_RESULT_ERROR_UNKNOWN; }
@@ -50,14 +108,72 @@ class MockMetricSource : public L0::MetricSource {
     }
 
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
-                                    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                    uint32_t *pCount,
-                                    zet_metric_handle_t *phExcludedMetrics,
-                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+                                    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override {
+
+        std::vector<MetricScopeImp *> metricScopes;
+        for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
+            metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
+        }
+
+        std::vector<MetricImp *> metrics;
+        std::vector<MetricImp *> metricsInReport;
+        std::vector<MetricScopeImp *> metricScopesInReport;
+
+        // Only support metric groups, enough for ULT
+        for (uint32_t i = 0; i < pCalculationDesc->metricGroupCount; i++) {
+            MockMetricSource metricSource{};
+            metrics.push_back(new MockMetric(metricSource, const_cast<std::vector<MetricScopeImp *> &>(metricScopes)));
+        }
+
+        for (uint32_t i = 0; i < pCalculationDesc->metricCount; i++) {
+            MockMetricSource metricSource{};
+            metrics.push_back(new MockMetric(metricSource, const_cast<std::vector<MetricScopeImp *> &>(metricScopes)));
+        }
+
+        // Map each metric scope to all metrics
+        for (uint32_t i = 0; i < metricScopes.size(); i++) {
+            for (uint32_t j = 0; j < metrics.size(); j++) {
+                metricsInReport.push_back(metrics[j]);
+                metricScopesInReport.push_back(metricScopes[i]);
+            }
+        }
+
+        auto calcOp = new MockMetricCalcOp(true, metricScopesInReport, metricsInReport, {});
+        *phCalculationOperation = calcOp->toHandle();
+
+        return ZE_RESULT_SUCCESS;
+    }
+    bool canDisable() override { return false; }
+
+    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
+        for (auto index = 0u; index < static_cast<uint32_t>(testMetricScopes.size()); index++) {
+            metricDeviceContext.addMetricScope(testMetricScopes[index].name,
+                                               testMetricScopes[index].description,
+                                               testMetricScopes[index].computeSubDeviceIndex);
+        }
+        initComputeMetricScopes(metricDeviceContext);
     }
 
-    ~MockMetricSource() override = default;
+    void addTestMetricScope(const std::string &name, const std::string &description, uint32_t computeSubDeviceIndex) {
+        testMetricScopes.emplace_back(TestMetricScope{name, description, computeSubDeviceIndex});
+    }
+
+    void removeTestMetricScope(const std::string &name) {
+        testMetricScopes.erase(std::remove_if(testMetricScopes.begin(), testMetricScopes.end(),
+                                              [&name](const TestMetricScope &scope) { return scope.name == name; }),
+                               testMetricScopes.end());
+    }
+
+    uint32_t enableCallCount = 0;
+    bool isAvailableReturn = false;
+    struct TestMetricScope {
+        std::string name;
+        std::string description;
+        uint32_t computeSubDeviceIndex = 0;
+    };
+
+    std::vector<TestMetricScope> testMetricScopes{};
 };
 
 class MockMetricGroup : public L0::MetricGroupImp {
@@ -133,43 +249,6 @@ class MockMetricGroup : public L0::MetricGroupImp {
     }
 };
 
-class MockMetric : public L0::MetricImp {
-  public:
-    ze_result_t destroyReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    ~MockMetric() override = default;
-    MockMetric(MetricSource &metricSource) : L0::MetricImp(metricSource) {}
-    ze_result_t getProperties(zet_metric_properties_t *pProperties) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    ze_result_t destroy() override {
-        return destroyReturn;
-    }
-
-    void setPredefined(bool status) {
-        isPredefined = status;
-    }
-
-    void setMultiDevice(bool status) {
-        isMultiDevice = status;
-    }
-};
-
-class MockMetricCalcOp : public MetricCalcOpImp {
-  public:
-    ~MockMetricCalcOp() override = default;
-    MockMetricCalcOp() : MetricCalcOpImp(false){};
-    ze_result_t destroy() override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    };
-    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    };
-    ze_result_t metricCalculateMultipleValues(size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
-                                              uint32_t *pSetCount, uint32_t *pMetricReportCountPerSet,
-                                              uint32_t *pTotalMetricReportCount,
-                                              zet_intel_metric_result_exp_t *pMetricResults) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
-};
-
 class MockMetricDeviceContext : public MetricDeviceContext {
   public:
     MockMetricDeviceContext(Device &device) : MetricDeviceContext(device) {}
@@ -180,6 +259,23 @@ class MockMetricDeviceContext : public MetricDeviceContext {
 
     void setMockMetricSource(MockMetricSource *metricSource) {
         metricSources[MetricSource::metricSourceTypeOa] = std::unique_ptr<MockMetricSource>(metricSource);
+    }
+    void setMockMetricSourceAtIndex(uint32_t index, MockMetricSource *metricSource) {
+        metricSources[index] = std::unique_ptr<MockMetricSource>(metricSource);
+    }
+
+    void setMultiDeviceCapable(bool capable) {
+        multiDeviceCapable = capable;
+    }
+};
+
+class MockMetricScope : public MetricScopeImp {
+  public:
+    ~MockMetricScope() override = default;
+    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated, uint32_t computeSubDeviceIndex)
+        : MetricScopeImp(properties, aggregated, computeSubDeviceIndex) {}
+    ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) override {
+        return MetricScopeImp::getProperties(pProperties);
     }
 };
 

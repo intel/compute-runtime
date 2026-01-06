@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
@@ -30,16 +32,24 @@
 
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
+#include "neo_aot_platforms.h"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <optional>
 #include <thread>
 #if !defined(__linux__)
 #include <regex>
 #endif
 
+#include "shared/test/common/helpers/mock_file_io.h"
+
 namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileList;
+extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
+
 namespace PagaFaultManagerTestConfig {
 bool disabled = false;
 }
@@ -86,13 +96,15 @@ void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
 
 bool generateRandomInput = false;
+std::optional<uint32_t> blitterMaskOverride;
 
 std::string getRunPath(char *argv0) {
     std::string res(argv0);
 
     auto pos = res.rfind(fSeparator);
-    if (pos != std::string::npos)
+    if (pos != std::string::npos) {
         res = res.substr(0, pos);
+    }
 
     if (res == "." || pos == std::string::npos) {
         char *cwd;
@@ -127,7 +139,7 @@ void applyCommonWorkarounds() {
         ss >> val;
     }
 
-    // intialize rand
+    // initialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
     // Create at least on thread to prevent false memory leaks in tests using threads
@@ -141,6 +153,10 @@ void applyCommonWorkarounds() {
         NEO::fileLoggerInstance();
         NEO::usmReusePerfLoggerInstance();
     }
+
+    // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
+    // This prevents false-positive leak reports.
+    AOT::getInvertedCompatibilityMapping();
 }
 
 bool enableAlarm = ENABLE_ALARM_DEFAULT;
@@ -234,7 +250,7 @@ int main(int argc, char **argv) {
             if (i < argc) {
                 if (::isdigit(argv[i][0])) {
                     int productValue = atoi(argv[i]);
-                    if (productValue > 0 && productValue < IGFX_MAX_PRODUCT && hardwarePrefix[productValue] != nullptr) {
+                    if (productValue > 0 && productValue < NEO::maxProductEnumValue && hardwarePrefix[productValue] != nullptr) {
                         productFamily = static_cast<PRODUCT_FAMILY>(productValue);
                     } else {
                         productFamily = IGFX_UNKNOWN;
@@ -242,9 +258,10 @@ int main(int argc, char **argv) {
                 } else {
                     bool selectAllProducts = (strcmp("*", argv[i]) == 0);
                     productFamily = IGFX_UNKNOWN;
-                    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-                        if (hardwarePrefix[j] == nullptr)
+                    for (int j = 0; j < NEO::maxProductEnumValue; j++) {
+                        if (hardwarePrefix[j] == nullptr) {
                             continue;
+                        }
                         if ((strcmp(hardwarePrefix[j], argv[i]) == 0) || selectAllProducts) {
                             productFamily = static_cast<PRODUCT_FAMILY>(j);
                             selectedTestProducts.push_back(productFamily);
@@ -307,6 +324,11 @@ int main(int argc, char **argv) {
                 testMode = TestMode::aubTestsWithoutOutputFiles;
             }
             initialHardwareTag = 0;
+        } else if (!strcmp("--blitterMask", argv[i])) {
+            ++i;
+            if (i < argc) {
+                blitterMaskOverride = static_cast<uint32_t>(std::stoi(argv[i]));
+            }
         }
     }
 
@@ -415,8 +437,12 @@ int main(int argc, char **argv) {
         } else {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
+        std::string options;
+        if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
+            options = "-heapless_" + std::string(CompilerOptions::greaterThan4gbBuffersRequired);
+        }
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
 
         gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
         gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
@@ -458,8 +484,26 @@ int main(int argc, char **argv) {
             return sigOut;
         }
 
+        std::string testFilename;
+        {
+            USE_REAL_FILE_SYSTEM();
+            for (std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
+                                                     "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16"}) {
+                retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
+                size_t retFileNsize = 0;
+                auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
+                if (retFiledata) {
+                    virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                    UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());
+                    DEBUG_BREAK_IF(0 == retFileNsize);
+                }
+            }
+        }
+
         retVal = RUN_ALL_TESTS();
         cleanupSignals();
+
+        virtualFileListTestKernelsOnly.clear();
 
         if (showTestStats) {
             std::cout << getTestStats() << std::endl;

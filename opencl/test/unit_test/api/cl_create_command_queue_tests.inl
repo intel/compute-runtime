@@ -6,10 +6,10 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "cl_api_tests.h"
@@ -60,7 +60,7 @@ TEST_F(ClCreateCommandQueueTest, givenInvalidPropertiesWhenCreatingCommandQueueT
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
+TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIsSuccessfullyCreated) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
@@ -71,7 +71,7 @@ TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIs
 
 HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     DebugManagerStateRestore restorer{};
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
@@ -123,7 +123,7 @@ HWTEST_F(ClCreateCommandQueueTest, givenForcedDispatchModeAndOoqParametersWhenQu
 
 HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     DebugManagerStateRestore restorer{};
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;

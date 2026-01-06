@@ -9,10 +9,20 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/logger_tests.h"
+
+#include "gtest/gtest.h"
+
+#include <ios>
+#include <memory>
+#include <ostream>
+#include <sstream>
+#include <thread>
+#include <vector>
 
 using namespace NEO;
 
@@ -35,8 +45,9 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_HEAP_STATELESS_DATA_PORT_L1_CACHED;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NonLocalOnly = 0;
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_HEAP_STATELESS_DATA_PORT_L1_CACHED;
     allocation.setGpuAddress(0x12345);
     allocation.size = 777u;
 
@@ -62,19 +73,17 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::stringstream totalLocalMemoryCheck;
     totalLocalMemoryCheck << "Total lmem allocated: " << std::dec << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
 
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
-        EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("UNKNOWN GMM USAGE TYPE 40") != std::string::npos);
-        EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
-        EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
-        EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
-    }
+    ASSERT_TRUE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
+    auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+    EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
+    EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
+    EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
+    EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
 }
 
 TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogged) {
@@ -94,7 +103,8 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NonLocalOnly = 0;
 
     logAllocation(fileLogger, &allocation, nullptr);
 

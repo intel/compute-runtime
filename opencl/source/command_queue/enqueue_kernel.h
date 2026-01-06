@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/surface.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -111,8 +112,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     if (kernelInfo.builtinDispatchBuilder != nullptr) {
         cl_int err = kernelInfo.builtinDispatchBuilder->validateDispatch(&kernel, workDim, Vec3<size_t>(region), Vec3<size_t>(workGroupSize), Vec3<size_t>(globalWorkOffset));
-        if (err != CL_SUCCESS)
+        if (err != CL_SUCCESS) {
             return err;
+        }
     }
 
     DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo.kernelDescriptor.kernelMetadata.kernelName,

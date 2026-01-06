@@ -11,7 +11,6 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
-#include <stdarg.h>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -37,8 +36,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     virtual void prepareRootDeviceEnvironments(uint32_t numRootDevices);
     void prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit);
     void parseAffinityMask();
-    void adjustCcsCount();
-    void adjustCcsCount(const uint32_t rootDeviceIndex) const;
+    bool adjustCcsCount();
+    bool adjustCcsCount(const uint32_t rootDeviceIndex) const;
     void sortNeoDevices();
     void setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHelper);
     void setDeviceHierarchyMode(const DeviceHierarchyMode deviceHierarchyMode) {
@@ -47,7 +46,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     DeviceHierarchyMode getDeviceHierarchyMode() const { return deviceHierarchyMode; }
     void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
-    void configureCcsMode();
+    MOCKABLE_VIRTUAL void configureCcsMode();
     void setDebuggingMode(DebuggingMode debuggingMode) {
         debuggingEnabledMode = debuggingMode;
     }
@@ -64,9 +63,22 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         fp64EmulationEnabled = true;
     }
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
+    void setDevicePermissionError(bool value) {
+        devicePermissionError = value;
+    }
+    bool isDevicePermissionError() const { return devicePermissionError; }
+
+    void setOneApiPvcWaEnv(bool val) {
+        oneApiPvcWaEnv = val;
+    }
+    bool isOneApiPvcWaEnv() const { return oneApiPvcWaEnv; }
 
     DirectSubmissionController *initializeDirectSubmissionController();
-    void initializeUnifiedMemoryReuseCleaner(bool enable);
+    void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
+
+    std::unique_lock<std::mutex> obtainPeerAccessQueryLock() {
+        return std::unique_lock<std::mutex>(peerAccessQueryMutex);
+    }
 
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;
@@ -74,21 +86,24 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
-    // Map of Sub Device Indicies set during Affinity Mask in the form of:
+    // Map of Sub Device Indices set during Affinity Mask in the form of:
     // <RootDeviceIndex, SubDeviceIndex, SubDeviceCount>
     // Primarily used by the Metrics Library to communicate the actual Sub Device Index being used in queries.
     std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>> mapOfSubDeviceIndices;
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
+    std::mutex peerAccessQueryMutex;
 
   protected:
     static bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2);
-    void parseCcsCountLimitations();
+    bool parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();
     void restoreCcsMode();
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
+    bool oneApiPvcWaEnv = true;
+    bool devicePermissionError = false;
 
     DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -14,13 +15,18 @@
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
+
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 
 using namespace NEO;
 
@@ -58,7 +64,6 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
@@ -97,59 +102,25 @@ LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdI
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
+            allocationType == AllocationType::timestampPacketTagBuffer ||
+            allocationType == AllocationType::hostFunction) {
             EXPECT_TRUE(preferredAllocationMethod.has_value());
             EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
         }
     }
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheableThenTrueIsReturnedForCommandBuffer) {
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;
-    EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+    EXPECT_TRUE(productHelper->overrideAllocationCpuCacheable(allocationData));
 
     allocationData.type = AllocationType::buffer;
-    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
-}
-
-LNLTEST_F(LnlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideCacheable) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(1);
-
-    AllocationData allocationData{};
-    allocationData.type = AllocationType::externalHostPtr;
-    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
-
-    debugManager.flags.AllowDcFlush.set(0);
-
-    for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
-        auto allocationType = static_cast<AllocationType>(i);
-        allocationData.type = allocationType;
-        switch (allocationData.type) {
-        case AllocationType::commandBuffer:
-            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
-            break;
-        case AllocationType::externalHostPtr:
-        case AllocationType::bufferHostMemory:
-        case AllocationType::mapAllocation:
-        case AllocationType::svmCpu:
-        case AllocationType::svmZeroCopy:
-        case AllocationType::internalHostMemory:
-        case AllocationType::printfSurface:
-            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
-            EXPECT_TRUE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
-            break;
-        default:
-            EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
-            EXPECT_FALSE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
-            break;
-        }
-    }
+    EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnCorrectValue) {
@@ -165,6 +136,11 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+    EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+}
+
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }

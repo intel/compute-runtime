@@ -9,15 +9,15 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -26,6 +26,7 @@ using BarrierTest = Test<CommandEnqueueFixture>;
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
     auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
@@ -69,6 +70,7 @@ HWTEST_F(BarrierTest, GivenCsrTaskLevelGreaterThenCmdqTaskLevelWhenEnqueingBarri
     auto pCmdQ = this->pCmdQ;
     auto pCmdBuffer = this->pCmdBuffer;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
 
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
@@ -128,7 +130,7 @@ HWTEST_F(BarrierTest, GivenGpuHangAndBlockingCallWhenEnqueingBarrierWithWaitList
     DebugManagerStateRestore stateRestore;
     debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
-    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
@@ -273,6 +275,7 @@ HWTEST_F(BarrierTest, givenBlockedCommandQueueAndEnqueueBarrierWithWaitlistRetur
     EXPECT_EQ(pEvent->peekTaskCount(), CompletionStamp::notReady);
     event2.setStatus(CL_COMPLETE);
     clReleaseEvent(event);
+    pCmdQ->finish(false);
 }
 
 HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEventIsSignaledThenNewCommandStreamIsNotAcquired) {
@@ -316,4 +319,5 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_GE(commandStream.getMaxAvailableSpace(), commandStream.getMaxAvailableSpace());
 
     clReleaseEvent(event);
+    pCmdQ->finish(false);
 }

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstdint>
 #include <memory>
@@ -41,13 +41,17 @@ enum class AILEnumeration : uint32_t {
     disableHostPtrTracking,
     enableLegacyPlatformName,
     disableDirectSubmission,
+    disableDirectSubmissionBcs,
+    directSubmissionControllerConfig,
     handleDivergentBarriers,
     disableBindlessAddressing,
+    forceLocalOnlyForDeviceUSM,
+    customWmtpDataSize,
 };
 
 class AILConfiguration;
 using AILConfigurationCreateFunctionType = std::unique_ptr<AILConfiguration> (*)();
-extern AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
+extern AILConfigurationCreateFunctionType ailConfigurationFactory[NEO::maxProductEnumValue];
 
 class AILConfiguration {
   public:

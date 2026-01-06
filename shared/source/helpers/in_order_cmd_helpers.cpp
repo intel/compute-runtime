@@ -14,7 +14,6 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
-#include <string.h>
 #include <vector>
 
 namespace NEO {
@@ -73,7 +72,9 @@ InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *ho
         deviceAddress = deviceCounterNode->getGpuAddress();
     }
 
-    isTbx = device.getDefaultEngine().commandStreamReceiver->isTbxMode();
+    auto csr = device.getDefaultEngine().commandStreamReceiver;
+    isTbx = csr->isTbxMode();
+    immWritePostSyncWriteOffset = std::max(csr->getImmWritePostSyncWriteOffset(), static_cast<uint32_t>(sizeof(uint64_t)));
 
     reset();
 }
@@ -98,20 +99,28 @@ void InOrderExecInfo::uploadToTbx(TagNodeBase &node, size_t size) {
 }
 
 void InOrderExecInfo::initializeAllocationsFromHost() {
+    const uint64_t initialValue = getInitialCounterValue();
+
     if (deviceCounterNode) {
-        const size_t deviceAllocationWriteSize = sizeof(uint64_t) * numDevicePartitionsToWait;
-        memset(ptrOffset(deviceCounterNode->getCpuBase(), allocationOffset), 0, deviceAllocationWriteSize);
+        for (uint32_t i = 0; i < numDevicePartitionsToWait; i++) {
+            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(deviceCounterNode->getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
+            *ptr = initialValue;
+        }
 
         if (isTbx) {
+            const size_t deviceAllocationWriteSize = alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * numDevicePartitionsToWait;
             uploadToTbx(*deviceCounterNode, deviceAllocationWriteSize);
         }
     }
 
     if (hostCounterNode) {
-        const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
-        memset(ptrOffset(hostCounterNode->getCpuBase(), allocationOffset), 0, hostAllocationWriteSize);
+        for (uint32_t i = 0; i < numHostPartitionsToWait; i++) {
+            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(hostCounterNode->getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
+            *ptr = initialValue;
+        }
 
         if (isTbx) {
+            const size_t hostAllocationWriteSize = alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * numHostPartitionsToWait;
             uploadToTbx(*hostCounterNode, hostAllocationWriteSize);
         }
     }
@@ -120,9 +129,15 @@ void InOrderExecInfo::initializeAllocationsFromHost() {
 void InOrderExecInfo::reset() {
     resetCounterValue();
     regularCmdListSubmissionCounter = 0;
+    aggregatedEventUsageCounter = 0;
     allocationOffset = 0;
 
     initializeAllocationsFromHost();
+}
+
+void InOrderExecInfo::resetCounterValue() {
+    counterValue = getInitialCounterValue();
+    lastWaitedCounterValue[allocationOffset != 0].store(getInitialCounterValue());
 }
 
 NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
@@ -143,19 +158,20 @@ uint64_t InOrderExecInfo::getBaseHostGpuAddress() const {
     return hostCounterNode->getGpuAddress();
 }
 
-void InOrderExecInfo::pushTempTimestampNode(TagNodeBase *node, uint64_t value) {
+void InOrderExecInfo::pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset) {
     std::unique_lock<std::mutex> lock(mutex);
 
-    tempTimestampNodes.emplace_back(node, value);
+    tempTimestampNodes.emplace_back(node, std::make_pair(value, allocationOffset));
 }
 
 void InOrderExecInfo::releaseNotUsedTempTimestampNodes(bool forceReturn) {
     std::unique_lock<std::mutex> lock(mutex);
 
-    std::vector<std::pair<TagNodeBase *, uint64_t>> tempVector;
+    std::vector<std::pair<TagNodeBase *, CounterAndOffsetPairT>> tempVector;
 
     for (auto &node : tempTimestampNodes) {
-        if (forceReturn || lastWaitedCounterValue >= node.second) {
+        const auto &counterAndOffsetPair = node.second;
+        if (forceReturn || isCounterAlreadyDone(counterAndOffsetPair.first, counterAndOffsetPair.second)) {
             node.first->returnTag();
         } else {
             tempVector.push_back(node);
@@ -163,6 +179,24 @@ void InOrderExecInfo::releaseNotUsedTempTimestampNodes(bool forceReturn) {
     }
 
     tempTimestampNodes.swap(tempVector);
+}
+
+uint64_t InOrderExecInfo::getHostNodeGpuAddress() const {
+    if (hostCounterNode) {
+        return hostCounterNode->getGpuAddress() + allocationOffset;
+    }
+    return 0;
+}
+
+uint64_t InOrderExecInfo::getDeviceNodeGpuAddress() const {
+    if (deviceCounterNode) {
+        return deviceCounterNode->getGpuAddress() + allocationOffset;
+    }
+    return 0;
+}
+
+uint64_t InOrderExecInfo::getInitialCounterValue() const {
+    return debugManager.flags.InitialCounterBasedEventValue.getIfNotDefault<uint64_t>(0);
 }
 
 } // namespace NEO

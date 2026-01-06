@@ -38,6 +38,7 @@ void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaul
 
 void RootDeviceEnvironment::initApiGfxCoreHelper() {
 }
+const char *apiName = "SHARED";
 
 } // namespace NEO
 
@@ -45,7 +46,7 @@ using namespace NEO;
 void cleanTestHelpers() {}
 
 void applyWorkarounds() {
-    const std::array<ConstStringRef, 11> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.spv",
+    const std::array<ConstStringRef, 12> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.spv",
                                                                   "copy_buffer_rect.builtin_kernel.spv",
                                                                   "fill_buffer.builtin_kernel.spv",
                                                                   "copy_buffer_to_image3d.builtin_kernel.spv",
@@ -55,7 +56,8 @@ void applyWorkarounds() {
                                                                   "copy_image_to_image3d.builtin_kernel.spv",
                                                                   "fill_image1d.builtin_kernel.spv",
                                                                   "fill_image2d.builtin_kernel.spv",
-                                                                  "fill_image3d.builtin_kernel.spv"};
+                                                                  "fill_image3d.builtin_kernel.spv",
+                                                                  "fill_image1d_buffer.builtin_kernel.spv"};
     auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
     for (auto builtinIntermediateName : builtinIntermediateNames) {
         std::string resource = "__mock_spirv_resource";

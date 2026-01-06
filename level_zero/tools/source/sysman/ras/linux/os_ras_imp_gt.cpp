@@ -7,9 +7,14 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include <algorithm>
+#include <linux/perf_event.h>
 
 namespace L0 {
 
@@ -53,7 +58,7 @@ static const std::map<zes_ras_error_category_exp_t, std::vector<std::string>> ca
 
 static void closeFd(int64_t &fd) {
     if (fd != -1) {
-        close(static_cast<int>(fd));
+        NEO::SysCalls::close(static_cast<int>(fd));
         fd = -1;
     }
 }
@@ -78,7 +83,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Symlink from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Symlink from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     const auto loc = bdfDir.find_last_of('/');
@@ -92,7 +97,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     result = pFsAccess->listDirectory(sysfsNode, listOfEvents);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directories from %s and returning error:0x%x \n", __FUNCTION__, sysfsNode.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directories from %s and returning error:0x%x \n", __FUNCTION__, sysfsNode.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return ZE_RESULT_SUCCESS;
@@ -256,7 +261,7 @@ ze_result_t LinuxRasSourceGt::getPmuConfig(
     std::string &pmuConfig) {
     auto findErrorInList = std::find(listOfEvents.begin(), listOfEvents.end(), errorFileToGetConfig);
     if (findErrorInList == listOfEvents.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find %s from list of events and returning error:0x%x \n", __FUNCTION__, errorFileToGetConfig.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find %s from list of events and returning error:0x%x \n", __FUNCTION__, errorFileToGetConfig.c_str(), ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return pFsAccess->read(eventDirectory + "/" + errorFileToGetConfig, pmuConfig);
@@ -325,7 +330,7 @@ void LinuxRasSourceGt::initRasErrors(ze_bool_t clear) {
             if (result != ZE_RESULT_SUCCESS) {
                 continue;
             }
-            uint64_t config = convertHexToUint64(pmuConfig);
+            uint64_t config = convertHexToUint64(std::move(pmuConfig));
             if (groupFd == -1) {
                 groupFd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP); // To get file descriptor of the group leader
                 if (groupFd < 0) {

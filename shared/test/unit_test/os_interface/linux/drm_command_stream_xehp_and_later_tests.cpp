@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -36,7 +37,6 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         debugManager.flags.CreateMultipleSubDevices.set(2u);
         debugManager.flags.EnableImplicitScaling.set(1);
         debugManager.flags.EnableForcePin.set(false);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
 
         executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();
@@ -85,9 +85,32 @@ struct DrmCommandStreamMultiTileMemExecFixture {
 
 using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
-    auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(testCsr);
+struct DrmCommandStreamMultiTileMemExecTestWithCsr : public DrmCommandStreamMultiTileMemExecTest {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<TestedDrmCommandStreamReceiver<FamilyType>>();
+
+        DrmCommandStreamMultiTileMemExecTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        DrmCommandStreamMultiTileMemExecTest::TearDown();
+    }
+};
+
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTestWithCsr, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
+
+    auto &productHelper = device->getProductHelper();
+    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+        GTEST_SKIP();
+    }
+
+    auto testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(2u, testCsr->activePartitions);
 
     TestedBufferObject bo(0, mock, 128);
@@ -129,7 +152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     EXPECT_NE(0u, postSyncOffset);
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,19 @@
 
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
+
+namespace NEO {
+class ClDevice;
+class Context;
+class GraphicsAllocation;
+} // namespace NEO
 
 using namespace NEO;
 
@@ -39,7 +41,7 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
         enqueueWriteImageCalled++;
         return CL_SUCCESS;
     }
-    cl_int finish() override {
+    cl_int finish(bool resolvePendingL3Flushes) override {
         finishCalled++;
         return CL_SUCCESS;
     }
@@ -52,9 +54,9 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
 class ImageUnmapTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
-        image.reset(ImageHelper<ImageReadOnly<Image3dDefaults>>::create(context.get()));
+        image.reset(ImageHelperUlt<ImageReadOnly<Image3dDefaults>>::create(context.get()));
     }
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;

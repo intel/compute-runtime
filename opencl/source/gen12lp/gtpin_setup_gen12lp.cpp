@@ -24,11 +24,10 @@ bool GTPinGfxCoreHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo 
     if (debugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
         canUseSharedAllocation = !!debugManager.flags.GTPinAllocateBufferInSharedMemory.get();
     }
-    canUseSharedAllocation &= hwInfo.capabilityTable.ftrSvm;
     return canUseSharedAllocation;
 }
 
-extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 typedef Gen12LpFamily Family;
 static const auto gfxFamily = IGFX_GEN12LP_CORE;

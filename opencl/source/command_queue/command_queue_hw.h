@@ -6,19 +6,21 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/device/device.h"
+#include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/program/printf_handler.h"
 
@@ -27,8 +29,10 @@
 namespace NEO {
 
 class EventBuilder;
+class Kernel;
 struct EnqueueProperties;
 struct KernelOperation;
+struct MultiDispatchInfo;
 
 template <typename GfxFamily>
 class CommandQueueHw : public CommandQueue {
@@ -365,8 +369,10 @@ class CommandQueueHw : public CommandQueue {
                                   const cl_event *eventWaitList,
                                   cl_event *event) override;
 
-    cl_int finish() override;
+    cl_int finish(bool resolvePendingL3Flushes) override;
     cl_int flush() override;
+
+    void programPendingL3Flushes(CommandStreamReceiver &csr, bool &waitForTaskCountRequired, bool resolvePendingL3Flushes) override;
 
     template <uint32_t enqueueType>
     cl_int enqueueHandler(Surface **surfacesForResidency,
@@ -442,19 +448,19 @@ class CommandQueueHw : public CommandQueue {
                         TagNodeBase *multiRootDeviceSyncNode,
                         CsrDependencyContainer *csrDependencies);
 
-    CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
-                                                size_t surfaceCount,
-                                                LinearStream *commandStream,
-                                                size_t commandStreamStart,
-                                                bool &blocking,
-                                                const EnqueueProperties &enqueueProperties,
-                                                TimestampPacketDependencies &timestampPacketDependencies,
-                                                EventsRequest &eventsRequest,
-                                                EventBuilder &eventBuilder,
-                                                TaskCountType taskLevel,
-                                                CsrDependencies &csrDeps,
-                                                CommandStreamReceiver *bcsCsr,
-                                                bool hasRelaxedOrderingDependencies);
+    MOCKABLE_VIRTUAL CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
+                                                                 size_t surfaceCount,
+                                                                 LinearStream *commandStream,
+                                                                 size_t commandStreamStart,
+                                                                 bool &blocking,
+                                                                 const EnqueueProperties &enqueueProperties,
+                                                                 TimestampPacketDependencies &timestampPacketDependencies,
+                                                                 EventsRequest &eventsRequest,
+                                                                 EventBuilder &eventBuilder,
+                                                                 TaskCountType taskLevel,
+                                                                 CsrDependencies &csrDeps,
+                                                                 CommandStreamReceiver *bcsCsr,
+                                                                 bool hasRelaxedOrderingDependencies);
     void processDispatchForCacheFlush(Surface **surfaces,
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
@@ -480,7 +486,7 @@ class CommandQueueHw : public CommandQueue {
 
     bool isCacheFlushCommand(uint32_t commandType) const override;
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
+    bool waitForTimestamps(std::span<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
 
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
     MOCKABLE_VIRTUAL void processSignalMultiRootDeviceNode(LinearStream *commandStream,
@@ -555,12 +561,16 @@ class CommandQueueHw : public CommandQueue {
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
                                    TimestampPacketDependencies &timestampPacketDependencies,
-                                   bool relaxedOrderingEnabled);
+                                   bool relaxedOrderingEnabled,
+                                   bool blocking);
 
-    MOCKABLE_VIRTUAL bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies, bool containsCrossEngineDependency) const;
+    MOCKABLE_VIRTUAL bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies, bool containsCrossEngineDependency, bool textureCacheFlushRequired) const;
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
     bool relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const;
+    bool isFillOperation(cl_command_type commandType) const {
+        return (commandType == CL_COMMAND_FILL_BUFFER) || (commandType == CL_COMMAND_SVM_MEMFILL);
+    }
 };
 } // namespace NEO

@@ -21,6 +21,8 @@ struct HardwareInfo;
 struct KernelInfo;
 struct SurfaceFormatInfo;
 struct UnifiedSharingMemoryDescription;
+class MemoryManager;
+class SharingHandler;
 
 using ImageCreateFunc = Image *(*)(Context *context,
                                    const MemoryProperties &memoryProperties,
@@ -139,9 +141,6 @@ class Image : public MemObj {
                         size_t *paramValueSizeRet);
 
     virtual void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) = 0;
-    virtual void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) = 0;
-    virtual void setMediaSurfaceRotation(void *memory) = 0;
-    virtual void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) = 0;
 
     const cl_image_desc &getImageDesc() const;
     const cl_image_format &getImageFormat() const;
@@ -174,8 +173,8 @@ class Image : public MemObj {
     bool getIsDisplayable() const { return isDisplayable; }
     void setIsDisplayable(bool displayable) { this->isDisplayable = displayable; }
 
-    void setCubeFaceIndex(uint32_t index) { cubeFaceIndex = index; }
-    uint32_t getCubeFaceIndex() { return cubeFaceIndex; }
+    void setCubeFaceIndex(GmmCubeFace index) { cubeFaceIndex = index; }
+    GmmCubeFace getCubeFaceIndex() { return cubeFaceIndex; }
     void setMediaPlaneType(cl_uint type) { mediaPlaneType = type; }
     cl_uint getMediaPlaneType() const { return mediaPlaneType; }
     int peekBaseMipLevel() { return baseMipLevel; }
@@ -184,14 +183,14 @@ class Image : public MemObj {
     uint32_t peekMipCount() { return mipCount; }
     void setMipCount(uint32_t mipCountNew) { this->mipCount = mipCountNew; }
 
-    static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features);
+    static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
     static cl_int validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint32_t rootDeviceIndex);
     void setMcsSurfaceInfo(const McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
-    void setPlane(const GMM_YUV_PLANE_ENUM plane) { this->plane = plane; }
-    GMM_YUV_PLANE_ENUM getPlane() const { return this->plane; }
+    void setPlane(ImagePlane plane) { this->plane = plane; }
+    ImagePlane getPlane() const { return this->plane; }
     size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
     virtual void transformImage2dArrayTo3d(void *memory) = 0;
@@ -209,6 +208,7 @@ class Image : public MemObj {
 
     static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
     void setAs3DUavOrRtvImage(bool isUavOrRtv);
+    void setIsPackedFormat(bool isPackedFormat) { this->isPackedFormat = isPackedFormat; }
 
   protected:
     Image(Context *context,
@@ -242,13 +242,14 @@ class Image : public MemObj {
     size_t hostPtrRowPitch = 0;
     size_t hostPtrSlicePitch = 0;
     size_t imageCount = 0;
-    uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
+    GmmCubeFace cubeFaceIndex = gmmNoCubeMap;
     cl_uint mediaPlaneType = 0;
     SurfaceOffsets surfaceOffsets = {0};
     uint32_t baseMipLevel = 0;
     uint32_t mipCount = 1;
-    GMM_YUV_PLANE_ENUM plane = GMM_NO_PLANE;
+    ImagePlane plane = ImagePlane::noPlane;
     bool is3DUAVOrRTV = false;
+    bool isPackedFormat = false;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);
@@ -338,9 +339,6 @@ class ImageHw : public Image {
 
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex);
-    void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override;
-    void setMediaSurfaceRotation(void *memory) override;
-    void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) override;
     void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex);
     void appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void appendSurfaceStateExt(void *memory);

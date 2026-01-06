@@ -12,7 +12,6 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include <chrono>
-#include <time.h>
 
 namespace NEO {
 

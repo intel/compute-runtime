@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ void DebugApiLinuxFixture::setUp(NEO::HardwareInfo *hwInfo) {
     }
     NEO::DrmQueryTopologyData topologyData = {};
     mockDrm->systemInfoQueried = true;
-    mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+    mockDrm->queryTopology(*neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo(), topologyData);
     auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
     auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;
     for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {

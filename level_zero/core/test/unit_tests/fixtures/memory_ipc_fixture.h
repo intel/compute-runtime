@@ -1,27 +1,36 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include "gtest/gtest.h"
 
+using namespace NEO;
+
 namespace NEO {
 class MockDevice;
 class MemoryManagerMemHandleMock;
+class ExecutionEnvironment;
+class SVMAllocsManager;
 } // namespace NEO
 
 namespace L0 {
+struct Device;
+struct DriverHandle;
+
 namespace ult {
 
 struct DriverHandleGetFdMock : public L0::DriverHandleImp {
@@ -73,7 +82,7 @@ struct MemoryExportImportTest : public ::testing::Test {
 };
 
 struct DriverHandleGetMemHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer,
                          NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
@@ -122,7 +131,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 };
 
 struct DriverHandleGetWinHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
 
     uint64_t mockHandle = 57;
     std::pair<void *, uint64_t> allocationMap;
@@ -157,6 +166,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
     void SetUp() override;
 
     void TearDown() override {
+        driverHandle.reset(nullptr);
     }
     std::unique_ptr<DriverHandleGetWinHandleMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
@@ -208,8 +218,23 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
         return {};
     }
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
+        return selectAlignmentAndHeap(0ull, size, heap);
+    }
+    size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) override {
+
+        // Always default to HEAP STANDARD and page size 64Kb.
         *heap = HeapIndex::heapStandard;
-        return MemoryConstants::pageSize64k;
+        size_t pageSizeAlignment = MemoryConstants::pageSize64k;
+
+        // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+        if (requiredStartAddress != 0ull) {
+            auto rootDeviceIndex = 0u;
+            auto gfxPartition = getGfxPartition(rootDeviceIndex);
+            if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+                return pageSizeAlignment;
+            }
+        }
+        return pageSizeAlignment;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
@@ -225,9 +250,9 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
-    void unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return; };
-    void unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return; };
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) override { return false; };
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
@@ -339,8 +364,23 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
         return {};
     }
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
+        return selectAlignmentAndHeap(0ull, size, heap);
+    }
+    size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) override {
+
+        // Always default to HEAP STANDARD and page size 64Kb.
         *heap = HeapIndex::heapStandard;
-        return MemoryConstants::pageSize64k;
+        size_t pageSizeAlignment = MemoryConstants::pageSize64k;
+
+        // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+        if (requiredStartAddress != 0ull) {
+            auto rootDeviceIndex = 0u;
+            auto gfxPartition = getGfxPartition(rootDeviceIndex);
+            if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+                return pageSizeAlignment;
+            }
+        }
+        return pageSizeAlignment;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
@@ -356,9 +396,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
-    void unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return; };
-    void unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return; };
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) override { return false; };
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
@@ -399,6 +439,19 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextIpcMock> context;
+    DebugManagerStateRestore restorer;
+};
+
+struct MemoryGetIpcHandlePidfdTest : public ::testing::Test {
+    void SetUp() override;
+    void TearDown() override;
+
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    NEO::MemoryManager *currMemoryManager = nullptr;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextImp> context;
 };
 
 } // namespace ult

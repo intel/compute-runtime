@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,7 @@
 #include "zello_compile.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Multidev";
@@ -70,8 +68,9 @@ int main(int argc, char *argv[]) {
 
         ze_device_p2p_properties_t deviceP2PProperties = {ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES};
         for (uint32_t j = 0; j < deviceCount; j++) {
-            if (j == i)
+            if (j == i) {
                 continue;
+            }
             SUCCESS_OR_TERMINATE(zeDeviceGetP2PProperties(devices[i], devices[j], &deviceP2PProperties));
             ze_bool_t canAccessPeer = false;
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));
@@ -89,7 +88,7 @@ int main(int argc, char *argv[]) {
     kernel.resize(deviceCount);
 
     std::string buildLog;
-    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
+    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
 
@@ -221,8 +220,6 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList[i]));
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue[i]));
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;

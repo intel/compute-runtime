@@ -6,10 +6,12 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
 #include "level_zero/sysman/source/api/firmware/sysman_os_firmware.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
@@ -17,11 +19,14 @@ namespace Sysman {
 
 class FirmwareUtil;
 class SysFsAccessInterface;
+class LinuxSysmanImp;
+struct OsSysman;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
+    ze_result_t osFirmwareFlashExtended(void *pImage, uint32_t size);
     ze_result_t osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) override;
     ze_result_t osGetSecurityVersion(char *pVersion) override;
     ze_result_t osSetSecurityVersion() override;
@@ -32,6 +37,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
     ~LinuxFirmwareImp() override = default;
 
   protected:
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     std::string osFwType;

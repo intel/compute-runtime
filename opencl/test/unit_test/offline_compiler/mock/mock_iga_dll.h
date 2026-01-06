@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #define IGA_BUILDING_DLL
 #include "igad.h"
+
 #undef IGA_BUILDING_DLL
 
 #include <cstdint>

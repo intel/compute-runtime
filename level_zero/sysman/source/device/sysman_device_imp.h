@@ -13,18 +13,38 @@
 
 #include "level_zero/sysman/source/device/sysman_device.h"
 
-#include <unordered_map>
+namespace NEO {
+class ExecutionEnvironment;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
 struct OsSysman;
+class Ecc;
+class Events;
+class GlobalOperations;
+class Pci;
+struct DiagnosticsHandleContext;
+struct EngineHandleContext;
+struct FabricPortHandleContext;
+struct FanHandleContext;
+struct FirmwareHandleContext;
+struct FrequencyHandleContext;
+struct MemoryHandleContext;
+struct PerformanceHandleContext;
+struct PowerHandleContext;
+struct RasHandleContext;
+struct SchedulerHandleContext;
+struct StandbyHandleContext;
+struct TemperatureHandleContext;
+struct VfManagementHandleContext;
 
 struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 
     SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
+    SysmanDeviceImp();
     ~SysmanDeviceImp() override;
 
-    SysmanDeviceImp() = delete;
     ze_result_t init();
 
     OsSysman *pOsSysman = nullptr;
@@ -86,6 +106,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
     ze_result_t pciGetProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
     ze_result_t pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
+    ze_result_t pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
     ze_result_t pciGetStats(zes_pci_stats_t *pStats) override;
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) override;
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;

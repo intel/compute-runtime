@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace aub_stream {
 
 struct HardwareContext;
 struct CreateHardwareContext2Params;
+struct HardwareContextParamsHeader;
 
 struct AubManagerOptions {
     uint32_t version{};
@@ -30,7 +31,7 @@ struct AubManagerOptions {
     uint64_t gpuAddressSpace{};
     SharedMemoryInfo sharedMemoryInfo{};
     bool throwOnError{};
-    uint64_t dataStolenMemorySize{4 * 1024 * 1024};
+    uint64_t dataStolenMemorySize{};
 };
 
 class AubManager {
@@ -73,6 +74,10 @@ class AubManager {
 
     virtual bool releaseHardwareContext(HardwareContext *context) { return false; };
     virtual HardwareContext *createHardwareContext2(const CreateHardwareContext2Params &params, uint32_t device, uint32_t engine, uint32_t flags) { return nullptr; };
+
+    virtual void setCCSMode(uint32_t ccsCount) {}
+    virtual void closeSocket(void) {}
+    virtual HardwareContext *createHardwareContext3(const HardwareContextParamsHeader *params) { return nullptr; }
 };
 
 } // namespace aub_stream

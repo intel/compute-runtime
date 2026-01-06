@@ -185,7 +185,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, giventhreadArbitrationPoli
     };
 
     getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(false, flags.numGrfRequired,
-                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled);
+                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
 
     flushTask(true);
     findCmd(true); // first time

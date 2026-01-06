@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,10 +38,6 @@ inline bool ClGfxCoreHelperHw<GfxFamily>::getQueueFamilyName(std::string &name, 
     return false;
 }
 
-template <typename GfxFamily>
-inline bool ClGfxCoreHelperHw<GfxFamily>::preferBlitterForLocalToLocalTransfers() const {
-    return false;
-}
 template <typename GfxFamily>
 bool ClGfxCoreHelperHw<GfxFamily>::isSupportedKernelThreadArbitrationPolicy() const { return true; }
 

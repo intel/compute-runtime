@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
@@ -32,6 +33,13 @@ uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(int32_
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired() {
     return true;
+}
+
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::skipStatePrefetch(GenCmdList::iterator &iter) {
+    while (genCmdCast<typename GfxFamily::STATE_PREFETCH *>(*iter)) {
+        iter++;
+    }
 }
 
 } // namespace NEO

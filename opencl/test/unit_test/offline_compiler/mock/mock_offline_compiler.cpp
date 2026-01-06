@@ -15,7 +15,7 @@ namespace NEO {
 
 MockOfflineCompiler::MockOfflineCompiler() : OfflineCompiler() {
     uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-    uniqueHelper->setAllCallBase(true);
+    uniqueHelper->setAllCallBase(false);
     argHelper = uniqueHelper.get();
 
     auto uniqueFclFacadeMock = std::make_unique<MockOclocFclFacade>(argHelper);
@@ -80,12 +80,16 @@ void MockOfflineCompiler::clearLog() {
     argHelper = uniqueHelper.get();
 }
 
-void MockOfflineCompiler::createDir(const std::string &path) {
+int MockOfflineCompiler::createDir(const std::string &path) {
     if (interceptCreatedDirs) {
         createdDirs.push_back(path);
+        return OCLOC_SUCCESS;
     } else {
-        OfflineCompiler::createDir(path);
+        return OfflineCompiler::createDir(path);
     }
 }
-
+void MockOfflineCompiler::createTempSourceFileForDebug() {
+    OfflineCompiler::createTempSourceFileForDebug();
+    createTempSourceFileForDebugCalled++;
+}
 } // namespace NEO

@@ -26,6 +26,9 @@
     case IGFX_XE3_CORE:                                    \
         XE3_TYPED_TEST(methodName)                         \
         break;                                             \
+    case IGFX_XE3P_CORE:                                   \
+        XE3P_TYPED_TEST(methodName)                        \
+        break;                                             \
     default:                                               \
         ASSERT_TRUE((false && "Unknown hardware family")); \
         break;                                             \
@@ -49,6 +52,9 @@
             break;                                             \
         case IGFX_XE3_CORE:                                    \
             supported = XE3_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        case IGFX_XE3P_CORE:                                   \
+            supported = XE3P_SUPPORTED_TEST(cmdSetBase);       \
             break;                                             \
         default:                                               \
             ASSERT_TRUE((false && "Unknown hardware family")); \

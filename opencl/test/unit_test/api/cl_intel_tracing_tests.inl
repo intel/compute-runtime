@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1217,6 +1217,9 @@ struct IntelClLinkProgramTracingTest : public IntelTracingTest, PlatformFixture 
 };
 
 TEST_F(IntelClLinkProgramTracingTest, givenLinkProgramCallTracingWhenInvokingCallbackThenPointersFromCallAndCallbackPointToTheSameAddress) {
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
+
     call();
     EXPECT_EQ(1u, enterCount);
     EXPECT_EQ(1u, exitCount);

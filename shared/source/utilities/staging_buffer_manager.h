@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -31,7 +32,7 @@ using ChunkTransferBufferFunc = std::function<int32_t(void *, size_t, size_t)>;
 class StagingBuffer : NEO::NonCopyableClass {
   public:
     StagingBuffer(void *baseAddress, size_t size);
-    StagingBuffer(StagingBuffer &&other);
+    StagingBuffer(StagingBuffer &&other) noexcept;
     StagingBuffer &operator=(StagingBuffer &&other) noexcept = delete;
 
     void *getBaseAddress() const {
@@ -59,16 +60,21 @@ struct StagingBufferTracker {
     void freeChunk() const;
 };
 
-struct RowPitchData {
+struct ImageMetadata {
+    size_t bytesPerPixel = 0;
     size_t rowSize = 0;
     size_t rowPitch = 0;
+    size_t slicePitch = 0;
+
     size_t rowsInChunk = 0;
+    size_t slicesInChunk = 0;
 };
 
 struct UserData {
     const void *ptr = nullptr;
     size_t size = 0;
-    RowPitchData rowPitchData{};
+    ImageMetadata imageMetadata{};
+    bool isImageOperation = false;
 };
 
 struct StagingTransferStatus {
@@ -84,11 +90,11 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
     StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable);
     ~StagingBufferManager();
 
-    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId);
+    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
-    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
-    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t bytesPerPixel, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
+    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead);
+    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
     StagingTransferStatus performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead);
 
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
@@ -96,6 +102,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     bool registerHostPtr(const void *ptr);
     void resetDetectedPtrs();
+    void freeAllocations();
 
   private:
     std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);
@@ -104,13 +111,17 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     template <class Func, class... Args>
     StagingTransferStatus performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
+    StagingTransferStatus performImageSlicesTransfer(StagingQueue &stagingQueue, size_t &submittedChunks, const void *ptr, auto sliceOffset,
+                                                     size_t baseRowOffset, size_t rowsToCopy, size_t origin[4], size_t region[3], ImageMetadata &imageMetadata,
+                                                     ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
 
     WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const;
     WaitStatus drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const;
+    void copyImageToHost(void *dst, const void *stagingBuffer, size_t size, const ImageMetadata &imageData) const;
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
-    size_t chunkSize = MemoryConstants::pageSize2M;
+    size_t chunkSize = 0;
     std::mutex mtx;
     std::vector<StagingBuffer> stagingBuffers;
     std::vector<StagingBufferTracker> trackers;
@@ -124,5 +135,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<StagingBufferManager>);
+
+size_t getDefaultStagingBufferSize();
 
 } // namespace NEO

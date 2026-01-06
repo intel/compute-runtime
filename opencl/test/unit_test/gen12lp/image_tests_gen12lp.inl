@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ typedef ::testing::Test gen12LpImageTests;
 GEN12LPTEST_F(gen12LpImageTests, WhenAppendingSurfaceStateParamsThenSurfaceStateDoesNotChange) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(&context));
     auto surfaceStateBefore = FamilyType::cmdInitRenderSurfaceState;
     auto surfaceStateAfter = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -48,7 +48,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenClearColorParamete
     EXPECT_EQ(0u, surfaceState.getClearColorAddress());
     EXPECT_EQ(0u, surfaceState.getClearColorAddressHigh());
 
-    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
+    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm);
@@ -98,7 +98,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenCanonicalAddresFor
     EXPECT_THROW(surfaceState.setClearColorAddressHigh(static_cast<uint32_t>(canonicalAddress >> 32)), std::exception);
     surfaceState.setSurfaceBaseAddress(canonicalAddress);
 
-    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
+    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     EXPECT_NO_THROW(EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm));
@@ -119,7 +119,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUn
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -147,7 +147,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenCompressionThenSurfaceStateParamsAreSetFor
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
@@ -162,7 +162,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenNoCompressionWhenProgramingImageSurfaceSta
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     surfaceState.setMemoryCompressionEnable(true);
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -179,7 +179,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionThenSurfaceStateParamsAreS
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;

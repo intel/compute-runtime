@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,13 +77,11 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
         args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
-    } else {
-        if (args.dsh) {
-            args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
-            args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
-            args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
-            args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
-        }
+    } else if (args.dsh) {
+        args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
+        args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
     }
 
     if (args.ssh) {
@@ -98,7 +96,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
         auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper);
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper, args.gmmHelper->getHardwareInfo());
 
         args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getMOCS(resourceUsage));
     }
@@ -130,8 +128,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 }
 
 template <typename GfxFamily>
-typename GfxFamily::STATE_BASE_ADDRESS *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
-    return cmdStream.getSpaceForCmd<typename GfxFamily::STATE_BASE_ADDRESS>();
+typename StateBaseAddressTypeHelper<GfxFamily>::type *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
+    return cmdStream.getSpaceForCmd<typename StateBaseAddressTypeHelper<GfxFamily>::type>();
 }
 
 template <typename GfxFamily>

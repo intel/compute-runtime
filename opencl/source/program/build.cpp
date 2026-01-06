@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
@@ -22,13 +19,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/cl_validators.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
-
-#include <cstring>
-#include <iterator>
-#include <sstream>
 
 namespace NEO {
 
@@ -76,11 +67,11 @@ cl_int Program::build(
                 break;
             }
 
-            disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
             if (createdFrom != CreatedFrom::source) {
-                inputArgs.srcType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
+                inputArgs.srcType = (intermediateRepresentation != IGC::CodeType::invalid)
+                                        ? intermediateRepresentation
+                                        : (isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc);
                 inputArgs.src = ArrayRef<const char>(irBinary.get(), irBinarySize);
             } else {
                 inputArgs.src = ArrayRef<const char>(sourceCode.c_str(), sourceCode.size());
@@ -95,6 +86,7 @@ cl_int Program::build(
                                                                       : defaultClDevice->peekCompilerExtensions();
 
             appendAdditionalExtensions(extensions, options, internalOptions);
+            removeNotSupportedExtensions(extensions, options, internalOptions);
             CompilerOptions::concatenateAppend(internalOptions, extensions);
 
             auto ailHelper = defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper();
@@ -104,13 +96,6 @@ cl_int Program::build(
 
             if (!this->getIsBuiltIn() && debugManager.flags.InjectInternalBuildOptions.get() != "unk") {
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());
-            }
-
-            if (nullptr != this->getContextPtr()) {
-                if (this->getContext().checkIfContextIsNonZebin()) {
-                    const auto &rootDevice = defaultDevice.getRootDevice();
-                    rootDevice->getCompilerInterface()->addOptionDisableZebin(options, internalOptions);
-                }
             }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
@@ -155,12 +140,12 @@ cl_int Program::build(
         retVal = processGenBinaries(deviceVector, phaseReached);
 
         auto skipLastExplicitArg = isGTPinInitialized;
-        auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
+        auto containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
         auto isUserKernel = !isBuiltIn;
 
-        auto failBuildProgram = containsStatefulAccess &&
+        auto failBuildProgram = containsBufferStatefulAccess &&
                                 isUserKernel &&
-                                AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getRootDeviceEnvironment()) &&
+                                AddressingModeHelper::failBuildProgramWithBufferStatefulAccess(clDevices[0]->getRootDeviceEnvironment()) &&
                                 isGeneratedByIgc;
 
         if (failBuildProgram) {

@@ -18,7 +18,9 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/metrics/linux/os_metric_ip_sampling_imp_linux.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 namespace NEO {
@@ -186,6 +188,23 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsWhenStar
     });
 
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
+}
+
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsThenClampingNotifyEveryNReportsReturnsCorrectValue, IsPVC) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == I915_PERF_IOCTL_ENABLE) {
+            return -1;
+        }
+        return 0;
+    });
+
+    auto linuxIface = static_cast<MetricIpSamplingLinuxImp *>(metricIpSamplingOsInterface.get());
+
+    EXPECT_EQ(0u, linuxIface->clampNReports(0));
+    EXPECT_EQ(1u, linuxIface->clampNReports(1));
+
+    auto reqBufSize = metricIpSamplingOsInterface->getRequiredBufferSize(std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(reqBufSize, linuxIface->clampNReports(std::numeric_limits<uint32_t>::max()));
 }
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenPerfOpenEuStallStreamWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {

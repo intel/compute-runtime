@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,15 +15,15 @@ class VariableBackup {
         oldValue = *ptr;
     }
     VariableBackup(T *ptr, T &&newValue) : pValue(ptr) {
-        oldValue = *ptr;
-        *pValue = newValue;
+        oldValue = std::move(*ptr);
+        *pValue = std::move(newValue);
     }
     VariableBackup(T *ptr, T &newValue) : pValue(ptr) {
         oldValue = *ptr;
         *pValue = newValue;
     }
     ~VariableBackup() {
-        *pValue = oldValue;
+        *pValue = std::move(oldValue);
     }
     void operator=(const T &val) {
         *pValue = val;

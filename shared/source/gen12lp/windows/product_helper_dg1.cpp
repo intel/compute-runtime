@@ -14,12 +14,18 @@ constexpr static auto gfxProduct = IGFX_DG1;
 
 #include "shared/source/gen12lp/dg1/os_agnostic_product_helper_dg1.inl"
 #include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
+#include "shared/source/os_interface/windows/product_helper_before_xe2_wddm.inl"
 
 namespace NEO {
 
 template <>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = false;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
+    return 0u;
 }
 
 template class ProductHelperHw<gfxProduct>;

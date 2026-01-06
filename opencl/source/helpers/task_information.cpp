@@ -91,22 +91,14 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
 
     gtpinNotifyPreFlushTask(&commandQueue);
 
-    completionStamp = commandQueue.getHeaplessStateInitEnabled() ? commandStreamReceiver.flushTaskStateless(queueCommandStream,
-                                                                                                            offset,
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                                                            taskLevel,
-                                                                                                            dispatchFlags,
-                                                                                                            commandQueue.getDevice())
-                                                                 : commandStreamReceiver.flushTask(queueCommandStream,
-                                                                                                   offset,
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                                                   taskLevel,
-                                                                                                   dispatchFlags,
-                                                                                                   commandQueue.getDevice());
+    completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
+                                                      offset,
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                                                      taskLevel,
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
 
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::dependencyResolveOnGpu);
 
@@ -199,7 +191,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     DispatchFlags dispatchFlags(
         nullptr,                                                                     // barrierTimestampPacketNodes
-        {false, kernel->isVmeKernel()},                                              // pipelineSelectArgs
+        {false},                                                                     // pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                // flushStampReference
         commandQueue.getThrottle(),                                                  // throttle
         preemptionMode,                                                              // preemptionMode
@@ -263,22 +255,14 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         }
     }
 
-    completionStamp = commandQueue.getHeaplessStateInitEnabled() ? commandStreamReceiver.flushTaskStateless(*kernelOperation->commandStream,
-                                                                                                            0,
-                                                                                                            dsh,
-                                                                                                            ioh,
-                                                                                                            ssh,
-                                                                                                            taskLevel,
-                                                                                                            dispatchFlags,
-                                                                                                            commandQueue.getDevice())
-                                                                 : commandStreamReceiver.flushTask(*kernelOperation->commandStream,
-                                                                                                   0,
-                                                                                                   dsh,
-                                                                                                   ioh,
-                                                                                                   ssh,
-                                                                                                   taskLevel,
-                                                                                                   dispatchFlags,
-                                                                                                   commandQueue.getDevice());
+    completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
+                                                      0,
+                                                      dsh,
+                                                      ioh,
+                                                      ssh,
+                                                      taskLevel,
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
 
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
@@ -436,22 +420,14 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
 
     gtpinNotifyPreFlushTask(&commandQueue);
 
-    completionStamp = commandQueue.getHeaplessStateInitEnabled() ? commandStreamReceiver.flushTaskStateless(*kernelOperation->commandStream,
-                                                                                                            0,
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                                                                            &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                                                            taskLevel,
-                                                                                                            dispatchFlags,
-                                                                                                            commandQueue.getDevice())
-                                                                 : commandStreamReceiver.flushTask(*kernelOperation->commandStream,
-                                                                                                   0,
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                                                                   &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                                                   taskLevel,
-                                                                                                   dispatchFlags,
-                                                                                                   commandQueue.getDevice());
+    completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
+                                                      0,
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                                                      taskLevel,
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
 
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();

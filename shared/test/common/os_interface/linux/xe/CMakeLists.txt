@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,8 @@ set(neo_libult_common_SRCS_LIB_ULT_LINUX_XE
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_drm_xe.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_drm_xe_definitions.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/xe_config_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_drm_xe_perf.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_drm_xe_perf.h
 )
 if(UNIX)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
     auto pDrm = osInterface->getDriverModel()->as<NEO::Drm>();
     std::optional<std::string> rootPciPath = NEO::getPciLinkPath(pDrm->getFileDescriptor());
     if (!rootPciPath.has_value()) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PCI Path not found%s\n", "");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PCI Path not found%s\n", "");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -125,7 +125,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     uint32_t physicalSubDeviceId = deviceImp->getPhysicalSubDeviceId();
 
-    // Remove ports which donot belong to this device
+    // Remove ports which do not belong to this device
     for (auto iter = iafPorts.begin(); iter != iafPorts.end();) {
         IafPort &port = *iter;
         if (port.portId.attachId != physicalSubDeviceId) {
@@ -140,10 +140,10 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
         FabricPortConnection connection = {};
         ze_result_t result = getConnection(iafPort, connection);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "failure observed for IafPort{0x%x, 0x%x, 0x%x}: 0x%x\n",
-                                  iafPort.portId.fabricId, iafPort.portId.attachId, iafPort.portId.portNumber,
-                                  result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "failure observed for IafPort{0x%x, 0x%x, 0x%x}: 0x%x\n",
+                         iafPort.portId.fabricId, iafPort.portId.attachId, iafPort.portId.portNumber,
+                         result);
             continue;
         }
         connections.push_back(connection);
@@ -154,10 +154,10 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
         std::vector<uint8_t> ports = {};
         if (ZE_RESULT_SUCCESS != pIafNlApi->subdevicePropertiesGet(iafPorts[0].portId.fabricId, physicalSubDeviceId, guid, ports)) {
             connections.clear();
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "failure during fabric port guid reading {0x%x, 0x%x, 0x%x}: result: 0x%x subdeviceId:%d\n",
-                                  iafPorts[0].portId.fabricId, iafPorts[0].portId.attachId, iafPorts[0].portId.portNumber,
-                                  result, physicalSubDeviceId);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "failure during fabric port guid reading {0x%x, 0x%x, 0x%x}: result: 0x%x subdeviceId:%d\n",
+                         iafPorts[0].portId.fabricId, iafPorts[0].portId.attachId, iafPorts[0].portId.portNumber,
+                         result, physicalSubDeviceId);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
@@ -170,11 +170,11 @@ ze_result_t FabricSubDeviceIaf::getConnection(IafPort &port, FabricPortConnectio
     IafPortState iafPortState = {};
     ze_result_t result = pIafNlApi->fPortStatusQuery(port.portId, iafPortState);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fPortStatusQuery Unsuccessful: %s\n", result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fPortStatusQuery Unsuccessful: %s\n", result);
         return result;
     }
     if (iafPortState.healthStatus != IAF_FPORT_HEALTH_HEALTHY) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "IAF PORT not Healthy%s\n", "");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "IAF PORT not Healthy%s\n", "");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

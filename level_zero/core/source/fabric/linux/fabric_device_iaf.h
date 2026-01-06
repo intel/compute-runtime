@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 namespace L0 {
 
 class FabricSubDeviceIaf;
+struct Device;
 
 struct FabricPortConnection {
     IafPortId currentid;

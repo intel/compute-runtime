@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,13 @@
 
 namespace NEO {
 
-extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 using Family = Xe2HpgCoreFamily;
 static auto gfxFamily = IGFX_XE2_HPG_CORE;
+
+template <typename GfxFamily>
+struct GmmCallbacks;
 
 struct EnableCoreXe2HpgCore {
     EnableCoreXe2HpgCore() {
@@ -27,6 +30,7 @@ struct EnableCoreXe2HpgCore {
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<DebuggerL0Hw<Family>>();
+        populateFactoryTable<GmmCallbacks<Family>>();
     }
 };
 

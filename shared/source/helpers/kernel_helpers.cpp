@@ -44,8 +44,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         dssCount = hwInfo.gtSystemInfo.SubSliceCount;
     }
 
-    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired);
-    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.slmSize);
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired, rootDeviceEnvironment);
+    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
     auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
@@ -92,23 +92,23 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
     auto totalScratchSize = KernelHelper::getScratchSize(attributes.perThreadScratchSize[0], computeUnitsForScratch);
     auto totalPrivateScratchSize = KernelHelper::getPrivateScratchSize(attributes.perThreadScratchSize[1], computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "computeUnits for each thread: %u\n", computeUnitsForScratch);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "computeUnits for each thread: %u\n", computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "global memory size: %llu\n", globalMemorySize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "global memory size: %llu\n", globalMemorySize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
-                       attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
+                 attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
-                       attributes.perThreadScratchSize[0], totalScratchSize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
+                 attributes.perThreadScratchSize[0], totalScratchSize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
-                       attributes.perThreadScratchSize[1], totalPrivateScratchSize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
+                 attributes.perThreadScratchSize[1], totalPrivateScratchSize);
 
     if (totalPrivateMemorySize > globalMemorySize ||
         totalScratchSize > globalMemorySize ||
@@ -146,6 +146,15 @@ std::pair<GraphicsAllocation *, size_t> KernelHelper::getSyncBufferAllocationOff
     size_t requiredSize = KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
 
     return device.syncBufferHandler->obtainAllocationAndOffset(requiredSize);
+}
+
+size_t KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(Device &device, size_t isaSize, bool isLastKernel) {
+    const size_t isaPadding = isLastKernel ? device.getGfxCoreHelper().getPaddingForISAAllocation() : 0u;
+    const size_t kernelStartPointerAlignment = device.getGfxCoreHelper().getKernelIsaPointerAlignment();
+    const size_t cacheLineSize = static_cast<size_t>(device.getProductHelper().getCacheLineSize());
+    const size_t alignment = std::max(kernelStartPointerAlignment, cacheLineSize);
+    DEBUG_BREAK_IF(cacheLineSize > kernelStartPointerAlignment && (cacheLineSize % kernelStartPointerAlignment) != 0);
+    return alignUp(isaPadding + isaSize, alignment);
 }
 
 } // namespace NEO

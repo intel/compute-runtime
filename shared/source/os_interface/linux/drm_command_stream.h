@@ -51,7 +51,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     bool isKmdWaitOnTaskCountAllowed() const override;
 
     DrmMemoryManager *getMemoryManager() const;
-    GmmPageTableMngr *createPageTableManager() override;
 
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
@@ -76,5 +75,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     int32_t kmdWaitTimeout = -1;
 
     bool useUserFenceWait = true;
+    const bool vmBindAvailable = false;
 };
 } // namespace NEO

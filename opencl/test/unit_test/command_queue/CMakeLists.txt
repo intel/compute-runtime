@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_enqueue_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_enqueue_2_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_operations_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_enqueue_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_enqueue_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_2_tests.cpp
@@ -113,6 +114,17 @@ endif()
 if(TESTS_PVC_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_queue
        ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_pvc_and_later.cpp
+  )
+endif()
+
+if(TESTS_XE3P_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_command_queue
+       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_heapless_tests.cpp
+  )
+endif()
+if(TESTS_XE3P)
+  list(APPEND IGDRCL_SRCS_tests_command_queue
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_xe3p.cpp
   )
 endif()
 

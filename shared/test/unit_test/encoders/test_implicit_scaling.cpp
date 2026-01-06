@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,6 @@ TEST_F(ImplicitScalingTests, givenMultiTileAndOsSupportWhenApiDisabledThenFeatur
     EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
 }
 
-TEST_F(ImplicitScalingTests, givenMultiTileAndApiSupportWhenOsDisabledThenFeatureDisabled) {
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
-}
-
 TEST_F(ImplicitScalingTests, givenSingleTileApiDisabledWhenOsSupportAndForcedOnThenFeatureEnabled) {
     debugManager.flags.EnableWalkerPartition.set(1);
     ImplicitScaling::apiSupport = false;
@@ -39,12 +34,6 @@ TEST_F(ImplicitScalingTests, givenSingleTileApiDisabledWhenOsSupportAndForcedOnT
 
 TEST_F(ImplicitScalingTests, givenMultiTileApiAndOsSupportEnabledWhenForcedOffThenFeatureDisabled) {
     debugManager.flags.EnableWalkerPartition.set(0);
-    EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
-}
-
-TEST_F(ImplicitScalingTests, givenMultiTileApiEnabledWhenOsSupportOffAndForcedOnThenFeatureDisabled) {
-    debugManager.flags.EnableWalkerPartition.set(1);
-    OSInterface::osEnableLocalMemory = false;
     EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
 }
 

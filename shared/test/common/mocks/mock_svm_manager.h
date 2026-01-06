@@ -6,18 +6,21 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
+    using SVMAllocsManager::containerLockedById;
+    using SVMAllocsManager::insertSVMAlloc;
+    using SVMAllocsManager::internalAllocationsMap;
     using SVMAllocsManager::memoryManager;
     using SVMAllocsManager::mtxForIndirectAccess;
-    using SVMAllocsManager::multiOsContextSupport;
     using SVMAllocsManager::svmAllocs;
     using SVMAllocsManager::SVMAllocsManager;
     using SVMAllocsManager::svmDeferFreeAllocs;
@@ -33,9 +36,25 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
 
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
         requestedZeroedOutAllocation = memoryProperties.isInternalAllocation;
-        return SVMAllocsManager::createUnifiedMemoryAllocation(size, memoryProperties);
+        if (createUnifiedMemoryAllocationCallBase) {
+            return SVMAllocsManager::createUnifiedMemoryAllocation(size, memoryProperties);
+        }
+        return createUnifiedMemoryAllocationReturnValue;
     }
     bool requestedZeroedOutAllocation = false;
+    bool createUnifiedMemoryAllocationCallBase = true;
+    void *createUnifiedMemoryAllocationReturnValue = nullptr;
+
+    void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) override {
+        freeSVMAllocImplLastFreePolicy = policy;
+        freeSVMAllocImplLastPtr = ptr;
+        if (freeSVMAllocImplCallBase) {
+            SVMAllocsManager::freeSVMAllocImpl(ptr, policy, svmData);
+        }
+    }
+    bool freeSVMAllocImplCallBase = true;
+    void *freeSVMAllocImplLastPtr = nullptr;
+    FreePolicyType freeSVMAllocImplLastFreePolicy = FreePolicyType::none;
 };
 
 template <bool enableLocalMemory>
@@ -43,13 +62,9 @@ struct SVMMemoryAllocatorFixture {
     SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
 
     void setUp() {
-        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
-        if (!svmSupported) {
-            GTEST_SKIP();
-        }
         executionEnvironment.initGmm();
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
-        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
         if (enableLocalMemory) {
             memoryManager->pageFaultManager.reset(new MockPageFaultManager);
         }

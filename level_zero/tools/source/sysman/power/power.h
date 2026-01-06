@@ -7,7 +7,6 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>
@@ -16,6 +15,7 @@
 namespace L0 {
 
 struct OsSysman;
+
 class Power : _zes_pwr_handle_t {
   public:
     virtual ~Power() = default;

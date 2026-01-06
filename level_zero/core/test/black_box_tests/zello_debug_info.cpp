@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,7 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 int main(int argc, char *argv[]) {
 
@@ -90,7 +88,6 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE_BOOL(debugInfo[0] != 0xff);
 
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     delete[] debugInfo;
 

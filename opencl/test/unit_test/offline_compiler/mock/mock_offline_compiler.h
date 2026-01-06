@@ -14,6 +14,7 @@
 #include <string>
 
 class MockOclocArgHelper;
+
 namespace NEO {
 class MockOclocFclFacade;
 class MockOclocIgcFacade;
@@ -60,6 +61,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::irBinary;
     using OfflineCompiler::irBinarySize;
     using OfflineCompiler::irHash;
+    using OfflineCompiler::loadSpecializationConstants;
     using OfflineCompiler::onlySpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
@@ -73,9 +75,12 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::revisionId;
     using OfflineCompiler::setStatelessToStatefulBufferOffsetFlag;
     using OfflineCompiler::sourceCode;
+    using OfflineCompiler::specConstants;
+    using OfflineCompiler::specConstantsFile;
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
     using OfflineCompiler::useGenFile;
+    using OfflineCompiler::useIgcAsFcl;
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler();
@@ -98,7 +103,8 @@ class MockOfflineCompiler : public OfflineCompiler {
 
     void clearLog();
 
-    void createDir(const std::string &path) override;
+    int createDir(const std::string &path) override;
+    void createTempSourceFileForDebug() override;
 
     std::map<std::string, std::string> filesMap{};
     int buildToIrBinaryStatus = 0;
@@ -114,6 +120,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     std::optional<int> buildReturnValue{};
     bool interceptCreatedDirs{false};
     std::vector<std::string> createdDirs{};
+    int createTempSourceFileForDebugCalled{0};
 };
 
 } // namespace NEO

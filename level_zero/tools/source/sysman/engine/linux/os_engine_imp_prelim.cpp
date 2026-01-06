@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,10 @@
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
+#include "level_zero/tools/source/sysman/sysman.h"
+
+#include <linux/perf_event.h>
 
 namespace L0 {
 
@@ -55,7 +59,7 @@ static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pai
 
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in ticks
@@ -78,15 +82,15 @@ static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
             fd[1] = pPmuInterface->pmuInterfaceOpen(vfConfigs[i].second, static_cast<int>(fd[0]),
                                                     PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
             if (fd[1] < 0) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
-                close(static_cast<int>(fd[0]));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
+                NEO::SysCalls::close(static_cast<int>(fd[0]));
                 fd[0] = -1;
             }
         }
 
         if (fd[1] < 0) {
             if (errno == EMFILE || errno == ENFILE) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
                 return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
             }
         }
@@ -111,10 +115,10 @@ ze_result_t LinuxEngineImpPrelim::getActivity(zes_engine_stats_t *pStats) {
 void LinuxEngineImpPrelim::cleanup() {
     for (auto &fdPair : fdList) {
         if (fdPair.first >= 0) {
-            close(static_cast<int>(fdPair.first));
+            NEO::SysCalls::close(static_cast<int>(fdPair.first));
         }
         if (fdPair.second >= 0) {
-            close(static_cast<int>(fdPair.second));
+            NEO::SysCalls::close(static_cast<int>(fdPair.second));
         }
     }
     fdList.clear();
@@ -140,7 +144,7 @@ ze_result_t LinuxEngineImpPrelim::getActivityExt(uint32_t *pCount, zes_engine_st
 
     if (fdList.size() == 0) {
         DEBUG_BREAK_IF(true);
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): unexpected fdlist\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): unexpected fdlist\n", __FUNCTION__);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -154,8 +158,8 @@ ze_result_t LinuxEngineImpPrelim::getActivityExt(uint32_t *pCount, zes_engine_st
             for (size_t i = 1; i < fdList.size(); i++) {
                 auto &fdPair = fdList[i];
                 if (fdPair.first >= 0) {
-                    close(static_cast<int32_t>(fdPair.first));
-                    close(static_cast<int32_t>(fdPair.second));
+                    NEO::SysCalls::close(static_cast<int32_t>(fdPair.first));
+                    NEO::SysCalls::close(static_cast<int32_t>(fdPair.second));
                 }
                 fdList.resize(1);
             }
@@ -189,10 +193,10 @@ ze_result_t LinuxEngineImpPrelim::getProperties(zes_engine_properties_t &propert
 
 void LinuxEngineImpPrelim::checkErrorNumberAndUpdateStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
         initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }
@@ -223,34 +227,45 @@ void LinuxEngineImpPrelim::init() {
     // Fds for global busyness
     fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[0] < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
         checkErrorNumberAndUpdateStatus();
         return;
     }
-    auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
-    fd[1] = pPmuInterface->pmuInterfaceOpen(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+
+    uint64_t totalTickConfig = 0u;
+    if (isGroupEngineHandle(engineGroup)) {
+        totalTickConfig = __PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId);
+    } else {
+        auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
+        totalTickConfig = PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance);
+    }
+
+    fd[1] = pPmuInterface->pmuInterfaceOpen(totalTickConfig, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
 
     if (fd[1] < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
         checkErrorNumberAndUpdateStatus();
-        close(static_cast<int>(fd[0]));
+        NEO::SysCalls::close(static_cast<int>(fd[0]));
         return;
     }
 
     fdList.push_back(std::make_pair(fd[0], fd[1]));
 
-    auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
-    if (status != ZE_RESULT_SUCCESS) {
-        numberOfVfs = 0;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
-        return;
-    }
+    // Vf Configs are supported only for the Single Engine handles
+    if (!isGroupEngineHandle(engineGroup)) {
+        auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+        if (status != ZE_RESULT_SUCCESS) {
+            numberOfVfs = 0;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
+            return;
+        }
 
-    // Delay fd opening till actually needed
-    for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
-        const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
-        const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), i);
-        vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
+        // Delay fd opening till actually needed
+        for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
+            const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
+            const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(totalTickConfig, i);
+            vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
+        }
     }
 }
 

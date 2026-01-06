@@ -6,19 +6,17 @@
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/utilities/staging_buffer_manager.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
-
-#include <algorithm>
-#include <new>
+#include "opencl/source/memory_manager/mem_obj_surface.h"
 
 namespace NEO {
 
@@ -134,9 +132,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    const bool useStateless = forceStateless(dstImage->getSize());
+    const bool isStateless = forceStateless(dstImage->getSize());
     const bool useHeapless = getHeaplessModeEnabled();
-    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, useHeapless);
+    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, useHeapless);
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);

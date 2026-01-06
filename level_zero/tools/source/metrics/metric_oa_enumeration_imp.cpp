@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
@@ -251,7 +251,7 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     }
 
     return ZE_RESULT_SUCCESS;
-} // namespace L0
+}
 
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 
@@ -289,7 +289,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         return result;
     }
 
-    // Avoid repeated cacheing for the sub-device
+    // Avoid repeated caching for the sub-device
     if (getMetricGroupCount() > 0) {
         return ZE_RESULT_SUCCESS;
     }
@@ -656,7 +656,7 @@ ze_result_t MetricEnumeration::metricProgrammableGet(uint32_t *pCount, zet_metri
     return ZE_RESULT_SUCCESS;
 }
 
-zet_metric_group_sampling_type_flag_t MetricEnumeration::getSamplingTypeFromApiMask(const uint32_t apiMask) {
+zet_metric_group_sampling_type_flags_t MetricEnumeration::getSamplingTypeFromApiMask(const uint32_t apiMask) {
     const uint32_t checkMask = MetricsDiscovery::API_TYPE_IOSTREAM | MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
     if ((apiMask & checkMask) == checkMask) {
         return METRICS_SAMPLING_TYPE_TIME_EVENT_BASED;
@@ -855,8 +855,8 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
 
     const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
     if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
-        METRICS_LOG_INFO("%s", "The call is not supported for multiple devices");
-        METRICS_LOG_INFO("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
+        METRICS_LOG_ERR("%s", "The call is not supported for multiple devices");
+        METRICS_LOG_ERR("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1012,20 +1012,21 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
             *globalTimestamp = deviceTimestamp;
         }
 
-        uint32_t cpuId;
-        MetricsDiscovery::ECompletionCode mdapiRetVal;
-        MetricsDiscovery::IMetricsDevice_1_13 *metricDevice;
-        metricDevice = getMetricSource()->getMetricEnumeration().getMdapiDevice();
-
-        // MDAPI returns GPU timestamps in nanoseconds
-        mdapiRetVal = metricDevice->GetGpuCpuTimestamps(metricTimestamp, &hostTimestamp, &cpuId);
-        if (mdapiRetVal != MetricsDiscovery::CC_OK) {
-            *globalTimestamp = 0;
-            *metricTimestamp = 0;
-            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        } else {
-            result = ZE_RESULT_SUCCESS;
+        if (!metricSource->isFrequencyDataAvailable) {
+            metricSource->csTimestampPeriodNs = metricSource->getMetricDeviceContext().getDevice().getNEODevice()->getProfilingTimerResolution();
+            result = metricSource->getTimerResolution(metricSource->oaTimestampFrequency);
+            if (result != ZE_RESULT_SUCCESS) {
+                METRICS_LOG_ERR("Could not fetch oaTimestampFrequency from getTimerResolution(). Return status received %x ", result);
+                *globalTimestamp = 0;
+                *metricTimestamp = 0;
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            metricSource->isFrequencyDataAvailable = true;
         }
+
+        const uint64_t csTimestampFrequency = static_cast<uint64_t>(CommonConstants::nsecPerSec / metricSource->csTimestampPeriodNs);
+        *metricTimestamp = deviceTimestamp * (metricSource->oaTimestampFrequency / csTimestampFrequency);
+        result = ZE_RESULT_SUCCESS;
     }
 
     return result;
@@ -1229,7 +1230,8 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
 }
 
 Metric *OaMetricImp::create(MetricSource &metricSource, zet_metric_properties_t &properties) {
-    auto pMetric = new OaMetricImp(metricSource);
+    std::vector<MetricScopeImp *> metricScopes{};
+    auto pMetric = new OaMetricImp(metricSource, metricScopes);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
     pMetric->isPredefined = true;

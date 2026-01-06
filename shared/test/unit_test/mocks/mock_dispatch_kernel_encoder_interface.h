@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
-
-#include <stdint.h>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -24,16 +22,17 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
         return requiredWalkGroupOrder;
     }
     uint32_t getNumThreadsPerThreadGroup() const override {
-        return 1;
+        return numThreadsPerThreadGroup;
     }
 
-    NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
+    ImplicitArgs *getImplicitArgs() const override { return implicitArgsPtr; }
 
     void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override { return; };
     void patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const override {
         samplerStateOffsetPassed = samplerStateOffset;
     }
 
+    ImplicitArgs *implicitArgsPtr = nullptr;
     MockGraphicsAllocation mockAllocation{};
     static constexpr uint32_t crossThreadSize = 0x40;
     static constexpr uint32_t perThreadSize = 0x20;
@@ -42,6 +41,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     uint32_t groupSizes[3]{32, 1, 1};
     uint32_t requiredWalkGroupOrder = 0x0u;
     KernelDescriptor kernelDescriptor{};
+    uint32_t numThreadsPerThreadGroup = 1;
 
     mutable uint64_t samplerStateOffsetPassed = 0u;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ struct CommandStreamReceiverHwTest : public ClDeviceFixture,
                                      public ::testing::Test {
 
     void SetUp() override {
+        environment.setCsrType<MockCsrHw<GfxFamily>>();
         ClDeviceFixture::setUp();
         HardwareParse::setUp();
     }
@@ -26,6 +27,8 @@ struct CommandStreamReceiverHwTest : public ClDeviceFixture,
 
     void givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl();
     void givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
+
+    EnvironmentWithCsrWrapper environment;
 };
 
 template <typename GfxFamily>
@@ -36,8 +39,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto *commandStreamReceiver = static_cast<MockCsrHw<GfxFamily> *>(&pDevice->getUltCommandStreamReceiver<GfxFamily>());
 
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
@@ -77,8 +79,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto *commandStreamReceiver = static_cast<MockCsrHw<GfxFamily> *>(&pDevice->getUltCommandStreamReceiver<GfxFamily>());
     cl_event blockingEvent;
     MockEvent<UserEvent> mockEvent(&ctx);
     blockingEvent = &mockEvent;

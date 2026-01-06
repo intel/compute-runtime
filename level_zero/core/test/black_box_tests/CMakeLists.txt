@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -37,7 +37,16 @@ target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC
 
 set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 
+if("${EXTERNAL_L0_LOADER_PATH}" STREQUAL "")
+  set(L0_BB_LINK_TARGET ${TARGET_NAME_L0})
+  message(STATUS "Linking black box tests against driver library")
+else()
+  set(L0_BB_LINK_TARGET ${EXTERNAL_L0_LOADER_PATH})
+  message(STATUS "Linking black box tests against external ${EXTERNAL_L0_LOADER_PATH}")
+endif()
+
 set(TEST_TARGETS
+    zello_arg_slm
     zello_atomic_inc
     zello_bindless_kernel
     zello_commandlist_immediate
@@ -47,7 +56,6 @@ set(TEST_TARGETS
     zello_copy_image
     zello_copy_kernel_printf
     zello_copy_only
-    zello_copy_tracing
     zello_debug_info
     zello_dynamic_link
     zello_dyn_local_arg
@@ -56,12 +64,15 @@ set(TEST_TARGETS
     zello_fill
     zello_function_pointers_cl
     zello_global_bindless_kernel
+    zello_graph
+    zello_host_function
     zello_host_pointer
     zello_image
     zello_image_view
     zello_immediate
     zello_ipc_copy_dma_buf
     zello_ipc_copy_dma_buf_p2p
+    zello_memFree_callback
     zello_multidev
     zello_printf
     zello_p2p_copy
@@ -99,6 +110,7 @@ foreach(TEST_NAME ${TEST_TARGETS})
     endif()
   endif()
 
+  set(EXTRA_SOURCES "")
   if(${TEST_NAME} STREQUAL "zello_bindless_kernel")
     set(EXTRA_SOURCES ${NEO_SOURCE_DIR}/level_zero/core/source/image/image_format_desc_helper.cpp)
   endif()
@@ -114,7 +126,7 @@ foreach(TEST_NAME ${TEST_TARGETS})
                         VS_DEBUGGER_WORKING_DIRECTORY "${TargetDir}"
   )
 
-  target_link_libraries(${TEST_NAME} PUBLIC ${TARGET_NAME_L0})
+  target_link_libraries(${TEST_NAME} PUBLIC ${L0_BB_LINK_TARGET})
 
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 

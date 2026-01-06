@@ -18,7 +18,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
               ${CORE_SOURCES}
   )
   if(${MOCKABLE})
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual MOCKABLE= DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_CORE_FLAGS_DEFINITONS})
+    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual MOCKABLE= DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} ${TESTED_CORE_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
   endif()
@@ -33,7 +33,6 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
 
   target_include_directories(${LIB_NAME} PUBLIC
                              ${AOT_CONFIG_HEADERS_DIR}
-                             ${KMDAF_HEADERS_DIR}
                              ${ENGINE_NODE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}
                              ${CIF_BASE_DIR}
@@ -220,4 +219,10 @@ else()
   if(NOT NEO_SKIP_UNIT_TESTS)
     target_include_directories(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pin/windows)
   endif()
+endif()
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_link_libraries(${NEO_SHARED_RELEASE_LIB_NAME} PRIVATE dxguid)
+  target_sources(${NEO_SHARED_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${NEO_SHARED_RELEASE_LIB_NAME}_pch.h)
+  target_precompile_headers(${NEO_SHARED_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${NEO_SHARED_RELEASE_LIB_NAME}_pch.h)
 endif()

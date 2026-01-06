@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ XE_HPC_CORETEST_P(UmStatelessCompression, givenDeviceMemAllocWhenStatelessCompre
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 
@@ -199,7 +199,7 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithStatefulAccess, givenDeviceMemAllocW
     retVal = commandQueues[0][0]->enqueueKernel(pMultiDeviceKernel->getKernel(rootDeviceIndex), 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    commandQueues[0][0]->finish();
+    commandQueues[0][0]->finish(false);
 
     expectMemory<FamilyType>(hostMemAlloc, buffer.data(), bufferSize, 0, 0);
 

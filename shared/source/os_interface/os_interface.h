@@ -81,6 +81,8 @@ class DriverModel : public NonCopyableClass {
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
     virtual PhysicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
 
+    virtual void unregisterTrimCallback(){};
+
     virtual size_t getMaxMemAllocSize() const {
         return std::numeric_limits<size_t>::max();
     }
@@ -97,6 +99,9 @@ class DriverModel : public NonCopyableClass {
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
     virtual const HardwareInfo *getHardwareInfo() const = 0;
+    virtual bool getDeviceState() {
+        return false;
+    }
 
     const TopologyMap &getTopologyMap() {
         return topologyMap;
@@ -117,11 +122,12 @@ class OSInterface : public NonCopyableClass {
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
     MOCKABLE_VIRTUAL bool isLockablePointer(bool isLockable) const;
-    MOCKABLE_VIRTUAL bool isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const;
+    MOCKABLE_VIRTUAL bool isSizeWithinThresholdForStaging(const void *ptr, size_t size) const;
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
+    void registerTrimCallback();
+    void unregisterTrimCallback();
 
     static bool osEnabled64kbPages;
-    static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;

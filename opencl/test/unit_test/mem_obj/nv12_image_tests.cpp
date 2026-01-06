@@ -6,9 +6,8 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -16,13 +15,12 @@
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/cl_validators.h"
-#include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -76,15 +74,13 @@ class Nv12ImageTest : public testing::Test {
     }
 
     void validateImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(
-            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         retVal = Image::validate(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                                  surfaceFormat, &imageDesc, nullptr);
     }
 
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(
-            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         return Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                              flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
@@ -245,7 +241,7 @@ TEST_F(Nv12ImageTest, WhenCreatingYPlaneImageThenDimensionsAreSetCorrectly) {
     EXPECT_EQ(true, imageYPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
               imageYPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(GMM_PLANE_Y, imageYPlane->getPlane());
+    EXPECT_EQ(ImagePlane::planeY, imageYPlane->getPlane());
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -281,7 +277,7 @@ TEST_F(Nv12ImageTest, WhenCreatingUVPlaneImageThenDimensionsAreSetCorrectly) {
     EXPECT_EQ(true, imageUVPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
               imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(GMM_PLANE_U, imageUVPlane->getPlane());
+    EXPECT_EQ(ImagePlane::planeU, imageUVPlane->getPlane());
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -343,8 +339,7 @@ TEST_F(Nv12ImageTest, GivenOffsetOfUVPlaneWhenCreatingUVPlaneImageThenDimensions
 }
 
 HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
-    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS_WITH_IMAGES);
-    auto device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     char hostPtr[16 * 16 * 16];
     auto contextWithMockCmdQ = new MockContext(device.get(), true);
     auto cmdQ = new MockCommandQueueHw<FamilyType>(contextWithMockCmdQ, device.get(), 0);
@@ -352,7 +347,7 @@ HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
 
     // Create Parent NV12 image
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> imageNV12{Image::create(contextWithMockCmdQ,
                                                    ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                                                    flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal)};
@@ -391,7 +386,7 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     cl_image_format imageFormat = Image2dDefaults::imageFormat;
     imageFormat.image_channel_order = CL_NV12_INTEL;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
-    std::unique_ptr<Image> image{Image2dHelper<>::create(&context, &imageDesc, &imageFormat)};
+    std::unique_ptr<Image> image{Image2dHelperUlt<>::create(&context, &imageDesc, &imageFormat)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
     image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
@@ -435,24 +430,6 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddr
     }
 
     EXPECT_EQ(tileMode, surfaceState.getTileMode());
-}
-
-HWTEST_F(Nv12ImageTest, WhenSettingMediaImageArgThenSurfaceStateIsCorrect) {
-    using MEDIA_SURFACE_STATE = typename FamilyType::MEDIA_SURFACE_STATE;
-    MEDIA_SURFACE_STATE surfaceState;
-
-    std::unique_ptr<Image> image{createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)};
-    ASSERT_NE(nullptr, image);
-
-    SurfaceOffsets surfaceOffsets;
-    image->getSurfaceOffsets(surfaceOffsets);
-    image->setMediaImageArg(&surfaceState, context.getDevice(0)->getRootDeviceIndex());
-
-    EXPECT_EQ(surfaceOffsets.xOffset, surfaceState.getXOffsetForUCb());
-    EXPECT_EQ(surfaceOffsets.yOffset, surfaceState.getXOffsetForUCb());
-    EXPECT_EQ(surfaceOffsets.yOffsetForUVplane, surfaceState.getYOffsetForUCb());
-    EXPECT_EQ(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset,
-              surfaceState.getSurfaceBaseAddress());
 }
 
 TEST_F(Nv12ImageTest, WhenRedescribingThenNV12ImageAndUVPlaneImageHaveCorrectOffsets) {

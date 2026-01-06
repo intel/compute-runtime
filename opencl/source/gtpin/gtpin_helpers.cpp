@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "gtpin_helpers.h"
 
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -17,7 +16,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
-#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "CL/cl.h"

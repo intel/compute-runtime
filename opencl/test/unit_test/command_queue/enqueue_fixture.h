@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -17,6 +16,10 @@
 #include "CL/cl.h"
 
 #include <memory>
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
 
 struct EnqueueTraits {
     static cl_uint numEventsInWaitList;
@@ -88,7 +91,7 @@ struct EnqueueCopyBufferToImageHelper {
                                            const cl_event *eventWaitList = Traits::eventWaitList,
                                            cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> dstImageDelete(dstImage ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> dstImageDelete(dstImage ? nullptr : Image2dHelperUlt<>::create(&context));
         dstImage = dstImage ? dstImage : dstImageDelete.get();
 
         size_t regionOut[3] = {
@@ -136,7 +139,7 @@ struct EnqueueCopyImageToBufferHelper {
                                            const cl_event *eventWaitList = Traits::eventWaitList,
                                            cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> srcImageDelete(srcImage ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> srcImageDelete(srcImage ? nullptr : Image2dHelperUlt<>::create(&context));
         srcImage = srcImage ? srcImage : srcImageDelete.get();
 
         size_t regionIn[3] = {
@@ -183,8 +186,8 @@ struct EnqueueCopyImageHelper {
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> srcImageDelete(srcImage ? nullptr : Image2dHelper<>::create(&context));
-        std::unique_ptr<Image> dstImageDelete(dstImage ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> srcImageDelete(srcImage ? nullptr : Image2dHelperUlt<>::create(&context));
+        std::unique_ptr<Image> dstImageDelete(dstImage ? nullptr : Image2dHelperUlt<>::create(&context));
         srcImage = srcImage ? srcImage : srcImageDelete.get();
         dstImage = dstImage ? dstImage : dstImageDelete.get();
 
@@ -266,7 +269,7 @@ struct EnqueueFillImageHelper {
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelperUlt<>::create(&context));
         image = image ? image : imageDelete.get();
 
         size_t regionOut[3] = {
@@ -465,7 +468,7 @@ struct EnqueueReadImageHelper {
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelperUlt<>::create(&context));
         image = image ? image : imageDelete.get();
 
         size_t regionOut[3] = {
@@ -627,7 +630,7 @@ struct EnqueueWriteImageHelper {
                                     const cl_event *eventWaitList = Traits::eventWaitList,
                                     cl_event *event = Traits::event) {
         auto &context = pCmdQ->getContext();
-        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> imageDelete(image ? nullptr : Image2dHelperUlt<>::create(&context));
         image = image ? image : imageDelete.get();
 
         size_t regionOut[3] = {

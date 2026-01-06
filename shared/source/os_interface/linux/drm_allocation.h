@@ -6,13 +6,15 @@
  */
 
 #pragma once
+#include "shared/source/device/sub_device_ids_vec.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
-#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 class BufferObject;
+class MemoryManager;
 class OsContext;
+class ProductHelper;
 class Drm;
 class OsContextLinux;
 enum class CachePolicy : uint32_t;
@@ -36,25 +38,9 @@ class DrmAllocation : public GraphicsAllocation {
         MemoryUnmapFunction unmapFunction;
     };
 
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress) {
-        bufferObjects.push_back(bo);
-        resizeBufferObjects(EngineLimits::maxHandleCount);
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
-    }
-
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount) {
-        bufferObjects.push_back(bo);
-        resizeBufferObjects(EngineLimits::maxHandleCount);
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
-    }
-
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
-          bufferObjects(bos) {
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
-    }
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress);
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool);
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool);
 
     ~DrmAllocation() override;
 
@@ -108,10 +94,11 @@ class DrmAllocation : public GraphicsAllocation {
     bool setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds);
 
     void *getMmapPtr() {
-        if (this->importedMmapPtr)
+        if (this->importedMmapPtr) {
             return this->importedMmapPtr;
-        else
+        } else {
             return this->mmapPtr;
+        }
     }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
     void setImportedMmapPtr(void *ptr) { this->importedMmapPtr = ptr; }

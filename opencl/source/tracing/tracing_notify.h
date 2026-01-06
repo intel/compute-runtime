@@ -396,7 +396,7 @@ class ClCreateCommandQueueTracer : NEO::NonCopyableAndNonMovableClass {
 
     void enter(cl_context *context,
                cl_device_id *device,
-               cl_command_queue_properties *properties,
+               const cl_command_queue_properties *properties,
                cl_int **errcodeRet) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
 
@@ -4928,7 +4928,7 @@ class ClEnqueueCopyImageToBufferTracer : NEO::NonCopyableAndNonMovableClass {
                cl_mem *dstBuffer,
                const size_t **srcOrigin,
                const size_t **region,
-               size_t *dstOffset,
+               const size_t *dstOffset,
                cl_uint *numEventsInWaitList,
                const cl_event **eventWaitList,
                cl_event **event) {

@@ -12,9 +12,27 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 #include <level_zero/zes_api.h>
 
-#include <unordered_map>
-
 namespace L0 {
+class Ecc;
+class Events;
+class GlobalOperations;
+class Pci;
+struct Device;
+struct DiagnosticsHandleContext;
+struct EngineHandleContext;
+struct FabricPortHandleContext;
+struct FanHandleContext;
+struct FirmwareHandleContext;
+struct FrequencyHandleContext;
+struct MemoryHandleContext;
+struct OsSysman;
+struct PerformanceHandleContext;
+struct PowerHandleContext;
+struct RasHandleContext;
+struct SchedulerHandleContext;
+struct StandbyHandleContext;
+struct TemperatureHandleContext;
+struct VfManagementHandleContext;
 
 struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 

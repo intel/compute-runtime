@@ -6,13 +6,9 @@
  */
 
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/command_queue/enqueue_fill_buffer.h"
-#include "opencl/source/command_queue/enqueue_kernel.h"
-#include "opencl/source/command_queue/enqueue_read_buffer.h"
-#include "opencl/source/command_queue/enqueue_write_buffer.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -21,30 +17,27 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
-                                   public SimpleArgKernelFixture,
-                                   public HelloWorldKernelFixture,
                                    public ::testing::Test {
-
-    using HelloWorldKernelFixture::setUp;
-    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
         CommandEnqueueFixture::setUp();
-        SimpleArgKernelFixture::setUp(pClDevice);
-        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
         BufferDefaults::context = new MockContext;
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
         patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
         pDevice->setPreemptionMode(PreemptionMode::Disabled);
+        auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+        bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+        bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
+        copyBufferToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
     }
 
     void TearDown() override {
@@ -52,14 +45,13 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
         delete dstBuffer;
         delete srcBuffer;
         delete BufferDefaults::context;
-        HelloWorldKernelFixture::tearDown();
-        SimpleArgKernelFixture::tearDown();
         CommandEnqueueFixture::tearDown();
     }
 
     Buffer *srcBuffer = nullptr;
     Buffer *dstBuffer = nullptr;
     GraphicsAllocation *patternAllocation = nullptr;
+    EBuiltInOps::Type copyBufferToBufferBuiltin;
 };
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
@@ -75,7 +67,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
     auto retVal = EnqueueFillBufferHelper<>::enqueue(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBuffer,
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
+    auto builtin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isForceStateless, heaplessAllowed);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -128,7 +124,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
     auto retVal = EnqueueCopyBufferHelper<>::enqueue(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -182,7 +178,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
         srcBuffer,
         CL_FALSE);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -236,7 +232,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
         srcBuffer,
         CL_TRUE);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -290,7 +286,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferNonBlockingThenHeapsAndComm
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -342,7 +338,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -436,11 +432,11 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalcul
     auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, &clEvent);
 
-    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pContext.getDevices()[0]->getRootDeviceEnvironment(), false), extendedCommandStreamSize);
+    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pContext.getDevices()[0]->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData), extendedCommandStreamSize);
 }
 
-HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulSupported) {
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulRequired) {
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -470,8 +466,21 @@ HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSiz
     EXPECT_EQ(sizeSSH, expectedSizeSSH);
 }
 
-HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef HelloWorldKernelFixture KernelFixture;
+struct GetSizeRequiredBufferHelloWorldTest : public GetSizeRequiredBufferTest,
+                                             public HelloWorldKernelFixture {
+
+    void SetUp() override {
+        GetSizeRequiredBufferTest::SetUp();
+        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
+    }
+
+    void TearDown() override {
+        HelloWorldKernelFixture::tearDown();
+        GetSizeRequiredBufferTest::TearDown();
+    }
+};
+
+HWTEST_F(GetSizeRequiredBufferHelloWorldTest, GivenHelloWorldKernelWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
@@ -481,7 +490,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenH
     size_t workSize[] = {64};
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
-        KernelFixture::pKernel,
+        pKernel,
         1,
         nullptr,
         workSize,
@@ -493,11 +502,11 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenH
     auto iohAfter = pIOH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, KernelFixture::pKernel, {});
-    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, pKernel, {});
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*pKernel);
     size_t localWorkSizes[] = {64, 1, 1};
-    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, localWorkSizes, pClDevice->getRootDeviceEnvironment());
-    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*pKernel, localWorkSizes, pClDevice->getRootDeviceEnvironment());
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*pKernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -509,8 +518,21 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenH
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
 }
 
-HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef SimpleArgKernelFixture KernelFixture;
+struct GetSizeRequiredBufferSimpleArgTest : public GetSizeRequiredBufferTest,
+                                            public SimpleArgKernelFixture {
+
+    void SetUp() override {
+        GetSizeRequiredBufferTest::SetUp();
+        SimpleArgKernelFixture::setUp(pClDevice);
+    }
+
+    void TearDown() override {
+        SimpleArgKernelFixture::tearDown();
+        GetSizeRequiredBufferTest::TearDown();
+    }
+};
+
+HWTEST_F(GetSizeRequiredBufferSimpleArgTest, GivenKernelWithSimpleArgWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
@@ -520,7 +542,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelTh
     size_t workSize[] = {64};
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
-        KernelFixture::pKernel,
+        pKernel,
         1,
         nullptr,
         workSize,
@@ -532,11 +554,11 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelTh
     auto iohAfter = pIOH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, KernelFixture::pKernel, {});
-    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, pKernel, {});
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*pKernel);
     size_t localWorkSizes[] = {64, 1, 1};
-    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, localWorkSizes, pClDevice->getRootDeviceEnvironment());
-    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*pKernel, localWorkSizes, pClDevice->getRootDeviceEnvironment());
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*pKernel);
 
     EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);

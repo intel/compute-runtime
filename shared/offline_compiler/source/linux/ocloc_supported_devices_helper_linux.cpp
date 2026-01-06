@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,8 @@ std::string SupportedDevicesHelper::getDataFromFormerOcloc() const {
         break;
     }
 
-    oclocFreeOutput(&numOutputs, &dataOutputs, &ouputLengths, &outputNames);
+    // Use formerOclocFree since memory was allocated by former ocloc
+    Commands::formerOclocFree(getOclocFormerLibName(), &numOutputs, &dataOutputs, &ouputLengths, &outputNames);
     return retData;
 }
 

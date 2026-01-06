@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
@@ -26,12 +27,32 @@ bool OSInterface::isLockablePointer(bool isLockable) const {
     return isLockable;
 }
 
-bool OSInterface::isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const {
+bool OSInterface::isSizeWithinThresholdForStaging(const void *ptr, size_t size) const {
     return true;
 }
 
 uint32_t OSInterface::getAggregatedProcessCount() const {
     return 0;
+}
+
+void OSInterface::registerTrimCallback() {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::wddm) {
+
+        NEO::EnvironmentVariableReader envReader;
+        bool noContextMode = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
+        if (noContextMode) {
+            return;
+        }
+
+        driverModel->as<NEO::Wddm>()->getResidencyController().registerCallback();
+        UNRECOVERABLE_IF(!driverModel->as<NEO::Wddm>()->getResidencyController().isInitialized());
+    }
+}
+
+void OSInterface::unregisterTrimCallback() {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::wddm) {
+        driverModel->unregisterTrimCallback();
+    }
 }
 
 } // namespace NEO

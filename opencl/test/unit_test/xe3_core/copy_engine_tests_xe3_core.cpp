@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -19,8 +20,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 
@@ -60,8 +59,8 @@ XE3_CORETEST_F(BlitXe3CoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -73,7 +72,7 @@ XE3_CORETEST_F(BlitXe3CoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
 
-    if (clDevice->getGmmHelper()->deferMOCSToPatIndex()) {
+    if (clDevice->getProductHelper().deferMOCSToPatIndex(clDevice->getRootDeviceEnvironment().isWddmOnLinux())) {
         EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
         EXPECT_EQ(0u, bltCmd->getSourceMOCS());
     } else {
@@ -96,8 +95,8 @@ XE3_CORETEST_F(BlitXe3CoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -128,7 +127,7 @@ XE3_CORETEST_F(BlitXe3CoreTests, given2dBlitCommandWhenDispatchingThenSetValidSu
     size_t offset = 0;
     {
         // 1D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
@@ -148,7 +147,7 @@ XE3_CORETEST_F(BlitXe3CoreTests, given2dBlitCommandWhenDispatchingThenSetValidSu
 
     {
         // 2D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
@@ -163,33 +162,4 @@ XE3_CORETEST_F(BlitXe3CoreTests, given2dBlitCommandWhenDispatchingThenSetValidSu
 
         EXPECT_EQ(MEM_COPY::COPY_TYPE::COPY_TYPE_MATRIX_COPY, bltCmd->getCopyType());
     }
-}
-
-using Xe3CoreCopyEngineTests = ::testing::Test;
-XE3_CORETEST_F(Xe3CoreCopyEngineTests, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnCorrectValue) {
-    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockContext context(clDevice.get());
-
-    cl_int retVal = CL_SUCCESS;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
-    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    const auto &productHelper = clDevice->getProductHelper();
-    EXPECT_EQ(productHelper.isDcFlushAllowed(), commandQueueHw->isCacheFlushForBcsRequired());
-}
-
-XE3_CORETEST_F(Xe3CoreCopyEngineTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockContext context(clDevice.get());
-
-    cl_int retVal = CL_SUCCESS;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
-    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(0);
-    EXPECT_FALSE(commandQueueHw->isCacheFlushForBcsRequired());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(1);
-    EXPECT_TRUE(commandQueueHw->isCacheFlushForBcsRequired());
 }

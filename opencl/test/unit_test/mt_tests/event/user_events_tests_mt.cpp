@@ -1,19 +1,23 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
+#include <new>
+#include <thread>
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
@@ -43,11 +47,13 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
         waitForEventsCompleted = true;
     });
     // wait for the thread to start
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     // now wait a while.
-    while (!waitForEventsCompleted && counter++ < deadline)
+    while (!waitForEventsCompleted && counter++ < deadline) {
         ;
+    }
 
     ASSERT_EQ(waitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
 
@@ -64,6 +70,7 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterBlockedPathIsChosenThenBlockingFlagDoesNotCauseStall) {
+    USE_REAL_FILE_SYSTEM();
 
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
@@ -85,6 +92,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterUpdateFromCompletionStampThenBlockingFlagDoesNotCauseStall) {
+    USE_REAL_FILE_SYSTEM();
 
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
@@ -112,6 +120,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 }
 
 HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFinishIsCalledThenItWaitsForCorrectTaskCount) {
+    USE_REAL_FILE_SYSTEM();
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
@@ -126,8 +135,9 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
         std::atomic_bool updateEvent{true};
 
         std::thread t([&]() {
-            while (!go)
+            while (!go) {
                 ;
+            }
 
             uEvent.setStatus(CL_COMPLETE);
         });

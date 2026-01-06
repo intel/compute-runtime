@@ -576,7 +576,7 @@ TEST_F(MetricExportDataOaTest, givenGlobalSymbolsWithSupportedValueTypesWhenMetr
         globalSymbol.SymbolTypedValue.ValueType = mdType;
         setupTypedValue(globalSymbol.SymbolTypedValue);
 
-        // Resetting the cache so that heap area is calculated everytime
+        // Resetting the cache so that heap area is calculated every time
         auto metricGroup = L0::MetricGroup::fromHandle(metricGroupHandle);
         auto oaMetricGroupImp = static_cast<OaMetricGroupImp *>(metricGroup);
         oaMetricGroupImp->setCachedExportDataHeapSize(0);
@@ -710,7 +710,7 @@ TEST_F(MetricExportDataOaTest, givenEquationsWithSupportedElementTypesWhenMetric
         equation.equationElement.Type = mdType;
         setupEquationElement(equation.equationElement);
 
-        // Resetting the cache so that heap area is calculated everytime
+        // Resetting the cache so that heap area is calculated every time
         auto metricGroup = L0::MetricGroup::fromHandle(metricGroupHandle);
         auto oaMetricGroupImp = static_cast<OaMetricGroupImp *>(metricGroup);
         oaMetricGroupImp->setCachedExportDataHeapSize(0);

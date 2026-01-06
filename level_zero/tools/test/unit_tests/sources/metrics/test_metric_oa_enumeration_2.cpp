@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
@@ -69,10 +70,11 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
     for (int vType = MetricsDiscovery::VALUE_TYPE_UINT32;
          vType < MetricsDiscovery::VALUE_TYPE_LAST; vType++) {
         source.ValueType = static_cast<MetricsDiscovery::TValueType>(vType);
-        if (vType != MetricsDiscovery::VALUE_TYPE_BOOL)
+        if (vType != MetricsDiscovery::VALUE_TYPE_BOOL) {
             source.ValueUInt64 = 0xFF;
-        else
+        } else {
             source.ValueBool = true;
+        }
 
         metricGroup.copyValue(const_cast<MetricsDiscovery::TTypedValue_1_0 &>(source), destination);
         switch (vType) {
@@ -102,6 +104,20 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
             break;
         }
     }
+}
+
+TEST_F(MetricEnumerationTest, GivenValidOASourceComputeMetricScopesAreEnumeratedOnce) {
+    MetricDeviceContext &metricsDevContext = device->getMetricDeviceContext();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricsDevContext.enableMetricApi());
+
+    metricsDevContext.setComputeMetricScopeInitialized();
+
+    auto &metricSource = metricsDevContext.getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.isAvailable(), true);
+
+    uint32_t metricScopesCount = 0;
+    metricsDevContext.metricScopesGet(context->toHandle(), &metricScopesCount, nullptr);
+    EXPECT_EQ(metricScopesCount, 0u);
 }
 
 using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;

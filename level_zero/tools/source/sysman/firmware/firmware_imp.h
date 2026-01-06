@@ -7,15 +7,16 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/sysman/firmware/firmware.h"
-#include "level_zero/tools/source/sysman/firmware/os_firmware.h"
 #include <level_zero/zes_api.h>
+
+#include <memory>
 
 namespace L0 {
 
 class OsFirmware;
+struct OsSysman;
 
 class FirmwareImp : public Firmware, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -25,7 +26,7 @@ class FirmwareImp : public Firmware, NEO::NonCopyableAndNonMovableClass {
     FirmwareImp() = default;
     FirmwareImp(OsSysman *pOsSysman, const std::string &fwType);
     ~FirmwareImp() override;
-    std::unique_ptr<OsFirmware> pOsFirmware = nullptr;
+    std::unique_ptr<OsFirmware> pOsFirmware;
     std::string fwType = "Unknown";
 
     void init();

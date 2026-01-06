@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,6 +176,74 @@ ze_result_t zeRTASParallelOperationDestroyExp(ze_rtas_parallel_operation_exp_han
     return L0::RTASParallelOperation::fromHandle(hParallelOperation)->destroy();
 }
 
+// RTAs Ext
+
+ze_result_t zeRTASBuilderCreateExt(ze_driver_handle_t hDriver,
+                                   const ze_rtas_builder_ext_desc_t *pDescriptor,
+                                   ze_rtas_builder_ext_handle_t *phBuilder) {
+    return L0::DriverHandle::fromHandle(hDriver)->createRTASBuilderExt(pDescriptor, phBuilder);
+}
+
+ze_result_t zeRTASBuilderGetBuildPropertiesExt(ze_rtas_builder_ext_handle_t hBuilder,
+                                               const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+                                               ze_rtas_builder_ext_properties_t *pProperties) {
+    return L0::RTASBuilderExt::fromHandle(hBuilder)->getProperties(pBuildOpDescriptor, pProperties);
+}
+
+ze_result_t zeRTASBuilderBuildExt(ze_rtas_builder_ext_handle_t hBuilder,
+                                  const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+                                  void *pScratchBuffer,
+                                  size_t scratchBufferSizeBytes,
+                                  void *pRtasBuffer,
+                                  size_t rtasBufferSizeBytes,
+                                  ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+                                  void *pBuildUserPtr,
+                                  ze_rtas_aabb_ext_t *pBounds,
+                                  size_t *pRtasBufferSizeBytes) {
+    return L0::RTASBuilderExt::fromHandle(hBuilder)->build(pBuildOpDescriptor,
+                                                           pScratchBuffer,
+                                                           scratchBufferSizeBytes,
+                                                           pRtasBuffer,
+                                                           rtasBufferSizeBytes,
+                                                           hParallelOperation,
+                                                           pBuildUserPtr,
+                                                           pBounds,
+                                                           pRtasBufferSizeBytes);
+}
+
+ze_result_t zeRTASBuilderDestroyExt(ze_rtas_builder_ext_handle_t hBuilder) {
+    return L0::RTASBuilderExt::fromHandle(hBuilder)->destroy();
+}
+
+ze_result_t zeRTASBuilderCommandListAppendCopyExt(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return zeCommandListAppendMemoryCopy(hCommandList, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t zeRTASParallelOperationCreateExt(ze_driver_handle_t hDriver,
+                                             ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) {
+    return L0::DriverHandle::fromHandle(hDriver)->createRTASParallelOperationExt(phParallelOperation);
+}
+
+ze_result_t zeRTASParallelOperationGetPropertiesExt(ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+                                                    ze_rtas_parallel_operation_ext_properties_t *pProperties) {
+    return L0::RTASParallelOperationExt::fromHandle(hParallelOperation)->getProperties(pProperties);
+}
+
+ze_result_t zeRTASParallelOperationJoinExt(ze_rtas_parallel_operation_ext_handle_t hParallelOperation) {
+    return L0::RTASParallelOperationExt::fromHandle(hParallelOperation)->join();
+}
+
+ze_result_t zeRTASParallelOperationDestroyExt(ze_rtas_parallel_operation_ext_handle_t hParallelOperation) {
+    return L0::RTASParallelOperationExt::fromHandle(hParallelOperation)->destroy();
+}
+// end RTAs Ext
 ze_result_t zeMemSetAtomicAccessAttributeExp(ze_context_handle_t hContext, ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr) {
     return L0::Context::fromHandle(hContext)->setAtomicAccessAttribute(L0::Device::fromHandle(hDevice), ptr, size, attr);
 }
@@ -391,6 +459,86 @@ zeRTASParallelOperationDestroyExp(
     return L0::zeRTASParallelOperationDestroyExp(hParallelOperation);
 }
 
+// RTAS Ext
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASBuilderCreateExt(
+    ze_driver_handle_t hDriver,
+    const ze_rtas_builder_ext_desc_t *pDescriptor,
+    ze_rtas_builder_ext_handle_t *phBuilder) {
+    return L0::zeRTASBuilderCreateExt(hDriver, pDescriptor, phBuilder);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASBuilderGetBuildPropertiesExt(
+    ze_rtas_builder_ext_handle_t hBuilder,
+    const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+    ze_rtas_builder_ext_properties_t *pProperties) {
+    return L0::zeRTASBuilderGetBuildPropertiesExt(hBuilder, pBuildOpDescriptor, pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASBuilderCommandListAppendCopyExt(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeRTASBuilderCommandListAppendCopyExt(hCommandList, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASBuilderBuildExt(
+    ze_rtas_builder_ext_handle_t hBuilder,
+    const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+    void *pScratchBuffer,
+    size_t scratchBufferSizeBytes,
+    void *pRtasBuffer,
+    size_t rtasBufferSizeBytes,
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+    void *pBuildUserPtr,
+    ze_rtas_aabb_ext_t *pBounds,
+    size_t *pRtasBufferSizeBytes) {
+    return L0::zeRTASBuilderBuildExt(hBuilder, pBuildOpDescriptor, pScratchBuffer,
+                                     scratchBufferSizeBytes, pRtasBuffer, rtasBufferSizeBytes,
+                                     hParallelOperation, pBuildUserPtr, pBounds, pRtasBufferSizeBytes);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASBuilderDestroyExt(
+    ze_rtas_builder_ext_handle_t hBuilder) {
+    return L0::zeRTASBuilderDestroyExt(hBuilder);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASParallelOperationCreateExt(
+    ze_driver_handle_t hDriver,
+    ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) {
+    return L0::zeRTASParallelOperationCreateExt(hDriver, phParallelOperation);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASParallelOperationGetPropertiesExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+    ze_rtas_parallel_operation_ext_properties_t *pProperties) {
+    return L0::zeRTASParallelOperationGetPropertiesExt(hParallelOperation, pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASParallelOperationJoinExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation) {
+    return L0::zeRTASParallelOperationJoinExt(hParallelOperation);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeRTASParallelOperationDestroyExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation) {
+    return L0::zeRTASParallelOperationDestroyExt(hParallelOperation);
+}
+// End RTAS Ext
+
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeMemSetAtomicAccessAttributeExp(
     ze_context_handle_t hContext,
@@ -409,6 +557,22 @@ zeMemGetAtomicAccessAttributeExp(
     size_t size,
     ze_memory_atomic_attr_exp_flags_t *pAttr) {
     return L0::zeMemGetAtomicAccessAttributeExp(hContext, hDevice, ptr, size, pAttr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetPitchFor2dImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch) {
+    return L0::zeMemGetPitchFor2dImage(hContext, hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeImageGetDeviceOffsetExp(
+    ze_image_handle_t hImage,
+    uint64_t *pDeviceOffset) {
+    return L0::zeImageGetDeviceOffsetExp(hImage, pDeviceOffset);
 }
 
 } // extern "C"

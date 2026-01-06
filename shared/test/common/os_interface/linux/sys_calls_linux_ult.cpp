@@ -23,7 +23,6 @@
 #include <iostream>
 #include <link.h>
 #include <poll.h>
-#include <string.h>
 #include <string_view>
 #include <sys/ioctl.h>
 #include <system_error>
@@ -54,9 +53,6 @@ uint32_t readFuncCalled = 0u;
 uint32_t writeFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
-int passedFileDescriptorFlagsToSet = 0;
-int getFileDescriptorFlagsCalled = 0;
-int setFileDescriptorFlagsCalled = 0;
 int unlinkCalled = 0;
 int scandirCalled = 0;
 int mkstempCalled = 0;
@@ -66,6 +62,9 @@ int flockCalled = 0;
 int opendirCalled = 0;
 int readdirCalled = 0;
 int closedirCalled = 0;
+int pidfdopenCalled = 0;
+int pidfdgetfdCalled = 0;
+int prctlCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -112,6 +111,10 @@ DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
 int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
+int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags) = nullptr;
+int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags) = nullptr;
+int (*sysCallsPrctl)(int option, unsigned long arg) = nullptr;
+off_t (*sysCallsLseek)(int fd, off_t offset, int whence) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -394,7 +397,6 @@ int fcntl(int fd, int cmd) {
     }
 
     if (cmd == F_GETFL) {
-        getFileDescriptorFlagsCalled++;
         return O_RDWR;
     }
     return 0;
@@ -403,11 +405,6 @@ int fcntl(int fd, int cmd) {
 int fcntl(int fd, int cmd, int arg) {
     if (failFcntl1) {
         return -1;
-    }
-
-    if (cmd == F_SETFL) {
-        setFileDescriptorFlagsCalled++;
-        passedFileDescriptorFlagsToSet = arg;
     }
 
     return 0;
@@ -514,6 +511,9 @@ int closedir(DIR *dir) {
 
 off_t lseek(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
+    if (sysCallsLseek != nullptr) {
+        return sysCallsLseek(fd, offset, whence);
+    }
     return lseekReturn;
 }
 long sysconf(int name) {
@@ -536,5 +536,72 @@ int mkfifo(const char *pathname, mode_t mode) {
     return 0;
 }
 
+int pidfdopen(pid_t pid, unsigned int flags) {
+    pidfdopenCalled++;
+    if (sysCallsPidfdOpen != nullptr) {
+        return sysCallsPidfdOpen(pid, flags);
+    }
+    return 0;
+}
+
+int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
+    pidfdgetfdCalled++;
+    if (sysCallsPidfdGetfd != nullptr) {
+        return sysCallsPidfdGetfd(pid, targetfd, flags);
+    }
+    return 0;
+}
+
+int prctl(int option, unsigned long arg) {
+    prctlCalled++;
+    if (sysCallsPrctl != nullptr) {
+        return sysCallsPrctl(option, arg);
+    }
+    return 0;
+}
+
+char **getEnviron() {
+    return NEO::ULT::getCurrentEnviron();
+}
+
 } // namespace SysCalls
+
+namespace ULT {
+
+static char *defaultTestEnviron[] = {nullptr};
+static char **mockEnviron = defaultTestEnviron;
+
+MockEnvironBackup::MockEnvironBackup(char **newEnviron)
+    : mockEnvironBackup(&mockEnviron, newEnviron) {
+}
+
+int MockEnvironBackup::defaultStatMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = S_IFDIR;
+    return 0;
+}
+
+std::vector<char *> MockEnvironBackup::buildEnvironFromMap(
+    const std::unordered_map<std::string, std::string> &envs,
+    std::vector<std::string> &storage) {
+    storage.clear();
+    for (const auto &kv : envs) {
+        storage.push_back(kv.first + "=" + kv.second);
+    }
+    std::vector<char *> result;
+    for (auto &str : storage) {
+        result.push_back(const_cast<char *>(str.c_str()));
+    }
+    result.push_back(nullptr);
+    return result;
+}
+
+char **getCurrentEnviron() {
+    return mockEnviron;
+}
+
+void setMockEnviron(char **mock) {
+    mockEnviron = mock ? mock : defaultTestEnviron;
+}
+
+} // namespace ULT
 } // namespace NEO

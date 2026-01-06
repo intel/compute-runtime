@@ -26,6 +26,7 @@ class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
 struct ProgramInfo;
+class SharedPoolAllocation;
 
 enum class SegmentType : uint32_t {
     unknown,
@@ -182,6 +183,7 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
 
     Traits traits;
     SymbolMap symbols;
+    std::vector<std::string> externalSymbols;
     std::vector<std::pair<std::string, SymbolInfo>> extFuncSymbols;
     Relocations dataRelocations;
     RelocationsPerInstSegment textRelocations;
@@ -192,8 +194,8 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
 };
 
 struct Linker {
-    inline static const std::string subDeviceID = "__SubDeviceID";
-    inline static const std::string perThreadOff = "__INTEL_PER_THREAD_OFF";
+    inline static constexpr std::string_view subDeviceID = "__SubDeviceID";
+    inline static constexpr std::string_view perThreadOff = "__INTEL_PER_THREAD_OFF";
 
     using RelocationInfo = LinkerInput::RelocationInfo;
 
@@ -227,11 +229,15 @@ struct Linker {
     using ExternalFunctionsT = std::vector<ExternalFunctionInfo>;
 
     Linker(const LinkerInput &data)
-        : data(data) {
+        : Linker(data, true) {
+    }
+
+    Linker(const LinkerInput &data, bool userModule)
+        : data(data), userModule(userModule) {
     }
 
     LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
-                       const SegmentInfo &globalStringsSegInfo, GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                       const SegmentInfo &globalStringsSegInfo, SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                        const PatchableSegments &instructionsSegments, UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData,
                        size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize, const KernelDescriptorsT &kernelDescriptors,
                        ExternalFunctionsT &externalFunctions);
@@ -256,7 +262,7 @@ struct Linker {
     void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
 
     void patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
-                           GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                           SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                            std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                            const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize);
 
@@ -267,7 +273,9 @@ struct Linker {
     template <typename PatchSizeT>
     void patchIncrement(void *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
 
-    std::unordered_map<uint32_t /*ISA segment id*/, StackVec<uint32_t *, 2> /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
+    /* <ISA segment id> to <implicit args relocation address to patch, relocation type> */
+    std::unordered_map<uint32_t, StackVec<std::pair<void *, RelocationInfo::Type>, 2>> pImplicitArgsRelocationAddresses;
+    bool userModule = true;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);

@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 
 using namespace NEO;
@@ -15,7 +14,7 @@ using PreambleCfeState = PreambleFixture;
 XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndConcurrentKernelExecutionTypeWhenCallingProgramVFEStateThenSingleSpliceDispatchCcsModeIsEnabled) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
     streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     streamProperties.frontEndState.setPropertiesAll(true, false, false);
@@ -28,10 +27,10 @@ XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndConcurrentKernelExecution
     EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
 }
 
-XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndDefaultKernelExecutionTypeWhenCallingProgramVFEStateThenSingleSpliceDispatchCcsModeIsDisabled) {
+XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndDefaultKernelExecutionTypeWhenCallingProgramVFEStateThenSingleSliceDispatchCcsModeIsDisabled) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
     streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     streamProperties.frontEndState.setPropertiesAll(false, false, false);

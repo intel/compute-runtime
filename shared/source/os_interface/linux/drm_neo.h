@@ -6,17 +6,15 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/constants.h"
+#include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <array>
 #include <atomic>
@@ -26,9 +24,8 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-
-struct GT_SYSTEM_INFO;
 
 namespace aub_stream {
 enum EngineType : uint32_t;
@@ -117,13 +114,13 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool sysmanQueryEngineInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo(bool isSysmanEnabled);
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
-    bool queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData);
+    bool queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
     MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence);
     MOCKABLE_VIRTUAL int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
-    int setupHardwareInfo(const DeviceDescriptor *, bool);
+    int setupHardwareInfo(uint32_t deviceId, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
     MOCKABLE_VIRTUAL void getPrelimVersion(std::string &prelimVersion);
@@ -153,6 +150,8 @@ class Drm : public DriverModel {
     bool isDirectSubmissionActive() const { return this->directSubmissionActive; }
     MOCKABLE_VIRTUAL void setSharedSystemAllocEnable(bool value) { this->sharedSystemAllocEnable = value; }
     MOCKABLE_VIRTUAL bool isSharedSystemAllocEnabled() const { return this->sharedSystemAllocEnable; }
+    void adjustSharedSystemMemCapabilities();
+    uint64_t getSharedSystemBindFlags();
 
     MOCKABLE_VIRTUAL bool isSetPairAvailable();
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
@@ -264,14 +263,19 @@ class Drm : public DriverModel {
     void cleanup() override;
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
+    MOCKABLE_VIRTUAL std::string getSysFsPciPathBaseName();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
 
     template <typename DataType>
     std::vector<DataType> query(uint32_t queryId, uint32_t queryItemFlags);
     static std::string getDrmVersion(int fileDescriptor);
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
+    uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
+    MOCKABLE_VIRTUAL void setSharedSystemAllocAddressRange(uint64_t value) { this->sharedSystemAllocAddressRange = value; }
+    MOCKABLE_VIRTUAL uint64_t getSharedSystemAllocAddressRange() const { return this->sharedSystemAllocAddressRange; }
 
   protected:
+    Drm() = delete;
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
@@ -284,6 +288,7 @@ class Drm : public DriverModel {
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
+    MOCKABLE_VIRTUAL const DeviceDescriptor *getDeviceDescriptor(uint32_t deviceId);
     static uint64_t alignUpGttSize(uint64_t inputGttSize);
 
 #pragma pack(1)
@@ -315,7 +320,7 @@ class Drm : public DriverModel {
 #pragma pack()
 
     GemContextParamSseu sseu{};
-    ADAPTER_BDF adapterBDF{};
+    AdapterBdf adapterBDF{};
     uint32_t pciDomain = 0;
 
     struct IoctlStatisticsEntry {
@@ -352,10 +357,11 @@ class Drm : public DriverModel {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool sharedSystemAllocEnable = false;
+    uint64_t sharedSystemAllocAddressRange = 0lu;
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
     uint32_t chunkingMode = 0;
-    uint32_t minimalChunkingSize = MemoryConstants::pageSize2M;
+    uint32_t minimalChunkingSize;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -162,7 +163,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -181,7 +182,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQ
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -199,7 +200,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(4u, drmMock->queryComputeSlicesCallCount); // 2x length + 2x query
 
@@ -218,7 +219,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
     drmMock->engineInfo.reset();
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -237,7 +238,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
     drmMock->queryComputeSlicesEuCount = 0;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(2u, drmMock->queryComputeSlicesCallCount);
 
@@ -256,7 +257,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallba
     drmMock->failOnQuery = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(1u, drmMock->queryComputeSlicesCallCount);
 
@@ -275,7 +276,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) 
     drmMock->useSmallerValuesOnSecondCall = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_NE(0, drmMock->queryComputeSlicesSCount);
     EXPECT_NE(0, topologyData.sliceCount);
@@ -302,7 +303,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrec
     drmMock->useSmallerValuesOnSecondCall = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     auto device0SliceMapping = drmMock->getSliceMappings(0);
     auto device1SliceMapping = drmMock->getSliceMappings(1);
@@ -324,7 +325,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -346,7 +347,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
 TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
     createDrm(2);
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     auto topologyMap = drmMock->getTopologyMap();
 
@@ -398,10 +399,11 @@ TEST(DrmQueryTest, givenPrintIoctlDebugFlagSetWhenCallingQueryPageFaultSupportTh
     bool hasPageFaultSupport = true;
     drm.context.hasPageFaultQueryValue = hasPageFaultSupport;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
     drm.queryPageFaultSupport();
     debugManager.flags.PrintIoctlEntries.set(false);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     if (productHelper.isPageFaultSupported()) {
         std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: 1, retCode: 0\n";
@@ -421,10 +423,11 @@ TEST(DrmQueryTest, givenPrintIoctlDebugFlagNotSetWhenIsPageFaultSupportedCalledT
     bool hasPageFaultSupport = true;
     drm.context.hasPageFaultQueryValue = hasPageFaultSupport;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
     drm.queryPageFaultSupport();
     debugManager.flags.PrintIoctlEntries.set(false);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_TRUE(outputString.empty());
 }

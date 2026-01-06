@@ -5,30 +5,55 @@
  *
  */
 
+#if SUPPORT_XE3P_CORE
+#ifdef SUPPORT_CRI
+DEVICE(0x674C, CriHwConfig)
+#endif
+#endif
+
 #if SUPPORT_XE3_CORE
 #ifdef SUPPORT_PTL
 DEVICE(0xB080, PtlHwConfig)
 DEVICE(0xB081, PtlHwConfig)
 DEVICE(0xB082, PtlHwConfig)
 DEVICE(0xB083, PtlHwConfig)
+DEVICE(0xB084, PtlHwConfig)
+DEVICE(0xB085, PtlHwConfig)
+DEVICE(0xB086, PtlHwConfig)
+DEVICE(0xB087, PtlHwConfig)
 DEVICE(0xB08F, PtlHwConfig)
 DEVICE(0xB090, PtlHwConfig)
 DEVICE(0xB0A0, PtlHwConfig)
 DEVICE(0xB0B0, PtlHwConfig)
+DEVICE(0xFD80, PtlHwConfig)
+DEVICE(0xFD81, PtlHwConfig)
+#endif
+#ifdef SUPPORT_NVLS
+DEVICE(0xD740, NvlsHwConfig)
+DEVICE(0xD741, NvlsHwConfig)
+DEVICE(0xD742, NvlsHwConfig)
+DEVICE(0xD743, NvlsHwConfig)
+DEVICE(0xD744, NvlsHwConfig)
+DEVICE(0xD745, NvlsHwConfig)
 #endif
 #endif
 
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG
 DEVICE(0xE202, BmgHwConfig)
+NAMEDDEVICE(0xE209, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
 NAMEDDEVICE(0xE20B, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
 NAMEDDEVICE(0xE20C, BmgHwConfig, "Intel(R) Arc(TM) B570 Graphics")
 DEVICE(0xE20D, BmgHwConfig)
 DEVICE(0xE210, BmgHwConfig)
-DEVICE(0xE211, BmgHwConfig)
-DEVICE(0xE212, BmgHwConfig)
+NAMEDDEVICE(0xE211, BmgHwConfig, "Intel(R) Arc(TM) Pro B60 Graphics")
+NAMEDDEVICE(0xE212, BmgHwConfig, "Intel(R) Arc(TM) Pro B50 Graphics")
 DEVICE(0xE215, BmgHwConfig)
 DEVICE(0xE216, BmgHwConfig)
+DEVICE(0xE220, BmgHwConfig)
+DEVICE(0xE221, BmgHwConfig)
+DEVICE(0xE222, BmgHwConfig)
+DEVICE(0xE223, BmgHwConfig)
 #endif
 #ifdef SUPPORT_LNL
 NAMEDDEVICE(0x6420, LnlHwConfig, "Intel(R) Graphics")

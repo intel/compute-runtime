@@ -80,7 +80,6 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
     void baseAllowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
         BaseFaultManager::allowCPUMemoryEviction(evict, ptr, pageFaultData);
     }
-    void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
 
     void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override {
         allowCPUMemoryEvictionImplCalled++;
@@ -133,7 +132,6 @@ class MockPageFaultManagerHandlerInvoke : public T {
     using T::allowCPUMemoryAccess;
     using T::allowCPUMemoryEvictionImpl;
     using T::checkFaultHandlerFromPageFaultManager;
-    using T::evictMemoryAfterImplCopy;
     using T::protectCPUMemoryAccess;
     using T::registerFaultHandler;
     using T::T;

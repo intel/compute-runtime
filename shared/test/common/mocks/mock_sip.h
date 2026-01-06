@@ -19,6 +19,7 @@ class MemoryAllocation;
 class MockSipKernel : public SipKernel {
   public:
     using SipKernel::createHeaderFilename;
+    using SipKernel::selectSipClassType;
     using SipKernel::type;
 
     MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);
@@ -36,7 +37,7 @@ class MockSipKernel : public SipKernel {
 
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
     std::unique_ptr<MemoryAllocation> tempSipMemoryAllocation;
-    std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
+    std::vector<char> mockStateSaveAreaHeader;
     MockExecutionEnvironment executionEnvironment;
 };
 

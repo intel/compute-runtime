@@ -17,6 +17,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -25,8 +26,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/io_functions.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 namespace NEO {
 
@@ -85,23 +84,28 @@ const std::vector<char> &SipKernel::getBinary() const {
 
 size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
-        return maxDbgSurfaceSize;
+        return 0u;
     }
 
     if (strcmp(stateSaveAreaHeader.data(), "tssarea")) {
-        return maxDbgSurfaceSize;
+        return 0u;
     }
 
     auto hdr = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
-    auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+    auto numSlices = std::max(hwInfo.gtSystemInfo.MaxSlicesSupported, NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo));
     size_t stateSaveAreaSize = 0;
-    if (hdr->versionHeader.version.major == 4) {
-        stateSaveAreaSize = static_cast<size_t>(hdr->totalWmtpDataSize);
+    const auto sipExternalLib = device->getSipExternalLibInterface();
+    if (sipExternalLib != nullptr) {
+        stateSaveAreaSize = sipExternalLib->getStateSaveAreaSize();
+    } else if (hdr->versionHeader.version.major == 4) {
+        if (debugManager.flags.ForceTotalWMTPDataSize.get() > -1) {
+            stateSaveAreaSize = static_cast<size_t>(debugManager.flags.ForceTotalWMTPDataSize.get());
+        } else {
+            stateSaveAreaSize = static_cast<size_t>(hdr->totalWmtpDataSize);
+        }
     } else if (hdr->versionHeader.version.major == 3) {
         stateSaveAreaSize = numSlices *
                                 hdr->regHeaderV3.num_subslices_per_slice *
@@ -125,7 +129,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 SipKernelType SipKernel::getSipKernelType(Device &device) {
     if (device.getDebugger() != nullptr) {
         auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-        if (compilerProductHelper.isHeaplessModeEnabled()) {
+        if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
             return SipKernelType::dbgHeapless;
         } else {
             return SipKernelType::dbgBindless;
@@ -251,7 +255,43 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
 }
 
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {
-    return false;
+    uint32_t sipIndex = static_cast<uint32_t>(type);
+    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
+    auto sipKenel = device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get();
+    if (sipKenel != nullptr) {
+        return true;
+    }
+
+    std::vector<char> sipBinary;
+    std::vector<char> stateSaveAreaHeader;
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+
+    auto ret = device.getSipExternalLibInterface()->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
+    if (ret != 0) {
+        return false;
+    }
+    UNRECOVERABLE_IF(sipBinary.size() == 0);
+
+    const auto allocType = AllocationType::kernelIsaInternal;
+    AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
+    properties.flags.use32BitFrontWindow = false;
+
+    auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (sipAllocation == nullptr) {
+        return false;
+    }
+    auto &productHelper = device.getProductHelper();
+    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                     device, sipAllocation, 0, sipBinary.data(),
+                                                     sipBinary.size());
+
+    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
+        std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
+
+    if (type == SipKernelType::csr) {
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = device.getBuiltIns()->getSipKernel(type, device).getStateSaveAreaSize(&device);
+    }
+    return true;
 }
 
 void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
@@ -309,7 +349,7 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
     SipKernelType debugSipType;
     auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
         debugSipType = SipKernelType::dbgHeapless;
     } else {
         debugSipType = SipKernelType::dbgBindless;
@@ -327,7 +367,7 @@ const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
 const SipKernel &SipKernel::getDebugSipKernel(Device &device, OsContext *context) {
     SipKernelType debugSipType;
     auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
         debugSipType = SipKernelType::dbgHeapless;
     } else {
         debugSipType = SipKernelType::dbgBindless;

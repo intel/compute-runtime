@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -25,7 +25,7 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct ClCreateImageTests : public ApiFixture<>,
+struct ClCreateImageTests : public ApiFixture,
                             public T {
 
     void SetUp() override {
@@ -1206,15 +1206,10 @@ TEST_F(ClCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithT
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
-        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
-        EXPECT_EQ(nullptr, imageFromImageObject);
-    } else {
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, imageFromImageObject);
-        retVal = clReleaseMemObject(imageFromImageObject);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, imageFromImageObject);
+    retVal = clReleaseMemObject(imageFromImageObject);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1264,11 +1259,7 @@ TEST_F(ClCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithD
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features) {
-        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
-    } else {
-        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
-    }
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
     EXPECT_EQ(nullptr, imageFromImageObject);
 
     retVal = clReleaseMemObject(image);
@@ -1367,7 +1358,7 @@ using clCreateImageWithMultiDeviceContextTests = MultiRootDeviceFixture;
 TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithoutHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsNotSet) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<ImageWithoutHostPtr>::create(context.get()));
 
     EXPECT_EQ(image->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 3u);
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
@@ -1382,7 +1373,7 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithHostPtrAnd
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     DebugManagerStateRestore dbgRestore;
 
-    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context.get()));
 
     EXPECT_EQ(image->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 3u);
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
@@ -1401,7 +1392,7 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenContextdWithMultiDeviceFai
         static_cast<MockMemoryManager *>(context->getMemoryManager())->successAllocatedGraphicsMemoryIndex = 0u;
         static_cast<MockMemoryManager *>(context->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 0u;
 
-        std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
+        std::unique_ptr<Image> image(ImageHelperUlt<ImageWithoutHostPtr>::create(context.get()));
 
         EXPECT_EQ(nullptr, image);
     }
@@ -1410,7 +1401,7 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenContextdWithMultiDeviceFai
         static_cast<MockMemoryManager *>(context->getMemoryManager())->successAllocatedGraphicsMemoryIndex = 0u;
         static_cast<MockMemoryManager *>(context->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 1u;
 
-        std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
+        std::unique_ptr<Image> image(ImageHelperUlt<ImageWithoutHostPtr>::create(context.get()));
 
         EXPECT_EQ(nullptr, image);
     }

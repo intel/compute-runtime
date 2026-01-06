@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,36 +81,42 @@ cl_int validateObject(cl_kernel object) {
 }
 
 cl_int validateObject(const EventWaitList &eventWaitList) {
-    if ((!eventWaitList.first) != (!eventWaitList.second))
+    if ((!eventWaitList.first) != (!eventWaitList.second)) {
         return CL_INVALID_EVENT_WAIT_LIST;
+    }
 
     for (cl_uint i = 0; i < eventWaitList.first; i++) {
-        if (validateObject(eventWaitList.second[i]) != CL_SUCCESS)
+        if (validateObject(eventWaitList.second[i]) != CL_SUCCESS) {
             return CL_INVALID_EVENT_WAIT_LIST;
+        }
     }
 
     return CL_SUCCESS;
 }
 
 cl_int validateObject(const DeviceList &deviceList) {
-    if ((!deviceList.first) != (!deviceList.second))
+    if ((!deviceList.first) != (!deviceList.second)) {
         return CL_INVALID_VALUE;
+    }
 
     for (cl_uint i = 0; i < deviceList.first; i++) {
-        if (validateObject(deviceList.second[i]) != CL_SUCCESS)
+        if (validateObject(deviceList.second[i]) != CL_SUCCESS) {
             return CL_INVALID_DEVICE;
+        }
     }
 
     return CL_SUCCESS;
 }
 
 cl_int validateObject(const MemObjList &memObjList) {
-    if ((!memObjList.first) != (!memObjList.second))
+    if ((!memObjList.first) != (!memObjList.second)) {
         return CL_INVALID_VALUE;
+    }
 
     for (cl_uint i = 0; i < memObjList.first; i++) {
-        if (validateObject(memObjList.second[i]) != CL_SUCCESS)
+        if (validateObject(memObjList.second[i]) != CL_SUCCESS) {
             return CL_INVALID_MEM_OBJECT;
+        }
     }
 
     return CL_SUCCESS;
@@ -121,7 +127,7 @@ cl_int validateObject(const NonZeroBufferSize &nzbs) {
 }
 
 cl_int validateObject(const PatternSize &ps) {
-    switch ((cl_int)ps) {
+    switch (static_cast<cl_int>(ps)) {
     case 128:
     case 64:
     case 32:
@@ -143,8 +149,9 @@ cl_int validateObject(bool isValid) {
 }
 
 cl_int validateYuvOperation(const size_t *origin, const size_t *region) {
-    if (!origin || !region)
+    if (!origin || !region) {
         return CL_INVALID_VALUE;
+    }
     return ((origin[0] % 2 == 0) && (region[0] % 2 == 0)) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 

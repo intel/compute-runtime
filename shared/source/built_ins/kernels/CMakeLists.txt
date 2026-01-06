@@ -21,7 +21,7 @@ set(BUILTIN_OPTIONS_STATELESS "-cl-intel-greater-than-4GB-buffer-required")
 set(BUILTIN_OPTIONS_STATEFUL "-force_stos_opt")
 
 set(stateless_INTERNAL_OPTIONS "")
-set(heapless_INTERNAL_OPTIONS -internal_options "")
+set(heapless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode -ze-intel-64bit-addressing")
 set(bindful_INTERNAL_OPTIONS "")
 set(bindless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
 macro(additional_heapless_checker)
@@ -29,14 +29,8 @@ endmacro()
 
 add_subdirectories()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  list(APPEND __ocloc__options__ "-D DEBUG")
-endif()
-
-function(get_builtin_options core_type neo_arch mode_type)
-  if("${neo_arch}" STREQUAL "x32")
-    set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
-  elseif("${mode_type}" STREQUAL "stateless" OR "${mode_type}" STREQUAL "heapless")
+function(get_builtin_options mode_type)
+  if("${mode_type}" STREQUAL "stateless" OR "${mode_type}" STREQUAL "heapless")
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
   else()
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATEFUL}" PARENT_SCOPE)
@@ -46,22 +40,30 @@ endfunction()
 function(get_generated_builtins core_type mode_type)
   if("${core_type}" STREQUAL "XE_HPC_CORE")
     # Compile all builtin kernels as stateless for XeHpc
-    set(generated_builtins "${GENERATED_BUILTINS};${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
-    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES};${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins "${GENERATED_BUILTINS}" PARENT_SCOPE)
+    set(generated_builtins_stateless "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES}" PARENT_SCOPE)
+    set(generated_builtins_images_stateless "${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
   elseif(${mode_type} STREQUAL "stateless")
-    set(generated_builtins "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
-    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins "" PARENT_SCOPE)
+    set(generated_builtins_stateless "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins_images "" PARENT_SCOPE)
+    set(generated_builtins_images_stateless "${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
   elseif(${mode_type} STREQUAL "heapless")
-    set(generated_builtins "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
-    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES};${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins "" PARENT_SCOPE)
+    set(generated_builtins_stateless "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES}" PARENT_SCOPE)
+    set(generated_builtins_images_stateless "${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
   else()
     set(generated_builtins "${GENERATED_BUILTINS}" PARENT_SCOPE)
+    set(generated_builtins_stateless "" PARENT_SCOPE)
     set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES}" PARENT_SCOPE)
+    set(generated_builtins_images_stateless "" PARENT_SCOPE)
   endif()
 endfunction()
 
 # Define function for compiling built-ins (with ocloc)
-function(compile_builtin core_type platform_it builtin bits builtin_options mode)
+function(compile_builtin core_type platform_it builtin bits builtin_options mode is_stateless)
   string(TOLOWER ${platform_it} platform_it_lower)
   string(TOLOWER ${core_type} core_type_lower)
   set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${core_type_lower}")
@@ -70,6 +72,10 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   # get name of the file w/o extension
   get_filename_component(BASENAME ${builtin} NAME_WE)
   get_filename_component(absolute_filepath ${builtin} ABSOLUTE)
+
+  if(is_stateless)
+    set(BASENAME ${BASENAME}_stateless)
+  endif()
 
   set(OUTPUT_FILE_SPV
       ${OUTPUTDIR}/${mode}_${BASENAME}_${platform_it_lower}.spv
@@ -80,7 +86,13 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
     set(heapless_mode "enable")
   endif()
 
+  if(${mode} STREQUAL "stateless" OR ${mode} STREQUAL "heapless")
+    list(APPEND __ocloc__options__ ${WIDE_STATELESS_TYPES})
+  else()
+    list(APPEND __ocloc__options__ ${KERNEL_TYPES})
+  endif()
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
+
   set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
@@ -152,8 +164,12 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   set(BUILTINS_COMMANDS ${BUILTINS_COMMANDS} PARENT_SCOPE)
 endfunction()
 
-function(generate_cpp_spirv builtin)
+function(generate_cpp_spirv builtin is_stateless)
   get_filename_component(BASENAME ${builtin} NAME_WE)
+  if(is_stateless)
+    set(BASENAME ${BASENAME}_stateless)
+    set(KERNEL_INTERNAL_OPTIONS "-cl-intel-greater-than-4GB-buffer-required")
+  endif()
 
   set(INPUT_FILENAME ${builtin}.builtin_kernel)
   get_filename_component(absolute_filepath ${INPUT_FILENAME} ABSOLUTE)
@@ -162,14 +178,22 @@ function(generate_cpp_spirv builtin)
   string(REPLACE "//" "/" OUTPUTDIR ${OUTPUTDIR})
 
   set(GENERATED_SPV_INPUT ${OUTPUTDIR}/${BASENAME}.spv)
+
   set(OUTPUT_FILE_CPP
       ${OUTPUTDIR}/${BASENAME}.cpp
   )
 
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+    if(is_stateless)
+      set(KERNEL_OPTIONS ${WIDE_STATELESS_TYPES})
+    else()
+      set(KERNEL_OPTIONS ${KERNEL_TYPES})
+    endif()
+    set(KERNEL_OPTIONS "${KERNEL_OPTIONS} -cl-kernel-arg-info")
+
     add_custom_command(
                        OUTPUT ${GENERATED_SPV_INPUT}
-                       COMMAND ${ocloc_cmd_prefix} -q -spv_only -file ${absolute_filepath} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
+                       COMMAND ${ocloc_cmd_prefix} -q -spv_only -file "${absolute_filepath}" -out_dir "${OUTPUTDIR}" -output "${BASENAME}" ${KERNEL_INTERNAL_OPTIONS} -output_no_suffix -options "${KERNEL_OPTIONS}"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV}
     )
@@ -233,25 +257,31 @@ macro(macro_for_each_platform)
       continue()
     endif()
 
-    get_builtin_options(${CORE_TYPE} ${NEO_ARCH} ${MODE})
+    get_builtin_options(${MODE})
     get_generated_builtins(${CORE_TYPE} ${MODE})
 
     if(${AUX_TRANSLATION_SUPPORT})
       # Stateless aux translation are only supported for XeHpc
       if(NOT ${MODE} STREQUAL "stateless" OR "${CORE_TYPE}" STREQUAL "XE_HPC_CORE")
         foreach(GENERATED_BUILTIN_AUX_TRANSLATION ${GENERATED_BUILTINS_AUX_TRANSLATION})
-          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE} FALSE)
         endforeach()
       endif()
     endif()
 
     foreach(generated_builtin ${generated_builtins})
-      compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+      compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE} FALSE)
+    endforeach()
+    foreach(generated_builtin ${generated_builtins_stateless})
+      compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE} TRUE)
     endforeach()
 
     if(${IMAGE_SUPPORT})
       foreach(generated_builtin_images ${generated_builtins_images})
-        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin_images}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin_images}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE} FALSE)
+      endforeach()
+      foreach(generated_builtin_images ${generated_builtins_images_stateless})
+        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin_images}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE} TRUE)
       endforeach()
     endif()
 
@@ -276,19 +306,19 @@ file(MAKE_DIRECTORY "${BUILTINS_OUTDIR_WITH_ARCH}/spirv")
 set(OUTPUT_FILES_SPIRV_PREV)
 
 foreach(builtin ${GENERATED_BUILTINS})
-  generate_cpp_spirv(${builtin})
+  generate_cpp_spirv(${builtin} FALSE)
 endforeach()
 foreach(builtin_images ${GENERATED_BUILTINS_IMAGES})
-  generate_cpp_spirv(${builtin_images})
+  generate_cpp_spirv(${builtin_images} FALSE)
 endforeach()
 foreach(builtin_aux_translation ${GENERATED_BUILTINS_AUX_TRANSLATION})
-  generate_cpp_spirv(${builtin_aux_translation})
+  generate_cpp_spirv(${builtin_aux_translation} FALSE)
 endforeach()
 foreach(builtin_stateless ${GENERATED_BUILTINS_STATELESS})
-  generate_cpp_spirv(${builtin_stateless})
+  generate_cpp_spirv(${builtin_stateless} TRUE)
 endforeach()
 foreach(builtin_images_stateless ${GENERATED_BUILTINS_IMAGES_STATELESS})
-  generate_cpp_spirv(${builtin_images_stateless})
+  generate_cpp_spirv(${builtin_images_stateless} TRUE)
 endforeach()
 if(NOT "${OUTPUT_LIST_CPP_FILES}" STREQUAL "")
   add_library(${BUILTINS_SPIRV_LIB_NAME} OBJECT ${OUTPUT_LIST_CPP_FILES})

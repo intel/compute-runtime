@@ -15,14 +15,24 @@
 namespace LevelZeroBlackBoxTests {
 
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
+    return compileToSpirV(src, options, {}, outCompilerLog);
+}
+
+std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, const std::string &device, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-spv_only", "-file", mainFileName, "", ""};
-    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 2;
+    const char *argv[] = {"ocloc", "-q", "-spv_only", "-file", mainFileName, "", "", "", ""};
+    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 4;
+    uint32_t nextArgIndex = 5;
+    if (device.size() > 0) {
+        argv[nextArgIndex++] = "-device";
+        argv[nextArgIndex++] = device.c_str();
+        numArgs += 2;
+    }
     if (options.size() > 0) {
-        argv[5] = "-options";
-        argv[6] = options.c_str();
+        argv[nextArgIndex++] = "-options";
+        argv[nextArgIndex++] = options.c_str();
         numArgs += 2;
     }
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
@@ -136,11 +146,37 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     oclocFreeOutput(&numOutputs, &outputs, &ouputLengths, &outputNames);
     return ret;
 }
+const char *slmArgKernelSrc = R"===(
+typedef struct {
+  unsigned int initLocalIdSum;
+  unsigned int initGlobalIdSum;
+} InitValues;
 
-const char *memcpyBytesTestKernelSrc = R"===(
-kernel void memcpy_bytes(__global char *dst, const __global char *src) {
-    unsigned int gid = get_global_id(0);
-    dst[gid] = src[gid];
+__kernel void test_arg_slm(
+    __global unsigned int *outputSums,           // Output array for sums (global memory)
+    __local unsigned int *localIdArray,          // Local array for local IDs (shared memory)
+    __local unsigned int *globalIdArray,         // Local array for global IDs (shared memory)
+    InitValues initValues                        // Initial values for output sums
+) {
+    // Each work-item stores its local and global ID in local memory
+    localIdArray[get_local_id(0)] = get_local_id(0);
+    globalIdArray[get_local_id(0)] = get_global_id(0);
+
+    // Synchronize all work-items in the group
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // Only the first work-item in the group performs the reduction
+    if(get_local_id(0) == 0){
+        unsigned int sumLocalIds = 0;
+        unsigned int sumGlobalIds = 0;
+        for(int i = 0; i < get_local_size(0); ++i){
+            sumLocalIds += localIdArray[i];
+            sumGlobalIds += globalIdArray[i];
+        }
+        // Store the results in the output array
+        outputSums[get_group_id(0)*2] = sumLocalIds + initValues.initLocalIdSum;
+        outputSums[get_group_id(0)*2+1] = sumGlobalIds + initValues.initGlobalIdSum;
+    }
 }
 )===";
 
@@ -156,13 +192,28 @@ __kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
 
 const char *openCLKernelsSource = R"OpenCLC(
 __kernel void add_constant(global int *values, int addval) {
-    const int xid = get_global_id(0);
-    values[xid] = values[xid] + addval;
+    const int gid = get_global_id(0);
+    values[gid] = values[gid] + addval;
 }
 
 __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
     unsigned int gid = get_global_id(0);
     dst[gid] = (uchar)(src[gid] + 1);
+}
+
+kernel void memcpy_bytes(__global char *dst, const __global char *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src[gid];
+}
+
+__kernel void add_constant_output(global int *src, global int *dst, int addval) {
+    const int gid = get_global_id(0);
+    dst[gid] = src[gid] + addval;
+}
+
+__kernel void mul_constant_output(global int *src, global int *dst, int mulval) {
+    const int gid = get_global_id(0);
+    dst[gid] = src[gid] * mulval;
 }
 )OpenCLC";
 
@@ -195,6 +246,8 @@ const char *printfKernelSource = R"===(
 #define MACRO_STR1 "string with tab(\\t) new line(\\n):"
 #define MACRO_STR2 "using tab \tand new line \nin this string"
 
+void printf_function();
+
 __kernel void printf_kernel(char byteValue, short shortValue, int intValue, long longValue) {
     printf("byte = %hhd\nshort = %hd\nint = %d\nlong = %ld", byteValue, shortValue, intValue, longValue);
 }
@@ -213,6 +266,18 @@ __kernel void print_string() {
 
 __kernel void print_macros() {
     printf("%s\n%s", MACRO_STR1, MACRO_STR2);
+}
+
+__kernel void print_from_function_kernel() {
+    printf_function();
+}
+
+)===";
+
+const char *printfFunctionSource = R"===(
+
+void printf_function() {
+     printf("test function\n");
 }
 
 )===";
@@ -451,6 +516,33 @@ void createScratchModuleKernel(ze_context_handle_t &context,
     ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
     std::cout << "Scratch size = " << std::dec << kernelProperties.spillMemSize << "\n";
+}
+
+void createModuleFromSpirV(ze_context_handle_t context, ze_device_handle_t device, const char *kernelSrc, ze_module_handle_t &module) {
+    // SpirV for a kernel
+    std::string buildLog;
+    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(kernelSrc, "", buildLog);
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
+    SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
+
+    ze_module_desc_t moduleDesc = {
+        .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
+        .pNext = nullptr,
+        .format = ZE_MODULE_FORMAT_IL_SPIRV,
+        .inputSize = moduleBinary.size(),
+        .pInputModule = reinterpret_cast<const uint8_t *>(moduleBinary.data()),
+    };
+    SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
+}
+
+void createKernelWithName(ze_module_handle_t module, const char *kernelName, ze_kernel_handle_t &kernel) {
+    ze_kernel_desc_t kernelDesc = {
+        .stype = ZE_STRUCTURE_TYPE_KERNEL_DESC,
+        .pNext = nullptr,
+        .flags = 0,
+        .pKernelName = kernelName,
+    };
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 }
 
 } // namespace LevelZeroBlackBoxTests

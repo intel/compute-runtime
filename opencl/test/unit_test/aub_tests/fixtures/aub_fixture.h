@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
@@ -40,24 +39,24 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
         executionEnvironment->calculateMaxOsContextCount();
 
-        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         auto engineType = getChosenEngineType(hwInfo);
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         std::stringstream strfilename;
         strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
-        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << EngineHelpers::engineTypeToString(engineType);
 
         aubFileName = strfilename.str();
         ultHwConfig.aubTestName = aubFileName.c_str();
 
         auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
-        device = std::make_unique<MockClDevice>(pDevice);
         pDevice->disableSecondaryEngines = true;
+        initPlatform({pDevice});
+        device = static_cast<MockClDevice *>(platform(pDevice->getExecutionEnvironment())->getClDevice(0));
 
         this->csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
-        CommandQueueHwFixture::setUp(AUBFixture::device.get(), cl_command_queue_properties(0));
+        CommandQueueHwFixture::setUp(AUBFixture::device, cl_command_queue_properties(0));
     }
     void tearDown() {
         CommandQueueHwFixture::tearDown();
@@ -157,7 +156,7 @@ class AUBFixture : public CommandQueueHwFixture {
     const uint32_t rootDeviceIndex = 0;
     CommandStreamReceiver *csr = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
-    std::unique_ptr<MockClDevice> device;
+    MockClDevice *device;
 
     ExecutionEnvironment *executionEnvironment;
 
@@ -173,7 +172,7 @@ struct KernelAUBFixture : public AUBFixture,
                           public KernelFixture {
     void setUp() {
         AUBFixture::setUp(nullptr);
-        KernelFixture::setUp(device.get(), context);
+        KernelFixture::setUp(device, context);
     }
 
     void tearDown() {

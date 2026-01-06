@@ -62,7 +62,8 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
         resume,
         ready,
         slmRead,
-        slmWrite
+        slmWrite,
+        barrierRead,
     };
 
   protected:

@@ -30,17 +30,7 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() co
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
+bool ReleaseHelperHw<release>::isBlitImageAllowedForDepthFormat() const {
     return false;
 }
 
@@ -59,5 +49,7 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
 }
 
 } // namespace NEO
+
+#include "shared/source/release_helper/release_helper_common_xe_lpg.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;

@@ -34,7 +34,7 @@ struct EventImp : public Event {
 
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t queryStatus() override;
+    ze_result_t queryStatus(int64_t timeSinceWait) override;
 
     ze_result_t reset() override;
 
@@ -68,11 +68,11 @@ struct EventImp : public Event {
     TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;
 
     ze_result_t calculateProfilingData();
-    ze_result_t queryStatusEventPackets();
-    ze_result_t queryCounterBasedEventStatus();
+    ze_result_t queryStatusEventPackets(int64_t timeSinceWait);
+    ze_result_t queryCounterBasedEventStatus(int64_t timeSinceWait);
     void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(State eventState);
-    void clearLatestInOrderTimestampData(uint32_t partitionCount) override;
+    void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override;
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
     void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
@@ -81,6 +81,7 @@ struct EventImp : public Event {
     void copyTbxData(uint64_t dstGpuVa, size_t copySize);
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
     void synchronizeTimestampCompletionWithTimeout();
+    bool isCacheFlushRequiredForHostSync() const;
 };
 
 } // namespace L0

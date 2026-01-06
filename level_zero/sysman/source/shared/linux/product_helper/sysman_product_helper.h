@@ -10,7 +10,7 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <map>
 #include <memory>
@@ -29,12 +29,13 @@ class LinuxSysmanImp;
 class PlatformMonitoringTech;
 class SysmanKmdInterface;
 class FirmwareUtil;
+class SysFsAccessInterface;
 
 enum class RasInterfaceType;
 enum class SysfsValueUnit;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
-extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
+extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[NEO::maxProductEnumValue];
 
 class SysmanProductHelper {
   public:
@@ -50,12 +51,13 @@ class SysmanProductHelper {
     // Frequency
     virtual void getFrequencyStepSize(double *pStepSize) = 0;
     virtual bool isFrequencySetRangeSupported() = 0;
-    virtual zes_freq_throttle_reason_flags_t getThrottleReasons(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) = 0;
+    virtual zes_freq_throttle_reason_flags_t getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) = 0;
 
     // Memory
     virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) = 0;
     virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) = 0;
     virtual void getMemoryHealthIndicator(FirmwareUtil *pFwInterface, zes_mem_health_t *health) = 0;
+    virtual ze_result_t getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) = 0;
 
     // Performance
     virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
@@ -99,6 +101,15 @@ class SysmanProductHelper {
     // Pci
     virtual ze_result_t getPciProperties(zes_pci_properties_t *pProperties) = 0;
     virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) = 0;
+    virtual bool isPcieDowngradeSupported() = 0;
+    virtual int32_t maxPcieGenSupported() = 0;
+
+    // Engine
+    virtual bool isAggregationOfSingleEnginesSupported() = 0;
+
+    // Vf Management
+    virtual bool isVfMemoryUtilizationSupported() = 0;
+    virtual ze_result_t getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) = 0;
 
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;

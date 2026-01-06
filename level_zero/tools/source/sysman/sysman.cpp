@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
@@ -16,9 +15,6 @@
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
-
-#include <cstring>
-#include <vector>
 
 namespace L0 {
 bool sysmanInitFromCore = false;
@@ -36,8 +32,8 @@ void DeviceImp::createSysmanHandle(bool isSubDevice) {
 
 SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     if (L0::Sysman::sysmanOnlyInit) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Sysman Initialization already happened via zesInit\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Sysman Initialization already happened via zesInit\n");
         return nullptr;
     }
 
@@ -78,8 +74,8 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     zes_event_type_flags_t *pEvents) {
 
     if (globalOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Os Sysman Driver Not initialized\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -94,8 +90,8 @@ ze_result_t DriverHandleImp::sysmanEventsListenEx(
     zes_event_type_flags_t *pEvents) {
 
     if (globalOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Os Sysman Driver Not initialized\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return globalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);

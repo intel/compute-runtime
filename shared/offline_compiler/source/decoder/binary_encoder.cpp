@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFileLines, s
             std::stringstream ss(ptmFileLines[deviceMarker]);
             ss.ignore(32, ' ');
             ss.ignore(32, ' ');
-            uint32_t gfxCore = 0;
+            int32_t gfxCore = 0;
             ss >> gfxCore;
             iga->setGfxCore(static_cast<GFXCORE_FAMILY>(gfxCore));
         }
@@ -234,7 +234,7 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 
     // Write KernelHeap and padding
     uint32_t kernelHeapSizeUnpadded = 0U;
-    bool heapsCopiedSuccesfully = true;
+    bool heapsCopiedSuccessfully = true;
 
     // Use .asm if available, fallback to .dat
     if (argHelper->fileExists(pathToDump + kernelName + "_KernelHeap.asm")) {
@@ -248,7 +248,7 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
         kernelHeapSizeUnpadded = static_cast<uint32_t>(kernelAsBinary.size());
         kernelBlob.write(kernelAsBinary.data(), kernelAsBinary.size());
     } else {
-        heapsCopiedSuccesfully = copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.dat", kernelBlob, &kernelHeapSizeUnpadded);
+        heapsCopiedSuccessfully = copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.dat", kernelBlob, &kernelHeapSizeUnpadded);
     }
 
     uint32_t kernelHeapSize = 0U;
@@ -264,11 +264,11 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 
     // Write GeneralStateHeap, DynamicStateHeap, SurfaceStateHeap
     if (argHelper->fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
-        heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", kernelBlob);
+        heapsCopiedSuccessfully = heapsCopiedSuccessfully && copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", kernelBlob);
     }
-    heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", kernelBlob);
-    heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_SurfaceStateHeap.bin", kernelBlob);
-    if (false == heapsCopiedSuccesfully) {
+    heapsCopiedSuccessfully = heapsCopiedSuccessfully && copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", kernelBlob);
+    heapsCopiedSuccessfully = heapsCopiedSuccessfully && copyBinaryToBinary(pathToDump + kernelName + "_SurfaceStateHeap.bin", kernelBlob);
+    if (false == heapsCopiedSuccessfully) {
         return -1;
     }
 
@@ -337,7 +337,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
     }
     if (pathToDump.empty()) {
         if (!argHelper->outputEnabled()) {
-            argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            argHelper->printf("Warning : Path to dump folder not specified - using ./dump as default.\n");
             pathToDump = "dump";
             addSlash(pathToDump);
         }

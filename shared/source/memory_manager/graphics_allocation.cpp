@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -91,7 +92,8 @@ bool GraphicsAllocation::isAllocationLockable() const {
     if (!gmm) {
         return true;
     }
-    return 0 == gmm->resourceParams.Flags.Info.NotLockable;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    return 0 == gmmResourceParams->Flags.Info.NotLockable;
 }
 
 void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {
@@ -100,6 +102,13 @@ void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {
 }
 
 bool GraphicsAllocation::isAubWritable(uint32_t banks) const {
+    if (debugManager.flags.AUBDumpAllocations.get()) {
+        UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
+        if ((1llu << (static_cast<int64_t>(this->getAllocationType()) - 1)) & ~debugManager.flags.AUBDumpAllocations.get()) {
+            return false;
+        }
+    }
+
     return isAnyBitSet(aubInfo.aubWritable, banks);
 }
 
@@ -158,9 +167,9 @@ bool GraphicsAllocation::hasAllocationReadOnlyType() {
     return false;
 }
 
-void GraphicsAllocation::checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties) {
+void GraphicsAllocation::checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData) {
     if (getAllocationType() == AllocationType::commandBuffer &&
-        (properties.flags.cantBeReadOnly | properties.flags.multiOsContextCapable)) {
+        (allocData.flags.cantBeReadOnly | allocData.flags.multiOsContextCapable)) {
         setAsCantBeReadOnly(true);
         return;
     }

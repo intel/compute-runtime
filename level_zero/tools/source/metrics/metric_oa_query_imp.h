@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,13 +28,6 @@ using MetricsLibraryApi::Interface_1_0;
 using MetricsLibraryApi::QueryHandle_1_0;
 using MetricsLibraryApi::StatusCode;
 
-namespace L0 {
-struct Device;
-struct CommandList;
-struct MetricGroup;
-class OaMetricSourceImp;
-} // namespace L0
-
 namespace NEO {
 class OsLibrary;
 class GraphicsAllocation;
@@ -42,6 +35,10 @@ class GfxCoreHelper;
 } // namespace NEO
 
 namespace L0 {
+struct Device;
+struct CommandList;
+struct MetricGroup;
+class OaMetricSourceImp;
 
 struct MetricsLibrary {
   public:
@@ -97,7 +94,7 @@ struct MetricsLibrary {
     ClientGen getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const;
 
   protected:
-    NEO::OsLibrary *handle = nullptr;
+    std::unique_ptr<NEO::OsLibrary> handle;
     OaMetricSourceImp &metricSource;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
     bool isWorkloadPartitionEnabled = false;

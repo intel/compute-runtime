@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,4 +13,4 @@ using namespace NEO;
 void Gmm::applyExtraMemoryFlags(const StorageInfo &storageInfo) {}
 bool Gmm::extraMemoryFlagsRequired() { return false; }
 void Gmm::applyAppResource(const StorageInfo &storageInfo) {}
-void Gmm::applyExtraInitFlag() {}
+void Gmm::applyExtraAuxInitFlag() {}

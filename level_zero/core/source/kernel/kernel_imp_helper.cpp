@@ -8,10 +8,13 @@
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
-namespace L0 {
+#include "implicit_args.h"
 
-KernelExt *KernelImp::getExtension(uint32_t extensionType) { return nullptr; }
+namespace L0 {
 
 void KernelImp::patchRegionParams(const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) {}
 
+ze_result_t KernelImp::validateWorkgroupSize() const {
+    return ZE_RESULT_SUCCESS;
+}
 } // namespace L0

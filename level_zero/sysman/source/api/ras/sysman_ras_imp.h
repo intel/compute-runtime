@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsRas;
+struct OsSysman;
 
 class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -23,6 +25,10 @@ class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
     ze_result_t rasGetState(zes_ras_state_t *pConfig, ze_bool_t clear) override;
     ze_result_t rasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) override;
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
+    ze_result_t rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) override;
+    ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override;
+    ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override;
+    ze_result_t rasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) override;
 
     RasImp() = default;
     RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t isSubDevice, uint32_t subDeviceId);

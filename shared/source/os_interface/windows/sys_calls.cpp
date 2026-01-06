@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,17 +11,6 @@
 #include <string>
 
 namespace NEO {
-
-bool isShutdownInProgress() {
-    auto handle = GetModuleHandleA("ntdll.dll");
-
-    if (!handle) {
-        return true;
-    }
-
-    auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
-    return rtlDllShutdownInProgress();
-}
 
 namespace SysCalls {
 void exit(int code) {
@@ -36,6 +25,14 @@ unsigned int getCurrentProcessId() {
     return GetCurrentProcessId();
 }
 
+BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) {
+    return DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+}
+
+HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
+    return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+}
+
 unsigned long getNumThreads() {
     return 1;
 }
@@ -46,6 +43,10 @@ DWORD getLastError() {
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
     return CreateEventA(lpEventAttributes, bManualReset, bInitialState, lpName);
+}
+
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+    return ::WaitForSingleObject(hHandle, dwMilliseconds);
 }
 
 BOOL closeHandle(HANDLE hObject) {
@@ -169,6 +170,42 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
     return CM_Get_Device_Interface_List(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
 }
 
+CONFIGRET cmGetDeviceIdSize(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags) {
+    return CM_Get_Device_ID_Size(pulLen, dnDevInst, ulFlags);
+}
+
+CONFIGRET cmGetDeviceId(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags) {
+    return CM_Get_Device_ID(dnDevInst, buffer, bufferLen, ulFlags);
+}
+
+CONFIGRET cmGetChild(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    return CM_Get_Child(pdnDevInst, dnDevInst, ulFlags);
+}
+
+CONFIGRET cmGetSibling(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    return CM_Get_Sibling(pdnDevInst, dnDevInst, ulFlags);
+}
+
+BOOL setupDiGetDeviceRegistryProperty(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) {
+    return SetupDiGetDeviceRegistryProperty(deviceInfoSet, deviceInfoData, property, propertyRegDataType, propertyBuffer, propertyBufferSize, requiredSize);
+}
+
+BOOL setupDiOpenDeviceInfo(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) {
+    return SetupDiOpenDeviceInfo(deviceInfoSet, deviceInstanceId, hwndParent, openFlags, deviceInfoData);
+}
+
+BOOL setupDiEnumDeviceInfo(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) {
+    return SetupDiEnumDeviceInfo(deviceInfoSet, memberIndex, deviceInfoData);
+}
+
+BOOL setupDiDestroyDeviceInfoList(HDEVINFO deviceInfoSet) {
+    return SetupDiDestroyDeviceInfoList(deviceInfoSet);
+}
+
+HDEVINFO setupDiGetClassDevs(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) {
+    return SetupDiGetClassDevs(classGuid, enumerator, hwndParent, flags);
+}
+
 LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
     return HeapAlloc(hHeap, dwFlags, dwBytes);
 }
@@ -196,6 +233,23 @@ BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LP
 BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lpBuffer, PUINT puLen) {
     return ::VerQueryValueW(pBlock, lpSubBlock, lpBuffer, puLen);
 }
+LPWCH getEnvironmentStringsW() {
+    return ::GetEnvironmentStringsW();
+}
 
+BOOL freeEnvironmentStringsW(LPWCH env) {
+    return ::FreeEnvironmentStringsW(env);
+}
+
+bool isShutdownInProgress() {
+    auto handle = GetModuleHandleA("ntdll.dll");
+
+    if (!handle) {
+        return true;
+    }
+
+    auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
+    return rtlDllShutdownInProgress();
+}
 } // namespace SysCalls
 } // namespace NEO

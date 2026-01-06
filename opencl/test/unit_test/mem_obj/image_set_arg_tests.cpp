@@ -8,16 +8,14 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
@@ -86,7 +84,7 @@ class ImageSetArgTest : public ClDeviceFixture,
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
         context = new MockContext(pClDevice);
-        srcImage = Image3dHelper<>::create(context);
+        srcImage = Image3dHelperUlt<>::create(context);
         srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, srcImage);
 
@@ -187,7 +185,7 @@ HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModi
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     uint32_t cubeFaceIndex = 2;
 
-    Image *src2dImage = Image2dHelper<>::create(context);
+    Image *src2dImage = Image2dHelperUlt<>::create(context);
 
     src2dImage->setCubeFaceIndex(cubeFaceIndex);
 
@@ -219,7 +217,7 @@ struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
         cl_image_desc imageDesc = Image2dDefaults::imageDesc;
         imageDesc.image_array_size = imageArraySize;
         imageDesc.image_type = imageType;
-        std::unique_ptr<Image> image{Image2dHelper<>::create(context, &imageDesc)};
+        std::unique_ptr<Image> image{Image2dHelperUlt<>::create(context, &imageDesc)};
         image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
         image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
@@ -227,11 +225,11 @@ struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
     }
 };
 
-HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_ARRAY, 1u, false);
 }
 
-HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE2D_ARRAY, 1u, false);
 }
 
@@ -269,7 +267,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     imageDesc.image_array_size = 3u;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
     imageInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imageInfo.plane = GMM_NO_PLANE;
+    imageInfo.plane = ImagePlane::noPlane;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imageInfo, false);
     allocation->setDefaultGmm(gmm.release());
@@ -321,7 +319,7 @@ HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenD
     EXPECT_FALSE(isImageArray);
 }
 
-HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFullGPuPointerIsPatched) {
+HWTEST_F(ImageSetArgTest, givenOffsetBufferWhenSetKernelArgImageIscalledThenFullGPuPointerIsPatched) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -377,7 +375,7 @@ HWTEST2_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly, Ma
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
     EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(0u, surfaceState->getCoherencyType());
     }
 
@@ -417,7 +415,7 @@ HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMip
 HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
-    Image *image2Darray = Image2dArrayHelper<>::create(context);
+    Image *image2Darray = Image2dArrayHelperUlt<>::create(context);
     auto graphicsAllocation = image2Darray->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     cl_mem memObj = image2Darray;
 
@@ -465,7 +463,7 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
 HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
-    Image *image1Darray = Image1dArrayHelper<>::create(context);
+    Image *image1Darray = Image1dArrayHelperUlt<>::create(context);
     auto graphicsAllocation = image1Darray->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     cl_mem memObj = image1Darray;
 
@@ -490,7 +488,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(image1Darray->getImageDesc().image_row_pitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
-    EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQPitch());
+    EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(), surfaceState->getSurfaceQPitch());
 
     EXPECT_EQ(image1Darray->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());
@@ -510,7 +508,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     delete image1Darray;
 }
 
-HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxCapabilityThenProgramAuxFieldsForMultisamples, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxCapabilityThenProgramAuxFieldsForMultisamples, IsAtMostXeCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -521,7 +519,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAux
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
-    auto image = Image2dHelper<>::create(context, &imgDesc);
+    auto image = Image2dHelperUlt<>::create(context, &imgDesc);
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image;
@@ -551,7 +549,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAux
     delete image;
 }
 
-HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields, IsAtMostXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
@@ -560,7 +558,7 @@ HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxField
     imgDesc.num_samples = 8;
     cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
 
-    auto image = Image2dHelper<>::create(context, &imgDesc, &imgFormat);
+    auto image = Image2dHelperUlt<>::create(context, &imgDesc, &imgFormat);
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image;
 
@@ -596,7 +594,7 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
     imgDesc.num_samples = 8;
     cl_image_format imgFormat = {CL_DEPTH_STENCIL, CL_FLOAT};
 
-    std::unique_ptr<Image> image(ImageHelper<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(ImageHelperUlt<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image.get();
 
@@ -612,7 +610,7 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
                 RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 }
 
-HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams, IsAtMostXeCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -623,7 +621,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisamp
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context, &imgDesc));
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     graphicsAllocation->getDefaultGmm()->setCompressionEnabled(true);
     image->setMcsSurfaceInfo(msi);
@@ -645,7 +643,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisamp
     EXPECT_EQ(mcsAlloc->getGpuAddress(), surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
-HWTEST2_F(ImageSetArgTest, givenDepthFormatAndCompressionWhenSetArgOnMultisampledImgIsCalledThenDontProgramAuxFields, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenDepthFormatAndCompressionWhenSetArgOnMultisampledImgIsCalledThenDontProgramAuxFields, IsAtMostXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
@@ -654,7 +652,7 @@ HWTEST2_F(ImageSetArgTest, givenDepthFormatAndCompressionWhenSetArgOnMultisample
     cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
     imgDesc.num_samples = 8;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc, &imgFormat));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context, &imgDesc, &imgFormat));
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     graphicsAllocation->getDefaultGmm()->setCompressionEnabled(true);
     image->setMcsSurfaceInfo(msi);
@@ -688,7 +686,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context, &imgDesc));
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
@@ -722,7 +720,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context, &imgDesc));
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
@@ -753,7 +751,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context, &imgDesc));
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
@@ -840,7 +838,7 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
 HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
-    Image *luminanceImage = Image3dHelper<LuminanceImage>::create(context);
+    Image *luminanceImage = Image3dHelperUlt<LuminanceImage>::create(context);
     cl_mem memObj = luminanceImage;
 
     retVal = clSetKernelArg(
@@ -949,7 +947,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
         context = new MockContext(pClDevice);
-        srcImage = Image3dHelper<>::create(context);
+        srcImage = Image3dHelperUlt<>::create(context);
         srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, srcImage);
     }
@@ -1137,7 +1135,7 @@ HWTEST_F(ImageShaderChannelValueTest, GivenChannelDepthWhenGettingShaderChannelV
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     cl_image_format imgFormat = {CL_DEPTH, CL_UNORM_INT16};
-    std::unique_ptr<Image> image(ImageHelper<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(ImageHelperUlt<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
 
     image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
 

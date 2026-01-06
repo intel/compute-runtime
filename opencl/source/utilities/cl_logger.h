@@ -15,6 +15,8 @@
 
 namespace NEO {
 struct MultiDispatchInfo;
+template <DebugFunctionalityLevel debugLevel>
+class FileLogger;
 
 template <DebugFunctionalityLevel debugLevel>
 class ClFileLogger : public NonCopyableAndNonMovableClass {

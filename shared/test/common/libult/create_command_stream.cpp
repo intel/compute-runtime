@@ -22,7 +22,7 @@
 
 namespace NEO {
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
                                            uint32_t rootDeviceIndex,
@@ -41,7 +41,7 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
         }
     }
 
-    auto funcCreate = commandStreamReceiverFactory[IGFX_MAX_CORE + hwInfo->platform.eRenderCoreFamily];
+    auto funcCreate = commandStreamReceiverFactory[NEO::maxCoreEnumValue + hwInfo->platform.eRenderCoreFamily];
     if (funcCreate) {
         return funcCreate(false, executionEnvironment, rootDeviceIndex, deviceBitfield);
     }

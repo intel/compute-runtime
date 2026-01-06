@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,13 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -85,7 +88,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
     pSrcMemory = ptrOffset(pSrcMemory, offset);
 
     cl_float *destGpuaddress = reinterpret_cast<cl_float *>(allocation->getGpuAddress());
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t sizeUserMemory = sizeof(destMemory);
     expectMemory<FamilyType>(destGpuaddress, pSrcMemory, sizeWritten);
 

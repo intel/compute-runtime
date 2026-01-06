@@ -49,12 +49,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
-}
-
-template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
-    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer, rootDeviceEnvironment);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
 }
 
 template <typename GfxFamily>
@@ -68,14 +63,8 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
 }
 
 template <typename GfxFamily>
-inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
-    return size;
-}
-
-template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 }
 
 } // namespace NEO

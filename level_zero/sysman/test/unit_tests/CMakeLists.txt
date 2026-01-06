@@ -29,7 +29,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
-               ${NEO_SOURCE_DIR}/level_zero/core/source/dll/create_builtin_functions_lib.cpp
+               ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/sources/builtin/create_ult_builtin_functions_lib.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
@@ -57,6 +57,7 @@ target_include_directories(${TARGET_NAME}
                            BEFORE
                            PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
 
@@ -67,7 +68,7 @@ endif()
 target_link_libraries(${TARGET_NAME}
                       ${NEO_SHARED_MOCKABLE_LIB_NAME}
                       ${HW_LIBS_ULT}
-                      gmock-gtest
+                      neo_gtest
                       ${NEO_EXTRA_LIBS}
 )
 

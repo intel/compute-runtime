@@ -22,8 +22,6 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include <errno.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -117,7 +115,7 @@ void BufferObject::setAddress(uint64_t address) {
 
 bool BufferObject::close() {
     if (!this->handle.canCloseBoHandle()) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Skipped closing BO-%d - more shared users!\n", this->handle.getBoHandle());
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Skipped closing BO-%d - more shared users!\n", this->handle.getBoHandle());
         return true;
     }
 
@@ -125,7 +123,7 @@ bool BufferObject::close() {
     close.handle = this->handle.getBoHandle();
     close.userptr = this->userptr;
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle.getBoHandle());
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle.getBoHandle());
 
     auto ioctlHelper = this->drm->getIoctlHelper();
     int ret = ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
@@ -134,7 +132,7 @@ bool BufferObject::close() {
 
         CREATE_DEBUG_STRING(str, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         drm->getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;
@@ -200,8 +198,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
                                 alignUp(used, 8), flags, drmContextId);
 
     if (debugManager.flags.PrintExecutionBuffer.get()) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n",
-                           static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0);
+        PRINT_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n", drm->getVmIdForContext(*osContext, vmHandleId));
 
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
@@ -211,7 +208,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     if (ret != 0) {
         int err = this->drm->getErrno();
         if (err == EOPNOTSUPP) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
             return err;
         }
 
@@ -222,7 +219,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     if (ret != 0) {
         const auto status = evictUnusedAllocations(true, true);
         if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
             return gpuHangDetected;
         }
 
@@ -234,7 +231,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     }
 
     int err = this->drm->getErrno();
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     return err;
 }
 
@@ -243,22 +240,23 @@ MemoryOperationsStatus BufferObject::evictUnusedAllocations(bool waitForCompleti
 }
 
 void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal) {
+    auto vmId = this->drm->getVmIdForContext(*osContext, vmHandleId);
     if (retVal == 0) {
         if (bind) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+            PRINT_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                         this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         } else {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+            PRINT_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                         this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         }
     } else {
         auto err = this->drm->getErrno();
         if (bind) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+            PRINT_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                         this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         } else {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+            PRINT_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                         this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         }
     }
 }
@@ -305,7 +303,7 @@ void BufferObject::printExecutionBuffer(ExecBuffer &execbuf, const size_t &resid
     logger << "Command ";
     ioctlHelper->logExecObject(execObjectsStorage[i], logger, this->peekSize());
 
-    printf("%s\n", logger.str().c_str());
+    PRINT_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "%s\n", logger.str().c_str());
 }
 
 int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence) {
@@ -348,11 +346,13 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             }
         }
     } else {
+        StackVec<std::unique_lock<NEO::CommandStreamReceiver::MutexType>, 1> locks{};
         if (this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager.get()) {
             const auto &engines = this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager->getRegisteredEngines(osContext->getRootDeviceIndex());
             for (const auto &engine : engines) {
                 if (engine.osContext->isDirectSubmissionLightActive()) {
-                    engine.commandStreamReceiver->stopDirectSubmission(false, true);
+                    locks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+                    engine.commandStreamReceiver->stopDirectSubmission(false, false);
                 }
             }
         }

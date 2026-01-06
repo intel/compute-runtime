@@ -14,17 +14,19 @@
 
 constexpr static auto gfxProduct = IGFX_DG2;
 
+#include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 #include "shared/source/xe_hpg_core/dg2/os_agnostic_product_helper_dg2.inl"
 #include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 
 namespace NEO {
 
 template <>
-int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    if (allowCompression(*hwInfo)) {
-        enableCompression(hwInfo);
-    }
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
+}
 
+template <>
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableBlitterOperationsSupport(hwInfo);
 
     hwInfo->workaroundTable.flags.wa_15010089951 = true;

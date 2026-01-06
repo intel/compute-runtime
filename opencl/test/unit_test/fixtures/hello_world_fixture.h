@@ -6,15 +6,18 @@
  */
 
 #pragma once
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 
@@ -59,7 +62,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(pClDevice, kernelFilename, kernelName);
+        KernelFixture::setUp(pClDevice);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;

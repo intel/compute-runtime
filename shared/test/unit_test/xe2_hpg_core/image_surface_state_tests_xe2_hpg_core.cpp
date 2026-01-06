@@ -42,7 +42,7 @@ XE2_HPG_CORETEST_F(ImageSurfaceStateTestsXe2HpgCore, givenNotMediaCompressedImag
 
     auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
 
-    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, GMM_NO_PLANE);
+    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, ImagePlane::noPlane);
 
     EXPECT_EQ(gmmClientContext->compressionFormatToReturn, rss.getCompressionFormat());
 }

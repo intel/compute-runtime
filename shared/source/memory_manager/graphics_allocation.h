@@ -39,6 +39,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class ProductHelper;
 
+struct AllocationData;
 struct AllocationProperties;
 
 struct AubInfo {
@@ -159,6 +160,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
+    uint32_t getNumRegisteredContexts() const { return registeredContextsNum.load(); }
     MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
     MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const {
         if (contextId >= usageInfos.size()) {
@@ -174,6 +176,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
     void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
+        if (contextId >= usageInfos.size()) {
+            DEBUG_BREAK_IF(true);
+            return;
+        }
         if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
             usageInfos[contextId].residencyTaskCount = newTaskCount;
         }
@@ -213,7 +219,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                allocationType == AllocationType::globalSurface ||
                allocationType == AllocationType::internalHeap ||
                allocationType == AllocationType::linearStream ||
-               allocationType == AllocationType::pipe ||
                allocationType == AllocationType::printfSurface ||
                allocationType == AllocationType::timestampPacketTagBuffer ||
                allocationType == AllocationType::ringBuffer ||
@@ -251,6 +256,22 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     static bool isConstantOrGlobalSurfaceAllocationType(AllocationType type) {
         return type == AllocationType::constantSurface ||
                type == AllocationType::globalSurface;
+    }
+
+    static bool is2MBPageAllocationType(AllocationType type) {
+        return type == AllocationType::timestampPacketTagBuffer ||
+               type == AllocationType::gpuTimestampDeviceBuffer ||
+               type == AllocationType::profilingTagBuffer ||
+               type == AllocationType::printfSurface;
+    }
+
+    static bool isAccessedFromCommandStreamer(AllocationType allocationType) {
+        return allocationType == AllocationType::commandBuffer ||
+               allocationType == AllocationType::ringBuffer ||
+               allocationType == AllocationType::semaphoreBuffer;
+    }
+    static bool isZeroInitRequired(AllocationType allocationType) {
+        return allocationType == AllocationType::preemption;
     }
 
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
@@ -325,7 +346,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
     bool isShareableHostMemory() const { return shareableHostMemory; }
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
-    MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties);
+    MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData);
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
@@ -343,6 +364,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     }
     void setExplicitlyMadeResident(bool explicitlyMadeResident) {
         this->explicitlyMadeResident = explicitlyMadeResident;
+    }
+
+    void setIsImported() {
+        isImported = true;
+    }
+
+    bool getIsImported() const {
+        return isImported;
     }
 
   protected:
@@ -411,6 +440,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool shareableHostMemory = false;
     bool cantBeReadOnly = false;
     bool explicitlyMadeResident = false;
+    bool isImported = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);

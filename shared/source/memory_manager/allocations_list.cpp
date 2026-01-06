@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,20 +14,35 @@
 
 namespace {
 struct ReusableAllocationRequirements {
-    const void *requiredPtr;
-    size_t requiredMinimalSize;
-    volatile TagAddressType *csrTagAddress;
-    NEO::AllocationType allocationType;
-    uint32_t contextId;
-    uint32_t activeTileCount;
-    uint32_t tagOffset;
-    bool forceSystemMemoryFlag;
+    ReusableAllocationRequirements() = delete;
+    ReusableAllocationRequirements(NEO::CommandStreamReceiver *csr, const void *requiredPtr, size_t requiredMinimalSize, NEO::AllocationType allocationType, bool forceSystemMemoryFlag)
+        : requiredPtr(requiredPtr), requiredMinimalSize(requiredMinimalSize), allocationType(allocationType), forceSystemMemoryFlag(forceSystemMemoryFlag) {
+
+        if (csr) {
+            csrTagAddress = csr->getTagAddress();
+            csrUcTagAddress = csr->getUcTagAddress();
+            contextId = csr->getOsContext().getContextId();
+            rootDeviceIndex = csr->getRootDeviceIndex();
+            deviceBitfield = csr->getOsContext().getDeviceBitfield();
+            tagOffset = csr->getImmWritePostSyncWriteOffset();
+        }
+    }
+
+    const void *requiredPtr = nullptr;
+    size_t requiredMinimalSize = 0;
+    volatile TagAddressType *csrTagAddress = nullptr;
+    volatile TagAddressType *csrUcTagAddress = nullptr;
+    NEO::AllocationType allocationType = NEO::AllocationType::unknown;
+    NEO::DeviceBitfield deviceBitfield = 1;
+    uint32_t contextId = std::numeric_limits<uint32_t>::max();
+    uint32_t rootDeviceIndex = 0;
+    uint32_t tagOffset = 0;
+    bool forceSystemMemoryFlag = false;
 };
 
-bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
-    auto tagAddress = requirements->csrTagAddress;
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation, volatile TagAddressType *tagAddress) {
     auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
-    for (uint32_t count = 0; count < requirements->activeTileCount; count++) {
+    for (uint32_t count = 0; count < requirements->deviceBitfield.count(); count++) {
         if (*tagAddress < taskCount) {
             return false;
         }
@@ -35,6 +50,15 @@ bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::Gra
     }
 
     return true;
+}
+
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
+    if (requirements->allocationType == NEO::AllocationType::commandBuffer) {
+        if (checkTagAddressReady(requirements, gfxAllocation, requirements->csrUcTagAddress)) {
+            return true;
+        }
+    }
+    return checkTagAddressReady(requirements, gfxAllocation, requirements->csrTagAddress);
 }
 } // namespace
 
@@ -47,15 +71,8 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
 }
 
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, bool forceSystemMemoryFlag, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
-    ReusableAllocationRequirements req;
-    req.requiredMinimalSize = requiredMinimalSize;
-    req.csrTagAddress = (commandStreamReceiver == nullptr) ? nullptr : commandStreamReceiver->getTagAddress();
-    req.allocationType = allocationType;
-    req.contextId = (commandStreamReceiver == nullptr) ? UINT32_MAX : commandStreamReceiver->getOsContext().getContextId();
-    req.requiredPtr = requiredPtr;
-    req.activeTileCount = (commandStreamReceiver == nullptr) ? 1u : commandStreamReceiver->getActivePartitions();
-    req.tagOffset = (commandStreamReceiver == nullptr) ? 0u : commandStreamReceiver->getImmWritePostSyncWriteOffset();
-    req.forceSystemMemoryFlag = forceSystemMemoryFlag;
+    ReusableAllocationRequirements req(commandStreamReceiver, requiredPtr, requiredMinimalSize, allocationType, forceSystemMemoryFlag);
+
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -71,8 +88,13 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
             if (req->csrTagAddress == nullptr) {
                 return removeOneImpl(curr, nullptr);
             }
-            if ((this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr)) &&
-                (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer())) {
+
+            bool usageMatch = (this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr));
+            bool ptrMatch = (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer());
+            bool tileMatch = (req->deviceBitfield == curr->storageInfo.subDeviceBitfield) || (curr->storageInfo.subDeviceBitfield == 0);
+            bool placementMatch = (req->rootDeviceIndex == curr->getRootDeviceIndex()) && tileMatch;
+
+            if (usageMatch && ptrMatch && placementMatch) {
                 if (this->allocationUsage == TEMPORARY_ALLOCATION) {
                     // We may not have proper task count yet, so set notReady to avoid releasing in a different thread
                     curr->updateTaskCount(CompletionStamp::notReady, req->contextId);

@@ -13,10 +13,9 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
-
-#include "hw_cmds.h"
 
 #include <array>
 #include <cstdio>
@@ -24,14 +23,6 @@
 #include <memory>
 
 namespace NEO {
-const DeviceDescriptor deviceDescriptorTable[] = {
-#define NAMEDDEVICE(devId, gt, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, devName},
-#define DEVICE(devId, gt) {devId, &gt::hwInfo, &gt::setupHardwareInfo, ""},
-#include "devices.inl"
-#undef DEVICE
-#undef NAMEDDEVICE
-    {0, nullptr, nullptr, ""}};
-
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     std::unique_ptr<Drm> drm{new Drm(std::move(hwDeviceId), rootDeviceEnvironment)};
 
@@ -40,49 +31,32 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     const auto usDeviceID = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
-    const auto usRevId = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
+
     if (!DeviceFactory::isAllowedDeviceId(usDeviceID, debugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 
-    const DeviceDescriptor *deviceDescriptor = nullptr;
-    for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
-        if (usDeviceID == deviceDescriptorEntry.deviceId) {
-            deviceDescriptor = &deviceDescriptorEntry;
-            break;
-        }
-    }
-    if (!deviceDescriptor) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", usDeviceID, usRevId);
+    if (drm->setupHardwareInfo(usDeviceID, true)) {
         return nullptr;
-    }
-
-    if (drm->setupHardwareInfo(deviceDescriptor, true)) {
-        return nullptr;
-    }
-
-    if (drm->isSharedSystemAllocEnabled()) {
-        auto hwInfo = drm->getRootDeviceEnvironment().getMutableHardwareInfo();
-        hwInfo->capabilityTable.sharedSystemMemCapabilities |= UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
     }
 
     if (drm->enableTurboBoost()) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
     drm->checkContextDebugSupport();
 
     drm->queryPageFaultSupport();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled() && !compilerProductHelper.isHeaplessModeEnabled()) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled() && !compilerProductHelper.isHeaplessModeEnabled(hwInfo)) {
         if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             drm->setPerContextVMRequired(false);
         } else {
             if (drm->isVmBindAvailable()) {
                 drm->setPerContextVMRequired(true);
             } else {
-                printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
             }
         }
     }
@@ -94,8 +68,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     drm->configureGpuFaultCheckThreshold();
 
     if (!drm->isPerContextVMRequired()) {
-        if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
-            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
+        if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(&hwInfo))) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }
 
@@ -108,6 +82,10 @@ void Drm::overrideBindSupport(bool &useVmBind) {
     if (debugManager.flags.UseVmBind.get() != -1) {
         useVmBind = debugManager.flags.UseVmBind.get();
     }
+}
+
+bool DrmMemoryManager::isGemCloseWorkerSupported() {
+    return true;
 }
 
 } // namespace NEO

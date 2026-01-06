@@ -166,20 +166,25 @@ struct ClEnqueueUnmapImageTests : ClEnqueueUnmapMemObjTests,
         EXPECT_NE(nullptr, image.get());
     }
 
+    void TearDown() override {
+        this->image.reset();
+        ClEnqueueUnmapMemObjTests::TearDown();
+    }
+
     Image *createImage(cl_mem_object_type type) {
         switch (type) {
         case CL_MEM_OBJECT_IMAGE1D:
-            return Image1dHelper<>::create(pContext);
+            return Image1dHelperUlt<>::create(pContext);
         case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-            return Image1dBufferHelper<>::create(pContext);
+            return Image1dBufferHelperUlt<>::create(pContext);
         case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-            return Image1dArrayHelper<>::create(pContext);
+            return Image1dArrayHelperUlt<>::create(pContext);
         case CL_MEM_OBJECT_IMAGE2D:
-            return Image2dHelper<>::create(pContext);
+            return Image2dHelperUlt<>::create(pContext);
         case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-            return Image2dArrayHelper<>::create(pContext);
+            return Image2dArrayHelperUlt<>::create(pContext);
         case CL_MEM_OBJECT_IMAGE3D:
-            return Image3dHelper<>::create(pContext);
+            return Image3dHelperUlt<>::create(pContext);
         default:
             return nullptr;
         }

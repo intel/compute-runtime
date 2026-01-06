@@ -9,13 +9,12 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
-#include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::getDefaultHwIpVersion() const {
@@ -64,7 +63,7 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(Har
 }
 
 template <>
-bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPreference() const {
+bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithBufferStatefulAccessPreference() const {
     return false;
 }
 
@@ -79,8 +78,9 @@ bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(cons
 template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const {
     auto config = getProductConfigFromHwInfo(hwInfo);
-    if (config >= AOT::PVC_XT_B0 && config < AOT::PVC_XT_C0_VG)
+    if (config >= AOT::PVC_XT_B0 && config < AOT::PVC_XT_C0_VG) {
         return true;
+    }
     return false;
 }
 

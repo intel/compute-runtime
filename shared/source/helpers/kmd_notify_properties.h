@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ struct KmdNotifyProperties {
     bool enableQuickKmdSleepForSporadicWaits;
     // If direct submission is enabled, use direct submission delay, otherwise use standard delay
     bool enableQuickKmdSleepForDirectSubmission;
+
+    bool operator==(const KmdNotifyProperties &) const = default;
 };
 
 namespace KmdNotifyConstants {

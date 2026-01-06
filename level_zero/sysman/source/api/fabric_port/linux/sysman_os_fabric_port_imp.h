@@ -17,6 +17,9 @@
 namespace L0 {
 namespace Sysman {
 class LinuxSysmanImp;
+class FabricDeviceAccess;
+struct OsSysman;
+
 class LinuxFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:
     uint32_t getNumPorts() override;

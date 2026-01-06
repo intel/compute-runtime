@@ -13,9 +13,16 @@
 #include "level_zero/core/source/image/image.h"
 
 #include <memory>
+#include <mutex>
 #include <optional>
 
+namespace NEO {
+class GraphicsAllocation;
+struct SurfaceStateInHeapInfo;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
 
 struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t destroy() override;
@@ -37,7 +44,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) override {
         pMemoryProperties->rowPitch = imgInfo.rowPitch;
         pMemoryProperties->slicePitch = imgInfo.slicePitch;
-        pMemoryProperties->size = imgInfo.surfaceFormat->imageElementSizeInBytes;
+        pMemoryProperties->size = imgInfo.size;
 
         return ZE_RESULT_SUCCESS;
     }
@@ -54,16 +61,20 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
         this->mimickedImagefor3Ch = value;
     }
 
+    void populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs);
     ze_result_t allocateBindlessSlot() override;
     NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
     ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
     static size_t getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo);
+    ze_result_t allocateImplicitArgsOnDemand() override;
+    void encodeImplicitArgsSurfaceState() override{};
 
   protected:
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
+    std::mutex implicitArgsAllocationMutex;
     ze_image_desc_t imageFormatDesc = {};
     ze_sampler_desc_t samplerDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};

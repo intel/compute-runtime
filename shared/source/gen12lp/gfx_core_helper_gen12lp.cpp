@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/gen12lp/aub_mapper.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 
 using Family = NEO::Gen12LpFamily;
@@ -14,8 +13,8 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
-#include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_tgllp_to_dg2.inl"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -60,7 +59,7 @@ bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition)
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 
@@ -83,11 +82,6 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCmd) {
     reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(barrierCmd)->setCommandStreamerStallEnable(true);
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::unTypedDataPortCacheFlushRequired() const {
-    return false;
 }
 
 template <typename GfxFamily>
@@ -125,8 +119,9 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
-    if (disableEUFusionForKernel)
+    if (disableEUFusionForKernel) {
         fusedEuDispatchEnabled = false;
+    }
 
     if (debugManager.flags.CFEFusedEUDispatch.get() != -1) {
         fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);
@@ -265,13 +260,13 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
         }
 
         if (l1enabled) {
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+            return gmmHelper.getL1EnabledMOCS() >> 1;
         } else {
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+            return gmmHelper.getL3EnabledMOCS() >> 1;
         }
     }
 
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 template <>

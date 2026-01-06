@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/zet_intel_gpu_metric.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 #include <level_zero/zet_api.h>

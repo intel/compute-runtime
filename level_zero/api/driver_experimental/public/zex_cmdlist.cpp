@@ -8,10 +8,12 @@
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
-ZE_APIEXPORT ze_result_t ZE_APICALL
+
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -21,8 +23,9 @@ zexCommandListAppendWaitOnMemory(
     try {
         {
             hCommandList = toInternalType(hCommandList);
-            if (nullptr == hCommandList)
+            if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
         return L0::CommandList::fromHandle(hCommandList)->appendWaitOnMemory(reinterpret_cast<void *>(desc), ptr, static_cast<uint64_t>(data), static_cast<ze_event_handle_t>(hSignalEvent), false);
     } catch (ze_result_t &result) {
@@ -34,7 +37,7 @@ zexCommandListAppendWaitOnMemory(
     }
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory64(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -50,7 +53,7 @@ zexCommandListAppendWaitOnMemory64(
     return L0::CommandList::fromHandle(hCommandList)->appendWaitOnMemory(reinterpret_cast<void *>(desc), ptr, data, static_cast<ze_event_handle_t>(hSignalEvent), true);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWriteToMemory(
     zex_command_list_handle_t hCommandList,
     zex_write_to_mem_desc_t *desc,
@@ -59,8 +62,9 @@ zexCommandListAppendWriteToMemory(
     try {
         {
             hCommandList = toInternalType(hCommandList);
-            if (nullptr == hCommandList)
+            if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
         return L0::CommandList::fromHandle(hCommandList)->appendWriteToMemory(reinterpret_cast<void *>(desc), ptr, data);
     } catch (ze_result_t &result) {
@@ -71,4 +75,218 @@ zexCommandListAppendWriteToMemory(
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 }
+
+ze_result_t ZE_APICALL
+zeCommandListAppendHostFunction(
+    ze_command_list_handle_t hCommandList,
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    CmdListHostFunctionParameters parameters{};
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendHostFunction>(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents,
+    ze_event_handle_t hSignalEvent) {
+
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == dstptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (nullptr == srcptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == ptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (nullptr == pattern) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_command_list_cleanup_callback_fn_t pfnCallback, void *pUserData, const void *pNext) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+
+    if (!cmdList || !pfnCallback) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    cmdList->addCleanupCallback(pfnCallback, pUserData);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ZE_APICALL
+zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
+                           const void *allocationPtr,
+                           const void *expectedData,
+                           size_t sizeOfComparison,
+                           zex_verify_memory_compare_type_t comparisonMode) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+
+    if (!cmdList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    if (!cmdList->isImmediateType()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (!allocationPtr || !expectedData) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (sizeOfComparison == 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    return cmdList->verifyMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
 } // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint32_t data,
+    zex_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendWaitOnMemory(hCommandList, desc, ptr, data, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory64(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data,
+    zex_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendWaitOnMemory64(hCommandList, desc, ptr, data, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWriteToMemory(
+    zex_command_list_handle_t hCommandList,
+    zex_write_to_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data) {
+    return L0::zexCommandListAppendWriteToMemory(hCommandList, desc, ptr, data);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendHostFunction(
+    ze_command_list_handle_t hCommandList,
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents,
+    ze_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendMemoryCopyWithParameters(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zexCommandListAppendMemoryFillWithParameters(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_command_list_cleanup_callback_fn_t pfnCallback, void *pUserData, const void *pNext) {
+    return L0::zexCommandListSetCleanupCallback(hCommandList, pfnCallback, pUserData, pNext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
+                           const void *allocationPtr,
+                           const void *expectedData,
+                           size_t sizeOfComparison,
+                           zex_verify_memory_compare_type_t comparisonMode) {
+
+    return L0::zexCommandListVerifyMemory(hCommandList, allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+}
+
+} // extern "C"

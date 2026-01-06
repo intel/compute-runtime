@@ -5,7 +5,7 @@
  *
  */
 
-// Need to suppress warining 4005 caused by hw_cmds.h and wddm.h order.
+// Need to suppress warning 4005 caused by hw_cmds.h and wddm.h order.
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -14,10 +14,11 @@
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/gmm_helper/gmm_callbacks.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
@@ -40,7 +41,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
                                                                 const DeviceBitfield deviceBitfield)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
-    notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
     this->wddm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Wddm>();
 
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(this->peekHwInfo());
@@ -65,8 +65,9 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
 
 template <typename GfxFamily>
 WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
-    if (commandBufferHeader)
+    if (commandBufferHeader) {
         delete commandBufferHeader;
+    }
 }
 
 template <typename GfxFamily>
@@ -129,15 +130,11 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
         break;
     }
 
-    if (wddm->isKmDafEnabled()) {
-        this->kmDafLockAllocations(allocationsForResidency);
-    }
-
     auto osContextWin = static_cast<OsContextWin *>(this->osContext);
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContextWin->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContextWin->getHwQueue().handle;
-    submitArgs.monitorFence = &osContextWin->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContextWin->getMonitoredFence();
     auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, submitArgs);
 
     this->flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
@@ -150,7 +147,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 
 template <typename GfxFamily>
 SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling, this) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>
@@ -164,7 +161,7 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() cons
 
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
-    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getResidencyController().getMonitoredFence(), false);
+    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getMonitoredFence(), false);
 }
 
 template <typename GfxFamily>
@@ -175,12 +172,14 @@ bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush(
 template <typename GfxFamily>
 GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
-    ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
-
     auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
 
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
-    gmmPageTableMngr->setCsrHandle(this);
+    ttCallbacks.pfWriteL3Adr = writeL3AddressFuncFactory[hwInfo->platform.eRenderCoreFamily];
+
+    void *aubCsrHandle = this->wddm->needsNotifyAubCaptureCallback() ? this : nullptr;
+
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks, aubCsrHandle);
     this->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;
 }
@@ -191,16 +190,6 @@ void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence(bool notifyKmd) {
         this->directSubmission->flushMonitorFence(notifyKmd);
     } else if (this->blitterDirectSubmission.get()) {
         this->blitterDirectSubmission->flushMonitorFence(notifyKmd);
-    }
-}
-template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
-    for (auto &graphicsAllocation : allocationsForResidency) {
-        if ((AllocationType::linearStream == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::fillPattern == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::commandBuffer == graphicsAllocation->getAllocationType())) {
-            wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->getDefaultHandle());
-        }
     }
 }
 
@@ -222,14 +211,13 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::setupContext(OsContext &osContext) {
     this->osContext = &osContext;
-    static_cast<OsContextWin *>(this->osContext)->getResidencyController().setCommandStreamReceiver(this);
 }
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
     // Eviction allocations are shared with trim callback thread.
     auto lock = static_cast<OsContextWin *>(this->osContext)->getResidencyController().acquireLock();
-    this->getEvictionAllocations().push_back(&gfxAllocation);
+    static_cast<OsContextWin *>(this->osContext)->getResidencyController().getEvictionAllocations().push_back(&gfxAllocation);
 }
 
 template <typename GfxFamily>

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
@@ -21,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -32,14 +32,18 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include <cstdint>
+#include <limits>
+#include <vector>
+
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
 using CommandListCreateTests = Test<CommandListCreateFixture>;
-HWTEST2_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+HWTEST_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     ze_result_t returnValue;
@@ -80,7 +84,7 @@ HWTEST2_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalT
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
@@ -114,7 +118,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestamp
     EXPECT_TRUE(foundTimestampPipeControl);
 }
 
-HWTEST2_F(CommandListCreateTests, givenMovedDstptrWhenAppendWriteGlobalTimestampCalledThenPipeControlWithProperTimestampEncoded, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenMovedDstptrWhenAppendWriteGlobalTimestampCalledThenPipeControlWithProperTimestampEncoded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
@@ -148,7 +152,7 @@ HWTEST2_F(CommandListCreateTests, givenMovedDstptrWhenAppendWriteGlobalTimestamp
     EXPECT_TRUE(foundTimestampPipeControl);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     uint64_t timestampAddress = 0x123456785500;
@@ -163,7 +167,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestamp
     EXPECT_TRUE(addressIsInContainer);
 }
 
-HWTEST2_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -187,9 +191,7 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobal
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -217,68 +219,20 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyIm
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
-
-    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams copyParams = {};
+    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyFromMemory(imageHWDst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    returnValue = commandList0->appendImageCopyFromMemory(imageHWDst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyToMemory(dstPtr, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-}
-
-HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionDisabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
-
-    const ze_command_queue_desc_t queueDesc = {};
-
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-
-    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device,
-                                                                               &queueDesc,
-                                                                               false,
-                                                                               NEO::EngineGroupType::copy,
-                                                                               returnValue));
-    ASSERT_NE(nullptr, commandList0);
-
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.width = 11;
-    desc.height = 13;
-    desc.depth = 17;
-
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    imageHWSrc->initialize(device, &desc);
-    imageHWDst->initialize(device, &desc);
-
-    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyFromMemory(imageHWDst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyToMemory(dstPtr, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    returnValue = commandList0->appendImageCopyToMemory(dstPtr, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
 HWTEST_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
@@ -308,30 +262,11 @@ class CommandListImmediateFlushTaskTests : public DeviceFixture {
 };
 
 using CommandListImmediateFlushTaskComputeTests = Test<CommandListImmediateFlushTaskTests>;
-HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenImmediateCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled) {
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    EXPECT_EQ(true, commandList->flushTaskSubmissionEnabled());
-}
-
-HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedThenFlushTaskIsSetToFalse) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    EXPECT_EQ(false, commandList->flushTaskSubmissionEnabled());
-}
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelThenSuccessIsReturned) {
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
     kernel.module = &module;
-
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -339,13 +274,13 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
 
     CmdListKernelLaunchParams launchParams = {};
-    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
@@ -369,7 +304,7 @@ HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOpera
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     CmdListKernelLaunchParams launchParams = {};
     {
         event->zeroKernelCount();
@@ -377,21 +312,19 @@ HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOpera
         event->increaseKernelCount();
         launchParams.isKernelSplitOperation = true;
 
-        result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, event->getKernelCount());
     }
     {
         launchParams.isKernelSplitOperation = false;
-        result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(1u, event->getKernelCount());
     }
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     size_t size = 0x100000001;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
@@ -408,7 +341,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
+
     NEO::debugManager.flags.UseBindlessMode.set(1);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
@@ -430,8 +363,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrIm
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendEventResetThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -449,7 +380,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -462,8 +393,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendEventResetWithTimestampThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -481,39 +410,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    result = commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    context->destroy();
-}
-
-HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendEventResetWithTimestampThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -526,8 +423,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendSignalEventThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -545,7 +440,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -558,8 +453,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendSignalEventWithTimestampThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -577,39 +470,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    result = commandList->appendSignalEvent(event->toHandle(), false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    context->destroy();
-}
-
-HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendSignalEventWithTimestampThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -622,7 +483,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendWaitOnEventWithTimestampThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -641,7 +501,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -655,8 +515,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendBarrierWithEventThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -674,7 +532,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -687,7 +545,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendBarrierWithTimestampEventThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -706,7 +563,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -719,8 +576,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendBarrierWithoutEventThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
@@ -730,7 +585,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendBarrierWithEventThenSuccessIsReturned) {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -749,7 +603,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -761,7 +615,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     context->destroy();
 }
 
-HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenIncrementBarrierCountAndDispatchBarrierTagUpdate) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -790,7 +644,7 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrier
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
-HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -810,7 +664,7 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnE
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     auto eventHandle = event->toHandle();
 
     result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, true, false, false, false, false);
@@ -832,7 +686,7 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnE
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
-HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsWithTrackDependenciesSetToFalseThenDoNotIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsWithTrackDependenciesSetToFalseThenDoNotIncrementBarrierCountAndDispatchBarrierTagUpdate) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
@@ -850,7 +704,7 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnE
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     auto eventHandle = event->toHandle();
 
     result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, false, false, false, false, false);
@@ -883,57 +737,53 @@ HWTEST_F(CommandListCreateTests, GivenCommandListWhenUnalignedPtrThenSingleCopyA
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreateTests, whenCommandListIsCreatedThenFlagsAreCorrectlySet, MatchAny) {
+HWTEST_F(CommandListCreateTests, whenCommandListIsCreatedThenFlagsAreCorrectlySet) {
     ze_command_list_flags_t flags[] = {0b0, 0b1, 0b10, 0b11};
 
     ze_result_t returnValue;
     for (auto flag : flags) {
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, flag, returnValue, false));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        auto pCommandListCoreFamily = static_cast<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> *>(commandList.get());
+        auto pCommandListCoreFamily = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
         EXPECT_EQ(flag, pCommandListCoreFamily->flags);
     }
 }
 
 using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
-HWTEST2_F(HostPointerManagerCommandListTest,
-          givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
-          MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+HWTEST_F(HostPointerManagerCommandListTest, givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    CmdListMemoryCopyParams copyParams = {};
     int pattern = 1;
-    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, false);
+    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest,
-          givenImportedHostPointerAndCopyEngineWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
-          MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+HWTEST_F(HostPointerManagerCommandListTest, givenImportedHostPointerAndCopyEngineWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    CmdListMemoryCopyParams copyParams = {};
     char pattern = 'a';
-    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, false);
+    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest,
-          givenHostPointerImportedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress,
-          MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t mainOffset = 100;
@@ -950,7 +800,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     size_t offsetSize = 20;
     void *offsetPointer = ptrOffset(importPointer, allocOffset);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, importPointer, importSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, importPointer, importSize, false, false);
     auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
     auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
@@ -959,7 +809,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(hostAllocation, outData.alloc);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocationData(device, offsetPointer, offsetSize, false, false);
+    outData = commandList->getAlignedAllocationData(device, false, offsetPointer, offsetSize, false, false);
     expectedOffset += allocOffset;
     EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -970,10 +820,8 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest,
-          givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset,
-          MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t pointerSize = MemoryConstants::pageSize;
@@ -986,7 +834,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, offsetPointer, pointerSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, offsetPointer, pointerSize, false, false);
     auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
     EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -997,11 +845,11 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, MatchAny) {
+HWTEST_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->getCmdContainer();
 
@@ -1019,14 +867,16 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     events.push_back(event.get());
     eventDesc.index = 1;
-    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     events.push_back(event1.get());
 
+    CmdListMemoryCopyParams copyParams = {};
     result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                           events[0], 1, &events[1], false);
+                                           events[0], 1, &events[1], copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
@@ -1038,7 +888,9 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*cmdList.rbegin());
 
-    if (!device->getProductHelper().isL3FlushAfterPostSyncRequired(device->getCompilerProductHelper().isHeaplessModeEnabled()) && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
+    auto l3FlushAfterPostSupported = device->getProductHelper().isL3FlushAfterPostSyncSupported(device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo));
+
+    if (!l3FlushAfterPostSupported && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_NE(nullptr, pc);
         EXPECT_TRUE(pc->getDcFlushEnable());
     } else {
@@ -1046,9 +898,9 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     }
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, MatchAny) {
+HWTEST_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
@@ -1065,21 +917,22 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     events.push_back(event.get());
     eventDesc.index = 1;
-    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     events.push_back(event1.get());
 
+    CmdListMemoryCopyParams copyParams = {};
     result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), size,
-                                           events[0], 1, &events[1], false);
+                                           events[0], 1, &events[1], copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned, MatchAny) {
+HWTEST_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1110,21 +963,22 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, ret));
     events.push_back(event.get());
     eventDesc.index = 1;
-    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, ret));
     events.push_back(event1.get());
 
+    CmdListMemoryCopyParams copyParams = {};
     ret = commandList0->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                         events[0], 1, &events[1], false);
+                                         events[0], 1, &events[1], copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, MatchAny) {
+HWTEST_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1147,7 +1001,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    int one = 1;
+    uint8_t one = 1;
     size_t size = 16;
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1159,21 +1013,22 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, ret));
     events.push_back(event.get());
     eventDesc.index = 1;
-    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, ret));
     events.push_back(event1.get());
 
+    CmdListMemoryCopyParams copyParams = {};
     ret = commandList0->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                         events[0], 1, &events[1], false);
+                                         events[0], 1, &events[1], copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, MatchAny) {
+HWTEST_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceHostPointerImport.set(1);
     void *testPtr = heapPointer;
@@ -1186,7 +1041,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreateTests, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, MatchAny) {
+HWTEST_F(CommandListCreateTests, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
@@ -1221,83 +1076,59 @@ HWTEST2_F(CommandListCreateTests, givenStateBaseAddressTrackingStateWhenCommandL
 
 using ImmediateCmdListSharedHeapsRegularFlushTaskTest = Test<ImmediateCmdListSharedHeapsFlushTaskFixture<0>>;
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendBarrierProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendBarrierProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::Barrier);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendSignalEventProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendSignalEventProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::SignalEvent);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendResetEventProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendResetEventProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::ResetEvent);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendWaitOnEventsProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendWaitOnEventsProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::WaitOnEvents);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendWriteGlobalTimestampProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendWriteGlobalTimestampProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::WriteGlobalTimestamp);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest,
-          givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendMemoryRangesBarrierProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsRegularFlushTaskTest, givenMultipleCommandListsUsingRegularWhenOldSharedHeapIsDepletedThenNonKernelAppendMemoryRangesBarrierProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::MemoryRangesBarrier);
 }
 
 using ImmediateCmdListSharedHeapsImmediateFlushTaskTest = Test<ImmediateCmdListSharedHeapsFlushTaskFixture<1>>;
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendBarrierProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendBarrierProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::Barrier);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendSignalEventProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendSignalEventProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::SignalEvent);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendResetEventProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendResetEventProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::ResetEvent);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendWaitOnEventsProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendWaitOnEventsProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::WaitOnEvents);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendWriteGlobalTimestampProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendWriteGlobalTimestampProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::WriteGlobalTimestamp);
 }
 
-HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
-          givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendMemoryRangesBarrierProvidesNoHeapInfo,
-          MatchAny) {
+HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommandListsUsingImmediateWhenOldSharedHeapIsDepletedThenNonKernelAppendMemoryRangesBarrierProvidesNoHeapInfo) {
     testBody<FamilyType>(NonKernelOperation::MemoryRangesBarrier);
 }
 
 HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
           givenImmediateCommandListWhenFirstAppendIsNonKernelAppendAndSecondAppendIsKernelAppendThenExpectAllBaseAddressSbaCommandBeforeSecondAppend,
-          IsAtLeastXeHpCore) {
+          IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1329,7 +1160,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
     auto result = ZE_RESULT_SUCCESS;
 
     csrUsedBefore = csrStream.getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     csrUsedAfter = csrStream.getUsed();
 
@@ -1355,13 +1186,13 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
 
 using ImmediateCommandListTest = Test<ModuleMutableCommandListFixture>;
 
-HWTEST2_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandListThenExpectNoEndingCmdDispatched, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandListThenExpectNoEndingCmdDispatched) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     returnValue = commandListImmediate.close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1383,13 +1214,20 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    void *srcPtr = reinterpret_cast<void *>(0x12000);
-    void *dstPtr = reinterpret_cast<void *>(0x23000);
+    constexpr size_t transferSize = sizeof(size_t);
+    void *src, *dst;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &src));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &dst));
+
     CmdListMemoryCopyParams copyParams = {};
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList->appendMemoryCopy(dst, src, transferSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(src));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(dst));
 }
 
 HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyOperationThenRequireMonitorFence, IsAtLeastXeHpcCore) {
@@ -1405,10 +1243,10 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    void *srcPtr = reinterpret_cast<void *>(0x12000);
-    void *dstPtr = reinterpret_cast<void *>(0x23000);
+    size_t src = 0;
+    size_t dst = 0;
     CmdListMemoryCopyParams copyParams = {};
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
@@ -1463,39 +1301,14 @@ using CommandListScratchPatchGlobalStatelessHeapsTest = Test<CommandListScratchP
 using CommandListScratchPatchPrivateHeapsStateInitTest = Test<CommandListScratchPatchFixture<0, 1, true>>;
 using CommandListScratchPatchGlobalStatelessHeapsStateInitTest = Test<CommandListScratchPatchFixture<1, 1, true>>;
 
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchSameNotPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchGrowingPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithChangedScratchControllerThenUpdatedCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchChangedControllerPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithCommandViewFlagThenScratchIsNotStoredToPatch, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchCommandViewNoPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testExternalScratchPatching<FamilyType>();
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, false);
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
@@ -1518,34 +1331,19 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
     testExternalScratchPatching<FamilyType>();
 }
 
-HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchSameNotPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchGrowingPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithCommandViewFlagThenScratchIsNotStoredToPatch, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchCommandViewNoPatching<FamilyType>();
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testExternalScratchPatching<FamilyType>();
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithUndefinedScratchAddressThenScratchIsNotStoredToPatch, IsAtLeastXeHpcCore) {
+    testScratchUndefinedPatching<FamilyType>();
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+    testScratchInline<FamilyType>(false, false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
@@ -1568,7 +1366,12 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
     testExternalScratchPatching<FamilyType>();
 }
 
-HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThenImmediateStreamIsSelected, MatchAny) {
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithUndefinedScratchAddressThenScratchIsNotStoredToPatch, IsAtLeastXeHpcCore) {
+    testScratchUndefinedPatching<FamilyType>();
+}
+
+HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThenImmediateStreamIsSelected) {
     commandList->close();
     auto cmdListHandle = commandList->toHandle();
 
@@ -1596,7 +1399,7 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThe
     }
 }
 
-HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmdListThenDoNotConsumeQueueInternalLinearStream, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmdListThenDoNotConsumeQueueInternalLinearStream) {
     auto immediateQueue = whiteboxCast(commandListImmediate->cmdQImmediate);
 
     commandList->close();
@@ -1609,8 +1412,7 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmd
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-HWTEST2_F(ImmediateCommandListTest,
-          givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1661,8 +1463,7 @@ HWTEST2_F(ImmediateCommandListTest,
     EXPECT_NE(cmdList.end(), iterator);
 }
 
-HWTEST2_F(ImmediateCommandListTest,
-          givenCopyEngineImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenCopyEngineImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     ze_result_t returnValue;
@@ -1713,8 +1514,7 @@ HWTEST2_F(ImmediateCommandListTest,
     EXPECT_NE(cmdList.end(), iterator);
 }
 
-HWTEST2_F(ImmediateCommandListTest,
-          givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListWithWaitEventThenDispatchSemaphoreAndJumpFromImmediateToRegular, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListWithWaitEventThenDispatchSemaphoreAndJumpFromImmediateToRegular) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -1729,7 +1529,7 @@ HWTEST2_F(ImmediateCommandListTest,
 
     ze_result_t returnValue;
     std::unique_ptr<EventPool> eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    std::unique_ptr<L0::Event> event = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    std::unique_ptr<L0::Event> event = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, returnValue));
     auto eventHandle = event->toHandle();
 
     commandList->close();
@@ -1774,7 +1574,7 @@ HWTEST2_F(ImmediateCommandListTest,
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
 
-HWTEST2_F(ImmediateCommandListTest, givenAsyncCmdlistWhenCmdlistIsDestroyedThenHostSynchronizeCalled, MatchAny) {
+HWTEST_F(ImmediateCommandListTest, givenAsyncCmdlistWhenCmdlistIsDestroyedThenHostSynchronizeCalled) {
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -1792,6 +1592,189 @@ HWTEST2_F(ImmediateCommandListTest, givenAsyncCmdlistWhenCmdlistIsDestroyedThenH
 
     clientCount = csr->getNumClients();
     EXPECT_EQ(0u, clientCount);
+}
+
+HWTEST_F(ImmediateCommandListTest,
+         givenImmediateCmdListWhenAppendingRegularCmdListWithPrintfKernelThenPrintfIsCalledAfterSynchronization) {
+    ze_result_t returnValue;
+
+    auto kernel = new Mock<KernelImp>{};
+    kernel->setModule(module.get());
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
+    kernel->createPrintfBuffer();
+    module->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    returnValue = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandListHandle = commandList->toHandle();
+    EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandListImmediate->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
+}
+
+HWTEST_F(ImmediateCommandListTest,
+         givenImmediateCmdListWhenAppendingRegularCmdListThenInternalResidencyContainerProcessed) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+
+    auto eventAllocation = event->getAllocation(device);
+    auto cmdBufferAllocation = commandListImmediate->getCmdContainer().getCommandStream()->getGraphicsAllocation();
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.storeMakeResidentAllocations = true;
+
+    returnValue = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandListHandle = commandList->toHandle();
+    auto eventHandle = event->toHandle();
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, eventHandle, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(ultCsr.isMadeResident(eventAllocation));
+    EXPECT_TRUE(ultCsr.isMadeResident(cmdBufferAllocation));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            ImmediateCommandListTest,
+            givenPatchPreambleInImmediateCommandListWhenExecutingRegularCommandListThenPatchBbStartInStoreDataCommand) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    uint32_t bbStartDwordBuffer[alignUp(sizeof(MI_BATCH_BUFFER_START) / sizeof(uint32_t), 2)] = {0};
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    returnValue = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    uint64_t startGpuAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+    uint64_t endGpuAddress = commandList->getCmdContainer().getEndCmdGpuAddress();
+
+    auto cmdStream = commandListImmediate->getCmdContainer().getCommandStream();
+    void *queueCpuBase = cmdStream->getCpuBase();
+    uint64_t queueGpuBase = cmdStream->getGpuBase();
+
+    auto commandListHandle = commandList->toHandle();
+    commandListImmediate->setPatchingPreamble(true, false);
+    auto usedSpaceBefore = cmdStream->getUsed();
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    GenCmdList::iterator patchCmdIterator = cmdList.end();
+    size_t bbStartIdx = 0;
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(0u, sdiCmds.size());
+    for (auto &sdiCmd : sdiCmds) {
+        auto storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmd);
+        EXPECT_EQ(endGpuAddress + bbStartIdx * sizeof(uint64_t), storeDataImm->getAddress());
+
+        bbStartDwordBuffer[2 * bbStartIdx] = storeDataImm->getDataDword0();
+        if (storeDataImm->getStoreQword()) {
+            bbStartDwordBuffer[2 * bbStartIdx + 1] = storeDataImm->getDataDword1();
+        }
+        bbStartIdx++;
+        patchCmdIterator = sdiCmd;
+    }
+
+    auto bbStarts = findAll<MI_BATCH_BUFFER_START *>(patchCmdIterator, cmdList.end());
+    ASSERT_NE(0u, bbStarts.size());
+    auto startingBbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStarts[0]);
+    EXPECT_EQ(startGpuAddress, startingBbStart->getBatchBufferStartAddress());
+
+    size_t offsetToReturn = ptrDiff(startingBbStart, queueCpuBase);
+    offsetToReturn += sizeof(MI_BATCH_BUFFER_START);
+
+    uint64_t expectedReturnAddress = queueGpuBase + offsetToReturn;
+
+    MI_BATCH_BUFFER_START *chainBackBbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartDwordBuffer);
+    ASSERT_NE(nullptr, chainBackBbStartCmd);
+    EXPECT_EQ(expectedReturnAddress, chainBackBbStartCmd->getBatchBufferStartAddress());
+}
+
+HWTEST_F(CommandListCreateTests, givenRegularOutOfOrderCommandListWhenGettingInOrderPropertiesThenReturnZeros) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandListImp = static_cast<L0::CommandListImp *>(commandList.get());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecDeviceRequiredSize());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecDeviceGpuAddress());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecHostRequiredSize());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecHostGpuAddress());
+}
+
+HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneAppendKernelIsCalledThenClonedValueDesciriptorIsAvailable) {
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, true};
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<ze_base_desc_t *>(&cooperativeDesc), outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, outExtPtr);
+
+    auto cloneExt = reinterpret_cast<ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(outExtPtr);
+    EXPECT_EQ(cooperativeDesc.stype, cloneExt->stype);
+    EXPECT_EQ(cooperativeDesc.isCooperative, cloneExt->isCooperative);
+
+    CommandList::freeClonedAppendKernelExtensions(outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendKernelIsCalledThenErrorIsReturned) {
+    ze_base_desc_t ext = {};
+    ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
+    ext.pNext = nullptr;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendKernelExtensions(&ext, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenNullptrDescriptorWhenCloneAppendMemoryCopyIsCalledThenSuccessIsReturned) {
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendMemoryCopyExtensions(nullptr, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendMemoryCopyIsCalledThenErrorIsReturned) {
+    ze_base_desc_t ext = {};
+    ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
+    ext.pNext = nullptr;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendMemoryCopyExtensions(&ext, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+
+    CommandList::freeClonedAppendMemoryCopyExtensions(&ext);
 }
 
 } // namespace ult

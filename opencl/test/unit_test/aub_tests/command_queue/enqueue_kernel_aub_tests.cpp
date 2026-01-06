@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ struct AUBHelloWorldFixture
         ClHardwareParse::setUp();
 
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(device.get(), kernelFilename, kernelName);
+        KernelFixture::setUp(device, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;
@@ -204,6 +204,7 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
 };
 
 HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     if (this->simd < UnitTestHelper<FamilyType>::smallestTestableSimdSize) {
         GTEST_SKIP();
     }
@@ -233,7 +234,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
 
     pCmdQ->flush();
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
 
@@ -330,6 +331,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBSimpleArg, WhenEnqueingKernelThenAddressesAreA
 }
 
 HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -404,7 +406,7 @@ HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
 
     pCmdQ->flush();
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     size_t sizeWritten = globalWorkItems * sizeof(int);
     AUBCommandStreamFixture::expectMemory<FamilyType>(this->pDestMemory, this->pExpectedMemory, sizeWritten);
@@ -498,7 +500,6 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         }
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::tearDown();
     }
-    unsigned int deviceClVersionSupport;
 
     const size_t typeSize = sizeof(int);
     const size_t typeItems = 40 * 40 * 40;
@@ -519,6 +520,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedThenExpectCorrectBuffer) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     cl_uint workDim = 1;
@@ -562,9 +564,45 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
                              bufferExpected, bufferSize);
 }
 
-using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
-HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
+using AUBSimpleAtomicTest = Test<AUBSimpleArgNonUniformFixture>;
 
+HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicValueIsCorrect) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {64, 1, 1};
+    size_t localWorkSize[3] = {32, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
+
+    auto retVal = this->pCmdQ->enqueueKernel(
+        this->kernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pCmdQ->finish(false);
+    expectMemory<FamilyType>(bufferGpuAddress, this->expectedMemory, sizeWrittenMemory - sizeof(int));
+
+    size_t testGlobalMax = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
+    int maxId = static_cast<int>(testGlobalMax);
+    int *expectedData = static_cast<int *>(ptrOffset(bufferGpuAddress, sizeWrittenMemory - sizeof(int)));
+
+    expectMemory<FamilyType>(expectedData, &maxId, sizeof(int));
+}
+
+using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
+
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 1, 1};
@@ -596,7 +634,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 1};
@@ -628,7 +666,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 1};
@@ -660,7 +698,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 1};
@@ -692,6 +730,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 32};
@@ -723,6 +762,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 32};
@@ -754,6 +794,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 39};
@@ -785,6 +826,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 32};
@@ -816,6 +858,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 39};
@@ -847,6 +890,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 39};
@@ -878,6 +922,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 39};
@@ -923,7 +968,7 @@ struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, MatchAny) {
+HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
     simulatedCsr->initializeEngine();
@@ -996,12 +1041,12 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
 
     EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
 
-    this->pCmdQ->finish();
+    this->pCmdQ->finish(false);
     expectMemory<FamilyType>(addrToPtr(ptrOffset(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), pBufferDst->getOffset())),
                              bufferDataSrc, bufferSize);
 }
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, MatchAny) {
+HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate) {
     constexpr unsigned int testWidth = 5;
     constexpr unsigned int testHeight = 1;
     constexpr unsigned int testDepth = 1;
@@ -1043,7 +1088,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, device->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(
         contextCl,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
@@ -1091,7 +1136,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
         event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = this->pCmdQ->finish();
+    retVal = this->pCmdQ->finish(false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(image->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),

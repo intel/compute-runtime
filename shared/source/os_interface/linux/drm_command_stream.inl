@@ -33,7 +33,7 @@ template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                                               uint32_t rootDeviceIndex,
                                                               const DeviceBitfield deviceBitfield)
-    : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+    : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), vmBindAvailable(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable()) {
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
@@ -111,7 +111,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
 
     std::unique_lock<std::mutex> lock;
-    if (!this->drm->isVmBindAvailable()) {
+    if (!this->vmBindAvailable) {
         lock = memoryOperationsInterface->lockHandlerIfUsed();
     }
 
@@ -120,7 +120,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         return submissionStatus;
     }
 
-    if (this->drm->isVmBindAvailable()) {
+    if (this->vmBindAvailable) {
         allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
     }
 
@@ -133,7 +133,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     }
 
     if (this->directSubmission.get()) {
-        if (!this->drm->isVmBindAvailable()) {
+        if (!this->vmBindAvailable) {
             batchBuffer.allocationsForResidency = &allocationsForResidency;
         }
         bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
@@ -198,11 +198,11 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(Residenc
                 }
             }
         }
-        printf("Buffer object for submit\n");
+        PRINT_STRING(true, stdout, "Buffer object for submit\n");
         for (const auto &bo : bosForSubmit) {
-            printf("BO-%d, range: %" SCNx64 " - %" SCNx64 ", size: %" SCNdPTR "\n", bo->peekHandle(), bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize());
+            PRINT_STRING(true, stdout, "BO-%d, range: %" SCNx64 " - %" SCNx64 ", size: %" SCNdPTR "\n", bo->peekHandle(), bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize());
         }
-        printf("\n");
+        PRINT_STRING(true, stdout, "\n");
     }
     return SubmissionStatus::success;
 }
@@ -227,7 +227,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 
     uint64_t completionGpuAddress = 0;
     TaskCountType completionValue = 0;
-    if (this->drm->isVmBindAvailable() && this->drm->completionFenceSupport()) {
+    if (this->vmBindAvailable && this->drm->completionFenceSupport()) {
         completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->immWritePostSyncWriteOffset) + TagAllocationLayout::completionFenceOffset;
         completionValue = this->latestSentTaskCount;
     }
@@ -250,7 +250,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
-    if (drm->isVmBindAvailable()) {
+    if (this->vmBindAvailable) {
         return SubmissionStatus::success;
     }
     int ret = 0;
@@ -290,24 +290,6 @@ DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() const 
 }
 
 template <typename GfxFamily>
-GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
-    auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
-    auto gmmClientContext = rootDeviceEnvironment->getGmmClientContext();
-
-    GMM_DEVICE_INFO deviceInfo{};
-    GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
-    deviceInfo.pDeviceCb = &deviceCallbacks;
-    gmmClientContext->setGmmDeviceInfo(&deviceInfo);
-
-    auto gmmPageTableMngr = GmmPageTableMngr::create(gmmClientContext, TT_TYPE::AUXTT, nullptr);
-    gmmPageTableMngr->setCsrHandle(this);
-
-    this->pageTableManager.reset(gmmPageTableMngr);
-
-    return gmmPageTableMngr;
-}
-
-template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     auto waitValue = static_cast<uint32_t>(flushStamp);
     if (isUserFenceWaitActive()) {
@@ -341,9 +323,8 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
                 return processResidencySuccess;
             }
 
-            if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-                printf("%u: Drm Submission of contextIndex: %u, with context id %u\n", SysCalls::getProcessId(), contextIndex, drmContextIds[contextIndex]);
-            }
+            PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
+                         "%u: Drm Submission of contextIndex: %u, with context id %u\n", SysCalls::getProcessId(), contextIndex, drmContextIds[contextIndex]);
 
             int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex], contextIndex);
             if (ret) {
@@ -375,7 +356,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::isGemCloseWorkerActive() const {
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitModeActive() {
-    if (this->drm->isVmBindAvailable()) {
+    if (this->vmBindAvailable) {
         return useUserFenceWait;
     }
     return true;
@@ -383,11 +364,11 @@ bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitModeActive() {
 
 template <typename GfxFamily>
 inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
-    return (this->drm->isVmBindAvailable() && useUserFenceWait);
+    return (this->vmBindAvailable && useUserFenceWait);
 }
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitOnTaskCountAllowed() const {
-    return this->isDirectSubmissionEnabled() && this->drm->isVmBindAvailable();
+    return this->isDirectSubmissionEnabled() && this->vmBindAvailable;
 }
 } // namespace NEO

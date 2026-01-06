@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/context/context.h"
+#include "opencl/source/api/api.h"
 
 #include "cl_api_tests.h"
 
@@ -14,7 +14,7 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct ClGetImageParams : public ApiFixture<>,
+struct ClGetImageParams : public ApiFixture,
                           public T {
 
     void SetUp() override {

@@ -10,6 +10,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}device_imp_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/bcs_split.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/bcs_split.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/bcs_split.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/device.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device.h
                ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_${DRIVER_MODEL}/device_imp_${DRIVER_MODEL}.cpp

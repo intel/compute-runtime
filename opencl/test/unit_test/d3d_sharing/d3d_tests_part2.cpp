@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -55,7 +55,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
 
     retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, mockCmdQ->finishCalled);
+    EXPECT_EQ(1u, mockCmdQ->finishCalled);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getBufferDescCalled);
 }
@@ -66,7 +66,39 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhe
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
+            finishCalled++;
+            return CL_SUCCESS;
+        }
+        uint32_t finishCalled = 0;
+    };
+
+    auto mockCmdQ = std::unique_ptr<MockCmdQ>(new MockCmdQ(this->context, this->context->getDevice(0), 0));
+
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    ASSERT_NE(nullptr, buffer.get());
+    cl_mem bufferMem = (cl_mem)buffer.get();
+
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, mockCmdQ->finishCalled);
+
+    retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(3u, mockCmdQ->finishCalled);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishOnce) {
+    this->context->setInteropUserSyncEnabled(false);
+    this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    this->mockSharingFcns->getBufferDescSetParams = true;
+    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
+
+    class MockCmdQ : public MockCommandQueue {
+      public:
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -86,38 +118,6 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhe
     retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, mockCmdQ->finishCalled);
-}
-
-TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishOnce) {
-    this->context->setInteropUserSyncEnabled(false);
-    this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
-
-    this->mockSharingFcns->getBufferDescSetParams = true;
-    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
-
-    class MockCmdQ : public MockCommandQueue {
-      public:
-        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
-            finishCalled++;
-            return CL_SUCCESS;
-        }
-        uint32_t finishCalled = 0;
-    };
-
-    auto mockCmdQ = std::unique_ptr<MockCmdQ>(new MockCmdQ(this->context, this->context->getDevice(0), 0));
-
-    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
-    ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
-
-    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, mockCmdQ->finishCalled);
-
-    retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCmdQ->finishCalled);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getBufferDescCalled);
 }
@@ -128,7 +128,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -147,7 +147,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
 
     retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCmdQ->finishCalled);
+    EXPECT_EQ(2u, mockCmdQ->finishCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate2dTextureThenStagingTextureEqualsPassedTexture) {
@@ -566,7 +566,7 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreat
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
-TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode) {
+TYPED_TEST_P(D3DTests, givenSharedObjectAndAllocationFailedWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
     this->mockSharingFcns->getTexture3dDescSetParams = true;
@@ -726,7 +726,7 @@ REGISTER_TYPED_TEST_SUITE_P(D3DTests,
                             givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
                             givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode,
                             givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
-                            givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
                             givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
                             givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
                             givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,

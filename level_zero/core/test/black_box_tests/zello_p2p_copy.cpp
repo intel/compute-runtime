@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,7 @@
 
 #include "zello_common.h"
 
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 struct DevObjects {
     ze_command_queue_handle_t cmdQueue;
@@ -50,8 +48,9 @@ int main(int argc, char *argv[]) {
         expP2Pproperties.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
         deviceP2PProperties.pNext = &expP2Pproperties;
         for (uint32_t j = 0; j < deviceCount; j++) {
-            if (j == i)
+            if (j == i) {
                 continue;
+            }
             SUCCESS_OR_TERMINATE(zeDeviceGetP2PProperties(devices[i], devices[j], &deviceP2PProperties));
             ze_bool_t canAccessPeer = false;
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));
@@ -132,8 +131,6 @@ int main(int argc, char *argv[]) {
         outputValidationSuccessful = LevelZeroBlackBoxTests::validateToValue<uint8_t>(value, devObjects[i].readBackData, allocSize);
         delete[] devObjects[i].readBackData;
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;

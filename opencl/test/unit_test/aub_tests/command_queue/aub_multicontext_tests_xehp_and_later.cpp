@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,24 +8,23 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 #include "multitile_matchers.h"
 
@@ -109,7 +108,7 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
         imageFormat.image_channel_order = CL_RGBA;
 
         cl_mem_flags flags = 0;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
         cl_image_desc imageDesc;
         imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -234,7 +233,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
         kernelIds |= (1 << 8);
 
         FourTilesSingleContextTest::SetUp();
-        SimpleKernelFixture::setUp(rootDevice.get(), context.get());
+        SimpleKernelFixture::setUp(rootDevice, context.get());
 
         rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
         EXPECT_EQ(4u, rootCsr->getOsContext().getNumSupportedDevices());
@@ -278,7 +277,7 @@ struct DynamicWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTile
 HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithAtomicThenOutputDataIsValid, SupportsMultiTile) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -336,7 +335,7 @@ HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForK
 
 HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithoutAtomicThenOutputDataIsValid, SupportsMultiTile) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -407,7 +406,7 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
 
 HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPartitionIsEnabledForKernelThenOutputDataIsValid, SupportsMultiTile) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -555,15 +554,18 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     cl_int retVal = CL_SUCCESS;
     const uint32_t bufferSize = 256;
     const uint32_t halfBufferSize = bufferSize / 2;
-    uint8_t writePattern1[halfBufferSize];
-    uint8_t writePattern2[halfBufferSize];
     uint8_t initPattern[bufferSize];
     std::fill(initPattern, initPattern + sizeof(initPattern), 0);
-    std::fill(writePattern1, writePattern1 + sizeof(writePattern1), 1);
-    std::fill(writePattern2, writePattern2 + sizeof(writePattern2), 2);
-
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bufferSize, initPattern, retVal));
     buffer->forceDisallowCPUCopy = true;
+
+    auto svmManager = context->getSVMAllocsManager();
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    auto writePattern1 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
+    auto writePattern2 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
+
+    std::fill(writePattern1, writePattern1 + halfBufferSize, 1);
+    std::fill(writePattern2, writePattern2 + halfBufferSize, 2);
 
     auto simulatedCsr0 = getSimulatedCsr<FamilyType>(0, 0);
     simulatedCsr0->overrideDispatchPolicy(DispatchMode::batchedDispatch);
@@ -573,12 +575,15 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     commandQueues[0][0]->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, halfBufferSize, writePattern1, nullptr, 0, nullptr, nullptr);
     commandQueues[0][1]->enqueueWriteBuffer(buffer.get(), CL_FALSE, halfBufferSize, halfBufferSize, writePattern2, nullptr, 0, nullptr, nullptr);
 
-    commandQueues[0][1]->finish(); // submit second enqueue first to make sure that residency flow is correct
-    commandQueues[0][0]->finish();
+    commandQueues[0][1]->finish(false); // submit second enqueue first to make sure that residency flow is correct
+    commandQueues[0][0]->finish(false);
 
     auto gpuPtr = reinterpret_cast<void *>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + buffer->getOffset());
     expectMemory<FamilyType>(gpuPtr, writePattern1, halfBufferSize, 0, 0);
     expectMemory<FamilyType>(ptrOffset(gpuPtr, halfBufferSize), writePattern2, halfBufferSize, 0, 1);
+
+    svmManager->freeSVMAlloc(writePattern1);
+    svmManager->freeSVMAlloc(writePattern2);
 }
 
 // 1 Tile

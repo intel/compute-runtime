@@ -6,33 +6,39 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/host_function.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/memory_compression_state.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/helpers/private_allocs_to_reuse_container.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include "aubstream/allocation_params.h"
-
 #include <atomic>
-#include <cstddef>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 
-namespace NEO {
+namespace aub_stream {
+struct AllocationParams;
+} // namespace aub_stream
 
+namespace NEO {
 enum class AllocationType;
 enum class DebugPauseState : uint32_t;
 struct BatchBuffer;
+struct DispatchBcsFlags;
+struct DispatchFlags;
 struct HardwareInfo;
+struct ImmediateDispatchFlags;
 struct WaitParams;
 class SubmissionAggregator;
 class FlushStampTracker;
@@ -41,7 +47,6 @@ class FlatBatchBufferHelper;
 class AllocationsList;
 class Device;
 class ExecutionEnvironment;
-class ExperimentalCommandBuffer;
 class GmmPageTableMngr;
 class GraphicsAllocation;
 class HostPtrSurface;
@@ -57,12 +62,15 @@ class HwPerfCounter;
 class HwTimeStamps;
 class GmmHelper;
 class TagAllocatorBase;
+class TimestampPacketContainer;
 class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
 class ReleaseHelper;
+class HostFunctionWorker;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
+class SharedPoolAllocation;
 
 template <typename TSize, uint32_t packetCount>
 class TimestampPackets;
@@ -72,11 +80,9 @@ class TagAllocator;
 class TagNodeBase;
 
 enum class DispatchMode {
-    deviceDefault = 0,          // default for given device
-    immediateDispatch,          // everything is submitted to the HW immediately
-    adaptiveDispatch,           // dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
-    batchedDispatchWithCounter, // dispatching is batched, after n commands there is implicit flush (not implemented)
-    batchedDispatch             // dispatching is batched, explicit clFlush is required
+    deviceDefault = 0, // default for given device
+    immediateDispatch, // everything is submitted to the HW immediately
+    batchedDispatch    // dispatching is batched, explicit clFlush is required
 };
 
 class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
@@ -91,6 +97,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     using MutexType = std::recursive_mutex;
     using TimeType = std::chrono::high_resolution_clock::time_point;
+
+    CommandStreamReceiver() = delete;
+
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                           uint32_t rootDeviceIndex,
                           const DeviceBitfield deviceBitfield);
@@ -102,10 +111,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual CompletionStamp flushTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
-
-    virtual CompletionStamp flushTaskStateless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
-                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     virtual CompletionStamp flushBcsTask(LinearStream &commandStream, size_t commandStreamStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) = 0;
     virtual CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
@@ -136,7 +141,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MemoryManager *getMemoryManager() const;
 
     ResidencyContainer &getResidencyAllocations();
-    ResidencyContainer &getEvictionAllocations();
     PrivateAllocsToReuseContainer &getOwnedPrivateAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
@@ -145,11 +149,14 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(TaskCountType requiredTaskCount);
     WaitStatus waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount);
+    MOCKABLE_VIRTUAL void createHostFunctionWorker();
+    HostFunctionWorker *getHostFunctionWorker();
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
     ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
     GmmHelper *peekGmmHelper() const;
+    DeviceBitfield peekDeviceBitfield() const { return deviceBitfield; }
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *getTagAllocation() const {
@@ -158,14 +165,15 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MultiGraphicsAllocation *getTagsMultiAllocation() const {
         return tagsMultiAllocation;
     }
-    MultiGraphicsAllocation &createTagsMultiAllocation();
-
+    MultiGraphicsAllocation &createMultiAllocationInSystemMemoryPool(AllocationType allocationType);
     TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
     TaskCountType peekBarrierCount() const { return this->barrierCount.load(); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
+    volatile TagAddressType *getUcTagAddress() const { return ucTagAddress; }
     volatile TagAddressType *getBarrierCountTagAddress() const { return this->barrierCountTagAddress; }
     uint64_t getBarrierCountGpuAddress() const;
     uint64_t getDebugPauseStateGPUAddress() const;
+    uint64_t getUcTagGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
 
@@ -256,7 +264,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void *getIndirectHeapCurrentPtr(IndirectHeapType heapType) const;
 
     virtual enum CommandStreamReceiverType getType() const = 0;
-    void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
     MOCKABLE_VIRTUAL bool createWorkPartitionAllocation(const Device &device);
@@ -264,7 +271,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool createPreemptionAllocation();
     MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
-
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> tryObtainUniqueOwnership();
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
     bool isLatestTaskCountFlushed() {
@@ -278,7 +285,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     AllocationsList &getDeferredAllocations();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
-    virtual size_t getPreferredTagPoolSize() const;
+    virtual uint32_t getPreferredTagPoolSize() const;
     virtual void fillReusableAllocationsList();
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
@@ -293,6 +300,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) { return false; }
     virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams){};
+    virtual void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables){};
     virtual void initializeEngine(){};
 
     virtual bool isMultiOsContextCapable() const = 0;
@@ -313,6 +321,15 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool isUpdateTagFromWaitEnabled() = 0;
     virtual void flushMonitorFence(bool notifyKmd){};
     virtual bool isTlbFlushRequiredForStateCacheFlush();
+    TaskCountType flushTagUpdateIfRequired() {
+        if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+            auto lock = this->obtainUniqueOwnership();
+            if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+                this->flushTagUpdate();
+            }
+        }
+        return this->peekLatestFlushedTaskCount();
+    }
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
@@ -340,21 +357,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         requiresInstructionCacheFlush = true;
     }
 
-    MOCKABLE_VIRTUAL bool checkDcFlushRequiredForDcMitigationAndReset() {
-        auto ret = this->requiresDcFlush;
-        this->requiresDcFlush = false;
-        return ret;
-    }
-
-    void registerDcFlushForDcMitigation() {
-        this->requiresDcFlush = true;
-    }
-
     bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
-
-    MOCKABLE_VIRTUAL void startControllingDirectSubmissions();
 
     MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabled() const {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
@@ -383,6 +388,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     virtual void stopDirectSubmission(bool blocking, bool needsLock) {}
+    virtual void unregisterDirectSubmissionFromController(){};
+    virtual void resetDirectSubmission(){};
 
     virtual QueueThrottle getLastDirectSubmissionThrottle() = 0;
 
@@ -502,7 +509,13 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return externalCondition ? dcFlushSupport : false;
     }
 
+    bool getHeaplessStateInitEnabled() const {
+        return heaplessStateInitEnabled;
+    }
+
     bool isTbxMode() const;
+    bool isAubMode() const;
+    bool isHardwareMode() const;
     bool ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex);
 
     L1CachePolicy *getStoredL1CachePolicy() {
@@ -550,7 +563,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return !testTaskCountReady(getTagAddress(), this->taskCount);
     }
 
-    bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
+    MOCKABLE_VIRTUAL bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
         return isBusy() && !this->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime);
     }
 
@@ -565,11 +578,36 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void drainPagingFenceQueue();
     bool isLatestFlushIsTaskCountUpdateOnly() const { return latestFlushIsTaskCountUpdateOnly; }
 
+    MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
+
+    MOCKABLE_VIRTUAL void signalHostFunctionWorker(uint32_t nHostFunctions);
+    void ensureHostFunctionWorkerStarted();
+    void createHostFunctionStreamer();
+    HostFunctionStreamer &getHostFunctionStreamer();
+
+    [[nodiscard]] std::unique_lock<MutexType> obtainHostFunctionWorkerStartLock();
+
+    void setHostFunctionWorker(HostFunctionWorker *hostFunctionWorker) {
+        this->hostFunctionWorker = hostFunctionWorker;
+    }
+
   protected:
+    MOCKABLE_VIRTUAL void startHostFunctionWorker();
+
+    virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                              const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+
+    virtual CompletionStamp flushTaskHeapful(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                             const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                             TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+
     void cleanupResources();
+    void cleanupHostFunctionWorker();
     void printDeviceIndex();
     void checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
+    MOCKABLE_VIRTUAL bool getAndClearIsWalkerWithProfilingEnqueued();
     void downloadTagAllocation(TaskCountType taskCountToWait);
     void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
     virtual void addToEvictionContainer(GraphicsAllocation &gfxAllocation);
@@ -592,14 +630,16 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
     std::unique_ptr<IndirectHeap> globalStatelessHeap;
+    std::unique_ptr<HostFunctionStreamer> hostFunctionStreamer;
+    HostFunctionWorker *hostFunctionWorker = nullptr;
 
     ResidencyContainer residencyAllocations;
-    ResidencyContainer evictionAllocations;
     PrivateAllocsToReuseContainer ownedPrivateAllocations;
 
     MutexType ownershipMutex;
     MutexType hostPtrSurfaceCreationMutex;
     MutexType registeredClientsMutex;
+    MutexType hostFunctionWorkerStartMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;
@@ -612,6 +652,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint64_t totalMemoryUsed = 0u;
 
     volatile TagAddressType *tagAddress = nullptr;
+    volatile TagAddressType *ucTagAddress = nullptr;
     volatile TagAddressType *barrierCountTagAddress = nullptr;
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
@@ -627,7 +668,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
-
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
@@ -644,19 +684,18 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<TaskCountType> taskCount{0};
 
     std::atomic<uint32_t> numClients = 0u;
-
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     uint32_t lastSentL3Config = 0;
-    uint32_t latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
-    uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;
-
+    uint32_t latestSentStatelessMocsConfig;
+    uint64_t lastSentSliceCount;
+    HostFunctionWorkerMode hostFunctionWorkerMode = HostFunctionWorkerMode::countingSemaphore;
     uint32_t requiredScratchSlot0Size = 0;
     uint32_t requiredScratchSlot1Size = 0;
-    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
+    uint32_t lastAdditionalKernelExecInfo;
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::defaultType;
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::notApplicable;
     uint32_t activePartitions = 1;
@@ -664,20 +703,20 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint32_t immWritePostSyncWriteOffset = 0;
     uint32_t timeStampPostSyncWriteOffset = 0;
     TaskCountType completionFenceValue = 0;
-
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
-
-    int8_t lastMediaSamplerConfig = -1;
-
+    std::atomic<bool> hostFunctionWorkerStarted = false;
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool isEnginePrologueSent = false;
+    bool areExceptionsSent = false;
     bool isPerDssBackedBufferSent = false;
+    bool isWalkerWithProfilingEnqueued = false;
     bool gsbaFor32BitProgrammed = false;
     bool gsbaStateDirty = true;
     bool bindingTableBaseAddressRequired = false;
     bool heapStorageRequiresRecyclingTag = false;
+    bool ucResourceRequiresTagUpdate = false;
     bool mediaVfeStateDirty = true;
     bool stateComputeModeDirty = true;
     bool btdCommandDirty = true;
@@ -701,6 +740,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool forceSkipResourceCleanupRequired = false;
     bool resourcesInitialized = false;
     bool heaplessStateInitialized = false;
+    bool heaplessStateInitEnabled = false;
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;

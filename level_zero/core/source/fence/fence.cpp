@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+
+#include <limits>
 
 namespace L0 {
 namespace FenceDefinition {

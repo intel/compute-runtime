@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_registers_access.h"
 
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
@@ -22,12 +23,23 @@ void DebugSessionRegistersAccessV3::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get(), true, 3);
 
     session->allThreads[stoppedThreadId]->stopThread(1u);
     session->allThreads[stoppedThreadId]->reportAsStopped();
+}
+
+void setIsScratchInGrf(NEO::MockDevice *neoDevice, bool value) {
+    auto mockProductHelper = std::make_unique<NEO::MockProductHelper>();
+    mockProductHelper->isScratchSpaceBasePointerInGrfResult = value;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper = std::move(mockProductHelper);
+}
+
+void DebugSessionRegistersAccessScratchV3::setUp() {
+    DebugSessionRegistersAccessV3::setUp();
+    setIsScratchInGrf(neoDevice, true);
 }
 
 void DebugSessionRegistersAccess::setUp() {
@@ -36,12 +48,17 @@ void DebugSessionRegistersAccess::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get());
 
     session->allThreads[stoppedThreadId]->stopThread(1u);
     session->allThreads[stoppedThreadId]->reportAsStopped();
+}
+
+void DebugSessionRegistersAccessScratch::setUp() {
+    DebugSessionRegistersAccess::setUp();
+    setIsScratchInGrf(neoDevice, true);
 }
 
 void DebugSessionRegistersAccess::tearDown() {

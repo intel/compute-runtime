@@ -12,12 +12,15 @@
 
 namespace NEO {
 
+enum class LocalMemAllocationMode : uint32_t;
+
 struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     using ProductHelper::setupPreemptionSurfaceSize;
     MockProductHelper() = default;
 
+    ADDMETHOD_CONST_NOBASE(setupHardwareInfo, bool, true, (HardwareInfo & hwInfo, const DeviceCapsReader &capsReader));
     ADDMETHOD_CONST_NOBASE(is48bResourceNeededForRayTracing, bool, true, ());
-    ADDMETHOD_CONST_NOBASE(overrideAllocationCacheable, bool, false, (const AllocationData &allocationData));
+    ADDMETHOD_CONST_NOBASE(overrideAllocationCpuCacheable, bool, false, (const AllocationData &allocationData));
     ADDMETHOD_NOBASE(configureHwInfoWddm, int, 0, (const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment));
     ADDMETHOD_CONST_NOBASE(supportReadOnlyAllocations, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isBlitCopyRequiredForLocalMemory, bool, true, (const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation));
@@ -27,5 +30,12 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isDeviceUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDisableScratchPagesRequiredForDebugger, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getStorageInfoLocalOnlyFlag, bool, false, (LocalMemAllocationMode, bool));
+    ADDMETHOD_CONST_NOBASE(isInterruptSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDeviceCapsReaderSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(initializeInternalEngineImmediately, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(sipUsesSubslicePools, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isScratchSpaceBasePointerInGrf, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(isFlushBetweenBlitsRequired, bool, true, ());
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,10 +159,10 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     event.timeStampNode = &timestampNode;
     event.calcProfilingData();
 
-    cl_ulong queued, submited, start, end, complete;
+    cl_ulong queued, submitted, start, end, complete;
 
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
@@ -170,7 +170,7 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQuerie
     EXPECT_EQ(timestamp.globalEndTS, complete);
     EXPECT_EQ(timestamp.globalEndTS, end);
     EXPECT_EQ(timestamp.globalStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submited);
+    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submitted);
     EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
     event.timeStampNode = nullptr;
 }

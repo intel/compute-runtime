@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,10 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/context/context.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
@@ -16,7 +18,6 @@
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -254,19 +255,19 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArg
     delete[] svmPtr;
 }
 
-HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThenProperSvmAddressIsPatched) {
+HWTEST_F(KernelArgSvmTest, givenOffsetSvmPointerWhenSetArgSvmAllocIsCalledThenProperSvmAddressIsPatched) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
     std::unique_ptr<char[]> svmPtr(new char[256]);
 
-    auto offsetedPtr = svmPtr.get() + 4;
+    auto offsetPtr = svmPtr.get() + 4;
 
     MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
 
     pKernelInfo->argAsPtr(0).bindful = 0;
-    pKernel->setArgSvmAlloc(0, offsetedPtr, &svmAlloc, 0u);
+    pKernel->setArgSvmAlloc(0, offsetPtr, &svmAlloc, 0u);
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -274,7 +275,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThen
                   pKernelInfo->argAsPtr(0).bindful));
 
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(offsetedPtr, surfaceAddress);
+    EXPECT_EQ(offsetPtr, surfaceAddress);
 }
 
 HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocBindlessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
@@ -311,7 +312,7 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocBindlessWhenSettingKernelArgThenArg
     EXPECT_EQ(svmPtr.get(), surfaceAddress);
 }
 
-HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerBindlessWhenSetArgSvmAllocIsCalledThenProperSvmAddressIsPatched) {
+HWTEST_F(KernelArgSvmTest, givenOffsetSvmPointerBindlessWhenSetArgSvmAllocIsCalledThenProperSvmAddressIsPatched) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -322,7 +323,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerBindlessWhenSetArgSvmAllocIsCa
 
     std::unique_ptr<char[]> svmPtr(new char[256]);
 
-    auto offsetedPtr = svmPtr.get() + 4;
+    auto offsetPtr = svmPtr.get() + 4;
 
     MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
 
@@ -330,7 +331,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerBindlessWhenSetArgSvmAllocIsCa
     pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
     pKernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
-    pKernel->setArgSvmAlloc(0, offsetedPtr, &svmAlloc, 0u);
+    pKernel->setArgSvmAlloc(0, offsetPtr, &svmAlloc, 0u);
 
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
@@ -341,7 +342,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerBindlessWhenSetArgSvmAllocIsCa
                   ssOffset));
 
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(offsetedPtr, surfaceAddress);
+    EXPECT_EQ(offsetPtr, surfaceAddress);
 }
 
 HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocBindlessAndNotInitializedBindlessOffsetToSurfaceStateWhenSettingKernelArgThenSurfaceStateIsNotEncoded) {

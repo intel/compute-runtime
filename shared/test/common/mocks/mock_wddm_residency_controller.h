@@ -11,8 +11,6 @@
 namespace NEO {
 class MockWddmResidencyController : public WddmResidencyController {
   public:
-    using WddmResidencyController::csr;
-    using WddmResidencyController::lastTrimFenceValue;
     using WddmResidencyController::lock;
     using WddmResidencyController::trimCallbackHandle;
     using WddmResidencyController::trimResidency;
@@ -24,6 +22,13 @@ class MockWddmResidencyController : public WddmResidencyController {
     std::unique_lock<SpinLock> acquireLock() override {
         acquireLockCallCount++;
         return WddmResidencyController::acquireLock();
+    }
+
+    uint32_t trimResidencyToBudgetCallCount = 0;
+
+    bool trimResidencyToBudget(uint64_t bytes) override {
+        ++trimResidencyToBudgetCallCount;
+        return WddmResidencyController::trimResidencyToBudget(bytes);
     }
 };
 } // namespace NEO

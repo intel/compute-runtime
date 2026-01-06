@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
@@ -19,7 +18,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockEngineHandleCount = 4u;
+constexpr uint32_t mockEngineHandleCount = 9u;
 
 class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
   protected:
@@ -37,7 +36,7 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
         });
         device = pSysmanDevice;
         MockNeoDrm *pDrm = new MockNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-        pDrm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*pDrm);
+        pDrm->ioctlHelper = std::make_unique<NEO::IoctlHelperXe>(*pDrm);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockNeoDrm>(pDrm));
 
@@ -47,6 +46,8 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
 
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->mockPmuFd = 10;
+        pPmuInterface->mockActiveTime = 98765432;
+        pPmuInterface->mockTimestamp = 8765432;
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
@@ -60,9 +61,25 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();
     }
+
+    std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            uint32_t mockReadVal = 23;
+            std::ostringstream oStream;
+            oStream << mockReadVal;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
+        });
+
+        std::vector<zes_engine_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
 };
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenSuccessIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenCallSucceedsAndValidCountIsReturned, IsBMG) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint32_t mockReadVal = 23;
@@ -73,35 +90,67 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandlesWhenCal
         return count;
     });
 
-    uint32_t count = 0u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr));
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, mockEngineHandleCount);
+
+    uint32_t testcount = count + 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &testcount, NULL));
+    EXPECT_EQ(testcount, mockEngineHandleCount);
+
+    count = 0;
     std::vector<zes_engine_handle_t> handles(count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()));
+    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, mockEngineHandleCount);
+}
+
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityThenCallSuccedsAndValidValuesAreReturned, IsBMG) {
+
+    zes_engine_stats_t stats = {};
+    auto handles = getEngineHandles(mockEngineHandleCount);
+    EXPECT_EQ(mockEngineHandleCount, handles.size());
+
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(stats.activeTime, pPmuInterface->mockActiveTime);
+        EXPECT_EQ(stats.timestamp, pPmuInterface->mockTimestamp);
     }
+}
 
-    zes_engine_properties_t properties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[0], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COMPUTE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuTimeStampIsZeroWhenCallingZesEngineGetActivityThenValidTimeStampIsReturned, IsBMG) {
+    zes_engine_stats_t stats = {};
+    pPmuInterface->mockTimestamp = 0u;
+    auto handles = getEngineHandles(mockEngineHandleCount);
+    EXPECT_EQ(mockEngineHandleCount, handles.size());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[1], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    uint64_t timeBeforeApiCall = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[2], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(stats.activeTime, pPmuInterface->mockActiveTime);
+        EXPECT_GE(stats.timestamp, timeBeforeApiCall);
+    }
+}
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[3], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuReadFailsWhenCallingZesEngineGetActivityThenErrorIsReturned, IsBMG) {
+
+    zes_engine_stats_t stats = {};
+    pPmuInterface->mockPmuReadFailureReturnValue = -1;
+    auto handles = getEngineHandles(mockEngineHandleCount);
+    EXPECT_EQ(mockEngineHandleCount, handles.size());
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenSysmanProductHelperHandleWhenCheckingIsAggregationOfSingleEnginesSupportedThenSuccessIsReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isAggregationOfSingleEnginesSupported());
 }
 
 } // namespace ult

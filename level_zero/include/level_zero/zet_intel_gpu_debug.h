@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ typedef enum _zet_debug_sba_intel_gpu_t {
     ZET_DEBUG_SBA_BINDLESS_SAMPLER_INTEL_GPU = 6, ///< BindlessSamplerStateBaseAddress
     ZET_DEBUG_SBA_BINDING_TABLE_INTEL_GPU = 7,    ///< BindingTableStateBaseAddress
     ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU = 8,    ///< ScratchSpaceBaseAddress
-    ZET_DEBUG_SBA_COUNT_INTEL_GPU = 9             ///< Number of registers in SBA regster set
+    ZET_DEBUG_SBA_COUNT_INTEL_GPU = 9             ///< Number of registers in SBA register set
 } zet_debug_sba_intel_gpu_t;
 #endif // ZET_INTEL_GPU_DEBUG_MAJOR == 1
 

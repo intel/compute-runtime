@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ namespace Zebin {
 template <Elf::ElfIdentifierClass numBits = Elf::EI_CLASS_64>
 struct ZebinSections {
     using SectionHeaderData = NEO::Elf::SectionHeaderAndData<numBits>;
+    StackVec<SectionHeaderData *, 1> textSections;
     StackVec<SectionHeaderData *, 32> textKernelSections;
     StackVec<SectionHeaderData *, 32> gtpinInfoSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;
@@ -51,7 +52,7 @@ bool isZebin(ArrayRef<const uint8_t> binary);
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Zebin::Elf::ZebinTargetFlags targetMetadata);
 
 template <Elf::ElfIdentifierClass numBits>
-bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorFeatureVersions &generatorFeatures, GeneratorType &generator);
 
 template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);
@@ -77,6 +78,8 @@ ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<
 void setKernelMiscInfoPosition(ConstStringRef metadata, ProgramInfo &dst);
 
 ConstStringRef getZeInfoFromZebin(const ArrayRef<const uint8_t> zebin, std::string &outErrReason, std::string &outWarning);
+
+ConstStringRef getKernelNameFromSectionName(ConstStringRef sectionName);
 
 } // namespace Zebin
 } // namespace NEO

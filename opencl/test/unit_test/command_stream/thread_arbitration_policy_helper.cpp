@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
-#include <stdint.h>
 namespace NEO {
 int32_t getNewKernelArbitrationPolicy(uint32_t policy) {
     if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {

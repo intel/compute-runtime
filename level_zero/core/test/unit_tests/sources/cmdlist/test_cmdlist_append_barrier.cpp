@@ -1,21 +1,25 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 namespace L0 {
 namespace ult {
@@ -240,7 +244,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                       sizeof(MI_STORE_DATA_IMM) +
                                       sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
-        size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
+        size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
         auto useSizeBefore = cmdListStream->getUsed();
         auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
@@ -316,7 +320,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         ze_result_t returnValue;
         auto eventPoolTimeStamp = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        auto eventTimeStamp = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolTimeStamp.get(), &eventDesc, device));
+        auto eventTimeStamp = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolTimeStamp.get(), &eventDesc, device, returnValue));
 
         uint64_t eventGpuAddress = eventTimeStamp->getGpuAddress(device);
         uint64_t contextStartAddress = eventGpuAddress + event->getContextStartOffset();
@@ -350,8 +354,8 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
             timestampRegisters += 2 * sizeof(MI_STORE_REGISTER_MEM);
         }
 
-        size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false) +
-                                            NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnv);
+        size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier() +
+                                            NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnv);
         size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
         auto useSizeBefore = cmdListStream->getUsed();
@@ -427,7 +431,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
 using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListAppendBarrierFixture<false>>;
 
-HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -479,7 +483,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenCurrentCommandBufferExhaustedWhenAppendingMultiTileBarrierThenPipeControlAndCrossTileSyncIsGeneratedInNewBuffer, IsAtLeastXeHpCore) {
+          GivenCurrentCommandBufferExhaustedWhenAppendingMultiTileBarrierThenPipeControlAndCrossTileSyncIsGeneratedInNewBuffer, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -540,31 +544,31 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeHpCore) {
+          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeCore) {
     testBodyNonTimestampEventSignal<FamilyType>();
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeHpCore) {
+          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeCore) {
     testBodyTimestampEventSignal<FamilyType>();
 }
 
 using MultiTilePrimaryBatchBufferCommandListAppendBarrier = Test<MultiTileCommandListAppendBarrierFixture<true>>;
 
 HWTEST2_F(MultiTilePrimaryBatchBufferCommandListAppendBarrier,
-          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeHpCore) {
+          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeCore) {
     testBodyNonTimestampEventSignal<FamilyType>();
 }
 
 HWTEST2_F(MultiTilePrimaryBatchBufferCommandListAppendBarrier,
-          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeHpCore) {
+          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeCore) {
     testBodyTimestampEventSignal<FamilyType>();
 }
 
 using MultiTileImmediateCommandListAppendBarrier = Test<MultiTileCommandListFixture<true, false, false, 0>>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
-          givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -575,10 +579,9 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
-    immediateCommandList->isFlushTaskSubmissionEnabled = true;
     immediateCommandList->cmdQImmediate = queue.get();
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -586,13 +589,12 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
-    constexpr size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
-                                           sizeof(MI_ATOMIC) +
-                                           NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
-                                           sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
+                                 sizeof(MI_ATOMIC) +
+                                 NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+                                 sizeof(MI_BATCH_BUFFER_START);
 
-    constexpr size_t expectedSize = sizeBarrierCommands +
-                                    2 * sizeof(uint32_t);
+    size_t expectedSize = sizeBarrierCommands + 2 * sizeof(uint32_t);
 
     size_t estimatedSize = immediateCommandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
     size_t usedBeforeSize = cmdStream->getUsed();
@@ -667,17 +669,16 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 }
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
-          givenMultiTileImmediateCommandListNotUsingFlushTaskWhenAppendingBarrierThenExpectSecondaryBufferStart, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListUsingFlushTaskWhenAppendingBarrierThenExpectNonSecondaryBufferStart, IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->cmdQImmediate = queue.get();
-    immediateCommandList->isFlushTaskSubmissionEnabled = false;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
@@ -699,7 +700,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorBbStart);
     auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
-    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
+    EXPECT_NE(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 }
 
 } // namespace ult

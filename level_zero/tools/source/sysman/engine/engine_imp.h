@@ -10,9 +10,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/engine/engine.h"
-#include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include <level_zero/zes_api.h>
+
 namespace L0 {
+struct OsSysman;
+class OsEngine;
 
 class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -24,7 +26,7 @@ class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
     EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     ~EngineImp() override;
 
-    std::unique_ptr<OsEngine> pOsEngine = nullptr;
+    std::unique_ptr<OsEngine> pOsEngine;
     void init();
 
   private:

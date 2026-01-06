@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,16 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/fill_pattern_tag_node.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 namespace L0 {
+
+Device::~Device() = default;
 
 uint32_t Device::getRootDeviceIndex() const {
     return neoDevice->getRootDeviceIndex();
@@ -34,7 +38,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 
             const size_t maxPartitionCount = neoDevice.getDeviceBitfield().count();
 
-            const size_t nodeSize = immediateWritePostSyncOffset * maxPartitionCount * 2; // Multiplied by 2 to handle 32b overflow
+            const size_t nodeSize = alignUp(immediateWritePostSyncOffset * maxPartitionCount, MemoryConstants::cacheLineSize * 4) * 2; // Multiplied by 2 to handle 32b overflow
 
             DEBUG_BREAK_IF(alignUp(nodeSize, MemoryConstants::cacheLineSize) * NodeT::defaultAllocatorTagCount > MemoryConstants::pageSize64k);
 
@@ -71,6 +75,21 @@ NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {
     return inOrderTimestampAllocator.get();
 }
 
+NEO::TagAllocatorBase *Device::getFillPatternAllocator() {
+    if (!this->fillPatternAllocator.get()) {
+        static std::mutex mtx;
+        std::unique_lock<std::mutex> lock(mtx);
+
+        if (!this->fillPatternAllocator.get()) {
+            RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
+            fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize2M / MemoryConstants::cacheLineSize),
+                                                                                                MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, 0, false, false, getNEODevice()->getDeviceBitfield());
+        }
+    }
+
+    return this->fillPatternAllocator.get();
+}
+
 uint32_t Device::getNextSyncDispatchQueueId() {
     auto newValue = syncDispatchQueueIdAllocator.fetch_add(1);
 
@@ -97,6 +116,14 @@ void Device::ensureSyncDispatchTokenAllocation() {
             memset(syncDispatchTokenAllocation->getUnderlyingBuffer(), 0, syncDispatchTokenAllocation->getUnderlyingBufferSize());
         }
     }
+}
+
+ze_result_t Device::getPriorityLevels(int32_t *lowestPriority, int32_t *highestPriority) {
+
+    *highestPriority = queuePriorityHigh;
+    *lowestPriority = queuePriorityLow;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

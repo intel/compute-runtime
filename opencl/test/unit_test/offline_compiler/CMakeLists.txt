@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -81,6 +81,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_supported_devices_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/former_ocloc_free_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/offline_compiler_ext_tests.cpp
@@ -105,7 +106,10 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_directory.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
     ${IGDRCL_SRCS_cloc}
@@ -127,10 +131,10 @@ if(WIN32)
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_helper.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
-       ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_supported_devices_helper_linux_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
@@ -144,18 +148,22 @@ add_executable(ocloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
 target_include_directories(ocloc_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )
+
+string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 target_compile_definitions(ocloc_tests PUBLIC
                            MOCKABLE_VIRTUAL=virtual
                            $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS>
                            ${TESTED_CORE_FLAGS_DEFINITONS}
                            NEO_OCLOC_CURRENT_LIB_NAME="ocloc-current"
                            NEO_OCLOC_FORMER_LIB_NAME="ocloc-former"
+                           DEFAULT_TEST_PLATFORM_NAME="${CLOC_LIB_DEFAULT_DEVICE}"
 )
 
-target_link_libraries(ocloc_tests gmock-gtest)
+target_link_libraries(ocloc_tests neo_gtest)
 
 if(WIN32)
   target_link_libraries(ocloc_tests dbghelp)
@@ -171,8 +179,6 @@ set_property(TARGET ocloc_tests PROPERTY FOLDER ${CLOC_LIB_FOLDER})
 set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_LIB_COMPILE_FLAGS} ${ASAN_FLAGS} ${TSAN_FLAGS})
 set_property(TARGET ocloc_tests PROPERTY ENABLE_EXPORTS TRUE)
 
-string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
-
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
 )
@@ -187,7 +193,7 @@ macro(macro_for_each_platform)
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     add_dependencies(run_ocloc_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     add_dependencies(unit_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
-    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER} --rev_id ${REVISION_ID})
+    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER})
   endif()
 endmacro()
 macro(macro_for_each_core_type)
@@ -226,3 +232,8 @@ endif()
 
 add_subdirectories()
 create_project_source_tree(ocloc_tests)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(ocloc_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_pch.h)
+  target_precompile_headers(ocloc_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_pch.h)
+endif()

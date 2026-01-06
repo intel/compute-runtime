@@ -32,11 +32,9 @@ TEST_F(ReleaseHelper2001Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
-        EXPECT_FALSE(releaseHelper->isDirectSubmissionSupported());
         EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
         EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
-        EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
@@ -72,6 +70,14 @@ TEST_F(ReleaseHelper2001Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned)
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
+TEST_F(ReleaseHelper2001Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
+}
+
+TEST_F(ReleaseHelper2001Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+    whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
+}
+
 TEST_F(ReleaseHelper2001Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
@@ -102,4 +108,24 @@ TEST_F(ReleaseHelper2001Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[6].upperLimit);
         EXPECT_EQ(6u, preferredSlmValueArray[6].valueToProgram);
     }
+}
+
+TEST_F(ReleaseHelper2001Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+    whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+}
+
+TEST_F(ReleaseHelper2001Tests, whenShouldQueryPeerAccessCalledThenTrueReturned) {
+    whenShouldQueryPeerAccessCalledThenTrueReturned();
+}
+
+TEST_F(ReleaseHelper2001Tests, whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned) {
+    whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned();
+}
+
+TEST_F(ReleaseHelper2001Tests, whenIsSingleDispatchRequiredForMultiCCSThenTrueReturned) {
+    whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
+}
+
+TEST_F(ReleaseHelper2001Tests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,12 @@
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/windows/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
+
+#include <iomanip>
 
 namespace L0 {
 namespace Sysman {
@@ -63,13 +66,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingRes
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetStateThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetStateThenFailureIsReturned) {
     init(true);
     zes_device_state_t pState = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(pSysmanDevice->toHandle(), &pState));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceProcessesGetStateThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceProcessesGetStateThenFailureIsReturned) {
     init(true);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceProcessesGetState(pSysmanDevice->toHandle(), &count, nullptr));
@@ -81,13 +84,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
     init(true);
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetSubDevicePropertiesExpThenUnsupportedIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetSubDevicePropertiesExpThenUnsupportedIsReturned) {
     init(true);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetSubDevicePropertiesExp(pSysmanDevice->toHandle(), &count, nullptr));
@@ -362,6 +365,19 @@ TEST_F(SysmanDevicePropertiesFixture,
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+}
+
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDriverHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverNameVerifyDriverNameIsReturned) {
+
+    std::string driverName = "WDDM";
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    properties.pNext = &drvName;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == driverName.compare(drvName.driverName));
 }
 
 HWTEST2_F(SysmanDevicePropertiesFixture,

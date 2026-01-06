@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace L0 {
 
-SamplerAllocatorFn samplerFactory[IGFX_MAX_PRODUCT] = {};
+SamplerAllocatorFn samplerFactory[NEO::maxProductEnumValue] = {};
 
 ze_result_t SamplerImp::destroy() {
     delete this;
@@ -25,7 +25,7 @@ ze_result_t SamplerImp::initialize(Device *device, const ze_sampler_desc_t *desc
 
 Sampler *Sampler::create(uint32_t productFamily, Device *device, const ze_sampler_desc_t *desc) {
     SamplerAllocatorFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = samplerFactory[productFamily];
     }
 

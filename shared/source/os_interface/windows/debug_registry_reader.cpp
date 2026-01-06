@@ -13,8 +13,6 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
-#include <stdint.h>
-
 namespace NEO {
 
 SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
@@ -35,8 +33,9 @@ void RegistryReader::setUpProcessName() {
     processName.assign(buff);
 }
 const char *RegistryReader::appSpecificLocation(const std::string &name) {
-    if (processName.length() > 0)
+    if (processName.length() > 0) {
         return processName.c_str();
+    }
     return name.c_str();
 }
 

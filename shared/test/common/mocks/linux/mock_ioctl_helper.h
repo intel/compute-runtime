@@ -30,7 +30,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
     ADDMETHOD_CONST_NOBASE(isImmediateVmBindRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIoctlRequestValue, unsigned int, 1234u, (DrmIoctl));
-    ADDMETHOD_CONST_NOBASE(isWaitBeforeBindRequired, bool, false, (bool));
+    ADDMETHOD_CONST_NOBASE(requiresUserFenceSetup, bool, false, (bool));
     ADDMETHOD_CONST_NOBASE(makeResidentBeforeLockNeeded, bool, false, ());
 
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
@@ -40,6 +40,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_NOBASE(releaseMediaContext, bool, true, (void *));
     ADDMETHOD_CONST_NOBASE(getNumMediaDecoders, uint32_t, 0, ());
     ADDMETHOD_CONST_NOBASE(getNumMediaEncoders, uint32_t, 0, ());
+    ADDMETHOD_CONST_NOBASE(overrideMaxSlicesSupported, bool, true, ());
     ADDMETHOD_NOBASE(queryDeviceParams, bool, true, (uint32_t *, uint16_t *));
 
     ADDMETHOD_NOBASE(closAlloc, CacheRegion, CacheRegion::none, (CacheLevel));
@@ -57,8 +58,9 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     }
 
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
-        if (callBaseVmAdviseAtomicAttribute)
+        if (callBaseVmAdviseAtomicAttribute) {
             return IoctlHelperPrelim20::getVmAdviseAtomicAttribute();
+        }
         return vmAdviseAtomicAttribute;
     }
 
@@ -84,11 +86,16 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         std::unique_ptr<MemoryInfo> memoryInfo = std::make_unique<MemoryInfo>(regionInfo, drm);
         return memoryInfo;
     }
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
         topologyData = topologyDataToSet;
         topologyMap = topologyMapToSet;
         return true;
     }
+
+    bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override {
+        return is2MBSizeAlignmentRequiredResult;
+    }
+
     DrmQueryTopologyData topologyDataToSet{};
     TopologyMap topologyMapToSet{};
     int getDrmParamValueResult = 1234;
@@ -97,6 +104,13 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
 
     bool releaseInterruptResult = true;
     bool callBaseVmAdviseAtomicAttribute = true;
+    bool is2MBSizeAlignmentRequiredResult = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute{};
+    void *pciBarrierMmapReturnValue = nullptr;
+    bool pciBarrierMmapCalled = false;
+    void *pciBarrierMmap() override {
+        pciBarrierMmapCalled = true;
+        return pciBarrierMmapReturnValue;
+    }
 };
 } // namespace NEO

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
@@ -34,7 +35,7 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
     executionEnvironment->decRefInternal();
 }
 
-TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
+TEST(ExecutionEnvironment, givenDeviceThatHaveReferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(1);
     auto executionEnvironment = new ExecutionEnvironment();

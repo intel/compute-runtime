@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,8 @@ void CommandStreamReceiverSystolicFixture::testBody() {
     bool systolicModeSupported = commandStreamReceiver.pipelineSupportFlags.systolicMode;
 
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = false;
 
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
 
     commandStreamReceiver.flushTask(commandStream,
                                     0,

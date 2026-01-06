@@ -65,6 +65,10 @@ class TimestampPackets : public TagTypeBase {
     void const *getContextEndAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextEnd); }
     void const *getContextStartAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextStart); }
 
+    uint32_t getPacketCount() const {
+        return packetCount;
+    }
+
   protected:
     struct alignas(1) Packet {
         TSize contextStart = TimestampPacketConstants::initValue;
@@ -98,9 +102,10 @@ struct TimestampPacketHelper {
     static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-        if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-            printf("\nPID: %u, TSP used for Semaphore: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), timestampPacketNode.getGpuAddress(), cmdStream.getCurrentGpuAddressPosition());
-        }
+        PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1,
+                     stdout,
+                     "\nPID: %u, TSP used for Semaphore: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64,
+                     SysCalls::getProcessId(), timestampPacketNode.getGpuAddress(), cmdStream.getCurrentGpuAddressPosition());
 
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
 
@@ -182,7 +187,7 @@ struct TimestampPacketHelper {
         size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
 
         if (auxTranslationDirection == AuxTranslationDirection::nonAuxToAux && cacheFlushForBcsRequired) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
         }
 
         return size;

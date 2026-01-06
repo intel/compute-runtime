@@ -11,12 +11,14 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include "ocl_igc_interface/code_type.h"
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -31,7 +33,7 @@ namespace NEO {
 
 class CompilerCache;
 class CompilerProductHelper;
-class OclocFclFacade;
+class OclocFclFacadeBase;
 class OclocIgcFacade;
 
 std::string convertToPascalCase(const std::string &inString);
@@ -50,9 +52,14 @@ constexpr bool isIntermediateRepresentation(IGC::CodeType::CodeType_t codeType) 
     return false == ((IGC::CodeType::oclC == codeType) || (IGC::CodeType::oclCpp == codeType) || (IGC::CodeType::oclGenBin == codeType));
 }
 
-constexpr const char *getFileExtension(IGC::CodeType::CodeType_t codeType) {
+inline std::string getFileExtension(IGC::CodeType::CodeType_t codeType) {
     switch (codeType) {
     default:
+        return "." + StringHelpers::toLower(IGC::CodeType::CodeTypeCoder::Dec(codeType));
+    case IGC::CodeType::oclGenBin:
+    case IGC::CodeType::elf:
+    case IGC::CodeType::undefined:
+    case IGC::CodeType::invalid:
         return ".bin";
     case IGC::CodeType::llvmBc:
         return ".bc";
@@ -60,6 +67,10 @@ constexpr const char *getFileExtension(IGC::CodeType::CodeType_t codeType) {
         return ".ll";
     case IGC::CodeType::spirV:
         return ".spv";
+    case IGC::CodeType::oclC:
+        return ".cl";
+    case IGC::CodeType::oclCpp:
+        return ".cl";
     }
 }
 
@@ -186,8 +197,8 @@ All supported acronyms: %s.
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
-        const char *ext = getFileExtension(intermediateRepresentation);
-        return generateFilePath(outputDirectory, fileNameBase, ext);
+        auto ext = getFileExtension(intermediateRepresentation);
+        return generateFilePath(outputDirectory, fileNameBase, ext.c_str());
     }
 
     std::string generateOptsSuffix() {
@@ -197,7 +208,8 @@ All supported acronyms: %s.
     }
 
     MOCKABLE_VIRTUAL void writeOutAllFiles();
-    MOCKABLE_VIRTUAL void createDir(const std::string &path);
+    MOCKABLE_VIRTUAL int createDir(const std::string &path);
+    bool useIgcAsFcl();
     void unifyExcludeIrFlags();
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo{};
@@ -221,6 +233,8 @@ All supported acronyms: %s.
     CompilerOptions::HeaplessMode heaplessMode = CompilerOptions::HeaplessMode::defaultMode;
     std::string irHash, genHash, dbgHash, elfHash;
     std::string cacheDir;
+    std::string specConstantsFile;
+    std::map<uint32_t, uint64_t> specConstants;
 
     bool allowCaching = false;
     bool dumpFiles = true;
@@ -245,6 +259,7 @@ All supported acronyms: %s.
     bool forceStatelessToStatefulOptimization = false;
     bool showHelp = false;
     bool excludeIr = false;
+    int loadSpecializationConstants(const std::string &filename);
 
     std::vector<uint8_t> elfBinary;
     size_t elfBinarySize = 0;
@@ -260,7 +275,7 @@ All supported acronyms: %s.
     uint64_t hwInfoConfig = 0u;
 
     std::unique_ptr<OclocIgcFacade> igcFacade;
-    std::unique_ptr<OclocFclFacade> fclFacade;
+    std::unique_ptr<OclocFclFacadeBase> fclFacade;
     std::unique_ptr<CompilerCache> cache;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;
@@ -268,6 +283,7 @@ All supported acronyms: %s.
     IGC::CodeType::CodeType_t intermediateRepresentation = IGC::CodeType::undefined;
 
     OclocArgHelper *argHelper = nullptr;
+    MOCKABLE_VIRTUAL void createTempSourceFileForDebug();
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<OfflineCompiler>);

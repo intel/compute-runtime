@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,7 +172,7 @@ WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
-    // create an exit event with a default security decriptor with no name
+    // create an exit event with a default security descriptor with no name
     bool manualResetObject = FALSE;
     bool isEventStateSignalled = FALSE;
     exitHandle = WddmEventsImp::createWddmEvent(NULL, manualResetObject, isEventStateSignalled, NULL);

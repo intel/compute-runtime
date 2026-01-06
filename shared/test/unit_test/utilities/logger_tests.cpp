@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,13 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
@@ -52,7 +55,6 @@ TEST(FileLogger, GivenFullyDisabledFileLoggerIsCreatedThenItIsDisabled) {
 TEST(FileLogger, GivenFileLoggerWhenSettingFileNameThenCorrectFilenameIsSet) {
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(std::string(""), flags);
-    fileLogger.useRealFiles(false);
     fileLogger.setLogFileName("new_filename");
     EXPECT_STREQ("new_filename", fileLogger.getLogFileName());
 }
@@ -61,7 +63,6 @@ TEST(FileLogger, GivenEnabledDebugFunctinalityWhenLoggingApiCallsThenDumpToFile)
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(std::string("test.log"), flags);
-    fileLogger.useRealFiles(false);
 
     fileLogger.logApiCall("searchString", true, 0);
     fileLogger.logApiCall("searchString2", false, 0);
@@ -121,7 +122,6 @@ TEST(FileLogger, GivenCorrectFilenameFileWhenLoggingApiCallsThenFileIsCreated) {
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(testFile, "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -135,7 +135,6 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewInstanceThenOldFileIsRemoved) {
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -148,7 +147,6 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileI
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -165,7 +163,6 @@ TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
     flags.LogApiCalls.set(false);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -264,7 +261,6 @@ TEST(FileLogger, WhenDumpingKernelThenFileIsCreated) {
     DebugVariables flags;
     flags.DumpKernels.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
     std::string kernelDumpFile = "testDumpKernel";
 
     // test kernel dumping
@@ -289,7 +285,6 @@ TEST(FileLogger, WhenDumpingBinaryFileThenFileIsCreated) {
     DebugVariables flags;
     flags.DumpKernels.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
     std::string programDumpFile = "programBinary.bin";
     size_t length = 4;
     unsigned char binary[4];
@@ -435,7 +430,6 @@ TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFil
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     fileLogger.logDebugString(true, "test log");
     EXPECT_EQ(std::string("test log"), fileLogger.getFileString(testFile));
@@ -448,6 +442,28 @@ TEST(FileLogger, givenDisabledLogWhenLogDebugStringCalledThenStringIsNotWrittenT
 
     fileLogger.logDebugString(false, "test log");
     EXPECT_EQ(0u, fileLogger.getFileString(testFile).size());
+}
+TEST(FileLogger, GivenFileLoggerInstanceWhenCreatedThenFileNameContainsProcessId) {
+    auto &logger = NEO::fileLoggerInstance();
+    auto logFileName = logger.getLogFileName();
+
+    auto actualPid = SysCalls::getProcessId();
+    std::stringstream expectedSubstring;
+    expectedSubstring << "igdrcl_" << actualPid << ".log";
+
+    EXPECT_STREQ(expectedSubstring.str().c_str(), logFileName);
+}
+
+TEST(FileLogger, GivenFileLoggerInstanceWhenCalledMultipleTimesThenReturnsSameSingleton) {
+    auto &logger1 = NEO::fileLoggerInstance();
+    auto &logger2 = NEO::fileLoggerInstance();
+
+    EXPECT_EQ(&logger1, &logger2);
+
+    std::string name1 = logger1.getLogFileName();
+    std::string name2 = logger2.getLogFileName();
+
+    EXPECT_STREQ(name1.c_str(), name2.c_str());
 }
 
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {
@@ -473,7 +489,6 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::linearStream, "LINEAR_STREAM"},
          {AllocationType::mapAllocation, "MAP_ALLOCATION"},
          {AllocationType::mcs, "MCS"},
-         {AllocationType::pipe, "PIPE"},
          {AllocationType::preemption, "PREEMPTION"},
          {AllocationType::printfSurface, "PRINTF_SURFACE"},
          {AllocationType::privateSurface, "PRIVATE_SURFACE"},
@@ -496,7 +511,8 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::debugContextSaveArea, "DEBUG_CONTEXT_SAVE_AREA"},
          {AllocationType::debugSbaTrackingBuffer, "DEBUG_SBA_TRACKING_BUFFER"},
          {AllocationType::debugModuleArea, "DEBUG_MODULE_AREA"},
-         {AllocationType::swTagBuffer, "SW_TAG_BUFFER"}}};
+         {AllocationType::swTagBuffer, "SW_TAG_BUFFER"},
+         {AllocationType::hostFunction, "HOST_FUNCTION"}}};
 
     for (const auto &[type, str] : allocationTypeValues) {
         GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, type, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
@@ -511,7 +527,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -543,10 +559,11 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
@@ -558,7 +575,6 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     flags.LogAllocationType.set(1);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
@@ -566,10 +582,11 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
@@ -602,4 +619,109 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
 
         EXPECT_STREQ(result, str);
     }
+}
+
+TEST(CpuGpuVaLogging, givenAllocationWithCpuVaWhenLoggingAllocationThenCpuVaRangeIsLoggedToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationMemoryPool.set(1);
+
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    char buffer[4096];
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, buffer, reinterpret_cast<uint64_t>(buffer), 0, MemoryPool::system4KBPages, MemoryManager::maxOsContextCount, sizeof(buffer));
+
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
+
+    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
+        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+        EXPECT_TRUE(str.find("CPU VA: 0x") != std::string::npos);
+        EXPECT_FALSE(str.find("CPU VA: NULL") != std::string::npos);
+        EXPECT_TRUE(str.find(" - 0x") != std::string::npos);
+    } else {
+        EXPECT_FALSE(true);
+    }
+}
+
+TEST(CpuGpuVaLogging, givenAllocationWithoutCpuVaWhenLoggingAllocationThenNullIsLoggedToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationMemoryPool.set(1);
+
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0x1000, 0, MemoryPool::localMemory, MemoryManager::maxOsContextCount, 4096);
+
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
+
+    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
+        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+        EXPECT_TRUE(str.find("CPU VA: NULL") != std::string::npos);
+    } else {
+        EXPECT_FALSE(true);
+    }
+}
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenStdoutForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(1);
+
+    int i = 4;
+    int j = 5;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(true, stdout, "same as default: %d, ", i);
+    PRINT_STRING(true, stderr, "forced: %d", j);
+    auto output = capture.getCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "same as default: 4, forced: 5");
+}
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenStderrForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(2);
+
+    int i = 4;
+    int j = 5;
+    StreamCapture capture;
+    capture.captureStderr();
+    PRINT_STRING(true, stdout, "forced: %d, ", i);
+    PRINT_STRING(true, stderr, "same as default: %d", j);
+    auto output = capture.getCapturedStderr();
+    EXPECT_STREQ(output.c_str(), "forced: 4, same as default: 5");
+}
+
+template <>
+struct NEO::FileLoggerProxy<false> {
+
+    static constexpr std::string_view logFileName = "mock_igdrcl.log";
+    ::FullyEnabledFileLogger virtualFileLogger = {std::string(logFileName), NEO::debugManager.flags};
+
+    void logString(std::string_view data) {
+        this->virtualFileLogger.logDebugString(true, data);
+    }
+
+    auto getCapturedString() {
+        return this->virtualFileLogger.getFileString(std::string(logFileName));
+    }
+};
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenFileOutputForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(3);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    auto callCnt = NEO::IoFunctions::mockVsnprintfCalled;
+    auto loggerProxy = NEO::FileLoggerProxy<false>{};
+    NEO::printStringForMacroUseOnly(loggerProxy, stdout, "%s: %d\n", "redirected", i);
+    EXPECT_EQ(NEO::IoFunctions::mockVsnprintfCalled, callCnt + 1U);
+    auto capturedFileOutput = loggerProxy.getCapturedString();
+    auto capturedStdout = capture.getCapturedStdout();
+    auto capturedStderr = capture.getCapturedStderr();
+    EXPECT_STREQ(capturedStdout.c_str(), "");
+    EXPECT_STREQ(capturedStderr.c_str(), "");
+    EXPECT_STREQ(capturedFileOutput.c_str(), "redirected: 4\n");
 }

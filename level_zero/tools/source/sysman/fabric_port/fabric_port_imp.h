@@ -10,10 +10,12 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
-#include "level_zero/tools/source/sysman/fabric_port/os_fabric_port.h"
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+class OsFabricDevice;
+class OsFabricPort;
+struct OsSysman;
 
 class FabricDeviceImp : public FabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:

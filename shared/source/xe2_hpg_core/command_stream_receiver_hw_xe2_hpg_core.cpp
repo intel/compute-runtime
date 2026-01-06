@@ -15,6 +15,7 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
 #include "shared/source/helpers/blit_commands_helper_pvc_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xe2_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
@@ -34,7 +35,7 @@ template class ImplicitFlushSettings<Family>;
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
@@ -67,35 +68,35 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcAllocation = blitProperties.srcAllocation;
 
-    if (srcAllocation->isCompressionEnabled()) {
+    if (srcAllocation && srcAllocation->isCompressionEnabled()) {
         auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         srcCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     }
 
-    if (dstAllocation->isCompressionEnabled()) {
+    if (dstAllocation && dstAllocation->isCompressionEnabled()) {
         auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         dstCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     }
 
     if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-        if (srcAllocation->isCompressionEnabled()) {
+        if (srcAllocation && srcAllocation->isCompressionEnabled()) {
             srcCompressionFormat = static_cast<uint8_t>(debugManager.flags.ForceBufferCompressionFormat.get());
         }
-        if (dstAllocation->isCompressionEnabled()) {
+        if (dstAllocation && dstAllocation->isCompressionEnabled()) {
             dstCompressionFormat = static_cast<uint8_t>(debugManager.flags.ForceBufferCompressionFormat.get());
         }
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
-                   (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
+                   (blitProperties.dstAllocation != blitProperties.srcAllocation || (blitProperties.dstAllocation && !blitProperties.dstAllocation->isCompressionEnabled())));
 
     blitCmd.setSourceCompressionFormat(static_cast<XY_BLOCK_COPY_BLT::SOURCE_COMPRESSION_FORMAT>(srcCompressionFormat));
     blitCmd.setDestinationCompressionFormat(static_cast<XY_BLOCK_COPY_BLT::DESTINATION_COMPRESSION_FORMAT>(dstCompressionFormat));
 
-    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
+    if (!dstAllocation || MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
-    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
+    if (!srcAllocation || MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 
@@ -125,7 +126,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
         blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
     }
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }
@@ -146,12 +147,16 @@ void BlitCommandsHelper<Family>::appendBaseAddressOffset(const BlitProperties &b
         offsetInfo.ReqRender = 1;
 
         if (isSource) {
-            blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            if (blitProperties.srcAllocation) {
+                blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            }
             blitCmd.setSourceBaseAddress(ptrOffset(blitProperties.srcGpuAddress, offsetInfo.Render.Offset));
             blitCmd.setSourceSurfaceDepth(1);
             blitCmd.setSourceArrayIndex(1);
         } else {
-            blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            if (blitProperties.dstAllocation) {
+                blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            }
             blitCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstGpuAddress, offsetInfo.Render.Offset));
             blitCmd.setDestinationSurfaceDepth(1);
             blitCmd.setDestinationArrayIndex(1);
@@ -204,7 +209,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         blitCmd.setCopyType(MEM_COPY::COPY_TYPE::COPY_TYPE_LINEAR_COPY);
     }
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }
@@ -213,18 +218,21 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     uint8_t compressionFormat = 0;
 
-    if (dstAllocation->isCompressionEnabled()) {
-        auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-    } else if (srcAllocation->isCompressionEnabled()) {
-        auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    if (dstAllocation) {
+        if (dstAllocation->isCompressionEnabled()) {
+            compressionFormat = 2;
+        }
+    }
+    if (compressionFormat == 0) {
+        if (srcAllocation) {
+            if (srcAllocation->isCompressionEnabled()) {
+                compressionFormat = 2;
+            }
+        }
     }
 
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool()) || !MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
-            compressionFormat = static_cast<uint8_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-        }
+    if (debugManager.flags.BcsCompressionFormatForXe2Plus.get() != -1) {
+        compressionFormat = static_cast<uint8_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get());
     }
 
     blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT30>(compressionFormat));
@@ -271,12 +279,16 @@ template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_B
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd);
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
+
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();
 const Family::CFE_STATE Family::cmdInitCfeState = Family::CFE_STATE::sInit();
 const Family::INTERFACE_DESCRIPTOR_DATA Family::cmdInitInterfaceDescriptorData = Family::INTERFACE_DESCRIPTOR_DATA::sInit();
 const Family::MI_BATCH_BUFFER_START Family::cmdInitBatchBufferStart = Family::MI_BATCH_BUFFER_START::sInit();
 const Family::MI_BATCH_BUFFER_END Family::cmdInitBatchBufferEnd = Family::MI_BATCH_BUFFER_END::sInit();
 const Family::PIPE_CONTROL Family::cmdInitPipeControl = Family::PIPE_CONTROL::sInit();
+const Family::RESOURCE_BARRIER Family::cmdInitResourceBarrier = Family::RESOURCE_BARRIER::sInit();
 const Family::STATE_COMPUTE_MODE Family::cmdInitStateComputeMode = Family::STATE_COMPUTE_MODE::sInit();
 const Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC Family::cmdInitStateBindingTablePoolAlloc =
     Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC::sInit();

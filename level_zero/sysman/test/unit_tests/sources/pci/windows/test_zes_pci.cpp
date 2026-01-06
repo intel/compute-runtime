@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,13 +31,11 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {92, 1}},
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {93, 1}}}};
 
-const std::wstring pmtInterfaceName = L"TEST\0";
-std::vector<wchar_t> deviceInterfacePci(pmtInterfaceName.begin(), pmtInterfaceName.end());
-
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PciKmdSysManager> pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
     void SetUp() override {
 
         SysmanDeviceFixture::SetUp();
@@ -47,8 +45,9 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePci, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         delete pSysmanDeviceImp->pPci;
@@ -83,7 +82,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
 
     setLocalMemorySupportedAndReinit(true);
 
-    zes_pci_properties_t properties;
+    zes_pci_properties_t properties = {};
 
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
 
@@ -115,7 +114,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallinggetPciBdfAndkmdS
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetProLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
     setLocalMemorySupportedAndReinit(true);
 
-    zes_pci_properties_t properties;
+    zes_pci_properties_t properties = {};
 
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
 
@@ -311,7 +310,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarEnab
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPropertiesThenPropertiesAreSetToTrue, IsBMG) {
-    zes_pci_properties_t properties{};
+    zes_pci_properties_t properties = {};
     WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getProperties(&properties));
     EXPECT_TRUE(properties.haveBandwidthCounters);
@@ -321,7 +320,7 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetProperties
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPropertiesThenPropertiesAreSetToFalse, IsNotBMG) {
-    zes_pci_properties_t properties{};
+    zes_pci_properties_t properties = {};
     WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getProperties(&properties));
     EXPECT_FALSE(properties.haveBandwidthCounters);
@@ -437,6 +436,135 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidPmtHandleWhenCallingZesDevicePciGetS
         ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
         count--;
     }
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpThenVerifyApiCallFails) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDevicePciLinkSpeedUpdateExp(pSysmanDevice->toHandle(), downgradeUpgrade, &pendingAction));
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureThenCallFails) {
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    properties.pNext = &extProps;
+    ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureThenCallFails) {
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    properties.pNext = &extProps;
+    ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
+    delete pSysmanDeviceImp->pPci;
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    PciImp *pPciImp = new PciImp(pOsSysman);
+    pSysmanDeviceImp->pPci = pPciImp;
+
+    if (pSysmanDeviceImp->pPci) {
+        pSysmanDeviceImp->pPci->init();
+        pPciImp->pOsPci->isPciDowngradePropertiesAvailable = true;
+    }
+
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    properties.pNext = &extProps;
+    ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
+    delete pSysmanDeviceImp->pPci;
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    PciImp *pPciImp = new PciImp(pOsSysman);
+    pSysmanDeviceImp->pPci = pPciImp;
+
+    if (pSysmanDeviceImp->pPci) {
+        pSysmanDeviceImp->pPci->init();
+        pPciImp->pOsPci->isPciDowngradePropertiesAvailable = true;
+    }
+
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    properties.pNext = &extProps;
+    ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenPciBdfInfoPointerIsNotInitializedWhenPciGetPropertiesIsInvokedThenErrorIsReturned) {
+    pSysmanDevice->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciWddmSysmanImp>(pSysmanDeviceImp);
+    pMockSysman->isPciBdfInfoPointerNull = true;
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
+}
+
+TEST_F(SysmanDevicePciFixture, GivenPciBdfInfoValuesAreInvalidWhenPciGetPropertiesIsInvokedThenErrorIsReturned) {
+    pSysmanDevice->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciWddmSysmanImp>(pSysmanDeviceImp);
+    pMockSysman->isPciBdfInfoObjectInitialized = false;
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
+}
+
+TEST_F(SysmanDevicePciFixture, GivenProperPciBdfInfoObjectWhenPciGetPropertiesIsInvokedThenCorrectBdfValuesAreReturned) {
+    pSysmanDevice->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciWddmSysmanImp>(pSysmanDeviceImp);
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+
+    zes_pci_properties_t properties = {};
+    ze_result_t result = testPciImp->pciStaticProperties(&properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pMockSysman->testPciBus, properties.address.bus);
+    EXPECT_EQ(pMockSysman->testPciDomain, properties.address.domain);
+    EXPECT_EQ(pMockSysman->testPciFunction, properties.address.function);
+    EXPECT_EQ(pMockSysman->testPciDevice, properties.address.device);
+
+    // Restore the original pOsSysman and clean up
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    pMockSysman.reset();
 }
 
 } // namespace ult

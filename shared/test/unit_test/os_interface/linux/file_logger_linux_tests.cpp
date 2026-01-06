@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/utilities/logger_neo_only.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -24,7 +25,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -35,8 +36,9 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
 
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -91,7 +93,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -101,8 +103,9 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
 
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -114,9 +117,10 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
 
     allocation.bufferObjects[0] = &bo;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logAllocation(fileLogger, &allocation, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -140,7 +144,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     EXPECT_TRUE(output.find("Handle: 4") != std::string::npos);
     EXPECT_TRUE(output.find("\n") != std::string::npos);
 
-    logFileCreated = fileExists(fileLogger.getLogFileName());
+    logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 }
 
@@ -151,7 +155,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
 
@@ -160,8 +164,9 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
     logAllocation(fileLogger, &allocation, nullptr);
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -187,7 +192,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);

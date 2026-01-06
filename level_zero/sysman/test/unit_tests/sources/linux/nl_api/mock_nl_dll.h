@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ class MockNlDll : public NEO::OsLibrary {
     static struct nlattr mockNextNlattr;
     static struct genl_ops mockGenlOps;
     static nl_recvmsg_msg_cb_t mockCb;
+    static const std::string mockStr;
 
     constexpr static int mockFamilyId = 0x2020;
     constexpr static char mockFamilyName[] = "TestName";

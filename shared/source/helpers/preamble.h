@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -37,7 +37,8 @@ struct PreambleHelper {
     static void appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd);
     static void *getSpaceForVfeState(LinearStream *pCommandStream,
                                      const HardwareInfo &hwInfo,
-                                     EngineGroupType engineGroupType);
+                                     EngineGroupType engineGroupType,
+                                     uint64_t *cmdBufferGpuAddress);
     static void programVfeState(void *pVfeState,
                                 const RootDeviceEnvironment &rootDeviceEnvironment,
                                 uint32_t scratchSize,

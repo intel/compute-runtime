@@ -14,6 +14,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+namespace NEO {
+class Device;
+} // namespace NEO
+
 namespace L0 {
 namespace ult {
 
@@ -61,7 +65,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
 
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+        MockDeviceImp l0Device(mockNeoDevice);
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 128u;
@@ -70,25 +74,22 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 3>, 4> values = {{
-            {16u, 0u, 64u}, // SIMT Size, HW local-id generation, Max Num of threads
-            {16u, 1u, 64u},
-            {32u, 1u, 32u},
-            {32u, 0u, 64u},
+        std::array<std::array<uint32_t, 2>, 2> values = {{
+            {16u, 64u}, // SIMT Size, Max Num of threads
+            {32u, 32u},
 
         }};
 
-        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
-            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+        MockDeviceImp l0Device(mockNeoDevice);
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 160u;
@@ -97,24 +98,21 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 3>, 4> values = {{
-            {16u, 0u, 48u}, // SIMT Size, HW local-id generation, Max Num of threads
-            {16u, 1u, 48u},
-            {32u, 1u, 32u},
-            {32u, 0u, 48u},
+        std::array<std::array<uint32_t, 2>, 2> values = {{
+            {16u, 48u}, // SIMT Size,  Max Num of threads
+            {32u, 32u},
         }};
 
-        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
-            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+        MockDeviceImp l0Device(mockNeoDevice);
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 192u;
@@ -123,24 +121,21 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 3>, 4> values = {{
-            {16u, 0u, 40u}, // SIMT Size, HW local-id generation, Max Num of threads
-            {16u, 1u, 40u},
-            {32u, 1u, 32u},
-            {32u, 0u, 40u},
+        std::array<std::array<uint32_t, 2>, 2> values = {{
+            {16u, 40u}, // SIMT Size, Max Num of threads
+            {32u, 32u},
         }};
 
-        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
-            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+        MockDeviceImp l0Device(mockNeoDevice);
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 256u;
@@ -149,24 +144,21 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 3>, 4> values = {{
-            {16u, 0u, 32u}, // SIMT Size, HW local-id generation, Max Num of threads
-            {16u, 1u, 32u},
-            {32u, 1u, 32u},
-            {32u, 0u, 32u},
+        std::array<std::array<uint32_t, 2>, 2> values = {{
+            {16u, 32u}, // SIMT Size, Max Num of threads
+            {32u, 32u},
         }};
 
-        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
-            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+        MockDeviceImp l0Device(mockNeoDevice);
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 512u;
@@ -175,19 +167,16 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 3>, 4> values = {{
-            {16u, 0u, 16u}, // SIMT Size, HW local-id generation, Max Num of threads
-            {16u, 1u, 16u},
-            {32u, 1u, 16u},
-            {32u, 0u, 16u},
+        std::array<std::array<uint32_t, 2>, 2> values = {{
+            {16u, 16u}, // SIMT Size, Max Num of threads
+            {32u, 16u},
         }};
 
-        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
-            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
 }

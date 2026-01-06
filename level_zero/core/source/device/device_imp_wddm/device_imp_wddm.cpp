@@ -42,8 +42,8 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+bool DeviceImp::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
+    return false;
 }
 
 } // namespace L0

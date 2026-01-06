@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 

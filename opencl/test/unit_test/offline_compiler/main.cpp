@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ void applyWorkarounds() {
     {
         [[maybe_unused]] auto ret = std::regex_search("str", std::regex(std::string(".")));
     }
-    // intialize rand
+    // initialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 }
 
@@ -89,8 +89,7 @@ int main(int argc, char **argv) {
     bool dumpTestStats = false;
     std::string dumpTestStatsFileName = "";
 
-    std::string devicePrefix("skl");
-    std::string revId("0");
+    std::string devicePrefix(DEFAULT_TEST_PLATFORM_NAME);
     std::string productConfig("");
 
     applyWorkarounds();
@@ -126,9 +125,6 @@ int main(int argc, char **argv) {
             } else if (strcmp("--device", argv[i]) == 0) {
                 ++i;
                 devicePrefix = argv[i];
-            } else if (strcmp("--rev_id", argv[i]) == 0) {
-                ++i;
-                revId = argv[i];
             } else if (!strcmp("--show_test_stats", argv[i])) {
                 showTestStats = true;
             } else if (!strcmp("--dump_test_stats", argv[i])) {
@@ -139,11 +135,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
+    uint16_t revision = 0;
+    for (unsigned int productId = 0; productId < NEO::maxProductEnumValue; ++productId) {
         if (NEO::hardwarePrefix[productId] && (0 == strcmp(devicePrefix.c_str(), NEO::hardwarePrefix[productId]))) {
             if (NEO::hardwareInfoTable[productId]) {
                 renderCoreFamily = NEO::hardwareInfoTable[productId]->platform.eRenderCoreFamily;
                 productFamily = NEO::hardwareInfoTable[productId]->platform.eProductFamily;
+                revision = NEO::hardwareInfoTable[productId]->platform.usRevId;
                 break;
             }
         }
@@ -166,7 +164,7 @@ int main(int argc, char **argv) {
     nTestFiles.append("/");
     nTestFiles.append(devicePrefix);
     nTestFiles.append("/");
-    nTestFiles.append(revId);
+    nTestFiles.append(std::to_string(revision));
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;

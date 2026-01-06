@@ -14,6 +14,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 
 #include "shared/source/gen12lp/dg1/os_agnostic_product_helper_dg1.inl"
 #include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
+#include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 namespace NEO {
 
 template <>
@@ -27,6 +28,11 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 300;
     return 0;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
+    return 0u;
 }
 
 template class ProductHelperHw<gfxProduct>;

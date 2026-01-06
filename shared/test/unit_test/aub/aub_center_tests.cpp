@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "aubstream/aubstream.h"
+#include "aubstream/stepping_values.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;
@@ -68,13 +69,13 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         __REVID stepping;
         uint32_t expectedAubStreamStepping;
     } steppingPairsToTest[] = {
-        {REVISION_A0, AubMemDump::SteppingValues::A},
-        {REVISION_A1, AubMemDump::SteppingValues::A},
-        {REVISION_A3, AubMemDump::SteppingValues::A},
-        {REVISION_B, AubMemDump::SteppingValues::B},
-        {REVISION_C, AubMemDump::SteppingValues::C},
-        {REVISION_D, AubMemDump::SteppingValues::D},
-        {REVISION_K, AubMemDump::SteppingValues::K}};
+        {REVISION_A0, aub_stream::SteppingValues::A},
+        {REVISION_A1, aub_stream::SteppingValues::A},
+        {REVISION_A3, aub_stream::SteppingValues::A},
+        {REVISION_B, aub_stream::SteppingValues::B},
+        {REVISION_C, aub_stream::SteppingValues::C},
+        {REVISION_D, aub_stream::SteppingValues::D},
+        {REVISION_K, aub_stream::SteppingValues::K}};
 
     debugManager.flags.UseAubStream.set(true);
 

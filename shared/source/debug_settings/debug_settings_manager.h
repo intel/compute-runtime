@@ -6,17 +6,25 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 
-#include <chrono>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <sstream>
-#include <string_view>
+#include <string>
+#include <type_traits>
+
+#if defined(_WIN32)
+#include <process.h>
+#pragma warning(disable : 4996)
+#else
+#include <unistd.h>
+#endif
 
 enum class DebugFunctionalityLevel {
     none,   // Debug functionality disabled
@@ -26,15 +34,11 @@ enum class DebugFunctionalityLevel {
 
 #if defined(_DEBUG)
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::full;
-#elif defined(_RELEASE_INTERNAL) || defined(_RELEASE_BUILD_WITH_REGKEYS)
+#elif defined(_RELEASE_INTERNAL) || defined(_RELEASE_BUILD_WITH_REGKEYS) || defined(OCLOC_ALLOW_REGKEYS)
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::regKeys;
 #else
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::none;
 #endif
-
-#define PRINT_DEBUG_STRING(flag, ...) \
-    if (flag)                         \
-        NEO::printDebugString(flag, __VA_ARGS__);
 
 namespace NEO {
 template <DebugFunctionalityLevel debugLevel>
@@ -44,14 +48,6 @@ extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 template <typename StreamT, typename... Args>
 void flushDebugStream(StreamT stream, Args &&...args) {
     IoFunctions::fflushPtr(stream);
-}
-
-template <typename... Args>
-void printDebugString(bool showDebugLogs, Args... args) {
-    if (showDebugLogs) {
-        IoFunctions::fprintf(args...);
-        flushDebugStream(args...);
-    }
 }
 
 void logDebugString(std::string_view debugString);
@@ -68,12 +64,27 @@ enum class DebugVarPrefix : uint8_t {
     none = 1,
     neo = 2,
     neoL0 = 3,
-    neoOcl = 4
+    neoOcl = 4,
+    neoOcloc = 5
 };
+
+using DVarsScopeMask = std::underlying_type_t<DebugVarPrefix>;
+constexpr auto getDebugVarScopeMaskFor(DebugVarPrefix v) {
+    return static_cast<DVarsScopeMask>(1U) << static_cast<DVarsScopeMask>(v);
+}
+
+template <DebugVarPrefix... vs>
+constexpr auto getDebugVarScopeMaskFor() {
+    return (0 | ... | getDebugVarScopeMaskFor(vs));
+}
+
+// compatibility with "old" behavior (prior to introducing scope masks)
+constexpr inline DVarsScopeMask compatibilityMask = getDebugVarScopeMaskFor<DebugVarPrefix::neoL0, DebugVarPrefix::neoOcl>();
 
 template <typename T>
 struct DebugVarBase {
     DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
+    DebugVarBase(const T &defaultValue, DVarsScopeMask scopeMask) : value(defaultValue), defaultValue(defaultValue), scopeMask(scopeMask) {}
     T get() const {
         return value;
     }
@@ -88,17 +99,34 @@ struct DebugVarBase {
             this->set(data);
         }
     }
+
     void setPrefixType(DebugVarPrefix data) {
         prefixType = std::move(data);
     }
     DebugVarPrefix getPrefixType() const {
         return prefixType;
     }
+    DVarsScopeMask getScopeMask() const {
+        return scopeMask;
+    }
+
+    template <typename UserType>
+    UserType getIfNotDefault(UserType userValue) const {
+        return (value != defaultValue) ? static_cast<UserType>(value) : userValue;
+    }
+
+    template <typename UserType>
+    void assignIfNotDefault(UserType &userDataForAssignment) const {
+        if (value != defaultValue) {
+            userDataForAssignment = static_cast<UserType>(value);
+        }
+    }
 
   private:
     T value;
     T defaultValue;
     DebugVarPrefix prefixType = DebugVarPrefix::none;
+    DVarsScopeMask scopeMask = compatibilityMask;
 };
 
 struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
@@ -114,8 +142,29 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
+#define S_NONE getDebugVarScopeMaskFor(DebugVarPrefix::none)
+#define S_NEO getDebugVarScopeMaskFor(DebugVarPrefix::neo)
+#define S_OCL getDebugVarScopeMaskFor(DebugVarPrefix::neoOcl)
+#define S_L0 getDebugVarScopeMaskFor(DebugVarPrefix::neoL0)
+#define S_RT (S_NEO | S_OCL | S_L0 | S_NONE)
+#define S_OCLOC getDebugVarScopeMaskFor(DebugVarPrefix::neoOcloc)
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
+    DebugVarBase<dataType> variableName{defaultValue, scope};
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+#undef S_OCLOC
+#undef S_RT
+#undef S_L0
+#undef S_OCL
+#undef S_NEO
+#undef S_NONE
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 };
 
@@ -164,11 +213,15 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
         auto setCsr = flags.SetCommandStreamReceiver.get();
         auto isTbxMode = (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbx)) ||
                          (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
-        auto isFaultManagerEnabledInEnvVars = flags.EnableTbxPageFaultManager.get();
+        auto isFaultManagerEnabledInEnvVars = true;
+        if (flags.EnableTbxPageFaultManager.get() == 0) {
+            isFaultManagerEnabledInEnvVars = false;
+        }
         return isFaultManagerEnabledInEnvVars && isTbxMode;
     }
 
   protected:
+    DVarsScopeMask scope = 0;
     std::unique_ptr<SettingsReader> readerImpl;
     bool isLoopAtDriverInitEnabled() const {
         auto loopingEnabled = flags.LoopAtDriverInit.get();
@@ -187,12 +240,93 @@ static_assert(NEO::NonCopyableAndNonMovable<DebugSettingsManager<DebugFunctional
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> debugManager;
 
+struct DebugMessagesBitmask {
+    constexpr static int32_t withPid = 1 << 0;
+    constexpr static int32_t withTimestamp = 1 << 1;
+};
+
 class DurationLog {
     DurationLog() = delete;
 
   public:
     static std::string getTimeString();
+    static std::string getTimestamp();
 };
+
+template <bool useFileBackend = true>
+struct FileLoggerProxy {
+    void logString(std::string_view data);
+};
+
+template <bool useRealFile, typename... Args>
+void logStringToFile(FileLoggerProxy<useRealFile> &loggerProvider, const std::ostringstream &prefix, Args... args) {
+    constexpr int buffSz = 4096;
+    char buff[buffSz];
+
+    int bytes = 0;
+    if (not prefix.str().empty()) {
+        bytes += IoFunctions::snprintf(buff, buffSz, "%s", prefix.str().c_str());
+    }
+    bytes += IoFunctions::snprintf(buff, buffSz - bytes, args...);
+
+    const int bytesToCopy = std::min(buffSz, bytes + 1);
+    buff[bytesToCopy - 1] = '\0';
+    loggerProvider.logString({buff, static_cast<size_t>(bytesToCopy)});
+}
+
+template <bool useRealFile, typename... Args>
+void printStringForMacroUseOnly(FileLoggerProxy<useRealFile> &loggerProvider, FILE *stream, Args... args) {
+
+    enum class RedirectionMode : int32_t {
+        inactive = 0,
+        toStdout = 1,
+        toStderr = 2,
+        toFile = 3,
+        maxSentinel = 4
+    };
+
+    std::ostringstream prefix;
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
+        prefix << "[PID: " << SysCalls::getCurrentProcessId() << "] ";
+    }
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
+        prefix << NEO::DurationLog::getTimestamp();
+    }
+
+    const auto redirectionMode = [&]() {
+        const auto flag = NEO::debugManager.flags.ForcePrintsRedirection.get();
+        if (flag > -1 && flag < toUnderlying(RedirectionMode::maxSentinel)) {
+            return toEnum<RedirectionMode>(flag);
+        }
+        return RedirectionMode::inactive;
+    }();
+
+    switch (redirectionMode) {
+    case RedirectionMode::toFile:
+        NEO::logStringToFile(loggerProvider, prefix, args...);
+        return;
+    case RedirectionMode::toStdout:
+        stream = stdout;
+        break;
+    case RedirectionMode::toStderr:
+        stream = stderr;
+        break;
+    default:
+        break;
+    }
+
+    if (not prefix.str().empty()) {
+        IoFunctions::fprintf(stream, "%s", prefix.str().c_str());
+    }
+    IoFunctions::fprintf(stream, args...);
+    flushDebugStream(stream, args...);
+}
+
+#define PRINT_STRING(flag, stream, ...)                                   \
+    if (flag) {                                                           \
+        auto fileLogger = NEO::FileLoggerProxy{};                         \
+        NEO::printStringForMacroUseOnly(fileLogger, stream, __VA_ARGS__); \
+    }
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::debugManager.logLazyEvaluateArgs([&] {                    \
@@ -206,7 +340,8 @@ class DurationLog {
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
         PRINT_DEBUGGER_LOG_TO_FILE(__VA_ARGS__)                                                                       \
     } else {                                                                                                          \
-        NEO::printDebugString(true, OUT, __VA_ARGS__);                                                                \
+        auto fileLogger = NEO::FileLoggerProxy{};                                                                     \
+        NEO::printStringForMacroUseOnly(fileLogger, OUT, __VA_ARGS__);                                                \
     }
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \

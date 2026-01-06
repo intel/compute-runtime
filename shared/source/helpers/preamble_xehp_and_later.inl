@@ -13,6 +13,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -32,10 +33,15 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
                                                      const HardwareInfo &hwInfo,
-                                                     EngineGroupType engineGroupType) {
+                                                     EngineGroupType engineGroupType,
+                                                     uint64_t *cmdBufferGpuAddress) {
     if constexpr (GfxFamily::isHeaplessRequired() == false) {
         using CFE_STATE = typename GfxFamily::CFE_STATE;
-        return pCommandStream->getSpace(sizeof(CFE_STATE));
+        void *cmdPtr = pCommandStream->getSpace(sizeof(CFE_STATE));
+        if (cmdBufferGpuAddress) {
+            *cmdBufferGpuAddress = (pCommandStream->getCurrentGpuAddressPosition() - sizeof(CFE_STATE));
+        }
+        return cmdPtr;
     } else {
         return nullptr;
     }
@@ -59,8 +65,9 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
         cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
 
         cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcs() > 1 && rootDeviceEnvironment.getReleaseHelper()->isSingleDispatchRequiredForMultiCCS());
 
-        PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
+        PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, singleSliceDispatchCcsMode);
 
         appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
 

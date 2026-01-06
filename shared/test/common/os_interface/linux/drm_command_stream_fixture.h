@@ -39,7 +39,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     template <typename GfxFamily>
     void setUpT() {
         // make sure this is disabled, we don't want to test this now
-        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
         debugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
@@ -83,7 +83,9 @@ class DrmCommandStreamTest : public ::testing::Test {
     template <typename GfxFamily>
     void tearDownT() {
         memoryManager->waitForDeletions();
-        memoryManager->peekGemCloseWorker()->close(true);
+        if (memoryManager->peekGemCloseWorker()) {
+            memoryManager->peekGemCloseWorker()->close(true);
+        }
         delete csr;
         if (mock->ioctlTearDownExpects) {
             EXPECT_EQ(mock->ioctlCount.gemWait, mock->ioctlTearDownExpected.gemWait);
@@ -127,7 +129,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
         // make sure this is disabled, we don't want to test this now
         debugManager.flags.EnableForcePin.set(false);
-        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
         mock = DrmType::create(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]).release();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
@@ -259,17 +261,18 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     template <typename GfxFamily>
     void setUpT() {
         debugManager.flags.EnableDirectSubmission.set(1u);
-        debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
         debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
+        device->finalizeRayTracing();
         csr->initDirectSubmission();
     }
 
     template <typename GfxFamily>
     void tearDownT() {
+        csr->stopDirectSubmission(false, false);
         this->dbgState.reset();
         DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
     }

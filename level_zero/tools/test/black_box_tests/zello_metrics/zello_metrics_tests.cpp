@@ -762,7 +762,7 @@ bool metricGetTimestampTest() {
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
 
         auto metricGroup = zmu::findMetricGroup(metricGroupName.c_str(),
-                                                static_cast<zet_metric_group_sampling_type_flag_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED),
                                                 executionCtxt->getDeviceHandle(0));
 
         ze_result_t status;
@@ -832,12 +832,7 @@ bool runtimeEnableTest() {
         EXPECT(metricGroupCountBeforeEnable == 0u);
         LOG(zmu::LogLevel::INFO) << "MetricGroup Count Before Runtime Enabling: " << metricGroupCountBeforeEnable << "\n";
 
-        typedef ze_result_t (*pfzetIntelDeviceEnableMetricsExp)(zet_device_handle_t hDevice);
-        pfzetIntelDeviceEnableMetricsExp zetIntelDeviceEnableMetricsExp = nullptr;
-        ze_result_t result = zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceEnableMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceEnableMetricsExp));
-        VALIDATECALL(result);
-
-        auto status = zetIntelDeviceEnableMetricsExp(executionCtxt->getDeviceHandle(0));
+        auto status = zetDeviceEnableMetricsExp(executionCtxt->getDeviceHandle(0));
         VALIDATECALL(status);
 
         uint32_t metricGroupCountAfterEnable = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,13 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -21,11 +24,13 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -49,6 +54,7 @@ namespace NEO {
 class OsLibrary;
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
+const char *apiName = "OCL";
 } // namespace NEO
 
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
@@ -191,7 +197,8 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto drm = DrmWrap::createDrm(*(mockExecutionEnvironment.rootDeviceEnvironments[0].get()));
 
@@ -201,7 +208,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     uint32_t contextId = 1u;
     drm->destroyDrmContext(contextId);
 
-    std::string output = ::testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0\n");
 }
 
@@ -215,7 +222,8 @@ struct DrmFailedIoctlTests : public ::testing::Test {
 };
 
 TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpectedIoctlIsPrinted) {
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto drm = DrmWrap::createDrm(*(mockExecutionEnvironment.rootDeviceEnvironments[0].get()));
 
@@ -226,7 +234,7 @@ TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpecte
     uint32_t vmId = 100u;
     drm->queryVmId(contextId, vmId);
 
-    std::string output = ::testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM returns -1, errno 9(Bad file descriptor)\n");
 }
 
@@ -315,11 +323,12 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     EXPECT_EQ(1u, destroyData->second.count);
     EXPECT_NE(0, destroyData->second.totalTime);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     drm.reset();
 
-    std::string output = ::testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STRNE("", output.c_str());
 
     std::string_view requestString("Request");
@@ -507,25 +516,6 @@ TEST_F(DrmTests, GivenNoDeviceWhenCreatingDrmThenNullIsReturned) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-
-    VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
-    VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
-
-    deviceId = -1;
-    revisionId = -1;
-
-    ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_EQ(drm, nullptr);
-    std::string errStr = ::testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffff, revisionId: ffff")));
-    ::testing::internal::GetCapturedStdout();
-}
-
 TEST_F(DrmTests, GivenKnownDeviceWhenCreatingDrmThenHwInfoIsProperlySet) {
     VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
 
@@ -633,6 +623,74 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
     EXPECT_EQ((maxNBitValue(47) + 1) / 4, NEO::getSizeToReserve());
 }
 
+class UnifiedMemoryPoolingManagerTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        gfxCoreHelperWithExtendedPoolSize = MockGfxCoreHelperUsmExtendedPool<true>();
+        gfxCoreHelperWithoutExtendedPoolSize = MockGfxCoreHelperUsmExtendedPool<false>();
+    }
+
+    template <bool isExtendedPoolSizeEnabled>
+    class MockGfxCoreHelperUsmExtendedPool : public GfxCoreHelperHw<DEFAULT_TEST_PLATFORM::GfxFamily> {
+      public:
+        bool isExtendedUsmPoolSizeEnabled() const override {
+            return isExtendedPoolSizeEnabled;
+        }
+    };
+
+  public:
+    MockGfxCoreHelperUsmExtendedPool<true> gfxCoreHelperWithExtendedPoolSize;
+    MockGfxCoreHelperUsmExtendedPool<false> gfxCoreHelperWithoutExtendedPoolSize;
+};
+
+TEST_F(UnifiedMemoryPoolingManagerTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
+    ASSERT_EQ(gfxCoreHelperWithExtendedPoolSize.isExtendedUsmPoolSizeEnabled(), true);
+    ASSERT_EQ(gfxCoreHelperWithoutExtendedPoolSize.isExtendedUsmPoolSizeEnabled(), false);
+
+    EXPECT_EQ(32 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelperWithExtendedPoolSize));
+    EXPECT_EQ(2 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelperWithoutExtendedPoolSize));
+}
+
+TEST_F(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
+    auto poolInfo0To4Kb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[0];
+    auto poolInfo4KbTo64Kb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[1];
+    auto poolInfo64KbTo1Mb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[2];
+
+    ASSERT_EQ(0u, poolInfo0To4Kb.minServicedSize);
+    ASSERT_EQ(4 * MemoryConstants::kiloByte, poolInfo0To4Kb.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4Kb.poolSize);
+
+    ASSERT_EQ(4 * MemoryConstants::kiloByte + 1, poolInfo4KbTo64Kb.minServicedSize);
+    ASSERT_EQ(64 * MemoryConstants::kiloByte, poolInfo4KbTo64Kb.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo4KbTo64Kb.poolSize);
+
+    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo1Mb.minServicedSize);
+    ASSERT_EQ(1 * MemoryConstants::megaByte, poolInfo64KbTo1Mb.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo1Mb.poolSize);
+
+    auto poolInfo0To4KbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[0];
+    auto poolInfo4KbTo64KbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[1];
+    auto poolInfo64KbTo2MbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[2];
+
+    ASSERT_EQ(0u, poolInfo0To4KbExtended.minServicedSize);
+    ASSERT_EQ(4 * MemoryConstants::kiloByte, poolInfo0To4KbExtended.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4KbExtended.poolSize);
+
+    ASSERT_EQ(4 * MemoryConstants::kiloByte + 1, poolInfo4KbTo64KbExtended.minServicedSize);
+    ASSERT_EQ(64 * MemoryConstants::kiloByte, poolInfo4KbTo64KbExtended.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo4KbTo64KbExtended.poolSize);
+
+    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2MbExtended.minServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.maxServicedSize);
+    ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.poolSize);
+}
+
+TEST(HeapTest, whenGetDefaultHeapSizeThenReturnCorrectValue) {
+    EXPECT_EQ(4 * MemoryConstants::megaByte, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject));
+    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState));
+    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::dynamicState));
+}
+
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePatIndex.set(0);
@@ -671,10 +729,6 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
-TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
-    EXPECT_TRUE(OSInterface::osEnableLocalMemory);
-}
-
 TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtualMemoryAddressSpaces) {
     DebugManagerStateRestore restore;
     debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -703,7 +757,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
-    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled(*drm->getRootDeviceEnvironment().getHardwareInfo());
 
     ASSERT_NE(drm, nullptr);
     if (drm->isVmBindAvailable()) {
@@ -734,8 +788,9 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
 TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenPerContextVMIsFalseVMsAreCreatedAndDebugMessageIsPrinted) {
     DebugManagerStateRestore restore;
 
-    ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
 
     debugManager.flags.CreateMultipleSubDevices.set(2);
     debugManager.flags.UseVmBind.set(0);
@@ -747,8 +802,8 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     EXPECT_NE(drm, nullptr);
 
     if (drm->isPerContextVMRequired()) {
-        ::testing::internal::GetCapturedStdout();
-        ::testing::internal::GetCapturedStderr();
+        capture.getCapturedStdout();
+        capture.getCapturedStderr();
         GTEST_SKIP();
     }
 
@@ -759,11 +814,11 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     EXPECT_NE(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
 
     debugManager.flags.PrintDebugMessages.set(false);
-    ::testing::internal::GetCapturedStdout();
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    capture.getCapturedStdout();
+    std::string errStr = capture.getCapturedStderr();
 
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled(*drm->getRootDeviceEnvironment().getHardwareInfo());
     if (heapless) {
         EXPECT_FALSE(hasSubstr(errStr, std::string("WARNING: Debugging not supported\n")));
 
@@ -794,19 +849,20 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
 
     failOnVirtualMemoryCreate = -1;
 
-    ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
     EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(0));
     EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     if (!drm->isPerContextVMRequired()) {
         EXPECT_TRUE(hasSubstr(errStr, std::string("INFO: Device doesn't support GEM Virtual Memory")));
     }
-    ::testing::internal::GetCapturedStdout();
+    capture.getCapturedStdout();
 }
 
 TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
@@ -862,10 +918,12 @@ int main(int argc, char **argv) {
     initializeTestedDevice();
 
     Os::dxcoreDllName = "";
+    GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
+    }
 
     auto retVal = RUN_ALL_TESTS();
 
@@ -886,10 +944,6 @@ TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
 
 TEST(DirectSubmissionControllerTest, whenCheckDirectSubmissionControllerSupportThenReturnsTrue) {
     EXPECT_TRUE(DirectSubmissionController::isSupported());
-}
-
-TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsTrue) {
-    EXPECT_TRUE(CommandQueue::isAssignEngineRoundRobinEnabled());
 }
 
 TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
@@ -989,16 +1043,17 @@ TEST_F(DrmTests, whenDrmIsCreatedAndQueryEngineInfoFailsThenWarningIsReported) {
     VariableBackup<decltype(DrmQueryConfig::failOnQueryEngineInfo)> backupFailOnFdSetParamEngineMap(&DrmQueryConfig::failOnQueryEngineInfo);
     DrmQueryConfig::failOnQueryEngineInfo = true;
 
-    ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
 
     MockExecutionEnvironment mockExecutionEnvironment;
     auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_NE(drm, nullptr);
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query engine info\n")));
-    ::testing::internal::GetCapturedStdout();
+    capture.getCapturedStdout();
 }
 
 TEST_F(DrmTests, whenDrmIsCreatedAndQueryMemoryInfoFailsThenWarningIsReported) {
@@ -1009,14 +1064,33 @@ TEST_F(DrmTests, whenDrmIsCreatedAndQueryMemoryInfoFailsThenWarningIsReported) {
     VariableBackup<decltype(DrmQueryConfig::failOnQueryMemoryInfo)> backupFailOnFdSetParamMemRegionMap(&DrmQueryConfig::failOnQueryMemoryInfo);
     DrmQueryConfig::failOnQueryMemoryInfo = true;
 
-    ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
 
     MockExecutionEnvironment mockExecutionEnvironment;
     auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_NE(drm, nullptr);
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query memory info\n")));
-    ::testing::internal::GetCapturedStdout();
+    capture.getCapturedStdout();
+}
+
+TEST(SmallBuffersParamsTest, WhenGettingDefaultParamsThenReturnCorrectValues) {
+    auto defaultParams = NEO::SmallBuffersParams::getDefaultParams();
+
+    EXPECT_EQ(2 * MemoryConstants::megaByte, defaultParams.aggregatedSmallBuffersPoolSize);
+    EXPECT_EQ(1 * MemoryConstants::megaByte, defaultParams.smallBufferThreshold);
+    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.chunkAlignment);
+    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.startingOffset);
+}
+
+TEST(SmallBuffersParamsTest, WhenGettingLargePagesParamsThenReturnCorrectValues) {
+    auto largePagesParams = NEO::SmallBuffersParams::getLargePagesParams();
+
+    EXPECT_EQ(16 * MemoryConstants::megaByte, largePagesParams.aggregatedSmallBuffersPoolSize);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, largePagesParams.smallBufferThreshold);
+    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.chunkAlignment);
+    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.startingOffset);
 }

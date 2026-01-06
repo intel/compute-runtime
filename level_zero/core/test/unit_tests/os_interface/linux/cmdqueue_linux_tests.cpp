@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,12 +68,12 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
 
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel.toHandle(), dispatchFunctionArguments, nullptr, 0, nullptr, launchParams, false);
+    commandList->appendLaunchKernel(kernel.toHandle(), dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     commandList->close();
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 
-    returnValue = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
     commandQueue->destroy();
     neoDevice->getMemoryManager()->freeGraphicsMemory(kernel.immutableData.isaGraphicsAllocation.release());

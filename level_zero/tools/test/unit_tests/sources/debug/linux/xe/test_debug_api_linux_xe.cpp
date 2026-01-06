@@ -9,16 +9,20 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/os_interface/linux/xe/eudebug/mock_eudebug_interface.h"
@@ -38,7 +42,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <fcntl.h>
 #include <fstream>
@@ -64,6 +68,7 @@ namespace L0 {
 namespace ult {
 
 extern CreateDebugSessionHelperFunc createDebugSessionFuncXe;
+extern OpenConnectionUpstreamHelperFunc openConnectionUpstreamFuncXe;
 
 TEST(IoctlHandlerXe, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCalledAgain) {
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
@@ -152,9 +157,15 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenCallingPollThenDefaultHandlerRe
     EXPECT_EQ(0, session->ioctlHandler->poll(nullptr, 0, 0));
 }
 
+struct dirent mockFDEntries[] = {
+    {0, 0, 0, 0, "1"},
+    {0, 0, 0, 0, "2"},
+};
+
 TEST_F(DebugApiLinuxTestXe, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
+
     zet_debug_session_handle_t debugSession = nullptr;
 
     auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
@@ -254,6 +265,273 @@ TEST_F(DebugApiLinuxTestXe, GivenEventWithInvalidFlagsWhenReadingEventThenUnknow
     EXPECT_EQ(eventsCount, static_cast<size_t>(handler->ioctlCalled));
 }
 
+TEST_F(DebugApiLinuxTestXe, WhenCallingOpenConnectionUpstreamWithValidDataThenSuccessIsReturned) {
+
+    L0::ult::openConnectionUpstreamFuncXe = nullptr;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int direntIndex = 0;
+            if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
+                direntIndex = 0;
+                return nullptr;
+            }
+            return &mockFDEntries[direntIndex++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadlink(
+        &NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            if (strstr(path, "/fd/")) {
+                // simulate finding our fd
+                strncpy(buf, "/dev/dri/renderD128", bufsize);
+                return static_cast<int>(strlen("/dev/dri/renderD128"));
+            } else {
+                errno = EINVAL;
+            }
+            return -1;
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpen(
+        &NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+            return reinterpret_cast<DIR *>(0x12345);
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPoll)> mockPoll(&NEO::SysCalls::sysCallsPoll, [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        if (nfds > 0) {
+            fds[0].revents = POLLIN;
+            return 1;
+        }
+        return 0;
+    });
+
+    mockDrm->setDeviceNodePath("/dev/dri/renderD128");
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    NEO::EuDebugConnect open = {};
+    NEO::MockEuDebugInterface euDebugInterface{};
+    int debugFd = -1;
+
+    mockDrm->debuggerOpenRetval = 8;
+    auto result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(8, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // expect opendir to be /proc/<pid>/fd
+    static std::string openDirPath = "";
+    mockOpen = [](const char *name) -> DIR * {  openDirPath = name; return reinterpret_cast<DIR *>(0x12345); };
+    config.pid = 1234;
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(std::string("/proc/1234/fd"), openDirPath);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(-1, debugFd);
+
+    // simulate num possible fds (symlinks to gpu device) to be 3
+    static int numPossibleFds = 0;
+    static struct dirent mockFDEntriesLarge[] = {
+        {0, 0, 0, 0, "."},
+        {0, 0, 0, 0, ".."},
+        {0, 0, 0, 0, "1"},
+        {0, 0, 0, 0, "2"},
+        {0, 0, 0, 0, "3"},
+        {0, 0, 0, 0, "4"},
+        {0, 0, 0, 0, "5"},
+    };
+    mockReaddir = [](DIR * dir) -> struct dirent * {
+        static int direntIndex = 0;
+        if (direntIndex >= static_cast<int>(sizeof(mockFDEntriesLarge) / sizeof(dirent))) {
+            direntIndex = 0;
+            return nullptr;
+        }
+        return &mockFDEntriesLarge[direntIndex++];
+    };
+    static int numValidTargets = 0;
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        if (strstr(path, "/fd/") && (numValidTargets < 3)) {
+            numValidTargets++;
+            // simulate finding our fd
+            strncpy(buf, "/dev/dri/renderD128", bufsize);
+            return static_cast<int>(strlen("/dev/dri/renderD128"));
+        } else {
+            errno = EINVAL;
+        }
+        return -1;
+    };
+
+    // simulate debuggerOpen ioctl succeeding on only 2 fds
+    static int *tempRet;
+    tempRet = &mockDrm->debuggerOpenRetval; // lambda cannot capture member variables directly to be used in VariableBackup
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)>
+    mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t pid, unsigned int flags) -> int {
+        numPossibleFds++;
+        if (numPossibleFds > 2) {
+            *tempRet = -1;
+        }
+        return numPossibleFds;
+    });
+
+    static size_t numFdsToPoll = 0;
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        numFdsToPoll = nfds;
+        for (unsigned long int i = 0; i < nfds; i++) {
+            fds[i].revents = POLLIN;
+        }
+        return static_cast<int>(nfds);
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(3, numPossibleFds);
+    EXPECT_EQ(2u, numFdsToPoll);
+    EXPECT_NE(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // cleanup
+    mockDrm->debuggerOpenRetval = 10;
+    numFdsToPoll = 0;
+    numPossibleFds = 0;
+    numValidTargets = 0;
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerConnectionUpstreamIsErrorThenReturnsInvalidFd) {
+
+    L0::ult::openConnectionUpstreamFuncXe = nullptr;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int direntIndex = 0;
+            if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
+                direntIndex = 0;
+                return nullptr;
+            }
+            return &mockFDEntries[direntIndex++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadlink(
+        &NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            if (strstr(path, "/fd/")) {
+                // simulate finding our fd
+                strncpy(buf, "/dev/dri/renderD128", bufsize);
+                return static_cast<int>(strlen("/dev/dri/renderD128"));
+            } else {
+                errno = EINVAL;
+            }
+            return -1;
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPoll)> mockPoll(&NEO::SysCalls::sysCallsPoll, [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        if (nfds > 0) {
+            fds[0].revents = POLLIN;
+            return 1;
+        }
+        return 0;
+    });
+
+    mockDrm->setDeviceNodePath("/dev/dri/renderD128");
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    NEO::EuDebugConnect open = {};
+    NEO::MockEuDebugInterface euDebugInterface{};
+
+    // unavailable fd directory
+    int debugFd = -1;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpen(
+        &NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+            return nullptr;
+        });
+
+    auto result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    mockOpen = [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0x12345);
+    };
+
+    // card is different / no fds found
+    mockDrm->setDeviceNodePath("/dev/dri/renderD129");
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    // readlink has error
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        errno = EBUSY;
+        return -1;
+    };
+    EXPECT_THROW(L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd), std::exception);
+
+    // device node path is a symlink
+    mockDrm->setDeviceNodePath("/dev/dri/by-path/pci-0000:03:00.0-render");
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        if (strstr(path, "/fd/") || strstr(path, "/dev/dri/by-path/pci-0000:03:00.0-render")) {
+            strncpy(buf, "/dev/dri/renderD128", bufsize);
+            return static_cast<int>(strlen("/dev/dri/renderD128"));
+        } else {
+            errno = EINVAL;
+        }
+        return -1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_NE(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // poll fails
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = EINVAL;
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        return -1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // poll returns no fd ready
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        for (unsigned long int i = 0; i < nfds; i++) {
+            fds[i].revents = 0;
+        }
+        return 1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    // pidfd_open fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t pid, unsigned int flags) -> int {
+        return -1;
+    });
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    mockPidfdOpen = [](pid_t pid, unsigned int flags) -> int {
+        return 1;
+    };
+
+    // pidfd_getfd fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGetfd(&NEO::SysCalls::sysCallsPidfdGetfd, [](int pidfd, int targetfd, unsigned int flags) -> int {
+        return -1;
+    });
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // permissions failure
+    mockDrm->errnoRetVal = EPERM;
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
+
+    // oom error
+    mockDrm->errnoRetVal = ENOMEM;
+    mockPidfdOpen = [](pid_t pid, unsigned int flags) -> int {
+        return -1;
+    };
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+}
+
 TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -286,6 +564,62 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
+
+    // Mock SipExternalLib that fails to create register descriptor map
+    class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0; // Success for getSipKernelBinary
+        }
+        bool createRegisterDescriptorMap() override {
+            return false; // Fail to create register descriptor map
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            return nullptr;
+        }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override {
+            return 0; // Return a test command register type
+        }
+    };
+
+    // Set up a mock SIP external lib on the NEO device
+    auto mockSipLib = std::make_unique<MockSipExternalLibFailingCreateMap>();
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+
+    // Store original SIP lib interface
+    auto originalSipLib = rootDeviceEnvironment.sipExternalLib.release();
+    rootDeviceEnvironment.sipExternalLib.reset(mockSipLib.release());
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    mockDrm->debuggerOpenRetval = 10;
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = 0;
+
+    // Mock the createDebugSession helper to successfully create and initialize a session
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFuncXe, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinuxXe(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    // Attempt to create debug session - should fail due to createRegisterDescriptorMap returning false
+    auto session = DebugSession::create(config, device, result, true);
+
+    // Verify that session creation failed and returned nullptr due to createRegisterDescriptorMap failure
+    EXPECT_EQ(nullptr, session);
+
+    // Restore original SIP lib interface
+    rootDeviceEnvironment.sipExternalLib.reset(originalSipLib);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -304,6 +638,23 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsRe
 
     result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenInterfaceIsUpstreamThenDefaultClientHandleConnectionCreated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    session->clientHandleToConnection.clear();
+
+    session->initialize();
+    EXPECT_EQ(1u, session->clientHandleToConnection.size());
+    EXPECT_NE(session->clientHandleToConnection.end(), session->clientHandleToConnection.find(EuDebugInterfaceUpstream::defaultClientHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializationWhenNoValidEventsAreReadThenResultNotReadyIsReturned) {
@@ -379,6 +730,7 @@ TEST_F(DebugApiLinuxTestXe, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyn
     constexpr int dummyReadEventCount = 1;
 
     EXPECT_EQ(dummyReadEventCount, handler->ioctlCalled);
+    EXPECT_EQ(0u, handler->debugEventInput.reserved);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(NEO::EuDebugEvent::type)>(static_cast<uint16_t>(NEO::EuDebugParam::eventTypeRead)), handler->debugEventInput.type);
 }
@@ -441,8 +793,9 @@ TEST_F(DebugApiLinuxTestXe, GivenEventInInternalEventQueueWhenAsyncThreadFunctio
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
 
@@ -471,8 +824,9 @@ TEST_F(DebugApiLinuxTestXe, GivenNoEventInInternalEventQueueWhenAsyncThreadFunct
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
 
@@ -666,7 +1020,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventCreateFlagWhenHan
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -702,7 +1056,9 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
     uint64_t execQueueData[sizeof(NEO::EuDebugEventExecQueue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
-    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(NEO::EuDebugEventExecQueue)));
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
+    auto &lrcHandle = execQueue->lrcHandle;
+
     typeOfLrcHandle lrcHandleTemp[3];
     const uint64_t lrcHandle0 = 2;
     const uint64_t lrcHandle1 = 3;
@@ -712,7 +1068,6 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
     // ExecQueue create event handle
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -769,7 +1124,7 @@ TEST_F(DebugApiLinuxTestXe, GivenExecQueueWhenGetVmHandleFromClientAndlrcHandleT
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -838,7 +1193,7 @@ TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessEx
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -1882,6 +2237,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     EXPECT_EQ(session->apiEvents.size(), 0u);
 
     // now unbind final segment
+    EXPECT_EQ(1u, connection->isaMap[0].count(seg1Va));
     vmBind.base.seqno = seqno++;
     vmBind.vmHandle = 0x1234;
     vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
@@ -1900,6 +2256,8 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
 
     event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+
+    EXPECT_EQ(0u, connection->isaMap[0].count(seg1Va));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataEventAndUfenceNotProvidedForProgramModuleWhenHandlingEventThenEventIsNotAckedButHandled) {
@@ -2089,6 +2447,73 @@ TEST_F(DebugApiLinuxTestXe, GivenThreadControlStoppedCalledWhenExecQueueAndLRCIs
     EXPECT_EQ(1, handler->ioctlCalled);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenIoctlSucceedsWhenThreadControlStoppedCalledThenExecQueueAndLRCAreCorrectlySet) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    const auto memoryHandle = 1u;
+
+    auto thread = EuThread::ThreadId{0, 0, 0, 2, 2};
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+
+    sessionMock->allThreads[thread.packed]->verifyStopped(1);
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
+    sessionMock->stoppedThreads[thread.packed] = 1; // previously stopped
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    uint64_t execQueueHandle = 101;
+    uint64_t lrcHandle = 10001;
+
+    uint64_t ioctlExecQueueHandle = 0;
+    uint64_t ioctlLRC = 0;
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle].reset(new MockDebugSessionLinuxXe::ClientConnectionXe);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[102].lrcHandles.push_back(11000);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[102].lrcHandles.push_back(11001);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[execQueueHandle].lrcHandles.push_back(lrcHandle);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[execQueueHandle].lrcHandles.push_back(10002);
+
+    // verify that the handles aren't updated on failed ioctl
+    handler->ioctlRetVal = -1;
+    auto result = sessionMock->threadControl({}, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
+
+    sessionMock->allThreads[thread]->getContextHandle(ioctlExecQueueHandle);
+    sessionMock->allThreads[thread]->getLrcHandle(ioctlLRC);
+    EXPECT_NE(ioctlExecQueueHandle, execQueueHandle);
+    EXPECT_NE(ioctlLRC, lrcHandle);
+    EXPECT_NE(0, result);
+
+    // verify that the handles are updated on successful ioctl
+    handler->ioctlRetVal = 0;
+    result = sessionMock->threadControl({}, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
+
+    sessionMock->allThreads[thread]->getContextHandle(ioctlExecQueueHandle);
+    sessionMock->allThreads[thread]->getLrcHandle(ioctlLRC);
+    EXPECT_EQ(ioctlExecQueueHandle, execQueueHandle);
+    EXPECT_EQ(ioctlLRC, lrcHandle);
+    EXPECT_EQ(0, result);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlThenThreadControlCallFails) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -2229,7 +2654,7 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsC
     EXPECT_EQ(nullptr, bitmaskOut.get());
 }
 
-HWTEST2_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated, MatchAny) {
+HWTEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
     MockL0GfxCoreHelperSupportsThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
     std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
@@ -2535,6 +2960,53 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenAttentionEventReceivedThe
     EXPECT_TRUE(sessionMock->triggerEvents);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenAttentionEventReceivedThenStoppedThreadsAreReadUntilAttentionSteadyState) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    uint64_t execQueueHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
+
+    uint8_t data[sizeof(NEO::EuDebugEventEuAttention) + 128];
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+    sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    sessionMock->interruptSent = true;
+    sessionMock->euControlInterruptSeqno = 1;
+
+    NEO::EuDebugEventEuAttention attention = {};
+    attention.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeEuAttention);
+    attention.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+    attention.base.len = sizeof(NEO::EuDebugEventEuAttention);
+    attention.base.seqno = 2;
+    attention.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    attention.lrcHandle = lrcHandle;
+    attention.flags = 0;
+    attention.execQueueHandle = execQueueHandle;
+    attention.bitmaskSize = 0;
+
+    memcpy(data, &attention, sizeof(NEO::EuDebugEventEuAttention));
+
+    sessionMock->expectedAttentionEvents = 1;
+    attention.base.seqno = 10;
+    memcpy(data, &attention, sizeof(NEO::EuDebugEventEuAttention));
+
+    sessionMock->reachSteadyStateCount = 8u;
+    sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
+
+    EXPECT_TRUE(sessionMock->triggerEvents);
+    EXPECT_EQ(8u, sessionMock->threadControlCallCount);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenNoElfDataImplementationThenGetElfDataReturnsNullptr) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -2589,8 +3061,9 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter < 2)
+    while (session->getInternalEventCounter < 2) {
         ;
+    }
 
     session->closeAsyncThread();
 
@@ -2820,12 +3293,12 @@ TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledTh
     auto mockDrm = new DrmMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     struct DebugSession : public DebugSessionLinuxXe {
         using DebugSessionLinuxXe::createTileSession;
         using DebugSessionLinuxXe::DebugSessionLinuxXe;
     };
-    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr, nullptr);
     ASSERT_NE(nullptr, session);
 
     std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
@@ -2911,11 +3384,12 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     engineClassInstance[0].engineInstance = 1;
     engineClassInstance[0].gtId = 0;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     session->handleEvent(&execQueuePlacements->base);
     alignedFree(memory);
 
-    auto infoMessage = ::testing::internal::GetCapturedStderr();
+    auto infoMessage = capture.getCapturedStderr();
     EXPECT_EQ(1u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("tileIndex = 1 already present. Attempt to overwrite with tileIndex = 0")));
 }
@@ -3168,6 +3642,105 @@ TEST_F(DebugApiLinuxTestXe, GivenPageFaultEventThenPageFaultHandledCalled) {
     memcpy(data, &pf, sizeof(NEO::EuDebugEventPageFault));
     sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
     EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
+}
+
+TEST_F(DebugApiLinuxTestXe, givenHandlePageFaultEventCalledThenLrcAndExecQueueUpdatedForAllThreads) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    uint64_t execQueueHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
+
+    uint8_t data[sizeof(NEO::EuDebugEventPageFault) + (256 * 3)];
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+    sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    sessionMock->interruptSent = true;
+    sessionMock->euControlInterruptSeqno = 1;
+
+    std::vector<EuThread::ThreadId> threads;
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    std::unique_ptr<uint8_t[]> bitmaskBefore, bitmaskAfter, bitmaskResolved;
+    size_t bitmaskSize;
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskBefore, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskAfter, bitmaskSize);
+
+    threads.push_back({0, 0, 0, 0, 0});
+    threads.push_back({0, 0, 0, 0, 2});
+    threads.push_back({0, 0, 0, 0, 3});
+    threads.push_back({0, 0, 0, 0, 4});
+    threads.push_back({0, 0, 0, 0, 6});
+    for (auto thread : threads) {
+        sessionMock->stoppedThreads[thread.packed] = 1;
+    }
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskResolved, bitmaskSize);
+
+    NEO::EuDebugEventPageFault pf = {};
+    pf.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypePagefault);
+    pf.base.flags = static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange);
+    pf.base.len = sizeof(data);
+    pf.base.seqno = 2;
+    pf.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    pf.lrcHandle = lrcHandle;
+    pf.flags = 0;
+    pf.execQueueHandle = execQueueHandle;
+    pf.bitmaskSize = static_cast<uint32_t>(bitmaskSize * 3);
+    memcpy(data, &pf, sizeof(NEO::EuDebugEventPageFault));
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask)), bitmaskBefore.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask) + bitmaskSize), bitmaskAfter.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask) + (2 * bitmaskSize)), bitmaskResolved.get(), bitmaskSize);
+
+    sessionMock->callHandlePageFaultBase = true;
+    sessionMock->callReadGpuMemoryBase = false;
+    sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
+
+    EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
+    EXPECT_EQ(threads.size(), sessionMock->newlyStoppedThreads.size());
+    for (auto thread : threads) {
+        EXPECT_TRUE(sessionMock->allThreads[thread]->getPageFault());
+        uint64_t foundLrcHandle, foundExecQueueHandle;
+        sessionMock->allThreads[thread]->getLrcHandle(foundLrcHandle);
+        sessionMock->allThreads[thread]->getContextHandle(foundExecQueueHandle);
+        EXPECT_EQ(lrcHandle, foundLrcHandle);
+        EXPECT_EQ(execQueueHandle, foundExecQueueHandle);
+    }
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenThreadConversionFunctionsCalledThenNoRemappingApplied) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ze_device_thread_t thread{3, 7, 4, 5};
+    auto convertedThread = session->convertToPhysicalWithinDevice(thread, 0);
+    EXPECT_EQ(convertedThread.slice, thread.slice);
+    EXPECT_EQ(convertedThread.subslice, thread.subslice);
+    EXPECT_EQ(convertedThread.eu, thread.eu);
+    EXPECT_EQ(convertedThread.thread, thread.thread);
+
+    auto threadId = session->convertToThreadId(thread);
+    EXPECT_EQ(threadId.slice, thread.slice);
+    EXPECT_EQ(threadId.subslice, thread.subslice);
+    EXPECT_EQ(threadId.eu, thread.eu);
+    EXPECT_EQ(threadId.thread, thread.thread);
+
+    auto apiThread = session->convertToApi(threadId);
+    EXPECT_EQ(threadId.slice, apiThread.slice);
+    EXPECT_EQ(threadId.subslice, apiThread.subslice);
+    EXPECT_EQ(threadId.eu, apiThread.eu);
+    EXPECT_EQ(threadId.thread, apiThread.thread);
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
-        std::vector<wchar_t> deviceInterfacePmt(pmtInterfaceName.begin(), pmtInterfaceName.end());
         SysmanDeviceFixture::SetUp();
 
         pKmdSysManager.reset(new TemperatureKmdSysManager);
@@ -29,7 +28,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePmt, pWddmSysmanImp->getSysmanProductHelper());
+        auto pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();

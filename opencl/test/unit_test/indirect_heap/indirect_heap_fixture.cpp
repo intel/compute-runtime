@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
+
+#include "shared/source/indirect_heap/indirect_heap.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 

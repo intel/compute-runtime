@@ -20,18 +20,16 @@ typedef VOID(NTAPI *_NtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK
 
 namespace NEO {
 
-std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd) {
+std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name) {
     if (osInterface) {
-        if (osInterface->getDriverModel()->getDriverModelType() == DriverModelType::wddm) {
-            auto externalSemaphore = ExternalSemaphoreWindows::create(osInterface);
+        auto externalSemaphore = ExternalSemaphoreWindows::create(osInterface);
 
-            bool result = externalSemaphore->importSemaphore(handle, fd, 0, nullptr, type, false);
-            if (result == false) {
-                return nullptr;
-            }
-
-            return externalSemaphore;
+        bool result = externalSemaphore->importSemaphore(handle, fd, 0, name, type, false);
+        if (result == false) {
+            return nullptr;
         }
+
+        return externalSemaphore;
     }
     return nullptr;
 }
@@ -48,6 +46,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
     switch (type) {
     case ExternalSemaphore::D3d12Fence:
     case ExternalSemaphore::OpaqueWin32:
+    case ExternalSemaphore::TimelineSemaphoreWin32:
         break;
     default:
         return false;
@@ -99,6 +98,49 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
 
         D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
         openName.dwDesiredAccess = access;
+        openName.pObjAttrib = &objectAttributes;
+        auto status = wddm->getGdi()->openSyncObjectNtHandleFromName(&openName);
+        if (status != STATUS_SUCCESS) {
+            return false;
+        }
+
+        syncNtHandle = openName.hNtHandle;
+    }
+
+    if (type == ExternalSemaphore::TimelineSemaphoreWin32 && name != nullptr) {
+        auto moduleHandle = GetModuleHandleA("ntdll.dll");
+        _RtlInitUnicodeString rtlInitUnicodeString = (_RtlInitUnicodeString)GetProcAddress(moduleHandle, "RtlInitUnicodeString");
+        _NtOpenDirectoryObject ntOpenDirectoryObject = (_NtOpenDirectoryObject)GetProcAddress(moduleHandle, "NtOpenDirectoryObject");
+
+        HANDLE rootDirectory;
+        OBJECT_ATTRIBUTES objectAttributesRootDirectory;
+        UNICODE_STRING unicodeNameRootDirectory;
+        PUNICODE_STRING pUnicodeNameRootDirectory = NULL;
+
+        wchar_t baseName[] = L"\\BaseNamedObjects";
+        rtlInitUnicodeString(&unicodeNameRootDirectory, baseName);
+        pUnicodeNameRootDirectory = &unicodeNameRootDirectory;
+        InitializeObjectAttributes(&objectAttributesRootDirectory, pUnicodeNameRootDirectory, 0, nullptr, nullptr);
+        ntOpenDirectoryObject(&rootDirectory, 0x0004 /* DIRECTORY_CREATE_OBJECT */, &objectAttributesRootDirectory);
+
+        OBJECT_ATTRIBUTES objectAttributes;
+        UNICODE_STRING unicodeName;
+
+        PUNICODE_STRING pUnicodeName = NULL;
+        std::wstring wideName;
+        size_t length = strlen(name) + 1;
+        wideName.resize(length);
+        mbstowcs(&wideName[0], name, length);
+
+        const wchar_t *pName = wideName.c_str();
+
+        rtlInitUnicodeString(&unicodeName, pName);
+        pUnicodeName = &unicodeName;
+
+        InitializeObjectAttributes(&objectAttributes, pUnicodeName, 0, rootDirectory, nullptr);
+
+        D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
+        openName.dwDesiredAccess = D3DDDI_SYNC_OBJECT_ALL_ACCESS;
         openName.pObjAttrib = &objectAttributes;
         auto status = wddm->getGdi()->openSyncObjectNtHandleFromName(&openName);
         if (status != STATUS_SUCCESS) {
@@ -163,6 +205,10 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
     signal.hDevice = wddm->getDeviceHandle();
     signal.ObjectCount = 1;
     signal.ObjectHandleArray = &this->syncHandle;
+
+    if (this->type == ExternalSemaphore::TimelineSemaphoreWin32) {
+        signal.Flags.AllowFenceRewind = true;
+    }
 
     uint64_t lastSignaledValue = 0;
     if (this->type == ExternalSemaphore::OpaqueWin32) {

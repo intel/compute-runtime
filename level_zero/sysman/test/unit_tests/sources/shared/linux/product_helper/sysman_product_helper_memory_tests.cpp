@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,10 @@ namespace Sysman {
 namespace ult {
 
 static const std::string mockPhysicalSize = "0x00000040000000";
+
+// Telemetry offsets for memory testing
+constexpr uint32_t mockOffsetNumChannelsPerMsu = 3660;
+constexpr uint32_t mockOffsetMsuBitmask = 3688;
 
 using SysmanProductHelperMemoryTest = SysmanDeviceFixture;
 
@@ -921,20 +925,31 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
 
     auto pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     MockMemorySysFsAccessInterface *pSysfsAccess = new MockMemorySysFsAccessInterface();
+    MockMemoryFsAccessInterface *pFsAccess = new MockMemoryFsAccessInterface();
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
     pSysfsAccess->mockReadStringValue.push_back(mockPhysicalSize);
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
     pSysfsAccess->isRepeated = true;
 
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
-    EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
-    EXPECT_EQ(properties.numChannels, numMemoryChannels);
-    EXPECT_EQ(properties.busWidth, memoryBusWidth);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
+        EXPECT_EQ(properties.numChannels, -1);
+        EXPECT_EQ(properties.busWidth, -1);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_FORCE_UINT32);
+        EXPECT_EQ(properties.physicalSize, mockIntegratedDevicePhysicalSize);
+    } else {
+        EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        EXPECT_EQ(properties.numChannels, numMemoryChannels);
+        EXPECT_EQ(properties.busWidth, memoryBusWidth);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
+    }
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndNoTelemNodesAvailableThenFailureIsReturned, IsBMG) {
@@ -1019,23 +1034,17 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6) {
             switch (offset) {
-            case 368:
+            case 376:
                 count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
                 break;
-            case 372:
+            case 380:
                 count = (readFailCount == 3) ? -1 : sizeof(uint32_t);
                 break;
-            case 376:
+            case 392:
                 count = (readFailCount == 4) ? -1 : sizeof(uint32_t);
                 break;
-            case 380:
-                count = (readFailCount == 5) ? -1 : sizeof(uint32_t);
-                break;
-            case 392:
-                count = (readFailCount == 6) ? -1 : sizeof(uint32_t);
-                break;
             case 396:
-                count = (readFailCount == 7) ? -1 : sizeof(uint32_t);
+                count = (readFailCount == 5) ? -1 : sizeof(uint32_t);
                 break;
             case 3688:
                 memcpy(buf, &mockMsuBitMask, count);
@@ -1053,7 +1062,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_bandwidth_t memBandwidth;
-    while (readFailCount <= 7) {
+    while (readFailCount <= 5) {
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getMemoryBandwidth(&memBandwidth, pLinuxSysmanImp, subdeviceId));
         readFailCount++;
     }
@@ -1091,12 +1100,14 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthThenValidValuesAreReturned, IsBMG) {
-    static uint32_t readCounterUpper = 0x3;
-    static uint32_t readCounterLower = 0xc;
-    static uint32_t writeCounterUpper = 0xe;
-    static uint32_t writeCounterLower = 0xa;
-    static uint32_t timeStampUpper = 0xb;
-    static uint32_t timeStampLower = 0x6;
+    static uint32_t readCounterUpper32Bit = 0x3;
+    static uint32_t readCounterLower32Bit = 0xc;
+    static uint32_t readCounterUpper64Bit = 0x4;
+    static uint32_t readCounterLower64Bit = 0xd;
+    static uint32_t writeCounterUpper32Bit = 0xe;
+    static uint32_t writeCounterLower32Bit = 0xa;
+    static uint32_t writeCounterUpper64Bit = 0xf;
+    static uint32_t writeCounterLower64Bit = 0xb;
     static uint32_t vramBandwidth = 0x6abc0000;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
@@ -1115,23 +1126,29 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6) {
             switch (offset) {
-            case 368:
-                memcpy(buf, &timeStampUpper, count);
-                break;
-            case 372:
-                memcpy(buf, &timeStampLower, count);
-                break;
             case 376:
-                memcpy(buf, &readCounterUpper, count);
+                memcpy(buf, &readCounterUpper32Bit, count);
                 break;
             case 380:
-                memcpy(buf, &readCounterLower, count);
+                memcpy(buf, &readCounterLower32Bit, count);
+                break;
+            case 384:
+                memcpy(buf, &readCounterUpper64Bit, count);
+                break;
+            case 388:
+                memcpy(buf, &readCounterLower64Bit, count);
                 break;
             case 392:
-                memcpy(buf, &writeCounterUpper, count);
+                memcpy(buf, &writeCounterUpper32Bit, count);
                 break;
             case 396:
-                memcpy(buf, &writeCounterLower, count);
+                memcpy(buf, &writeCounterLower32Bit, count);
+                break;
+            case 400:
+                memcpy(buf, &writeCounterUpper64Bit, count);
+                break;
+            case 404:
+                memcpy(buf, &writeCounterLower64Bit, count);
                 break;
             case 3688:
                 memcpy(buf, &mockMsuBitMask, count);
@@ -1155,21 +1172,197 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     zes_mem_bandwidth_t memBandwidth;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidth(&memBandwidth, pLinuxSysmanImp, subdeviceId));
 
-    uint64_t outputReadCounter = packInto64Bit(readCounterUpper, readCounterLower);
-    outputReadCounter = (outputReadCounter * transactionSize) / microFactor;
-    EXPECT_EQ(outputReadCounter, memBandwidth.readCounter);
+    uint64_t outputReadCounter32Bit = packInto64Bit(readCounterUpper32Bit, readCounterLower32Bit);
+    outputReadCounter32Bit *= 32;
+    uint64_t outputReadCounter64Bit = packInto64Bit(readCounterUpper64Bit, readCounterLower64Bit);
+    outputReadCounter64Bit *= 64;
+    EXPECT_EQ((outputReadCounter32Bit + outputReadCounter64Bit), memBandwidth.readCounter);
 
-    uint64_t outputWriteCounter = packInto64Bit(writeCounterUpper, writeCounterLower);
-    outputWriteCounter = (outputWriteCounter * transactionSize) / microFactor;
-    EXPECT_EQ(outputWriteCounter, memBandwidth.writeCounter);
-
-    uint64_t outputTimestamp = packInto64Bit(timeStampUpper, timeStampLower) * milliSecsToMicroSecs;
-    EXPECT_EQ(outputTimestamp, memBandwidth.timestamp);
+    uint64_t outputWriteCounter32Bit = packInto64Bit(writeCounterUpper32Bit, writeCounterLower32Bit) * 32;
+    uint64_t outputWriteCounter64Bit = packInto64Bit(writeCounterUpper64Bit, writeCounterLower64Bit) * 64;
+    EXPECT_EQ((outputWriteCounter32Bit + outputWriteCounter64Bit), memBandwidth.writeCounter);
 
     uint64_t outputMaxBandwidth = vramBandwidth;
     outputMaxBandwidth = outputMaxBandwidth >> 16;
     outputMaxBandwidth = static_cast<uint64_t>(outputMaxBandwidth) * megaBytesToBytes * 100;
     EXPECT_EQ(outputMaxBandwidth, memBandwidth.maxBandwidth);
+
+    EXPECT_GT(memBandwidth.timestamp, 0u);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndTelemNodesAreNotAvailableThenErrorIsReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndReadGuidFailsThenErrorIsReturned, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == 5 || fd == 9) {
+            // Fail when reading GUID fails
+            return -1;
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndGuidNotFoundInMapThenErrorIsReturned, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem2Offset = 0;
+        std::string invalidGuid = "0x12345678"; // This GUID doesn't exist in BMG's guidToKeyOffsetMap
+
+        if (fd == 4 || fd == 8) {
+            memcpy(buf, &telem2Offset, count);
+        } else if (fd == 5 || fd == 9) {
+            memcpy(buf, invalidGuid.data(), count);
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndKeyOffsetMapIsEmptyThenErrorIsReturned, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem2Offset = 0;
+        std::string validButEmptyGuid = "0x1e2f8200"; // Valid GUID but no NUM_OF_MEM_CHANNEL key
+
+        if (fd == 4 || fd == 8) {
+            memcpy(buf, &telem2Offset, count);
+        } else if (fd == 5 || fd == 9) {
+            memcpy(buf, validButEmptyGuid.data(), count);
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndReadValueFailsThenErrorIsReturned, IsBMG) {
+    static int readFailCount = 1;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem2Offset = 0;
+        std::string validOobmsmGuid = "0x5e2f8210";
+
+        if (fd == 4 || fd == 8) {
+            memcpy(buf, &telem2Offset, count);
+        } else if (fd == 5 || fd == 9) {
+            memcpy(buf, validOobmsmGuid.data(), count);
+        } else if (fd == 6 || fd == 10) {
+            switch (offset) {
+            case mockOffsetNumChannelsPerMsu:
+                count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                break;
+            case mockOffsetMsuBitmask:
+                count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                break;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    while (readFailCount <= 2) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels));
+        readFailCount++;
+    }
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesWithGddr6AndGetNumberOfMemoryChannelsSucceedsThenValidPropertiesAreReturned, IsBMG) {
+    static uint32_t mockMsuBitMask = 0b111111;
+    static uint32_t numChannelPerMsu = 2;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem2Offset = 0;
+        std::string validOobmsmGuid = "0x5e2f8311";
+
+        if (fd == 4 || fd == 8) {
+            memcpy(buf, &telem2Offset, count);
+        } else if (fd == 5 || fd == 9) {
+            memcpy(buf, validOobmsmGuid.data(), count);
+        } else if (fd == 6 || fd == 10) {
+            switch (offset) {
+            case mockOffsetNumChannelsPerMsu:
+                memcpy(buf, &numChannelPerMsu, count);
+                break;
+            case mockOffsetMsuBitmask:
+                memcpy(buf, &mockMsuBitMask, count);
+                break;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_mem_properties_t properties = {};
+    bool isSubdevice = false;
+    uint32_t subDeviceId = 0;
+
+    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::gddr6);
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
+    uint32_t totalNumberOfMsus = std::popcount(mockMsuBitMask);
+    int32_t expectedNumChannels = static_cast<int32_t>(numChannelPerMsu * totalNumberOfMsus);
+    EXPECT_EQ(properties.numChannels, expectedNumChannels);
+    EXPECT_EQ(properties.busWidth, properties.numChannels * 32);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesWithGddr6AndGetNumberOfMemoryChannelsFailsThenDefaultValuesAreReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_mem_properties_t properties = {};
+    bool isSubdevice = false;
+    uint32_t subDeviceId = 0;
+
+    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::gddr6);
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+
+    // getNumberOfMemoryChannels fails: getMemoryProperties now succeeds and leaves numChannels and busWidth to default (-1)
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
+    EXPECT_EQ(properties.numChannels, -1);
+    EXPECT_EQ(properties.busWidth, -1);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndDeviceIsNoteBMGThenErrorIsReturned, IsNotBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t numChannels = 0;
+
+    // For non-BMG platforms, the default implementation should return error
+    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 } // namespace ult

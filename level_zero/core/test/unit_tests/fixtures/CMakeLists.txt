@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -32,7 +32,7 @@ set(L0_FIXTURES_SOURCES
 add_library(${TARGET_NAME} OBJECT ${L0_FIXTURES_SOURCES} ${NEO_CORE_tests_compiler_mocks})
 
 target_include_directories(${TARGET_NAME} PRIVATE
-                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            ${NEO_SOURCE_DIR}/level_zero/core/test/unit_test

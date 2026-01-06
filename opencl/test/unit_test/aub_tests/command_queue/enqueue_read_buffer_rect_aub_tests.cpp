@@ -1,18 +1,25 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <tuple>
+#include <vector>
 
 using namespace NEO;
 
@@ -51,8 +58,9 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     uint8_t *srcMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
     uint8_t *destMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
 
-    for (unsigned int i = 0; i < bufferSize; i++)
+    for (unsigned int i = 0; i < bufferSize; i++) {
         srcMemory[i] = i;
+    }
 
     memset(destMemory, 0x00, bufferSize);
 
@@ -181,7 +189,7 @@ struct AUBReadBufferRectUnaligned
         expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
-        pCmdQ->finish();
+        pCmdQ->finish(false);
         alignedFree(dstMemory);
     }
 };

@@ -6,18 +6,18 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/os_context.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
@@ -26,7 +26,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct CommandQueueWithPropertiesTest : public ApiFixture<>,
+struct CommandQueueWithPropertiesTest : public ApiFixture,
                                         public ::testing::WithParamInterface<std::tuple<uint64_t, uint32_t, uint32_t, uint32_t>>,
                                         public ::testing::Test {
     CommandQueueWithPropertiesTest()
@@ -48,7 +48,7 @@ struct CommandQueueWithPropertiesTest : public ApiFixture<>,
     cl_queue_throttle_khr queueThrottle;
 };
 
-struct ClCreateCommandQueueWithPropertiesApi : public ApiFixture<>,
+struct ClCreateCommandQueueWithPropertiesApi : public ApiFixture,
                                                public MemoryManagementFixture,
                                                public ::testing::Test {
     ClCreateCommandQueueWithPropertiesApi() {

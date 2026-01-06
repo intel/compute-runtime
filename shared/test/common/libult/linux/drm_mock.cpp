@@ -55,6 +55,12 @@ int DrmMock::handleRemainingRequests(DrmIoctl request, void *arg) {
         return 0;
     }
 
+    if (request == DrmIoctl::gemMmapOffset) {
+        auto mmapArg = static_cast<GemMmapOffset *>(arg);
+        mmapArg->offset = 0;
+        return 0;
+    }
+
     ioctlCallsCount--;
     return -1;
 };

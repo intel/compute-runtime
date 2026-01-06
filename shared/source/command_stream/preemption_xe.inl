@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
         const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 
         if (isWARequired) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         }
         size += sizeof(typename GfxFamily::STATE_SIP);
     }

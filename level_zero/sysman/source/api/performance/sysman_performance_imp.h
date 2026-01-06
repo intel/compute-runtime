@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsPerformance;
+struct OsSysman;
 
 class PerformanceImp : public Performance, NEO::NonCopyableAndNonMovableClass {
   public:

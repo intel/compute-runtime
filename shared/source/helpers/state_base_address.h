@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/state_base_address_helper.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -23,7 +25,7 @@ struct StateBaseAddressProperties;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelperArgs {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
     uint64_t generalStateBaseAddress = 0;
     uint64_t indirectObjectHeapBaseAddress = 0;
@@ -59,7 +61,7 @@ struct StateBaseAddressHelperArgs {
 
 template <typename GfxFamily>
 struct StateBaseAddressHelper {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
     static STATE_BASE_ADDRESS *getSpaceForSbaCmd(LinearStream &cmdStream);
 

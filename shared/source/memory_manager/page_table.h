@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,9 @@ class PageTable {
     };
 
     virtual ~PageTable() {
-        for (auto &e : entries)
+        for (auto &e : entries) {
             delete e;
+        }
     }
 
     virtual uintptr_t map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank);

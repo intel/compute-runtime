@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,9 @@
 #include "aubstream/aubstream.h"
 #include "aubstream/hardware_context.h"
 
+#include <optional>
+#include <unordered_map>
+
 struct MockHardwareContext : public aub_stream::HardwareContext {
     using SurfaceInfo = aub_stream::SurfaceInfo;
 
@@ -25,7 +28,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void writeAndSubmitBatchBuffer(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank, size_t pageSize) override { writeAndSubmitCalled = true; }
     void submitBatchBuffer(uint64_t gfxAddress, bool overrideRingHead) override { submitCalled = true; }
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
-        UNRECOVERABLE_IF(true); // shouldnt be used
+        UNRECOVERABLE_IF(true); // should not be used
     }
     void writeMemory2(aub_stream::AllocationParams allocationParams) override {
         writeMemory2Called = true;
@@ -89,6 +92,12 @@ class MockAubManager : public aub_stream::AubManager {
         return new MockHardwareContext(device);
     }
 
+    HardwareContext *createHardwareContext3(const aub_stream::HardwareContextParamsHeader *params) override {
+        const auto *castedParams = reinterpret_cast<const aub_stream::CreateHardwareContext3Params *>(params);
+        contextFlags = castedParams->flags;
+        return new MockHardwareContext(castedParams->device);
+    }
+
     bool releaseHardwareContext(HardwareContext *context) override {
         delete context;
         return true;
@@ -120,7 +129,7 @@ class MockAubManager : public aub_stream::AubManager {
     }
 
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
-        UNRECOVERABLE_IF(true); // shouldnt be used
+        UNRECOVERABLE_IF(true); // should not be used
     }
 
     void writeMemory2(aub_stream::AllocationParams allocationParams) override {
@@ -150,6 +159,14 @@ class MockAubManager : public aub_stream::AubManager {
     bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
     bool mapGpuVa(uint64_t gfxAddress, size_t size, aub_stream::PhysicalAllocationInfo physicalAllocInfo) override { return false; };
 
+    uint32_t readMMIO(uint32_t offset) override {
+        if (mmioData) {
+            return (*mmioData)[offset];
+        } else {
+            return ::aub_stream::AubManager::readMMIO(offset);
+        }
+    }
+
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
     uint32_t openCalledCnt = 0;
     std::string fileName = "";
@@ -168,6 +185,7 @@ class MockAubManager : public aub_stream::AubManager {
     uint32_t contextFlags = 0;
     int hintToWriteMemory = 0;
     size_t writeMemoryPageSizePassed = 0;
+    std::optional<std::unordered_map<uint32_t, uint32_t>> mmioData;
 
     aub_stream::AubManagerOptions options{};
 

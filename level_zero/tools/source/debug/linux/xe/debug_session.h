@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 
@@ -16,12 +17,17 @@
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 
 namespace L0 {
+struct DebugSession;
+struct Device;
 
 struct DebugSessionLinuxXe : DebugSessionLinux {
 
     ~DebugSessionLinuxXe() override;
-    DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
+    DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params);
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
+    static ze_result_t openConnectionUpstream(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd);
+
+    ze_result_t initialize() override;
 
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
         IoctlHandlerXe(const NEO::EuDebugInterface &euDebugInterface) : euDebugInterface(euDebugInterface){};
@@ -158,6 +164,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     void pushApiEventForTileSession(uint32_t tileIndex, zet_debug_event_t &debugEvent) override { UNRECOVERABLE_IF(true) }
     void setPageFaultForTileSession(uint32_t tileIndex, EuThread::ThreadId threadId, bool hasPageFault) override{UNRECOVERABLE_IF(true)}
+
+    ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) override;
+    EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override;
+    ze_device_thread_t convertToApi(EuThread::ThreadId threadId) override;
 
     uint64_t euControlInterruptSeqno = 0;
 

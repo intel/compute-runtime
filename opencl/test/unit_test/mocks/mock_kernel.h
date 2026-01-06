@@ -108,12 +108,13 @@ class MockKernel : public Kernel {
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
+    using Kernel::imageFromBufferArgsCount;
+    using Kernel::implicitArgsVersion;
+    using Kernel::isBuiltIn;
     using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArguments;
-    using Kernel::KernelConfig;
     using Kernel::kernelHasIndirectAccess;
-    using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::localBindingTableOffset;
@@ -129,12 +130,10 @@ class MockKernel : public Kernel {
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::setInlineSamplers;
-    using Kernel::singleSubdevicePreferredInCurrentEnqueue;
-    using Kernel::unifiedMemoryControls;
-
-    using Kernel::implicitArgsVersion;
     using Kernel::slmSizes;
     using Kernel::slmTotalSize;
+    using Kernel::unifiedMemoryControls;
+    using Kernel::usingImages;
 
     MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
         : Kernel(programArg, kernelInfoArg, clDeviceArg) {
@@ -236,6 +235,13 @@ class MockKernel : public Kernel {
         return kernelInfoAllocated;
     }
 
+    void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) override {
+        setLws[0] = localWorkSizeX;
+        setLws[1] = localWorkSizeY;
+        setLws[2] = localWorkSizeZ;
+        Kernel::setLocalWorkSizeValues(localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    }
+
     std::vector<char> mockCrossThreadData;
     std::vector<char> mockSshLocal;
 
@@ -252,6 +258,7 @@ class MockKernel : public Kernel {
     uint32_t getResidencyCalls = 0;
     uint32_t setArgSvmAllocCalls = 0;
     uint32_t moveArgsToGpuDomainCalls = 0;
+    uint32_t setLws[3] = {0, 0, 0};
 
     bool canKernelTransformImages = true;
     bool isPatchedOverride = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,44 +12,44 @@
 #include <level_zero/zet_api.h>
 
 namespace L0 {
-ze_result_t zetDeviceGetDebugProperties(
+ze_result_t ZE_APICALL zetDeviceGetDebugProperties(
     zet_device_handle_t hDevice,
     zet_device_debug_properties_t *pDebugProperties) {
     return L0::Device::fromHandle(hDevice)->getDebugProperties(pDebugProperties);
 }
 
-ze_result_t zetDebugAttach(
+ze_result_t ZE_APICALL zetDebugAttach(
     zet_device_handle_t hDevice,
     const zet_debug_config_t *config,
     zet_debug_session_handle_t *phDebug) {
     return L0::DebugApiHandlers::debugAttach(hDevice, config, phDebug);
 }
 
-ze_result_t zetDebugDetach(
+ze_result_t ZE_APICALL zetDebugDetach(
     zet_debug_session_handle_t hDebug) {
     return L0::DebugApiHandlers::debugDetach(hDebug);
 }
 
-ze_result_t zetDebugReadEvent(
+ze_result_t ZE_APICALL zetDebugReadEvent(
     zet_debug_session_handle_t hDebug,
     uint64_t timeout,
     zet_debug_event_t *event) {
     return L0::DebugApiHandlers::debugReadEvent(hDebug, timeout, event);
 }
 
-ze_result_t zetDebugInterrupt(
+ze_result_t ZE_APICALL zetDebugInterrupt(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread) {
     return L0::DebugApiHandlers::debugInterrupt(hDebug, thread);
 }
 
-ze_result_t zetDebugResume(
+ze_result_t ZE_APICALL zetDebugResume(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread) {
     return L0::DebugApiHandlers::debugResume(hDebug, thread);
 }
 
-ze_result_t zetDebugReadMemory(
+ze_result_t ZE_APICALL zetDebugReadMemory(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
     const zet_debug_memory_space_desc_t *desc,
@@ -58,7 +58,7 @@ ze_result_t zetDebugReadMemory(
     return L0::DebugApiHandlers::debugReadMemory(hDebug, thread, desc, size, buffer);
 }
 
-ze_result_t zetDebugWriteMemory(
+ze_result_t ZE_APICALL zetDebugWriteMemory(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
     const zet_debug_memory_space_desc_t *desc,
@@ -67,20 +67,20 @@ ze_result_t zetDebugWriteMemory(
     return L0::DebugApiHandlers::debugWriteMemory(hDebug, thread, desc, size, buffer);
 }
 
-ze_result_t zetDebugAcknowledgeEvent(
+ze_result_t ZE_APICALL zetDebugAcknowledgeEvent(
     zet_debug_session_handle_t hDebug,
     const zet_debug_event_t *event) {
     return L0::DebugApiHandlers::debugAcknowledgeEvent(hDebug, event);
 }
 
-ze_result_t zetDebugGetRegisterSetProperties(
+ze_result_t ZE_APICALL zetDebugGetRegisterSetProperties(
     zet_device_handle_t hDevice,
     uint32_t *pCount,
     zet_debug_regset_properties_t *pRegisterSetProperties) {
     return L0::DebugApiHandlers::debugGetRegisterSetProperties(hDevice, pCount, pRegisterSetProperties);
 }
 
-ze_result_t zetDebugReadRegisters(
+ze_result_t ZE_APICALL zetDebugReadRegisters(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
     uint32_t type,
@@ -90,7 +90,7 @@ ze_result_t zetDebugReadRegisters(
     return L0::DebugApiHandlers::debugReadRegisters(hDebug, thread, type, start, count, pRegisterValues);
 }
 
-ze_result_t zetDebugWriteRegisters(
+ze_result_t ZE_APICALL zetDebugWriteRegisters(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
     uint32_t type,
@@ -100,7 +100,7 @@ ze_result_t zetDebugWriteRegisters(
     return L0::DebugApiHandlers::debugWriteRegisters(hDebug, thread, type, start, count, pRegisterValues);
 }
 
-ze_result_t zetDebugGetThreadRegisterSetProperties(
+ze_result_t ZE_APICALL zetDebugGetThreadRegisterSetProperties(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
     uint32_t *pCount,

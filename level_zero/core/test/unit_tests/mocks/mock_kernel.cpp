@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     execEnv.LargestCompiledSIMDSize = 8;
     kernelTokens.tokens.executionEnvironment = &execEnv;
 
-    this->kernelImmData = &immutableData;
+    this->sharedState->kernelImmData = &immutableData;
 
     auto allocation = new NEO::GraphicsAllocation(0,
                                                   1u /*num gmms*/,
@@ -41,11 +41,12 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
-    crossThreadData.reset(new uint8_t[100]);
+    privateState.crossThreadData.clear();
+    privateState.crossThreadData.resize(100U, 0x0);
 
-    groupSize[0] = 1;
-    groupSize[1] = 1;
-    groupSize[2] = 1;
+    privateState.groupSize[0] = 1;
+    privateState.groupSize[1] = 1;
+    privateState.groupSize[2] = 1;
 }
 Mock<::L0::KernelImp>::~Mock() {
     delete immutableData.isaGraphicsAllocation.release();

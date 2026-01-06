@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class PageFaultManagerTest : public ::testing::Test {
   public:
     void SetUp() override {
         memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
         pageFaultManager = std::make_unique<MockPageFaultManager>();
     }
 

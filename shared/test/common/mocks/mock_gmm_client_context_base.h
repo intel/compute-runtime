@@ -17,29 +17,31 @@ class MockGmmClientContextBase : public GmmClientContext {
         static constexpr uint32_t twoWayCoherent = 3;
         static constexpr uint32_t error = GMM_PAT_ERROR;
     };
-
-    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
-    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable) override;
+    void initialize(const RootDeviceEnvironment &rootDeviceEnvironment) override;
+    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) override;
+    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) override;
     GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
     GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
     long deallocate2(DeallocateGmm *deallocateGmm) override;
     uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
-    void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;
     uint64_t mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) override;
     uint64_t freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pMapGpuVa) override;
 
     GMM_RESOURCE_FORMAT capturedFormat = GMM_FORMAT_INVALID;
+    bool passedWrite = false;
+    bool passedNoAccess = false;
     uint8_t compressionFormatToReturn = 1;
     uint32_t getSurfaceStateCompressionFormatCalled = 0u;
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
     uint32_t mapGpuVirtualAddressCalled = 0u;
     uint32_t freeGpuVirtualAddressCalled = 0u;
+    uint32_t initializeCalled = 0u;
     bool returnErrorOnPatIndexQuery = false;
 
     bool passedCompressedSettingForGetPatIndexQuery = false;
-    bool passedCachableSettingForGetPatIndexQuery = false;
+    bool passedCacheableSettingForGetPatIndexQuery = false;
 
   protected:
     using GmmClientContext::GmmClientContext;

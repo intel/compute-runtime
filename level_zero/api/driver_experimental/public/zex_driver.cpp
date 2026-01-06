@@ -41,8 +41,6 @@ zexDriverGetHostPointerBaseAddress(
     return L0::DriverHandle::fromHandle(toInternalType(hDriver))->getHostPointerBaseAddress(ptr, baseAddress);
 }
 
-} // namespace L0
-
 ze_result_t ZE_APICALL
 zeIntelGetDriverVersionString(
     ze_driver_handle_t hDriver,
@@ -63,7 +61,17 @@ zeIntelGetDriverVersionString(
     return ZE_RESULT_SUCCESS;
 }
 
+} // namespace L0
+
 extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelGetDriverVersionString(
+    ze_driver_handle_t hDriver,
+    char *pDriverVersion,
+    size_t *pVersionSize) {
+    return L0::zeIntelGetDriverVersionString(hDriver, pDriverVersion, pVersionSize);
+}
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexDriverImportExternalPointer(
@@ -87,4 +95,4 @@ zexDriverGetHostPointerBaseAddress(
     void **baseAddress) {
     return L0::zexDriverGetHostPointerBaseAddress(hDriver, ptr, baseAddress);
 }
-}
+} // extern "C"

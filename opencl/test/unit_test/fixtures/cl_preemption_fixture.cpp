@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,9 @@
 
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
 
-#include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/enqueue_common.h"
-#include "opencl/source/command_queue/enqueue_kernel.h"
-#include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

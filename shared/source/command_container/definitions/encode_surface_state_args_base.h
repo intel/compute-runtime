@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace NEO {
@@ -18,6 +19,7 @@ struct EncodeSurfaceStateArgsBase {
     size_t size = 0u;
 
     void *outMemory = nullptr;
+    void *inTemplateMemory = nullptr;
 
     GraphicsAllocation *allocation = nullptr;
     GmmHelper *gmmHelper = nullptr;

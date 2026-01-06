@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -16,7 +17,7 @@
 
 namespace NEO {
 
-GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue] = {};
 
 std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCoreFamily) {
 
@@ -53,7 +54,7 @@ bool GfxCoreHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
 }
 
 uint32_t GfxCoreHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     auto maxHwThreadsCapable = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     auto maxHwThreadsReturned = maxHwThreadsCapable;
     if (debugManager.flags.MaxHwThreadsPercent.get() != 0) {
@@ -87,6 +88,24 @@ uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
         }
     }
     return highestEnabledSlice;
+}
+
+uint32_t GfxCoreHelper::getHighestEnabledSubSliceOnAnySlice(const HardwareInfo &hwInfo) {
+
+    if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
+        return 0;
+    }
+
+    uint32_t highestSubSlice = 0;
+    for (uint32_t sliceId = 0; sliceId < GT_MAX_SLICE; sliceId++) {
+        for (uint32_t subSliceId = 0; subSliceId < GT_MAX_SUBSLICE_PER_SLICE; subSliceId++) {
+            if (hwInfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled) {
+                highestSubSlice = std::max(highestSubSlice, subSliceId);
+            }
+        }
+    }
+
+    return highestSubSlice;
 }
 
 uint32_t getHighestEnabledSubSlice(const HardwareInfo &hwInfo) {
@@ -133,6 +152,26 @@ bool GfxCoreHelper::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_
         return false;
     }
     return (lowestHwRevIdWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < hwRevIdWithFix);
+}
+
+int32_t GfxCoreHelper::getHighestQueuePriorityLevel() const {
+    auto numLevels = getQueuePriorityLevels();
+    if (numLevels == 1) {
+        return 0;
+    }
+    return -static_cast<int32_t>(numLevels / 2);
+}
+
+int32_t GfxCoreHelper::getLowestQueuePriorityLevel() const {
+    auto numLevels = getQueuePriorityLevels();
+    if (numLevels == 1) {
+        return 0;
+    }
+    return (static_cast<int32_t>(Math::divideAndRoundUp(numLevels, 2))) - 1;
+}
+
+int32_t GfxCoreHelper::getDefaultQueuePriorityLevel() const {
+    return 0;
 }
 
 } // namespace NEO

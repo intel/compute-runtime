@@ -64,7 +64,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
             this->pciBarrierPtr = ptr;
         }
     }
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
     if (this->pciBarrierPtr) {
         this->miMemFenceRequired = false;
     }
@@ -98,6 +98,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->ringStart) {
         this->stopRingBuffer(true);
     }
+    this->tagAddress = nullptr;
     if (this->isCompletionFenceSupported()) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
@@ -120,14 +121,16 @@ TaskCountType *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePoi
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
-    this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    if (this->tagAddress) {
+        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
+    DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();
     this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
     this->currentTagData.tagValue = 0u;
-    this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
     return true;
 }
 
@@ -225,30 +228,43 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleRingRestartForUllsLightRe
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
-    if (this->disableMonitorFence) {
-        this->currentTagData.tagValue++;
+inline void DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency) {
+    if (allocationsForResidency) {
+        allocationsForResidency->clear();
+        static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->mergeWithResidencyContainer(&this->osContext, *allocationsForResidency);
     }
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
+    this->currentTagData.tagValue++;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
+    TagData currentTagData = {};
+    getTagAddressValue(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSectionSize() {
+    return Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment);
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    if (this->disableMonitorFence) {
+    if (this->ringStart) {
         this->currentTagData.tagValue++;
-
-        bool updateCompletionFences = true;
-        if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
-            updateCompletionFences = !debugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
-        }
-
-        if (updateCompletionFences) {
-            this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
-        }
     }
 
-    if (allocationsForResidency) {
-        allocationsForResidency->clear();
-        static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->mergeWithResidencyContainer(&this->osContext, *allocationsForResidency);
+    bool updateCompletionFences = true;
+    if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
+        updateCompletionFences = !debugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
+    }
+
+    if (updateCompletionFences) {
+        this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
     }
 }
 
@@ -265,6 +281,10 @@ template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     tagData.tagAddress = this->currentTagData.tagAddress;
     tagData.tagValue = this->currentTagData.tagValue + 1;
+}
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValueForRingSwitch(TagData &tagData) {
+    getTagAddressValue(tagData);
 }
 
 template <typename GfxFamily, typename Dispatcher>

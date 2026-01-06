@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,19 +9,18 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context_type.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-
-#include "test_traits_common.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -31,6 +30,12 @@ struct CompressionXeHPAndLater : public AUBFixture,
                                  public ::testing::WithParamInterface<uint32_t /*EngineType*/> {
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
+
+        auto &ftrTable = defaultHwInfo->featureTable;
+        if ((!ftrTable.flags.ftrFlatPhysCCS) ||
+            (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
+            GTEST_SKIP();
+        }
 
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.RenderCompressedBuffersEnabled.set(true);
@@ -55,11 +60,6 @@ struct CompressionXeHPAndLater : public AUBFixture,
             GTEST_SKIP();
         }
 
-        auto &ftrTable = device->getHardwareInfo().featureTable;
-        if ((!ftrTable.flags.ftrFlatPhysCCS) ||
-            (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
-            GTEST_SKIP();
-        }
         context->contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     }
     void TearDown() override {
@@ -94,7 +94,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
     if (testLocalMemory) {
         EXPECT_EQ(MemoryPool::localMemory, compressedAllocation->getMemoryPool());
     } else {
-        EXPECT_EQ(MemoryPool::system4KBPages, compressedAllocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::systemCpuInaccessible, compressedAllocation->getMemoryPool());
     }
 
     auto notCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
@@ -107,7 +107,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
 
     pCmdQ->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueCopyBuffer(compressedBuffer.get(), notCompressedBuffer.get(), 0, 0, bufferSize, 0, nullptr, nullptr);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectNotEqualMemory<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation),
                                      writePattern, bufferSize);
@@ -227,7 +227,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImageWhenReadingTh
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
 
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Image> srcImage(Image::create(
         context,

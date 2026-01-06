@@ -7,11 +7,15 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
+#include "shared/source/helpers/pipeline_select_args.h"
+#include "shared/source/helpers/state_base_address_helper.h"
+
 namespace NEO {
 class TagNodeBase;
 template <typename GfxFamily>
@@ -22,7 +26,7 @@ template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
     struct ImmediateFlushData {
         PipelineSelectArgs pipelineSelectArgs{};
@@ -60,10 +64,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
-
     void addPipeControlFlushTaskIfNeeded(LinearStream &commandStreamCSR, TaskCountType taskLevel);
 
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
@@ -99,7 +99,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
-    size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
     size_t getCmdSizeForActivePartitionConfig() const;
@@ -160,6 +159,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     uint32_t getDirectSubmissionRelaxedOrderingQueueDepth() const override;
 
     void stopDirectSubmission(bool blocking, bool needsLock) override;
+    void resetDirectSubmission() override;
 
     QueueThrottle getLastDirectSubmissionThrottle() override;
 
@@ -206,13 +206,20 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
   protected:
+    CompletionStamp flushTaskHeapful(LinearStream &commandStream, size_t commandStreamStart,
+                                     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+
+    CompletionStamp flushTaskHeapless(LinearStream &commandStream, size_t commandStreamStart,
+                                      const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                      TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs);
     void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
     void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
-    void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programPerDssBackedBuffer(LinearStream &scr, Device &device, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
@@ -224,6 +231,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
+    void programExceptions(LinearStream &csr, Device &device);
+    size_t getCmdSizeForExceptions() const;
     size_t getCmdSizeForHeaplessPrologue(Device &device) const;
     void handleAllocationsResidencyForHeaplessProlog(LinearStream &linearStream, Device &device);
 
@@ -237,7 +246,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool checkPlatformSupportsNewResourceImplicitFlush() const;
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
     void configurePostSyncWriteOffset();
-    void unregisterDirectSubmissionFromController();
+    void unregisterDirectSubmissionFromController() override;
     void handleFrontEndStateTransition(const DispatchFlags &dispatchFlags);
     void handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags);
     void handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty);
@@ -254,7 +263,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                           const IndirectHeap *ssh,
                                           DispatchFlags &dispatchFlags,
                                           Device &device, LinearStream &commandStreamCSR,
-                                          bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded);
+                                          bool sshDirty, bool bindingTablePoolCommandNeeded);
     inline void programStateBaseAddressCommon(const IndirectHeap *dsh,
                                               const IndirectHeap *ioh,
                                               const IndirectHeap *ssh,
@@ -267,6 +276,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                               bool dispatchBindingTableCommand,
                                               bool areMultipleSubDevicesInContext,
                                               bool setGeneralStateBaseAddress);
+
+    inline void emitTagUpdateWithoutDCFlush(LinearStream &commandStream);
 
     inline void processBarrierWithPostSync(LinearStream &commandStreamTask,
                                            DispatchFlags &dispatchFlags,

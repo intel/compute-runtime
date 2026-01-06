@@ -42,6 +42,7 @@ class CompilerProductHelper;
 class GraphicsAllocation;
 class ReleaseHelper;
 class AILConfiguration;
+class HostFunctionWorker;
 
 struct AllocationProperties;
 struct HardwareInfo;
@@ -81,7 +82,8 @@ struct RootDeviceEnvironment : NonCopyableClass {
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
     void createBindlessHeapsHelper(Device *rootDevice, bool availableDevices);
-    void setNumberOfCcs(uint32_t numberOfCcs);
+    bool setNumberOfCcs(uint32_t numberOfCcs);
+    uint32_t getNumberOfCcs() const;
     bool isNumberOfCcsLimited() const;
     void setRcsExposure();
     void initProductHelper();
@@ -100,6 +102,16 @@ struct RootDeviceEnvironment : NonCopyableClass {
     const ProductHelper &getProductHelper() const;
     GraphicsAllocation *getDummyAllocation() const;
     void releaseDummyAllocation();
+
+    void setExposeSingleDeviceMode(bool singleDeviceMode) {
+        exposeSingleDevice = singleDeviceMode;
+    }
+    bool isExposeSingleDeviceMode() const {
+        return exposeSingleDevice;
+    }
+
+    void setHostFunctionScheduler(std::unique_ptr<HostFunctionWorker> &&scheduler);
+    HostFunctionWorker *getHostFunctionScheduler() const;
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;
@@ -120,7 +132,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<AILConfiguration> ailConfiguration;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
-
+    std::unique_ptr<HostFunctionWorker> hostFunctionScheduler;
     std::unique_ptr<AssertHandler> assertHandler;
 
     ExecutionEnvironment &executionEnvironment;
@@ -133,6 +145,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
 
     bool limitedNumberOfCcs = false;
     bool isWddmOnLinuxEnable = false;
+    bool exposeSingleDevice = false;
     std::once_flag isDummyAllocationInitialized;
     std::unique_ptr<AllocationProperties> dummyBlitProperties;
 

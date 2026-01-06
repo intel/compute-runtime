@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/context/context.h"
@@ -37,28 +34,14 @@ namespace ULT {
 
 TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sourceArray[1] = {pSource.get()};
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sourceArray,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -80,8 +63,8 @@ TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     pProgram = clCreateProgramWithSource(
         nullptr,
         1,
-        sourceArray,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         nullptr);
     EXPECT_EQ(nullptr, pProgram);
 }
@@ -89,23 +72,14 @@ TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
 TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
-    const size_t binarySize = src.size();
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -127,28 +101,17 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
 }
 
 HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
-
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
-
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
-    const size_t binarySize = src.size();
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -170,31 +133,19 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreating
 }
 
 HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryGeneratedByNgenAsInputWhenCreatingProgramWithSourceThenProgramBuildReturnsSuccess, IsAtLeastXeHpcCore) {
-
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
-
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    auto &flags = reinterpret_cast<NEO::Zebin::Elf::ZebinTargetFlags &>(zebinData->elfHeader->flags);
-    flags.generatorId = 0u; // ngen generated
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
-    const size_t binarySize = src.size();
+    zebin.getFlags().generatorId = 0u; // ngen generated
 
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -219,28 +170,17 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-    const size_t binarySize = src.size();
-
     const size_t numBinaries = 6;
-    const unsigned char *binaries[numBinaries];
-    std::fill(binaries, binaries + numBinaries, reinterpret_cast<const unsigned char *>(src.data()));
+    MockZebinWrapper<6u> zebin{pDevice->getHardwareInfo()};
+
     cl_device_id devicesForProgram[] = {context.pRootDevice0, context.pSubDevice00, context.pSubDevice01, context.pRootDevice1, context.pSubDevice10, context.pSubDevice11};
-    size_t sizeBinaries[numBinaries];
-    std::fill(sizeBinaries, sizeBinaries + numBinaries, binarySize);
 
     pProgram = clCreateProgramWithBinary(
         &context,
         numBinaries,
         devicesForProgram,
-        sizeBinaries,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -264,22 +204,14 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
 TEST_F(ClBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-    const size_t binarySize = src.size();
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -368,23 +300,14 @@ TEST_F(ClBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgra
 TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -408,22 +331,14 @@ TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalid
 TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
-    const auto &src = zebinData->storage;
-
-    ASSERT_NE(nullptr, src.data());
-    ASSERT_NE(0u, src.size());
-    const size_t binarySize = src.size();
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
 
@@ -450,24 +365,14 @@ TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackI
 
 TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -522,29 +427,18 @@ TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenIn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThenInvalidOperationErrorIsReturned) {
+using ClBuildProgramMultiDeviceTests = Test<FixtureWithMockZebin>;
 
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThenInvalidOperationErrorIsReturned) {
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
     cl_int retVal = CL_INVALID_PROGRAM;
-    std::string testFile;
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -563,7 +457,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThe
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    auto kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -594,29 +488,16 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingThenInvalidOperationErrorIsReturned) {
-
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingThenInvalidOperationErrorIsReturned) {
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
     cl_int retVal = CL_INVALID_PROGRAM;
-    std::string testFile;
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -673,28 +554,16 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
+
     cl_int retVal = CL_INVALID_PROGRAM;
-    std::string testFile;
-
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -713,7 +582,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel pKernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    cl_kernel pKernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
@@ -728,28 +597,114 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
+TEST_F(ClBuildProgramMultiDeviceTests, GivenProgramCreatedFromSourceWhenBuildingThenCorrectlyFilledSingleDeviceBinaryIsUsed) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
+
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : some_kernel
+      execution_env :
+        simd_size : 32
+        require_iab:     true
+    - name : some_other_kernel
+      execution_env :
+        simd_size : 32
+)===";
+
+    uint8_t kernelIsa[8]{0U};
+    ZebinTestData::ValidEmptyProgram<is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64> zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_other_kernel", {kernelIsa, sizeof(kernelIsa)});
+
+    const uint8_t data[] = {'H', 'e', 'l', 'l', 'o', '!'};
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConstString, data);
+
+    {
+        const uint32_t indirectAccessBufferMajorVersion = 4u;
+
+        Zebin::Elf::ElfNoteSection elfNoteSection = {};
+        elfNoteSection.type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
+        elfNoteSection.descSize = sizeof(uint32_t);
+        elfNoteSection.nameSize = 8u;
+
+        auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        auto appendSingleIntelGTSectionData = [](const NEO::Elf::ElfNoteSection &elfNoteSection, uint8_t *const intelGTSectionData, const uint8_t *descData, const char *ownerName, size_t spaceAvailable) {
+            size_t offset = 0;
+            ASSERT_GE(spaceAvailable, sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize);
+            memcpy_s(ptrOffset(intelGTSectionData, offset), sizeof(NEO::Elf::ElfNoteSection), &elfNoteSection, sizeof(NEO::Elf::ElfNoteSection));
+            offset += sizeof(NEO::Elf::ElfNoteSection);
+            memcpy_s(reinterpret_cast<char *>(ptrOffset(intelGTSectionData, offset)), elfNoteSection.nameSize, ownerName, elfNoteSection.nameSize);
+            offset += elfNoteSection.nameSize;
+            memcpy_s(ptrOffset(intelGTSectionData, offset), elfNoteSection.descSize, descData, elfNoteSection.descSize);
+            offset += elfNoteSection.descSize;
+        };
+
+        appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), reinterpret_cast<const uint8_t *>(&indirectAccessBufferMajorVersion),
+                                       Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
+        zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    }
+
+    MockCompilerDebugVars debugVars;
+    debugVars.binaryToReturn = const_cast<unsigned char *>(zebin.storage.data());
+    debugVars.binaryToReturnSize = zebin.storage.size();
+    gEnvironment->igcPushDebugVars(debugVars);
+    gEnvironment->fclPushDebugVars(debugVars);
+
     cl_int retVal = CL_INVALID_PROGRAM;
-    std::string testFile;
-
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_id firstDevice = context.pRootDevice0;
+    cl_device_id secondDevice = context.pRootDevice1;
+    cl_device_id devices[] = {firstDevice, secondDevice};
+
+    retVal = clBuildProgram(
+        pProgram,
+        2,
+        devices,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_kernel pKernel = clCreateKernel(pProgram, "some_kernel", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
+    Program *program = castToObject<Program>(pProgram);
+    EXPECT_EQ(4u, program->getIndirectAccessBufferVersion());
+    EXPECT_TRUE(kernel->getKernelInfos()[1]->kernelDescriptor.kernelMetadata.isGeneratedByIgc);
+
+    retVal = clReleaseKernel(pKernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    gEnvironment->igcPopDebugVars();
+    gEnvironment->fclPopDebugVars();
+}
+
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -767,7 +722,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel kernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    cl_kernel kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clBuildProgram(
@@ -791,7 +746,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    kernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseKernel(kernel);
@@ -800,28 +755,16 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
     cl_int retVal = CL_INVALID_PROGRAM;
-    std::string testFile;
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -848,7 +791,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevic
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel pKernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    cl_kernel pKernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);

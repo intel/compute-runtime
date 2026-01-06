@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
@@ -34,6 +35,8 @@ namespace ult {
 struct L0DebuggerWindowsFixture {
     void setUp() {
         debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -186,13 +189,14 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledAndModuleD
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleDestroy(0x80000000);
 
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
-    EXPECT_TRUE(hasSubstr(testing::internal::GetCapturedStderr(), std::string("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY: Failed - Status:")));
+    EXPECT_TRUE(hasSubstr(capture.getCapturedStderr(), std::string("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY: Failed - Status:")));
 }
 
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailableWhenInitializingDriverThenSuccessIsReturned) {

@@ -6,14 +6,15 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/flush_stamp.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -24,6 +25,7 @@ using MarkerTest = Test<CommandEnqueueFixture>;
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeControlIsAdded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
@@ -61,6 +63,7 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
 
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithDifferentTaskLevelsWhenEnqueingMarkerThenPipeControlIsNotAdded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
 
     // Set task levels to known values.
     commandStreamReceiver.taskLevel = 2;
@@ -117,7 +120,7 @@ HWTEST_F(MarkerTest, GivenGpuHangAndBlockingCallWhenEnqueingMarkerThenOutOfResou
     DebugManagerStateRestore stateRestore;
     debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
-    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
@@ -153,9 +156,6 @@ HWTEST_F(MarkerTest, WhenEnqueingMarkerThenReturnedEventShouldHaveEqualDepthToLa
     ASSERT_NE(nullptr, event);
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    // Shouldn't sync to CSR
-    // should sync to command queue last packet
-    EXPECT_EQ(1u, pEvent->taskLevel);
     EXPECT_EQ(pCmdQ->taskLevel, pEvent->taskLevel);
 }
 

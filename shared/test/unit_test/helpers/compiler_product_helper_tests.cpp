@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -29,20 +30,24 @@ HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCal
     EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
 }
 
+TEST(CompilerProductHelperTest, GivenIgcLibraryNameDebugKeyWhenQueryingForCustomIgcLibraryNameThenDebugKeyValueisReturned) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.IgcLibraryName.set("my_custom_igc.so");
+    auto compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("my_custom_igc.so", compilerProductHelper->getCustomIgcLibraryName());
+}
+
 TEST(CompilerProductHelperTest, WhenCompilerProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, CompilerProductHelper::create(IGFX_UNKNOWN));
 }
 
-using IsBeforeXeHpc = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
-
-HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsBeforeXeHpc) {
+HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsAtMostXeHpgCore) {
     auto &compilerProductHelper = getHelper<CompilerProductHelper>();
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
-using IsAtLeastXeHpc = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
-
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStatelessRequiredThenCorrectResultIsReturned, IsAtLeastXeHpc) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStatelessRequiredThenCorrectResultIsReturned, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
@@ -51,32 +56,16 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStateless
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
 
     debugManager.flags.DisableForceToStateless.set(true);
-    if constexpr (FamilyType::isHeaplessRequired()) {
-        EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
-    } else {
-        EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
-    }
+    EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlockIoIsSupported, MatchAny) {
+HWTEST_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlockIoIsSupported) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_TRUE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenDotAccumulateIsSupported, IsAtLeastXeHpCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isDotAccumulateSupported());
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenDotAccumulateIsNotSupported, IsGen12LP) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isDotAccumulateSupported());
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_TRUE(compilerProductHelper.isCreateBufferWithPropertiesSupported());
@@ -255,20 +244,20 @@ HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThe
     EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtMostXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsGen12LP) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_EQ(compilerProductHelper.getCachingPolicyOptions(false), nullptr);
     EXPECT_EQ(compilerProductHelper.getCachingPolicyOptions(true), nullptr);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
@@ -278,7 +267,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     debugManager.flags.ForceAllResourcesUncached.set(true);
@@ -289,7 +278,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForc
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(5);
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
@@ -312,53 +301,28 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressTh
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersionAtLeast20ThenReportsClExtFloatAtomicsExtension) {
+TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.clVersionSupport = 20;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 21;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 30;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 12;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrExternalMemoryExtension) {
+TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
 
-    hwInfo.capabilityTable.clVersionSupport = 30;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
-
-    hwInfo.capabilityTable.clVersionSupport = 21;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ClKhrExternalMemoryExtension.set(0);
 
-    hwInfo.capabilityTable.clVersionSupport = 30;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenAtLeastGen12lpDeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenTrueReturned, MatchAny) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isDotIntegerProductExtensionSupported());
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenConfigWhenMatchConfigWithRevIdThenProperConfigIsReturned, IsNotPvcOrDg2) {
@@ -388,7 +352,7 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
 
 HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned, IsAtMostXe3Core) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());
+    EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 }
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
@@ -405,13 +369,9 @@ HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsR
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
-    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
-        ASSERT_EQ(4U, versions.size());
-        EXPECT_EQ(3, versions[3].major);
-        EXPECT_EQ(0, versions[3].minor);
-    } else {
-        EXPECT_EQ(3U, versions.size());
-    }
+    ASSERT_EQ(4U, versions.size());
+    EXPECT_EQ(3, versions[3].major);
+    EXPECT_EQ(0, versions[3].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToProvidedMax) {
@@ -440,13 +400,9 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
-    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
-        ASSERT_EQ(4U, versions.size());
-        EXPECT_EQ(3, versions[3].major);
-        EXPECT_EQ(0, versions[3].minor);
-    } else {
-        EXPECT_EQ(3U, versions.size());
-    }
+    ASSERT_EQ(4U, versions.size());
+    EXPECT_EQ(3, versions[3].major);
+    EXPECT_EQ(0, versions[3].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {

@@ -6,12 +6,13 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/os_interface/linux/cache_info.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
 
 namespace L0 {
+struct Device;
 
 class CacheReservationImpl : public CacheReservation {
   public:

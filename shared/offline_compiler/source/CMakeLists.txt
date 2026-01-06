@@ -34,6 +34,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions_extra.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.cpp
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/aot_platforms/neo_aot_platforms.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
@@ -66,26 +67,27 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy.h
-    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_tgllp_and_later.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_dg2_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_gen12lp.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_from_xe_hpg_to_xe3.inl
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
-    ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.h
     ${NEO_SHARED_DIRECTORY}/helpers/path.h
+    ${NEO_SHARED_DIRECTORY}/helpers/${BRANCH_DIR_SUFFIX}product_config_helper_extra.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
+    ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper_former.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper_former.h
     ${NEO_SHARED_DIRECTORY}/kernel/${BRANCH_DIR_SUFFIX}kernel_descriptor_ext.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
-    ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
     ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp
+    ${OCLOC_DIRECTORY}/source/debug_variables_helper_ocloc.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
@@ -123,6 +125,10 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler.h
     ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
+    ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
+    ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader.cpp
+    ${NEO_SOURCE_DIR}/shared/source/utilities/debug_file_reader.cpp
+    ${NEO_SOURCE_DIR}/shared/source/os_interface/debug_env_reader.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
     ${OCLOC_DIRECTORY}/source/offline_linker.cpp
     ${OCLOC_DIRECTORY}/source/offline_linker.h
@@ -157,7 +163,9 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
        ${NEO_SHARED_DIRECTORY}/ail/windows${BRANCH_DIR_SUFFIX}/ail_ov_comp_wa_windows.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/windows/debug_registry_reader.cpp
        ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
+       ${OCLOC_DIRECTORY}/source/windows/ocloc_reg_path.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
@@ -167,14 +175,16 @@ else()
        ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_inc.h
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_helper.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/settings_reader_create.cpp
        ${NEO_SHARED_DIRECTORY}/helpers/linux/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${NEO_SHARED_DIRECTORY}/ail/linux/ail_ov_comp_wa_linux.cpp
-       ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
+       ${OCLOC_DIRECTORY}/source/linux/ocloc_reg_path.cpp
   )
 endif()
 
@@ -190,36 +200,43 @@ foreach(OCLOC_SUPPORT_VAR ${OCLOC_SUPPORT_VARS})
 endforeach()
 
 macro(SET_FLAGS_FOR CORE_TYPE)
-  foreach(SKU_NAME ${ARGN})
-    if(SUPPORT_${SKU_NAME} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
-      if(NOT SUPPORT_${CORE_TYPE})
-        message(STATUS "Auto-Enabling ${CORE_TYPE} support for ${SKU_NAME} in ocloc")
-        set(SUPPORT_${CORE_TYPE} TRUE)
-      endif()
-    endif()
-    string(TOLOWER ${CORE_TYPE} MAP_${SKU_NAME}_CORE_lower)
-    string(TOLOWER ${SKU_NAME} MAP_${SKU_NAME}_lower)
-    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}${CORE_SUFFIX}")
-    set(MAP_${SKU_NAME}_lower ${MAP_${SKU_NAME}_lower})
-  endforeach()
-
-  if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
-    set(SUPPORT_${CORE_TYPE} TRUE)
-  elseif(NOT SUPPORT_${CORE_TYPE})
-    set(SUPPORT_${CORE_TYPE} ${SUPPORT_GEN_DEFAULT})
-  endif()
-
-  if(SUPPORT_${CORE_TYPE} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
-    list(APPEND ALL_SUPPORTED_CORE_FAMILIES ${CORE_TYPE})
-    list(REMOVE_DUPLICATES ALL_SUPPORTED_CORE_FAMILIES)
-
-    foreach(${CORE_TYPE}_PLATFORM ${ARGN})
-      if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
-        set(SUPPORT_${${CORE_TYPE}_PLATFORM} TRUE)
-      elseif(NOT SUPPORT_${${CORE_TYPE}_PLATFORM})
-        set(SUPPORT_${${CORE_TYPE}_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT})
+  if(NOT OCLOC_DISABLE_${CORE_TYPE})
+    set(ANY_SKU_IN_CORE FALSE)
+    foreach(SKU_NAME ${ARGN})
+      if(NOT OCLOC_DISABLE_${SKU_NAME})
+        set(ANY_SKU_IN_CORE TRUE)
+        if(SUPPORT_${SKU_NAME} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+          if(NOT SUPPORT_${CORE_TYPE})
+            message(STATUS "Auto-Enabling ${CORE_TYPE} support for ${SKU_NAME} in ocloc")
+            set(SUPPORT_${CORE_TYPE} TRUE)
+          endif()
+        endif()
+        string(TOLOWER ${CORE_TYPE} MAP_${SKU_NAME}_CORE_lower)
+        string(TOLOWER ${SKU_NAME} MAP_${SKU_NAME}_lower)
+        set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}${CORE_SUFFIX}")
+        set(MAP_${SKU_NAME}_lower ${MAP_${SKU_NAME}_lower})
       endif()
     endforeach()
+    if(ANY_SKU_IN_CORE)
+      if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+        set(SUPPORT_${CORE_TYPE} TRUE)
+      elseif(NOT SUPPORT_${CORE_TYPE})
+        set(SUPPORT_${CORE_TYPE} ${SUPPORT_GEN_DEFAULT})
+      endif()
+
+      if(SUPPORT_${CORE_TYPE} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+        list(APPEND ALL_SUPPORTED_CORE_FAMILIES ${CORE_TYPE})
+        list(REMOVE_DUPLICATES ALL_SUPPORTED_CORE_FAMILIES)
+
+        foreach(${CORE_TYPE}_PLATFORM ${ARGN})
+          if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+            set(SUPPORT_${${CORE_TYPE}_PLATFORM} TRUE)
+          elseif(NOT SUPPORT_${${CORE_TYPE}_PLATFORM})
+            set(SUPPORT_${${CORE_TYPE}_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT})
+          endif()
+        endforeach()
+      endif()
+    endif()
   endif()
 endmacro()
 
@@ -338,7 +355,12 @@ set(CLOC_LIB_SRCS
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
 )
-add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS})
+add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS}
+            ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader_creator.cpp
+            ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
+)
+remove_definitions(-DPURGE_DEBUG_KEY_NAMES=0 -DPURGE_DEBUG_KEY_NAMES=1)
+add_definitions(-DPURGE_DEBUG_KEY_NAMES=0 -DOCLOC_ALLOW_REGKEYS=1)
 add_subdirectories()
 
 create_project_source_tree(${OCLOC_NAME}_lib)

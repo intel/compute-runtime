@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -116,12 +117,13 @@ TEST(DrmTest, givenEngineQueryOnIncorrectSetupWithZeroEnginesThenProperDebugMess
     auto ioctlHelper = std::make_unique<MockIoctlHelperEngineInfoDetection>(*drm);
     drm->ioctlHelper.reset(ioctlHelper.release());
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     drm->queryEngineInfo();
     EXPECT_EQ(0u, drm->engineInfo.get()->getEngineInfos().size());
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expectedError = "FATAL: Engine info size is equal to 0.\n";
 
     EXPECT_EQ(output, expectedError);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 namespace NEO {
 
 void translateDebugSettings(DebugVariables &debugVariables) {
-    translateDebugSettingsBase(debugVariables);
 }
 
 } // namespace NEO

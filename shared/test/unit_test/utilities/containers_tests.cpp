@@ -10,7 +10,6 @@
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 #include "shared/source/utilities/lookup_array.h"
-#include "shared/source/utilities/range.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
@@ -21,6 +20,7 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -1032,7 +1032,7 @@ TEST(IDRefList, GivenRecursiveLockWhenExecutingThenListIsNotEmpty) {
     ASSERT_FALSE(list.peekIsEmpty());
 }
 
-// Checks if a pointer is contained (in terms of continous memory) within given object
+// Checks if a pointer is contained (in terms of continuous memory) within given object
 template <typename ContainerType>
 bool contains(const ContainerType *container, const void *ptr) {
     uintptr_t base = (intptr_t)container;
@@ -1410,7 +1410,7 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
             this->data = new int[100];
         }
 
-        Element(Element &&rhs) {
+        Element(Element &&rhs) noexcept {
             this->v = rhs.v;
             this->data = rhs.data;
             rhs.data = nullptr;
@@ -1423,7 +1423,7 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
             return *this;
         }
 
-        Element &operator=(Element &&rhs) {
+        Element &operator=(Element &&rhs) noexcept {
             this->v = rhs.v;
             delete[] this->data;
             this->data = rhs.data;
@@ -1493,6 +1493,26 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
     EXPECT_NE(nullptr, vec[1].data);
     EXPECT_NE(nullptr, vec[2].data);
     EXPECT_FALSE(contains(&vec, &*vec.begin()));
+}
+
+TEST(StackVec, GivenNoDefaultValueWhenResizingThenDontUseCopyAssignment) {
+    struct Element {
+        Element() = default;
+
+        Element(Element &&rhs) = default;
+        Element &operator=(Element &&rhs) = default;
+
+        Element(const Element &rhs) = delete;
+        Element &operator=(const Element &rhs) = delete;
+
+        int v = 9;
+    };
+
+    StackVec<Element, 5> vec;
+    vec.resize(3);
+    EXPECT_EQ(9, vec[0].v);
+    EXPECT_EQ(9, vec[1].v);
+    EXPECT_EQ(9, vec[2].v);
 }
 
 TEST(StackVec, WhenIteratingThenCorrectElementsAreReturned) {
@@ -1892,48 +1912,6 @@ TEST(ArrayRef, GivenArraysContainingSameDataWhenComparingThenEqualReturnsTrue) {
     ArrayRef<char> arrayA{dataA, sizeof(dataA)};
     ArrayRef<char> arrayB{dataB, sizeof(dataB)};
     EXPECT_TRUE(arrayA == arrayB);
-}
-
-TEST(Range, GivenRangeThenValidStandardIteratorsAreAvailable) {
-    int tab[10] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
-    Range<int> range = tab;
-    const Range<int> &constantRange = range;
-    Range<int> emptyRange{nullptr, 0};
-    EXPECT_EQ(0U, emptyRange.size());
-    EXPECT_TRUE(emptyRange.empty());
-    EXPECT_EQ(10U, constantRange.size());
-    EXPECT_FALSE(constantRange.empty());
-
-    auto rangeFwdIt = range.begin();
-    auto rangeFwdEnd = range.end();
-    auto rangeBackIt = range.rbegin();
-    auto rangeBackEnd = range.rend();
-
-    auto constantRangeFwdIt = constantRange.begin();
-    auto constantRangeFwdEnd = constantRange.end();
-    auto constantRangeBackIt = constantRange.rbegin();
-    auto constantRangeBackEnd = constantRange.rend();
-    for (int i = 0; i < 10; ++i, ++rangeFwdIt, ++rangeBackIt, ++constantRangeFwdIt, ++constantRangeBackIt) {
-        EXPECT_EQ(tab[i], *rangeFwdIt) << " it : " << i;
-        EXPECT_EQ(tab[i], *constantRangeFwdIt) << " it : " << i;
-        EXPECT_NE(rangeFwdEnd, rangeFwdIt) << " it : " << i;
-        EXPECT_NE(constantRangeFwdEnd, constantRangeFwdIt) << " it : " << i;
-
-        EXPECT_EQ(tab[10 - 1 - i], *rangeBackIt) << " it : " << i;
-        EXPECT_EQ(tab[10 - 1 - i], *constantRangeBackIt) << " it : " << i;
-        EXPECT_NE(rangeBackEnd, rangeBackIt) << " it : " << i;
-        EXPECT_NE(constantRangeBackEnd, constantRangeBackIt) << " it : " << i;
-    }
-
-    EXPECT_EQ(rangeFwdEnd, rangeFwdIt);
-    EXPECT_EQ(constantRangeFwdEnd, constantRangeFwdIt);
-    EXPECT_EQ(rangeBackEnd, rangeBackIt);
-    EXPECT_EQ(constantRangeBackEnd, constantRangeBackIt);
-
-    std::vector<int> vec(&tab[0], &tab[10]);
-    Range<int> rangeFromVec = vec;
-    EXPECT_EQ(&*vec.begin(), &*rangeFromVec.begin());
-    EXPECT_EQ(&*vec.rbegin(), &*rangeFromVec.rbegin());
 }
 
 TEST(ArrayRef, WhenFromAnyIsCalledThenPointerIsReinterpretedAndSizeIsAdjusted) {

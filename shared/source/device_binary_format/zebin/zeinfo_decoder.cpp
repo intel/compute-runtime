@@ -15,7 +15,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
@@ -121,7 +120,7 @@ DecodeError extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, con
 
 bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::string &outErrReason) {
     ConstStringRef context = "DeviceBinaryFormat::zebin::ZeInfo";
-    bool valid = validateCountExactly(zeInfoSections.kernels, 1U, outErrReason, "kernels", context);
+    bool valid = validateCountAtMost(zeInfoSections.kernels, 1U, outErrReason, "kernels", context);
     valid &= validateCountAtMost(zeInfoSections.version, 1U, outErrReason, "version", context);
     valid &= validateCountAtMost(zeInfoSections.globalHostAccessTable, 1U, outErrReason, "global host access table", context);
     valid &= validateCountAtMost(zeInfoSections.functions, 1U, outErrReason, "functions", context);
@@ -305,6 +304,10 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
         extFunInfo.numGrfRequired = static_cast<uint16_t>(execEnv.grfCount);
         extFunInfo.simdSize = static_cast<uint8_t>(execEnv.simdSize);
         extFunInfo.hasRTCalls = execEnv.hasRTCalls;
+        extFunInfo.hasPrintfCalls = execEnv.hasPrintfCalls;
+        extFunInfo.hasIndirectCalls = execEnv.hasIndirectCalls;
+        extFunInfo.requireAssertBuffer = execEnv.requireAssertBuffer;
+        extFunInfo.requireSyncBuffer = execEnv.requireSyncBuffer;
         dst.externalFunctions.push_back(extFunInfo);
     }
 
@@ -519,15 +522,17 @@ DecodeError decodeZeInfoFunctions(ProgramInfo &dst, Yaml::YamlParser &parser, co
 }
 
 DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion) {
-    UNRECOVERABLE_IF(zeInfoSections.kernels.size() != 1U);
-    for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
-        if (DecodeError::success != zeInfoErr) {
-            return zeInfoErr;
-        }
+    if (zeInfoSections.kernels.size() > 0) {
 
-        dst.kernelInfos.push_back(kernelInfo.release());
+        for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
+            auto kernelInfo = std::make_unique<KernelInfo>();
+            auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
+            if (DecodeError::success != zeInfoErr) {
+                return zeInfoErr;
+            }
+
+            dst.kernelInfos.push_back(kernelInfo.release());
+        }
     }
     return DecodeError::success;
 }
@@ -686,8 +691,20 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.privateSize, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::spillSize == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.spillSize, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::requireImplicitArgBuffer == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireImplicitArgBuffer, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::actualKernelStartOffset == key) {
             // ignore intentionally - deprecated and redundant key
+        } else if (Tags::Kernel::ExecutionEnv::hasLscStoresWithNonDefaultL1CacheControls == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasLscStoresWithNonDefaultL1CacheControls, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::hasPrintfCalls == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasPrintfCalls, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::hasIndirectCalls == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasIndirectCalls, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::requireAssertBuffer == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireAssertBuffer, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::requireSyncBuffer == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireSyncBuffer, context, outErrReason);
         } else {
             readZeInfoValueCheckedExtra(parser, execEnvMetadataNd, outExecEnv, context, key, outErrReason, outWarning, validExecEnv, err);
         }
@@ -718,6 +735,11 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.usesSystolicPipelineSelectMode = execEnv.hasDpas;
     dst.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
     dst.kernelAttributes.flags.hasSample = execEnv.hasSample;
+    dst.kernelAttributes.flags.requiresImplicitArgs = execEnv.requireImplicitArgBuffer;
+    dst.kernelAttributes.flags.hasIndirectCalls = execEnv.hasIndirectCalls;
+    dst.kernelAttributes.flags.usesPrintf = execEnv.hasPrintfCalls;
+    dst.kernelAttributes.flags.usesAssert = execEnv.requireAssertBuffer;
+    dst.kernelAttributes.flags.usesSyncBuffer = execEnv.requireSyncBuffer;
     dst.kernelAttributes.barrierCount = execEnv.barrierCount;
     dst.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;
     dst.kernelAttributes.inlineDataPayloadSize = static_cast<uint16_t>(execEnv.inlineDataPayloadSize);
@@ -801,6 +823,9 @@ DecodeError readZeInfoAttributes(const Yaml::YamlParser &parser, const Yaml::Nod
             outAttributes.invalidKernel = parser.readValue(attributesMetadataNd);
         } else if (key == Tags::Kernel::Attributes::vecTypeHint) {
             outAttributes.vecTypeHint = parser.readValue(attributesMetadataNd);
+        } else if (key == Tags::Kernel::Attributes::intelReqdThreadgroupDispatchSize) {
+            outAttributes.intelReqdThreadgroupDispatchSize = AttributeTypes::Defaults::intelReqdThreadgroupDispatchSize;
+            validAttributes &= readZeInfoValueChecked(parser, attributesMetadataNd, *outAttributes.intelReqdThreadgroupDispatchSize, context, outErrReason);
         } else if (key.contains(Tags::Kernel::Attributes::hintSuffix.data())) {
             outAttributes.otherHints.push_back({key, parser.readValue(attributesMetadataNd)});
         } else {
@@ -849,10 +874,12 @@ void populateKernelSourceAttributes(NEO::KernelDescriptor &dst, const KernelAttr
     appendAttributeIfSet(languageAttributes, AttributeTags::workgroupSizeHint, attributes.workgroupSizeHint);
     appendAttributeIfSet(languageAttributes, AttributeTags::vecTypeHint, attributes.vecTypeHint);
     appendAttributeIfSet(languageAttributes, AttributeTags::invalidKernel, attributes.invalidKernel);
+    appendAttributeIfSet(languageAttributes, AttributeTags::intelReqdThreadgroupDispatchSize, attributes.intelReqdThreadgroupDispatchSize);
 
     dst.kernelAttributes.flags.isInvalid = attributes.invalidKernel.has_value();
     dst.kernelAttributes.flags.requiresWorkgroupWalkOrder = attributes.intelReqdWorkgroupWalkOrder.has_value();
     dst.kernelMetadata.requiredSubGroupSize = static_cast<uint8_t>(attributes.intelReqdSubgroupSize.value_or(0U));
+    dst.kernelMetadata.requiredThreadGroupDispatchSize = static_cast<uint8_t>(attributes.intelReqdThreadgroupDispatchSize.value_or(0U));
 }
 
 DecodeError decodeZeInfoKernelDebugEnvironment(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning) {
@@ -1050,6 +1077,13 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
                     bindfulImageAccess = true;
                 }
             }
+
+            if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessWriteOnly ||
+                    dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessReadWrite) {
+                    dst.kernelAttributes.hasImageWriteArg = true;
+                }
+            }
         }
 
         const auto implicitArgsVec = dst.getImplicitArgBindlessCandidatesVec();
@@ -1091,7 +1125,8 @@ DecodeError readZeInfoPayloadArguments(const Yaml::YamlParser &parser, const Yam
         for (const auto &payloadArgumentMemberNd : parser.createChildrenRange(payloadArgumentNd)) {
             auto key = parser.readKey(payloadArgumentMemberNd);
             if (Tags::Kernel::PayloadArgument::argType == key) {
-                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.argType, context, outErrReason);
+                validPayload &= readZeInfoArgTypeNameCheckedExt(parser, payloadArgumentMemberNd, payloadArgMetadata) ||
+                                readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.argType, context, outErrReason);
             } else if (Tags::Kernel::PayloadArgument::argIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.argIndex);
                 outMaxPayloadArgumentIndex = std::max<int32_t>(outMaxPayloadArgumentIndex, payloadArgMetadata.argIndex);
@@ -1139,14 +1174,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     }
 
     auto &explicitArgs = dst.payloadMappings.explicitArgs;
-    auto getVmeDescriptor = [&src, &dst]() {
-        auto &argsExt = dst.payloadMappings.explicitArgsExtendedDescriptors;
-        argsExt.resize(dst.payloadMappings.explicitArgs.size());
-        if (argsExt[src.argIndex] == nullptr) {
-            argsExt[src.argIndex] = std::make_unique<ArgDescVme>();
-        }
-        return static_cast<ArgDescVme *>(argsExt[src.argIndex].get());
-    };
 
     const auto &kernelName = dst.kernelMetadata.kernelName;
     auto populateArgPointerStateless = [&src](auto &arg) {
@@ -1199,6 +1226,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     switch (src.argType) {
     default:
+        if (DecodeError::success == populateKernelPayloadArgumentExt(dst, src, outErrReason)) {
+            return DecodeError::success;
+        }
         outErrReason.append("DeviceBinaryFormat::zebin : Invalid arg type in cross thread data section in context of : " + kernelName + ".\n");
         return DecodeError::invalidBinary; // unsupported
 
@@ -1230,21 +1260,12 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             }
 
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
-            extendedInfo.isMediaImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMedia);
             extendedInfo.isMediaBlockImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMediaBlock);
             extendedInfo.isTransformable = src.imageTransformable;
             dst.kernelAttributes.flags.usesImages = true;
         } break;
         case Types::Kernel::PayloadArgument::addressSpaceSampler: {
-            using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
-            auto &extendedInfo = arg.getExtendedTypeInfo();
-            extendedInfo.isAccelerator = (src.samplerType == SamplerType::samplerTypeVME) ||
-                                         (src.samplerType == SamplerType::samplerTypeVE) ||
-                                         (src.samplerType == SamplerType::samplerTypeVD);
-            const bool usesVme = src.samplerType == SamplerType::samplerTypeVME;
-            extendedInfo.hasVmeExtendedDescriptor = usesVme;
-            dst.kernelAttributes.flags.usesVme = usesVme;
             dst.kernelAttributes.flags.usesSamplers = true;
         } break;
         }
@@ -1303,7 +1324,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 dst.kernelAttributes.numArgsStateful++;
             } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).bindless = src.offset;
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).size = src.size;
                 dst.kernelAttributes.numArgsStateful++;
+                dst.kernelAttributes.numBindlessImages++;
             } else {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).index = src.samplerIndex;
@@ -1460,18 +1483,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     case Types::Kernel::argTypeSamplerSnapWa:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerSnapWa);
 
-    case Types::Kernel::argTypeVmeMbBlockType:
-        return populateWithOffset(getVmeDescriptor()->mbBlockType);
-
-    case Types::Kernel::argTypeVmeSubpixelMode:
-        return populateWithOffset(getVmeDescriptor()->subpixelMode);
-
-    case Types::Kernel::argTypeVmeSadAdjustMode:
-        return populateWithOffset(getVmeDescriptor()->sadAdjustMode);
-
-    case Types::Kernel::argTypeVmeSearchPathType:
-        return populateWithOffset(getVmeDescriptor()->searchPathType);
-
     case Types::Kernel::argTypeRegionGroupSize:
         return populateArgVec(dst.payloadMappings.dispatchTraits.regionGroupSize, Tags::Kernel::PayloadArgument::ArgType::regionGroupSize);
 
@@ -1487,6 +1498,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypeInlineSampler:
         return populateInlineSampler(dst, Tags::Kernel::PayloadArgument::ArgType::inlineSampler);
+
+    case Types::Kernel::argTypeBufferSize:
+        return populateWithOffsetChecked(dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).bufferSize, sizeof(int64_t), Tags::Kernel::PayloadArgument::ArgType::bufferSize);
     }
 
     UNREACHABLE();

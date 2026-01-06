@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
+struct Device;
+
 namespace ult {
 
 MockDeviceForBuiltinTests::MockModuleForBuiltinTests::MockModuleForBuiltinTests(Device *device, ModuleType type) : ModuleImp(device, nullptr, type){};
@@ -19,9 +21,6 @@ ze_result_t MockDeviceForBuiltinTests::MockModuleForBuiltinTests::createKernel(c
 
     *kernelHandle = new Mock<KernelImp>();
     return ZE_RESULT_SUCCESS;
-}
-
-MockDeviceForBuiltinTests::MockDeviceForBuiltinTests(NEO::Device *device) : MockDeviceImp(device, device->getExecutionEnvironment()) {
 }
 
 ze_result_t MockDeviceForBuiltinTests::createModule(const ze_module_desc_t *desc,

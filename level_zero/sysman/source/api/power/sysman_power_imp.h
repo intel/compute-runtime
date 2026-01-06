@@ -14,6 +14,8 @@
 namespace L0 {
 namespace Sysman {
 class OsPower;
+struct OsSysman;
+
 class PowerImp : public Power, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t powerGetProperties(zes_power_properties_t *pProperties) override;

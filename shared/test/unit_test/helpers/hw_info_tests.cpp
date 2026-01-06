@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -48,4 +50,31 @@ TEST(HwInfoTest, givenHwInfoWhenQueryNumSubSlicesPerSliceThenCorrectNumberIsRetu
     hwInfo.gtSystemInfo.SubSliceCount = 7;
     uint32_t expectedNumSubSlicesPerSlice = 4;
     EXPECT_EQ(getNumSubSlicesPerSlice(hwInfo), expectedNumSubSlicesPerSlice);
+}
+
+TEST(HwInfoTest, whenGettingHwInfoForUnspecifiedPlatformStringThenSuccessIsReturned) {
+    HardwareInfo hwInfo{};
+    const HardwareInfo *pHwInfo = &hwInfo;
+    std::string unspecifiedPlatform = debugManager.flags.ProductFamilyOverride.get();
+    EXPECT_TRUE(getHwInfoForPlatformString(unspecifiedPlatform, pHwInfo));
+    EXPECT_EQ(pHwInfo, &hwInfo);
+}
+
+TEST(HwInfoTest, whenGettingHwInfoForUnknownPlatformStringThenFailureIsReturned) {
+    HardwareInfo hwInfo{};
+    const HardwareInfo *pHwInfo = &hwInfo;
+    std::string invalidPlatformString = "invalid";
+    EXPECT_FALSE(getHwInfoForPlatformString(invalidPlatformString, pHwInfo));
+}
+
+TEST(HwInfoTest, whenApplyDebugOverrideCalledThenDebugVariablesAreApplied) {
+    DebugManagerStateRestore debugRestorer;
+    debugManager.flags.OverrideNumThreadsPerEu.set(123);
+
+    HardwareInfo hwInfo{};
+    hwInfo.gtSystemInfo.EUCount = 2;
+
+    applyDebugOverrides(hwInfo);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu, 123u);
+    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, hwInfo.gtSystemInfo.EUCount * 123u);
 }

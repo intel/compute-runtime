@@ -66,6 +66,10 @@ void sfence() {
 #endif
 }
 
+void mfence() {
+    _mm_mfence();
+}
+
 void pause() {
 #if defined(__riscv)
     __asm__ volatile("fence"::);
@@ -97,7 +101,9 @@ void umonitor(void *a) {
 }
 
 uint64_t rdtsc() {
-#if defined(__riscv)
+#if defined(__ARM_ARCH)
+    return 0;
+#elif defined(__riscv)
     std::uint64_t val = 0;
     __asm__ __volatile__(
        "rdtime %0;\n"

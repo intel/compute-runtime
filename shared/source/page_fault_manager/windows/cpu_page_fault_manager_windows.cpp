@@ -79,8 +79,6 @@ void PageFaultManagerWindows::protectCpuMemoryFromWrites(void *ptr, size_t size)
     UNRECOVERABLE_IF(!retVal);
 }
 
-void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
-
 void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) {
     NEO::SvmAllocationData *allocData = this->memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);
@@ -89,7 +87,7 @@ void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, 
         auto &residencyController = static_cast<OsContextWin *>(&csr.getOsContext())->getResidencyController();
 
         auto lock = residencyController.acquireLock();
-        auto &evictContainer = csr.getEvictionAllocations();
+        auto &evictContainer = residencyController.getEvictionAllocations();
         auto iter = std::find(evictContainer.begin(), evictContainer.end(), allocData->cpuAllocation);
         auto allocInEvictionList = iter != evictContainer.end();
         if (evict && !allocInEvictionList) {

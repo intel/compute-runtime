@@ -17,8 +17,8 @@ namespace NEO {
 using CIFBuffer = CIF::Builtins::BufferSimple;
 class OsLibrary;
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
@@ -35,8 +35,8 @@ inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationC
     return ret;
 }
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
@@ -65,8 +65,8 @@ inline bool getSpecConstantsInfoImpl(TranslationCtx *tCtx,
 }
 
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
@@ -93,7 +93,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
     libraryProperties.errorValue = &loadLibraryError;
     auto lib = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc(libraryProperties));
     if (lib == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
         DEBUG_BREAK_IF(true); // could not load library
         return false;
     }
@@ -109,7 +109,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
 
     std::vector<CIF::InterfaceId_t> interfacesToIgnore{IGC::OclGenBinaryBase::GetInterfaceId()};
     if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         return false;
     }

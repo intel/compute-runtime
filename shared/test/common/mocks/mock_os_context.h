@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,30 @@ class OsContextMock : public OsContext {
     using OsContext::engineUsage;
     using OsContext::getDeviceBitfield;
 
+    using OsContext::getEngineType;
+    using OsContext::getUmdPowerHintMax;
+    using OsContext::isDirectSubmissionAvailable;
+    using OsContext::isDirectSubmissionSupported;
+    using OsContext::OsContext;
+    using OsContext::setDefaultContext;
+    using OsContext::setUmdPowerHintValue;
+
     OsContextMock(uint32_t contextId, const EngineDescriptor &engineDescriptorHelper)
         : OsContext(0, contextId, engineDescriptorHelper) {}
 
     uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override { return offlineDumpCtxId; };
+
+    bool isDirectSubmissionSupported() const override {
+        if (callBaseIsDirectSubmissionSupported) {
+            return OsContext::isDirectSubmissionSupported();
+        }
+        return mockDirectSubmissionSupported;
+    }
+
     uint64_t offlineDumpCtxId = 0;
+
+    bool callBaseIsDirectSubmissionSupported = true;
+    bool mockDirectSubmissionSupported = false;
 };
 
 } // namespace NEO

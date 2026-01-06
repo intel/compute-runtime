@@ -146,7 +146,7 @@ ze_result_t readMcChannelCounters(std::map<std::string, uint64_t> keyOffsetMap, 
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
             if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, val)) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             counterValues[counterIndex] += val;
@@ -184,17 +184,17 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     }
     keyOffsetMap = keyOffsetMapEntry->second;
 
-    result = readMcChannelCounters(keyOffsetMap, pBandwidth->readCounter, pBandwidth->writeCounter, telemDir, telemOffset);
+    result = readMcChannelCounters(std::move(keyOffsetMap), pBandwidth->readCounter, pBandwidth->writeCounter, std::move(telemDir), telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
-    result = pSysFsAccess->read(maxBwFile, maxBw);
+    result = pSysFsAccess->read(std::move(maxBwFile), maxBw);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
@@ -214,7 +214,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
-    if (!PlatformMonitoringTech::getKeyOffsetMap(this, guid, keyOffsetMap)) {
+    if (!PlatformMonitoringTech::getKeyOffsetMap(this, std::move(guid), keyOffsetMap)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -241,6 +241,25 @@ bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) {
+
+    const std::string pathForLmemQuota = "/gt/lmem_quota";
+    std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
+
+    auto result = pSysfsAccess->read(std::move(pathForDeviceMemQuota), lMemQuota);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

@@ -17,15 +17,35 @@ void readZeInfoValueCheckedExtra(const NEO::Yaml::YamlParser &parser, const NEO:
     encounterUnknownZeInfoAttribute(entry.str(), outErrReason, outWarning, error);
 }
 
-namespace Types::Kernel::ExecutionEnv {
-ExecutionEnvExt *allocateExecEnvExt() {
-    return nullptr;
+bool readZeInfoArgTypeNameCheckedExt(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &payloadArgumentMemberNd, KernelPayloadArgBaseT &outKernelPayArg) {
+    return false;
 }
-void freeExecEnvExt(ExecutionEnvExt *envExt) {
-}
-} // namespace Types::Kernel::ExecutionEnv
 
 void populateKernelExecutionEnvironmentExt(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion) {
 }
 
+DecodeError populateKernelPayloadArgumentExt(NEO::KernelDescriptor &dst, const KernelPayloadArgBaseT &src, std::string &outErrReason) {
+    return DecodeError::unhandledBinary;
+}
+
 } // namespace NEO::Zebin::ZeInfo
+
+template <>
+void cloneExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT> &dst, const NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT &src) {
+}
+
+template <>
+void destroyExt(NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT *dst) {
+}
+
+template <>
+void cloneExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt> &dst, const NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt &src) {
+}
+
+template <>
+void destroyExt(NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt *dst) {
+}
+
+template <>
+void allocateExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt> &dst) {
+}

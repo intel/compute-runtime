@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,16 @@
 
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
 
-#include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/program/kernel_info.h"
-
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
 
 KernelImageArgTest::~KernelImageArgTest() = default;
+KernelImageArgTest::KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
     pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -70,7 +67,7 @@ void KernelImageArgTest::SetUp() {
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    image.reset(Image2dHelper<>::create(context.get()));
+    image.reset(Image2dHelperUlt<>::create(context.get()));
     ASSERT_NE(nullptr, image);
 }
 

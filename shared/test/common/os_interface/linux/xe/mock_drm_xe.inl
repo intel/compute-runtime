@@ -7,6 +7,7 @@
 
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;
+inline constexpr int testValuePciBarrierOff = 0x99aa;
 inline constexpr int testValuePrime = 0x4321;
 inline constexpr uint32_t testValueGemCreate = 0x8273;
 struct DrmMockXe : public DrmMockCustom {
@@ -15,14 +16,18 @@ struct DrmMockXe : public DrmMockCustom {
     static std::unique_ptr<DrmMockXe> create(RootDeviceEnvironment &rootDeviceEnvironment);
 
     void testMode(int f, int a = 0);
+    void testModeMulti(const std::initializer_list<int> &answers);
+    int getIoctlAnswer();
     int ioctl(DrmIoctl request, void *arg) override;
     virtual void handleUserFenceWaitExtensions(drm_xe_wait_user_fence *userFenceWait) {}
     virtual void handleContextCreateExtensions(drm_xe_user_extension *extension) {}
 
     void addMockedQueryTopologyData(uint16_t gtId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask);
+    void changeTilesQueryDataToIrregular();
 
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
+    std::queue<int> setIoctlAnswers;
     int gemVmBindReturn = 0;
     GemClose passedGemClose{};
     int gemCloseCalled = 0;
@@ -32,7 +37,6 @@ struct DrmMockXe : public DrmMockCustom {
     uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
     uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
-    static constexpr int32_t mockDefaultCxlType = 0;
     static constexpr uint32_t mockTimestampFrequency = 12500000;
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[52]{}; // 1 qword for num engines and 4 qwords per engine

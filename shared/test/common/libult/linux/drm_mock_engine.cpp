@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,20 @@ void DrmMockEngine::handleQueryItem(QueryItem *queryItem) {
                 EXPECT_EQ(deviceBlobSize, queryItem->length);
                 auto deviceBlobData = reinterpret_cast<uint32_t *>(queryItem->dataPtr);
                 memcpy(deviceBlobData, &dummyDeviceBlobData, deviceBlobSize);
+                adjustL3BankGroupsInfo(queryItem);
             }
+        }
+    }
+}
+
+void DrmMockEngine::adjustL3BankGroupsInfo(QueryItem *queryItem) {
+    auto blobData = reinterpret_cast<uint32_t *>(queryItem->dataPtr);
+    auto blobSize = static_cast<size_t>(queryItem->length) / sizeof(uint32_t);
+    for (size_t i = 0; i < blobSize; i++) {
+        if (blobData[i] == NEO::DeviceBlobConstants::numL3BanksPerGroup && dontQueryL3BanksPerGroup) {
+            blobData[i + 2] = 0;
+        } else if (blobData[i] == NEO::DeviceBlobConstants::numL3BankGroups && dontQueryL3BankGroups) {
+            blobData[i + 2] = 0;
         }
     }
 }

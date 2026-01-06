@@ -15,7 +15,7 @@
 #include <thread>
 namespace NEO {
 
-UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner() {
+UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner(bool trimAllAllocations) : trimAllAllocations(trimAllAllocations) {
 }
 
 UnifiedMemoryReuseCleaner::~UnifiedMemoryReuseCleaner() {
@@ -23,8 +23,11 @@ UnifiedMemoryReuseCleaner::~UnifiedMemoryReuseCleaner() {
 }
 
 void UnifiedMemoryReuseCleaner::stopThread() {
-    keepCleaning.store(false);
-    runCleaning.store(false);
+    {
+        std::lock_guard<std::mutex> lock(condVarMutex);
+        keepCleaning.store(false);
+        condVar.notify_one();
+    }
     if (unifiedMemoryReuseCleanerThread) {
         unifiedMemoryReuseCleanerThread->join();
         unifiedMemoryReuseCleanerThread.reset();
@@ -33,26 +36,24 @@ void UnifiedMemoryReuseCleaner::stopThread() {
 
 void *UnifiedMemoryReuseCleaner::cleanUnifiedMemoryReuse(void *self) {
     auto cleaner = reinterpret_cast<UnifiedMemoryReuseCleaner *>(self);
-    while (!cleaner->runCleaning.load()) {
-        if (!cleaner->keepCleaning.load()) {
-            return nullptr;
-        }
-        NEO::sleep(sleepTime);
-    }
-
-    while (true) {
-        if (!cleaner->keepCleaning.load()) {
-            return nullptr;
-        }
-        NEO::sleep(sleepTime);
+    while (cleaner->keepCleaning.load()) {
+        std::unique_lock lock(cleaner->condVarMutex);
+        cleaner->wait(lock);
+        lock.unlock();
         cleaner->trimOldInCaches();
+        NEO::sleep(sleepTime);
     }
+    return nullptr;
+}
+
+void UnifiedMemoryReuseCleaner::notifySvmAllocationsCacheUpdate() {
+    std::lock_guard<std::mutex> lock(condVarMutex);
+    condVar.notify_one();
 }
 
 void UnifiedMemoryReuseCleaner::registerSvmAllocationCache(SvmAllocationCache *cache) {
     std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
     this->svmAllocationCaches.push_back(cache);
-    this->startCleaning();
 }
 
 void UnifiedMemoryReuseCleaner::unregisterSvmAllocationCache(SvmAllocationCache *cache) {
@@ -75,12 +76,14 @@ void UnifiedMemoryReuseCleaner::trimOldInCaches() {
                 }
             }
         }
-        svmAllocCache->trimOldAllocs(trimTimePoint, shouldLimitReuse);
+        svmAllocCache->trimOldAllocs(trimTimePoint, shouldLimitReuse || this->trimAllAllocations);
     }
 }
 
 void UnifiedMemoryReuseCleaner::startThread() {
-    this->unifiedMemoryReuseCleanerThread = Thread::createFunc(cleanUnifiedMemoryReuse, reinterpret_cast<void *>(this));
+    std::call_once(startThreadOnce, [this]() {
+        this->unifiedMemoryReuseCleanerThread = Thread::createFunc(cleanUnifiedMemoryReuse, reinterpret_cast<void *>(this));
+    });
 }
 
 } // namespace NEO

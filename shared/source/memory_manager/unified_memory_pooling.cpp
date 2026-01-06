@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,11 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -30,15 +32,21 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     DEBUG_BREAK_IF(nullptr == ptr);
     this->pool = ptr;
     this->svmMemoryManager = svmMemoryManager;
+    this->allocationData = svmData;
     this->poolEnd = ptrOffset(this->pool, svmData->size);
     this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  svmData->size,
                                                  chunkAlignment,
                                                  maxServicedSize / 2));
-    this->poolSize = svmData->size;
     this->poolMemoryType = svmData->memoryType;
-    this->minServicedSize = minServicedSize;
-    this->maxServicedSize = maxServicedSize;
+    this->poolInfo.minServicedSize = minServicedSize;
+    this->poolInfo.maxServicedSize = maxServicedSize;
+    this->poolInfo.poolSize = svmData->size;
+    this->device = svmData->device;
+    if (nullptr != device) {
+        allocation = svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    }
     return true;
 }
 
@@ -47,31 +55,37 @@ bool UsmMemAllocPool::isInitialized() const {
 }
 
 size_t UsmMemAllocPool::getPoolSize() const {
-    return this->poolSize;
+    return this->poolInfo.poolSize;
 }
 
 void UsmMemAllocPool::cleanup() {
     if (isInitialized()) {
-        this->svmMemoryManager->freeSVMAlloc(this->pool, true);
+        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, false);
+        DEBUG_BREAK_IF(false == status);
         this->svmMemoryManager = nullptr;
         this->pool = nullptr;
         this->poolEnd = nullptr;
-        this->poolSize = 0u;
+        this->poolInfo.poolSize = 0u;
         this->poolMemoryType = InternalMemoryType::notSpecified;
     }
 }
 
 bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
-    return alignment % chunkAlignment == 0;
+    return alignment <= poolAlignment;
 }
 
 bool UsmMemAllocPool::sizeIsAllowed(size_t size) {
-    return size >= minServicedSize && size <= maxServicedSize;
+    return size >= poolInfo.minServicedSize && size <= poolInfo.maxServicedSize;
 }
 
 bool UsmMemAllocPool::flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties) {
-    return memoryProperties.allocationFlags.allFlags == 0u &&
-           memoryProperties.allocationFlags.allAllocFlags == 0u;
+    auto flagsWithoutCompression = memoryProperties.allocationFlags;
+    flagsWithoutCompression.flags.compressedHint = 0u;
+    flagsWithoutCompression.flags.uncompressedHint = 0u;
+
+    return flagsWithoutCompression.allFlags == 0u &&
+           memoryProperties.allocationFlags.allAllocFlags == 0u &&
+           memoryProperties.allocationFlags.hostptr == 0u;
 }
 
 double UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType) {
@@ -116,7 +130,7 @@ bool UsmMemAllocPool::isInPool(const void *ptr) const {
     return ptr >= this->pool && ptr < this->poolEnd;
 }
 
-bool UsmMemAllocPool::isEmpty() {
+bool UsmMemAllocPool::isEmpty() const {
     return 0u == this->allocations.getNumAllocs();
 }
 
@@ -126,7 +140,17 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
         auto allocationInfo = allocations.extract(ptr);
         if (allocationInfo) {
             DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
+            if (blocking) {
+                svmMemoryManager->waitForEnginesCompletion(allocationData);
+            }
             this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
+            if (trackResidency) {
+                OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
+                if (allocationInfo->isResident && 1u == this->residencyCount--) {
+                    DEBUG_BREAK_IF(!isEmpty());
+                    evictPool();
+                }
+            }
             return true;
         }
     }
@@ -162,38 +186,43 @@ size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {
     return 0u;
 }
 
-bool UsmMemAllocPoolsManager::PoolInfo::isPreallocated() const {
-    return 0u != preallocateSize;
+uint64_t UsmMemAllocPool::getPoolAddress() const {
+    return castToUint64(this->pool);
 }
 
-bool UsmMemAllocPoolsManager::ensureInitialized(SVMAllocsManager *svmMemoryManager) {
+PoolInfo UsmMemAllocPool::getPoolInfo() const {
+    return poolInfo;
+}
+
+MemoryOperationsStatus UsmMemAllocPool::evictPool() {
+    return memoryOperationsIface->evict(device, *allocation);
+}
+
+MemoryOperationsStatus UsmMemAllocPool::makePoolResident() {
+    return memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
+}
+
+const std::array<const PoolInfo, 3> UsmMemAllocPoolsManager::getPoolInfos() {
+    return (device ? PoolInfo::getPoolInfos(device->getGfxCoreHelper()) : PoolInfo::getHostPoolInfos());
+}
+
+size_t UsmMemAllocPoolsManager::getMaxPoolableSize() {
+    return (device ? PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) : PoolInfo::getHostMaxPoolableSize());
+}
+
+bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
     DEBUG_BREAK_IF(poolMemoryType != InternalMemoryType::deviceUnifiedMemory &&
                    poolMemoryType != InternalMemoryType::hostUnifiedMemory);
-    if (isInitialized()) {
-        return true;
-    }
-    std::unique_lock<std::mutex> lock(mtx);
-    if (isInitialized()) {
-        return true;
-    }
-    bool allPoolAllocationsSucceeded = true;
-    this->totalSize = 0u;
-    SVMAllocsManager::UnifiedMemoryProperties poolsMemoryProperties(poolMemoryType, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitFields);
-    poolsMemoryProperties.device = device;
-    for (const auto &poolInfo : this->poolInfos) {
+    DEBUG_BREAK_IF(device == nullptr && poolMemoryType == InternalMemoryType::deviceUnifiedMemory);
+    this->svmMemoryManager = svmMemoryManager;
+    for (const auto &poolInfo : getPoolInfos()) {
         this->pools[poolInfo] = std::vector<std::unique_ptr<UsmMemAllocPool>>();
-        if (poolInfo.isPreallocated()) {
-            auto pool = std::make_unique<UsmMemAllocPool>();
-            allPoolAllocationsSucceeded &= pool->initialize(svmMemoryManager, poolsMemoryProperties, poolInfo.preallocateSize, poolInfo.minServicedSize, poolInfo.maxServicedSize);
-            this->pools[poolInfo].push_back(std::move(pool));
-            this->totalSize += poolInfo.preallocateSize;
+        auto pool = tryAddPool(poolInfo);
+        if (nullptr == pool) {
+            cleanup();
+            return false;
         }
     }
-    if (false == allPoolAllocationsSucceeded) {
-        cleanup();
-        return false;
-    }
-    this->svmMemoryManager = svmMemoryManager;
     return true;
 }
 
@@ -201,34 +230,13 @@ bool UsmMemAllocPoolsManager::isInitialized() const {
     return nullptr != this->svmMemoryManager;
 }
 
-void UsmMemAllocPoolsManager::trim() {
-    std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : this->poolInfos) {
-        if (false == poolInfo.isPreallocated()) {
-            trim(this->pools[poolInfo]);
-        }
-    }
-}
-
-void UsmMemAllocPoolsManager::trim(std::vector<std::unique_ptr<UsmMemAllocPool>> &poolVector) {
-    auto poolIterator = poolVector.begin();
-    while (poolIterator != poolVector.end()) {
-        if ((*poolIterator)->isEmpty()) {
-            this->totalSize -= (*poolIterator)->getPoolSize();
-            (*poolIterator)->cleanup();
-            poolIterator = poolVector.erase(poolIterator);
-        } else {
-            ++poolIterator;
-        }
-    }
-}
-
 void UsmMemAllocPoolsManager::cleanup() {
-    for (const auto &poolInfo : this->poolInfos) {
-        for (const auto &pool : this->pools[poolInfo]) {
+    for (auto &[_, bucket] : this->pools) {
+        for (const auto &pool : bucket) {
             pool->cleanup();
         }
     }
+    this->pools.clear();
     this->svmMemoryManager = nullptr;
 }
 
@@ -238,86 +246,102 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
         return nullptr;
     }
     std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : this->poolInfos) {
+    void *ptr = nullptr;
+    for (const auto &poolInfo : getPoolInfos()) {
         if (size <= poolInfo.maxServicedSize) {
             for (auto &pool : this->pools[poolInfo]) {
-                if (void *ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties)) {
-                    return ptr;
+                if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
+                    break;
+                }
+            }
+            if (nullptr == ptr) {
+                if (auto pool = tryAddPool(poolInfo)) {
+                    ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties);
+                    DEBUG_BREAK_IF(nullptr == ptr);
                 }
             }
             break;
         }
     }
-    return nullptr;
+    return ptr;
+}
+
+UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
+    UsmMemAllocPool *poolPtr = nullptr;
+    if (canAddPool(poolInfo)) {
+        auto pool = std::make_unique<UsmMemAllocPool>();
+        if (pool->initialize(svmMemoryManager, poolMemoryProperties, poolInfo.poolSize, poolInfo.minServicedSize, poolInfo.maxServicedSize)) {
+            poolPtr = pool.get();
+            this->totalSize += pool->getPoolSize();
+            if (trackResidency) {
+                pool->enableResidencyTracking();
+            }
+            this->pools[poolInfo].push_back(std::move(pool));
+        }
+    }
+    return poolPtr;
+}
+bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {
+    return true;
+}
+
+bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
+    return size <= getMaxPoolableSize() &&
+           UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
+           UsmMemAllocPool::flagsAreAllowed(memoryProperties);
+}
+
+void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
+    std::lock_guard lock(mtx);
+    auto &bucket = pools[poolInfo];
+    auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
+        return !pool->isEmpty();
+    });
+    const auto emptyPoolsCount = static_cast<size_t>(std::distance(firstEmptyPoolIt, bucket.end()));
+    if (emptyPoolsCount > maxEmptyPoolsPerBucket) {
+        std::advance(firstEmptyPoolIt, maxEmptyPoolsPerBucket);
+        for (auto it = firstEmptyPoolIt; it != bucket.end(); ++it) {
+            (*it)->cleanup();
+        }
+        bucket.erase(firstEmptyPoolIt, bucket.end());
+    }
 }
 
 bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, bool blocking) {
-    if (UsmMemAllocPool *pool = this->getPoolContainingAlloc(ptr)) {
-        return pool->freeSVMAlloc(ptr, blocking);
+    bool allocFreed = false;
+    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
+        allocFreed = pool->freeSVMAlloc(ptr, blocking);
+        if (allocFreed && pool->isEmpty()) {
+            trimEmptyPools(pool->getPoolInfo());
+        }
     }
-    return false;
+    return allocFreed;
 }
 
 size_t UsmMemAllocPoolsManager::getPooledAllocationSize(const void *ptr) {
-    if (UsmMemAllocPool *pool = this->getPoolContainingAlloc(ptr)) {
+    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
         return pool->getPooledAllocationSize(ptr);
     }
     return 0u;
 }
 
 void *UsmMemAllocPoolsManager::getPooledAllocationBasePtr(const void *ptr) {
-    if (UsmMemAllocPool *pool = this->getPoolContainingAlloc(ptr)) {
+    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
         return pool->getPooledAllocationBasePtr(ptr);
     }
     return nullptr;
 }
 
 size_t UsmMemAllocPoolsManager::getOffsetInPool(const void *ptr) {
-    if (UsmMemAllocPool *pool = this->getPoolContainingAlloc(ptr)) {
+    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
         return pool->getOffsetInPool(ptr);
     }
     return 0u;
 }
 
-uint64_t UsmMemAllocPoolsManager::getFreeMemory() {
-    const auto isIntegrated = device->getHardwareInfo().capabilityTable.isIntegratedDevice;
-    const uint64_t deviceMemory = isIntegrated ? device->getDeviceInfo().globalMemSize : device->getDeviceInfo().localMemSize;
-    const uint64_t usedMemory = memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex());
-    DEBUG_BREAK_IF(usedMemory > deviceMemory);
-    const uint64_t freeMemory = deviceMemory - usedMemory;
-    return freeMemory;
-}
-
-bool UsmMemAllocPoolsManager::recycleSVMAlloc(void *ptr, bool blocking) {
-    if (false == isInitialized()) {
-        return false;
-    }
-    auto svmData = this->svmMemoryManager->getSVMAlloc(ptr);
-    DEBUG_BREAK_IF(svmData->memoryType != this->poolMemoryType);
-    if (svmData->size > maxPoolableSize || belongsInPreallocatedPool(svmData->size)) {
-        return false;
-    }
-    if (this->totalSize + svmData->size > getFreeMemory() * UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(svmData->memoryType)) {
-        return false;
-    }
-    std::unique_lock<std::mutex> lock(mtx);
-    for (auto poolInfoIndex = firstNonPreallocatedIndex; poolInfoIndex < this->poolInfos.size(); ++poolInfoIndex) {
-        const auto &poolInfo = this->poolInfos[poolInfoIndex];
-        if (svmData->size <= poolInfo.maxServicedSize) {
-            auto pool = std::make_unique<UsmMemAllocPool>();
-            pool->initialize(this->svmMemoryManager, ptr, svmData, poolInfo.minServicedSize, svmData->size);
-            this->pools[poolInfo].push_back(std::move(pool));
-            this->totalSize += svmData->size;
-            return true;
-        }
-    }
-    DEBUG_BREAK_IF(true);
-    return false;
-}
-
 UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
     std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : this->poolInfos) {
+    for (const auto &poolInfo : getPoolInfos()) {
         for (auto &pool : this->pools[poolInfo]) {
             if (pool->isInPool(ptr)) {
                 return pool.get();

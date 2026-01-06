@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/metrics/metric_oa_programmable_imp.h"
-
-#include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
@@ -60,11 +58,18 @@ ze_result_t OaMetricProgrammableImp::getProperties(zet_metric_programmable_exp_p
 
 ze_result_t OaMetricProgrammableImp::getParamInfo(uint32_t *pParameterCount, zet_metric_programmable_param_info_exp_t *pParameterInfo) {
 
+    if (*pParameterCount == 0 && properties.parameterCount != 0) {
+        METRICS_LOG_ERR("%s", "Error while retrieving Parameter info for 0 parameterCount.");
+        METRICS_LOG_ERR("%s", "Use zetMetricProgrammableGetPropertiesExp to retrieve parameterCount.");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     *pParameterCount = std::min(*pParameterCount, properties.parameterCount);
 
     for (uint32_t i = 0; i < *pParameterCount; i++) {
         auto optionDescriptor = pPrototype->GetOptionDescriptor(i);
         if (optionDescriptor == nullptr) {
+            METRICS_LOG_ERR("%s", "GetOptionDescriptor returned nullptr");
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -74,6 +79,7 @@ ze_result_t OaMetricProgrammableImp::getParamInfo(uint32_t *pParameterCount, zet
         {
             auto iterator = optionTypeToParameterTypeMap.find(optionDescriptor->Type);
             if (iterator == optionTypeToParameterTypeMap.end()) {
+                METRICS_LOG_ERR("Unsupported Option Description Type %d", optionDescriptor->Type);
                 DEBUG_BREAK_IF(true);
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
@@ -83,6 +89,7 @@ ze_result_t OaMetricProgrammableImp::getParamInfo(uint32_t *pParameterCount, zet
             DEBUG_BREAK_IF(optionDescriptor->ValidValueCount == 0);
             auto iterator = valueTypeToValueInfoTypeMap.find(optionDescriptor->ValidValues[0].ValueType);
             if (iterator == valueTypeToValueInfoTypeMap.end()) {
+                METRICS_LOG_ERR("Unsupported ValueType Type %d", optionDescriptor->ValidValues[0].ValueType);
                 DEBUG_BREAK_IF(true);
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
@@ -273,7 +280,8 @@ Metric *OaMetricFromProgrammable::create(MetricSource &metricSource, zet_metric_
                                          MetricsDiscovery::IMetricPrototype_1_13 *pClonedPrototype,
                                          uint32_t domain,
                                          zet_metric_group_sampling_type_flags_t supportedSamplingTypes) {
-    auto pMetric = new OaMetricFromProgrammable(metricSource);
+    std::vector<MetricScopeImp *> scopes;
+    auto pMetric = new OaMetricFromProgrammable(metricSource, scopes);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
     pMetric->pClonedPrototype = pClonedPrototype;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -146,22 +145,4 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     auto mapAllocation = buffer->getBasePtrForMap(0);
     EXPECT_EQ(mapAllocation, buffer->getAllocatedMapPtr());
     EXPECT_NE(mapAllocation, bufferAllocation);
-}
-
-TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
-    auto hostPtr = (void *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-    auto size = MemoryConstants::pageSize;
-    auto retVal = CL_SUCCESS;
-
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if constexpr (is64bit) {
-        EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
-    }
-    alignedFree(hostPtr);
 }

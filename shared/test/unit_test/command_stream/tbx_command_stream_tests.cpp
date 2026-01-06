@@ -6,10 +6,13 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
@@ -42,7 +45,7 @@
 using namespace NEO;
 
 namespace NEO {
-extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
+extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
 } // namespace NEO
 
 struct TbxFixture : public TbxCommandStreamFixture,
@@ -322,19 +325,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     EXPECT_EQ(commandBuffer, allocationsForResidency[0]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
-}
-
-HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUseDefaultDeviceId) {
-    const HardwareInfo &hwInfo = *defaultHwInfo;
-    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
-    EXPECT_EQ(hwInfo.capabilityTable.aubDeviceId, tbxCsr->aubDeviceId);
-}
-
-HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThenUseDebugDeviceId) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
-    EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResidentThenOnlyResidentAllocationsAddedAllocationsForDownload) {
@@ -647,6 +637,23 @@ HWTEST_F(TbxCommandStreamTests, whenPollForAubCompletionCalledThenDontInsertPoll
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 }
 
+HWTEST_F(TbxCommandStreamTests, givenTbxWithAubCsrWhenPollForAubCompletionCalledThenInsertPoll) {
+    auto csr = new CommandStreamReceiverWithAUBDump<MockTbxCsr<FamilyType>>("",
+                                                                            *pDevice->executionEnvironment,
+                                                                            0,
+                                                                            pDevice->getDeviceBitfield());
+
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    csr->setupContext(osContext);
+    csr->initializeEngine();
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
+
+    csr->pollForAubCompletion();
+    EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
+    delete csr;
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFlushIsCalledThenItShouldMakeCommandBufferResident) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
@@ -763,7 +770,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsE
     executionEnvironment.initGmm();
 
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::tbx);
+    setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::tbx, true);
 
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
 
@@ -782,7 +789,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenOpenIsCalle
 }
 
 using SimulatedCsrTest = ::testing::Test;
-HWTEST_F(SimulatedCsrTest, givenTbxCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitalized) {
+HWTEST_F(SimulatedCsrTest, givenTbxCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitialized) {
     uint32_t expectedRootDeviceIndex = 10;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, expectedRootDeviceIndex + 2);
     executionEnvironment.initializeMemoryManager();
@@ -1117,7 +1124,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWritableWhenDumpAllocatio
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
 
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
@@ -1146,7 +1153,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
 
     tbxCsr.dumpAllocation(*gfxAllocation);
     EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
@@ -1222,7 +1229,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
 
     tbxCsr.dumpAllocation(*gfxAllocation);
     EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
@@ -1302,7 +1309,7 @@ class MockTbxCsrForPageFaultTests : public MockTbxCsr<FamilyType> {
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShouldBeDownloadedAndWritable) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1357,7 +1364,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShou
 HWTEST_F(TbxCommandStreamTests, givenTbxWithModeWhenHostBufferNotWritableAndProtectedThenDownloadShouldNotCrash) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1389,7 +1396,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxWithModeWhenHostBufferNotWritableAndProt
 HWTEST_F(TbxCommandStreamTests, givenAllocationWithNoDriverAllocatedCpuPtrThenIsAllocTbxFaultableShouldReturnFalse) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1416,7 +1423,7 @@ HWTEST_F(TbxCommandStreamTests, givenAllocationWithNoDriverAllocatedCpuPtrThenIs
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostReadsHostAllocThenAllocShouldBeDownloadedButNotWritable) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1465,7 +1472,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostReadsHostAllocThenAllocShoul
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHandleFaultFalseThenTbxFaultableTypesShouldNotBeHandled) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1509,7 +1516,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHandleFaultFalseThenTbxFaultable
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsDisabledThenIsAllocTbxFaultableShouldReturnFalse) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(false);
+    debugManager.flags.EnableTbxPageFaultManager.set(0);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1530,7 +1537,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsDisabledThenIs
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsNotAvailableThenIsAllocTbxFaultableShouldReturnFalse) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(false);
+    debugManager.flags.EnableTbxPageFaultManager.set(0);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     tbxCsr->tbxFaultManager.reset(nullptr);
@@ -1549,7 +1556,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsNotAvailableTh
 }
 
 static constexpr std::array onceWritableAllocTypesForTbx{
-    AllocationType::pipe,
     AllocationType::constantSurface,
     AllocationType::globalSurface,
     AllocationType::kernelIsa,
@@ -1568,12 +1574,13 @@ static constexpr std::array onceWritableAllocTypesForTbx{
     AllocationType::tagBuffer,
     AllocationType::syncDispatchToken,
     AllocationType::bufferHostMemory,
+    AllocationType::hostFunction,
 };
 
 HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsTbxFaultableThenTbxFaultableTypesShouldReturnTrue) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1589,7 +1596,7 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
 
     for (const auto &allocType : onceWritableAllocTypesForTbx) {
         gfxAlloc1->setAllocationType(allocType);
-        if (allocType == AllocationType::bufferHostMemory || allocType == AllocationType::timestampPacketTagBuffer) {
+        if (allocType == AllocationType::bufferHostMemory) {
             EXPECT_TRUE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
         }
     }
@@ -1602,7 +1609,7 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
 HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsNotTbxFaultableThenTbxFaultableTypesShouldReturnFalse) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
     std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -1626,4 +1633,46 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
     gfxAlloc1->setAllocationType(backupAllocType);
 
     memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenPooledAllocationWhenWritePooledMemoryCalledThenWriteMemoryIsInvokedOncePerCall) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+    std::mutex mtx;
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+        tbxCsr.writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(1u, tbxCsr.writeMemoryChunkCallCount);
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, &mtx, true);
+        tbxCsr.writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(2u, tbxCsr.writeMemoryChunkCallCount);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenInitFullPageTablesWhenWritePooledMemoryCalledThenFullAndChunkWritesArePerformed) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+
+    auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+    tbxCsr.writePooledMemory(*globalSurface, true);
+
+    // 1 write for full page tables
+    // 1 write for allocation chunk
+    EXPECT_EQ(2u, tbxCsr.writeMemoryChunkCallCount);
 }

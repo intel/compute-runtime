@@ -26,6 +26,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_ocl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper.h
@@ -55,9 +56,14 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_and_later.inl
   )
 endif()
-
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND RUNTIME_SRCS_HELPERS_BASE ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_pvc_and_later.inl)
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND RUNTIME_SRCS_HELPERS_BASE
+       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xe3p_and_later.inl
+  )
 endif()
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_BASE})

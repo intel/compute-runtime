@@ -6,12 +6,15 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/heap_size.h"
-#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -19,7 +22,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -607,7 +609,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapt
     debugger->sbaTrackingGpuVa.address = 0x45670000;
 
     NEO::CommandContainer container;
-    container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     NEO::Debugger::SbaAddresses sba = {};
     sba.surfaceStateBaseAddress = 0x123456000;
@@ -631,7 +633,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
     debugger->sbaTrackingGpuVa.address = 0x45670000;
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.surfaceStateBaseAddress = 0x123456000;
@@ -644,7 +646,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
 
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.generalStateBaseAddress = 0x123456000;
@@ -657,7 +659,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
 
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.bindlessSurfaceStateBaseAddress = 0x123456000;

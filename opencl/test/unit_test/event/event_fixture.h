@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -45,6 +46,26 @@ struct EventTest
     MockContext mockContext;
 };
 
+template <typename GfxFamily>
+struct TestEventCsr;
+
+struct EventTestWithTestEventCsr
+    : public EventTest {
+    void SetUp() override {}
+    void TearDown() override {}
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<TestEventCsr<FamilyType>>();
+        EventTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        EventTest::TearDown();
+    }
+};
+
 struct InternalsEventTest
     : public ClDeviceFixture,
       public ::testing::Test {
@@ -63,6 +84,25 @@ struct InternalsEventTest
     }
 
     MockContext *mockContext = nullptr;
+};
+
+struct InternalsEventTestWithMockCsr
+    : public InternalsEventTest {
+
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsr<FamilyType>>();
+        InternalsEventTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        InternalsEventTest::TearDown();
+    }
 };
 
 struct MyUserEvent : public VirtualEvent {

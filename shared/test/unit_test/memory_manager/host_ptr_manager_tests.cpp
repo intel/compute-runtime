@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_manager_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -365,7 +366,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledTwiceWithTheSamePointerWhenA
     EXPECT_EQ(1u, hostPtrManager.getFragmentCount());
 }
 
-TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenFragmentIsBeingReleasedThenManagerMaintainsProperRefferenceCount) {
+TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenFragmentIsBeingReleasedThenManagerMaintainsProperReferenceCount) {
     MockHostPtrManager hostPtrManager;
     FragmentStorage fragment;
     void *cpuPtr = (void *)0x1000;
@@ -944,14 +945,202 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
     requirements.rootDeviceIndex = csr0->getRootDeviceIndex();
 
+    memoryManager->deferAllocInUse = true;
     hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(1u, csr0->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(1u, csr1->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(2u, storage0->cleanAllocationsCalled);
     EXPECT_EQ(2u, storage0->lastCleanAllocationsTaskCount);
-    EXPECT_EQ(2u, storage1->cleanAllocationsCalled);
-    EXPECT_EQ(2u, storage1->lastCleanAllocationsTaskCount);
+
+    if (memoryManager->isSingleTemporaryAllocationsListEnabled()) {
+        EXPECT_EQ(1u, storage1->cleanAllocationsCalled);
+        EXPECT_EQ(1u, storage1->lastCleanAllocationsTaskCount);
+    } else {
+        EXPECT_EQ(2u, storage1->cleanAllocationsCalled);
+        EXPECT_EQ(2u, storage1->lastCleanAllocationsTaskCount);
+    }
+}
+
+HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsAndSingleTempAllocationsListWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
+    TaskCountType taskCountReady = 2;
+    TaskCountType taskCountNotReady = 1;
+
+    memoryManager->singleTemporaryAllocationsList = true;
+    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
+
+    auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
+    EXPECT_EQ(1u, engines.size());
+
+    auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
+    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    TaskCountType csr0GpuTag = taskCountNotReady;
+    TaskCountType csr1GpuTag = taskCountNotReady;
+    csr0->tagAddress = &csr0GpuTag;
+    csr1->tagAddress = &csr1GpuTag;
+    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::lowPriority}));
+    csr1->setupContext(*osContext);
+
+    void *cpuPtr = reinterpret_cast<void *>(0x100004);
+
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    auto graphicsAllocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
+
+    auto storage0 = new MockInternalAllocationStorage(*csr0);
+    auto storage1 = new MockInternalAllocationStorage(*csr1);
+    csr0->internalAllocationStorage.reset(storage0);
+    storage0->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation0), TEMPORARY_ALLOCATION, taskCountReady);
+    storage0->updateCompletionAfterCleaningList(taskCountReady);
+    csr1->internalAllocationStorage.reset(storage1);
+    storage1->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
+    storage1->updateCompletionAfterCleaningList(taskCountReady);
+
+    csr0->setLatestSentTaskCount(taskCountNotReady);
+    csr1->setLatestSentTaskCount(taskCountNotReady);
+
+    AllocationRequirements requirements;
+
+    requirements.requiredFragmentsCount = 1;
+    requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
+
+    requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr, MemoryConstants::pageSize);
+    requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
+    requirements.rootDeviceIndex = csr0->getRootDeviceIndex();
+
+    memoryManager->deferAllocInUse = true;
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+
+    // first CSR tag updated
+    hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
+
+    EXPECT_FALSE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+
+    // second CSR tag updated
+    hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
+
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekIsEmpty());
+}
+
+HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorageThenCleanCorrectly) {
+    TaskCountType taskCountReady = 2;
+    TaskCountType taskCountNotReady = 1;
+
+    memoryManager->singleTemporaryAllocationsList = true;
+    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
+    memoryManager->callBaseAllocInUse = true;
+
+    auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
+    EXPECT_EQ(1u, engines.size());
+
+    auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
+    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    TaskCountType csr0GpuTag = taskCountNotReady;
+    TaskCountType csr1GpuTag = taskCountNotReady;
+    csr0->tagAddress = &csr0GpuTag;
+    csr1->tagAddress = &csr1GpuTag;
+    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::lowPriority}));
+    csr1->setupContext(*osContext);
+
+    void *cpuPtr = reinterpret_cast<void *>(0x100004);
+
+    auto graphicsAllocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
+
+    auto storage0 = new MockInternalAllocationStorage(*csr0);
+    auto storage1 = new MockInternalAllocationStorage(*csr1);
+    csr0->internalAllocationStorage.reset(storage0);
+    csr1->internalAllocationStorage.reset(storage1);
+
+    EXPECT_EQ(memoryManager->temporaryAllocations.get(), &csr0->getTemporaryAllocations());
+    EXPECT_EQ(memoryManager->temporaryAllocations.get(), &csr1->getTemporaryAllocations());
+
+    storage0->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation0), TEMPORARY_ALLOCATION, taskCountReady);
+    EXPECT_TRUE(storage0->allocationLists[TEMPORARY_ALLOCATION].peekIsEmpty());
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_EQ(taskCountReady, graphicsAllocation0->getTaskCount(csr0->getOsContext().getContextId()));
+
+    storage1->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
+    EXPECT_TRUE(storage1->allocationLists[TEMPORARY_ALLOCATION].peekIsEmpty());
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_EQ(taskCountReady, graphicsAllocation1->getTaskCount(csr1->getOsContext().getContextId()));
+
+    csr0->setLatestSentTaskCount(taskCountNotReady);
+    csr1->setLatestSentTaskCount(taskCountNotReady);
+
+    storage0->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
+    storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+
+    csr1GpuTag = taskCountReady;
+
+    storage0->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_FALSE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+
+    storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+
+    csr0GpuTag = taskCountReady;
+    storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekIsEmpty());
+}
+
+HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorageThenObtainCorrectly) {
+    TaskCountType taskCountReady = 2;
+    TaskCountType taskCountNotReady = 1;
+
+    memoryManager->singleTemporaryAllocationsList = true;
+    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
+    memoryManager->callBaseAllocInUse = true;
+
+    auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
+    auto csr = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
+
+    TaskCountType csrGpuTag = taskCountNotReady;
+    csr->tagAddress = &csrGpuTag;
+
+    void *cpuPtr = reinterpret_cast<void *>(0x100004);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
+
+    auto storage = new MockInternalAllocationStorage(*csr);
+    csr->internalAllocationStorage.reset(storage);
+    csr->setLatestSentTaskCount(taskCountNotReady);
+
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION, taskCountReady);
+
+    auto alloc = storage->obtainTemporaryAllocationWithPtr(MemoryConstants::pageSize, cpuPtr, graphicsAllocation->getAllocationType());
+    EXPECT_NE(nullptr, alloc.get());
+    EXPECT_TRUE(memoryManager->temporaryAllocations->peekIsEmpty());
+    alloc.release();
+
+    EXPECT_EQ(CompletionStamp::notReady, graphicsAllocation->getTaskCount(csr->getOsContext().getContextId()));
+
+    // clean on CSR destruction
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION, taskCountReady);
+    csr->tagAddress = nullptr;
+}
+
+TEST_F(HostPtrAllocationTest, givenDebugFlagSetWhenCreatingMemoryManagerThenEnableSingleTempAllocationsList) {
+    DebugManagerStateRestore debugRestorer;
+
+    {
+        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        EXPECT_TRUE(memoryManager->isSingleTemporaryAllocationsListEnabled());
+        EXPECT_NE(nullptr, memoryManager->temporaryAllocations.get());
+    }
+
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(0);
+    {
+        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        EXPECT_FALSE(memoryManager->isSingleTemporaryAllocationsListEnabled());
+        EXPECT_EQ(nullptr, memoryManager->temporaryAllocations.get());
+    }
 }
 
 TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredFragmentCannotBeDestroyedThenCheckForOverlappingReturnsError) {

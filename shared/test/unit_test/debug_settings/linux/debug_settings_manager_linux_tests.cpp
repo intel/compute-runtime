@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_file_reader.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <fstream>
@@ -18,15 +20,11 @@
 namespace NEO {
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreateThenAllVariablesAreRead) {
-    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
-    if (!settingsFileExists) {
-        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        std::ofstream file;
-        file.open(SettingsReader::settingsFileName);
-        file << data;
-        file.close();
-    }
-    SettingsReader *reader = SettingsReader::createFileReader();
+    constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+    writeDataToFile(SettingsReader::settingsFileName, data);
+
+    SettingsReader *reader = MockSettingsReader::createFileReader();
+
     EXPECT_NE(nullptr, reader);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
@@ -40,13 +38,12 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreate
     EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
     EXPECT_EQ(1, debugManager.flags.LogApiCalls.get());
 
-    if (!settingsFileExists) {
-        remove(SettingsReader::settingsFileName);
-    }
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyDisabledTestDebugManager debugManager;
     debugManager.flags.PrintDebugSettings.set(true);
     debugManager.flags.LoopAtDriverInit.set(true);
@@ -65,11 +62,15 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
     SettingsFileReader allSettingsReader{FullyDisabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description) \
     EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue));
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, varName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
     std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: TbxServer = 192.168.0.1"));

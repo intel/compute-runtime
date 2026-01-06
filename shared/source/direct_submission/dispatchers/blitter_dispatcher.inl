@@ -47,22 +47,12 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeMonitorFence(const RootDevice
 }
 
 template <typename GfxFamily>
-inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
-    dispatchTlbFlush(cmdBuffer, address, rootDeviceEnvironment);
-}
-
-template <typename GfxFamily>
 inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const RootDeviceEnvironment &rootDeviceEnvironment) {
     NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     MiFlushArgs args{waArgs};
     args.tlbFlush = true;
     args.commandWithPostSync = true;
     EncodeMiFlushDW<GfxFamily>::programWithWa(cmdBuffer, address, 0ull, args);
-}
-
-template <typename GfxFamily>
-inline size_t BlitterDispatcher<GfxFamily>::getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return getSizeTlbFlush(rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>

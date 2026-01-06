@@ -1,24 +1,29 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/mocks/mock_elf.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
@@ -64,6 +69,24 @@ struct DebuggerClFixture
 
 using DebuggerCmdQTest = Test<DebuggerClFixture>;
 
+struct DebuggerCmdQTestWithMockCsr : public DebuggerCmdQTest {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsr<FamilyType>>();
+
+        DebuggerCmdQTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        DebuggerCmdQTest::TearDown();
+    }
+};
+
 HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenCommandQueueIsCreatedAndReleasedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     debuggerL0Hw->commandQueueCreatedCount = 0;
@@ -89,10 +112,8 @@ HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenInternalCommandQueueIsCreate
 }
 
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident, Gen12Plus) {
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCSR);
+HWTEST2_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident, Gen12Plus) {
+    auto mockCSR = static_cast<MockCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
 
     MockKernelWithInternals mockKernelWithInternals(*clDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;
@@ -140,7 +161,7 @@ struct DebuggerZebinProgramTest : public Test<DebuggerClFixture> {
         delete program->getKernelInfoArray(rootDeviceIndex)[0]->kernelAllocation;
         delete program->getKernelInfoArray(rootDeviceIndex)[0];
         program->getKernelInfoArray(rootDeviceIndex).clear();
-        delete program->getGlobalSurface(rootDeviceIndex);
+        delete program->getGlobalSurfaceGA(rootDeviceIndex);
         program->setGlobalSurface(nullptr);
         delete program;
         program = nullptr;
@@ -222,8 +243,14 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram<>();
+    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
+
+    auto copyHwInfo = device->getHardwareInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     mockCompilerInterface->output.intermediateRepresentation.size = zebin.storage.size();
     mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[zebin.storage.size()]);
@@ -235,7 +262,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     program->irBinary = std::make_unique<char[]>(16);
     program->irBinarySize = 16;
 
-    cl_int retVal = program->build(program->getDevices(), nullptr);
+    cl_int retVal = program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, debuggerL0Hw->notifyModuleCreateCount);
 
@@ -248,8 +275,14 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenLinkingThenNotifyModuleCreate
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram<>();
+    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
+
+    auto copyHwInfo = device->getHardwareInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     mockCompilerInterface->output.intermediateRepresentation.size = zebin.storage.size();
     mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[zebin.storage.size()]);

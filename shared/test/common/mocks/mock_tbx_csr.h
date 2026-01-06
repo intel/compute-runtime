@@ -22,11 +22,16 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     using TbxCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager;
-    MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
+    MockTbxCsr(ExecutionEnvironment &executionEnvironment,
+               uint32_t rootDeviceIndex,
+               const DeviceBitfield deviceBitfield)
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
+    }
+    MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        : MockTbxCsr<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
     }
     ~MockTbxCsr() override {
         this->downloadAllocationImpl = nullptr;
@@ -46,6 +51,12 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        writeMemoryChunkCallCount++;
+        return TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+    }
+
     bool writeMemory(GraphicsAllocation &graphicsAllocation) override {
         writeMemoryGfxAllocCalled = true;
         return TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(graphicsAllocation);
@@ -69,6 +80,12 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         dumpAllocationCalled = true;
     }
 
+    void setupContext(OsContext &osContext) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
+        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
+    }
+
+    size_t writeMemoryChunkCallCount = 0u;
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;
@@ -119,6 +136,11 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
 
     uint64_t getNonBlockingDownloadTimeoutMs() const override {
         return 1;
+    }
+
+    void setupContext(OsContext &osContext) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
+        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
     }
 
     std::set<GraphicsAllocation *> downloadedAllocations;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -68,11 +69,11 @@ struct MockVfPmuInterfaceImp : public PmuInterfaceImp {
     }
 };
 
-struct MockVfNeoDrm : public Drm {
-    using Drm::engineInfo;
-    using Drm::setupIoctlHelper;
+struct MockVfNeoDrm : public NEO::Drm {
+    using NEO::Drm::engineInfo;
+    using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockVfNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<NEO::HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     ~MockVfNeoDrm() override = default;
 
     bool mockReadSysmanQueryEngineInfo = true;
@@ -91,7 +92,7 @@ struct MockVfNeoDrm : public Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfos{i915QueryEngineInfo};
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfos));
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfos));
         return true;
     }
 };

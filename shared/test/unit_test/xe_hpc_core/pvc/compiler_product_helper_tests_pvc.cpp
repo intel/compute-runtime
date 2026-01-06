@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ PVCTEST_F(CompilerProductHelperPvcTest, givenPvcWhenFailBuildProgramWithStateful
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    EXPECT_FALSE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
+    EXPECT_FALSE(compilerProductHelper.failBuildProgramWithBufferStatefulAccessPreference());
 }
 
 PVCTEST_F(CompilerProductHelperPvcTest, givenPvcB0AndLaterThenMatrixMultiplyAccumulateTF32IsSupported) {

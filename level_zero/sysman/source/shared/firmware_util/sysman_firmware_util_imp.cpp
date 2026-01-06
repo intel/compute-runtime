@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,49 +9,67 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/utilities/directory.h"
+
+#include <map>
 
 namespace L0 {
 namespace Sysman {
+static const std::map<std::string, csc_late_binding_type> lateBindingTypeToEnumMap = {
+    {"FanTable", CSC_LATE_BINDING_TYPE_FAN_TABLE},
+    {"VRConfig", CSC_LATE_BINDING_TYPE_VR_CONFIG},
+};
+
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
 const std::string fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
 const std::string fwDeviceFwVersion = "igsc_device_fw_version";
+const std::string fwDeviceFwDataVersion = "igsc_device_fwdata_version";
 const std::string fwDeviceIteratorCreate = "igsc_device_iterator_create";
 const std::string fwDeviceIteratorNext = "igsc_device_iterator_next";
 const std::string fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
 const std::string fwDeviceFwUpdate = "igsc_device_fw_update";
+const std::string fwDeviceFwDataUpdate = "igsc_device_fwdata_update";
 const std::string fwImageOpromInit = "igsc_image_oprom_init";
 const std::string fwImageOpromType = "igsc_image_oprom_type";
 const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
 const std::string fwDeviceOpromVersion = "igsc_device_oprom_version";
+const std::string fwDevicePscVersion = "igsc_device_psc_version";
 const std::string fwDeviceClose = "igsc_device_close";
+const std::string fwDeviceUpdateLateBindingConfig = "igsc_device_update_late_binding_config";
 
 pIgscDeviceInitByDevice deviceInitByDevice;
 pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
 pIgscDeviceFwVersion deviceGetFwVersion;
+pIgscDeviceFwDataVersion deviceGetFwDataVersion;
 pIgscDeviceIteratorCreate deviceIteratorCreate;
 pIgscDeviceIteratorNext deviceItreatorNext;
 pIgscDeviceIteratorDestroy deviceItreatorDestroy;
 pIgscDeviceFwUpdate deviceFwUpdate;
+pIgscDeviceFwDataUpdate deviceFwDataUpdate;
 pIgscImageOpromInit imageOpromInit;
 pIgscImageOpromType imageOpromType;
 pIgscDeviceOpromUpdate deviceOpromUpdate;
 pIgscDeviceOpromVersion deviceOpromVersion;
+pIgscDevicePscVersion deviceGetPscVersion;
 pIgscDeviceClose deviceClose;
+pIgscDeviceUpdateLateBindingConfig deviceUpdateLateBindingConfig;
 
 bool FirmwareUtilImp::loadEntryPoints() {
     bool ok = getSymbolAddr(fwDeviceInitByDevice, deviceInitByDevice);
     ok = ok && getSymbolAddr(fwDeviceGetDeviceInfo, deviceGetDeviceInfo);
     ok = ok && getSymbolAddr(fwDeviceFwVersion, deviceGetFwVersion);
+    ok = ok && getSymbolAddr(fwDeviceFwDataVersion, deviceGetFwDataVersion);
     ok = ok && getSymbolAddr(fwDeviceIteratorCreate, deviceIteratorCreate);
     ok = ok && getSymbolAddr(fwDeviceIteratorNext, deviceItreatorNext);
     ok = ok && getSymbolAddr(fwDeviceIteratorDestroy, deviceItreatorDestroy);
     ok = ok && getSymbolAddr(fwDeviceFwUpdate, deviceFwUpdate);
+    ok = ok && getSymbolAddr(fwDeviceFwDataUpdate, deviceFwDataUpdate);
     ok = ok && getSymbolAddr(fwImageOpromInit, imageOpromInit);
     ok = ok && getSymbolAddr(fwImageOpromType, imageOpromType);
     ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
     ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
+    ok = ok && getSymbolAddr(fwDevicePscVersion, deviceGetPscVersion);
     ok = ok && getSymbolAddr(fwDeviceClose, deviceClose);
+    ok = ok && getSymbolAddr(fwDeviceUpdateLateBindingConfig, deviceUpdateLateBindingConfig);
     ok = ok && loadEntryPointsExt();
 
     return ok;
@@ -62,7 +80,7 @@ void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx) {
         uint32_t percent = (done * 100) / total;
         FirmwareUtilImp *pFirmwareUtilImp = static_cast<FirmwareUtilImp *>(ctx);
         pFirmwareUtilImp->updateFirmwareFlashProgress(percent);
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
     }
 }
 
@@ -134,6 +152,23 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FirmwareUtilImp::fwDataGetVersion(std::string &fwDataVersion) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    igsc_fwdata_version deviceFwDataVersion;
+    memset(&deviceFwDataVersion, 0, sizeof(deviceFwDataVersion));
+    int ret = deviceGetFwDataVersion(&fwDeviceHandle, &deviceFwDataVersion);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    fwDataVersion.append("Major : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.major_version));
+    fwDataVersion.append(", OEM Manufacturing Data : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.oem_manuf_data_version));
+    fwDataVersion.append(", Major VCN : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.major_vcn));
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     igsc_oprom_version opromVersion;
@@ -168,6 +203,15 @@ ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FirmwareUtilImp::fwFlashGfxData(void *pImage, uint32_t size) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    int ret = deviceFwDataUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     struct igsc_oprom_image *opromImg = nullptr;
@@ -188,6 +232,19 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
         retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, this);
     }
     if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FirmwareUtilImp::fwFlashLateBinding(void *pImage, uint32_t size, const std::string &fwType) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    uint32_t lateBindingFlashStatus = 0;
+    int ret = deviceUpdateLateBindingConfig(&fwDeviceHandle, lateBindingTypeToEnumMap.at(fwType), CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK, static_cast<uint8_t *>(pImage), static_cast<size_t>(size), &lateBindingFlashStatus);
+    if (ret != IGSC_SUCCESS || lateBindingFlashStatus != CSC_LATE_BINDING_STATUS_SUCCESS) {
+        if (ret == IGSC_ERROR_BUSY) {
+            return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+        }
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_SUCCESS;

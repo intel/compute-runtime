@@ -56,6 +56,10 @@ void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo) {
         waitCount = 0u;
     }
 
+    overrideWaitpkgParams();
+}
+
+void overrideWaitpkgParams() {
     if (debugManager.flags.WaitpkgCounterValue.get() != -1) {
         waitpkgCounterValue = debugManager.flags.WaitpkgCounterValue.get();
     }
@@ -67,6 +71,12 @@ void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo) {
     if (debugManager.flags.WaitpkgThreshold.get() != -1) {
         waitPkgThresholdInMicroSeconds = debugManager.flags.WaitpkgThreshold.get();
     }
+}
+
+void adjustWaitpkgParamsForUllsLight() {
+    waitPkgThresholdInMicroSeconds = defaultWaitPkgThresholdForUllsLightInMicroSeconds;
+    waitpkgCounterValue = defaultCounterValueForUllsLight;
+    overrideWaitpkgParams();
 }
 
 } // namespace WaitUtils

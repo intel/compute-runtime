@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,8 +9,6 @@ target_sources(igdrcl_aub_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_fixture.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_mi_atomic_tests.cpp
 )
 
@@ -26,6 +24,12 @@ endif()
 if(TESTS_DG2_AND_LATER)
   target_sources(igdrcl_aub_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/mi_math_aub_tests_dg2_and_later.cpp
+  )
+endif()
+
+if(TESTS_XE3P_AND_LATER)
+  target_sources(igdrcl_aub_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_tests_xe3p_and_later.cpp
   )
 endif()
 

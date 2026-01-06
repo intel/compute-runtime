@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,8 @@
 namespace NEO {
 class ClDeviceVector;
 class MultiGraphicsAllocation;
+class Context;
+class MultiDeviceKernel;
 
 template <>
 struct OpenCLObjectMapper<_cl_kernel> {
@@ -96,7 +98,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     void callOnEachKernel(FuncType function, Args &&...args) {
         for (auto &pKernel : kernels) {
             if (pKernel) {
-                (pKernel->*function)(std::forward<Args>(args)...);
+                (pKernel->*function)(args...);
             }
         }
     }

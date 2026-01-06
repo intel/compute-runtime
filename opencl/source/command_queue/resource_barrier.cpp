@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,16 +9,17 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/utilities/range.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
+#include <span>
+
 namespace NEO {
 BarrierCommand::BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors) : numSurfaces(numDescriptors) {
-    for (auto &description : createRange(descriptors, numDescriptors)) {
+    for (auto &description : std::span(descriptors, numDescriptors)) {
         GraphicsAllocation *allocation;
         if (description.memObject) {
             MemObj *memObj = nullptr;

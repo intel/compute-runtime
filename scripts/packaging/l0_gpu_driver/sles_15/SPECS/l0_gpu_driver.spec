@@ -125,16 +125,19 @@ fi
 %files -n intel-level-zero-gpu%{?name_suffix}-devel
 %{_includedir}/level_zero/zet_intel_gpu_debug.h
 %{_includedir}/level_zero/ze_intel_gpu.h
+%{_includedir}/level_zero/ze_intel_results.h
 %{_includedir}/level_zero/ze_stypes.h
-%{_includedir}/level_zero/driver_experimental/ze_bindless_image_exp.h
 %{_includedir}/level_zero/driver_experimental/zex_api.h
 %{_includedir}/level_zero/driver_experimental/zex_cmdlist.h
 %{_includedir}/level_zero/driver_experimental/zex_context.h
 %{_includedir}/level_zero/driver_experimental/zex_common.h
 %{_includedir}/level_zero/driver_experimental/zex_driver.h
 %{_includedir}/level_zero/driver_experimental/zex_event.h
+%{_includedir}/level_zero/driver_experimental/zex_graph.h
 %{_includedir}/level_zero/driver_experimental/zex_memory.h
 %{_includedir}/level_zero/driver_experimental/zex_module.h
+%{_includedir}/level_zero/zes_intel_gpu_sysman.h
+%{_includedir}/level_zero/zet_intel_gpu_metric.h
 
 %doc
 

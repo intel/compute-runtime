@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,6 @@
 
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.inl"
 
@@ -190,7 +187,8 @@ ze_result_t MultiDeviceCreatedMetricGroupManager::close() {
                 subDeviceMetrics[subDeviceIndex] = static_cast<MetricImp *>(
                     Metric::fromHandle(subDeviceMetricHandles[subDeviceIndex][index]));
             }
-            arrangedMetricHandles[index] = MultiDeviceMetricImp::create(metricSource, subDeviceMetrics);
+            std::vector<MetricScopeImp *> scopes{};
+            arrangedMetricHandles[index] = MultiDeviceMetricImp::create(metricSource, subDeviceMetrics, scopes);
         }
     }
 

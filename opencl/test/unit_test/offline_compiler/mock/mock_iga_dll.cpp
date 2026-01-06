@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "mock_iga_dll.h"
-
-#include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdlib>
 #include <iostream>

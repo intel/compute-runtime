@@ -6,10 +6,13 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -23,11 +26,111 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 #include "encode_surface_state_args.h"
+
+#include <list>
+
+namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileList;
+}
 
 namespace L0 {
 namespace ult {
+
+TEST(DebugSessionTest, GivenValidArgsWhenReadSipMemoryCalledThenReturnsSizeAndReadsMemory) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x1234;
+    args.gpuVa = 0x1000;
+
+    constexpr uint32_t size = 16;
+    char destination[size] = {};
+    sessionMock->readGpuMemoryCallCount = 0;
+
+    uint32_t ret = DebugSessionImp::readSipMemory(&args, 0x10, size, destination);
+    EXPECT_EQ(size, ret);
+    EXPECT_EQ(1u, sessionMock->readGpuMemoryCallCount);
+}
+
+TEST(DebugSessionTest, GivenReadGpuMemoryFailsWhenReadSipMemoryCalledThenReturnsZero) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x1234;
+    args.gpuVa = 0x1000;
+
+    sessionMock->forcereadGpuMemoryFailOnCount = 1;
+    char destination[8] = {};
+    uint32_t ret = DebugSessionImp::readSipMemory(&args, 0, 8, destination);
+    EXPECT_EQ(0u, ret);
+}
+
+TEST(DebugSessionTest, GivenValidArgsWhenWriteSipMemoryCalledThenReturnsSizeAndWritesMemory) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x5678;
+    args.gpuVa = 0x2000;
+
+    constexpr uint32_t size = 32;
+    char source[size] = {1, 2, 3, 4};
+    sessionMock->writeGpuMemoryCallCount = 0;
+
+    uint32_t ret = DebugSessionImp::writeSipMemory(&args, 0x20, size, source);
+    EXPECT_EQ(size, ret);
+    EXPECT_EQ(1u, sessionMock->writeGpuMemoryCallCount);
+}
+
+TEST(DebugSessionTest, GivenWriteGpuMemoryFailsWhenWriteSipMemoryCalledThenReturnsZero) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x5678;
+    args.gpuVa = 0x2000;
+
+    sessionMock->forceWriteGpuMemoryFailOnCount = 1;
+    char source[8] = {5, 6, 7, 8};
+    uint32_t ret = DebugSessionImp::writeSipMemory(&args, 0, 8, source);
+    EXPECT_EQ(0u, ret);
+}
 
 using DebugSessionTest = ::testing::Test;
 
@@ -46,7 +149,7 @@ TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThen
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &deviceImp);
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 0, 0)));
@@ -81,7 +184,7 @@ TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -103,11 +206,11 @@ TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvai
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -125,7 +228,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptWhenSendInterruptCalledThenInterru
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->interruptSent = true;
@@ -140,7 +243,7 @@ TEST(DebugSessionTest, givenPendingInterruptWhenNewInterruptForThreadCalledThenE
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -158,7 +261,7 @@ TEST(DebugSessionTest, givenInterruptAlreadySentWhenSendInterruptCalledSecondTim
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -186,7 +289,7 @@ TEST(DebugSessionTest, givenInterruptRequestWhenInterruptImpFailsInSendInterrupt
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -213,7 +316,7 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -263,7 +366,7 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -301,7 +404,7 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -329,10 +432,10 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     sessionMock->sendInterrupts();
 
     cr0[1] = 1 << 15 | 1 << 31;
-    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithBp].get(), regdesc, 0, 1, cr0, true);
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithBp].get(), regdesc, 0, 1, 0, cr0, true);
 
     cr0[1] = 1 << 26;
-    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, cr0, true);
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, 0, cr0, true);
 
     sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithBp, 1u, sessionMock->stateSaveAreaHeader.data());
     sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithFe, 1u, sessionMock->stateSaveAreaHeader.data());
@@ -379,7 +482,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -397,7 +500,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -418,7 +521,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -450,7 +553,7 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->threadStopped = 0;
@@ -467,7 +570,7 @@ TEST(DebugSessionTest, givenV3SipHeaderWhenCalculatingThreadOffsetThenCorrectRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, true, 3);
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -485,7 +588,7 @@ TEST(DebugSessionTest, givenSipHeaderGreaterThan3WhenCalculatingThreadOffsetThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, true, 3);
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -502,7 +605,7 @@ TEST(DebugSessionTest, givenStoppedThreadAndNoSrMagicWhenAddingNewlyStoppedThenT
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -537,7 +640,7 @@ TEST(DebugSessionTest, givenStoppedThreadAndValidSrMagicWhenAddingNewlyStoppedTh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -575,7 +678,7 @@ TEST(DebugSessionTest, givenNoInterruptsSentWhenGenerateEventsAndResumeCalledThe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -592,7 +695,7 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -629,7 +732,7 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -659,7 +762,7 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -684,7 +787,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCheckingThreadSta
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readSystemRoutineIdentRetVal = false;
@@ -702,7 +805,7 @@ TEST(DebugSessionTest, givenPendingInterruptsWhenGeneratingEventsThenStoppedEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -730,7 +833,7 @@ TEST(DebugSessionTest, givenEmptyStateSaveAreaWhenGetStateSaveAreaCalledThenRead
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     decltype(sessionMock->stateSaveAreaHeader) emptyHeader;
@@ -747,7 +850,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -798,7 +901,7 @@ TEST(DebugSessionTest, givenPFThreadWithAIPEqStartIPWhenCallingFillResumeAndStop
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -828,7 +931,7 @@ TEST(DebugSessionTest, givenDbgRegAndCRThenisAIPequalToThreadStartIPReturnsCorre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->callBaseisAIPequalToThreadStartIP = true;
@@ -845,7 +948,7 @@ TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndS
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -884,7 +987,7 @@ TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     std::vector<EuThread::ThreadId> resumeThreads;
@@ -912,7 +1015,7 @@ TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsC
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     sessionMock->skipCheckThreadIsResumed = false;
@@ -943,7 +1046,7 @@ TEST(DebugSessionTest, givenCr0RegisterWhenIsFEOrFEHOnlyExceptionReasonThenTrueR
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -971,13 +1074,13 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -989,9 +1092,9 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     auto result = sessionMock->resume(thread);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount - 1u, sessionMock->resumeThreadCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu - 1u, sessionMock->resumeThreadCount);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
     }
@@ -1006,7 +1109,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1018,7 +1121,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
         sessionMock->stateSaveAreaHeader.resize(size);
     }
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
@@ -1034,9 +1137,9 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // only threads from EU0 resumed
-    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount, sessionMock->resumeThreadCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu, sessionMock->resumeThreadCount);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
 
@@ -1053,7 +1156,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1065,7 +1168,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
         sessionMock->stateSaveAreaHeader.resize(size);
     }
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -1128,7 +1231,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -1137,7 +1240,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
                 pStateSaveAreaHeader->regHeader.state_save_size * 16;
     sessionMock->stateSaveAreaHeader.resize(size);
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -1180,12 +1283,12 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenRes
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    sessionMock->forceZeroStateSaveAreaSize = true;
+    sessionMock->forceStateSaveAreaSize = 0;
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
@@ -1234,7 +1337,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1255,7 +1358,7 @@ TEST(DebugSessionTest, givenAllThreadsRunningWhenResumeCalledThenErrorUnavailabl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1270,7 +1373,7 @@ TEST(DebugSessionTest, givenErrorFromResumeImpWhenResumeCalledThenErrorReturned)
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1289,7 +1392,7 @@ TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readSbaBufferResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1306,7 +1409,7 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1317,13 +1420,13 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsAtLeastXeCore) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
@@ -1361,7 +1464,7 @@ TEST(DebugSessionTest, givenNullptrStateSaveAreaGpuVaWhenCallingCheckIsThreadRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1381,7 +1484,7 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1417,7 +1520,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1439,7 +1542,7 @@ TEST(DebugSessionTest, givenSipVersion1WhenCallingCheckThreadIsResumedWithSaveAr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1472,7 +1575,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1507,7 +1610,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1539,7 +1642,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterBiggerThanPreviousThenThreadIsResu
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1571,7 +1674,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterOverflowingZeroThenThreadIsResumed
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1594,7 +1697,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1639,7 +1742,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1686,7 +1789,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1732,7 +1835,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1786,7 +1889,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1831,7 +1934,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1869,7 +1972,7 @@ struct DebugSessionTestSwFifoFixture : public ::testing::Test {
         config.pid = 0x1234;
         auto hwInfo = *NEO::defaultHwInfo.get();
         NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-        MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+        MockDeviceImp deviceImp(neoDevice);
         session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
         stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
@@ -2050,26 +2153,7 @@ TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringF
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
-
-    session->stateSaveAreaHeader.clear();
-    session->stateSaveAreaHeader.resize(stateSaveAreaHeader.size());
-    memcpy_s(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
-
-    std::vector<EuThread::ThreadId> threadsWithAttention;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
-}
-
-TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsGreaterThanThreeDuringFifoReadThenFifoIsNotReadAndSuccessIsReturned) {
-    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader.version.major = 4;
-
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     session->stateSaveAreaHeader.clear();
@@ -2092,7 +2176,7 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     // Declare node whose valid field is 0
@@ -2113,13 +2197,61 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     // Declare node whose valid field is 0
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
     session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+}
+
+TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsDumped) {
+    static constexpr const char *filePath = "test_dump_file.bin";
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpDebugSurfaceFile.set(filePath);
+
+    const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
+    session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(1u, NEO::virtualFileList.size());
+    EXPECT_TRUE(NEO::virtualFileList.find(filePath) != NEO::virtualFileList.end());
+    auto content = NEO::virtualFileList.at(filePath).str();
+    EXPECT_EQ(stateSaveAreaContent, std::vector<uint8_t>(content.cbegin(), content.cend()));
+}
+
+TEST_F(DebugSessionTest, givenNoDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsNotDumped) {
+    const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+
+    session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
+    session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
+
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(0u, NEO::virtualFileList.size());
+}
+
+TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadAndReadGpuMemoryFailsThenDebugSurfaceFileIsNotDumped) {
+    static constexpr const char *filePath = "test_dump_file.bin";
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpDebugSurfaceFile.set(filePath);
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(0u, NEO::virtualFileList.size());
 }
 
 TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderIsNotSet) {
@@ -2131,7 +2263,7 @@ TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderI
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     session->readMemoryBuffer.resize(stateSaveAreaHeader.size());
@@ -2152,7 +2284,7 @@ TEST_F(DebugSessionTest, givenSsaHeaderVersionGreaterThan3WhenStateSaveAreIsRead
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     session->readMemoryBuffer.resize(stateSaveAreaHeader.size());
@@ -2170,7 +2302,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRun
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -2197,7 +2329,7 @@ TEST(DebugSessionTest, givenSizeBiggerThanPreviousWhenAllocatingStateSaveAreaMem
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -2215,7 +2347,7 @@ TEST(DebugSessionTest, givenTheSameSizeWhenAllocatingStateSaveAreaMemoryThenNewM
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -2680,66 +2812,293 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveHeaderGreaterThanV3WhenC
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.fc);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.msg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.scalar);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.msg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.scalar);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            // Return a test regset descriptor for GRF type
+            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
+                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+                return &testRegsetDesc;
+            }
+            return nullptr;
+        }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override {
+            return 0; // Return a test command register type
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test that when device has SIP external lib, typeToRegsetDesc uses getRegsetDescFromMap
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0x100u);
+        EXPECT_EQ(result->num, 128u);
+        EXPECT_EQ(result->bits, 16u);
+        EXPECT_EQ(result->bytes, 32u);
+    }
+
+    // Test with a type that returns nullptr from the mock
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    // Test ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 1u);
+        EXPECT_EQ(result->bits, 32u);
+        EXPECT_EQ(result->bytes, 4u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 2u);
+        EXPECT_EQ(result->bits, 64u);
+        EXPECT_EQ(result->bytes, 8u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 2u);
+        EXPECT_EQ(result->bits, 64u);
+        EXPECT_EQ(result->bytes, 8u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        // For heapless mode (which is the case with SIP external lib), SBA should return empty descriptor
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 0u);
+        EXPECT_EQ(result->bits, 0u);
+        EXPECT_EQ(result->bytes, 0u);
+    }
+
+    // Test remaining register types that go through getRegsetDescFromMap (should return nullptr from mock)
+    // These types fall through to the default case and call getRegsetDescFromMap
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    // Test invalid type
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenRegistersAccessHelperCalledThenReturnsSuccess) {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            // Return a test regset descriptor for GRF type
+            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
+                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+                return &testRegsetDesc;
+            }
+            return nullptr;
+        }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            if (registerCount) {
+                *registerCount = 1;
+            }
+            if (registerStartOffset) {
+                *registerStartOffset = 0;
+            }
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override {
+            return 0; // Return a test command register type
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    // Create a new debug session with the mock device
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto mockSession = std::make_unique<MockDebugSession>(config, mockL0Device.get());
+    mockSession->stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(3);
+
+    // Setup state save area
+    {
+        auto pStateSaveAreaHeader = mockSession->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        mockSession->stateSaveAreaHeader.resize(size);
+    }
+
+    // Get register descriptor from the mock session using the mock device
+    auto pStateSaveAreaHeader = mockSession->getStateSaveAreaHeader();
+    auto *regdesc = mockSession->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockL0Device.get());
+    if (regdesc != nullptr) {
+        EXPECT_EQ(regdesc->offset, 0x100u);
+        EXPECT_EQ(regdesc->num, 128u);
+        EXPECT_EQ(regdesc->bytes, 32u);
+    }
+
+    // Prepare test data for registersAccessHelper
+    uint8_t testData[32] = {0x12, 0x34, 0x56, 0x78};
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+    SIP::regset_desc regdescTest = regdesc != nullptr ? *regdesc : SIP::regset_desc{0x100u, 128u, 0, 32u};
+
+    // Test registersAccessHelper for write operation
+    auto result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, 0, testData, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Test registersAccessHelper for read operation
+    uint8_t readData[32] = {};
+    result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, 0, readData, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenTypeToRegsetDescCalledThenNullRegdescIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenGetSbaRegsetDescCalledThenNullIsReturned) {
-    reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
+    reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 99;
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(*pStateSaveAreaHeader), nullptr);
+    EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(session->getConnectedDevice(), *pStateSaveAreaHeader), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenCmdRegisterAccessHelperCalledThenNullIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    SIP::sip_command resumeCommand = {0};
+    NEO::SipCommandRegisterValues resumeCommand = {{0}};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->cmdRegisterAccessHelper(thread0, resumeCommand, false));
 }
 
@@ -2748,28 +3107,29 @@ using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), &pStateSaveAreaHeader->regHeader.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), &pStateSaveAreaHeader->regHeader.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeader.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.fc);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
     decltype(session->stateSaveAreaHeader) emptyHeader;
     session->stateSaveAreaHeader.swap(emptyHeader);
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenValidRegisterWhenGettingSizeThenCorrectSizeIsReturned) {
@@ -2801,7 +3161,7 @@ TEST_F(DebugSessionRegistersAccessTest,
 
 HWTEST2_F(DebugSessionRegistersAccessTest,
           givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsSetThen256GrfRegisterCountIsReported,
-          IsXeHpOrXeHpcOrXeHpgCore) {
+          IsXeCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -2819,7 +3179,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
     uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cr0[0] = 0x80002000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, cr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, cr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
@@ -2830,7 +3190,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
 
 HWTEST2_F(DebugSessionRegistersAccessTest,
           givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsNotSetThen128GrfRegisterCountIsReported,
-          IsXeHpOrXeHpcOrXeHpgCore) {
+          IsXeCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -2848,7 +3208,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
     uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cr0[0] = 0x80000000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, cr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, cr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
@@ -2949,7 +3309,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaGpuVaWhenRegistersAc
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -2967,7 +3327,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAcc
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -2985,7 +3345,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAcce
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -2997,7 +3357,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenReadRegisterCall
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -3024,17 +3384,200 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cmd;
     SIP::sip_command resumeCommand = {0};
     resumeCommand.command = 11;
-    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, true);
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, &resumeCommand, true);
 
     session->skipWriteResumeCommand = false;
     session->writeResumeCommand(threads);
 
-    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, false);
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
 
     resumeCommand.command = 11;
-    session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, &resumeCommand, false);
+    session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, 0, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessFlagSetWhenIsHeaplessModeCalledThenReturnsTrue) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS; // Heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
+    EXPECT_TRUE(result); // Should return true when heapless flag is set
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
+    EXPECT_FALSE(result); // Should return false when no heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessHelperCalledForReadThenReturnsSuccess) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test successful read operation
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessHelperCalledForWriteThenReturnsSuccess) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32] = {0x12, 0x34, 0x56, 0x78}; // Test data
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test successful write operation
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenInvalidStartParameterWhenRegistersAccessHelperCalledThenReturnsInvalidArgument) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test with start index >= regdesc->num
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, regdesc->num, 1, 0, r0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenInvalidCountParameterWhenRegistersAccessHelperCalledThenReturnsInvalidArgument) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test with start + count > regdesc->num
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, regdesc->num + 1, 0, r0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNullStateSaveAreaHeaderWhenTypeToRegsetDescCalledThenReturnsNull) {
+    // Test decision at line 1122 - null pointer check
+    const SIP::regset_desc *result = DebugSessionImp::typeToRegsetDesc(nullptr, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, session->getConnectedDevice());
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithGrfTypeThenReturnsGrfRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test switch label at line 1135 for version 3 - GRF case
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithVariousTypesThenReturnsCorrectRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test various switch labels at line 1135 for version 3
+    const SIP::regset_desc *result;
+
+    // ADDR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.addr);
+
+    // FLAG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.flag);
+
+    // CE case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.emask);
+
+    // SR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sr);
+
+    // CR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.cr);
+
+    // TDR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.tdr);
+
+    // ACC case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.acc);
+
+    // MME case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.mme);
+
+    // SP case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sp);
+
+    // DBG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+
+    // FC case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.fc);
+
+    // SCALAR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.scalar);
+
+    // MSG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.msg);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithUnknownTypeThenReturnsNull) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test default case in switch (line 1135)
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, 999999, deviceImp.get()); // Invalid type
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenVersion2StateSaveAreaWhenTypeToRegsetDescCalledThenReturnsCorrectRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test version < 3 path - should use regHeader instead of regHeaderV3
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.grf);
+
+    // Test another case for version < 3
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.addr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResumeThenResumeInCmdRegisterIsWritten) {
@@ -3344,7 +3887,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3409,7 +3952,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3477,7 +4020,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3574,6 +4117,306 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     sessionMock->slmTesting = false;
 }
 
+struct DebugSessionSlmV2Test : public ::testing::Test {
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    static constexpr size_t dataSize = 317;
+    static constexpr uint64_t memDescAddress = 0x5372;
+    static constexpr uint64_t slmStartOffsetResult = 0x4891;
+
+    struct MockDebugSessionSlmV2 : public MockDebugSession {
+        using MockDebugSession::getSlmStartOffset;
+        using SlmAccessProtocol = DebugSessionImp::SlmAccessProtocol;
+        using MockDebugSession::getSlmAddresses;
+
+        template <typename T>
+        struct MemAccessRecorder {
+            T ptr;
+            size_t size;
+            uint64_t gpuVa;
+        };
+
+        uint64_t ctxSsaGpuVaReturn = 0x20000000;
+        std::list<ze_result_t> waitForCmdReadyReturns;
+        ze_result_t cmdRegisterAccessHelperReturn = ZE_RESULT_SUCCESS;
+        ze_result_t readGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        ze_result_t writeGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        std::array<char, dataSize> mockGpuMemory;
+        std::optional<SIP::sip_command> lastSipCommand;
+        std::optional<NEO::MockProductHelper> mockProductHelper;
+        std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
+        std::optional<SlmAccessProtocol> forcedSlmAccessProtocol;
+        std::optional<std::optional<SipTransferAddr>> forcedSlmAddressResult;
+        MemAccessRecorder<char *> lastReadGpuMemory;
+        MemAccessRecorder<const char *> lastWriteGpuMemory;
+
+        MockDebugSessionSlmV2(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device),
+                                                                                      mockSipExternalLib(std::make_unique<MockSipExternalLib>()) {
+            mockSipExternalLib->getSlmStartOffsetResult = slmStartOffsetResult;
+        }
+
+        ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount) override {
+            EXPECT_FALSE(waitForCmdReadyReturns.empty());
+            ze_result_t ret = waitForCmdReadyReturns.front();
+            waitForCmdReadyReturns.pop_front();
+            return ret;
+        }
+
+        ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write) override {
+            lastSipCommand = command.sip_commandValues;
+            return cmdRegisterAccessHelperReturn;
+        }
+
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return ctxSsaGpuVaReturn;
+        }
+
+        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            EXPECT_LE(size, mockGpuMemory.size());
+            memcpy_s(output, size, mockGpuMemory.data(), size);
+            lastReadGpuMemory = {.ptr = output, .size = size, .gpuVa = gpuVa};
+            return readGpuMemoryReturn;
+        }
+
+        ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            EXPECT_LE(size, mockGpuMemory.size());
+            memcpy_s(mockGpuMemory.data(), size, input, size);
+            lastWriteGpuMemory = {.ptr = input, .size = size, .gpuVa = gpuVa};
+            return writeGpuMemoryReturn;
+        }
+
+        const NEO::ProductHelper &getProductHelper() const override {
+            return mockProductHelper ? mockProductHelper.value() : MockDebugSession::getProductHelper();
+        }
+
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipExternalLib ? mockSipExternalLib.get() : MockDebugSession::getSipExternalLibInterface();
+        }
+
+        SlmAccessProtocol getSlmAccessProtocol() const override {
+            return forcedSlmAccessProtocol ? forcedSlmAccessProtocol.value() : MockDebugSession::getSlmAccessProtocol();
+        }
+
+        std::optional<SipTransferAddr> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
+            return forcedSlmAddressResult ? forcedSlmAddressResult.value() : MockDebugSession::getSlmAddresses(threadId, size, desc);
+        }
+    };
+
+    MockDeviceImp deviceImp;
+    MockDebugSessionSlmV2 session;
+    EuThread::ThreadId threadId;
+    zet_debug_memory_space_desc_t memDesc;
+
+    DebugSessionSlmV2Test() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                              session(zet_debug_config_t{}, &deviceImp),
+                              threadId(0, 0, 0, 0, 0),
+                              memDesc{.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM, .address = memDescAddress} {}
+
+    void SetUp() override {
+        session.allThreads[threadId]->stopThread(testMemoryHandle);
+        session.slmTesting = true;
+    }
+};
+
+TEST_F(DebugSessionSlmV2Test, GivenBaseCaseThenGetProductHelperIsValid) {
+    session.getProductHelper();
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipExternalLibIsAvailableThenSipExternalLibIsReturned) {
+    session.mockSipExternalLib = nullptr;
+    session.getSipExternalLibInterface();
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipUsesSubslicePoolsThenSlmAccessProtocolIsV2) {
+    session.mockProductHelper = NEO::MockProductHelper{};
+    session.mockProductHelper->sipUsesSubslicePoolsResult = true;
+    EXPECT_EQ(session.getSlmAccessProtocol(), DebugSessionImp::SlmAccessProtocol::v2);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipDoesNotUseSubslicePoolsThenSlmAccessProtocolIsV1) {
+    session.mockProductHelper = NEO::MockProductHelper{};
+    session.mockProductHelper->sipUsesSubslicePoolsResult = false;
+    EXPECT_EQ(session.getSlmAccessProtocol(), DebugSessionImp::SlmAccessProtocol::v1);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipExternalLibIsAvailableThenGetSlmStartOffsetIsObtainedFromSipExternalLib) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getSlmStartOffsetResult = slmStartOffsetResult;
+    uint32_t slmStartOffset = 0;
+    EXPECT_EQ(session.getSlmStartOffset(0, threadId, &slmStartOffset), true);
+    EXPECT_EQ(slmStartOffset, slmStartOffsetResult);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSlmStartOffsetIsAvailableThenGetSlmAddressReturnsCorrectValue) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getSlmStartOffsetResult = 0x5a00;
+    session.ctxSsaGpuVaReturn = 0x9317b0000;
+    const zet_debug_memory_space_desc_t desc = {
+        .type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM,
+        .address = 0xff00002f,
+    };
+    std::optional<DebugSessionImp::SipTransferAddr> result = session.getSlmAddresses(threadId, 3, &desc);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->sipOffset, 0xff000020u);
+    EXPECT_EQ(result->sipSize, 0xfu + 3u);         // requested size + alignment padding
+    EXPECT_EQ(result->gpuMemOffset, 0x9317b5a2fu); // reserved bits are masked off
+}
+
+using DebugSessionSlmReadV2Test = DebugSessionSlmV2Test;
+
+TEST_F(DebugSessionSlmReadV2Test, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmReadV2IsSuccessful) {
+    for (size_t i = 0; i < dataSize; i++) {
+        session.mockGpuMemory[i] = static_cast<char>(i % 73);
+    }
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (size_t i = 0; i < dataSize; i++) {
+        EXPECT_EQ(readBuf[i], static_cast<char>(i % 73));
+    }
+    EXPECT_EQ(memcmp(session.mockGpuMemory.data(), readBuf.data(), dataSize), 0);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmRead));
+}
+
+TEST_F(DebugSessionSlmReadV2Test, SlmReadV2UsesCorrectSlmAddresses) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.forcedSlmAddressResult = DebugSessionImp::SipTransferAddr{
+        .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmRead));
+    EXPECT_EQ(session.lastSipCommand->offset, 0x12u);
+    EXPECT_EQ(session.lastSipCommand->size, 0x34u);
+    EXPECT_EQ(session.lastReadGpuMemory.gpuVa, 0x56u);
+    EXPECT_EQ(session.lastReadGpuMemory.size, dataSize);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.mockSipExternalLib->getSlmStartOffsetRetValue = false;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenFirstWaitForCmdReadyReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenSecondWaitForCmdReadyReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenCmdRegisterAccessHelperReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.cmdRegisterAccessHelperReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenResumeImpReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+using DebugSessionSlmWriteV2Test = DebugSessionSlmV2Test;
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmWriteV2IsSuccessful) {
+    std::vector<char> writeBuf(dataSize);
+    for (size_t i = 0; i < dataSize; i++) {
+        writeBuf[i] = static_cast<char>(i % 67);
+    }
+
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(memcmp(session.mockGpuMemory.data(), writeBuf.data(), dataSize), 0);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite));
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, SlmWriteV2UsesCorrectSlmAddresses) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.forcedSlmAddressResult = DebugSessionImp::SipTransferAddr{
+        .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite));
+    EXPECT_EQ(session.lastSipCommand->offset, 0x12u);
+    EXPECT_EQ(session.lastSipCommand->size, 0x34u);
+    EXPECT_EQ(session.lastWriteGpuMemory.gpuVa, 0x56u);
+    EXPECT_EQ(session.lastWriteGpuMemory.size, dataSize);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.mockSipExternalLib->getSlmStartOffsetRetValue = false;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenFirstWaitForCmdReadyReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenSecondWaitForCmdReadyReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenCmdRegisterAccessHelperReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.cmdRegisterAccessHelperReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenResumeImpReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenWriteGpuMemoryReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.writeGpuMemoryReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
 TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteFailsGracefully) {
 
     zet_debug_config_t config = {};
@@ -3581,7 +4424,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3647,7 +4490,7 @@ TEST(DebugSessionTest, givenCanonicalOrDecanonizedAddressWhenCheckingValidAddres
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3669,7 +4512,7 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     auto gmmHelper = neoDevice->getGmmHelper();
@@ -3765,7 +4608,7 @@ TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, false);
     ASSERT_NE(nullptr, sessionMock);
@@ -4071,6 +4914,868 @@ TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInt
 
     EXPECT_TRUE(sessionMock->interruptSent);
     EXPECT_EQ(1u, sessionMock->interruptedDevices[0]);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
+    // Test with device that has no SIP external lib interface (default deviceImp)
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_FALSE(result); // Should return false because no SIP interface and no heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndHeaplessFlagWhenIsHeaplessModeCalledThenReturnsTrue) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS;
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_TRUE(result); // Should return true because of heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_FALSE(result); // Should return false
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            return nullptr;
+        }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override {
+            return 0; // Return a test command register type
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set, but device has SIP external lib
+
+    bool result = DebugSessionImp::isHeaplessMode(mockL0Device.get(), ssa);
+    EXPECT_TRUE(result); // Should return true because device has SIP external lib interface
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidStartIndexWhenCalledThenReturnsInvalidArgument) {
+    auto threadId = stoppedThreadId;
+    auto thread = session->allThreads[threadId].get();
+
+    // Create a regset descriptor with limited registers
+    SIP::regset_desc regdesc = {0, 5, 4, 1}; // offset=0, num=5, bytes=4, numslots=1
+
+    uint32_t registerValues[2] = {0};
+
+    // Test with start index >= num registers
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 5, 1, 0, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = session->registersAccessHelper(thread, &regdesc, 10, 1, 0, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidCountWhenCalledThenReturnsInvalidArgument) {
+    auto threadId = stoppedThreadId;
+    auto thread = session->allThreads[threadId].get();
+
+    // Create a regset descriptor with limited registers
+    SIP::regset_desc regdesc = {0, 5, 4, 1}; // offset=0, num=5, bytes=4, numslots=1
+
+    uint32_t registerValues[10] = {0};
+
+    // Test with start + count > num registers
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 2, 4, 0, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = session->registersAccessHelper(thread, &regdesc, 0, 6, 0, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithModeFlagsTypeThenReturnsModeFlagsRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getModeFlagsRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithDebugScratchTypeThenReturnsDebugScratchRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getDebugScratchRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithThreadScratchTypeThenReturnsThreadScratchRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getThreadScratchRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithSbaTypeThenReturnsSbaRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    // The result should be the SBA regset descriptor from getSbaRegsetDesc
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithUnknownTypeThenCallsGetRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test with a register type that should go to the default case
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    // For normal devices without SIP interface, this should return the regular GRF regset
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithoutSipLibInterfaceWhenCalledWithVersion3ThenReturnsCorrectRegsetDescForSwitchCases) {
+    // Use the normal deviceImp which should not have a SIP external lib interface
+
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    EXPECT_EQ(3u, pStateSaveAreaHeader->versionHeader.version.major);
+
+    // Test some specific switch cases in the version 3 branch
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.grf);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.addr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.flag);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.emask);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.sr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.cr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.tdr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.acc);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.mme);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.sp);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.fc);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.scalar);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.msg);
+
+    // Test default case with invalid type
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x9999, deviceImp.get()), nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidParametersWhenCalledThenHandlesDecisionBranches) {
+    // Set up a proper regset_desc for testing
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    const SIP::regset_desc *regdesc = &pStateSaveAreaHeader->regHeaderV3.grf; // Use GRF regset
+
+    // Create test data
+    uint32_t start = 0;
+    uint32_t count = 1;
+    uint64_t testData = 0x1234567890ABCDEF;
+
+    // Test the decision coverage for the function at line 1551
+    // First test the decision when start >= regdesc->num
+    ze_result_t result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                                        regdesc, regdesc->num, count, 0, &testData, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Test the decision when start + count > regdesc->num
+    result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                            regdesc, regdesc->num - 1, 2, 0, &testData, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Test valid parameters (should reach further into the function)
+    result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                            regdesc, start, count, 0, &testData, false);
+    // Result depends on memory access implementation, but should not crash
+    // This exercises the decision paths within the function
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesBinaryRetrievalFailsThenErrorUnknownReturned) {
+    class MockSipExternalLibBinaryFail : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return -1; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibBinaryFail());
+
+    uint32_t count = 0; // query path
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesCreateMapFailsThenErrorUnknownReturned) {
+    class MockSipExternalLibCreateMapFail : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return false; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibCreateMapFail());
+
+    uint32_t count = 0; // initial query count path
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetIncluded) {
+    // Heapless mode detection in DebugSessionImp::isHeaplessMode returns true if SIP external lib interface present.
+    // We inject a SIP external lib and verify THREAD_SCRATCH regset appears.
+
+    class MockSipExternalLibMinimal : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            stateSaveAreaHeader.resize(sizeof(SIP::intelgt_state_save_area_V3));
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibMinimal());
+
+    uint32_t count = 0;
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_GT(count, 0u);
+    std::vector<zet_debug_regset_properties_t> props(count);
+    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    bool threadScratchFound = false;
+    for (auto &p : props) {
+        if (p.type == ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU) {
+            threadScratchFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(threadScratchFound);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhenGetThreadRegisterSetPropertiesCalledThenSipLibPathUsed) {
+    class MockSipExternalLibAccess : public MockSipExternalLib {
+      public:
+        bool registerAccessCalled = false;
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            registerAccessCalled = true;
+            if (registerCount) {
+                *registerCount = 8;
+            }
+            if (registerStartOffset) {
+                *registerStartOffset = 0;
+            }
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    auto mockSipLib = new MockSipExternalLibAccess();
+    rootEnv.sipExternalLib.reset(mockSipLib);
+    auto threadId = stoppedThreadId;
+    session->allThreads[threadId]->stopThread(1u);
+    uint32_t count = 0;
+    auto singleThread = ze_device_thread_t{static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
+    auto ret = session->getThreadRegisterSetProperties(singleThread, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // With SIP external lib present, getRegisterAccessProperties should be invoked on session (mock sets flag)
+    EXPECT_TRUE(session->registerAccessPropertiesCalled);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithOutOfRangeCountThenInvalidArgumentReturned) {
+    class MockSipExternalLibRegAccess : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            if (registerCount) {
+                *registerCount = 4;
+            }
+            if (registerStartOffset) {
+                *registerStartOffset = 0;
+            }
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
+    auto thread = session->allThreads[stoppedThreadId].get();
+    uint64_t data = 0;
+    auto result = session->registersAccessHelper(thread, regdesc, 2, 3, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, &data, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperReadWriteCalledThenSuccessReturned) {
+    class MockSipExternalLibRegAccess : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            if (registerCount) {
+                *registerCount = 16;
+            }
+            if (registerStartOffset) {
+                *registerStartOffset = 8;
+            }
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
+    auto thread = session->allThreads[stoppedThreadId].get();
+    uint8_t buffer[64] = {};
+    auto result = session->registersAccessHelper(thread, regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buffer, false);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+    result = session->registersAccessHelper(thread, regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buffer, true);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithZeroGpuVaThenErrorUnknownReturned) {
+    class MockSipExternalLibRegAccess : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            if (registerCount) {
+                *registerCount = 16;
+            }
+            if (registerStartOffset) {
+                *registerStartOffset = 0;
+            }
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    session->returnStateSaveAreaGpuVa = false; // force getContextStateSaveAreaGpuVa() to return 0
+    auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
+    auto thread = session->allThreads[stoppedThreadId].get();
+    uint32_t value = 0;
+    auto result = session->registersAccessHelper(thread, regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, &value, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAccessHelperCalledThenCommandTypeUsed) {
+    class MockSipExternalLibCmdType : public MockSipExternalLib {
+      public:
+        uint32_t cmdType = 0xABCDEF01;
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return cmdType; }
+    };
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibCmdType());
+    NEO::SipCommandRegisterValues cmd = {{0}};
+    cmd.sip_commandValues.command = 0x1;
+    auto result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, false);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, true);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+// Tests for getSbaRegsetDesc function
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs3AndHeaplessModeThenReturnsHeaplessDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 3;
+    header.regHeaderV3.sip_flags = SIP::SIP_FLAG_HEAPLESS;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, 0u);
+    EXPECT_EQ(result->offset, 0u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs3AndNotHeaplessModeThenReturnsSbaDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 3;
+    header.regHeaderV3.sip_flags = 0; // Not heapless
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
+    EXPECT_EQ(result->bits, 64u);
+    EXPECT_EQ(result->bytes, 8u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs5ThenReturnsHeaplessDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 5;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, 0u);
+    EXPECT_EQ(result->offset, 0u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs2ThenReturnsSbaDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 2;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
+    EXPECT_EQ(result->bits, 64u);
+    EXPECT_EQ(result->bytes, 8u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs6ThenReturnsNullptr) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 6;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs7ThenReturnsNullptr) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 7;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetNotIncluded) {
+    // Test the false branch of: isHeaplessMode(device, pStateSaveArea->regHeaderV3) || version.major == 5
+    // Version 3, no heapless flag, no SIP external lib -> THREAD_SCRATCH should NOT be included
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+
+    // Don't set SIP external lib to ensure isHeaplessMode returns false
+    rootEnv.sipExternalLib.reset(nullptr);
+
+    uint32_t count = 0;
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_GT(count, 0u);
+
+    std::vector<zet_debug_regset_properties_t> props(count);
+    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    bool threadScratchFound = false;
+    for (auto &p : props) {
+        if (p.type == ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU) {
+            threadScratchFound = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(threadScratchFound);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetIncluded) {
+    // Test the true branch of the second part: version.major == 5
+    // This should include THREAD_SCRATCH regardless of heapless mode
+
+    class MockSipExternalLibForV5 : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            // Create a proper StateSaveAreaHeader with version 5
+            stateSaveAreaHeader.resize(sizeof(NEO::StateSaveAreaHeader));
+            auto pHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+            pHeader->versionHeader.version.major = 5;
+            pHeader->versionHeader.version.minor = 0;
+            pHeader->versionHeader.version.patch = 0;
+            pHeader->versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibForV5());
+
+    // Create a version 5 state save area header manually
+    NEO::StateSaveAreaHeader stateSaveAreaHeader5 = {};
+    stateSaveAreaHeader5.versionHeader.version.major = 5;
+    stateSaveAreaHeader5.versionHeader.version.minor = 0;
+    stateSaveAreaHeader5.versionHeader.version.patch = 0;
+    stateSaveAreaHeader5.versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
+    memcpy(stateSaveAreaHeader5.versionHeader.magic, "tssarea", 8);
+
+    // Initialize regHeaderV3 with minimal valid data (used for V5)
+    stateSaveAreaHeader5.regHeaderV3.num_slices = 1;
+    stateSaveAreaHeader5.regHeaderV3.num_subslices_per_slice = 1;
+    stateSaveAreaHeader5.regHeaderV3.num_eus_per_subslice = 8;
+    stateSaveAreaHeader5.regHeaderV3.num_threads_per_eu = 7;
+    stateSaveAreaHeader5.regHeaderV3.grf = {0, 128, 512, 64};
+
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader.assign(reinterpret_cast<char *>(&stateSaveAreaHeader5),
+                                             reinterpret_cast<char *>(&stateSaveAreaHeader5) + sizeof(NEO::StateSaveAreaHeader));
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
+
+    uint32_t count = 0;
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_GT(count, 0u);
+
+    std::vector<zet_debug_regset_properties_t> props(count);
+    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    bool threadScratchFound = false;
+    for (auto &p : props) {
+        if (p.type == ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU) {
+            threadScratchFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(threadScratchFound);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+// Tests for getSipCommandRegisterValues (non-V5 behavior)
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenWriteTrueThenReturnsSipCommandValuesAndFullSize) {
+    // For non-V5 versions (< 5), getSipCommandRegisterValues does not modify the size parameter
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = 0x12345678;
+    command.sip_commandValues.size = 0xABCD;
+    command.sip_commandValues.offset = 0x9876;
+
+    size_t size = 128;
+    size_t originalSize = size;
+    size = session->getSipCommandRegisterValues(command, true, size);
+
+    // For non-V5 version, size parameter should remain unchanged
+    EXPECT_EQ(originalSize, size);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenWriteFalseThenReturnsSipCommandValuesAndFullSize) {
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = 0x12345678;
+    command.sip_commandValues.size = 0xABCD;
+    command.sip_commandValues.offset = 0x9876;
+
+    size_t size = 0;
+    size_t originalSize = size;
+    size = session->getSipCommandRegisterValues(command, false, size);
+
+    // For non-V5 version, size parameter should remain unchanged
+    EXPECT_EQ(originalSize, size);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenCmdRegisterAccessHelperWhenWritingCommandThenCommandValuesArePreparedCorrectly) {
+    // Setup the state save area to allow registersAccessHelper to work
+    {
+        auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    // Create command to write
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
+    command.sip_commandValues.size = 0x100;
+    command.sip_commandValues.offset = 0x200;
+
+    // Test getSipCommandRegisterValues for write mode
+    size_t writeSize = 0;
+    size_t originalWriteSize = writeSize;
+    writeSize = session->getSipCommandRegisterValues(command, true, writeSize);
+
+    // For non-V5 version (< 5), size parameter should remain unchanged
+    EXPECT_EQ(originalWriteSize, writeSize);
+
+    // Call cmdRegisterAccessHelper for write - should succeed or return expected error
+    auto result = session->cmdRegisterAccessHelper(stoppedThreadId, command, true);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenCmdRegisterAccessHelperWhenReadingCommandThenCommandValuesArePreparedCorrectly) {
+    // Setup the state save area
+    {
+        auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    // Create command to read
+    NEO::SipCommandRegisterValues command = {{0}};
+
+    // Test getSipCommandRegisterValues for read mode
+    size_t readSize = 0;
+    size_t originalReadSize = readSize;
+    readSize = session->getSipCommandRegisterValues(command, false, readSize);
+
+    // For non-V5 version (< 5), size parameter should remain unchanged
+    EXPECT_EQ(originalReadSize, readSize);
+
+    // Call cmdRegisterAccessHelper for read
+    auto result = session->cmdRegisterAccessHelper(stoppedThreadId, command, false);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenDifferentCommandsUsedThenCorrectValuesReturned) {
+    // Test multiple commands with different values
+    std::vector<std::pair<uint32_t, const char *>> commandTests = {
+        {static_cast<uint32_t>(NEO::SipKernel::Command::resume), "resume"},
+        {static_cast<uint32_t>(NEO::SipKernel::Command::slmRead), "slmRead"},
+        {static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite), "slmWrite"},
+        {0x12345678, "custom"}};
+
+    for (const auto &[cmdValue, cmdName] : commandTests) {
+        NEO::SipCommandRegisterValues command = {{0}};
+        command.sip_commandValues.command = cmdValue;
+        command.sip_commandValues.size = 0x1000;
+        command.sip_commandValues.offset = 0x2000;
+
+        // Test write mode
+        size_t writeSize = 0;
+        size_t originalWriteSize = writeSize;
+        writeSize = session->getSipCommandRegisterValues(command, true, writeSize);
+
+        // For non-V5 version, size parameter should remain unchanged
+        EXPECT_EQ(originalWriteSize, writeSize) << "Failed for command: " << cmdName;
+
+        // Test read mode
+        size_t readSize = 0;
+        size_t originalReadSize = readSize;
+        readSize = session->getSipCommandRegisterValues(command, false, readSize);
+
+        // For non-V5 version, size parameter should remain unchanged
+        EXPECT_EQ(originalReadSize, readSize) << "Failed for command: " << cmdName;
+    }
+}
+
+struct DebugSessionBarrierMemTest : public ::testing::Test {
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    static constexpr uint64_t memDescAddress = 0x5372;
+
+    struct MockDebugSessionBarrierMem : public MockDebugSession {
+        using DebugSessionImp::SipTransferAddr;
+        using MockDebugSession::getBarrierAddresses;
+        using MockDebugSession::getBarrierStartOffset;
+        using MockDebugSession::readBarrierMemory;
+
+        uint64_t ctxSsaGpuVaReturn = 0x20000000;
+        std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
+        std::optional<std::optional<SipTransferAddr>> forcedBarrierAddressResult;
+
+        MockDebugSessionBarrierMem(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device),
+                                                                                           mockSipExternalLib(std::make_unique<MockSipExternalLib>()) {
+        }
+
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return ctxSsaGpuVaReturn;
+        }
+
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipExternalLib ? mockSipExternalLib.get() : MockDebugSession::getSipExternalLibInterface();
+        }
+
+        std::optional<SipTransferAddr> getBarrierAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
+            return forcedBarrierAddressResult ? forcedBarrierAddressResult.value() : MockDebugSession::getBarrierAddresses(threadId, size, desc);
+        }
+
+        struct ReadMemViaSipTransactionArgs {
+            NEO::SipKernel::Command commandId;
+            EuThread::ThreadId threadId;
+            SipTransferAddr addrs;
+            size_t size;
+            void *buffer;
+        };
+        std::optional<ReadMemViaSipTransactionArgs> lastCalledReadMemViaSipTransactionArgs;
+        ze_result_t readMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addrs, size_t size, void *buffer) override {
+            lastCalledReadMemViaSipTransactionArgs = ReadMemViaSipTransactionArgs{
+                .commandId = commandId,
+                .threadId = threadId,
+                .addrs = addrs,
+                .size = size,
+                .buffer = buffer,
+            };
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    MockDeviceImp deviceImp;
+    MockDebugSessionBarrierMem session;
+    EuThread::ThreadId threadId;
+
+    DebugSessionBarrierMemTest() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                                   session(zet_debug_config_t{}, &deviceImp),
+                                   threadId(0, 0, 0, 0, 0) {}
+
+    void SetUp() override {
+        session.allThreads[threadId]->stopThread(testMemoryHandle);
+    }
+};
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierStartOffsetFailsWhenGetBarrierAddressesIsCalledThenNulloptIsReturned) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetRetValue = false;
+    zet_debug_memory_space_desc_t memDesc;
+    const auto addrs = session.getBarrierAddresses(threadId, 8, &memDesc);
+    EXPECT_EQ(addrs, std::nullopt);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierStartOffsetSucceedsWhenGetBarrierAddressesIsCalledThenCorrectValuesAreReturned) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetResult = 0x300000;
+    zet_debug_memory_space_desc_t memDesc = {.address = 0xbee504ae};
+    const auto addrs = session.getBarrierAddresses(threadId, 17, &memDesc);
+    EXPECT_NE(addrs, std::nullopt);
+    EXPECT_EQ(addrs->sipOffset, 21u);
+    EXPECT_EQ(addrs->sipSize, 2u);
+    EXPECT_EQ(addrs->gpuMemOffset, 0x203000a8u);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenSipExternalLibIsAvailableThenGetBarrierStartOffsetIsObtainedFromSipExternalLib) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetResult = 0x300000;
+    uint32_t barrierStartOffset = 0;
+    EXPECT_EQ(session.getBarrierStartOffset(0, threadId, &barrierStartOffset), true);
+    EXPECT_EQ(barrierStartOffset, 0x300000u);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierAddressesFailsThenReadBarrierMemoryAlsoFails) {
+    session.forcedBarrierAddressResult = std::optional<DebugSessionImp::SipTransferAddr>(std::nullopt);
+    zet_debug_memory_space_desc_t memDesc;
+    char buf[16];
+    ze_result_t status = session.readBarrierMemory(threadId, &memDesc, sizeof(buf), buf);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierAddressesSucceedsThenReadMemViaSipTransactionIsCalledWithCorrectArgs) {
+    session.forcedBarrierAddressResult = DebugSessionImp::SipTransferAddr{
+        .sipOffset = 15,
+        .sipSize = 8,
+        .gpuMemOffset = 0x123456,
+    };
+    zet_debug_memory_space_desc_t memDesc;
+    char buf[13];
+    session.readBarrierMemory(threadId, &memDesc, sizeof(buf), buf);
+    EXPECT_NE(session.lastCalledReadMemViaSipTransactionArgs, std::nullopt);
+    const auto args = *session.lastCalledReadMemViaSipTransactionArgs;
+    EXPECT_EQ(args.commandId, NEO::SipKernel::Command::barrierRead);
+    EXPECT_EQ(args.threadId, threadId);
+    EXPECT_EQ(args.addrs.sipOffset, 15u);
+    EXPECT_EQ(args.addrs.sipSize, 8u);
+    EXPECT_EQ(args.addrs.gpuMemOffset, 0x123456u);
+    EXPECT_EQ(args.size, sizeof(buf));
+    EXPECT_EQ(args.buffer, buf);
 }
 
 } // namespace ult

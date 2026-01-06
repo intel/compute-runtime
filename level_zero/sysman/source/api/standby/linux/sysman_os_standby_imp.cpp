@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,8 +38,8 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
         return result;
     }
     if (standbyModeDefault == currentMode) {
@@ -48,8 +48,8 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
         mode = ZES_STANDBY_PROMO_MODE_NEVER;
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <unknown or internal error occured> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
     }
     return result;
 }
@@ -64,8 +64,8 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
 
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
     }
     return result;
 }
@@ -74,7 +74,7 @@ void LinuxStandbyImp::init() {
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;
 
-    if (pSysfsAccess->directoryExists(baseDir)) {
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
         baseDirectoryExists = true;
     }
 

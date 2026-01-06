@@ -8,12 +8,14 @@
 #pragma once
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/address_range.h"
+#include "shared/source/utilities/stackvec.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 #include <unordered_map>
 
@@ -22,18 +24,6 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 class OSInterface;
-
-// NOLINTBEGIN
-struct StateSaveAreaHeader {
-    struct SIP::StateSaveArea versionHeader;
-    union {
-        struct SIP::intelgt_state_save_area regHeader;
-        struct SIP::intelgt_state_save_area_V3 regHeaderV3;
-        uint64_t totalWmtpDataSize;
-    };
-};
-
-// NOLINTEND
 
 #pragma pack(1)
 struct SbaTrackedAddresses {
@@ -111,7 +101,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
     void setSingleAddressSpaceSbaTracking(bool value) {
         singleAddressSpaceSbaTracking = value;
     }
-    bool getSingleAddressSpaceSbaTracking() { return singleAddressSpaceSbaTracking; }
+    bool getSingleAddressSpaceSbaTracking() const override { return singleAddressSpaceSbaTracking; }
 
     struct CommandQueueNotification {
         uint32_t subDeviceIndex = 0;

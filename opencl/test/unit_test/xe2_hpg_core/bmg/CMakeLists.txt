@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,5 +12,4 @@ if(TESTS_BMG)
   )
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe2_hpg_core_bmg})
-  add_subdirectories()
 endif()

@@ -153,6 +153,13 @@ void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyn
         DEBUG_BREAK_IF(true);
         return;
     }
+
+    [[maybe_unused]] auto ret = SysCalls::waitForSingleObject(glSyncInfo.submissionEvent, INFINITE);
+    if (ret != WAIT_OBJECT_0) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
     glSyncInfo.waitCalled = true;
 }
 

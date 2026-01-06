@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 namespace L0 {
@@ -441,8 +441,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
     pMockDiagProcfsAccess->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDevicePid = getpid();
-    pMockDiagLinuxSysmanImp->ourDeviceFd = NEO::SysCalls::open("/dev/null", 0);
+    constexpr auto deviceFd = 0xF00;
+    pMockDiagLinuxSysmanImp->ourDeviceFd = deviceFd;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->gpuProcessCleanup(true));
+    EXPECT_EQ(deviceFd, NEO::SysCalls::closeFuncArgPassed);
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFailsThenWaitForQuiescentCompletionsFails) {

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <fstream>
@@ -21,7 +22,7 @@
 namespace NEO {
 
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
-    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(std::string("igdrcl.log"), debugManager.flags);
+    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance("igdrcl_" + std::to_string(SysCalls::getProcessId()) + ".log", debugManager.flags);
     return fileLoggerInstance;
 }
 
@@ -89,10 +90,11 @@ void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_
 
         std::stringstream ss;
         ss << "ThreadID: " << thisThread << " ";
-        if (enter)
+        if (enter) {
             ss << "Function Enter: ";
-        else
+        } else {
             ss << "Function Leave (" << errorCode << "): ";
+        }
         ss << function << std::endl;
 
         auto str = ss.str();
@@ -102,8 +104,9 @@ void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_
 
 template <DebugFunctionalityLevel debugLevel>
 size_t FileLogger<debugLevel>::getInput(const size_t *input, int32_t index) {
-    if (enabled() == false)
+    if (enabled() == false) {
         return 0;
+    }
     return input != nullptr ? input[index] : 0;
 }
 
@@ -161,8 +164,6 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "MAP_ALLOCATION";
     case AllocationType::mcs:
         return "MCS";
-    case AllocationType::pipe:
-        return "PIPE";
     case AllocationType::preemption:
         return "PREEMPTION";
     case AllocationType::printfSurface:
@@ -223,6 +224,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "ASSERT_BUFFER";
     case AllocationType::syncDispatchToken:
         return "SYNC_DISPATCH_TOKEN";
+    case AllocationType::hostFunction:
+        return "HOST_FUNCTION";
     default:
         return "ILLEGAL_VALUE";
     }
@@ -255,5 +258,10 @@ const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation) {
 template class FileLogger<DebugFunctionalityLevel::none>;
 template class FileLogger<DebugFunctionalityLevel::regKeys>;
 template class FileLogger<DebugFunctionalityLevel::full>;
+
+template <>
+void FileLoggerProxy<true>::logString(std::string_view data) {
+    NEO::fileLoggerInstance().logDebugString(true, data);
+}
 
 } // namespace NEO

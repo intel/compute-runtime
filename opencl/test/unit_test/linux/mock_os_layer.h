@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,14 @@
 #include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+
+namespace NEO {
+struct GemVmControl;
+struct Query;
+} // namespace NEO
 
 extern int (*openFunc)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);

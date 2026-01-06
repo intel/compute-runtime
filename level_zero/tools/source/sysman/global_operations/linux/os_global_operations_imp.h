@@ -6,14 +6,22 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/pmt_util.h"
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/global_operations/os_global_operations.h"
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+
+namespace NEO {
+class ExecutionEnvironment;
+} // namespace NEO
 
 namespace L0 {
 class SysfsAccess;
 struct Device;
+class FsAccess;
+class LinuxSysmanImp;
+class ProcfsAccess;
+struct OsSysman;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:

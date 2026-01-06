@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
-#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -28,13 +25,19 @@ HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispat
     auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
     LinearStream stream(buffer.get(), bufferSize);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::renderCompute);
+    stream.setGpuBase(0x1000);
+    uint64_t expectedBufferGpuAddress = stream.getCurrentGpuAddressPosition();
+    uint64_t cmdBufferGpuAddress = 0;
+
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::renderCompute, &cmdBufferGpuAddress);
+    EXPECT_EQ(expectedBufferGpuAddress, cmdBufferGpuAddress);
+
     StreamProperties props;
     props.frontEndState.disableEUFusion.set(true);
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props);
 
-    auto cfeCmd = reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto cfeCmd = reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(1u, cfeCmd->getFusedEuDispatch());
 }
 

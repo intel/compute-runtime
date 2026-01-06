@@ -1,23 +1,29 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <memory>
 
 using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 
@@ -42,12 +48,12 @@ struct GmmTests : public MockExecutionEnvironmentGmmFixtureTest {
 };
 
 TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
-    std::vector<std::pair<GMM_CUBE_FACE_ENUM, uint32_t>> v = {{__GMM_CUBE_FACE_NEG_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
-                                                              {__GMM_CUBE_FACE_POS_X, GL_TEXTURE_CUBE_MAP_POSITIVE_X},
-                                                              {__GMM_CUBE_FACE_NEG_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y},
-                                                              {__GMM_CUBE_FACE_POS_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y},
-                                                              {__GMM_CUBE_FACE_NEG_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z},
-                                                              {__GMM_CUBE_FACE_POS_Z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z}};
+    std::vector<std::pair<GmmCubeFace, uint32_t>> v = {{__GMM_CUBE_FACE_NEG_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
+                                                       {__GMM_CUBE_FACE_POS_X, GL_TEXTURE_CUBE_MAP_POSITIVE_X},
+                                                       {__GMM_CUBE_FACE_NEG_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y},
+                                                       {__GMM_CUBE_FACE_POS_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y},
+                                                       {__GMM_CUBE_FACE_NEG_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z},
+                                                       {__GMM_CUBE_FACE_POS_Z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z}};
 
     uint32_t maxVal = 0;
     for (auto p : v) {
@@ -129,11 +135,11 @@ static const cl_mem_object_type imgTypes[6] = {
 } // namespace GmmTestConst
 
 TEST_F(GmmTests, WhenConvertingPlanesThenCorrectPlaneIsReturned) {
-    std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::noPlane, GMM_YUV_PLANE::GMM_NO_PLANE},
-                                                           {ImagePlane::planeY, GMM_YUV_PLANE::GMM_PLANE_Y},
-                                                           {ImagePlane::planeU, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::planeUV, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::planeV, GMM_YUV_PLANE::GMM_PLANE_V}};
+    std::vector<std::pair<ImagePlane, ImagePlane>> v = {{ImagePlane::noPlane, ImagePlane::noPlane},
+                                                        {ImagePlane::planeY, ImagePlane::planeY},
+                                                        {ImagePlane::planeU, ImagePlane::planeU},
+                                                        {ImagePlane::planeUV, ImagePlane::planeU},
+                                                        {ImagePlane::planeV, ImagePlane::planeV}};
 
     for (auto p : v) {
         EXPECT_TRUE(p.second == GmmTypesConverter::convertPlane(p.first));
@@ -164,7 +170,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     ImageInfo updateImgInfo = {};
     NEO::ImagePlane yuvPlane = NEO::ImagePlane::noPlane;
     if (Image::convertType(GetParam()) == ImageType::image2D) {
-        updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
+        updateImgInfo.plane = ImagePlane::planeU;
         yuvPlane = NEO::ImagePlane::planeUV;
     }
 
@@ -172,7 +178,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     GMM_REQ_OFFSET_INFO expectedReqInfo[2] = {};
     expectedReqInfo[0].ReqLock = 1;
     expectedReqInfo[1].ReqRender = 1;
-    expectedReqInfo[1].Plane = updateImgInfo.plane;
+    expectedReqInfo[1].Plane = static_cast<GMM_YUV_PLANE>(updateImgInfo.plane);
 
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = Image::convertType(GetParam());
@@ -203,7 +209,8 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
 
-    auto mockResInfo = new MyMockGmmResourceInfo(&queryGmm->resourceParams);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    auto mockResInfo = new MyMockGmmResourceInfo(queryGmmResourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
 
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
@@ -280,11 +287,12 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
 
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
-    MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(&gmm->resourceParams);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(gmmResourceParams);
     gmm->gmmResourceInfo.reset(mockGmmResourceInfo);
 
     mockGmmResourceInfo->expectedArrayIndex = 7;
-    mockGmmResourceInfo->expectedGmmPlane = imgInfo.plane;
+    mockGmmResourceInfo->expectedGmmPlane = static_cast<GMM_YUV_PLANE>(imgInfo.plane);
     mockGmmResourceInfo->gmmGetOffsetOutput = {10, 111, 120};
     mockGmmResourceInfo->gmmGetBitsPerPixelOutput = 24;
     gmm->updateOffsetsInImgInfo(imgInfo, mockGmmResourceInfo->expectedArrayIndex);
@@ -316,7 +324,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
-        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+        imgInfo.plane = ImagePlane::noPlane;
     }
 
     HardwareInfo *localPlatformDevice = nullptr;
@@ -336,12 +344,33 @@ TEST_F(GmmCompressionTests, givenNV12FormatWhenQueryingThenDisallow) {
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
+TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndXe2CompressionFtrSetWhenQueryingThenDisallowOnGmmXe2CompFormat) {
+    auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
+    imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
+
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = true;
+    uint8_t validFormat = static_cast<uint8_t>(GMM_XE2_UNIFIED_COMP_FORMAT::GMM_XE2_UNIFIED_COMP_FORMAT_R32);
+    uint8_t invalidFormat = static_cast<uint8_t>(GMM_XE2_UNIFIED_COMP_FORMAT::GMM_XE2_UNIFIED_COMP_FORMAT_INVALID);
+
+    mockGmmClient->compressionFormatToReturn = invalidFormat;
+    auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_EQ(compressionFormat, invalidFormat);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
+
+    mockGmmClient->compressionFormatToReturn = validFormat;
+    queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled());
+}
+
 TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrSetWhenQueryingThenDisallowOnGmmFlatCcsFormat) {
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = false;
     localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = true;
-    uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
+    uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_R32U);
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
 
     mockGmmClient->compressionFormatToReturn = invalidFormat;
@@ -360,9 +389,10 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrNotSetWhen
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = false;
     localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = false;
+    uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_RGB32);
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
-    uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     mockGmmClient->compressionFormatToReturn = invalidFormat;
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
@@ -415,7 +445,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -426,9 +456,11 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
     storageInfo.memoryBanks.set(1);
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, false);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+
+    EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceFlags->Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhenGmmIsCreatedThenNonLocalOnlyFlagIsNotSetAndNotLockableAndLocalOnlyIsSet) {
@@ -441,7 +473,7 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -455,9 +487,10 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled());
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+    EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedThenLocalOnlyNotSet) {
@@ -468,7 +501,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedT
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -476,8 +509,9 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedT
     imgInfo.useLocalMemory = false;
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
 }
 
 TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
@@ -488,19 +522,21 @@ TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
 
     imgInfo.useLocalMemory = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
     imgInfo.useLocalMemory = true;
     gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
 }
 
 } // namespace NEO

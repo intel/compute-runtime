@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "opencl/test/unit_test/program/program_tests.h"
 
 namespace NEO {
@@ -17,6 +18,7 @@ class MockProgram;
 using namespace NEO;
 
 class MockBuffer;
+
 class ProgramWithZebinFixture : public ProgramTests {
   public:
     std::unique_ptr<MockProgram> program;
@@ -25,10 +27,14 @@ class ProgramWithZebinFixture : public ProgramTests {
     std::unique_ptr<MockBuffer> globalSurface;
     std::unique_ptr<MockBuffer> constantSurface;
     const char strings[12] = "Hello olleH";
+    bool isUsingSharedIsaAllocation = false;
+    const size_t isaSubAllocOffset = 48u;
+    const size_t isaSubAllocSize = 308u;
     void SetUp() override;
     void TearDown() override;
     void addEmptyZebin(MockProgram *program);
     void populateProgramWithSegments(MockProgram *program);
+    void populateProgramWithSegments(MockProgram *program, bool createWithSharedGlobalConstSurfaces);
     ~ProgramWithZebinFixture() override;
     ProgramWithZebinFixture();
 };

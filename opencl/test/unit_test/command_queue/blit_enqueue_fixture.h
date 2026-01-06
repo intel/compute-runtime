@@ -7,25 +7,23 @@
 
 #pragma once
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/helpers/pause_on_gpu_properties.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
+#include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/vec.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -84,7 +82,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));
         debugManager.flags.EnableLocalMemory.set(1);
 
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
         REQUIRE_AUX_RESOLVES(device->getRootDeviceEnvironment());
 
@@ -171,7 +169,7 @@ struct BlitEnqueueTests : public ::testing::Test {
             GmmRequirements gmmRequirements{};
             gmmRequirements.allowLargePages = true;
             gmmRequirements.preferCompressed = false;
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

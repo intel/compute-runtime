@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,18 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 using namespace NEO;
 
@@ -61,6 +65,7 @@ TEST_P(GetCommandQueueInfoTest, GivenClQueueContextWhenGettingCommandQueueInfoTh
 
 TEST_P(GetCommandQueueInfoTest, GivenClQueueDeviceWhenGettingCommandQueueInfoThenSuccessIsReturned) {
     cl_device_id deviceExpected = pClDevice;
+
     cl_device_id deviceReturned = nullptr;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
@@ -188,8 +193,8 @@ TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilySelectedWhenGettingFamily
 HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGettingCommandQueueInfoThenCorrectValueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
-
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0)};
+    MockClDevice &mockClDevice = *deviceFactory.rootDevices[0];
     const cl_device_id deviceId = &mockClDevice;
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
     auto ccsFamily = mockClDevice.getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);

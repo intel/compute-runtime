@@ -47,8 +47,6 @@ if(BUILD_WITH_L0)
 
   add_definitions(-DZE_ENABLE_OCL_INTEROP=1)
 
-  file(WRITE "${CMAKE_BINARY_DIR}/VERSION" "${PROJECT_VERSION}")
-
   #Define a path for custom commands to work around MSVC
   set(CUSTOM_COMMAND_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if(MSVC)
@@ -80,25 +78,6 @@ if(BUILD_WITH_L0)
     else()
       message(STATUS "libudev headers not available. Building without")
     endif()
-  endif()
-
-  # Firmware Update Library
-  get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
-  if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-    find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
-  else()
-    find_package(igsc)
-  endif()
-  if(igsc_FOUND)
-    add_definitions(-DIGSC_PRESENT=1)
-    if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-      get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
-    endif()
-    message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
-    message(STATUS "igsc version: ${igsc_VERSION}")
-    include_directories(SYSTEM ${igsc_INCLUDE_DIR})
-  else()
-    message(STATUS "igsc Library headers not available. Building without")
   endif()
 
   if(NOT MSVC)
@@ -156,7 +135,6 @@ if(BUILD_WITH_L0)
                            COMMAND echo Running copy_third_party_files for igc dir. Copy from: "${TEMP_DIR}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                            COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                           DEPENDS "${NEO__IGC_LIBRARY_PATH}"
         )
       endforeach()
     endif()
@@ -188,7 +166,6 @@ if(BUILD_WITH_L0)
                          COMMAND echo Running copy_third_party_files for gmm dir. Copy from: "${NEO__GMM_LIBRARY_PATH}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                          COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__GMM_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         DEPENDS "${NEO__GMM_LIBRARY_PATH}"
       )
     endif()
   endif()
@@ -201,20 +178,31 @@ if(BUILD_WITH_L0)
   endif()
 
   include_directories(${COMPUTE_RUNTIME_DIR}/third_party/opencl_headers)
-  if(UNIX AND DEFINED NEO_SPDLOG_DIR)
-    set_source_files_properties(
-                                ${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/log_utility/linux/linux_logging.cpp
-                                PROPERTIES INCLUDE_DIRECTORIES ${NEO_SPDLOG_DIR}
-    )
+
+  if(NOT DEFINED NEO_IGSC_HEADERS_DIR)
+    get_filename_component(IGSC_DIR "${COMPUTE_RUNTIME_DIR}/third_party/igsc/include" ABSOLUTE)
+    if(IS_DIRECTORY ${IGSC_DIR})
+      set(NEO_IGSC_HEADERS_DIR ${IGSC_DIR})
+    else()
+      message(FATAL_ERROR "IGSC headers not available!")
+    endif()
+  elseif(NOT EXISTS "${NEO_IGSC_HEADERS_DIR}/igsc_lib.h")
+    message(FATAL_ERROR "Invalid IGSC headers directory: ${NEO_IGSC_HEADERS_DIR}. Required file 'igsc_lib.h' not found.")
   endif()
+  message(STATUS "IGSC headers dir: ${NEO_IGSC_HEADERS_DIR}")
 
   if(CUSTOM_L0_INCLUDE_PATH)
     include_directories(${CUSTOM_L0_INCLUDE_PATH}/../)
   else()
     include_directories(${LevelZero_INCLUDE_DIRS})
   endif()
+
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/definitions${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/driver/definitions${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/graph/captured_apis${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/graph/definitions${BRANCH_DIR_SUFFIX})
 
   # Create our shared library/DLL
   configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)
@@ -254,9 +242,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows${BRANCH_DIR_SUFFIX}/options_windows.cpp
-                   ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/create_gmm_memory.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls_winmm.cpp
@@ -281,13 +267,12 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/linux/debugger_l0_dll_linux.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
-                   ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
     )
     if(NOT DISABLE_WDDM_LINUX)
       target_sources(${TARGET_NAME_L0}
                      PRIVATE
-                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/create_gmm_memory.cpp
                      ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                      ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
       )
@@ -339,9 +324,12 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
-  hide_subdir(api)
-  add_subdirectory_unique(source)
+  target_include_directories(${TARGET_NAME_L0}
+                             PRIVATE
+                             ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
 
+  hide_subdir(api)
   hide_subdir(ddi)
   hide_subdir(experimental)
   hide_subdir(include)
@@ -372,12 +360,6 @@ if(BUILD_WITH_L0)
                                 COMPILE_DEFINITIONS
                                 "NEO_L0_VERSION_MAJOR=${NEO_L0_VERSION_MAJOR};NEO_L0_VERSION_MINOR=${NEO_L0_VERSION_MINOR}"
     )
-
-    if(DEFINED NEO_SPDLOG_DIR)
-      target_include_directories(${LIB_NAME} PRIVATE "experimental/source/log_utility")
-    else()
-      target_include_directories(${LIB_NAME} PRIVATE "experimental/source/log_utility_stub")
-    endif()
 
     if(${MOCKABLE})
       get_property(COMPUTE_RUNTIME_DEFINITIONS
@@ -411,6 +393,9 @@ if(BUILD_WITH_L0)
                                ${IGC_OCL_ADAPTOR_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
+                               ${KHRONOS_GL_HEADERS_DIR}
+                               ${KHRONOS_SPIRV_HEADERS_DIR}
+                               ${NEO_IGSC_HEADERS_DIR}
                                ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
@@ -466,9 +451,10 @@ if(BUILD_WITH_L0)
     target_link_libraries(${TARGET_NAME_L0} PRIVATE ${GMM_LINK_NAME})
     if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
       set_property(TARGET ${TARGET_NAME_L0}
-                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
+                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux${BRANCH_DIR_SUFFIX}/ze.exports"
       )
     endif()
+    set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
   endif()
 
   create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)
@@ -553,6 +539,11 @@ if(BUILD_WITH_L0)
       include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
     endif()
 
+  endif()
+
+  if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+    target_sources(${L0_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${L0_RELEASE_LIB_NAME}_pch.h)
+    target_precompile_headers(${L0_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${L0_RELEASE_LIB_NAME}_pch.h)
   endif()
 
 else()

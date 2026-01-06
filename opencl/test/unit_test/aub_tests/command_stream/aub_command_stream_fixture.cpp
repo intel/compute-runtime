@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ void AUBCommandStreamFixture::setUp(const HardwareInfo *hardwareInfo) {
 
     CommandStreamFixture::setUp(pCmdQ);
 
-    pClDevice = device.get();
+    pClDevice = device;
     pDevice = &pClDevice->device;
     pCommandStreamReceiver = csr;
     pTagMemory = pCommandStreamReceiver->getTagAddress();

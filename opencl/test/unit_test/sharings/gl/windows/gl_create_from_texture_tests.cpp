@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,11 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -21,6 +22,8 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 namespace NEO {
 class CreateFromGlTexture : public ::testing::Test {
@@ -204,7 +207,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
         EXPECT_EQ(glImage->getImageDesc().image_slice_pitch, imgInfo.size);
     }
 
-    EXPECT_EQ(glImage->getQPitch(), gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType()));
+    EXPECT_EQ(glImage->getQPitch(), gmm->queryQPitch());
 
     // gmm returns 1 by default - OCL requires 0
     uint32_t numSamples = static_cast<uint32_t>(gmm->gmmResourceInfo->getNumSamples());

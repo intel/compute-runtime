@@ -53,7 +53,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingPreemptionCmdThenExpectPrope
 }
 
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment(), false);
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
     EXPECT_EQ(expectedSize, RenderDispatcher<FamilyType>::getSizeMonitorFence(this->pDevice->getRootDeviceEnvironment()));
 }
@@ -84,39 +84,6 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
         }
     }
     EXPECT_TRUE(foundMonitorFence);
-}
-
-HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
-
-    size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(expectedSize, actualSize);
-}
-
-HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getRootDeviceEnvironment(), 0ull);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(cmdBuffer);
-
-    bool foundCacheFlush = false;
-    for (auto &it : hwParse.cmdList) {
-        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(it);
-        if (pipeControl) {
-            foundCacheFlush =
-                pipeControl->getRenderTargetCacheFlushEnable() &&
-                pipeControl->getInstructionCacheInvalidateEnable() &&
-                pipeControl->getTextureCacheInvalidationEnable() &&
-                pipeControl->getPipeControlFlushEnable() &&
-                pipeControl->getStateCacheInvalidationEnable();
-            if (foundCacheFlush) {
-                break;
-            }
-        }
-    }
-    EXPECT_TRUE(foundCacheFlush);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,

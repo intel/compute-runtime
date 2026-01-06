@@ -24,7 +24,7 @@ namespace L0::ult {
 struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
     std::vector<uint32_t> getGrfSizes(ze_device_handle_t device) {
         ze_device_module_properties_t deviceModuleProperties{};
-        zex_device_module_register_file_exp_t deviceModuleRegisterFile{};
+        zex_device_module_register_file_exp_t deviceModuleRegisterFile{ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};
         deviceModuleProperties.pNext = &deviceModuleRegisterFile;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetModuleProperties(device, &deviceModuleProperties));
 

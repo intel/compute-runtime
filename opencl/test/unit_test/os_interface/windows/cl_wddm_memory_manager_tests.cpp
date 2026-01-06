@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -53,7 +54,7 @@ void ClWddmMemoryManagerFixture::setUp() {
 
         for (auto engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
             if (engine.getEngineUsage() == EngineUsage::regular) {
-                engine.commandStreamReceiver->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks));
+                engine.commandStreamReceiver->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks, nullptr));
             }
         }
     }
@@ -86,8 +87,7 @@ HWTEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCou
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(
         Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -96,7 +96,7 @@ HWTEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCou
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType());
 }
 
 TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
@@ -117,8 +117,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(
         Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -128,7 +127,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType());
 }
 
 HWTEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
@@ -155,8 +154,7 @@ HWTEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCre
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(
         Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, data, retVal));
@@ -165,7 +163,7 @@ HWTEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCre
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType());
 }
 
 TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
@@ -185,8 +183,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCoun
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(
         Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -196,7 +193,7 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCoun
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType());
 }
 
 TEST_F(BufferWithWddmMemory, WhenCreatingBufferThenBufferIsCreatedCorrectly) {
@@ -259,10 +256,11 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
         EXPECT_NE(0u, osHandle->handle);
 
         EXPECT_NE(nullptr, osHandle->gmm);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(osHandle->gmm->resourceParamsData.data());
         EXPECT_EQ(reqs.allocationFragments[i].allocationPtr,
-                  reinterpret_cast<void *>(osHandle->gmm->resourceParams.pExistingSysMem));
+                  reinterpret_cast<void *>(gmmResourceParams->pExistingSysMem));
         EXPECT_EQ(reqs.allocationFragments[i].allocationSize,
-                  osHandle->gmm->resourceParams.BaseWidth);
+                  gmmResourceParams->BaseWidth);
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
@@ -300,91 +298,6 @@ TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
 
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedThenGraphicsAddressIsPopulatedFromProperFragment) {
-    memoryManager->setForce32bitAllocations(true);
-    OsHandleStorage handleStorage = {};
-    D3DGPU_VIRTUAL_ADDRESS gpuAddress = MemoryConstants::pageSize * 1;
-    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
-    auto size = MemoryConstants::pageSize * 2;
-    auto maxOsContextCount = 1u;
-
-    auto osHandle = new OsHandleWin();
-
-    handleStorage.fragmentStorageData[0].cpuPtr = ptr;
-    handleStorage.fragmentStorageData[0].fragmentSize = size;
-    handleStorage.fragmentStorageData[0].osHandleStorage = osHandle;
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
-    handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    handleStorage.fragmentCount = 1;
-
-    FragmentStorage fragment = {};
-    fragment.driverAllocation = true;
-    fragment.fragmentCpuPointer = ptr;
-    fragment.fragmentSize = size;
-    fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    osHandle->gpuPtr = gpuAddress;
-    memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
-
-    AllocationData allocationData;
-    allocationData.size = size;
-    allocationData.hostPtr = ptr;
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
-    EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
-    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(gpuAddress, allocation->getGpuAddress());
-    EXPECT_EQ(0ULL, allocation->getAllocationOffset());
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedNotAllignedToPageThenGraphicsAddressIsPopulatedFromProperFragmentAndOffsetisAssigned) {
-    memoryManager->setForce32bitAllocations(true);
-    OsHandleStorage handleStorage = {};
-    D3DGPU_VIRTUAL_ADDRESS gpuAddress = MemoryConstants::pageSize * 1;
-    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
-    auto size = MemoryConstants::pageSize * 2;
-    auto maxOsContextCount = 1u;
-
-    auto osHandle = new OsHandleWin();
-
-    handleStorage.fragmentStorageData[0].cpuPtr = ptr;
-    handleStorage.fragmentStorageData[0].fragmentSize = size;
-    handleStorage.fragmentStorageData[0].osHandleStorage = osHandle;
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
-    handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    handleStorage.fragmentCount = 1;
-
-    FragmentStorage fragment = {};
-    fragment.driverAllocation = true;
-    fragment.fragmentCpuPointer = ptr;
-    fragment.fragmentSize = size;
-    fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    osHandle->gpuPtr = gpuAddress;
-    memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
-
-    auto offset = 80u;
-    auto allocationPtr = ptrOffset(ptr, offset);
-    AllocationData allocationData;
-    allocationData.size = size;
-    allocationData.hostPtr = allocationPtr;
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
-
-    EXPECT_EQ(allocationPtr, allocation->getUnderlyingBuffer());
-    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(gpuAddress + offset, allocation->getGpuAddress()); // getGpuAddress returns gpuAddress + allocationOffset
-    EXPECT_EQ(offset, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -488,7 +401,7 @@ TEST_F(PlatformWithFourDevicesTest, whenCreateColoredAllocationAndWddmReturnsCan
     struct CanonizeAddressMockWddm : public WddmMock {
         using WddmMock::WddmMock;
 
-        bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type) override {
+        bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *memoryFlags) override {
             auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
             gpuPtr = gmmHelper->canonize(preferredAddress);
             return mapGpuVaStatus;

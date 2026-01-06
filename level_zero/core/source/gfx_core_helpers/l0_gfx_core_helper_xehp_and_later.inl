@@ -15,11 +15,6 @@
 namespace L0 {
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
-    return true;
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsStateComputeModeTracking() const {
     return true;
 }
@@ -54,8 +49,8 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncRequired(heaplessEnabled);
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncSupported(heaplessEnabled);
 
     uint32_t basePackets = getEventMaxKernelCount(hwInfo);
     if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment) && !flushL3AfterPostSync) {
@@ -66,18 +61,8 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::Debugger *debugger) const {
-    return true;
-}
-
-template <typename Family>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return NEO::HeapAddressModel::privateHeaps;
-}
-
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
-    return true;
 }
 
 template <typename Family>

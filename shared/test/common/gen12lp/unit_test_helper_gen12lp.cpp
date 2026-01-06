@@ -217,6 +217,17 @@ bool UnitTestHelper<Family>::getSystolicFlagValueFromPipelineSelectCommand(const
     return pipelineSelectCmd.getSpecialModeEnable();
 }
 
+template <>
+template <typename WalkerType>
+uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walkerCmd) {
+    return 0;
+}
+
+template <>
+void UnitTestHelper<Family>::skipStatePrefetch(GenCmdList::iterator &iter) {}
+
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;
+
+template uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress<Family::GPGPU_WALKER>(Family::GPGPU_WALKER *walkerCmd);
 } // namespace NEO

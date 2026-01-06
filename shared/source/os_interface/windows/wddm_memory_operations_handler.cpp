@@ -15,7 +15,7 @@
 namespace NEO {
 
 WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm) {
-    residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
+    residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm, false);
 }
 
 WddmMemoryOperationsHandler::~WddmMemoryOperationsHandler() = default;
@@ -85,7 +85,6 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(Device *device, G
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isExplicitlyMadeResident()) {
-
         WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
 
         if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {

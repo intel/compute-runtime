@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,10 @@ unsigned long getNumThreads() {
 }
 
 DWORD getLastErrorResult = 0u;
-
+bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
-const wchar_t *currentLibraryPath = L"";
+const wchar_t *currentLibraryPath = L"\\";
 uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;
@@ -63,7 +63,8 @@ HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr,
 
 size_t deleteFileACalled = 0u;
 const size_t deleteFilesCount = 4;
-std::string deleteFiles[deleteFilesCount];
+constexpr size_t deleteFilesMaxLength = 256;
+char deleteFiles[deleteFilesCount][deleteFilesMaxLength] = {{0}};
 
 HRESULT shGetKnownFolderPathResult = 0;
 extern const size_t shGetKnownFolderSetPathSize = 50;
@@ -113,11 +114,51 @@ CONFIGRET(*sysCallsCmGetDeviceInterfaceListSize)
 CONFIGRET(*sysCallsCmGetDeviceInterfaceList)
 (LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
 
+CONFIGRET(*sysCallsCmGetDeviceIdSize)
+(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetDeviceId)
+(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetChild)
+(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetSibling)
+(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+BOOL(*sysCallsSetupDiGetDeviceRegistryProperty)
+(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) = nullptr;
+
+BOOL(*sysCallsSetupDiOpenDeviceInfo)
+(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+
+BOOL(*sysCallsSetupDiEnumDeviceInfo)
+(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+
+BOOL(*sysCallsSetupDiDestroyDeviceInfoList)
+(HDEVINFO deviceInfoSet) = nullptr;
+
+HDEVINFO(*sysCallsSetupDiGetClassDevs)
+(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) = nullptr;
+
 LPVOID(*sysCallsHeapAlloc)
 (HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) = nullptr;
 
 BOOL(*sysCallsHeapFree)
 (HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
+
+BOOL(*sysCallsDuplicateHandle)
+(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) = nullptr;
+
+HANDLE(*sysCallsOpenProcess)
+(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) = nullptr;
+
+DWORD(*sysCallsWaitForSingleObject)
+(HANDLE hHandle, DWORD dwMilliseconds) = nullptr;
+
+bool isShutdownInProgress() {
+    return isShutdownInProgressRetVal;
+}
 
 void exit(int code) {
 }
@@ -131,6 +172,13 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
         return mockCreateEventClb(lpEventAttributes, bManualReset, bInitialState, lpName, mockCreateEventClbData);
     }
     return reinterpret_cast<HANDLE>(dummyHandle);
+}
+
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+    if (sysCallsWaitForSingleObject) {
+        return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);
+    }
+    return WAIT_OBJECT_0;
 }
 
 BOOL closeHandle(HANDLE hObject) {
@@ -204,7 +252,7 @@ HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 BOOL deleteFileA(LPCSTR lpFileName) {
     if (deleteFileACalled < deleteFilesCount) {
-        deleteFiles[deleteFileACalled] = std::string(lpFileName);
+        memcpy_s(deleteFiles[deleteFileACalled], deleteFilesMaxLength, lpFileName, strlen(lpFileName));
     }
     deleteFileACalled++;
     return TRUE;
@@ -266,8 +314,9 @@ DWORD getFileAttributesA(LPCSTR lpFileName) {
     }
 
     for (const auto &[path, attributes] : pathAttributes) {
-        if (path.empty())
+        if (path.empty()) {
             continue;
+        }
 
         std::string tempP2 = path;
         if (tempP2.back() == PATH_SEPARATOR) {
@@ -329,6 +378,69 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
     return -1;
 }
 
+CONFIGRET cmGetDeviceIdSize(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetDeviceIdSize != nullptr) {
+        return sysCallsCmGetDeviceIdSize(pulLen, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetDeviceId(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags) {
+    if (sysCallsCmGetDeviceId != nullptr) {
+        return sysCallsCmGetDeviceId(dnDevInst, buffer, bufferLen, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetChild(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetChild != nullptr) {
+        return sysCallsCmGetChild(pdnDevInst, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetSibling(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetSibling != nullptr) {
+        return sysCallsCmGetSibling(pdnDevInst, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+BOOL setupDiGetDeviceRegistryProperty(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) {
+    if (sysCallsSetupDiGetDeviceRegistryProperty != nullptr) {
+        return sysCallsSetupDiGetDeviceRegistryProperty(deviceInfoSet, deviceInfoData, property, propertyRegDataType, propertyBuffer, propertyBufferSize, requiredSize);
+    }
+    return false;
+}
+
+BOOL setupDiOpenDeviceInfo(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) {
+    if (sysCallsSetupDiOpenDeviceInfo != nullptr) {
+        return sysCallsSetupDiOpenDeviceInfo(deviceInfoSet, deviceInstanceId, hwndParent, openFlags, deviceInfoData);
+    }
+    return false;
+}
+
+BOOL setupDiEnumDeviceInfo(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) {
+    if (sysCallsSetupDiEnumDeviceInfo != nullptr) {
+        return sysCallsSetupDiEnumDeviceInfo(deviceInfoSet, memberIndex, deviceInfoData);
+    }
+    return false;
+}
+
+BOOL setupDiDestroyDeviceInfoList(HDEVINFO deviceInfoSet) {
+    if (sysCallsSetupDiDestroyDeviceInfoList != nullptr) {
+        return sysCallsSetupDiDestroyDeviceInfoList(deviceInfoSet);
+    }
+    return false;
+}
+
+HDEVINFO setupDiGetClassDevs(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) {
+    if (sysCallsSetupDiGetClassDevs != nullptr) {
+        return sysCallsSetupDiGetClassDevs(classGuid, enumerator, hwndParent, flags);
+    }
+    return nullptr;
+}
+
 LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
     if (sysCallsHeapAlloc != nullptr) {
         return sysCallsHeapAlloc(hHeap, dwFlags, dwBytes);
@@ -341,6 +453,20 @@ BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
         return sysCallsHeapFree(hHeap, dwFlags, lpMem);
     }
     return HeapFree(hHeap, dwFlags, lpMem);
+}
+
+BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) {
+    if (sysCallsDuplicateHandle != nullptr) {
+        return sysCallsDuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+    }
+    return FALSE;
+}
+
+HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
+    if (sysCallsOpenProcess != nullptr) {
+        return sysCallsOpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+    }
+    return nullptr;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
@@ -464,15 +590,18 @@ BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUIN
     }
     return FALSE;
 }
+LPWCH mockEnvStringsW = nullptr;
+BOOL mockFreeEnvStringsWResult = TRUE;
+LPWCH getEnvironmentStringsW() {
+    return mockEnvStringsW;
+}
+BOOL freeEnvironmentStringsW(LPWCH) {
+    return mockFreeEnvStringsWResult;
+}
 
 } // namespace SysCalls
-
-bool isShutdownInProgress() {
-    return false;
-}
 
 unsigned int readEnablePreemptionRegKey() {
     return 1;
 }
-
 } // namespace NEO

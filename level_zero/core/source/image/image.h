@@ -39,10 +39,9 @@ struct Image : _ze_image_handle_t {
     virtual NEO::GraphicsAllocation *getAllocation() = 0;
     virtual NEO::GraphicsAllocation *getImplicitArgsAllocation() = 0;
     virtual void copySurfaceStateToSSH(void *surfaceStateHeap,
-                                       const uint32_t surfaceStateOffset,
+                                       uint32_t surfaceStateOffset,
+                                       uint32_t bindlessSlot,
                                        bool isMediaBlockArg) = 0;
-    virtual void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) = 0;
-    virtual void copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) = 0;
     virtual NEO::ImageInfo getImageInfo() = 0;
     virtual ze_image_desc_t getImageDesc() = 0;
     virtual ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) = 0;
@@ -50,6 +49,8 @@ struct Image : _ze_image_handle_t {
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
     virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
     virtual bool isMimickedImage() = 0;
+    virtual ze_result_t allocateImplicitArgsOnDemand() = 0;
+    virtual void encodeImplicitArgsSurfaceState() = 0;
 
     static ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

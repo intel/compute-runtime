@@ -6,7 +6,9 @@
  */
 
 #pragma once
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
@@ -25,8 +27,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    const bool useStateless = forceStateless(srcBuffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, this->heaplessModeEnabled);
+    const bool isStateless = forceStateless(srcBuffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled);
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             this->getClDevice());

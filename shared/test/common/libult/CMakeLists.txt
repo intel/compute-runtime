@@ -109,7 +109,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers${BRANCH_DIR_SUFFIX}unit_test_setter.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_setter.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
@@ -119,6 +119,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
@@ -209,6 +210,11 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/setup_external_dependencies_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_usm_pool_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_default_heap_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_LINUX ${neo_libult_SRCS_LINUX})
@@ -224,6 +230,11 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls_winmm.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_usm_pool_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_default_heap_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_WINDOWS ${neo_libult_SRCS_WINDOWS})
@@ -260,7 +271,7 @@ foreach(target_name "neo_libult_common" "neo_libult")
   target_include_directories(${target_name} PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-                             $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                             $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
   )
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
   # please do not add new sources below this function

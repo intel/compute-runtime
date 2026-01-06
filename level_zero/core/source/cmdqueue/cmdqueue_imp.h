@@ -34,6 +34,7 @@ class MemoryManager;
 
 namespace L0 {
 struct CommandList;
+struct CommandListImp;
 struct Kernel;
 struct CommandQueueImp : public CommandQueue {
     class CommandBufferManager {
@@ -101,6 +102,10 @@ struct CommandQueueImp : public CommandQueue {
         return syncMode;
     }
 
+    bool getUseKmdWaitFunction() const {
+        return useKmdWaitFunction;
+    }
+
     virtual bool getPreemptionCmdProgramming() = 0;
     void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
     void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
@@ -117,6 +122,7 @@ struct CommandQueueImp : public CommandQueue {
     void triggerBbStartJump() {
         forceBbStartJump = true;
     }
+    void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

@@ -7,32 +7,23 @@
 
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
-#include "level_zero/zet_intel_gpu_debug.h"
 #include <level_zero/ze_api.h>
 
-#include "common/StateSaveAreaHeader.h"
-
 #include <algorithm>
-#include <fcntl.h>
 
 namespace L0 {
 
@@ -454,7 +445,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
         if (vmHandle == invalidHandle) {
             return;
         }
-        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->page_fault_address, pf->bitmask_size, pf->bitmask};
+        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->page_fault_address, 0u, 0u, pf->bitmask_size, pf->bitmask};
         handlePageFaultEvent(pfEvent);
     } break;
 
@@ -985,15 +976,8 @@ void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_
     }
 
     std::vector<EuThread::ThreadId> threadsWithAttention;
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
     if (tmpInterruptSent) {
-        std::unique_ptr<uint8_t[]> bitmask;
-        size_t bitmaskSize;
-        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
-        if (attReadResult == 0) {
-            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
-        }
+        scanThreadsWithAttRaisedUntilSteadyState(tileIndex, threadsWithAttention);
     }
 
     AttentionEventFields attentionEventFields;
@@ -1003,7 +987,9 @@ void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_
     attentionEventFields.contextHandle = attention->ctx_handle;
     attentionEventFields.lrcHandle = attention->lrc_handle;
 
-    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, tileIndex, threadsWithAttention);
+    if (updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, tileIndex, threadsWithAttention) != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to update stopped threads and check trigger events\n", "");
+    }
 }
 
 std::unique_lock<std::mutex> DebugSessionLinuxi915::getThreadStateMutexForTileSession(uint32_t tileIndex) {
@@ -1131,6 +1117,8 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
+    bool shouldPrintBitmask = command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
+                              command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME;
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME ||
@@ -1143,8 +1131,9 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME) {
         applyResumeWa(bitmask.get(), bitmaskSize);
     }
-
-    printBitmask(bitmask.get(), bitmaskSize);
+    if (shouldPrintBitmask) {
+        printBitmask(bitmask.get(), bitmaskSize);
+    }
 
     auto euControlRetVal = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
     if (euControlRetVal != 0) {

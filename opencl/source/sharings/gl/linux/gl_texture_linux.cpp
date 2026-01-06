@@ -7,17 +7,14 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 
-#include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
@@ -27,7 +24,7 @@
 
 #include "CL/cl_gl.h"
 #include "config.h"
-#include "third_party/uapi/upstream/drm/drm_fourcc.h"
+#include "drm_fourcc.h"
 #include <GL/gl.h>
 
 namespace NEO {
@@ -67,7 +64,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     if (texIn.target != GL_TEXTURE_2D) {
-        printf("target %x not supported\n", target);
+        PRINT_STRING(true, stdout, "target %x not supported\n", target);
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
     }
@@ -154,8 +151,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         imgInfo.forceTiling = ImageTilingMode::tiled4;
         break;
     default:
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Unexpected format in CL-GL sharing");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Unexpected format in CL-GL sharing");
         return nullptr;
     }
 
@@ -166,7 +163,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
 
-    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     if (!surfaceFormatInfoAddress) {
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
@@ -222,7 +219,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     uint32_t cubeFaceIndex = GmmTypesConverter::getCubeFaceIndex(target);
 
-    uint32_t qPitch = gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType());
+    uint32_t qPitch = gmm->queryQPitch();
 
     GraphicsAllocation *mcsAlloc = nullptr;
 
@@ -291,7 +288,7 @@ cl_gl_object_type GlTexture::getClGlObjectType(cl_GLenum glType) {
 }
 
 uint32_t GlTexture::getClObjectType(cl_GLenum glType, bool returnClGlObjectType) {
-    // return cl_gl_object_type if returnClGlObjectType is ture, otherwise cl_mem_object_type
+    // return cl_gl_object_type if returnClGlObjectType is true, otherwise cl_mem_object_type
     uint32_t retValue = 0;
     switch (glType) {
     case GL_TEXTURE_1D:

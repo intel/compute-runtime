@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/gdi_interface_logging.h"
 #include "shared/source/os_interface/windows/os_inc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
@@ -58,7 +59,8 @@ TEST(GdiInterface, givenPrintKmdTimesWhenCallThkWrapperThenRecordTime) {
     auto gdi = std::make_unique<Gdi>();
     EXPECT_TRUE(gdi->isInitialized());
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     D3DKMT_OPENADAPTERFROMLUID param = {};
     gdi->openAdapterFromLuid(&param);
@@ -68,7 +70,7 @@ TEST(GdiInterface, givenPrintKmdTimesWhenCallThkWrapperThenRecordTime) {
     gdi->closeAdapter(&closeAdapter);
 
     gdi.reset();
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(output.find("\n--- Gdi statistics ---\n") != std::string::npos);
 }
 
@@ -115,7 +117,8 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileNotUs
     debugManager.flags.LogGdiCalls.set(true);
     debugManager.flags.LogGdiCallsToFile.set(false);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     std::unique_ptr<Gdi> gdi = std::make_unique<Gdi>();
     EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
@@ -127,6 +130,6 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileNotUs
     gdi.reset(nullptr);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 
-    testing::internal::GetCapturedStdout();
+    capture.getCapturedStdout();
 }
 #endif

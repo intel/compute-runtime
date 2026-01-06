@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #include "opencl/test/unit_test/mocks/gl/linux/mock_gl_sharing_linux.h"
 
 #include "GL/gl.h"
-
-#include <string.h>
 
 extern "C" {
 const char *glString = "Intel";
@@ -22,10 +20,12 @@ CL_GL_RESOURCE_INFO textureInfoOutput = {0};
 GLboolean glSetSharedOCLContextStateReturnedValue = 1u;
 
 const unsigned char *glGetString(unsigned int name) {
-    if (name == GL_VENDOR)
+    if (name == GL_VENDOR) {
         return reinterpret_cast<const unsigned char *>(glString);
-    if (name == GL_VERSION)
+    }
+    if (name == GL_VERSION) {
         return reinterpret_cast<const unsigned char *>(glVersion);
+    }
     return reinterpret_cast<const unsigned char *>("");
 };
 

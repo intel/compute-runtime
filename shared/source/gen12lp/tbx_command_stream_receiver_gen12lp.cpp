@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.inl"
@@ -30,7 +29,7 @@ bool TbxCommandStreamReceiverHw<Family>::getpollNotEqualValueForPollForCompletio
 
 template <>
 void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
-    extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
     UNRECOVERABLE_IF(!isInRange(gfxCore, tbxCommandStreamReceiverFactory));
     tbxCommandStreamReceiverFactory[gfxCore] = TbxCommandStreamReceiverHw<Family>::create;
 }

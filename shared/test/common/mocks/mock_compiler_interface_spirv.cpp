@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "shared/test/common/libult/global_environment.h"
 
 namespace NEO {
-TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) {
+TranslationErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) {
     std::string kernelName;
     retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".bin");
 
@@ -25,9 +25,9 @@ TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Devi
     output.deviceBinary.size = size;
     output.intermediateCodeType = IGC::CodeType::spirV;
 
-    return TranslationOutput::ErrorCode::success;
+    return TranslationErrorCode::success;
 }
-TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) {
+TranslationErrorCode MockCompilerInterfaceSpirv::build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) {
     return this->compile(device, input, out);
 }
 } // namespace NEO

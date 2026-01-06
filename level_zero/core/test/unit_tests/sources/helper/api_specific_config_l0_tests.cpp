@@ -44,12 +44,12 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturn
 }
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfHostDeviceAllocationCacheIsEnabledThenReturnFalse) {
-    EXPECT_FALSE(ApiSpecificConfig::isHostAllocationCacheEnabled());
-    EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
+    EXPECT_TRUE(ApiSpecificConfig::isHostAllocationCacheEnabled());
+    EXPECT_TRUE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfUsmAllocPoolingIsEnabledThenReturnFalse) {
-    EXPECT_FALSE(ApiSpecificConfig::isHostUsmPoolingEnabled());
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfUsmAllocPoolingIsEnabledThenReturnCorrectValue) {
+    EXPECT_TRUE(ApiSpecificConfig::isHostUsmPoolingEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
 }
 
@@ -114,7 +114,7 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBindlessAddressingIsEnabledThenRetu
     EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
 
     mockAilConfigurationHelper.setDisableBindlessAddressing(true);
-    EXPECT_EQ(mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(), ApiSpecificConfig::getBindlessMode(mockDevice));
+    EXPECT_EQ(mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo), ApiSpecificConfig::getBindlessMode(mockDevice));
 }
 
 } // namespace NEO

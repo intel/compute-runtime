@@ -46,7 +46,7 @@ class DrmSemaphoreFixture : public DeviceFixture {
 using DrmExternalSemaphoreTest = Test<DrmSemaphoreFixture>;
 
 HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphoreExpIsCalledThenUnsupportedFeatureIsReturned) {
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     int fd = 0;
@@ -55,7 +55,7 @@ HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphor
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_OPAQUE_FD;
 
-    fdDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    fdDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC;
     fdDesc.fd = fd;
 
     desc.pNext = &fdDesc;

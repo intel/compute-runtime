@@ -8,6 +8,7 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdcontainer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdcontainer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_enablers.inl
@@ -84,6 +85,14 @@ endif()
 if(SUPPORT_XE_HPC_AND_BEFORE OR SUPPORT_XE2_HPG_CORE)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_gen12lp_to_xe2_hpg.inl
+  )
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_heapless_addressing.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe3p_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_from_xe3p_and_later.inl
   )
 endif()
 

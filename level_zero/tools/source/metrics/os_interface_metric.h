@@ -12,6 +12,7 @@
 #include <level_zero/zet_api.h>
 
 #include <memory>
+#include <sys/types.h>
 
 namespace L0 {
 

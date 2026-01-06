@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/release_helper/release_helper.h"
-#include "shared/source/xe_hpg_core/aub_mapper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XeHpgCoreFamily;
@@ -17,9 +16,9 @@ using Family = NEO::XeHpgCoreFamily;
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
-#include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_tgllp_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 #include "shared/source/helpers/local_memory_access_modes.h"
 
@@ -32,8 +31,9 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
-    if (disableEUFusionForKernel)
+    if (disableEUFusionForKernel) {
         fusedEuDispatchEnabled = false;
+    }
 
     if (debugManager.flags.CFEFusedEUDispatch.get() != -1) {
         fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);
@@ -88,7 +88,7 @@ size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchron
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using COMPARE_OPERATION = typename Family::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(commandStream, gpuAddress, EncodeSemaphore<Family>::invalidHardwareTag, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, nullptr);

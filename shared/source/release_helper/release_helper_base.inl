@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -60,11 +61,6 @@ bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDirectSubmissionSupported() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isDirectSubmissionLightSupported() const {
     return false;
 }
@@ -87,11 +83,6 @@ bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isGlobalBindlessAllocatorEnabled() const {
     return false;
-}
-
-template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
-    return 8u;
 }
 
 template <ReleaseType releaseType>
@@ -168,8 +159,50 @@ bool ReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
     return 0u;
+}
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isBlitImageAllowedForDepthFormat() const {
+    return true;
+}
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPostImageWriteFlushRequired() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
+    return maxThreadsPerEuCount;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::shouldQueryPeerAccess() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isUsmCompressionSupportedOnPeerAccess() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired() const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
+    }
+    return false;
 }
 
 } // namespace NEO

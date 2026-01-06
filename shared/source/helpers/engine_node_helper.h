@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/device_bitfield.h"
 
 #include "aubstream/engine_node.h"
@@ -58,6 +59,7 @@ aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainC
 aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index);
 std::string engineTypeToString(aub_stream::EngineType engineType);
 std::string engineUsageToString(EngineUsage usage);
+EngineGroupType engineTypeToEngineGroupType(aub_stream::EngineType engineType);
 
 bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType);
 

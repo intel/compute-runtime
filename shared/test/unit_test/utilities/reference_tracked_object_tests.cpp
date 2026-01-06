@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ TEST(UniquePtrIfUnused, GivenCustomDeleterAtCreationWhenDeletingThenUseProvidedD
     ASSERT_TRUE(customDeleterObj.customDeleterWasCalled);
 }
 
-TEST(UniquePtrIfUnused, GivenIntializedWithDerivativeOfReferenceCounterWhenDestroyingThenUseObtainedDeleter) {
+TEST(UniquePtrIfUnused, GivenInitializedWithDerivativeOfReferenceCounterWhenDestroyingThenUseObtainedDeleter) {
     struct ObtainedDeleterTestStruct : public ReferenceTrackedObject<ObtainedDeleterTestStruct> {
         DeleterFuncType getCustomDeleter() const {
             return &ObtainedDeleterTestStruct::deleter;

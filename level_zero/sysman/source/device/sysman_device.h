@@ -10,16 +10,12 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
-#include "level_zero/sysman/source/api/ecc/sysman_ecc.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
-#include "level_zero/sysman/source/api/events/sysman_events.h"
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port.h"
 #include "level_zero/sysman/source/api/fan/sysman_fan.h"
 #include "level_zero/sysman/source/api/firmware/sysman_firmware.h"
 #include "level_zero/sysman/source/api/frequency/sysman_frequency.h"
-#include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
 #include "level_zero/sysman/source/api/memory/sysman_memory.h"
-#include "level_zero/sysman/source/api/pci/sysman_pci.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 #include "level_zero/sysman/source/api/power/sysman_power.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
@@ -30,8 +26,14 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
+namespace NEO {
+class ExecutionEnvironment;
+struct HardwareInfo;
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
+struct OsSysman;
 
 struct SysmanDevice : _ze_device_handle_t {
     static SysmanDevice *fromHandle(zes_device_handle_t handle);
@@ -119,6 +121,9 @@ struct SysmanDevice : _ze_device_handle_t {
     static ze_result_t pciGetStats(zes_device_handle_t hDevice, zes_pci_stats_t *pStats);
     virtual ze_result_t pciGetStats(zes_pci_stats_t *pStats) = 0;
 
+    static ze_result_t pciLinkSpeedUpdateExp(zes_device_handle_t hDevice, ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction);
+    virtual ze_result_t pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) = 0;
+
     static ze_result_t fanGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fan_handle_t *phFan);
     virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;
 
@@ -139,6 +144,7 @@ struct SysmanDevice : _ze_device_handle_t {
 
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
+    bool isDeviceInSurvivabilityMode = false;
 };
 
 } // namespace Sysman

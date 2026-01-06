@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
+
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 template <typename D3D>

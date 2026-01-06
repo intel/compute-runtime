@@ -1,17 +1,22 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
-#include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -28,12 +33,9 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
-    auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
-         maxDbgSurfaceSize,
+         MemoryConstants::pageSize,
          NEO::AllocationType::debugContextSaveArea,
          false,
          false,
@@ -60,18 +62,16 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[2 * sizeof(RENDER_SURFACE_STATE)]);
-    module->kernelImmData = &kernel.immutableData;
+    module->data = &kernel.immutableData;
 
     kernel.initialize(&desc);
 
-    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
-    patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
+    patchWithImplicitSurface(ArrayRef<uint8_t>(), kernel.getSurfaceStateHeapDataSpan(),
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
                              *device->getNEODevice(), device->isImplicitScalingCapable());
 
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
-    debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(&kernel.getSurfaceStateHeapDataSpan()[sizeof(RENDER_SURFACE_STATE)]);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, debugSurfaceState->getL1CacheControlCachePolicy());
 }
@@ -82,12 +82,9 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
-    auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
-         maxDbgSurfaceSize,
+         MemoryConstants::pageSize,
          NEO::AllocationType::debugContextSaveArea,
          false,
          false,
@@ -114,19 +111,18 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[2 * sizeof(RENDER_SURFACE_STATE)]);
-    module->kernelImmData = &kernel.immutableData;
+    module->data = &kernel.immutableData;
 
     kernel.initialize(&desc);
 
-    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(nullptr);
-    patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
+    neoDevice->setDebugger(nullptr);
+    patchWithImplicitSurface(ArrayRef<uint8_t>(), kernel.getSurfaceStateHeapDataSpan(),
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
                              *device->getNEODevice(), device->isImplicitScalingCapable());
 
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
-    debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(&kernel.getSurfaceStateHeapDataSpan()[sizeof(RENDER_SURFACE_STATE)]);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, debugSurfaceState->getL1CacheControlCachePolicy());
 }

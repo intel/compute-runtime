@@ -37,11 +37,11 @@ TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidVal
     VariableBackup<const char *> pathPrefixBackup(&Os::sysFsProcPathPrefix, ".");
     std::string cpuinfoFile = "cpuinfo";
     EXPECT_FALSE(virtualFileExists(cpuinfoFile));
-    std::string cpuinfoData = "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
-    writeDataToFile(cpuinfoFile.c_str(), cpuinfoData.data(), cpuinfoData.length());
+    constexpr std::string_view cpuinfoData = "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
+    writeDataToFile(cpuinfoFile.c_str(), cpuinfoData);
     EXPECT_TRUE(virtualFileExists(cpuinfoFile));
 
-    CpuInfo::getCpuFlagsFunc = mockGetCpuFlags;
+    VariableBackup<decltype(CpuInfo::getCpuFlagsFunc)> funcBackup(&CpuInfo::getCpuFlagsFunc, mockGetCpuFlags);
     CpuInfo testCpuInfo;
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag1"));
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag2"));

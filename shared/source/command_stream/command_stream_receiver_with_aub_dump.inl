@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 template <typename BaseCSR>
 CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const std::string &baseName,
@@ -29,6 +29,7 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex, deviceBitfield));
+        UNRECOVERABLE_IF(!aubCSR);
         UNRECOVERABLE_IF(!aubCSR->initializeTagAllocation());
 
         uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
@@ -111,6 +112,7 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForAubCompletion() {
     if (aubCSR) {
         aubCSR->pollForCompletion(true);
     }
+    BaseCSR::pollForAubCompletion();
 }
 
 template <typename BaseCSR>
@@ -131,4 +133,13 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::writeMemory(GraphicsAllocation &
     }
     return BaseCSR::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
 }
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {
+    if (aubCSR) {
+        aubCSR->writePooledMemory(sharedPoolAllocation, initFullPageTables);
+    }
+    BaseCSR::writePooledMemory(sharedPoolAllocation, initFullPageTables);
+}
+
 } // namespace NEO

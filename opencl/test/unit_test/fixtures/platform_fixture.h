@@ -12,6 +12,7 @@
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {
+class Platform;
 
 class PlatformFixture {
   protected:

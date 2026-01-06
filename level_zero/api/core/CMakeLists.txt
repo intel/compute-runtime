@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,5 +21,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/ze_image_api_entrypoints.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ze_memory_api_entrypoints.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ze_module_api_entrypoints.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/ze_mutable_cmdlist_api_entrypoints.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ze_sampler_api_entrypoints.h
 )

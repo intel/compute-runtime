@@ -20,7 +20,6 @@
 #include <atomic>
 #include <cstddef>
 #include <mutex>
-#include <stdint.h>
 #include <utility>
 #include <vector>
 
@@ -116,7 +115,7 @@ class BufferObject {
                               BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue);
 
     int bind(OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence);
-    int unbind(OsContext *osContext, uint32_t vmHandleId);
+    MOCKABLE_VIRTUAL int unbind(OsContext *osContext, uint32_t vmHandleId);
 
     void printExecutionBuffer(ExecBuffer &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]);
 

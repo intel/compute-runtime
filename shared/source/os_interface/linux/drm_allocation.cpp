@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/residency.h"
@@ -27,6 +28,26 @@
 #include <sstream>
 
 namespace NEO {
+
+DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress)
+    : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress) {
+    bufferObjects.push_back(bo);
+    resizeBufferObjects(EngineLimits::maxHandleCount);
+    handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
+}
+
+DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
+    : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount) {
+    bufferObjects.push_back(bo);
+    resizeBufferObjects(EngineLimits::maxHandleCount);
+    handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
+}
+
+DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
+    : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
+      bufferObjects(bos) {
+    handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
+}
 
 DrmAllocation::~DrmAllocation() {
     [[maybe_unused]] int retCode;
@@ -57,8 +78,9 @@ std::string DrmAllocation::getPatIndexInfoString(const ProductHelper &productHel
     if (gmm) {
         ss << " Gmm resource usage: "
            << "[ " << gmm->getUsageTypeString() << " ],";
-        ss << " Cacheable: " << gmm->resourceParams.Flags.Info.Cacheable;
-        ss << " NotLockable: " << gmm->resourceParams.Flags.Info.NotLockable;
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        ss << " Cacheable: " << gmmResourceParams->Flags.Info.Cacheable;
+        ss << " NotLockable: " << gmmResourceParams->Flags.Info.NotLockable;
     }
     return ss.str();
 }
@@ -126,13 +148,13 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
             region.memory_instance = memRegions[i / (this->storageInfo.numOfChunks / memRegions.size())].memoryInstance;
             uint64_t chunkLength = (bufferObjects[0]->peekSize() / this->storageInfo.numOfChunks);
             uint64_t chunkStart = i * chunkLength;
-            printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                             "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
-                             bufferObjects[0]->peekHandle(),
-                             chunkStart,
-                             chunkLength,
-                             region.memory_class,
-                             region.memory_instance);
+            PRINT_STRING(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                         "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
+                         bufferObjects[0]->peekHandle(),
+                         chunkStart,
+                         chunkLength,
+                         region.memory_class,
+                         region.memory_instance);
             success &= ioctlHelper->setVmBoAdviseForChunking(bufferObjects[0]->peekHandle(),
                                                              chunkStart,
                                                              chunkLength,
@@ -230,15 +252,15 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
             auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
             auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
 
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                               "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
-                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
+            PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                         "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
+                         bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
 
             success &= ioctlHelper->setVmPrefetch(chunkStart, chunkLength, region, vmId);
 
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                               "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
-                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
+            PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                         "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                         bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
         }
     }
 
@@ -329,14 +351,18 @@ bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t s
 
     auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                       "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
-                       bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
+    PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                 "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                 bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
     return result;
 }
 
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (!drm->getIoctlHelper()->resourceRegistrationEnabled()) {
+        return;
+    }
+
+    if (!registeredBoBindHandles.empty()) {
         return;
     }
 

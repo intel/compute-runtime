@@ -9,14 +9,13 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include <string>
-#include <vector>
 
 namespace NEO {
+
 StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
@@ -28,7 +27,7 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isForceBindlessRequired()) {
+    if (device.getCompilerProductHelper().isForceBindlessRequired(device.getHardwareInfo())) {
         return true;
     }
 

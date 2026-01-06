@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,6 @@
 #include <fcntl.h>
 #include <limits>
 #include <netlink/attr.h>
-#include <netlink/genl/ctrl.h>
-#include <netlink/genl/family.h>
-#include <sys/socket.h>
 
 namespace L0 {
 
@@ -732,7 +729,7 @@ ze_result_t IafNlApi::init() {
 
     int retval = pNlApi->genlRegisterFamily(&ops);
     if (-NLE_EXIST == retval) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (!retval) {
         nlSock = pNlApi->nlSocketAlloc();

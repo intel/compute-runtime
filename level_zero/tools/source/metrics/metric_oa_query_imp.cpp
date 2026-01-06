@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -179,7 +178,7 @@ void MetricsLibrary::release() {
 
 bool MetricsLibrary::load() {
     // Load library.
-    handle = NEO::OsLibrary::loadFunc({getFilename()});
+    handle.reset(NEO::OsLibrary::loadFunc({getFilename()}));
 
     // Load exported functions.
     if (handle) {

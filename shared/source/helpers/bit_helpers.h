@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,11 @@ constexpr uint32_t getMostSignificantSetBitIndex(uint64_t field) {
         index++;
     }
     return index;
+}
+
+template <unsigned... bits>
+constexpr uint64_t makeBitMask() {
+    return ((1ull << bits) | ...);
 }
 
 } // namespace NEO

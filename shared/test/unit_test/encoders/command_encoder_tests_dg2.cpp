@@ -16,9 +16,9 @@
 using namespace NEO;
 
 using DG2CommandEncoderTest = Test<DeviceFixture>;
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeHpCore, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_Platforms, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsHeapfulSupportedAndAtLeastXeHpCore, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsHeapfulRequiredAndAtLeastXeCore, IGFX_DG2);
 
 HWTEST2_F(DG2CommandEncoderTest, givenDG2WhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG2) {
     class MockCommandContainer : public CommandContainer {
@@ -85,7 +85,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
 
         for (auto numberOfThreadsInGroup : {1u, 4u, 16u}) {
             iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInGroup);
-            EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, 0, 0, numberOfThreadsInGroup, walkerCmd);
+            EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, 0, 0, 0, numberOfThreadsInGroup, walkerCmd);
 
             if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
                 if (numberOfThreadsInGroup == 1) {

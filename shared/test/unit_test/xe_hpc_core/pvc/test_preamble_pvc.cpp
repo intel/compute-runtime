@@ -1,16 +1,14 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 using namespace NEO;
 
@@ -21,7 +19,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     const auto &productHelper = pDevice->getProductHelper();
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::renderCompute, nullptr);
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, false},
          {REVISION_A0, true},
@@ -34,7 +32,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *hwInfo);
         streamProperties.frontEndState.setPropertiesAll(kernelExecutionType, false, false);
 
-        PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
+        PreambleHelper<FamilyType>::programVfeState(feCmdPtr, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
         parseCommands<FamilyType>(linearStream);
         auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), cfeStateIt);

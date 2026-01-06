@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,16 +43,22 @@ class ZesEccFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccAvailableThenVerifyApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceEccAvailableTwiceThenVerifyApiCallSucceeds) {
     ze_bool_t eccAvailable = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
+    EXPECT_EQ(true, eccAvailable);
 
+    eccAvailable = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(true, eccAvailable);
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccConfigurableThenVerifyApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceEccConfigurableTwiceThenVerifyApiCallSucceeds) {
     ze_bool_t eccConfigurable = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
+    EXPECT_EQ(true, eccConfigurable);
 
+    eccConfigurable = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
     EXPECT_EQ(true, eccConfigurable);
 }
@@ -73,19 +79,21 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
     delete tempEccImp;
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingzesDeviceEccConfigurableAndAvailableThenVerifyApiCallReturnsFailure) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingZesDeviceEccConfigurableAndAvailableThenVerifyApiCallReturnsFailure) {
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockFwGetEccConfigResult = ZE_RESULT_ERROR_UNINITIALIZED;
+    pMockFwInterface->mockFwGetEccAvailableResult = ZE_RESULT_ERROR_UNINITIALIZED;
+    pMockFwInterface->mockFwGetEccConfigurableResult = ZE_RESULT_ERROR_UNINITIALIZED;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndCurrentStateIsNoneWhenCallingzesDeviceEccConfigurableAndAvailableThenNotSupportedEccIsReturned) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndCurrentStateIsNoneWhenCallingZesDeviceEccConfigurableAndAvailableThenNotSupportedEccIsReturned) {
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockCurrentState = eccStateNone;
+    pMockFwInterface->mockEccAvailable = false;
+    pMockFwInterface->mockEccConfigurable = false;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(false, eccAvailable);
@@ -93,18 +101,7 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndCurrentStateIsNoneWhenCallingzesD
     EXPECT_EQ(false, eccConfigurable);
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndPendingStateIsNoneWhenCallingzesDeviceEccConfigurableAndAvailableThenNotSupportedEccIsReturned) {
-    ze_bool_t eccConfigurable = true;
-    ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockPendingState = eccStateNone;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
-    EXPECT_EQ(false, eccAvailable);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
-    EXPECT_EQ(false, eccConfigurable);
-}
-
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceGetEccStateThenApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceGetEccStateThenApiCallSucceeds) {
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.currentState);
@@ -112,13 +109,40 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingze
     EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingzesDeviceGetEccStateThenApiCallReturnFailure) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceGetEccStateWithDefaultExtensionStructureThenApiCallSucceeds) {
+    zes_device_ecc_properties_t props = {};
+    zes_device_ecc_default_properties_ext_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT;
+    props.pNext = &extProps;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.pendingState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
+}
+
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceGetEccStateWithWrongDefaultExtensionStructureThenApiCallSucceeds) {
+    zes_device_ecc_properties_t props = {};
+    zes_device_ecc_default_properties_ext_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    props.pNext = &extProps;
+    extProps.defaultState = ZES_DEVICE_ECC_STATE_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.pendingState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_FORCE_UINT32, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
+}
+
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingZesDeviceGetEccStateThenApiCallReturnFailure) {
     zes_device_ecc_properties_t props = {};
     pMockFwInterface->mockFwGetEccConfigResult = ZE_RESULT_ERROR_UNINITIALIZED;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, props.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, props.pendingState);
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceSetEccStateThenApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceSetEccStateThenApiCallSucceeds) {
     zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_STATE, nullptr, ZES_DEVICE_ECC_STATE_ENABLED};
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetEccState(pSysmanDevice->toHandle(), &newState, &props));
@@ -127,13 +151,19 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingze
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetEccState(pSysmanDevice->toHandle(), &newState, &props));
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceSetEccStateWithInvalidEnumThenFailureIsReturned) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceSetEccStateWithUnavailableEnumThenUnsupportedIsReturned) {
     zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_STATE, nullptr, ZES_DEVICE_ECC_STATE_UNAVAILABLE};
+    zes_device_ecc_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetEccState(pSysmanDevice->toHandle(), &newState, &props));
+}
+
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceSetEccStateWithInvalidEnumThenFailureIsReturned) {
+    zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_STATE, nullptr, ZES_DEVICE_ECC_STATE_FORCE_UINT32};
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesDeviceSetEccState(pSysmanDevice->toHandle(), &newState, &props));
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwSetEccConfigFailsWhenCallingzesDeviceSetEccStateThenFailureIsReturned) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwSetEccConfigFailsWhenCallingZesDeviceSetEccStateThenFailureIsReturned) {
     zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_STATE, nullptr, ZES_DEVICE_ECC_STATE_ENABLED};
     zes_device_ecc_properties_t props = {};
     pMockFwInterface->mockFwSetEccConfigResult = ZE_RESULT_ERROR_UNINITIALIZED;

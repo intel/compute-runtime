@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,8 +69,9 @@ struct GetInfoHelper {
                 errCode = GetInfoStatus::invalidValue;
             }
         }
-        if (retVal)
+        if (retVal) {
             *retVal = errCode;
+        }
         return errCode;
     }
 

@@ -9,12 +9,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_properties.h"
-#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -47,12 +44,16 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     if (printfSurfaceSize == 0) {
         return;
     }
-    auto rootDeviceIndex = device.getRootDeviceIndex();
-    kernel = multiDispatchInfo.peekMainKernel();
-    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::printfSurface, device.getDeviceBitfield()});
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     const auto &productHelper = device.getProductHelper();
+
+    DEBUG_BREAK_IF(productHelper.is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(printfSurfaceSize, MemoryConstants::pageSize2M));
+
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    kernel = multiDispatchInfo.peekMainKernel();
+    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::printfSurface, device.getDeviceBitfield()});
 
     MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface),
                                                      device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
@@ -60,7 +61,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
 
     const auto &printfSurfaceArg = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()), printfSurfaceArg.stateless);
-    patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
+    patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, printfSurface->getGpuAddressToPatch());
     if (isValidOffset(printfSurfaceArg.bindful)) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()), printfSurfaceArg.bindful);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();

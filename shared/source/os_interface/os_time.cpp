@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include <cstdlib>
 #include <mutex>
 
 namespace NEO {
@@ -77,7 +78,7 @@ TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime
         if (initialGpuTimeStamp) {
             UNRECOVERABLE_IF(deviceTimerResolution == 0);
             auto calculatedTimestamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
-            auto diff = abs(static_cast<int64_t>(timeStamp->gpuTimeStamp - calculatedTimestamp));
+            auto diff = std::abs(static_cast<int64_t>(timeStamp->gpuTimeStamp - calculatedTimestamp));
             auto elapsedTicks = timeStamp->gpuTimeStamp - fetchedTimestamps.gpuTimeStamp;
             int64_t adaptValue = static_cast<int64_t>(diff * deviceTimerResolution);
             adaptValue = std::min(adaptValue, static_cast<int64_t>(timestampRefreshMinTimeoutNS));

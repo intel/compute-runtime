@@ -11,8 +11,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 
-#include <string.h>
-
 namespace NEO {
 
 namespace Elf {
@@ -162,7 +160,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
 
             RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, rela->addend, rela->offset, relocType, std::move(name)};
 
-            relocs.push_back(relocInfo);
+            relocs.push_back(std::move(relocInfo));
             rela++;
         }
     }
@@ -196,7 +194,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
 
             RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, 0, reloc->offset, relocType, std::move(name)};
 
-            relocs.push_back(relocInfo);
+            relocs.push_back(std::move(relocInfo));
             reloc++;
         }
     }

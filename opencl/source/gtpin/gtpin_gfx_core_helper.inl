@@ -45,7 +45,7 @@ void GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) const {
         using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
         BINDING_TABLE_STATE *pNewBTS = reinterpret_cast<BINDING_TABLE_STATE *>(pNewSsh + newSurfaceStateSize + currBTCount * btsSize);
         *pNewBTS = GfxFamily::cmdInitBindingTableState;
-        pNewBTS->setSurfaceStatePointer((uint64_t)currBTOffset);
+        pNewBTS->setSurfaceStatePointer(currBTOffset);
     }
     pKernel->resizeSurfaceStateHeap(pNewSsh, sshSize + sizeToEnlarge, currBTCount + 1, newSurfaceStateSize);
 }

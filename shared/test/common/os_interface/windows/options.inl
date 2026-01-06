@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "common/gtsysinfo.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
+
+#include <cstdint>
 
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,3 +22,7 @@ const char *dxcoreDllName = "";
 const char *testDllName = "test_dynamic_lib.dll";
 const char *metricsLibraryDllName = "";
 } // namespace Os
+
+namespace ContextGroup {
+uint32_t maxContextCount = 8;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,15 +11,22 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <queue>
-#include <unordered_set>
+
+namespace NEO {
+class ProductHelper;
+struct StateSaveAreaHeader;
+} // namespace NEO
 
 namespace SIP {
 struct StateSaveAreaHeader;
@@ -28,7 +35,12 @@ struct sr_ident;
 struct sip_command;
 } // namespace SIP
 
+namespace NEO {
+class SipExternalLib;
+}
+
 namespace L0 {
+struct Device;
 
 struct DebugSessionImp : DebugSession {
 
@@ -36,6 +48,17 @@ struct DebugSessionImp : DebugSession {
         success,
         threadsRunning,
         unknown
+    };
+
+    enum class SlmAccessProtocol {
+        v1,
+        v2,
+    };
+
+    struct SipTransferAddr {
+        uint64_t sipOffset;
+        uint32_t sipSize;
+        uint64_t gpuMemOffset;
     };
 
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
@@ -65,12 +88,23 @@ struct DebugSessionImp : DebugSession {
     virtual void detachTile() = 0;
     virtual void cleanRootSessionAfterDetach(uint32_t deviceIndex) = 0;
 
-    static bool isHeaplessMode(const SIP::intelgt_state_save_area_V3 &ssa);
-    static const SIP::regset_desc *getSbaRegsetDesc(const NEO::StateSaveAreaHeader &ssah);
+    static bool isHeaplessMode(L0::Device *device, const SIP::intelgt_state_save_area_V3 &ssa);
+    static const SIP::regset_desc *getSbaRegsetDesc(L0::Device *device, const NEO::StateSaveAreaHeader &ssah);
     static const SIP::regset_desc *getModeFlagsRegsetDesc();
     static const SIP::regset_desc *getDebugScratchRegsetDesc();
     static const SIP::regset_desc *getThreadScratchRegsetDesc();
+    static const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device);
     static uint32_t typeToRegsetFlags(uint32_t type);
+    static SIP::regset_desc *getRegsetDesc(zet_debug_regset_type_intel_gpu_t type, NEO::SipExternalLib *sipExternalLib);
+    static uint32_t getSipRegisterType(zet_debug_regset_type_intel_gpu_t zeRegisterType);
+    struct SipMemoryAccessArgs {
+        struct DebugSessionImp *debugSession;
+        uint64_t contextHandle;
+        uint64_t gpuVa;
+    };
+    static uint32_t readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination);
+    static uint32_t writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source);
+    std::unordered_map<uint64_t, void *> pIGSipHandleMap;
 
     using ApiEventQueue = std::queue<zet_debug_event_t>;
 
@@ -93,7 +127,22 @@ struct DebugSessionImp : DebugSession {
     template <class BufferType, bool write>
     ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer);
 
-    ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
+    MOCKABLE_VIRTUAL NEO::SipExternalLib *getSipExternalLibInterface() const;
+    MOCKABLE_VIRTUAL const NEO::ProductHelper &getProductHelper() const;
+    MOCKABLE_VIRTUAL SlmAccessProtocol getSlmAccessProtocol() const;
+    MOCKABLE_VIRTUAL bool getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset);
+    MOCKABLE_VIRTUAL bool getBarrierStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset);
+    MOCKABLE_VIRTUAL std::optional<SipTransferAddr> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc);
+    MOCKABLE_VIRTUAL std::optional<SipTransferAddr> getBarrierAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc);
+
+    MOCKABLE_VIRTUAL ze_result_t readMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addr, size_t size, void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t readBarrierMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
+
+    MOCKABLE_VIRTUAL ze_result_t writeMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addr, size_t size, const void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer);
+
+    MOCKABLE_VIRTUAL ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
     size_t calculateSrMagicOffset(const NEO::StateSaveAreaHeader *header, EuThread *thread);
@@ -103,6 +152,9 @@ struct DebugSessionImp : DebugSession {
     ze_result_t readSbaRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
     ze_result_t readModeFlags(uint32_t start, uint32_t count, void *pRegisterValues);
     ze_result_t readDebugScratchRegisters(uint32_t start, uint32_t count, void *pRegisterValues);
+    ze_result_t getScratchRenderSurfaceStateAddress(EuThread::ThreadId thread, uint64_t *result);
+    ze_result_t getScratchRenderSurfaceStateAddressV1(EuThread::ThreadId thread, uint64_t *result);
+    MOCKABLE_VIRTUAL ze_result_t getScratchRenderSurfaceStateAddressV2(EuThread::ThreadId thread, uint64_t *result);
     MOCKABLE_VIRTUAL ze_result_t readThreadScratchRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
 
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
@@ -117,26 +169,36 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL void generateEventsForPendingInterrupts();
 
     const NEO::StateSaveAreaHeader *getStateSaveAreaHeader();
+    void dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, const std::string &path);
     void validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa);
+    bool getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSaveArea, size_t size, size_t &regHeaderSize);
     virtual void readStateSaveAreaHeader(){};
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);
     MOCKABLE_VIRTUAL ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node);
+    void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);
 
     virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) = 0;
     virtual size_t getContextStateSaveAreaSize(uint64_t memoryHandle) = 0;
 
     ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
-                                      uint32_t start, uint32_t count, void *pRegisterValues, bool write);
+                                      uint32_t start, uint32_t count, uint32_t type, void *pRegisterValues, bool write);
 
     void slmSipVersionCheck();
-    MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
+    MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write);
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
+    ze_result_t getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc);
 
-    const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
     uint32_t getRegisterSize(uint32_t type) override;
 
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
+    size_t getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size);
+
+    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override;
+    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override;
+    void closeExternalSipHandles() override;
+    void *getSipHandle(uint64_t contextHandle);
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override;
 
     void newAttentionRaised() {
         if (expectedAttentionEvents > 0) {
@@ -179,7 +241,7 @@ struct DebugSessionImp : DebugSession {
     int64_t interruptTimeout = 2000;
     std::unordered_map<uint64_t, AttentionEventFields> attentionEventContext{};
     std::chrono::milliseconds lastFifoReadTime = std::chrono::milliseconds(0);
-    virtual void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;
+    virtual ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;
 
     std::chrono::high_resolution_clock::time_point interruptTime;
     std::atomic<bool> interruptSent = false;
@@ -208,7 +270,7 @@ struct DebugSessionImp : DebugSession {
     std::condition_variable apiEventCondition;
     constexpr static uint16_t slmAddressSpaceTag = 28;
     constexpr static uint16_t slmSendBytesSize = 16;
-    constexpr static uint16_t sipRetryCount = 10;
+    constexpr static uint16_t sipRetryCount = 25;
     uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
 };
 
@@ -220,10 +282,10 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    SIP::sip_command sipCommand = {0};
+    NEO::SipCommandRegisterValues sipCommand = {{0}};
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
-    // SIP accesses SLM in units of slmSendBytesSize at offset allignment of slmSendBytesSize
+    // SIP accesses SLM in units of slmSendBytesSize at offset alignment of slmSendBytesSize
     uint32_t frontPadding = offset % slmSendBytesSize;
     uint64_t alignedOffset = offset - frontPadding;
     uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
@@ -258,7 +320,7 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
     uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
     uint32_t accessUnits = 0;
     uint32_t countReadyBytes = 0;
-    sipCommand.offset = alignedOffset;
+    sipCommand.sip_commandValues.offset = alignedOffset;
 
     for (uint32_t loop = 0; loop < loops; loop++) {
 
@@ -269,12 +331,12 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         }
 
         if constexpr (write) {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
-            sipCommand.size = static_cast<uint32_t>(accessUnits);
-            memcpy_s(sipCommand.buffer, accessUnits * slmSendBytesSize, tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize);
+            sipCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
+            sipCommand.sip_commandValues.size = static_cast<uint32_t>(accessUnits);
+            memcpy_s(sipCommand.sip_commandValues.buffer, accessUnits * slmSendBytesSize, tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize);
         } else {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
-            sipCommand.size = static_cast<uint32_t>(accessUnits);
+            sipCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
+            sipCommand.sip_commandValues.size = static_cast<uint32_t>(accessUnits);
         }
 
         status = cmdRegisterAccessHelper(threadId, sipCommand, true);
@@ -298,12 +360,13 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
                 return status;
             }
 
-            memcpy_s(tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize, sipCommand.buffer, accessUnits * slmSendBytesSize);
+            memcpy_s(tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize, sipCommand.sip_commandValues.buffer, accessUnits * slmSendBytesSize);
         }
 
         remainingSlmSendUnits -= accessUnits;
         countReadyBytes += accessUnits * slmSendBytesSize;
-        sipCommand.offset += accessUnits * slmSendBytesSize;
+        alignedOffset += accessUnits * slmSendBytesSize;
+        sipCommand.sip_commandValues.offset = alignedOffset;
     }
 
     if constexpr (!write) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,16 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/program/work_size_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
-#include "patch_shared.h"
+namespace NEO {
+struct RootDeviceEnvironment;
+} // namespace NEO
 
 using namespace NEO;
 

@@ -10,8 +10,8 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
-    return allocationData.type == AllocationType::commandBuffer || this->overrideCacheableForDcFlushMitigation(allocationData.type);
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationData.type);
 }
 
 template <>
@@ -21,7 +21,7 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return false;
+    return true;
 }
 
 template <>
@@ -30,7 +30,12 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
     return true;
 }
 

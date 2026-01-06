@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -14,8 +15,6 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
 #include "opencl/source/helpers/properties_helper.h"
-
-#include "memory_properties_flags.h"
 
 #include <cstdint>
 #include <vector>
@@ -29,6 +28,7 @@ class GraphicsAllocation;
 struct KernelInfo;
 class MemoryManager;
 class Context;
+class MemObj;
 
 template <>
 struct OpenCLObjectMapper<_cl_mem> {
@@ -44,7 +44,7 @@ struct AllocationInfo {
     bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;
 
-    bool alignementSatisfied = true;
+    bool alignmentSatisfied = true;
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
 
@@ -83,7 +83,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void *getCpuAddress() const;
     void *getHostPtr() const;
     bool getIsObjectRedescribed() const { return isObjectRedescribed; };
-    size_t getSize() const;
+    MOCKABLE_VIRTUAL size_t getSize() const;
 
     MapOperationsHandler &getMapOperationsHandler();
     MapOperationsHandler *getMapOperationsHandlerIfExists();

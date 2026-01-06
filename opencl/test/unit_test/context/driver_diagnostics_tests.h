@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/kernel/kernel.h"
@@ -46,7 +46,7 @@ struct DriverDiagnosticsTest : public PlatformFixture,
 };
 
 struct VerboseLevelTest : public DriverDiagnosticsTest,
-                          public ::testing::WithParamInterface<unsigned int> {
+                          public ::testing::WithParamInterface<uint64_t> {
 
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
@@ -57,7 +57,7 @@ struct VerboseLevelTest : public DriverDiagnosticsTest,
     void TearDown() override {
         DriverDiagnosticsTest::TearDown();
     }
-    std::vector<unsigned int> validLevels{
+    std::vector<uint64_t> validLevels{
         CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL,
         CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL,
         CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL,
@@ -174,8 +174,8 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
 
         PerformanceHintEnqueueTest::SetUp();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-        image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
-        zeroCopyImage.reset(ImageHelper<Image1dDefaults>::create(context));
+        image = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
+        zeroCopyImage.reset(ImageHelperUlt<Image1dDefaults>::create(context));
     }
 
     void TearDown() override {

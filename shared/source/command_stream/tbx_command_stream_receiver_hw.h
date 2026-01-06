@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/page_table.h"
 
 #include <array>
@@ -25,7 +24,6 @@ template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
   protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
-    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using BaseClass::forceSkipResourceCleanupRequired;
     using BaseClass::getParametersForMemory;
     using BaseClass::osContext;
@@ -45,11 +43,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void protectCPUMemoryFromWritesIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
 
   public:
-    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;
-    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::peekExecutionEnvironment;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::writeMemory;
 
@@ -60,6 +56,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void downloadAllocations(bool blockingWait, TaskCountType taskCount) override;
     void downloadAllocationTbx(GraphicsAllocation &gfxAllocation);
     void removeDownloadAllocation(GraphicsAllocation *alloc) override;
+    void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void processEviction() override;
     SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
@@ -67,13 +64,18 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
     void writeMMIO(uint32_t offset, uint32_t value) override;
     bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;
 
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
 
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void pollForCompletion(bool skipTaskCountCheck) override;
-
+    void pollForAubCompletion() override {
+        if (getType() == CommandStreamReceiverType::tbxWithAub) {
+            pollForCompletion(true);
+        }
+    }
     void dumpAllocation(GraphicsAllocation &gfxAllocation) override;
 
     static CommandStreamReceiver *create(const std::string &baseName,
@@ -95,16 +97,12 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     MOCKABLE_VIRTUAL CpuPageFaultManager *getTbxPageFaultManager();
 
-    TbxStream tbxStream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
-    uint32_t aubDeviceId;
     bool streamInitialized = false;
 
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<std::conditional<is64bit, PML4, PDPE>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
-    // remap CPU VA -> GGTT VA
-    AddressMapper gttRemap;
 
     std::set<GraphicsAllocation *> allocationsForDownload = {};
 

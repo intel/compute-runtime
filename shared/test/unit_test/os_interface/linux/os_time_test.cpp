@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -278,7 +278,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectR
     auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
 
-    // 19200000 is frequency yelding 52.083ns resolution
+    // 19200000 is frequency yielding 52.083ns resolution
     drm->getParamRetValue = 19200000;
     drm->ioctlRes = 0;
     deviceTime->callGetDynamicDeviceTimerResolution = true;

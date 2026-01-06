@@ -10,6 +10,7 @@
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
@@ -53,12 +54,24 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
+
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
+    EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_TRUE(productHelper->useSharedSystemUsm());
 }
 
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
@@ -69,8 +82,9 @@ BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
@@ -85,4 +99,32 @@ BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    // This simulates the test scenario that was causing the abort
+    auto mockDriverModel = std::make_unique<MockDriverModel>(); // Defaults to DriverModelType::unknown
+    osInterface->setDriverModel(std::move(mockDriverModel));
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnClockRate) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }

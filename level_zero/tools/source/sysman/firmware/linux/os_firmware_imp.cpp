@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,10 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+
+#include <algorithm>
 
 namespace L0 {
 
@@ -28,7 +32,7 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     std::vector<std::string> mtdDescriptorStrings = {};
     ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
         return result;
     }
     for (const auto &readByteLine : mtdDescriptorStrings) {

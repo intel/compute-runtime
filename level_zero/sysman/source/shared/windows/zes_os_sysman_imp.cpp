@@ -8,10 +8,12 @@
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
@@ -46,14 +48,14 @@ ze_result_t WddmSysmanImp::init() {
         if (pSysmanProductHelper->isZesInitSupported()) {
             sysmanInitFromCore = false;
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "%s", "Sysman Initialization already happened via zeInit\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Sysman Initialization already happened via zeInit\n");
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
 
-    pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get());
-
+    pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+    pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get(), pciBusInfo.pciBus, pciBusInfo.pciDevice, pciBusInfo.pciFunction);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -65,6 +67,12 @@ SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
 
+const NEO::HardwareInfo &WddmSysmanImp::getHardwareInfo() const {
+    return pParentSysmanDeviceImp->getHardwareInfo();
+}
+
+PRODUCT_FAMILY WddmSysmanImp::getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
+
 SysmanProductHelper *WddmSysmanImp::getSysmanProductHelper() {
     UNRECOVERABLE_IF(nullptr == pSysmanProductHelper);
     return pSysmanProductHelper.get();
@@ -75,7 +83,6 @@ PlatformMonitoringTech *WddmSysmanImp::getSysmanPmt() {
 }
 
 void WddmSysmanImp::createFwUtilInterface() {
-    const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
     const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
     const uint8_t bus = static_cast<uint8_t>(pciBusInfo.pciBus);
     const uint8_t device = static_cast<uint8_t>(pciBusInfo.pciDevice);
@@ -121,8 +128,8 @@ void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     if (uuidValid) {
         uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
         std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid));
-        std::string uuidString(reinterpret_cast<char const *>(uuid));
-        deviceUuids.push_back(uuidString);
+        std::string uuidString(reinterpret_cast<char const *>(uuid), ZES_MAX_UUID_SIZE);
+        deviceUuids.push_back(std::move(uuidString));
     }
 }
 
@@ -189,6 +196,14 @@ bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusIn
     }
 
     return false;
+}
+
+ze_result_t WddmSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) {
+    return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+bool WddmSysmanImp::isDeviceInSurvivabilityMode() {
+    return pParentSysmanDeviceImp->isDeviceInSurvivabilityMode;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

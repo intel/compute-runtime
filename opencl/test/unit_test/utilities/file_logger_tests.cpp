@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,13 @@
 
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 #include "shared/test/common/utilities/logger_tests.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -22,7 +21,8 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include <cstdio>
+#include "gtest/gtest.h"
+
 #include <memory>
 #include <sstream>
 #include <string>
@@ -153,7 +153,6 @@ TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
-    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 
@@ -218,7 +217,6 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
-    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 
@@ -334,7 +332,6 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
-    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 

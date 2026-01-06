@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
@@ -19,6 +20,12 @@ namespace NEO {
 
 class AsyncEventsHandler;
 class OsContext;
+class ClDevice;
+class ClDeviceVector;
+class CommandStreamReceiver;
+class MockClDevice;
+class SharingFunctions;
+class Platform;
 
 class MockContext : public Context {
   public:
@@ -26,8 +33,6 @@ class MockContext : public Context {
     using Context::deviceBitfields;
     using Context::devices;
     using Context::driverDiagnostics;
-    using Context::getUsmDevicePoolParams;
-    using Context::getUsmHostPoolParams;
     using Context::maxRootDeviceIndex;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;
@@ -35,11 +40,9 @@ class MockContext : public Context {
     using Context::rootDeviceIndices;
     using Context::setupContextType;
     using Context::sharingFunctions;
-    using Context::smallBufferPoolAllocator;
     using Context::specialQueues;
     using Context::svmAllocsManager;
     using Context::usmPoolInitialized;
-    using Context::UsmPoolParams;
 
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
     MockContext(const ClDeviceVector &clDeviceVector, bool noSpecialQueue = true);
@@ -66,6 +69,8 @@ class MockContext : public Context {
     };
 
   private:
+    void initializeManagers() final;
+
     ClDevice *pDevice = nullptr;
 };
 

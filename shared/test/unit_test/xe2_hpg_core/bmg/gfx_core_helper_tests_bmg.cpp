@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,15 +43,4 @@ BMGTEST_F(GfxCoreHelperTestsBmg, givenCommandBufferAllocationTypeWhenGetAllocati
 BMGTEST_F(GfxCoreHelperTestsBmg, WhenAskingForDcFlushThenReturnFalse) {
     setUpImpl();
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()));
-}
-
-BMGTEST_F(GfxCoreHelperTestsBmg, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue) {
-    setUpImpl();
-    DebugManagerStateRestore restore;
-
-    auto &helper = this->pDevice->getGfxCoreHelper();
-    EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
-
-    debugManager.flags.OverrideTimestampWidth.set(36);
-    EXPECT_EQ(36u, helper.getDeviceTimestampWidth());
 }

@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "shared/source/helpers/basic_math.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"

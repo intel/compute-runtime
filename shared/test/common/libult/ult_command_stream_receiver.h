@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
@@ -61,8 +62,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
+    using BaseClass::flushTaskHeapful;
+    using BaseClass::flushTaskHeapless;
+    using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
+    using BaseClass::getHostFunctionStreamer;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
     using BaseClass::handleAllocationsResidencyForHeaplessProlog;
@@ -76,6 +81,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
+    using BaseClass::isWalkerWithProfilingEnqueued;
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;
     using BaseClass::perDssBackedBuffer;
@@ -84,6 +90,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::primaryCsr;
     using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
+    using BaseClass::programExceptions;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
     using BaseClass::programStallingCommandsForBarrier;
@@ -96,9 +103,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::streamProperties;
+    using BaseClass::ucResourceRequiresTagUpdate;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
+    using BaseClass::CommandStreamReceiver::areExceptionsSent;
     using BaseClass::CommandStreamReceiver::baseWaitFunction;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
@@ -122,9 +131,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::heaplessModeEnabled;
+    using BaseClass::CommandStreamReceiver::heaplessStateInitEnabled;
     using BaseClass::CommandStreamReceiver::heaplessStateInitialized;
     using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
+    using BaseClass::CommandStreamReceiver::initializeTagAllocation;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
     using BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled;
     using BaseClass::CommandStreamReceiver::isDirectSubmissionEnabled;
@@ -133,7 +144,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::isStateSipSent;
     using BaseClass::CommandStreamReceiver::lastAdditionalKernelExecInfo;
     using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
-    using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
@@ -166,6 +176,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::timeStampPostSyncWriteOffset;
+    using BaseClass::CommandStreamReceiver::ucTagAddress;
     using BaseClass::CommandStreamReceiver::use4GbHeaps;
     using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;
@@ -187,6 +198,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
     ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;
+        if (initialOsContext) {
+            BaseClass::setupContext(*initialOsContext);
+        }
     }
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
@@ -200,12 +214,19 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return nullptr;
     }
 
+    uint64_t peekTotalMemoryUsed() {
+        return this->totalMemoryUsed;
+    }
+
     void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations) override {
         makeSurfacePackNonResidentCalled++;
         BaseClass::makeSurfacePackNonResident(allocationsForResidency, clearAllocations);
     }
 
     NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        if (incrementFlushStampOnFlush) {
+            this->flushStamp->setStamp(this->obtainCurrentFlushStamp() + 1);
+        }
         if (flushReturnValue) {
             return *flushReturnValue;
         }
@@ -223,15 +244,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         recordedSsh = ssh;
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-    }
-
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        recordedDispatchFlags = dispatchFlags;
-        recordedSsh = ssh;
-        this->lastFlushedCommandStream = &commandStream;
-        return BaseClass::flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream,
@@ -285,7 +297,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     }
 
-    size_t getPreferredTagPoolSize() const override {
+    uint32_t getPreferredTagPoolSize() const override {
         return BaseClass::getPreferredTagPoolSize() + 1;
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
@@ -297,11 +309,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
         downloadAllocationCalled = true;
-    }
-
-    bool checkDcFlushRequiredForDcMitigationAndReset() override {
-        this->registeredDcFlushForDcFlushMitigation = this->requiresDcFlush;
-        return BaseClass::checkDcFlushRequiredForDcMitigationAndReset();
     }
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
@@ -327,6 +334,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        if (captureWaitForTaskCountWithKmdNotifyInputParams) {
+            static std::mutex waitForTaskCountWithKmdNotifyInputParamsMtx;
+            std::unique_lock<std::mutex> lock(waitForTaskCountWithKmdNotifyInputParamsMtx);
+            waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+        }
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
@@ -394,7 +406,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         addAubCommentCalled = true;
     }
     bool flushBatchedSubmissions() override {
-        auto commandStreamReceieverOwnership = this->obtainUniqueOwnership();
+        auto commandStreamReceiverOwnership = this->obtainUniqueOwnership();
         flushBatchedSubmissionsCalled = true;
 
         if (shouldFailFlushBatchedSubmissions) {
@@ -435,6 +447,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         } else {
             return flushBcsTaskReturnValue;
         }
+    }
+
+    bool getAndClearIsWalkerWithProfilingEnqueued() override {
+        if (this->isWalkerWithProfilingEnqueued) {
+            ++this->walkerWithProfilingEnqueuedTimes;
+        }
+        return CommandStreamReceiverHw<GfxFamily>::getAndClearIsWalkerWithProfilingEnqueued();
     }
 
     bool createPerDssBackedBuffer(Device &device) override {
@@ -499,6 +518,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return commandStreamReceiverType;
     }
 
+    void setType(CommandStreamReceiverType commandStreamReceiverType) {
+        this->commandStreamReceiverType = commandStreamReceiverType;
+    }
+
     void pollForCompletion(bool skipTaskCountCheck) override {
         pollForCompletionCalled++;
     }
@@ -518,7 +541,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     SubmissionStatus sendRenderStateCacheFlush() override {
         this->renderStateCacheFlushed = true;
-        this->renderStateCacheDcFlushForced = this->requiresDcFlush;
         if (callBaseSendRenderStateCacheFlush) {
             return BaseClass::sendRenderStateCacheFlush();
         }
@@ -528,9 +550,27 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
         stopDirectSubmissionCalledBlocking = blocking;
+        if (initialOsContext) {
+            BaseClass::setupContext(*initialOsContext);
+        }
         if (this->callBaseStopDirectSubmission) {
             BaseClass::stopDirectSubmission(blocking, needsLock);
         }
+    }
+
+    void setupContext(OsContext &osContext) override {
+        if (!initialOsContext) {
+            initialOsContext = this->osContext;
+        }
+        BaseClass::setupContext(osContext);
+    }
+
+    void signalHostFunctionWorker(uint32_t nHostFunctions) override {
+        signalHostFunctionWorkerCounter += nHostFunctions;
+    }
+
+    void createHostFunctionWorker() override {
+        createHostFunctionWorkerCounter++;
     }
 
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
@@ -570,6 +610,22 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
         return isAnyDirectSubmissionEnabledResult;
     }
+
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) override {
+        if (testTaskCountReadyReturnValue.has_value()) {
+            return *testTaskCountReadyReturnValue;
+        }
+        return BaseClass::testTaskCountReady(pollAddress, taskCountToWait);
+    }
+
+    bool isGpuHangDetected() const override {
+        if (isGpuHangDetectedReturnValue.has_value()) {
+            return *isGpuHangDetectedReturnValue;
+        } else {
+            return CommandStreamReceiver::isGpuHangDetected();
+        }
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -588,6 +644,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     const IndirectHeap *recordedSsh = nullptr;
 
+    struct WaitForTaskCountWithKmdNotifyParams {
+        TaskCountType taskCountToWait;
+        FlushStamp flushStampToWait;
+        bool useQuickKmdSleep;
+        QueueThrottle throttle;
+    };
+
+    std::vector<WaitForTaskCountWithKmdNotifyParams> waitForTaskCountWithKmdNotifyInputParams;
+
     std::mutex mutex;
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
@@ -604,6 +669,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t drainPagingFenceQueueCalled = 0;
     uint32_t flushHandlerCalled = 0;
     uint32_t obtainUniqueOwnershipCalledTimes = 0;
+    uint32_t walkerWithProfilingEnqueuedTimes = 0;
+    uint32_t createHostFunctionWorkerCounter = 0;
+    uint32_t signalHostFunctionWorkerCounter = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
@@ -615,12 +683,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<WaitStatus> waitForTaskCountReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
+    std::optional<bool> isGpuHangDetectedReturnValue{};
+    std::optional<bool> testTaskCountReadyReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
+    OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;
-    bool renderStateCacheDcFlushForced = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlushedBatchBuffer = false;
@@ -650,10 +720,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
-    bool registeredDcFlushForDcFlushMitigation = false;
     bool isUserFenceWaitSupported = false;
     bool isAnyDirectSubmissionEnabledCallBase = true;
     bool isAnyDirectSubmissionEnabledResult = true;
+    std::atomic_bool captureWaitForTaskCountWithKmdNotifyInputParams = false;
+    bool incrementFlushStampOnFlush = false;
 };
 
 } // namespace NEO

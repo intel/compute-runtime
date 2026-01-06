@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ extern size_t mockFwriteReturn;
 extern char *mockFwriteBuffer;
 extern char *mockFreadBuffer;
 extern bool mockVfptrinfUseStdioFunction;
+extern uint32_t mockVsnprintfCalled;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
@@ -50,6 +51,11 @@ inline int mockVfptrinf(FILE *stream, const char *format, va_list arg) {
         return vfprintf(stream, format, arg);
     }
     return 0x10;
+}
+
+inline int mockVsnprintf(char *buff, size_t buffLen, char const *const formatStr, va_list arg) {
+    ++mockVsnprintfCalled;
+    return ::vsnprintf(buff, buffLen, formatStr, arg);
 }
 
 inline int mockFclose(FILE *stream) {
@@ -102,9 +108,14 @@ inline size_t mockFwrite(const void *ptr, size_t size, size_t nmemb, FILE *strea
 }
 
 inline int mockFflush(FILE *stream) {
-    if (stream == stdout || stream == stderr)
+    if (stream == stdout || stream == stderr) {
         return fflush(stream);
+    }
 
+    return 0;
+}
+
+inline int mockMkdir(const char *filename) {
     return 0;
 }
 

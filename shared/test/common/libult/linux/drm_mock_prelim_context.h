@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ struct UuidVmBindExt {
 };
 
 struct DrmMockPrelimContext {
-    const HardwareInfo *hwInfo;
+    HardwareInfo *hwInfo;
     const RootDeviceEnvironment &rootDeviceEnvironment;
     const CacheInfo *cacheInfo;
     const bool &failRetTopology;

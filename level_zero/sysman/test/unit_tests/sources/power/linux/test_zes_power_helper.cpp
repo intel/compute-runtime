@@ -187,8 +187,14 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenReadingToSysNodesFailsWhe
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
+        if (!properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
+        } else {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &count, nullptr));
+        }
         EXPECT_EQ(count, 0u);
     }
 }

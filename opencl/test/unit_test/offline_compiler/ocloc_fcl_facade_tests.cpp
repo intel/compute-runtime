@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include "mock/mock_ocloc_fcl_facade.h"
 
@@ -22,9 +23,10 @@ TEST_F(OclocFclFacadeTest, GivenMissingFclLibraryWhenPreparingFclThenFailureIsRe
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailLoadingOfFclLib = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -39,9 +41,10 @@ TEST_F(OclocFclFacadeTest, GivenFailingLoadingOfFclSymbolsWhenPreparingFclThenFa
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailLoadingOfFclCreateMainFunction = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -54,9 +57,10 @@ TEST_F(OclocFclFacadeTest, GivenFailingCreationOfFclMainWhenPreparingFclThenFail
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailCreationOfFclMain = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -73,9 +77,10 @@ TEST_F(OclocFclFacadeTest, GivenIncompatibleFclInterfacesWhenPreparingFclThenFai
     mockFclFacade.isFclInterfaceCompatibleReturnValue = false;
     mockFclFacade.getIncompatibleInterfaceReturnValue = "SomeImportantInterface";
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -88,9 +93,10 @@ TEST_F(OclocFclFacadeTest, GivenFailingCreationOfFclDeviceContextWhenPreparingFc
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailCreationOfFclDeviceContext = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -103,9 +109,10 @@ TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetAndNotPopulateFclInterfaceWhenPrepa
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = false;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, fclPreparationResult);
     EXPECT_TRUE(output.empty()) << output;
@@ -118,9 +125,10 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceAndInvalidFclDeviceContextWh
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = true;
     mockFclFacade.shouldReturnInvalidFclPlatformHandle = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, fclPreparationResult);
     EXPECT_FALSE(mockFclFacade.isInitialized());
@@ -135,9 +143,10 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceWhenPreparingFclThenSuccessI
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, fclPreparationResult);
     EXPECT_TRUE(output.empty()) << output;
@@ -149,9 +158,10 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceWhenPreparingFclThenSuccessI
 TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetWhenPreparingFclThenSuccessIsReported) {
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, fclPreparationResult);
     EXPECT_TRUE(output.empty()) << output;
@@ -164,9 +174,10 @@ TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetWhenPreparingFclThenSuccessIsReport
 TEST_F(OclocFclFacadeTest, GivenInitializedFclWhenGettingIncompatibleInterfaceThenEmptyStringIsReturned) {
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     ASSERT_EQ(OCLOC_SUCCESS, fclPreparationResult);
 

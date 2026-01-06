@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #pragma once
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 
 #include <level_zero/ze_api.h>
 
-static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperationsStatus status) {
+static inline ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperationsStatus status) {
     switch (status) {
     case NEO::MemoryOperationsStatus::success:
         return ZE_RESULT_SUCCESS;

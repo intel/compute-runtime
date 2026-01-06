@@ -5,10 +5,6 @@
  *
  */
 
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/product_config_helper.h"
-
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 #include <cstring>
@@ -17,7 +13,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct GetDeviceInfoP : public ApiFixture<>, public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
+struct GetDeviceInfoP : public ApiFixture, public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
         ApiFixture::setUp();
@@ -62,7 +58,6 @@ TEST_P(GetDeviceGlInfoStr, WhenGettingDeviceExtensionsThenExtensionsAreReportedC
             "cl_intel_subgroups ",
             "cl_intel_required_subgroup_size ",
             "cl_intel_subgroups_short ",
-            "cl_khr_spir ",
             "cl_intel_accelerator ",
             "cl_intel_driver_diagnostics ",
             "cl_khr_priority_hints ",

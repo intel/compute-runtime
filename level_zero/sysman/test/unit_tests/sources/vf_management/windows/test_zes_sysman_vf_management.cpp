@@ -45,25 +45,13 @@ TEST_F(ZesVfFixture, GivenValidDeviceHandleAndOneVfIsEnabledWhenRetrievingVfHand
     WddmVfImp::numEnabledVfs = 0;
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenZeroPciAddressIsReturned) {
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenErrorIsReturned) {
 
     uint32_t vfId = 1;
     std::unique_ptr<VfManagement> pVfManagement = std::make_unique<VfImp>(pOsSysman, vfId);
     zes_vf_handle_t vfHandle = pVfManagement->toVfManagementHandle();
     zes_vf_exp2_capabilities_t capabilities = {};
     ze_result_t result = zesVFManagementGetVFCapabilitiesExp2(vfHandle, &capabilities);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(capabilities.address.domain, (uint32_t)0);
-    EXPECT_EQ(capabilities.address.bus, (uint32_t)0);
-    EXPECT_EQ(capabilities.address.device, (uint32_t)0);
-    EXPECT_EQ(capabilities.address.function, (uint32_t)0);
-}
-
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsVfCapabilitiesThenErrorIsReturned) {
-
-    auto pWddmVfImp = std::make_unique<WddmVfImp>();
-    zes_vf_exp2_capabilities_t capabilities = {};
-    ze_result_t result = pWddmVfImp->vfOsGetCapabilities(&capabilities);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
@@ -104,13 +92,6 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsGetLocalMemoryUsedThenError
     auto pWddmVfImp = std::make_unique<WddmVfImp>();
     uint64_t lMemUsed = 0;
     bool result = pWddmVfImp->vfOsGetLocalMemoryUsed(lMemUsed);
-    EXPECT_FALSE(result);
-}
-
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsGetLocalMemoryQuotaThenErrorIsReturned) {
-    auto pWddmVfImp = std::make_unique<WddmVfImp>();
-    uint64_t lMemQuota = 0;
-    bool result = pWddmVfImp->vfOsGetLocalMemoryQuota(lMemQuota);
     EXPECT_FALSE(result);
 }
 

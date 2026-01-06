@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,13 @@ class OsContextWin : public OsContext {
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     bool isDirectSubmissionSupported() const override;
     Wddm *getWddm() const { return &wddm; }
-    MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
+    MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    MonitoredFence &getMonitoredFence() { return monitoredFence; }
+    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
+    bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
+    void updateLastTrimFenceValue() { lastTrimFenceValue = *monitoredFence.cpuAddress; }
+    uint64_t getLastTrimFenceValue() const { return this->lastTrimFenceValue; };
     void reInitializeContext() override;
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
     uint32_t getDeviceNodeMask();
@@ -43,8 +48,11 @@ class OsContextWin : public OsContext {
   protected:
     bool initializeContext(bool allocateInterrupt) override;
 
-    WddmResidencyController residencyController;
     HardwareQueue hardwareQueue;
+
+    MonitoredFence monitoredFence = {};
+    uint64_t lastTrimFenceValue = 0u;
+
     Wddm &wddm;
     D3DKMT_HANDLE wddmContextHandle = 0;
 };

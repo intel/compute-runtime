@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -16,9 +15,10 @@
 
 #include <atomic>
 #include <mutex>
+#include <optional>
 #include <vector>
 
-struct _ze_command_queue_handle_t : BaseHandle {};
+struct _ze_command_queue_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_QUEUE> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_command_queue_handle_t>);
 
 namespace NEO {
@@ -38,6 +38,7 @@ struct QueueProperties {
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     bool interruptHint = false;
     bool copyOffloadHint = false;
+    std::optional<int> priorityLevel = std::nullopt;
 };
 
 struct CommandQueue : _ze_command_queue_handle_t {
@@ -55,7 +56,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream) = 0;
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                            std::unique_lock<std::mutex> *outerLockForIndirect) = 0;
     virtual ze_result_t synchronize(uint64_t timeout) = 0;
     virtual ze_result_t getOrdinal(uint32_t *pOrdinal) = 0;
     virtual ze_result_t getIndex(uint32_t *pIndex) = 0;
@@ -82,6 +84,24 @@ struct CommandQueue : _ze_command_queue_handle_t {
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
 
+    inline bool getAndClearIsWalkerWithProfilingEnqueued() {
+        bool retVal = this->isWalkerWithProfilingEnqueued;
+        this->isWalkerWithProfilingEnqueued = false;
+        return retVal;
+    }
+    inline void setPatchingPreamble(bool patching, bool saveWait) {
+        this->patchingPreamble = patching;
+        this->saveWaitForPreamble = saveWait;
+    }
+    inline bool getPatchingPreamble() const {
+        return this->patchingPreamble;
+    }
+    inline bool getSaveWaitForPreamble() const {
+        return this->saveWaitForPreamble;
+    }
+    void saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *commandListHandles,
+                                            NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount);
+
   protected:
     bool frontEndTrackingEnabled() const;
 
@@ -102,6 +122,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
+    bool isWalkerWithProfilingEnqueued = false;
+    bool patchingPreamble = false;
+    bool saveWaitForPreamble = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

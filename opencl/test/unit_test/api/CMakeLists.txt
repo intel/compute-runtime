@@ -27,6 +27,7 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_perf_counters_command_queue_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_pipe_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_program_with_binary_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cl_create_program_with_binary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_program_with_built_in_kernels_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sampler_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sampler_with_properties_tests.inl
@@ -93,8 +94,6 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_program_info_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_supported_image_formats_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_icd_get_platform_ids_khr_tests.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_accelerator_tests.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_motion_estimation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_tracing_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_link_program_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_mem_locally_uncached_resource_tests.cpp

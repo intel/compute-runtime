@@ -7,17 +7,20 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/sysman_const.h"
 
-#include <unistd.h>
+namespace NEO {
+class Drm;
+struct EngineInfo;
+} // namespace NEO
 
 namespace L0 {
 class PmuInterface;
 struct Device;
+class SysfsAccess;
+struct OsSysman;
+
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;

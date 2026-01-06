@@ -49,9 +49,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     if (directSubmissionController) {
         directSubmissionController->stopThread();
     }
-    if (unifiedMemoryReuseCleaner) {
-        unifiedMemoryReuseCleaner->stopThread();
-    }
     if (memoryManager) {
         memoryManager->commonCleanup();
         for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
@@ -152,17 +149,16 @@ DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionCont
     return directSubmissionController.get();
 }
 
-void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner(bool enable) {
+void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled) {
     std::lock_guard<std::mutex> lock(initializeUnifiedMemoryReuseCleanerMutex);
-    auto initializeUnifiedMemoryReuseCleaner = UnifiedMemoryReuseCleaner::isSupported() && enable;
+    auto initializeUnifiedMemoryReuseCleaner = UnifiedMemoryReuseCleaner::isSupported() && !isAnyDirectSubmissionLightEnabled;
 
     if (debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() != -1) {
         initializeUnifiedMemoryReuseCleaner = debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() == 1;
     }
 
     if (initializeUnifiedMemoryReuseCleaner && nullptr == this->unifiedMemoryReuseCleaner) {
-        this->unifiedMemoryReuseCleaner = std::make_unique<UnifiedMemoryReuseCleaner>();
-        this->unifiedMemoryReuseCleaner->startThread();
+        this->unifiedMemoryReuseCleaner = std::make_unique<UnifiedMemoryReuseCleaner>(isAnyDirectSubmissionLightEnabled);
     }
 }
 
@@ -178,6 +174,9 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
 }
 
 void ExecutionEnvironment::prepareForCleanup() const {
+    if (unifiedMemoryReuseCleaner) {
+        unifiedMemoryReuseCleaner->stopThread();
+    }
     for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
         if (rootDeviceEnvironment) {
             rootDeviceEnvironment->prepareForCleanup();
@@ -273,7 +272,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     auto affinityMaskEntries = StringHelpers::split(affinityMaskString, ",");
 
-    // Index of the Device to be returned to the user, not the physcial device index.
+    // Index of the Device to be returned to the user, not the physical device index.
     uint32_t deviceIndex = 0;
     for (const auto &entry : affinityMaskEntries) {
         auto subEntries = StringHelpers::split(entry, ".");
@@ -355,8 +354,10 @@ void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceE
     productHelper.adjustNumberOfCcs(*hwInfo);
 }
 
-void ExecutionEnvironment::adjustCcsCount() {
-    parseCcsCountLimitations();
+bool ExecutionEnvironment::adjustCcsCount() {
+    if (!parseCcsCountLimitations()) {
+        return false;
+    }
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
@@ -365,32 +366,42 @@ void ExecutionEnvironment::adjustCcsCount() {
             adjustCcsCountImpl(rootDeviceEnvironment.get());
         }
     }
+
+    return true;
 }
 
-void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
+bool ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
     auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
     if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
-        rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
+        if (!rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex))) {
+            return false;
+        }
     } else {
         adjustCcsCountImpl(rootDeviceEnvironment.get());
     }
+
+    return true;
 }
 
-void ExecutionEnvironment::parseCcsCountLimitations() {
+bool ExecutionEnvironment::parseCcsCountLimitations() {
     const auto &numberOfCcsString = debugManager.flags.ZEX_NUMBER_OF_CCS.get();
 
     if (numberOfCcsString.compare("default") == 0 ||
         numberOfCcsString.empty()) {
-        return;
+        return true;
     }
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
         UNRECOVERABLE_IF(!rootDeviceEnvironment);
         auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-        productHelper.parseCcsMode(numberOfCcsString, rootDeviceNumCcsMap, rootDeviceIndex, rootDeviceEnvironment.get());
+        if (!productHelper.parseCcsMode(numberOfCcsString, rootDeviceNumCcsMap, rootDeviceIndex, rootDeviceEnvironment.get())) {
+            return false;
+        }
     }
+
+    return true;
 }
 
 void ExecutionEnvironment::configureNeoEnvironment() {

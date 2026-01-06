@@ -19,7 +19,7 @@ struct KernelInfo;
 struct ProgramInfo;
 
 namespace Zebin::ZeInfo {
-inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 39};
+inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 61};
 
 using KernelExecutionEnvBaseT = Types::Kernel::ExecutionEnv::ExecutionEnvBaseT;
 

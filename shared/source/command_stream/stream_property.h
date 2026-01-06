@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <stddef.h>
 
 namespace NEO {
 
@@ -24,10 +24,8 @@ struct StreamPropertyType {
                 value = newValue;
                 isDirty = true;
             }
-        } else {
-            if (newValue != initValue) {
-                value = newValue;
-            }
+        } else if (newValue != initValue) {
+            value = newValue;
         }
     }
 };

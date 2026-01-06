@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
-#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -21,7 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_sharing_factory.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -69,8 +66,9 @@ class TestedSharingBuilderFactory : public SharingBuilderFactory {
         invocationCount++;
     };
     void *getExtensionFunctionAddress(const std::string &functionName) override {
-        if (functionName == "someFunction")
+        if (functionName == "someFunction") {
             invocationCount++;
+        }
         return nullptr;
     }
 
@@ -220,9 +218,10 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
 
-    cl_device_id clDevice = device.get();
+    cl_device_id clDevice = device;
     auto deviceVector = ClDeviceVector(&clDevice, 1);
     cl_int retVal;
 

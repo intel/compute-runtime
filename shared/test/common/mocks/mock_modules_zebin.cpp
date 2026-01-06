@@ -9,6 +9,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/mocks/mock_elf.h"
@@ -228,14 +229,62 @@ void ZebinWithL0TestCommonModule::recalcPtr() {
     elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *>(storage.data());
 }
 
-template ZebinCopyBufferSimdModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
-template ZebinCopyBufferSimdModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo);
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo);
 
 template <ElfIdentifierClass numBits>
-ZebinCopyBufferSimdModule<numBits>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize) {
-    zeInfoSize = static_cast<size_t>(snprintf(nullptr, 0, zeInfoCopyBufferSimdPlaceholder.c_str(), simdSize, simdSize, getLocalIdSize(hwInfo, simdSize)) + 1);
+ZebinCopyImageModule<numBits>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo) {
+    MockElfEncoder<numBits> elfEncoder;
+    auto &elfHeader = elfEncoder.getElfFileHeader();
+    elfHeader.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto copyHwInfo = hwInfo;
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    elfHeader.machine = copyHwInfo.platform.eProductFamily;
+
+    const uint8_t testKernel1Data[0xac0] = {0u};
+    const uint8_t testKernel2Data[0xac0] = {0u};
+    const uint8_t testKernel3Data[0xac0] = {0u};
+    const uint8_t testKernel4Data[0xac0] = {0u};
+
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage3dToImage3d", testKernel1Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage1dBufferToImage3d", testKernel2Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage3dToImage1dBuffer", testKernel3Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage1dBufferToImage1dBuffer", testKernel4Data);
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfoCopyImage);
+
+    storage = elfEncoder.encode();
+    this->elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<numBits> *>(storage.data());
+}
+
+template ZebinCopyBufferModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor desc);
+template ZebinCopyBufferModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor desc);
+
+template <ElfIdentifierClass numBits>
+ZebinCopyBufferModule<numBits>::ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor desc) {
+    using namespace NEO::Zebin::ZeInfo::Tags::Kernel;
+    const char *addrmode = desc.isStateless ? "stateless" : "stateful";
+
+    if (!desc.isStateless) {
+        std::stringstream os;
+        os << "    binding_table_indices:\n";
+        if (!desc.bindingTableIndices.empty()) {
+            for (const auto &bti : desc.bindingTableIndices) {
+                os << "      - bti_value: " << std::to_string(bti.btiValue) << '\n';
+                os << "        arg_index: " << std::to_string(bti.argIndex) << '\n';
+            }
+        }
+        zeInfoCopyBufferSimdPlaceholder += os.str();
+    }
+
+    const std::string userAttributesStr = desc.userAttributes.toZeInfoYaml();
+    const std::string execEnvStr = desc.execEnv.toZeInfoYaml();
+
+    zeInfoSize = static_cast<size_t>(snprintf(nullptr, 0, zeInfoCopyBufferSimdPlaceholder.c_str(), userAttributesStr.c_str(), execEnvStr.c_str(), addrmode, addrmode));
     zeInfoCopyBuffer.resize(zeInfoSize);
-    snprintf(zeInfoCopyBuffer.data(), zeInfoSize, zeInfoCopyBufferSimdPlaceholder.c_str(), simdSize, simdSize, getLocalIdSize(hwInfo, simdSize));
+    snprintf(zeInfoCopyBuffer.data(), zeInfoSize, zeInfoCopyBufferSimdPlaceholder.c_str(), userAttributesStr.c_str(), execEnvStr.c_str(), addrmode, addrmode);
 
     MockElfEncoder<numBits> elfEncoder;
     auto &elfHeader = elfEncoder.getElfFileHeader();

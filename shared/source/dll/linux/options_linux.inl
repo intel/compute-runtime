@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "igc.opencl.h"
+
+#include <cstdint>
 
 namespace Os {
 // Compiler library names
@@ -24,3 +26,7 @@ const char *sysFsProcPathPrefix = "/proc";
 // Metrics Library name
 const char *metricsLibraryDllName = "libigdml.so.1";
 } // namespace Os
+
+namespace ContextGroup {
+uint32_t maxContextCount = 64;
+}

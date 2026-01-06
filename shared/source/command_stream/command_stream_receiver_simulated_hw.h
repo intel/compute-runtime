@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "aubstream/allocation_params.h"
+#include "aubstream/hint_values.h"
 
 namespace NEO {
 class GraphicsAllocation;
@@ -67,25 +67,6 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return {};
     }
 
-    int getAddressSpace(int hint) {
-        bool traceLocalAllowed = false;
-        switch (hint) {
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs:
-        case AubMemDump::DataTypeHintValues::TraceCommandBuffer:
-            traceLocalAllowed = true;
-            break;
-        default:
-            break;
-        }
-        if ((traceLocalAllowed && this->localMemoryEnabled) || debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-            return AubMemDump::AddressSpaceValues::TraceLocal;
-        }
-        return AubMemDump::AddressSpaceValues::TraceNonlocal;
-    }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper) {
         const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
         const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
@@ -97,13 +78,20 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         size_t allocSize;
         this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
         int hint = graphicsAllocation.getAllocationType() == AllocationType::commandBuffer
-                       ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
-                       : AubMemDump::DataTypeHintValues::TraceNotype;
+                       ? aub_stream::DataTypeHintValues::TraceBatchBuffer
+                       : aub_stream::DataTypeHintValues::TraceNotype;
 
         if (isChunkCopy) {
             gpuAddress += gpuVaChunkOffset;
             cpuAddress = ptrOffset(cpuAddress, static_cast<uintptr_t>(gpuVaChunkOffset));
             allocSize = chunkSize;
+        }
+
+        std::unique_ptr<unsigned char[]> memoryCopy;
+        if (graphicsAllocation.isLocked() && debugManager.flags.CopyLockedMemoryBeforeWrite.get()) {
+            memoryCopy = std::make_unique_for_overwrite<unsigned char[]>(allocSize);
+            memcpy_s(memoryCopy.get(), allocSize, cpuAddress, allocSize);
+            cpuAddress = memoryCopy.get();
         }
 
         aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, allocSize, this->getMemoryBank(&graphicsAllocation),
@@ -113,12 +101,14 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
 
         if (gmm) {
             allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
-            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
         if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
+            UNRECOVERABLE_IF(nullptr == aubManager);
             aubManager->writeMemory2(allocationParams);
         } else {
+            UNRECOVERABLE_IF(nullptr == hardwareContextController);
             hardwareContextController->writeMemory(allocationParams);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,6 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessI
 }
 
 TEST_F(ClEnqueueSVMMemcpyTests, GivenQueueIncapableWhenCopyingSvmBufferThenInvalidOperationIsReturned) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL);
 
@@ -185,6 +184,37 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsRe
     }
 }
 
+TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryWithEventThenProperCmdTypeIsSet) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, pDstSvm);
+        void *pSrcSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, pSrcSvm);
+
+        cl_event event = nullptr;
+        auto retVal = clEnqueueSVMMemcpy(
+            pCommandQueue, // cl_command_queue command_queue
+            CL_FALSE,      // cl_bool blocking_copy
+            pDstSvm,       // void *dst_ptr
+            pSrcSvm,       // const void *src_ptr
+            0,             // size_t size
+            0,             // cl_uint num_events_in_wait_list
+            nullptr,       // const cl_event *event_wait_list
+            &event         // cl_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MEMCPY;
+        cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+        EXPECT_EQ(expectedCmd, actualCmd);
+
+        clSVMFree(pContext, pDstSvm);
+        clSVMFree(pContext, pSrcSvm);
+        clReleaseEvent(event);
+    }
+}
+
 TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
@@ -209,29 +239,7 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryTh
     }
 }
 
-TEST_F(ClEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcpyThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.ftrSvm = false;
-
-    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    cl_device_id deviceId = pDevice.get();
-    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
-    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr, false);
-
-    auto retVal = clEnqueueSVMMemcpy(
-        pCommandQueue.get(), // cl_command_queue command_queue
-        CL_FALSE,            // cl_bool blocking_copy
-        nullptr,             // void *dst_ptr
-        nullptr,             // const void *src_ptr
-        0,                   // size_t size
-        0,                   // cl_uint num_events_in_wait_list
-        nullptr,             // const cl_event *event_wait_list
-        nullptr              // cl_event *event
-    );
-    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-}
-
-TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccesfull) {
+TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccessfull) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();

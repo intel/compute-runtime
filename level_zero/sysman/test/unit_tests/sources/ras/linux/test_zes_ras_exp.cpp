@@ -5,14 +5,10 @@
  *
  */
 
-#include "shared/test/common/libult/linux/drm_mock.h"
-
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
-
-class OsRas;
 
 namespace L0 {
 namespace Sysman {
@@ -56,6 +52,34 @@ struct SysmanRasExpFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    uint32_t count = 0u;
+    zes_ras_error_category_exp_t categories = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetSupportedCategoriesExp(&count, &categories));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetConfigExp(count, &config));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasSetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_state_exp_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp(count, &state));
+}
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpThenSuccessIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {

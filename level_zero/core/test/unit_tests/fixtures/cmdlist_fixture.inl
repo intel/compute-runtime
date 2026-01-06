@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
@@ -18,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -80,7 +82,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     } else {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(RegisterOffsets::globalTimestampUn, cmdMem->getRegisterAddress());
+        EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
         EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -89,7 +91,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         }
     }
 
-    itor++;
+    itor = useMask ? find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
     if (useMask) {
         {
             ASSERT_NE(cmdList.end(), itor);
@@ -128,7 +130,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     } else {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, cmdMem->getRegisterAddress());
+        EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
         EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -137,6 +139,145 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         }
     }
 
+    itor++;
+    startIt = itor;
+}
+
+template <typename FamilyType>
+void validateTimestampLongRegisters(GenCmdList &cmdList,
+                                    GenCmdList::iterator &startIt,
+                                    uint32_t firstLoadRegisterRegSrcAddress,
+                                    uint64_t firstStoreRegMemAddress,
+                                    uint32_t secondLoadRegisterRegSrcAddress,
+                                    uint64_t secondStoreRegMemAddress,
+                                    uint32_t thirdLoadRegisterRegSrcAddress,
+                                    uint64_t thirdStoreRegMemAddress,
+                                    uint32_t fourthLoadRegisterRegSrcAddress,
+                                    uint64_t fourthStoreRegMemAddress,
+                                    bool workloadPartition,
+                                    bool useMask) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    constexpr uint32_t mask = 0xfffffffe;
+
+    auto itor = useMask ? find<MI_LOAD_REGISTER_REG *>(startIt, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
+    if (useMask) {
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+            EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
+            EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
+            if (workloadPartition) {
+                EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            } else {
+                EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            }
+        }
+    } else {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+        EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
+        if (workloadPartition) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        }
+    }
+    itor++;
+    ASSERT_NE(cmdList.end(), itor);
+    auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+    EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
+    if (workloadPartition) {
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    } else {
+        EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    }
+
+    itor = useMask ? find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
+    if (useMask) {
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+            EXPECT_EQ(thirdLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
+            EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(thirdStoreRegMemAddress, cmdMem->getMemoryAddress());
+            if (workloadPartition) {
+                EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            } else {
+                EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            }
+        }
+    } else {
+        ASSERT_NE(cmdList.end(), itor);
+        cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(thirdLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+        EXPECT_EQ(thirdStoreRegMemAddress, cmdMem->getMemoryAddress());
+        if (workloadPartition) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        }
+    }
+    itor++;
+    ASSERT_NE(cmdList.end(), itor);
+    cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(fourthLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+    EXPECT_EQ(fourthStoreRegMemAddress, cmdMem->getMemoryAddress());
+    if (workloadPartition) {
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    } else {
+        EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    }
     itor++;
     startIt = itor;
 }
@@ -173,7 +314,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -197,7 +338,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -225,7 +366,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -250,7 +391,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -283,7 +424,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -317,7 +458,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -342,7 +483,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -375,7 +516,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -408,7 +549,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -440,7 +581,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -465,7 +606,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -511,7 +652,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
 
     sizeBefore = regularCommandListStream.getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
@@ -537,7 +678,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     commandList->close();
 
     sizeBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
@@ -571,7 +712,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
 
     size_t csrUsedBefore = csrStream.getUsed();
     sizeBefore = immediateCmdListStream.getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = immediateCmdListStream.getUsed();
     size_t csrUsedAfter = csrStream.getUsed();
@@ -638,7 +779,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
 
     size_t csrUsedBefore = csrStream.getUsed();
     sizeBefore = immediateCmdListStream.getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = immediateCmdListStream.getUsed();
     size_t csrUsedAfter = csrStream.getUsed();
@@ -689,7 +830,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     auto &cmdQueueStream = commandQueue->commandStream;
 
     sizeBefore = regularCommandListStream.getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = regularCommandListStream.getUsed();
 
@@ -713,7 +854,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     commandList->close();
 
     sizeBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
@@ -741,7 +882,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     CmdListKernelLaunchParams launchParams = {};
 
     auto result = ZE_RESULT_SUCCESS;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList->close();
@@ -750,7 +891,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
 
-    result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList2->close();
@@ -760,7 +901,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
 
     // execute first clear command list to settle global init
     ze_command_list_handle_t commandLists[2] = {commandList->toHandle(), nullptr};
-    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr);
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto queueSize = cmdQueueStream.getUsed();
@@ -768,7 +909,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     // scratch makes globally front end dirty and so global init too,
     // but dispatch systolic programming only before second command list
     commandLists[1] = commandList2->toHandle();
-    result = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr);
+    result = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -844,7 +985,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -865,7 +1006,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -891,7 +1032,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -911,7 +1052,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -934,7 +1075,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -958,7 +1099,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -978,7 +1119,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1001,7 +1142,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1024,7 +1165,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1047,7 +1188,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1067,7 +1208,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1111,7 +1252,7 @@ void CmdListLargeGrfFixture::testBody() {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1132,7 +1273,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1158,7 +1299,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1178,7 +1319,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1201,7 +1342,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1225,7 +1366,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1245,7 +1386,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1268,7 +1409,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1291,7 +1432,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1314,7 +1455,7 @@ void CmdListLargeGrfFixture::testBody() {
     {
         mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
-        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = commandListStream.getUsed();
 
@@ -1334,7 +1475,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1351,8 +1492,6 @@ void CmdListLargeGrfFixture::testBody() {
 
 template <typename FamilyType>
 void TbxImmediateCommandListFixture::setUpT() {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ModuleImmutableDataFixture::setUp();
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
@@ -1372,7 +1511,7 @@ void TbxImmediateCommandListFixture::setUpT() {
 
     ze_result_t returnValue;
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue)));
 
     setEvent();
 }
@@ -1385,12 +1524,12 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
     CmdListKernelLaunchParams launchParams = {};
     auto result = ZE_RESULT_SUCCESS;
 
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
@@ -1411,14 +1550,14 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     csrSshHeap->getSpace(csrSshHeap->getAvailableSpace());
 
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 
     EXPECT_NE(firstSshCpuPointer, sshFirstCmdList->getCpuBase());
 
-    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
@@ -1434,88 +1573,140 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 }
 
 template <typename FamilyType>
-void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
-    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    auto scratchController = csr->getScratchSpaceController();
+void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bool patchPreamble) {
+    if constexpr (GfxFamilyWithSBA<FamilyType>) {
+        auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+        auto scratchController = csr->getScratchSpaceController();
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr);
-    ultCsr->storeMakeResidentAllocations = true;
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr);
+        ultCsr->storeMakeResidentAllocations = true;
 
-    NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
-    dispatchKernelArgs.isHeaplessModeEnabled = true;
+        NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
+        dispatchKernelArgs.isHeaplessModeEnabled = true;
 
-    size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
+        size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    auto scratchCmdList = static_cast<L0::CommandList *>(commandList.get());
-    auto cmdListStream = commandList->commandContainer.getCommandStream();
-    if (useImmediate) {
-        scratchCmdList = static_cast<L0::CommandList *>(commandListImmediate.get());
-        cmdListStream = commandListImmediate->commandContainer.getCommandStream();
-    }
+        auto scratchCmdList = static_cast<L0::CommandList *>(commandList.get());
+        auto cmdListStream = commandList->commandContainer.getCommandStream();
+        if (useImmediate) {
+            scratchCmdList = static_cast<L0::CommandList *>(commandListImmediate.get());
+            cmdListStream = commandListImmediate->commandContainer.getCommandStream();
+        }
 
-    const ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
+        const ze_group_count_t groupCount{1, 1, 1};
+        CmdListKernelLaunchParams launchParams = {};
 
-    auto result = ZE_RESULT_SUCCESS;
-    size_t usedBefore = cmdListStream->getUsed();
-    result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    size_t usedAfter = cmdListStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        auto cmdListGpuBase = cmdListStream->getGpuBase();
+        auto cmdListCpuBase = cmdListStream->getCpuBase();
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(useImmediate);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
-        usedAfter - usedBefore));
-
-    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), walkerIterator);
-    void *walkerPtrWithScratch = *walkerIterator;
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
-
-    usedBefore = cmdListStream->getUsed();
-    result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    usedAfter = cmdListStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    cmdList.clear();
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
-        usedAfter - usedBefore));
-
-    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), walkerIterator);
-    void *walkerPtrWithoutScratch = *walkerIterator;
-
-    if (!useImmediate) {
-        result = commandList->close();
+        auto result = ZE_RESULT_SUCCESS;
+        size_t usedBefore = cmdListStream->getUsed();
+        result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+        size_t usedAfter = cmdListStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        auto commandListHandle = commandList->toHandle();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+        uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(useImmediate);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList,
+            ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+            usedAfter - usedBefore));
+
+        auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerIterator);
+        void *walkerPtrWithScratch = *walkerIterator;
+        auto walkerOffset = ptrDiff(walkerPtrWithScratch, cmdListCpuBase);
+
+        mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
+
+        usedBefore = cmdListStream->getUsed();
+        result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+        usedAfter = cmdListStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        cmdList.clear();
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList,
+            ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+            usedAfter - usedBefore));
+
+        walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerIterator);
+        void *walkerPtrWithoutScratch = *walkerIterator;
+
+        if (!useImmediate) {
+            result = commandList->close();
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            EXPECT_EQ(1u, commandList->getActiveScratchPatchElements());
+
+            auto commandListHandle = commandList->toHandle();
+
+            void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+            auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+            commandQueue->setPatchingPreamble(patchPreamble, false);
+            result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+            ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+            if (patchPreamble) {
+                cmdList.clear();
+                ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+                    cmdList,
+                    ptrOffset(queueCpuBase, usedSpaceBefore),
+                    usedSpaceAfter - usedSpaceBefore));
+            }
+        }
+
+        auto scratchAddress = scratchController->getScratchPatchAddress();
+        auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+        uint64_t scratchInlineValue = 0;
+
+        if (patchPreamble) {
+            using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+            auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+            ASSERT_LT(2u, sdiCmds.size()); // last two SDI encodes returning BB_START
+
+            uint64_t walkerScratchInlineGpuVa = cmdListGpuBase + walkerOffset + (inlineOffset + scratchInlineOffset);
+
+            uint32_t scratchLowerDword = static_cast<uint32_t>(fullScratchAddress & std::numeric_limits<uint32_t>::max());
+            uint32_t scratchUpperDword = static_cast<uint32_t>(fullScratchAddress >> 32);
+
+            size_t sdiMax = sdiCmds.size() - 2;
+            for (size_t i = 0; i < sdiMax; i++) {
+                auto sdiCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+                EXPECT_EQ(walkerScratchInlineGpuVa, sdiCmd->getAddress());
+                if (i == 0) {
+                    EXPECT_EQ(scratchLowerDword, sdiCmd->getDataDword0());
+                } else {
+                    EXPECT_EQ(scratchUpperDword, sdiCmd->getDataDword0());
+                }
+                if (sdiCmd->getStoreQword() == false) {
+                    walkerScratchInlineGpuVa += sizeof(uint32_t);
+                } else {
+                    EXPECT_EQ(scratchUpperDword, sdiCmd->getDataDword1());
+                }
+            }
+        } else {
+            void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+            std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+            EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+            scratchInlinePtr = ptrOffset(walkerPtrWithoutScratch, (inlineOffset + scratchInlineOffset));
+            std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+            EXPECT_EQ(0u, scratchInlineValue);
+        }
+
+        auto scratch0Allocation = scratchController->getScratchSpaceSlot0Allocation();
+        bool scratchInResidency = ultCsr->isMadeResident(scratch0Allocation);
+        EXPECT_TRUE(scratchInResidency);
+
+        commandList->reset();
+        EXPECT_EQ(0u, commandList->getActiveScratchPatchElements());
     }
-
-    auto scratchAddress = scratchController->getScratchPatchAddress();
-    auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
-
-    uint64_t scratchInlineValue = 0;
-
-    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
-    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
-    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
-
-    scratchInlinePtr = ptrOffset(walkerPtrWithoutScratch, (inlineOffset + scratchInlineOffset));
-    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
-    EXPECT_EQ(0u, scratchInlineValue);
-
-    auto scratch0Allocation = scratchController->getScratchSpaceSlot0Allocation();
-    bool scratchInResidency = ultCsr->isMadeResident(scratch0Allocation);
-    EXPECT_TRUE(scratchInResidency);
 }
 
 template <typename FamilyType>
@@ -1535,7 +1726,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1555,15 +1746,22 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
+    auto patchIndex = launchParams.scratchAddressPatchIndex;
+    ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
+
+    auto *scratchPatch0 = std::get_if<PatchComputeWalkerInlineDataScratch>(&commandList->commandsToPatch[patchIndex]);
+    ASSERT_NE(nullptr, scratchPatch0);
+
+    auto currentScratchPatchAddress = scratchPatch0->scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
-    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
 
     uint64_t scratchInlineValue = 0;
@@ -1574,13 +1772,12 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     commandList->reset();
 
-    EXPECT_EQ(0u, commandList->getCurrentScratchPatchAddress());
     EXPECT_EQ(nullptr, commandList->getCommandListUsedScratchController());
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x40;
 
     usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1597,15 +1794,22 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchSlot1Address = surfaceHeapGpuBase + scratchAddress;
 
+    patchIndex = launchParams.scratchAddressPatchIndex;
+    ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
+
+    auto *scratchPatch1 = std::get_if<PatchComputeWalkerInlineDataScratch>(&commandList->commandsToPatch[patchIndex]);
+    ASSERT_NE(nullptr, scratchPatch1);
+
+    currentScratchPatchAddress = scratchPatch1->scratchAddressAfterPatch;
     expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
-    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
 
     scratchInlinePtr = ptrOffset(walkerPtrWithSlot1Scratch, (inlineOffset + scratchInlineOffset));
@@ -1614,7 +1818,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
@@ -1635,10 +1839,11 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
 
     const ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
+    EXPECT_TRUE(NEO::isUndefined(launchParams.scratchAddressPatchIndex));
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1657,26 +1862,44 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    const PatchComputeWalkerInlineDataScratch *scratchCmd = nullptr;
+    size_t scratchCmdIndex = 0;
+
+    for (const auto &cmdToPatchVariant : commandList->getCommandsToPatch()) {
+        if (auto *patch = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatchVariant)) {
+            scratchCmd = patch;
+            break;
+        }
+        scratchCmdIndex += 1;
+    }
+
+    ASSERT_NE(scratchCmd, nullptr);
+    EXPECT_EQ(0u, scratchCmd->scratchAddressAfterPatch);
+    EXPECT_EQ(scratchCmdIndex, launchParams.scratchAddressPatchIndex);
+
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+    auto expectedSavedScratchAddress = fixtureGlobalStatelessMode ? fullScratchAddress : scratchAddress;
 
     uint64_t scratchInlineValue = 0;
 
     void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+    EXPECT_EQ(expectedSavedScratchAddress, scratchCmd->scratchAddressAfterPatch);
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
     EXPECT_EQ(0u, scratchInlineValue);
+    EXPECT_EQ(expectedSavedScratchAddress, scratchCmd->scratchAddressAfterPatch);
 }
 
 template <typename FamilyType>
@@ -1697,7 +1920,7 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1747,7 +1970,7 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1767,15 +1990,19 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto scratchAddress = scratchControllerInitial->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
+    auto patchIndex = launchParams.scratchAddressPatchIndex;
+    ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
+
+    auto currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
-    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchControllerInitial, commandList->getCommandListUsedScratchController());
 
     uint64_t scratchInlineValue = 0;
@@ -1790,15 +2017,16 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     ultCsr->createScratchSpaceController();
     auto scratchControllerSecond = csr->getScratchSpaceController();
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     scratchAddress = scratchControllerSecond->getScratchPatchAddress();
     fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
     expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+    currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
 
-    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchControllerSecond, commandList->getCommandListUsedScratchController());
 
     scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
@@ -1807,7 +2035,7 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
@@ -1826,21 +2054,17 @@ void CommandListScratchPatchFixtureInit::testScratchCommandViewNoPatching() {
     launchParams.hostPayloadBuffer = payloadHostBuffer;
 
     auto result = ZE_RESULT_SUCCESS;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(0));
     EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(1));
 
     auto &cmdsToPatch = commandList->getCommandsToPatch();
-    bool foundScratchPatchCmd = false;
+    bool foundScratchPatchCmd = std::ranges::any_of(cmdsToPatch, [](const auto &cmdToPatch) {
+        return std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatch) != nullptr;
+    });
 
-    for (auto &cmdToPatch : cmdsToPatch) {
-        if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
-            foundScratchPatchCmd = true;
-            break;
-        }
-    }
     EXPECT_FALSE(foundScratchPatchCmd);
 }
 
@@ -1869,7 +2093,7 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1892,15 +2116,19 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
+    auto patchIndex = launchParams.scratchAddressPatchIndex;
+    ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
+
+    auto currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
-    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
 
     uint64_t scratchInlineValue = 0;
@@ -1908,6 +2136,49 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
     void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+}
+
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchUndefinedPatching() {
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = ZE_RESULT_SUCCESS;
+
+    struct TestParam {
+        uint8_t pointerSize;
+        InlineDataOffset offset;
+    };
+
+    std::vector<TestParam> testParams = {
+        {undefined<uint8_t>, 0u},
+        {8u, undefined<InlineDataOffset>}};
+
+    for (const auto &testParam : testParams) {
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.pointerSize;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = testParam.offset;
+
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        bool foundScratchPatchCmd = false;
+        const auto &cmdsToPatch = commandList->getCommandsToPatch();
+        for (const auto &cmdToPatch : cmdsToPatch) {
+            if (auto *pCmd = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatch)) {
+                foundScratchPatchCmd = true;
+                if (isUndefined(testParam.pointerSize)) {
+                    EXPECT_TRUE(isUndefined(pCmd->patchSize));
+                }
+                if (isUndefined(testParam.offset)) {
+                    EXPECT_TRUE(isUndefined(pCmd->offset));
+                }
+                break;
+            }
+        }
+        EXPECT_TRUE(foundScratchPatchCmd);
+
+        result = commandList->reset();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
 }
 
 } // namespace ult

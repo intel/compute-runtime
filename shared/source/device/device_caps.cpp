@@ -18,7 +18,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -28,7 +27,7 @@
 
 namespace NEO {
 
-static const char *spirvWithVersion = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ";
+static const char *spirvWithVersion = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ";
 
 size_t Device::getMaxParameterSizeFromIGC() const {
     CompilerInterface *compilerInterface = getCompilerInterface();
@@ -41,16 +40,10 @@ size_t Device::getMaxParameterSizeFromIGC() const {
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto addressing32bitAllowed = is64bit;
 
     auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
-
-    bool ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
-    if (ocl21FeaturesEnabled) {
-        addressing32bitAllowed = false;
-    }
 
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
@@ -71,11 +64,10 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = getGlobalMemorySize(allSubDevicesMask);
     deviceInfo.maxMemAllocSize = getGlobalMemorySize(singleSubDeviceMask); // Allocation can be placed only on one SubDevice
 
-    if (debugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
+    if (is32bit) {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;
-        deviceInfo.force32BitAddresses = is64bit;
     }
 
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
@@ -101,6 +93,10 @@ void Device::initializeCaps() {
         driverModelMaxMemAlloc = this->executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->getMaxMemAllocSize();
     }
     deviceInfo.maxMemAllocSize = std::min<std::uint64_t>(driverModelMaxMemAlloc, deviceInfo.maxMemAllocSize);
+
+    if (debugManager.flags.OverrideMaxMemAllocSizeMb.get() != -1) {
+        deviceInfo.maxMemAllocSize = static_cast<uint64_t>(debugManager.flags.OverrideMaxMemAllocSizeMb.get()) * MemoryConstants::megaByte;
+    }
 
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
     if (debugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
@@ -154,7 +150,7 @@ void Device::initializeCaps() {
     deviceInfo.computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
-    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte;
+    deviceInfo.localMemSize = hwInfo.capabilityTable.maxProgrammableSlmSize * MemoryConstants::kiloByte;
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;

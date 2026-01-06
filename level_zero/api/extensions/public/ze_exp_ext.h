@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/driver_experimental/ze_bindless_image_exp.h"
+#include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 namespace L0 {
@@ -143,6 +143,62 @@ ze_result_t zeRTASParallelOperationJoinExp(
 
 ze_result_t zeRTASParallelOperationDestroyExp(
     ze_rtas_parallel_operation_exp_handle_t hParallelOperation);
+
+// RTAs Ext
+
+ze_result_t zeRTASBuilderCreateExt(ze_driver_handle_t hDriver,
+                                   const ze_rtas_builder_ext_desc_t *pDescriptor,
+                                   ze_rtas_builder_ext_handle_t *phBuilder);
+
+ze_result_t zeRTASBuilderGetBuildPropertiesExt(
+    ze_rtas_builder_ext_handle_t hBuilder,
+    const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+    ze_rtas_builder_ext_properties_t *pProperties);
+
+ze_result_t zeDriverRTASFormatCompatibilityCheckExt(
+    ze_driver_handle_t hDriver,
+    ze_rtas_format_ext_t rtasFormatA,
+    ze_rtas_format_ext_t rtasFormatB);
+
+ze_result_t zeRTASBuilderBuildExt(
+    ze_rtas_builder_ext_handle_t hBuilder,
+    const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
+    void *pScratchBuffer,
+    size_t scratchBufferSizeBytes,
+    void *pRtasBuffer,
+    size_t rtasBufferSizeBytes,
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+    void *pBuildUserPtr,
+    ze_rtas_aabb_ext_t *pBounds,
+    size_t *pRtasBufferSizeBytes);
+
+ze_result_t zeRTASBuilderDestroyExt(
+    ze_rtas_builder_ext_handle_t hBuilder);
+
+ze_result_t zeRTASBuilderCommandListAppendCopyExt(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ze_result_t zeRTASParallelOperationCreateExt(
+    ze_driver_handle_t hDriver,
+    ze_rtas_parallel_operation_ext_handle_t *phParallelOperation);
+
+ze_result_t zeRTASParallelOperationGetPropertiesExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation,
+    ze_rtas_parallel_operation_ext_properties_t *pProperties);
+
+ze_result_t zeRTASParallelOperationJoinExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation);
+
+ze_result_t zeRTASParallelOperationDestroyExt(
+    ze_rtas_parallel_operation_ext_handle_t hParallelOperation);
+
+// End RTAS Ext
 
 ze_result_t zeMemSetAtomicAccessAttributeExp(
     ze_context_handle_t hContext,

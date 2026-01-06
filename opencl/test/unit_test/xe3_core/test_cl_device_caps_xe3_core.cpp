@@ -6,13 +6,12 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

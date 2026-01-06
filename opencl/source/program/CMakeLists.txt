@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ set(RUNTIME_SRCS_PROGRAM
     ${CMAKE_CURRENT_SOURCE_DIR}/build.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}create_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/link.cpp

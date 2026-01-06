@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -45,11 +46,13 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     DirectSubmissionControllerMock controller;
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
 
     csr.taskCount.store(6u);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
@@ -63,6 +66,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
 
     csr.taskCount.store(8u);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 8u);
@@ -129,6 +133,8 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&bcsCsr);
     controller.registerDirectSubmission(&ccsCsr);
+    controller.notifyNewSubmission(&bcsCsr);
+    controller.notifyNewSubmission(&ccsCsr);
     controller.checkNewSubmissions();
 
     EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
@@ -142,6 +148,8 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
 
     bcsCsr.taskCount.store(6u);
     ccsCsr.taskCount.store(6u);
+    controller.notifyNewSubmission(&bcsCsr);
+    controller.notifyNewSubmission(&ccsCsr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&bcsCsr].taskCount, 6u);
@@ -162,7 +170,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionControllerTimeout.set(5'000);
     debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
-    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(0);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -180,6 +187,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     controller.registerDirectSubmission(&csr);
     {
         csr.taskCount.store(1u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
@@ -195,6 +203,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     }
     {
         csr.taskCount.store(2u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
@@ -209,6 +218,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     }
     {
         csr.taskCount.store(3u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
@@ -224,6 +234,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     {
         controller.timeout = std::chrono::microseconds(5'000);
         csr.taskCount.store(4u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
@@ -237,181 +248,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
         EXPECT_EQ(controller.timeout.count(), 5'000);
     }
     controller.unregisterDirectSubmission(&csr);
-}
-
-void fillTimeoutParamsMap(DirectSubmissionControllerMock &controller) {
-    controller.timeoutParamsMap.clear();
-    for (auto throttle : {QueueThrottle::LOW, QueueThrottle::MEDIUM, QueueThrottle::HIGH}) {
-        for (auto acLineStatus : {false, true}) {
-            auto key = controller.getTimeoutParamsMapKey(throttle, acLineStatus);
-            TimeoutParams params{};
-            if (throttle == QueueThrottle::LOW) {
-                params.maxTimeout = std::chrono::microseconds{500u};
-            } else {
-                params.maxTimeout = std::chrono::microseconds{500u + static_cast<size_t>(throttle) * 500u + (acLineStatus ? 0u : 1500u)};
-            }
-            params.timeout = params.maxTimeout;
-            params.timeoutDivisor = 1;
-            params.directSubmissionEnabled = true;
-            auto keyValue = std::make_pair(key, params);
-            bool result = false;
-            std::tie(std::ignore, result) = controller.timeoutParamsMap.insert(keyValue);
-            EXPECT_TRUE(result);
-        }
-    }
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOnThrottleAndAcLineStatusDisabledWhenSetTimeoutParamsForPlatformThenTimeoutParamsMapsIsEmpty) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(0);
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-
-    DirectSubmissionControllerMock controller;
-    controller.setTimeoutParamsForPlatform(csr.getProductHelper());
-    EXPECT_EQ(0u, controller.timeoutParamsMap.size());
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOnThrottleAndAcLineStatusEnabledWhenThrottleOrAcLineStatusChangesThenTimeoutIsChanged) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(1);
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
-
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-    DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.setTimeoutParamsForPlatform(csr.getProductHelper());
-    controller.registerDirectSubmission(&csr);
-    EXPECT_TRUE(controller.adjustTimeoutOnThrottleAndAcLineStatus);
-    fillTimeoutParamsMap(controller);
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::LOW;
-        csr.getAcLineConnectedReturnValue = true;
-        csr.taskCount.store(1u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
-
-        EXPECT_EQ(500u, controller.timeout.count());
-        EXPECT_EQ(500u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
-        csr.getAcLineConnectedReturnValue = true;
-        csr.taskCount.store(2u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
-
-        EXPECT_EQ(1'000u, controller.timeout.count());
-        EXPECT_EQ(1'000u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::HIGH;
-        csr.getAcLineConnectedReturnValue = true;
-        csr.taskCount.store(3u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
-
-        EXPECT_EQ(1'500u, controller.timeout.count());
-        EXPECT_EQ(1'500u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::LOW;
-        csr.getAcLineConnectedReturnValue = false;
-        csr.taskCount.store(4u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
-
-        EXPECT_EQ(500u, controller.timeout.count());
-        EXPECT_EQ(500u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
-        csr.getAcLineConnectedReturnValue = false;
-        csr.taskCount.store(5u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
-
-        EXPECT_EQ(2'500u, controller.timeout.count());
-        EXPECT_EQ(2'500u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
-        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::HIGH;
-        csr.getAcLineConnectedReturnValue = false;
-        csr.taskCount.store(6u);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
-
-        EXPECT_EQ(3'000u, controller.timeout.count());
-        EXPECT_EQ(3'000u, controller.maxTimeout.count());
-        EXPECT_EQ(1, controller.timeoutDivisor);
-    }
-
-    {
-        controller.lowestThrottleSubmitted = QueueThrottle::LOW;
-        controller.checkNewSubmissions();
-        EXPECT_EQ(QueueThrottle::HIGH, controller.lowestThrottleSubmitted);
-    }
-
-    controller.unregisterDirectSubmission(&csr);
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsAdjusted) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    DeviceBitfield deviceBitfield(1);
-
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-
-    DirectSubmissionControllerMock controller;
-    auto timeout = std::chrono::microseconds{5'000};
-    EXPECT_EQ(controller.timeout, timeout);
-    controller.registerDirectSubmission(&csr);
-    csr.getProductHelper().overrideDirectSubmissionTimeouts(timeout, timeout);
-    EXPECT_EQ(controller.timeout, timeout);
 }
 
 TEST(DirectSubmissionControllerTests, givenPowerSavingUintWhenCallingGetThrottleFromPowerSavingUintThenCorrectValueIsReturned) {
@@ -438,12 +274,12 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
     EXPECT_EQ(request.pagingFenceValue, 10u);
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
-    controller.handlePagingFenceRequests(lock, false);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 
     // Do nothing when queue is empty
     csr.pagingFenceValueToUnblock = 0u;
-    controller.handlePagingFenceRequests(lock, false);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
 }
 
@@ -468,7 +304,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenDrainPa
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 }
 
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceWithCheckSubmissionsThenCheckSubmissions) {
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceThenDoNotCheckSubmissions) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -491,13 +327,14 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
 
     csr.taskCount.store(5u);
     controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.handlePagingFenceRequests(lock, true);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 0u);
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCheckTimeoutElapsedThenReturnCorrectValue) {
@@ -547,6 +384,7 @@ struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
         controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
         controller->registerDirectSubmission(csr.get());
         csr->taskCount.store(10u);
+        controller->notifyNewSubmission(csr.get());
         controller->checkNewSubmissions();
     }
 
@@ -623,6 +461,7 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     controller->registerDirectSubmission(csr.get());
 
     csr->taskCount.store(10u);
+    controller->notifyNewSubmission(csr.get());
     controller->checkNewSubmissions();
     csr->setLatestFlushedTaskCount(10u);
     csr->isBusyReturnValue = true;
@@ -634,4 +473,685 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
 }
 
+TEST_F(DirectSubmissionIdleDetectionTests, givenPeerContentionThenIsDirectSubmissionIdleReflectsTryLockResult) {
+    if (!controller->isCsrsContextGroupIdleDetectionEnabled) {
+        GTEST_SKIP();
+    }
+
+    struct TryLockPeerCsr : public TagUpdateMockCommandStreamReceiver {
+        using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
+        bool simulateContention = false;
+
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (simulateContention) {
+                return std::unique_lock<CommandStreamReceiver::MutexType>(); // fail -> contention
+            }
+            return TagUpdateMockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+    };
+
+    controller->unregisterDirectSubmission(csr.get());
+
+    DeviceBitfield deviceBitfield(1);
+
+    auto mainCsr = std::make_unique<TryLockPeerCsr>(executionEnvironment, 0u, deviceBitfield);
+    auto peerCsr = std::make_unique<TryLockPeerCsr>(executionEnvironment, 0u, deviceBitfield);
+
+    auto primaryContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
+                                                                                                                    PreemptionMode::ThreadGroup, deviceBitfield)));
+    primaryContext->setContextGroupCount(8);
+
+    auto secondaryContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                                         EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
+                                                                                                                      PreemptionMode::ThreadGroup, deviceBitfield)));
+    secondaryContext->setPrimaryContext(primaryContext.get());
+
+    mainCsr->setupContext(*primaryContext);
+    peerCsr->setupContext(*secondaryContext);
+
+    constexpr TaskCountType baseTask = 200u;
+    for (auto *c : {mainCsr.get(), peerCsr.get()}) {
+        c->taskCount.store(baseTask);
+        c->setLatestFlushedTaskCount(baseTask);
+        c->isBusyReturnValue = false;
+    }
+
+    controller->registerDirectSubmission(mainCsr.get());
+    controller->registerDirectSubmission(peerCsr.get());
+
+    controller->directSubmissions[mainCsr.get()].taskCount = baseTask;
+    controller->directSubmissions[peerCsr.get()].taskCount = baseTask;
+    controller->directSubmissions[mainCsr.get()].isStopped = false;
+    controller->directSubmissions[peerCsr.get()].isStopped = false;
+
+    auto callIsIdle = [&](bool expected) {
+        std::lock_guard<std::mutex> dsLock(controller->directSubmissionsMutex);
+        auto lock = mainCsr->obtainUniqueOwnership(); // blocking lock
+        ASSERT_TRUE(lock.owns_lock());
+        bool result = controller->isDirectSubmissionIdle(mainCsr.get(), lock);
+        EXPECT_EQ(expected, result);
+        ASSERT_TRUE(lock.owns_lock()); // lock should be re-acquired inside function
+    };
+
+    // 1. Both idle, no contention -> true
+    callIsIdle(true);
+
+    // 2. Peer contention -> false (try-lock fails)
+    peerCsr->simulateContention = true;
+    callIsIdle(false);
+
+    // 3. Remove contention but peer reports busy -> false
+    peerCsr->simulateContention = false;
+    peerCsr->isBusyReturnValue = true;
+    callIsIdle(false);
+
+    // 4. Peer idle again -> true
+    peerCsr->isBusyReturnValue = false;
+    callIsIdle(true);
+
+    controller->unregisterDirectSubmission(peerCsr.get());
+    controller->unregisterDirectSubmission(mainCsr.get());
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenTryLockContentionThenIsCopyEngineOnDeviceIdleReturnsFalse) {
+    struct ContentionSimulatingCsr : public TagUpdateMockCommandStreamReceiver {
+        using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
+
+        bool simulateContention = false;
+
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (simulateContention) {
+                return std::unique_lock<CommandStreamReceiver::MutexType>();
+            }
+            return TagUpdateMockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+    };
+
+    // Remove original csr from controller
+    controller->unregisterDirectSubmission(csr.get());
+
+    DeviceBitfield deviceBitfield(1);
+    auto contCsr = std::make_unique<ContentionSimulatingCsr>(executionEnvironment, 0u, deviceBitfield);
+    auto osCtx = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                              EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                           PreemptionMode::ThreadGroup, deviceBitfield)));
+    contCsr->setupContext(*osCtx);
+
+    contCsr->taskCount.store(50u);
+    contCsr->setLatestFlushedTaskCount(50u);
+    contCsr->isBusyReturnValue = false;
+
+    controller->registerDirectSubmission(contCsr.get());
+    controller->directSubmissions[contCsr.get()].taskCount = 50u;
+    controller->directSubmissions[contCsr.get()].isStopped = false;
+
+    std::optional<TaskCountType> bcsTaskCount(50u);
+
+    // No contention -> true
+    EXPECT_TRUE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    // Contention -> false
+    contCsr->simulateContention = true;
+    EXPECT_FALSE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    // Remove contention -> true again
+    contCsr->simulateContention = false;
+    EXPECT_TRUE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    controller->unregisterDirectSubmission(contCsr.get());
+}
+
+struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
+    void SetUp() override {
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+        executionEnvironment.prepareRootDeviceEnvironments(2);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+        executionEnvironment.rootDeviceEnvironments[1]->initOsTime();
+
+        DeviceBitfield deviceBitfield(1);
+        ccsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
+        bcsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
+        ccsOsContext.reset(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+        bcsOsContext.reset(OsContext::create(nullptr, 0, 1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+        ccsCsr->setupContext(*ccsOsContext);
+        bcsCsr->setupContext(*bcsOsContext);
+
+        controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+        controller->registerDirectSubmission(ccsCsr.get());
+        controller->registerDirectSubmission(bcsCsr.get());
+        bcsCsr->taskCount.store(10u);
+        ccsCsr->taskCount.store(10u);
+        controller->notifyNewSubmission(ccsCsr.get());
+        controller->notifyNewSubmission(bcsCsr.get());
+        controller->checkNewSubmissions();
+    }
+
+    void TearDown() override {
+        controller->unregisterDirectSubmission(ccsCsr.get());
+        controller->unregisterDirectSubmission(bcsCsr.get());
+    }
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+
+    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<TagUpdateMockCommandStreamReceiver> ccsCsr;
+    std::unique_ptr<OsContext> ccsOsContext;
+
+    std::unique_ptr<TagUpdateMockCommandStreamReceiver> bcsCsr;
+    std::unique_ptr<OsContext> bcsOsContext;
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+};
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineBusyThenDontTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->notifyNewSubmission(ccsCsr.get());
+    controller->notifyNewSubmission(bcsCsr.get());
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+
+    if (ccsCsr->getProductHelper().checkBcsForDirectSubmissionStop()) {
+        EXPECT_FALSE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(0u, ccsCsr->stopDirectSubmissionCalledTimes);
+    } else {
+        EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
+    }
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineUpdatedTaskCountThenDontTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = false;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    bcsCsr->taskCount.store(20u);
+
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+
+    if (ccsCsr->getProductHelper().checkBcsForDirectSubmissionStop()) {
+        EXPECT_FALSE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(0u, ccsCsr->stopDirectSubmissionCalledTimes);
+    } else {
+        EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
+    }
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineBusyAndDifferentDeviceThenTerminateDirectSubmission) {
+    DeviceBitfield deviceBitfield(1);
+    TagUpdateMockCommandStreamReceiver secondDeviceCsr(executionEnvironment, 1, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 1, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    secondDeviceCsr.setupContext(*osContext);
+    controller->registerDirectSubmission(&secondDeviceCsr);
+    secondDeviceCsr.taskCount.store(10u);
+    controller->notifyNewSubmission(&secondDeviceCsr);
+    controller->checkNewSubmissions();
+
+    secondDeviceCsr.setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    secondDeviceCsr.isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->notifyNewSubmission(&secondDeviceCsr);
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[&secondDeviceCsr].taskCount, 10u);
+    EXPECT_TRUE(controller->directSubmissions[&secondDeviceCsr].isStopped);
+    EXPECT_EQ(1u, secondDeviceCsr.stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCopyEngineNotStartedThenTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+    EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+    EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
+}
+
+TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithPrimaryContextWhenGetContextGroupIdIsCalledThenReturnsPrimaryContextId) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    // Create a primary OsContext and mark it as part of a group
+    auto primaryContext = std::make_unique<OsContext>(0, 42, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    primaryContext->setContextGroupCount(8);
+
+    // Create a secondary OsContext and set its primary context
+    auto secondaryContext = std::make_unique<OsContext>(0, 99, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    secondaryContext->setPrimaryContext(primaryContext.get());
+
+    // Create CSR and set up with secondary context
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*secondaryContext);
+
+    // Should return the primary context's id (42)
+    EXPECT_EQ(42u, csr.getContextGroupId());
+}
+
+TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimaryContextWhenGetContextGroupIdIsCalledThenReturnsOwnContextId) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    // Create an OsContext that is part of a group but has no primary context
+    auto context = std::make_unique<OsContext>(0, 55, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    context->setContextGroupCount(8);
+    // Do NOT set primary context
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*context);
+
+    // Should return its own context id (55)
+    EXPECT_EQ(55u, csr.getContextGroupId());
+}
+
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsEnabledByDefault) {
+    DirectSubmissionControllerMock controller;
+
+    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+}
+
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionControllerContextGroupIdleDetectionSetWhenCreatingControllerThenContextGroupIdleDetectionIsSetCorrectly) {
+    DebugManagerStateRestore restorer;
+
+    for (auto contextGroupIdleDetectionState : {-1, 0, 1}) {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(contextGroupIdleDetectionState);
+
+        DirectSubmissionControllerMock controller;
+        if (0 == contextGroupIdleDetectionState) {
+            EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        } else {
+            EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        }
+    }
+}
+
+class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
+  public:
+    using MockCommandStreamReceiver::MockCommandStreamReceiver;
+
+    // Context group id mock
+    uint32_t mockContextGroupId = 0;
+    void setContextGroupId(uint32_t id) { mockContextGroupId = id; }
+    uint32_t getContextGroupId() const override { return mockContextGroupId; }
+
+    // Busy state mock
+    bool busy = false;
+    void setBusy(bool value) { busy = value; }
+    bool isBusyWithoutHang(TimeType &) override { return busy; }
+
+    SubmissionStatus flushTagUpdate() override {
+        latestFlushedTaskCount.store(taskCount); // Simulate hardware progress
+        return SubmissionStatus::success;
+    }
+
+    // Mutex mock
+    std::recursive_mutex mockMutex;
+    std::recursive_mutex &getMutex() { return mockMutex; }
+};
+
+class DirectSubmissionIdleDetectionWithContextGroupTests : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
+        executionEnvironment.prepareRootDeviceEnvironments(1);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
+
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+        ASSERT_TRUE(controller->isCsrsContextGroupIdleDetectionEnabled);
+    }
+
+    void TearDown() override {
+        // Unregister all CSRs that were registered in the test
+        for (auto *csr : registeredCsrs) {
+            controller->unregisterDirectSubmission(csr);
+        }
+        registeredCsrs.clear();
+    }
+
+    // Helper to create and register a CSR with a given context group id and busy state
+    std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t contextGroupId, bool busy) {
+        auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, 0, DeviceBitfield(1));
+        auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
+        osContext->setContextGroupCount(8);
+        csr->setupContext(*osContext);
+        csr->setContextGroupId(contextGroupId);
+        csr->setBusy(busy);
+        controller->registerDirectSubmission(csr.get());
+        registeredCsrs.push_back(csr.get());
+        osContexts.push_back(std::move(osContext));
+        return csr;
+    }
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+    std::vector<MockContextGroupIdleDetectionCsr *> registeredCsrs;
+    std::vector<std::unique_ptr<OsContext>> osContexts;
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSingleCsrIsNotBusyThenIsDirectSubmissionIdleReturnsTrue) {
+    auto csr = createAndRegisterCsr(123, false);
+    csr->latestFlushedTaskCount = 1;
+    csr->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSingleCsrIsBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    auto csr = createAndRegisterCsr(123, true);
+    csr->latestFlushedTaskCount = 1;
+    csr->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextGroupAreNotBusyThenIsDirectSubmissionIdleReturnsTrue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(42, false);
+    auto csr2 = createAndRegisterCsr(42, false);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAnyCsrInContextGroupIsBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(42, false);
+    auto csr2 = createAndRegisterCsr(42, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextGroupAreBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(77, true);
+    auto csr2 = createAndRegisterCsr(77, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrsAreInDifferentContextGroupsThenIdleDetectionIsIndependentPerGroup) {
+    // Different context groups
+    auto csr1 = createAndRegisterCsr(77, false);
+    auto csr2 = createAndRegisterCsr(88, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrInContextGroupIsUnregisteredThenItIsIgnored) {
+    // Create and register only one CSR in the group
+    auto csr1 = createAndRegisterCsr(88, false);
+    // Create a second CSR with the same group, but do not register it
+    auto csr2 = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, 0, DeviceBitfield(1));
+    csr2->setContextGroupId(88);
+    csr2->setBusy(true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrsWithDifferentTaskCountsInContextGroupThenIsDirectSubmissionIdleReturnsExpectedValue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(124, false);
+    auto csr2 = createAndRegisterCsr(124, false);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 2; // Not equal
+    csr1->setBusy(false);
+
+    csr2->latestFlushedTaskCount = 2;
+    csr2->taskCount = 2;
+    csr2->setBusy(false);
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+
+    csr1->setBusy(true);
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrInContextGroupHasPendingTaskCountButAllAreNotBusyAfterFlushThenIsDirectSubmissionIdleReturnsTrue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(555, false);
+    auto csr2 = createAndRegisterCsr(555, false); // Not busy, only task count matters
+
+    // csr2 has pending work (taskCount > latestFlushedTaskCount), but is not busy
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 2;
+
+    // After flushTagUpdate and polling, both CSRs are not busy, so the group is considered idle
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupIsBusyThenUnlockIsCalledAndReturnsFalse) {
+    // Two CSRs in the same group, one is busy, one is not
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, true); // This one will be busy
+
+    csr1->latestFlushedTaskCount = 5;
+    csr1->taskCount = 5;
+    csr2->latestFlushedTaskCount = 7;
+    csr2->taskCount = 7;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    // csr2 is busy, so isDirectSubmissionIdle should return false and unlock should be called for csr2
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSelfIsBusyThenUnlockIsNotCalledAndReturnsFalse) {
+    // Single CSR in the group, it is busy
+    auto csr = createAndRegisterCsr(123, true);
+
+    csr->latestFlushedTaskCount = 5;
+    csr->taskCount = 5;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    // Only one CSR, so groupCsr == csr, unlock should NOT be called
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupHasPendingTaskAndRemainsBusyAfterPollingThenUnlockIsCalledAndReturnsFalse) {
+    // Create two CSRs in the same group
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, false);
+
+    // Set up csr1 as the main CSR, csr2 as the "other" in the group
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    // csr2 has pending work (latestFlushedTaskCount != taskCount)
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 2;
+
+    // Simulate that after polling, csr2 is still busy
+    csr2->setBusy(false); // Not busy before polling
+    // We'll override isBusyWithoutHang to return true after polling
+    struct BusyAfterPollingCsr : public MockContextGroupIdleDetectionCsr {
+        using MockContextGroupIdleDetectionCsr::MockContextGroupIdleDetectionCsr;
+        int callCount = 0;
+        bool isBusyWithoutHang(TimeType &) override {
+            callCount++;
+            // First call (before polling): return false (simulate not busy)
+            // Second call (after polling): return true (simulate still busy)
+            return callCount >= 2;
+        }
+    };
+    auto busyAfterPollingCsr = std::make_unique<BusyAfterPollingCsr>(executionEnvironment, 0, DeviceBitfield(1));
+    busyAfterPollingCsr->setContextGroupId(123);
+    busyAfterPollingCsr->latestFlushedTaskCount = 1;
+    busyAfterPollingCsr->taskCount = 2;
+    controller->registerDirectSubmission(busyAfterPollingCsr.get());
+    registeredCsrs.push_back(busyAfterPollingCsr.get());
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    // Should return false because busyAfterPollingCsr is still busy after polling
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleDetectionDisabledThenOnlySelfIsChecked) {
+    controller->isCsrsContextGroupIdleDetectionEnabled = false;
+
+    // Create two CSRs in the same group
+    auto csr1 = createAndRegisterCsr(99, false);
+    auto csr2 = createAndRegisterCsr(99, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+    std::unique_lock<std::recursive_mutex> lock2(csr2->getMutex());
+
+    // When group idle detection is disabled, only the queried CSR's state matters
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));  // csr1 is not busy
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr2.get(), lock2)); // csr2 is busy
+
+    // Now make csr1 busy and csr2 idle, and check again
+    csr1->setBusy(true);
+    csr2->setBusy(false);
+
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1)); // csr1 is busy
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr2.get(), lock2));  // csr2 is not busy
+}
+
+class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
+        executionEnvironment.prepareRootDeviceEnvironments(2);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
+        executionEnvironment.rootDeviceEnvironments[1]->osTime.reset(new MockOSTime{});
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+        ASSERT_TRUE(controller->isCsrsContextGroupIdleDetectionEnabled);
+    }
+
+    void TearDown() override {
+        // Unregister all CSRs that were registered in the test
+        for (auto *csr : registeredCsrs) {
+            controller->unregisterDirectSubmission(csr);
+        }
+        registeredCsrs.clear();
+    }
+
+    // Helper to create and register a CSR with a given rootDeviceIndex and contextGroupId
+    std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t rootDeviceIndex, uint32_t contextGroupId) {
+        auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, rootDeviceIndex, DeviceBitfield(1));
+        auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, rootDeviceIndex, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
+        osContext->setContextGroupCount(8);
+        csr->setupContext(*osContext);
+        csr->setContextGroupId(contextGroupId);
+        controller->registerDirectSubmission(csr.get());
+        registeredCsrs.push_back(csr.get());
+        osContexts.push_back(std::move(osContext));
+        return csr;
+    }
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+    std::vector<MockContextGroupIdleDetectionCsr *> registeredCsrs;
+    std::vector<std::unique_ptr<OsContext>> osContexts;
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGroupIdButDifferentRootDeviceIndexWhenCheckingDirectSubmissionIdleThenCsrsAreNotGrouped) {
+    // Create two CSRs with the same contextGroupId but different rootDeviceIndex
+    auto csr0 = createAndRegisterCsr(0, 42);
+    auto csr1 = createAndRegisterCsr(1, 42);
+
+    csr0->latestFlushedTaskCount = 1;
+    csr0->taskCount = 1;
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    // Only csr0 should be in its group, and only csr1 in its own group
+    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+
+    // Make csr1 busy, csr0 idle
+    csr0->setBusy(false);
+    csr1->setBusy(true);
+
+    // csr0's group should be idle (csr1's busy state should not affect it)
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    // csr1's group should not be idle (csr1 is busy)
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+}
+
+TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGroupIdAndRootDeviceIndexWhenCheckingDirectSubmissionIdleThenCsrsAreGrouped) {
+    // Create two CSRs with the same rootDeviceIndex and contextGroupId
+    auto csr0 = createAndRegisterCsr(0, 77);
+    auto csr1 = createAndRegisterCsr(0, 77);
+
+    csr0->latestFlushedTaskCount = 1;
+    csr0->taskCount = 1;
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+
+    // Both not busy: group is idle
+    csr0->setBusy(false);
+    csr1->setBusy(false);
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+
+    // One busy: group is not idle
+    csr1->setBusy(true);
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+}
 } // namespace NEO

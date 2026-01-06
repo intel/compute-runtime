@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ ze_result_t FabricDeviceAccessStub::getState(const zes_fabric_port_id_t portId, 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FabricDeviceAccessStub::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) {
+ze_result_t FabricDeviceAccessStub::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) {
     return ZE_RESULT_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ void OsAgnosticMemoryManager::initialize(bool aubUsage) {
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() = default;
 
 bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
-    return hwInfo->capabilityTable.ftr64KBpages && !!debugManager.flags.Enable64kbpages.get();
+    return !!debugManager.flags.Enable64kbpages.get();
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
@@ -71,9 +71,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 
     if (fakeBigAllocations && sizeAligned > bigAllocation) {
         memoryAllocation = createMemoryAllocation(
-            allocationData.type, nullptr, reinterpret_cast<void *>(dummyAddress), dummyAddress, sizeAligned, counter,
+            allocationData.type, nullptr, reinterpret_cast<void *>(dummyAddress), dummyAddress, sizeAligned, counter.fetch_add(1),
             MemoryPool::system4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
-        counter++;
+
         return memoryAllocation;
     }
 
@@ -91,7 +91,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
     auto ptr = allocateSystemMemory(cpuAllocationSize, alignment);
     if (ptr != nullptr) {
         memoryAllocation = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), sizeAligned,
-                                                  counter, MemoryPool::system4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
+                                                  counter.load(), MemoryPool::system4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
 
         if (allocationData.type == AllocationType::svmCpu) {
             // add  padding in case mapPtr is not aligned
@@ -127,7 +127,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, pHwInfo),
                                              allocationData.storageInfo,
                                              gmmRequirements);
             memoryAllocation->setDefaultGmm(gmm.release());
@@ -169,12 +169,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
 
     auto memoryAllocation = createMemoryAllocation(allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
-                                                   reinterpret_cast<uint64_t>(alignedPtr), allocationData.size, counter,
+                                                   reinterpret_cast<uint64_t>(alignedPtr), allocationData.size, counter.fetch_add(1),
                                                    MemoryPool::system4KBPages, allocationData.rootDeviceIndex, false, allocationData.flags.flushL3, false);
 
     memoryAllocation->setAllocationOffset(offsetInPage);
 
-    counter++;
     return memoryAllocation;
 }
 
@@ -208,7 +207,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
                                              allocationData.hostPtr,
                                              allocationDataAlign.size,
                                              allocationDataAlign.alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, hwInfo),
                                              allocationData.storageInfo, gmmRequirements);
             memoryAllocation->setDefaultGmm(gmm.release());
         }
@@ -234,13 +233,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
         MemoryAllocation *memAlloc = new MemoryAllocation(
             allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
             canonizedGpuAddress, allocationData.size,
-            counter, MemoryPool::system4KBPagesWith32BitGpuAddressing, false, false, maxOsContextCount);
+            counter.fetch_add(1), MemoryPool::system4KBPagesWith32BitGpuAddressing, false, false, maxOsContextCount);
 
         memAlloc->set32BitAllocation(true);
         memAlloc->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heap)));
         memAlloc->sizeToFree = allocationSize;
 
-        counter++;
         return memAlloc;
     }
 
@@ -261,7 +259,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
         auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
         memoryAllocation = new MemoryAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, ptrAlloc, ptrAlloc,
                                                 canonizedGpuAddress,
-                                                allocationData.size, counter, MemoryPool::system4KBPagesWith32BitGpuAddressing,
+                                                allocationData.size, counter.load(), MemoryPool::system4KBPagesWith32BitGpuAddressing,
                                                 false, allocationData.flags.flushL3, maxOsContextCount);
 
         memoryAllocation->set32BitAllocation(true);
@@ -377,7 +375,7 @@ uint64_t OsAgnosticMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto allocation = createMemoryAllocation(allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
-                                             reinterpret_cast<uint64_t>(allocationData.hostPtr), allocationData.size, counter++,
+                                             reinterpret_cast<uint64_t>(allocationData.hostPtr), allocationData.size, counter.fetch_add(1),
                                              MemoryPool::system4KBPages, allocationData.rootDeviceIndex, false, allocationData.flags.flushL3, false);
 
     allocation->fragmentsStorage = handleStorage;
@@ -417,19 +415,21 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
     }
 }
 
-void OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
     physicalAllocation->setGpuPtr(0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
+    return true;
 }
 
-void OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(multiGraphicsAllocation.getGraphicsAllocations().size()); i++) {
         delete multiGraphicsAllocation.getGraphicsAllocation(i);
         multiGraphicsAllocation.removeAllocation(i);
     }
+    return true;
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) {
     physicalAllocation->setGpuPtr(gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     return true;
@@ -456,6 +456,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
     size_t sizeAligned64k = 0;
     sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
@@ -463,7 +464,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
                                 nullptr,
                                 sizeAligned64k,
                                 MemoryConstants::pageSize64k,
-                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
                                 allocationData.storageInfo,
                                 gmmRequirements);
 
@@ -471,9 +472,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
     if (systemMemory) {
         auto sizeOfHeapChunk = sizeAligned64k;
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, systemMemory, systemMemory,
-                                          0u, sizeAligned64k, counter,
+                                          0u, sizeAligned64k, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
-        counter++;
+
         allocation->setDefaultGmm(gmm.release());
         allocation->sizeToFree = sizeOfHeapChunk;
     }
@@ -491,11 +492,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
     status = AllocationStatus::Error;
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -503,8 +505,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
     if (ptr != nullptr) {
         alloc = new MemoryAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, ptr, ptr, 0u, allocationData.size,
-                                     counter, MemoryPool::systemCpuInaccessible, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
-        counter++;
+                                     counter.fetch_add(1), MemoryPool::systemCpuInaccessible, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
     }
 
     if (alloc) {
@@ -518,11 +519,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const Al
     status = AllocationStatus::Error;
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -530,8 +532,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const Al
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize2M);
     if (ptr != nullptr) {
         alloc = new MemoryAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, ptr, ptr, 0u, allocationData.size,
-                                     counter, MemoryPool::system4KBPages, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
-        counter++;
+                                     counter.fetch_add(1), MemoryPool::system4KBPages, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
     }
 
     if (alloc) {
@@ -545,11 +546,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const Al
 GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -558,8 +560,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const Allocatio
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, alignment), alignment);
     if (ptr != nullptr) {
         alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
-                                       counter, MemoryPool::systemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
-        counter++;
+                                       counter.fetch_add(1), MemoryPool::systemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
     }
 
     if (alloc) {
@@ -583,8 +584,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     auto ptr = allocateSystemMemory(alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize), MemoryConstants::pageSize);
     if (ptr != nullptr) {
         alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.imgInfo->size,
-                                       counter, MemoryPool::systemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
-        counter++;
+                                       counter.fetch_add(1), MemoryPool::systemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
     }
 
     if (alloc) {
@@ -624,7 +624,7 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 
     size_t alignedSize = alignSizeWholePage(pMem, memSize);
 
-    auto heap = (force32bitAllocations || requireSpecificBitness) ? HeapIndex::heapExternal : HeapIndex::heapStandard;
+    auto heap = requireSpecificBitness ? HeapIndex::heapExternal : HeapIndex::heapStandard;
 
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     uint64_t limitedGpuAddress = gfxPartition->heapAllocate(heap, alignedSize);
@@ -641,8 +641,24 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 }
 
 size_t OsAgnosticMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
+    return selectAlignmentAndHeap(0ull, size, heap);
+}
+
+size_t OsAgnosticMemoryManager::selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) {
+    // Always default to HEAP STANDARD and 64KB page.
     *heap = HeapIndex::heapStandard;
-    return MemoryConstants::pageSize64k;
+    size_t pageSizeAlignment = MemoryConstants::pageSize64k;
+
+    // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+    if (requiredStartAddress != 0ull) {
+        auto rootDeviceIndex = 0u;
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+            return pageSizeAlignment;
+        }
+    }
+
+    return pageSizeAlignment;
 }
 
 AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
@@ -655,7 +671,7 @@ AddressRange OsAgnosticMemoryManager::reserveGpuAddressOnHeap(const uint64_t req
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         auto gmmHelper = getGmmHelper(rootDeviceIndex);
-        gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(heap, size));
+        gpuVa = requiredStartAddress == 0 ? gmmHelper->canonize(gfxPartition->heapAllocate(heap, size)) : gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignmentWithStartAddressHint(gmmHelper->decanonize(requiredStartAddress), heap, size, alignment));
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             break;
@@ -682,7 +698,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         return nullptr;
     }
 
-    if (allocationData.flags.useSystemMemory || (allocationData.flags.allow32Bit && this->force32bitAllocations)) {
+    if (allocationData.flags.useSystemMemory) {
         return nullptr;
     }
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
@@ -690,8 +706,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2M);
         auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(allocationData.hostPtr));
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
-                                          allocationData.size, counter, MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
-        counter++;
+                                          allocationData.size, counter.fetch_add(1), MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
+
         if (allocationData.flags.preferCompressed) {
             auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
             GmmRequirements gmmRequirements{};
@@ -702,7 +718,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                              allocationData.hostPtr,
                                              allocationData.size,
                                              MemoryConstants::pageSize2M,
-                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
                                              allocationData.storageInfo,
                                              gmmRequirements);
             allocation->setDefaultGmm(gmm.release());
@@ -729,7 +745,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                             allocationData.hostPtr,
                                             sizeAligned64k,
                                             MemoryConstants::pageSize64k,
-                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
                                             allocationData.storageInfo,
                                             gmmRequirements);
             }
@@ -756,9 +772,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
             canonizedGpuAddress = MemoryManager::adjustToggleBitFlagForGpuVa(allocationData.type, canonizedGpuAddress);
         }
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, systemMemory, systemMemory,
-                                          canonizedGpuAddress, sizeAligned64k, counter,
+                                          canonizedGpuAddress, sizeAligned64k, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
-        counter++;
+
         allocation->setDefaultGmm(gmm.release());
         allocation->sizeToFree = sizeOfHeapChunk;
         if (use32Allocator) {

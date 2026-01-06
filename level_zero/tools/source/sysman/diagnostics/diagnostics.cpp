@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/tools/source/sysman/diagnostics/diagnostics_imp.h"
 
 namespace L0 {
-class OsDiagnostics;
 DiagnosticsHandleContext::~DiagnosticsHandleContext() {
     releaseDiagnosticsHandles();
 }

@@ -52,7 +52,8 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_include_directories(igdrcl_aub_tests PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
-                             ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
   )
 
   copy_gmm_dll_for(igdrcl_aub_tests)
@@ -60,7 +61,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
   target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-  target_link_libraries(igdrcl_aub_tests gmock-gtest ${NEO_EXTRA_LIBS})
+  target_link_libraries(igdrcl_aub_tests neo_gtest ${NEO_EXTRA_LIBS})
   target_link_libraries(igdrcl_aub_tests ${AUB_STREAM_PROJECT_NAME})
 
   if(UNIX)
@@ -68,7 +69,11 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   else()
     add_dependencies(igdrcl_aub_tests ${GMM_TARGET_NAME})
   endif()
-  target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX})
 
   create_project_source_tree(igdrcl_aub_tests)
+
+  if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+    target_sources(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_aub_tests_pch.h)
+    target_precompile_headers(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_aub_tests_pch.h)
+  endif()
 endif()

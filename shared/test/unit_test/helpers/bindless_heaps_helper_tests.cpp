@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -217,11 +217,29 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetAlphaBorderColorO
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialHeapThenFirstSlotIsAtOffsetZero) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    if (bindlessHeapHelper->heaplessEnabled) {
+        GTEST_SKIP();
+    }
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::specialSsh);
 
     EXPECT_EQ(0u, ssInHeapInfo.surfaceStateOffset);
+    EXPECT_EQ(ssInHeapInfo.heapAllocation->getGpuAddress(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
+    EXPECT_EQ(bindlessHeapHelper->getGlobalHeapsBase(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
+}
+
+TEST_F(BindlessHeapsHelperTests, givenHeaplessAndBindlessHeapHelperWhenAllocateSsInSpecialHeapThenFirstSlotIsAtOffsetOfHeapBaseAddress) {
+
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    if (!bindlessHeapHelper->heaplessEnabled) {
+        GTEST_SKIP();
+    }
+    MockGraphicsAllocation alloc;
+    size_t size = 0x40;
+    auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::specialSsh);
+
+    EXPECT_EQ(ssInHeapInfo.heapAllocation->getGpuBaseAddress(), ssInHeapInfo.surfaceStateOffset);
     EXPECT_EQ(ssInHeapInfo.heapAllocation->getGpuAddress(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
     EXPECT_EQ(bindlessHeapHelper->getGlobalHeapsBase(), ssInHeapInfo.heapAllocation->getGpuBaseAddress());
 }
@@ -232,7 +250,11 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHe
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     EXPECT_LE(0u, ssInHeapInfo.surfaceStateOffset);
-    EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
+    if (bindlessHeapHelper->heaplessEnabled) {
+        EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset - ssInHeapInfo.heapAllocation->getGpuBaseAddress());
+    } else {
+        EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
+    }
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDshThenOffsetLessThanHeapSize) {
@@ -241,7 +263,11 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDs
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EXPECT_LE(0u, ssInHeapInfo.surfaceStateOffset);
-    EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
+    if (bindlessHeapHelper->heaplessEnabled) {
+        EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset - ssInHeapInfo.heapAllocation->getGpuBaseAddress());
+    } else {
+        EXPECT_GT(MemoryConstants::max32BitAddress, ssInHeapInfo.surfaceStateOffset);
+    }
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIsCalledThenSSinHeapInfoShouldBePlacedInReuseVector) {

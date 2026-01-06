@@ -9,10 +9,11 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 #include "level_zero/zet_intel_gpu_metric.h"
@@ -613,8 +614,8 @@ TEST_F(MetricEnumerationTest, whenReadingMetricCroupCalculateParametersThenExpec
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroupsHandles.data()), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 2u);
 
-    zet_intel_metric_group_calculate_properties_exp_t metricGroupCalcProps{};
-    metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES;
+    zet_intel_metric_group_calculation_properties_exp_t metricGroupCalcProps{};
+    metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATION_EXP_PROPERTIES;
     metricGroupCalcProps.pNext = nullptr;
     metricGroupCalcProps.isTimeFilterSupported = false;
 
@@ -860,7 +861,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     EXPECT_NE(metricTimestamp, 0UL);
 }
 
-TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetricsOrDeviceTimestampsThenValuesAreZero) {
+TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadDeviceTimestampsOrMetricFrequencyThenValuesAreZero) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -922,7 +923,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
     ze_bool_t synchronizedWithHost = true;
     uint64_t globalTimestamp = 1;
     uint64_t metricTimestamp = 1;
-    metricsDevice.forceGetGpuCpuTimestampsFail = true;
+    metricsDevice.forceGetSymbolByNameFail = true;
 
     EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(globalTimestamp, 0UL);
@@ -931,6 +932,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
 
     globalTimestamp = 1;
     metricTimestamp = 1;
+    metricsDevice.forceGetGpuCpuTimestampsFail = true;
     neoDevice->setOSTime(new FalseGpuCpuTime());
     EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_DEVICE_LOST);
     EXPECT_EQ(globalTimestamp, 0UL);
@@ -1596,6 +1598,100 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsW
 
     // Activate metric groups.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 2, metricGroupHandles.data()), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndMetricsIsDisabledThenZetContextActivateMetricGroupsReturnsFailure) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    // Metrics Discovery:: metric.
+    Mock<IMetric_1_13> metric;
+    TMetricParams_1_13 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
+
+    metric.GetParamsResult = &metricParams;
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Activate metric group.
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    // Disable Metrics with an activated metric group returns error
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+    // De-Activate all metric groups.
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    // Disable Metrics with all groups deactivated should return success
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
+    // Multiple Disables continue to return success
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
+    // Activate metric group on a disabled device should be failure
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_ERROR_UNINITIALIZED);
+
+    // Reset the disabled status
+    devices[0]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    for (uint32_t i = 0; i < subDeviceCount; i++) {
+        deviceImp.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
+    }
 }
 
 TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
@@ -3542,7 +3638,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenRet
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
-    EXPECT_EQ(zetIntelCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIsCalled) {
@@ -3594,45 +3690,39 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    auto hMockScope = mockMetricScope.toHandle();
+
     // metric groups from different source
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,            // pNext
         1,                  // metricGroupCount
         &metricGroupHandle, // phMetricGroups
         0,                  // metricCount
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
-        nullptr,            // pCalculateTimeWindows
+        nullptr,            // pCalculationTimeWindows
         1000,               // timeAggregationWindow
+        1,                  // metricScopesCount
+        &hMockScope,        // phMetricScopes
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t *phExcludedMetrics = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
-                                                                                             device->toHandle(), &calculateDesc,
-                                                                                             &excludedMetricsCount, phExcludedMetrics,
-                                                                                             &hCalculateOperation));
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                                               device->toHandle(), &calculationDesc,
+                                                                                               &hCalculationOperation));
 }
 
-using AppendMarkerDriverVersionTest = Test<DeviceFixture>;
+using AppendMarkerDriverVersionTest = Test<ExtensionFixture>;
 
-TEST_F(AppendMarkerDriverVersionTest, givenSupportedExtensionsWhenCheckIfAppendMarkerIsSupportedThenCorrectResultsAreReturned) {
-    uint32_t count = 0;
-    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
-    EXPECT_NE(0u, count);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    std::vector<ze_driver_extension_properties_t> extensionProperties;
-    extensionProperties.resize(count);
-
-    res = driverHandle->getExtensionProperties(&count, extensionProperties.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZET_INTEL_METRIC_APPEND_MARKER_EXP_NAME) == 0); });
-    EXPECT_NE(it, extensionProperties.end());
-    EXPECT_EQ((*it).version, ZET_INTEL_METRIC_APPEND_MARKER_EXP_VERSION_CURRENT);
+TEST_F(AppendMarkerDriverVersionTest, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
+    verifyExtensionDefinition(ZET_INTEL_METRIC_APPEND_MARKER_EXP_NAME, ZET_INTEL_METRIC_APPEND_MARKER_EXP_VERSION_CURRENT);
 }
 
 } // namespace ult

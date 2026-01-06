@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,20 +7,21 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/l3_range.h"
-#include "shared/source/utilities/range.h"
+
+#include <span>
 
 namespace NEO {
 
 struct HardwareInfo;
 
 template <typename GfxFamily>
-inline size_t getSizeNeededToFlushGpuCache(const Range<L3Range> &ranges, bool usePostSync) {
+inline size_t getSizeNeededToFlushGpuCache(std::span<const L3Range> ranges, bool usePostSync) {
     size_t size = sizeof(typename GfxFamily::L3_CONTROL) * (ranges.size() / maxFlushSubrangeCount + 1);
     size += ranges.size() * sizeof(typename GfxFamily::L3_FLUSH_ADDRESS_RANGE);
     return size;
 }
 template <typename GfxFamily>
-inline size_t getSizeNeededForL3Control(const Range<L3Range> &ranges) {
+inline size_t getSizeNeededForL3Control(std::span<const L3Range> ranges) {
     size_t size = sizeof(typename GfxFamily::L3_CONTROL);
     size += ranges.size() * sizeof(typename GfxFamily::L3_FLUSH_ADDRESS_RANGE);
     return size;
@@ -30,7 +31,7 @@ template <typename GfxFamily>
 void adjustL3ControlField(void *l3ControlBuffer);
 
 template <typename GfxFamily>
-inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
+inline void flushGpuCache(LinearStream *commandStream, std::span<const L3Range> ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
@@ -54,7 +55,7 @@ inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ran
     l3Control++;
     L3_FLUSH_ADDRESS_RANGE *l3Ranges = reinterpret_cast<L3_FLUSH_ADDRESS_RANGE *>(l3Control);
     L3_FLUSH_ADDRESS_RANGE cmdFlushRange = {};
-    for (const L3Range *it = &*ranges.begin(), *end = &*ranges.end(); it != end; ++it, l3Ranges++) {
+    for (auto it = ranges.begin(), end = ranges.end(); it != end; ++it, l3Ranges++) {
         cmdFlushRange = GfxFamily::cmdInitL3FlushAddressRange;
 
         cmdFlushRange.setAddress(it->getMaskedAddress());

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
@@ -48,7 +49,7 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     bool pdhInitialized = false;
     bool pdhCounterAdded = false;
     PDH_HQUERY gpuQuery = nullptr;
-    PDH_HCOUNTER dedicatedUsage = nullptr;
+    PDH_HCOUNTER usage = nullptr;
     HINSTANCE hGetProcPDH = nullptr;
 };
 

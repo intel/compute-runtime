@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,8 +211,9 @@ class ConstStringRef {
             if (*i == separator) {
                 continue;
             }
-            if (*i != *rhs)
+            if (*i != *rhs) {
                 return false;
+            }
             ++rhs;
         }
         return ('\0' == *rhs);

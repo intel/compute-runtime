@@ -9,11 +9,13 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cinttypes>
 #include <cstddef>
@@ -46,6 +48,7 @@ struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
     uint64_t unallocatedSize;
+    uint64_t cpuVisibleSize;
     std::bitset<4> tilesMask;
 };
 
@@ -111,6 +114,7 @@ class IoctlHelper {
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
     virtual void setExternalContext(ExternalCtx *ctx);
+    virtual bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) = 0;
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
@@ -126,11 +130,15 @@ class IoctlHelper {
                               bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
+    virtual uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
+    virtual bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) { return true; }
+    virtual AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) { return AtomicAccessMode::none; }
     virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
+    virtual bool setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) { return true; }
     virtual bool setGemTiling(void *setTiling) = 0;
     virtual bool getGemTiling(void *setTiling) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
@@ -188,16 +196,21 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const = 0;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const = 0;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
-    virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
+    virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
-    virtual void setupIpVersion();
+    void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 
+    virtual void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                                  std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) = 0;
+
+    void writeCcsMode(const std::string &gtFile, uint32_t ccsMode,
+                      std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec);
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
     virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
-    virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
+    virtual bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
     virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;
 
     virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) = 0;
@@ -218,14 +231,15 @@ class IoctlHelper {
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
     virtual bool isPreemptionSupported() = 0;
-    virtual int getTileIdFromGtId(int gtId) const = 0;
+    virtual uint32_t getTileIdFromGtId(uint32_t gtId) const = 0;
+    virtual uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const = 0;
 
     virtual bool allocateInterrupt(uint32_t &outHandle) { return false; }
     virtual bool releaseInterrupt(uint32_t handle) { return false; }
 
     virtual uint64_t *getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux *osContext);
-    virtual uint64_t acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex);
-    virtual void releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex);
+    virtual uint64_t acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, AllocationType allocType, HeapIndex heapIndex);
+    virtual void releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex, AllocationType allocType);
     virtual void *mmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size, int prot, int flags, int fd, off_t offset);
     virtual int munmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size);
     virtual void registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction);
@@ -233,6 +247,7 @@ class IoctlHelper {
     virtual void syncUserptrAlloc(DrmMemoryManager &memoryManager, GraphicsAllocation &allocation) { return; };
 
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
+    virtual std::optional<std::vector<uint32_t>> queryDeviceCaps() { return std::nullopt; }
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
     virtual uint32_t getNumProcesses() const { return 1; }
@@ -240,6 +255,10 @@ class IoctlHelper {
     virtual bool makeResidentBeforeLockNeeded() const { return false; }
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
+    virtual bool isSmallBarConfigAllowed() const = 0;
+    virtual bool overrideMaxSlicesSupported() const { return false; }
+    virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
+    virtual uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) { return 0; }
 
   protected:
     Drm &drm;
@@ -268,16 +287,22 @@ class IoctlHelperI915 : public IoctlHelper {
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                          std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     bool setGemTiling(void *setTiling) override;
     bool getGemTiling(void *setTiling) override;
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
-    int getTileIdFromGtId(int gtId) const override { return gtId; }
+    uint32_t getTileIdFromGtId(uint32_t gtId) const override { return gtId; }
+    uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override { return tileId; }
     bool hasContextFreqHint() override;
     void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) override;
+    bool isSmallBarConfigAllowed() const override { return true; }
+    bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
+    bool overrideMaxSlicesSupported() const override { return true; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);
@@ -305,6 +330,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
+    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
@@ -343,7 +369,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     int getDrmParamValue(DrmParam drmParam) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
-    bool isWaitBeforeBindRequired(bool bind) const override;
+    bool requiresUserFenceSetup(bool bind) const override;
 
   protected:
     MOCKABLE_VIRTUAL void detectExtSetPatSupport();
@@ -366,7 +392,8 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
-    IoctlHelperPrelim20(Drm &drmArg);
+    using IoctlHelperI915::IoctlHelperI915;
+
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
@@ -380,6 +407,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
+    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
@@ -420,10 +448,9 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
-    bool isWaitBeforeBindRequired(bool bind) const override;
+    bool requiresUserFenceSetup(bool bind) const override;
     void *pciBarrierMmap() override;
-    void setupIpVersion() override;
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     bool registerResourceClasses() override;
     uint32_t registerIsaCookie(uint32_t isaHandle) override;
@@ -440,15 +467,14 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint32_t getStatusForResetStats(bool banned) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
+    uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
 
   protected:
-    bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);
     StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
-    bool handleExecBufferInNonBlockMode = false;
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     uint64_t uuid = 0;
 };
 
-extern std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[IGFX_MAX_PRODUCT];
+extern std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[NEO::maxProductEnumValue];
 } // namespace NEO

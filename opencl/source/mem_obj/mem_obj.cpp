@@ -104,8 +104,10 @@ MemObj::~MemObj() {
             }
         }
         if (associatedMemObject) {
+            context->forEachBufferPoolAllocator([this](auto &bufferPoolAllocator) {
+                bufferPoolAllocator.tryFreeFromPoolBuffer(this->associatedMemObject, this->offset, this->sizeInPoolAllocator);
+            });
             associatedMemObject->decRefInternal();
-            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->sizeInPoolAllocator);
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();
@@ -114,7 +116,7 @@ MemObj::~MemObj() {
 
     destructorCallbacks.invoke(this);
 
-    const bool needDecrementContextRefCount = !context->getBufferPoolAllocator().isPoolBuffer(this);
+    const bool needDecrementContextRefCount = !context->isPoolBuffer(this);
     if (needDecrementContextRefCount) {
         context->decRefInternal();
     }
@@ -174,7 +176,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     case CL_MEM_OFFSET:
         clOffset = this->getOffset();
         if (nullptr != this->associatedMemObject) {
-            if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+            if (this->getContext()->isPoolBuffer(this->associatedMemObject)) {
                 clOffset = 0;
             } else {
                 clOffset -= this->associatedMemObject->getOffset();
@@ -185,7 +187,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_ASSOCIATED_MEMOBJECT:
-        if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+        if (this->getContext()->isPoolBuffer(this->associatedMemObject)) {
             clAssociatedMemObject = nullptr;
         }
         srcParamSize = sizeof(clAssociatedMemObject);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ inline NEO::HardwareInterfaceWalkerArgs createHardwareInterfaceWalkerArgs(size_t
     return args;
 }
 
-inline NEO::HardwareInterfaceWalkerArgs createHardwareInterfaceWalkerArgs(size_t wkgSizeArray[3], Vec3<size_t> &wgInfo, PreemptionMode mode) {
+inline NEO::HardwareInterfaceWalkerArgs createHardwareInterfaceWalkerArgs(size_t wkgSizeArray[3], Vec3<size_t> &wgInfo, NEO::PreemptionMode mode) {
     NEO::HardwareInterfaceWalkerArgs args = createHardwareInterfaceWalkerArgs(wkgSizeArray, wgInfo);
     args.preemptionMode = mode;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,13 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/xe/xedrm.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
 namespace NEO {
 class XeConfigFixture {
   public:

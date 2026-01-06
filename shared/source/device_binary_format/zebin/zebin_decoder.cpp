@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/logger.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 template <>
@@ -45,28 +45,32 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
 
 bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG &targetDeviceProductConfig,
                                                       const AOT::PRODUCT_CONFIG &productConfig) {
-    auto compatProdConfPairItr = AOT::compatibilityMapping.find(productConfig);
-    if (compatProdConfPairItr != AOT::compatibilityMapping.end()) {
-        for (auto &compatibleConfig : compatProdConfPairItr->second)
-            if (targetDeviceProductConfig == compatibleConfig)
-                return true;
+    const auto &invertedMapping = AOT::getInvertedCompatibilityMapping();
+    auto invertedProdConfPairItr = invertedMapping.find(targetDeviceProductConfig);
+    if (invertedProdConfPairItr == invertedMapping.end()) {
+        return false;
     }
-    return false;
+    const auto &compatibleProducts = invertedProdConfPairItr->second;
+    return std::find(compatibleProducts.begin(), compatibleProducts.end(), productConfig) != compatibleProducts.end();
 }
 
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
+    if (debugManager.flags.ForceCompatibilityMode.get()) {
+        return true;
+    }
     if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {
         return false;
     }
 
     if (productConfig != AOT::UNKNOWN_ISA) {
         auto targetDeviceProductConfig = static_cast<AOT::PRODUCT_CONFIG>(targetDevice.aotConfig.value);
-        if (targetDeviceProductConfig == productConfig)
+        if (targetDeviceProductConfig == productConfig) {
             return true;
-        else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
+        } else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
             return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
-        } else
+        } else {
             return false;
+        }
     }
 
     if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {
@@ -92,10 +96,10 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierCl
     return true;
 }
 
-template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
-template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
+template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorFeatureVersions &generatorFeatures, GeneratorType &generator);
+template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorFeatureVersions &generatorFeatures, GeneratorType &generator);
 template <Elf::ElfIdentifierClass numBits>
-bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary) {
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorFeatureVersions &generatorFeatures, GeneratorType &generator) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
@@ -123,7 +127,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto targetMetadataPacked = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             targetMetadata.packed = static_cast<uint32_t>(*targetMetadataPacked);
-            singleDeviceBinary.generator = static_cast<GeneratorType>(targetMetadata.generatorId);
+            generator = static_cast<GeneratorType>(targetMetadata.generatorId);
             break;
         }
         case Elf::IntelGTSectionType::zebinVersion: {
@@ -155,7 +159,13 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
         case Elf::IntelGTSectionType::indirectAccessDetectionVersion: {
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto indirectDetectionVersion = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
-            singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection = static_cast<uint32_t>(*indirectDetectionVersion);
+            generatorFeatures.indirectMemoryAccessDetection = static_cast<uint32_t>(*indirectDetectionVersion);
+            break;
+        }
+        case Elf::IntelGTSectionType::indirectAccessBufferMajorVersion: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto indirectDetectionVersion = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            generatorFeatures.indirectAccessBuffer = static_cast<uint32_t>(*indirectDetectionVersion);
             break;
         }
         default:
@@ -242,6 +252,10 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         case Elf::SHT_PROGBITS:
             if (sectionName.startsWith(Elf::SectionNames::textPrefix.data())) {
                 out.textKernelSections.push_back(&elfSectionHeader);
+            } else if (sectionName == Elf::SectionNames::text) {
+                if (false == elfSectionHeader.data.empty()) {
+                    out.textSections.push_back(&elfSectionHeader);
+                }
             } else if (sectionName == Elf::SectionNames::dataConst) {
                 out.constDataSections.push_back(&elfSectionHeader);
             } else if (sectionName == Elf::SectionNames::dataGlobalConst) {
@@ -254,7 +268,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             } else if (sectionName.startsWith(Elf::SectionNames::debugPrefix.data())) {
                 // ignoring intentionally
             } else {
-                outErrReason.append("DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
+                outErrReason.append("DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::text.str() + " (aliased to " + Elf::SectionNames::functions.str() + "), " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
                 return DecodeError::invalidBinary;
             }
             break;
@@ -339,6 +353,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, Elf::SectionNames::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, Elf::SectionNames::spv, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, Elf::SectionNames::noteIntelGT, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.textSections, Elf::SectionNames::text, 1U, outErrReason, outWarning);
     return valid ? DecodeError::success : DecodeError::invalidBinary;
 }
 
@@ -358,6 +373,18 @@ ConstStringRef getZeInfoFromZebin(const ArrayRef<const uint8_t> zebin, std::stri
     return Elf::isElf<Elf::EI_CLASS_32>(zebin)
                ? extractZeInfoMetadataString<Elf::EI_CLASS_32>(zebin, outErrReason, outWarning)
                : extractZeInfoMetadataString<Elf::EI_CLASS_64>(zebin, outErrReason, outWarning);
+}
+
+template <Elf::ElfIdentifierClass numBits>
+void handleTextSection(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &zebinSections) {
+    if (zebinSections.textSections.empty()) {
+        return;
+    }
+
+    zebinSections.textKernelSections.push_back(zebinSections.textSections[0]);
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = NEO::Zebin::Elf::SectionNames::externalFunctions.str();
+    dst.kernelInfos.push_back(kernelInfo.release());
 }
 
 template DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_32> &elf, std::string &outErrReason, std::string &outWarning);
@@ -420,6 +447,8 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         return decodeZeInfoError;
     }
 
+    handleTextSection(dst, elf, zebinSections);
+
     for (auto &kernelInfo : dst.kernelInfos) {
         ConstStringRef kernelName(kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
         auto kernelInstructions = getKernelHeap(kernelName, elf, zebinSections);
@@ -457,12 +486,20 @@ ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBi
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (auto *textSection : zebinSections.textKernelSections) {
         ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + textSection->header->name);
-        auto sufix = sectionName.substr(static_cast<int>(Elf::SectionNames::textPrefix.length()));
-        if (sufix == kernelName) {
+        if (getKernelNameFromSectionName(sectionName) == kernelName) {
             return textSection->data;
         }
     }
     return {};
+}
+
+ConstStringRef getKernelNameFromSectionName(ConstStringRef sectionName) {
+    if (sectionName.startsWith(NEO::Zebin::Elf::SectionNames::textPrefix)) {
+        return sectionName.substr(NEO::Zebin::Elf::SectionNames::textPrefix.length());
+    } else {
+        DEBUG_BREAK_IF(sectionName != NEO::Zebin::Elf::SectionNames::text);
+        return Zebin::Elf::SectionNames::externalFunctions;
+    }
 }
 
 template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);
@@ -473,8 +510,8 @@ ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (auto *gtpinInfoSection : zebinSections.gtpinInfoSections) {
         ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + gtpinInfoSection->header->name);
-        auto sufix = sectionName.substr(static_cast<int>(Elf::SectionNames::gtpinInfo.length()));
-        if (sufix == kernelName) {
+        auto suffix = sectionName.substr(static_cast<int>(Elf::SectionNames::gtpinInfo.length()));
+        if (suffix == kernelName) {
             return gtpinInfoSection->data;
         }
     }

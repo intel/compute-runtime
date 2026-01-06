@@ -11,6 +11,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -51,11 +52,11 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
 }
 
-HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
+TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.ipVersion.value += 0xdead;
-    const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::copyBufferToBuffer,
+    const std::array<uint32_t, 12> builtinTypes{EBuiltInOps::copyBufferToBuffer,
                                                 EBuiltInOps::copyBufferRect,
                                                 EBuiltInOps::fillBuffer,
                                                 EBuiltInOps::copyBufferToImage3d,
@@ -65,7 +66,8 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
                                                 EBuiltInOps::copyImageToImage3d,
                                                 EBuiltInOps::fillImage1d,
                                                 EBuiltInOps::fillImage2d,
-                                                EBuiltInOps::fillImage3d};
+                                                EBuiltInOps::fillImage3d,
+                                                EBuiltInOps::fillImage1dBuffer};
 
     for (auto &builtinType : builtinTypes) {
         auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::binary, *pDevice);
@@ -107,7 +109,7 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
     }
 }
 
-HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenReturnForReleaseAndGenericResourceNames) {
+TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenReturnForReleaseAndGenericResourceNames) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -123,7 +125,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
 }
 
-HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
+TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
 
     const std::pair<EBuiltInOps::Type, const char *> testCases[] = {
         {EBuiltInOps::auxTranslation, "aux_translation.builtin_kernel"},
@@ -154,7 +156,9 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
         {EBuiltInOps::fillImage2dHeapless, "fill_image2d.builtin_kernel"},
         {EBuiltInOps::fillImage3d, "fill_image3d.builtin_kernel"},
         {EBuiltInOps::fillImage3dHeapless, "fill_image3d.builtin_kernel"},
-        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"}};
+        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
+        {EBuiltInOps::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"},
+        {EBuiltInOps::fillImage1dBufferHeapless, "fill_image1d_buffer.builtin_kernel"}};
 
     for (const auto &[type, name] : testCases) {
         std::string builtinResourceName = createBuiltinResourceName(type, ".bin");
@@ -163,23 +167,23 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
     }
 }
 
-HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
+TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
 }
 
-HWTEST2_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsCalledThenResourceNameIsCorrect, MatchAny) {
+TEST_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsCalledThenResourceNameIsCorrect) {
 
-    class MockCompilerProductHelper : public CompilerProductHelperHw<productFamily> {
+    class BuiltinMockCompilerProductHelper : public MockCompilerProductHelper {
       public:
-        bool isHeaplessModeEnabled() const override {
+        bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override {
             return true;
         }
     };
 
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(new MockCompilerProductHelper());
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(new BuiltinMockCompilerProductHelper());
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 

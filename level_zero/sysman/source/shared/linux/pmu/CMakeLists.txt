@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ if(UNIX)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmu_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmu_imp_xe.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmu_imp.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmu.h
   )

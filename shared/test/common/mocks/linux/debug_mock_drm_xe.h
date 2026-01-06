@@ -14,7 +14,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
-#include "shared/source/os_interface/linux/xe/xedrm.h"
+#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -146,6 +146,10 @@ struct DrmMockXeDebug : public DrmMockCustom {
         hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);
     }
 
+    void setDeviceNodePath(const char *devNodePath) {
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), "", devNodePath);
+    }
+
     int ioctl(DrmIoctl request, void *arg) override {
         int ret = -1;
         ioctlCalled = true;
@@ -190,6 +194,9 @@ struct DrmMockXeDebug : public DrmMockCustom {
             for (uint16_t i = 0; i < create->num_placements; i++) {
                 execQueueEngineInstances.push_back(reinterpret_cast<drm_xe_engine_class_instance *>(create->instances)[i]);
             }
+            ret = 0;
+        } break;
+        case DrmIoctl::gemContextDestroy: {
             ret = 0;
         } break;
         case DrmIoctl::gemVmCreate: {

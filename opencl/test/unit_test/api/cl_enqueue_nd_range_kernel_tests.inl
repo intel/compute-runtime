@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -51,7 +53,8 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto localMemSize = static_cast<uint32_t>(pDevice->getDevice().getDeviceInfo().localMemSize);
 
@@ -69,10 +72,10 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     pKernel->setTotalSLMSize(localMemSize + 10u);
     retVal = clEnqueueNDRangeKernel(
@@ -88,7 +91,7 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     const auto &slmInlineSize = pKernel->getSlmTotalSize();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);

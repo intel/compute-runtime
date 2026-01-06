@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,10 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t interruptImp(uint32_t deviceIndex) override;
     ze_result_t acknowledgeEventImp(uint32_t seqNo, uint32_t eventType);
 
+    MOCKABLE_VIRTUAL ze_result_t interruptContextImp();
+    MOCKABLE_VIRTUAL ze_result_t resumeContextImp(uint64_t memoryHandle);
+    MOCKABLE_VIRTUAL ze_result_t continueExecutionImp(uint64_t memoryHandle);
+
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
     bool isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size);
@@ -78,6 +82,7 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams);
     ze_result_t handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams);
     ze_result_t handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams);
+    ze_result_t handleSyncHostEvent(DBGUMD_READ_EVENT_SYNC_HOST_DATA_PARAMS &syncHostDataParams);
     ze_result_t readAllocationDebugData(uint32_t seqNo, uint64_t umdDataBufferPtr, void *outBuf, size_t outBufSize);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override;
@@ -95,7 +100,7 @@ struct DebugSessionWindows : DebugSessionImp {
         UNRECOVERABLE_IF(true);
     }
 
-    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
+    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
 
     static void *asyncThreadFunction(void *arg);
 

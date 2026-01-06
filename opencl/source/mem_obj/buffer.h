@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#include "igfxfmid.h"
-#include "memory_properties_flags.h"
+#include "neo_igfxfmid.h"
 
 #include <functional>
 
@@ -23,6 +23,8 @@ class ClDevice;
 class Device;
 class MemoryManager;
 struct EncodeSurfaceStateArgs;
+class GraphicsAllocation;
+class SharingHandler;
 
 using BufferCreateFunc = Buffer *(*)(Context *context,
                                      const MemoryProperties &memoryProperties,
@@ -40,7 +42,7 @@ struct BufferFactoryFuncs {
     BufferCreateFunc createBufferFunction;
 };
 
-extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
+extern BufferFactoryFuncs bufferFactory[NEO::maxCoreEnumValue];
 
 namespace BufferFunctions {
 using ValidateInputAndCreateBufferFunc = std::function<cl_mem(cl_context context,
@@ -56,7 +58,7 @@ extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 class Buffer : public MemObj {
   public:
     struct AdditionalBufferCreateArgs {
-        bool doNotProvidePerformanceHints;
+        bool isAllocationForPool;
         bool makeAllocationLockable;
     };
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MemoryConstants::megaByte;

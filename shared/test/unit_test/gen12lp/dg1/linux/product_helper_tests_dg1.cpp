@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,9 @@ TYPED_TEST(Dg1HwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+
+    int ret = drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

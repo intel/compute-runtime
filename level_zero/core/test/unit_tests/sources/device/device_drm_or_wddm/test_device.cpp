@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
@@ -18,12 +19,14 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
+#include "hw_device_id.h"
 
 namespace L0 {
 namespace ult {
@@ -140,6 +143,5 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndAndNoOsInterfaceThen
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 }
-
 } // namespace ult
 } // namespace L0

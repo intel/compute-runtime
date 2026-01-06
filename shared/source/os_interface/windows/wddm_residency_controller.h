@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,57 +25,50 @@ class GraphicsAllocation;
 class WddmAllocation;
 class Wddm;
 class CommandStreamReceiver;
+class OsContextWin;
 
 class WddmResidencyController {
   public:
-    WddmResidencyController(Wddm &wddm, uint32_t osContextId);
-    MOCKABLE_VIRTUAL ~WddmResidencyController();
+    WddmResidencyController(Wddm &wddm);
+    MOCKABLE_VIRTUAL ~WddmResidencyController() = default;
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
 
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     [[nodiscard]] std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
-    bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
-    void updateLastTrimFenceValue() { lastTrimFenceValue = *this->getMonitoredFence().cpuAddress; }
-
-    MonitoredFence &getMonitoredFence() { return monitoredFence; }
-    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
-
     void registerCallback();
+    void unregisterCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
-    bool trimResidencyToBudget(uint64_t bytes);
+    MOCKABLE_VIRTUAL bool trimResidencyToBudget(uint64_t bytes);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, CommandStreamReceiver *csr);
 
     bool isInitialized() const;
 
-    void setCommandStreamReceiver(CommandStreamReceiver *csr);
-
     void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
-  protected:
-    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
+    ResidencyContainer &getEvictionAllocations() {
+        return this->evictionAllocations;
+    }
 
-    MonitoredFence monitoredFence = {};
+  protected:
+    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
+    void removeAllocationImpl(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
     SpinLock lock;
     SpinLock trimCallbackLock;
 
-    uint64_t lastTrimFenceValue = 0u;
-
     Wddm &wddm;
     VOID *trimCallbackHandle = nullptr;
 
-    uint32_t osContextId;
-
     bool memoryBudgetExhausted = false;
 
-    CommandStreamReceiver *csr = nullptr;
+    ResidencyContainer evictionAllocations;
 
     ResidencyContainer backupResidencyContainer;    // Stores allocations which should be resident
     std::vector<D3DKMT_HANDLE> handlesForResidency; // Stores D3DKMT handles of allocations which are not yet resident

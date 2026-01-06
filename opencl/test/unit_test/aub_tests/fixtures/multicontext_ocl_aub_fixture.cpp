@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,28 +7,29 @@
 
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 
-#include "shared/source/command_stream/aub_command_stream_receiver.h"
-#include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
 
 namespace NEO {
 
 void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, enableCompression);
-
+    debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    debugManager.flags.RenderCompressedImagesEnabled.set(-1);
     cl_int retVal = CL_SUCCESS;
 
     auto createCommandQueueForEngine = [&](uint32_t tileNumber, size_t engineFamily, size_t engineIndex) {
@@ -39,7 +40,7 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
     };
 
     {
-        cl_device_id deviceId = rootDevice.get();
+        cl_device_id deviceId = rootDevice;
         ClDeviceVector clDeviceVector{&deviceId, 1};
         if (numberOfTiles > 1) {
             for (uint32_t i = 0; i < numberOfTiles; i++) {
@@ -48,6 +49,7 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
         }
         context.reset(MockContext::create<MockContext>(nullptr, clDeviceVector, nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
+        this->svmAllocsManager = context->getSVMAllocsManager();
     }
 
     commandQueues.resize(numberOfTiles);
@@ -85,21 +87,30 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
 
     {
         cl_int retVal = CL_SUCCESS;
-        cl_device_id deviceId = rootDevice.get();
+        cl_device_id deviceId = rootDevice;
         multiTileDefaultContext.reset(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
+    debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
+    debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
 }
 
 CommandStreamReceiver *MulticontextOclAubFixture::getGpgpuCsr(uint32_t tile, uint32_t engine) {
     return &(commandQueues[tile][engine]->getGpgpuCommandStreamReceiver());
 }
 
+CommandStreamReceiver *MulticontextOclAubFixture::getRootCsr() {
+    return rootDevice->getDefaultEngine().commandStreamReceiver;
+}
+
 void MulticontextOclAubFixture::createDevices(const HardwareInfo &hwInfo, uint32_t numTiles) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
 
-    rootDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
+    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto platform = constructPlatform(device->getExecutionEnvironment());
+    initPlatform({device});
+    rootDevice = static_cast<MockClDevice *>(platform->getClDevice(0u));
 
     EXPECT_EQ(rootDeviceIndex, rootDevice->getRootDeviceIndex());
 

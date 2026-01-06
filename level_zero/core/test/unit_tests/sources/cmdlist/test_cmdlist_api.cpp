@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include <level_zero/ze_api.h>
 
@@ -54,9 +55,20 @@ TEST(zeCommandListAppendMemoryFill, whenCalledThenRedirectedToObject) {
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST(zeCommandListAppendMemoryFill, whenPatternSizeNotPowerOf2ThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                             3u, bufferSize, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
 TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), 1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -81,7 +93,8 @@ TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
 }
 TEST(zeCommandListAppendEventReset, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendEventReset(commandList.toHandle(), event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -96,7 +109,8 @@ TEST(zeCommandListAppendExecutionBarrier, whenCalledThenRedirectedToObject) {
 
 TEST(zeCommandListAppendSignalEvent, WhenAppendingSignalEventThenSuccessIsReturned) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendSignalEvent(commandList.toHandle(), event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

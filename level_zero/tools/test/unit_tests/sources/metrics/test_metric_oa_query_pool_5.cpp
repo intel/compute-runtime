@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
@@ -351,7 +353,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
     EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
     EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, true);
 
-    // Initiate a Metrics Library Release by releaing Metric Query Pool
+    // Initiate a Metrics Library Release by releasing Metric Query Pool
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zetMetricQueryCreate(poolHandle, 0, &queryHandle), ZE_RESULT_SUCCESS);

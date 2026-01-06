@@ -11,14 +11,14 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -29,7 +29,6 @@
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
 #include "gtest/gtest.h"
-#include "test_traits_common.h"
 
 using BlitTests = Test<DeviceFixture>;
 
@@ -121,7 +120,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
 
 HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBufferThenDebugMocksValueIsSet, BlitPlatforms) {
     DebugManagerStateRestore dbgRestore;
-    uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) + 1;
+    uint32_t mockValue = pDevice->getGmmHelper()->getL3EnabledMOCS() + 1;
 
     debugManager.flags.OverrideBlitterMocs.set(mockValue);
 
@@ -175,7 +174,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFil
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
 }
 
-HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverriden, BlitPlatforms) {
+HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverridden, BlitPlatforms) {
     DebugManagerStateRestore restore{};
 
     UltDeviceFactory deviceFactory{1, 2};
@@ -236,27 +235,27 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     struct {
         uint8_t returnedCompressionFormat;
         uint8_t expectedCompressionFormat;
-        GMM_YUV_PLANE_ENUM plane;
+        ImagePlane plane;
     } testInputs[] = {
         // regular image
-        {0x0, 0x0, GMM_NO_PLANE},
-        {0xF, 0xF, GMM_NO_PLANE},
-        {0x10, 0x10, GMM_NO_PLANE},
-        {0x1F, 0x1F, GMM_NO_PLANE},
+        {0x0, 0x0, ImagePlane::noPlane},
+        {0xF, 0xF, ImagePlane::noPlane},
+        {0x10, 0x10, ImagePlane::noPlane},
+        {0x1F, 0x1F, ImagePlane::noPlane},
         // luma plane
-        {0x0, 0x0, GMM_PLANE_Y},
-        {0xF, 0xF, GMM_PLANE_Y},
-        {0x10, 0x0, GMM_PLANE_Y},
-        {0x1F, 0xF, GMM_PLANE_Y},
+        {0x0, 0x0, ImagePlane::planeY},
+        {0xF, 0xF, ImagePlane::planeY},
+        {0x10, 0x0, ImagePlane::planeY},
+        {0x1F, 0xF, ImagePlane::planeY},
         // chroma plane
-        {0x0, 0x10, GMM_PLANE_U},
-        {0x0, 0x10, GMM_PLANE_V},
-        {0xF, 0x1F, GMM_PLANE_U},
-        {0xF, 0x1F, GMM_PLANE_V},
-        {0x10, 0x10, GMM_PLANE_U},
-        {0x10, 0x10, GMM_PLANE_V},
-        {0x1F, 0x1F, GMM_PLANE_U},
-        {0x1F, 0x1F, GMM_PLANE_V},
+        {0x0, 0x10, ImagePlane::planeU},
+        {0x0, 0x10, ImagePlane::planeV},
+        {0xF, 0x1F, ImagePlane::planeU},
+        {0xF, 0x1F, ImagePlane::planeV},
+        {0x10, 0x10, ImagePlane::planeU},
+        {0x10, 0x10, ImagePlane::planeV},
+        {0x1F, 0x1F, ImagePlane::planeU},
+        {0x1F, 0x1F, ImagePlane::planeV},
     };
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -270,7 +269,7 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     BlitProperties properties = {};
     properties.srcAllocation = &mockAllocationSrc;
     uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
-    GMM_TILE_TYPE tileType = GMM_NOT_TILED;
+    auto tileType = ImageTilingMode::notTiled;
     uint32_t mipTailLod = 0;
     uint32_t compressionFormat = 0;
     auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
@@ -429,8 +428,12 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
     EXPECT_EQ(0u, stream.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsXeHPOrAbove) {
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnTrue, IsWithinXeCoreAndXe2HpgCore) {
+    EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+}
+
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3Core) {
+    EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
 HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {
@@ -449,16 +452,17 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
     size_t srcSlicePitch = 1;
     size_t dstRowPitch = 1;
     size_t dstSlicePitch = 1;
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, &clearColorAllocation);
     blitProperties.srcSize = {1, 1, 1};
     blitProperties.dstSize = {1, 1, 1};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expectedOutput;
     expectedOutput << "Slice index: 0\n"
                    << "ColorDepth: 0\n"
@@ -670,14 +674,14 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAddit
     EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
 }
 
-struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
+struct IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return IsAtLeastGfxCore<IGFX_XE_HP_CORE>::isMatched<productFamily>() && !IsXe2HpgCore::isMatched<productFamily>() && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
     }
 };
 
-HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalledThenIndexesAreSet, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalledThenIndexesAreSet, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto blitCmd = FamilyType::cmdInitXyBlockCopyBlt;
@@ -700,7 +704,7 @@ HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalle
     EXPECT_EQ(blitCmd.getSourceArrayIndex(), sliceIndex + 1);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -725,7 +729,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D,
     EXPECT_EQ(bltCmd.getDestinationSurfaceType(), XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -750,7 +754,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D
     EXPECT_EQ(bltCmd.getDestinationSurfaceType(), XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DNotTiledThenSrcAndDstTypeIs1D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DNotTiledThenSrcAndDstTypeIs1D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());

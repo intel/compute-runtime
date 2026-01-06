@@ -1,18 +1,26 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <new>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -51,7 +59,7 @@ TEST_F(MemoryIPCTests,
 }
 
 TEST_F(MemoryIPCTests,
-       givenCallToGetIpcHandleWithDeviceAllocationAndCallToPutIpcHandleThenIpcHandleIsReturnedAndReleased) {
+       givenCallToGetIpcHandleWithDeviceAllocationAndCallToPutIpcHandleInNonOpaqueModeThenIpcHandleIsReturnedAndReleased) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -63,12 +71,114 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    ze_ipc_mem_handle_t ipcHandle;
+    // Save context useOpaqueHandle setting
+    bool useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = false;
+
+    alignas(8) ze_ipc_mem_handle_t ipcHandle;
     result = context->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    // Verify that non-opaque mode by checking the memory type
+    alignas(8) IpcMemoryData ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    InternalIpcMemoryType memoryType = static_cast<InternalIpcMemoryType>(ipcData.type);
+    EXPECT_EQ(memoryType, InternalIpcMemoryType::deviceUnifiedMemory);
+
     result = context->putIpcMemHandle(ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Restore previous context useOpaqueHandle setting
+    context->settings.useOpaqueHandle = useOpaque;
+
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
+       givenCallToGetIpcHandleWithDeviceAllocationAndCallToPutIpcHandleInOpaqueDRMModeThenIpcHandleIsReturnedAndReleased) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    // Save and set context settings for opaque FD handle mode
+    bool useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = true;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    alignas(8) ze_ipc_mem_handle_t ipcHandle;
+    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Verify that opaque mode was used by checking the memory type and process ID
+    alignas(8) IpcOpaqueMemoryData ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
+    InternalIpcMemoryType memType = static_cast<InternalIpcMemoryType>(ipcData.memoryType);
+    IpcHandleType hdlType = context->settings.handleType;
+    EXPECT_EQ(memType, InternalIpcMemoryType::deviceUnifiedMemory);
+    EXPECT_EQ(hdlType, IpcHandleType::fdHandle);
+    EXPECT_EQ(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+    EXPECT_NE(ipcData.processId, 0u);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Restore previous context settings
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
+
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
+       givenCallToGetIpcHandleWithDeviceAllocationAndCallToPutIpcHandleInOpaqueWDDMModeThenIpcHandleIsReturnedAndReleased) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    // Save and set context settings for opaque NT handle mode
+    bool useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = true;
+    context->settings.handleType = IpcHandleType::ntHandle;
+
+    alignas(8) ze_ipc_mem_handle_t ipcHandle;
+    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Verify that opaque mode was used by checking the memory type and process ID
+    alignas(8) IpcOpaqueMemoryData ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
+    InternalIpcMemoryType memType = static_cast<InternalIpcMemoryType>(ipcData.memoryType);
+    IpcHandleType hdlType = context->settings.handleType;
+    EXPECT_EQ(memType, InternalIpcMemoryType::deviceUnifiedMemory);
+    EXPECT_EQ(hdlType, IpcHandleType::ntHandle);
+    EXPECT_EQ(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+    EXPECT_NE(ipcData.processId, 0u);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Restore previous context settings
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
 
     EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
@@ -379,6 +489,7 @@ TEST_F(MemoryOpenIpcHandleTest,
 struct HostUsmPoolMemoryOpenIpcHandleTest : public MemoryIPCTests {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableUsmPoolLazyInit.set(-1);
         MemoryIPCTests::SetUp();
     }
 
@@ -387,8 +498,6 @@ struct HostUsmPoolMemoryOpenIpcHandleTest : public MemoryIPCTests {
 
 TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
        givenCallToOpenIpcMemHandleItIsSuccessfullyOpenedAndClosed) {
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
     size_t size = 1;
     size_t alignment = 0u;
     void *ptr = nullptr;
@@ -398,9 +507,9 @@ TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(ptr));
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->getHostUsmPoolOwningPtr(ptr));
+    ASSERT_NE(nullptr, mockHostMemAllocPool);
     const auto pooledAllocationOffset = ptrDiff(mockHostMemAllocPool->allocations.get(ptr)->address, castToUint64(mockHostMemAllocPool->pool));
-    EXPECT_GT(pooledAllocationOffset, 0u);
 
     ze_ipc_mem_handle_t ipcHandle = {};
     result = context->getIpcMemHandle(ptr, &ipcHandle);

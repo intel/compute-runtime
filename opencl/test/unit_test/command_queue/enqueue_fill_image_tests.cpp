@@ -5,19 +5,15 @@
  *
  */
 
-#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fill_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-
-#include <algorithm>
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 using namespace NEO;
 
@@ -101,7 +97,7 @@ HWTEST_F(EnqueueFillImageTest, GivenGpuHangAndBlockingCallWhenFillingImageThenOu
     DebugManagerStateRestore stateRestore;
     debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
-    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
@@ -216,7 +212,43 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST2_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+
+    std::unique_ptr<Image> image1dBuffer;
+    image1dBuffer.reset(Image1dBufferHelperUlt<>::create(context));
+    VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
+
+    mockCmdQ->storeMultiDispatchInfo = true;
+    enqueueFillImage<FamilyType>();
+
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
+}
+
+HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+
+    std::unique_ptr<Image> image1dBuffer;
+    image1dBuffer.reset(Image1dBufferHelperUlt<>::create(context));
+    VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
+
+    mockCmdQ->storeMultiDispatchInfo = true;
+    mockCmdQ->heaplessModeEnabled = true;
+    enqueueFillImage<FamilyType>();
+
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
+}
+
+HWTEST2_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueFillImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

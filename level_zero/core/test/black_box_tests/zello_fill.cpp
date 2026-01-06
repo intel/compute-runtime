@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "zello_common.h"
 
 #include <cstring>
-#include <iomanip>
 
 void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet, ze_command_queue_handle_t &cmdQueue, size_t maxElemenets, bool useInitFill) {
     size_t numElements = maxElemenets;
@@ -118,7 +117,6 @@ int main(int argc, char *argv[]) {
     testAppendMemoryCopyFill(context, device, outputValidationSuccessful, cmdQueue, maxElemenets, useInitFill);
 
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 

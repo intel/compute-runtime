@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,7 @@ if(UNIX)
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_dll.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_dll.h
         ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_iaf_nl_api.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_api.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_nl_api.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_iaf_nl_api.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_api.h
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_iaf_nl_api.h
@@ -26,3 +26,5 @@ if(UNIX)
   endif()
 
 endif()
+
+add_subdirectories()

@@ -6,17 +6,16 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/kernel/kernel_arg_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -354,18 +353,18 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     if (svmAllocationsManager == nullptr) {
         return;
     }
-    pContext->getHostMemAllocPool().cleanup();
+    pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().cleanup();
     svmAllocationsManager->cleanupUSMAllocCaches();
 
     mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
     deviceProperties.device = &pClDevice->getDevice();
     auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
     auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
     EXPECT_TRUE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
@@ -566,7 +565,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
 
@@ -608,7 +607,7 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
 
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());

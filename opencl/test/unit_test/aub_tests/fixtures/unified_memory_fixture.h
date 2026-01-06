@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class UnifiedMemoryAubFixture : public AUBFixture {
     using AUBFixture::tearDown;
 
     cl_int retVal = CL_SUCCESS;
-    const size_t dataSize = MemoryConstants::megaByte;
+    const size_t dataSize = 2 * MemoryConstants::pageSize64k;
     bool skipped = false;
 
     void setUp();

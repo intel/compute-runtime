@@ -1,43 +1,46 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/sharings/gl/cl_gl_api_intel.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/source/sharings/gl/gl_context_guard.h"
 #include "opencl/source/sharings/gl/gl_sync_event.h"
-#include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
+#include "CL/cl_ext.h"
 #include "gl_types.h"
 
 using namespace NEO;
@@ -146,22 +149,6 @@ TEST_F(GlSharingTests, givenContextWithSharingWhenClCreateFromGlBufferIsCalledWi
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     ASSERT_EQ(CL_INVALID_GL_OBJECT, retVal);
     ASSERT_EQ(nullptr, glBuffer);
-}
-
-TEST_F(GlSharingTests, givenContextAnd32BitAddressingWhenClCreateFromGlBufferIsCalledThenBufferIsReturned) {
-    auto flagToRestore = debugManager.flags.Force32bitAddressing.get();
-    debugManager.flags.Force32bitAddressing.set(true);
-
-    auto retVal = CL_SUCCESS;
-    auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, glBuffer);
-
-    EXPECT_TRUE(castToObject<Buffer>(glBuffer)->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation());
-
-    retVal = clReleaseMemObject(glBuffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    debugManager.flags.Force32bitAddressing.set(flagToRestore);
 }
 
 TEST_F(GlSharingTests, givenGlClBufferWhenAskedForCLGLGetInfoThenIdAndTypeIsReturned) {
@@ -351,9 +338,9 @@ TEST_F(GlSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGra
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
 
-    auto offsetedGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+    auto offsetGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-    EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + mockGlSharing->bufferInfoOutput.bufferOffset);
+    EXPECT_EQ(offsetGraphicsAddress, graphicsAddress + mockGlSharing->bufferInfoOutput.bufferOffset);
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -518,6 +505,7 @@ TEST_F(GlSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
     EXPECT_LT(CL_SUCCESS, event->peekExecutionStatus());
     EXPECT_TRUE(handler->peekIsRegisterListEmpty());
 
+    event->setStatus(CL_COMPLETE);
     event->release();
 }
 
@@ -935,7 +923,7 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
         gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
     }
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
-    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
@@ -1344,7 +1332,7 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenContextWithoutGlSharingWhe
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccesAndValidFormatsAreReturned) {
+TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccessAndValidFormatsAreReturned) {
     cl_uint numFormats = 0;
     cl_GLenum glFormats[2] = {};
     auto glFormatsCount = static_cast<cl_uint>(arrayCount(glFormats));

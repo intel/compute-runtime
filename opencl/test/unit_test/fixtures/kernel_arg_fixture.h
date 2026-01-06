@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,7 @@ struct SKernelBinaryHeaderCommon;
 
 class KernelImageArgTest : public Test<NEO::ClDeviceFixture> {
   public:
-    KernelImageArgTest() {
-    }
+    KernelImageArgTest();
 
     ~KernelImageArgTest() override;
 

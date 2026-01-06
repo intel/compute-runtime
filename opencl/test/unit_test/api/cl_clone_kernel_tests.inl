@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -33,28 +32,16 @@ TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
     cl_kernel pClonedKernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
-
-    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -71,7 +58,7 @@ TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
 
     pSourceKernel = clCreateKernel(
         pProgram,
-        "CopyBuffer",
+        zebin.kernelName,
         &retVal);
 
     EXPECT_NE(nullptr, pSourceKernel);

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gmm_helper/resource_info.h"
 
 using Family = NEO::Gen12LpFamily;
@@ -16,8 +17,8 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
+#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
 #include "shared/source/helpers/populate_factory.h"
-#include "shared/source/helpers/state_base_address_tgllp_and_later.inl"
 
 namespace NEO {
 static auto gfxCore = IGFX_GEN12LP_CORE;
@@ -25,26 +26,25 @@ static auto gfxCore = IGFX_GEN12LP_CORE;
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
+template <>
+size_t CommandStreamReceiverHw<Gen12LpFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = 0;
     const auto &productHelper = getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
-        size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment()));
+        size += (2 * PreambleHelper<Gen12LpFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment()));
     }
-    size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    size += sizeof(typename Gen12LpFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     return size;
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
+    if (csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
         if (!isPipelineSelectAlreadyProgrammed()) {
             PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekRootDeviceEnvironment());
         }
-        this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
-        this->streamProperties.pipelineSelect.setPropertiesAll(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode);
+        this->streamProperties.pipelineSelect.setPropertiesAll(true, this->lastSystolicPipelineSelectMode);
         this->streamProperties.pipelineSelect.clearIsDirty();
     }
 }
@@ -128,7 +128,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), false);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 }
 
 template <typename GfxFamily>
@@ -180,13 +180,13 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::appendTilingType(ImageTilingMode srcTilingType, ImageTilingMode dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                                GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                                ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
 }
 
 template <typename GfxFamily>
@@ -196,11 +196,6 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
     return 0u;
-}
-
-template <typename GfxFamily>
-bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
-    return false;
 }
 
 template <typename GfxFamily>
@@ -234,7 +229,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForL3Config() const {
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
@@ -266,8 +261,8 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 
 template <>
 void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                             GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                             ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         if (!gmmResourceInfo->getResourceFlags()->Info.Linear) {
@@ -288,7 +283,7 @@ void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitPr
 
 template <>
 void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
-    auto tileType = GMM_NOT_TILED;
+    auto tileType = ImageTilingMode::notTiled;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
@@ -297,12 +292,14 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;
     auto compressionDetails = 0u;
-
-    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
-                                rootDeviceEnvironment, blitProperties.srcPlane);
-    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
-                                rootDeviceEnvironment, blitProperties.dstPlane);
-
+    if (srcAllocation) {
+        getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
+                                    rootDeviceEnvironment, blitProperties.srcPlane);
+    }
+    if (dstAllocation) {
+        getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
+                                    rootDeviceEnvironment, blitProperties.dstPlane);
+    }
     blitCmd.setSourcePitch(srcRowPitch);
     blitCmd.setDestinationPitch(dstRowPitch);
 
@@ -311,8 +308,13 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
 }
 
 template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
-    NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
+size_t BlitCommandsHelper<Family>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    return NEO::BlitCommandsHelper<Family>::getNumberOfBlitsForFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+}
+
+template <>
+BlitCommandsResult BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+    return NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
 }
 
 template <>
@@ -331,6 +333,8 @@ bool BlitCommandsHelper<Family>::preBlitCommandWARequired() {
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
+
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
 
 const Family::GPGPU_WALKER Family::cmdInitGpgpuWalker = Family::GPGPU_WALKER::sInit();
 const Family::INTERFACE_DESCRIPTOR_DATA Family::cmdInitInterfaceDescriptorData = Family::INTERFACE_DESCRIPTOR_DATA::sInit();

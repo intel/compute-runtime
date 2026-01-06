@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ XE2_HPG_CORETEST_F(AubCommandStreamReceiverXe2HpgCoreTests, givenLinkBcsEngineWh
 
         MockOsContext osContext(0, engineDescriptor);
         aubCsr.setupContext(osContext);
-
+        aubCsr.initializeEngine();
         aubCsr.dumpAllocation(*gfxAllocation);
 
         auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct FlushStampTrackingObj : public ReferenceTrackedObject<FlushStampTrackingO
     std::atomic<bool> initialized{false};
 };
 
-class FlushStampTracker {
+class FlushStampTracker : NonCopyableClass {
   public:
     FlushStampTracker() = delete;
     FlushStampTracker(bool allocateStamp);
@@ -35,6 +35,8 @@ class FlushStampTracker {
   protected:
     FlushStampTrackingObj *flushStampSharedHandle = nullptr;
 };
+
+static_assert(NonCopyable<FlushStampTracker>);
 
 class FlushStampUpdateHelper {
   public:

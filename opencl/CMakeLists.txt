@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -57,3 +57,13 @@ else()
 endif()
 
 add_subdirectory(test)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(${NEO_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_lib_pch.h)
+  target_precompile_headers(${NEO_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_lib_pch.h)
+
+  if(NOT DONT_CARE_OF_VIRTUALS AND NOT NEO_SKIP_OCL_UNIT_TESTS)
+    target_sources(${NEO_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_lib_pch.h)
+    target_precompile_headers(${NEO_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_lib_pch.h)
+  endif()
+endif()

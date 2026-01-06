@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2022 Intel Corporation
+Copyright (C) 2022-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -26,3 +26,4 @@ ze_result_t res = zeDriverGetExtensionFunctionAddress(hDriver, "zexMemOpenIpcHan
 
 ### [Multiple IPC Handles](MULTIPLE_IPC_HANDLES.md)
 ### [Multi-CCS Modes](MULTI_CCS_MODES.md)
+### [Local memory allocation mode](LOCAL_MEMORY_ALLOCATION_MODE.md)

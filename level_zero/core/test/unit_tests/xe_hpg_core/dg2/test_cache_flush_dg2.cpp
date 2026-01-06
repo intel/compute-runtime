@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,10 +23,10 @@ namespace ult {
 using CacheFlushDG2Tests = Test<DeviceFixture>;
 
 HWTEST2_F(CacheFlushDG2Tests, givenCommandStreamWithSingleL3RangeAndNonZeroPostSyncAddressWhenFlushGpuCacheIsCalledThenPostSyncOperationIsSetForL3ControlAndUnTypedDataPortCacheFlushIsSet, IsDG2) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     LinearStream *cmdStream = commandList->commandContainer.getCommandStream();
     uint64_t gpuAddress = 0x1200;

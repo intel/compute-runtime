@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,7 +188,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
             EXPECT_EQ(static_cast<uint32_t>(((segments.varData.address + symbols[2].value + debugRelocations[2].addend) >> 32) & 0xffffffff),
                       *reinterpret_cast<const uint32_t *>(ptrDebugInfo + debugRelocations[2].offset));
 
-            // debug symbols with name different than text segments are not offseted
+            // debug symbols with name different than text segments are not offset
             EXPECT_EQ(symbols[3].value + debugRelocations[3].addend,
                       *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[3].offset));
 
@@ -196,7 +196,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
             EXPECT_EQ(*reinterpret_cast<uint64_t *>(debugInfo + debugRelocations[4].offset),
                       *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[4].offset));
 
-            // debug symbols with text segment name are offseted by corresponding segment's address
+            // debug symbols with text segment name are offset by corresponding segment's address
             EXPECT_EQ(segments.nameToSegMap["kernel"].address,
                       *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[5].offset));
 

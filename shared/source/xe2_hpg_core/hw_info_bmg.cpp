@@ -7,7 +7,6 @@
 
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
@@ -33,51 +32,41 @@ const PLATFORM BMG::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable BMG::capabilityTable{
-    EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_CCS, {true, false, false, true}},
-        {aub_stream::ENGINE_CCS1, {true, false, true, true}},
-        {aub_stream::ENGINE_BCS, {true, false, true, true}}}, // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},                 // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,                         // gpuAddressSpace
-    0,                                                        // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                                // requiredPreemptionSurfaceSize
-    "",                                                       // deviceName
-    nullptr,                                                  // preferredPlatformName
-    PreemptionMode::MidThread,                                // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                                   // defaultEngineType
-    0,                                                        // maxRenderFrequency
-    30,                                                       // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Bmg,            // aubDeviceId
-    0,                                                        // extraQuantityThreadsPerEU
-    128,                                                      // slmSize
-    sizeof(BMG::GRF),                                         // grfSize
-    64,                                                       // timestampValidBits
-    64,                                                       // kernelTimestampValidBits
-    false,                                                    // blitterOperationsSupported
-    true,                                                     // ftrSupportsInteger64BitAtomics
-    true,                                                     // ftrSupportsFP64
-    false,                                                    // ftrSupportsFP64Emulation
-    true,                                                     // ftrSupports64BitMath
-    true,                                                     // ftrSvm
-    false,                                                    // ftrSupportsCoherency
-    false,                                                    // ftrRenderCompressedBuffers
-    false,                                                    // ftrRenderCompressedImages
-    true,                                                     // ftr64KBpages
-    true,                                                     // instrumentationEnabled
-    false,                                                    // supportCacheFlushAfterWalker
-    true,                                                     // supportsImages
-    true,                                                     // supportsOcl21Features
-    true,                                                     // supportsOnDemandPageFaults
-    true,                                                     // supportsIndependentForwardProgress
-    false,                                                    // hostPtrTrackingEnabled
-    false,                                                    // isIntegratedDevice
-    false,                                                    // supportsMediaBlock
-    false,                                                    // p2pAccessSupported
-    false,                                                    // p2pAtomicAccessSupported
-    false,                                                    // fusedEuEnabled
-    true,                                                     // l0DebuggerSupported;
-    true,                                                     // supportsFloatAtomics
-    0                                                         // cxlType
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
+        {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
+        {aub_stream::ENGINE_BCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
+    }),
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = MemoryConstants::max48BitAddress,
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::MidThread,
+    .defaultEngineType = aub_stream::ENGINE_CCS,
+    .maxRenderFrequency = 0,
+    .extraQuantityThreadsPerEU = 0,
+    .maxProgrammableSlmSize = 128,
+    .grfSize = sizeof(BMG::GRF),
+    .timestampValidBits = 64,
+    .kernelTimestampValidBits = 64,
+    .blitterOperationsSupported = false,
+    .ftrSupportsFP64 = true,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = true,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = false,
+    .supportsImages = true,
+    .supportsOnDemandPageFaults = true,
+    .supportsIndependentForwardProgress = true,
+    .isIntegratedDevice = false,
+    .supportsMediaBlock = false,
+    .fusedEuEnabled = false,
+    .l0DebuggerSupported = true,
 };
 
 void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
@@ -111,12 +100,17 @@ GT_SYSTEM_INFO BmgHwConfig::gtSystemInfo = {};
 const HardwareInfo BMG::hwInfo = BmgHwConfig::hwInfo;
 
 void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupDefaultGtSysInfo(hwInfo, releaseHelper);
+    setupDefaultGtSysInfo(hwInfo);
+
+    hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     BMG::adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         BMG::setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 void BmgHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {

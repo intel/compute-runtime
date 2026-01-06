@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <string>
 
 extern std::string getCurrentDirectoryOwn(std::string outDirForBuilds);

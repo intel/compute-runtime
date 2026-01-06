@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,9 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     }
     void getDeviceContext(D3DQuery *query) override {
         signalDeviceContextCalled = true;
-        while (!signalLockChecked)
+        while (!signalLockChecked) {
             ;
+        }
     }
     void copySubresourceRegion(D3DResource *dst, cl_uint dstSubresource,
                                D3DResource *src, cl_uint srcSubresource) override {
@@ -63,8 +64,9 @@ TEST(SharingD3DMT, givenD3DSharingWhenSynchroniceObjectIsCalledThenMtxIsLockedBe
     auto mockD3DSharing = std::make_unique<MockD3DSharingBase<D3DTypesHelper::D3D11>>(mockCtx.get());
     UpdateData updateData(0);
     std::thread t1([&] { mockD3DSharing->synchronizeObject(updateData); });
-    while (!reinterpret_cast<MockD3DSharingFunctions<D3DTypesHelper::D3D11> *>(mockD3DSharing->sharingFunctions)->signalDeviceContextCalled)
+    while (!reinterpret_cast<MockD3DSharingFunctions<D3DTypesHelper::D3D11> *>(mockD3DSharing->sharingFunctions)->signalDeviceContextCalled) {
         ;
+    }
     std::thread t2([&] { mockD3DSharing->checkIfMutexWasLocked(); });
     t1.join();
     t2.join();
@@ -77,8 +79,9 @@ TEST(SharingD3DMT, givenD3DSharingWhenReleaseResourceIsCalledThenMtxIsLockedBefo
     auto mockD3DSharing = std::make_unique<MockD3DSharingBase<D3DTypesHelper::D3D11>>(mockCtx.get());
     UpdateData updateData(0);
     std::thread t1([&] { mockD3DSharing->releaseResource(nullptr, 0); });
-    while (!reinterpret_cast<MockD3DSharingFunctions<D3DTypesHelper::D3D11> *>(mockD3DSharing->sharingFunctions)->signalDeviceContextCalled)
+    while (!reinterpret_cast<MockD3DSharingFunctions<D3DTypesHelper::D3D11> *>(mockD3DSharing->sharingFunctions)->signalDeviceContextCalled) {
         ;
+    }
     std::thread t2([&] { mockD3DSharing->checkIfMutexWasLocked(); });
     t1.join();
     t2.join();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,18 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/user_event.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
 
 namespace NEO {
@@ -71,11 +72,11 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
 
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
-
+    auto isCacheFlushForBcs = commandQueueHw.isCacheFlushForBcsRequired();
     if (blitEnqueue) {
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
-        if (commandQueueHw.isCacheFlushForBcsRequired()) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+        if (isCacheFlushForBcs || commandQueueHw.isCacheFlushForImageRequired(eventType)) {
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
         }
 
         return expectedSizeCS;
@@ -84,8 +85,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel(), dispatchInfo);
         size_t kernelObjAuxCount = multiDispatchInfo.getKernelObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getKernelObjsForAuxTranslation()->size() : 0;
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, isCacheFlushForBcs);
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, isCacheFlushForBcs);
     }
 
     auto relaxedOrderingEnabled = commandQueue.getGpgpuCommandStreamReceiver().directSubmissionRelaxedOrderingEnabled();
@@ -99,7 +100,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps, relaxedOrderingEnabled);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         if (resolveDependenciesByPipecontrol) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier();
         }
         if (isMarkerWithProfiling) {
             if (!eventsInWaitlist) {
@@ -108,7 +109,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
             expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
         }
     } else if (isMarkerWithProfiling) {
-        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
             expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
         }
@@ -118,7 +119,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     }
 
     if (debugManager.flags.PauseOnEnqueue.get() != -1) {
-        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * 2;
+        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() * 2;
         expectedSizeCS += NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * 2;
     }
 
@@ -129,10 +130,10 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (outEvent) {
         auto pEvent = castToObjectOrAbort<Event>(*outEvent);
         if ((pEvent->getContext()->getRootDeviceIndices().size() > 1) && (!pEvent->isUserEvent())) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
         }
     }
-    expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 
     if ((CL_COMMAND_BARRIER == eventType) && !commandQueue.isOOQEnabled() && eventsInWaitlist) {
         expectedSizeCS += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
@@ -154,7 +155,7 @@ template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue) {
     size_t size = 0;
     if (reserveProfilingCmdsSpace) {
-        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
 
     return size;
@@ -162,9 +163,6 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfi
 
 template <typename GfxFamily>
 template <typename WalkerType>
-void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(WalkerType *walkerCmd,
-                                                               const ProductHelper &productHelper,
-                                                               bool flushL3AfterPostSyncForHostUsm,
-                                                               bool flushL3AfterPostSyncForExternalAllocation) {
+void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(WalkerType &walkerCmd, CommandQueue &commandQueue, const FlushL3Args &args) {
 }
 } // namespace NEO

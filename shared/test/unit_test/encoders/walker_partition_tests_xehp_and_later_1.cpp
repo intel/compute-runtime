@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1493,7 +1493,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
+    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1515,7 +1515,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
     size_t parsedOffset = 0;
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
@@ -1584,7 +1584,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1618,7 +1618,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedData, finalSyncTileCountFieldStore->getDataDword0());
     parsedOffset += sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>);
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
@@ -1727,7 +1727,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1767,7 +1767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedData, finalSyncTileCountFieldAtomic->getOperand1DataDword0());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;

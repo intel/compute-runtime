@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class D3DSharing : public SharingHandler {
     unsigned int &getSubresource() { return subresource; }
     D3DQuery *getQuery() { return d3dQuery; }
     bool isSharedResource() { return sharedResource; }
-    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool packedSupported);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:

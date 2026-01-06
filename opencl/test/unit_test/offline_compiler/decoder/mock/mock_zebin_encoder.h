@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 
 #include "opencl/test/unit_test/offline_compiler/decoder/mock/mock_iga_wrapper.h"

@@ -64,6 +64,9 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     }
 
     template <typename FamilyType>
+    bool isStallingBarrier(GenCmdList::iterator &iter);
+
+    template <typename FamilyType>
     void findHardwareCommands();
 
     template <typename FamilyType>
@@ -215,6 +218,13 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         return FamilyType::Parse::getCommandName(cmd);
     }
 
+    template <typename FamilyType>
+    static GenCmdList parseCommandBuffer(const LinearStream &linearStream, size_t offset) {
+        GenCmdList cmds;
+        EXPECT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(cmds, ptrOffset(linearStream.getCpuBase(), offset), linearStream.getUsed() - offset));
+        return cmds;
+    }
+
     // The starting point of parsing commandBuffers.  This is important
     // because as buffers get reused, we only want to parse the deltas.
     LinearStream *previousCS = nullptr;
@@ -246,5 +256,7 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
 
     bool parsePipeControl = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<HardwareParse>);
 
 } // namespace NEO

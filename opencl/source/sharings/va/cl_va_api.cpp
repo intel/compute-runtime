@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,7 @@
 #include "opencl/source/sharings/va/cl_va_api.h"
 
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/utilities/api_intercept.h"
 
-#include "opencl/source/api/api.h"
 #include "opencl/source/api/api_enter.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -18,13 +16,10 @@
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/va/va_device.h"
-#include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
 #include "opencl/source/utilities/cl_logger.h"
 
 #include "CL/cl.h"
-
-#include <cstring>
 
 using namespace NEO;
 
@@ -141,7 +136,7 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
         status = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                             eventWaitList, event, CL_COMMAND_RELEASE_VA_API_MEDIA_SURFACES_INTEL);
         if (!pCommandQueue->getContext().getInteropUserSyncEnabled()) {
-            pCommandQueue->finish();
+            pCommandQueue->finish(false);
         }
     }
     return status;

@@ -10,8 +10,6 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 
-#include <cmath>
-
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -49,12 +47,19 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
 
         sysfsAccess = static_cast<MockXeFrequencySysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
         sysfsAccess->setVal(minFreqFile, minFreq);
+        sysfsAccess->setVal(minFreqFileMedia, minFreq);
         sysfsAccess->setVal(maxFreqFile, maxFreq);
+        sysfsAccess->setVal(maxFreqFileMedia, maxFreq);
         sysfsAccess->setVal(requestFreqFile, request);
+        sysfsAccess->setVal(requestFreqFileMedia, request);
         sysfsAccess->setVal(actualFreqFile, actual);
+        sysfsAccess->setVal(actualFreqFileMedia, actual);
         sysfsAccess->setVal(efficientFreqFile, efficient);
+        sysfsAccess->setVal(efficientFreqFileMedia, efficient);
         sysfsAccess->setVal(maxValFreqFile, maxVal);
+        sysfsAccess->setVal(maxValFreqFileMedia, maxVal);
         sysfsAccess->setVal(minValFreqFile, minVal);
+        sysfsAccess->setVal(minValFreqFileMedia, minVal);
         step = 50;
         numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
@@ -230,7 +235,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -247,7 +252,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFr
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -264,7 +269,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFr
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMin = 900.0;
@@ -297,7 +302,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAnd
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto &handle : handles) {
         const double negativeMin = -1;
@@ -313,7 +318,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalled
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;
@@ -371,7 +376,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
         const double testEfficientValue = 400.0;
         const double testActualValue = 550.0;
         const uint32_t invalidReason = 0;
-        zes_freq_state_t state;
+        zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
 
         sysfsAccess->setValU32(throttleReasonStatusFile, invalidReason);
         sysfsAccess->setVal(requestFreqFile, testRequestValue);

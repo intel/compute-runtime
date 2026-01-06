@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,17 +12,13 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_time.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/cl_device/cl_device_info_map.h"
-#include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/platform/platform.h"
 
 namespace NEO {
 
@@ -258,8 +254,12 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        auto &compilerProductHelper = device.getCompilerProductHelper();
-        param.uint = static_cast<cl_version>(compilerProductHelper.getHwIpVersion(getHardwareInfo()));
+        uint32_t hwIpVersion = getHardwareInfo().ipVersionOverrideExposedToTheApplication.value;
+        if (0 == hwIpVersion) {
+            auto &compilerProductHelper = device.getCompilerProductHelper();
+            hwIpVersion = compilerProductHelper.getHwIpVersion(getHardwareInfo());
+        }
+        param.uint = static_cast<cl_version>(hwIpVersion);
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);
         break;
@@ -348,6 +348,27 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_EU_THREAD_COUNTS_INTEL:
         src = getSharedDeviceInfo().threadsPerEUConfigs.begin();
         retSize = srcSize = (getSharedDeviceInfo().threadsPerEUConfigs.size() * sizeof(uint32_t));
+        break;
+    case CL_DEVICE_SPIRV_EXTENSIONS_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvExtensions.data();
+        retSize = srcSize = deviceInfo.spirvExtensions.size() * sizeof(const char *);
+        break;
+    case CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvExtendedInstructionSets.data();
+        retSize = srcSize = deviceInfo.spirvExtendedInstructionSets.size() * sizeof(const char *);
+        break;
+    case CL_DEVICE_SPIRV_CAPABILITIES_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvCapabilities.data();
+        retSize = srcSize = deviceInfo.spirvCapabilities.size() * sizeof(cl_uint);
         break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -254,6 +254,14 @@ constexpr bool isVectorDataType(const Token &token) {
     return false;
 }
 
+constexpr bool allowEmptyVectorDataType(const Token &token) {
+    auto tokenString = ConstStringRef(token.pos, token.len);
+    if (equals(tokenString, "kernels")) {
+        return true;
+    }
+    return false;
+}
+
 struct Line {
     enum class LineType : uint8_t { empty,
                                     comment,
@@ -305,7 +313,7 @@ using LinesCache = StackVec<Line, 512>;
 std::string constructYamlError(size_t lineNumber, const char *lineBeg, const char *parsePos, const char *reason = nullptr);
 
 bool isValidInlineCollectionFormat(const char *context, const char *contextEnd);
-constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)+\\s*\\]\\s*\\n";
+constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline collection is not in valid regex format - ^\\[(\\s*(\\d|\\w)+,?)*\\s*\\]\\s*\\n";
 
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
@@ -651,7 +659,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         return false;
     }
 
-    // valid values : y/n yes/no true/false on/off (case insesitive)
+    // valid values : y/n yes/no true/false on/off (case insensitive)
     if (token.len > 5) {
         return false;
     }

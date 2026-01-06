@@ -60,14 +60,13 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     }
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     auto engineType = getChosenEngineType(hwInfo);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
 
     strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << NEO::EngineHelpers::engineTypeToString(engineType);
 
     aubFileName = strfilename.str();
     NEO::ultHwConfig.aubTestName = aubFileName.c_str();
@@ -109,6 +108,8 @@ void AUBFixtureL0::tearDown() {
 }
 
 ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile) {
+    USE_REAL_FILE_SYSTEM();
+
     ze_module_handle_t moduleHandle;
     std::string testFile;
     if (useSharedFile) {

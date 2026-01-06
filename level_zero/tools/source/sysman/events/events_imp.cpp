@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "events_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+
+#include "os_events.h"
 
 namespace L0 {
 

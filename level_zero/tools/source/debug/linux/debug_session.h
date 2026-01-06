@@ -7,15 +7,17 @@
 
 #pragma once
 
-#include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 #include <set>
+#include <unordered_set>
 
 namespace L0 {
 struct DebugSessionLinux : DebugSessionImp {
@@ -253,7 +255,7 @@ struct DebugSessionLinux : DebugSessionImp {
         return allInstancesRemoved;
     }
 
-    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
+    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
     virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) = 0;
     virtual uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) = 0;
     virtual std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) = 0;
@@ -297,14 +299,21 @@ struct DebugSessionLinux : DebugSessionImp {
     void createTileSessionsIfEnabled();
     virtual DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) = 0;
     bool checkAllEventsCollected();
+    void scanThreadsWithAttRaisedUntilSteadyState(uint32_t tileIndex, std::vector<L0::EuThread::ThreadId> &threadsWithAttention);
+
     struct PageFaultEvent {
         uint64_t vmHandle;
         uint32_t tileIndex;
         uint64_t pageFaultAddress;
+        uint64_t execQueueHandle;
+        uint64_t lrcHandle;
         uint32_t bitmaskSize;
         uint8_t *bitmask;
     };
     MOCKABLE_VIRTUAL void handlePageFaultEvent(PageFaultEvent &pfEvent);
+
+    MOCKABLE_VIRTUAL ze_result_t readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer);
 
     uint8_t maxRetries = 3;
     std::unique_ptr<IoctlHandler> ioctlHandler;

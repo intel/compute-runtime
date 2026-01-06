@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,15 +116,27 @@ void KernelDataTest::buildAndDecode() {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pSsh, pSsh, sshSize));
     }
     if (kernelHeapSize) {
-        auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
+        auto kernelAllocation = pKernelInfo->getIsaGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
-        auto &helper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-        size_t isaPadding = helper.getPaddingForISAAllocation();
-        EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
+        auto &gfxCoreHelper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        auto &productHelper = device.getProductHelper();
+        const size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+        const bool isIsaPooled = (pKernelInfo->getIsaParentAllocation() != nullptr);
+        size_t expectedIsaSize = kernelHeapSize + isaPadding;
+        if (isIsaPooled) {
+            const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+            const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+            const size_t alignment = std::max(kernelAlign, cacheLine);
+            expectedIsaSize = alignUp(kernelHeapSize + isaPadding, alignment);
+        }
+        EXPECT_EQ(pKernelInfo->getIsaSize(), expectedIsaSize);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
+        if (pKernelInfo->getIsaParentAllocation()) {
+            kernelIsa = ptrOffset(kernelIsa, pKernelInfo->getIsaOffsetInParentAllocation());
+        }
         EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));
     } else {
-        EXPECT_EQ(nullptr, pKernelInfo->getGraphicsAllocation());
+        EXPECT_EQ(nullptr, pKernelInfo->getIsaGraphicsAllocation());
     }
 }

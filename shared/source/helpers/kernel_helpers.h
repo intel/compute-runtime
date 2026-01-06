@@ -55,6 +55,8 @@ struct KernelHelper {
         return alignUp(std::max(requestedNumberOfWorkgroups, static_cast<size_t>(CommonConstants::minimalSyncBufferSize)), static_cast<size_t>(CommonConstants::maximalSizeOfAtomicType));
     }
     static std::pair<GraphicsAllocation *, size_t> getSyncBufferAllocationOffset(Device &device, const size_t requestedNumberOfWorkgroups);
+
+    static size_t computeKernelIsaAllocationAlignedSizeWithPadding(Device &device, size_t isaSize, bool isLastKernel);
 };
 
 } // namespace NEO

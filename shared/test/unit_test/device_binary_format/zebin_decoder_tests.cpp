@@ -10,13 +10,13 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder_ext.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_enum_lookup.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <numeric>
 #include <vector>
@@ -151,12 +151,13 @@ TEST(ExtractZebinSections, GivenUnknownElfProgbitsSectionThenFail) {
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
-    auto expectedError = "DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : someSection currently supports only : .text.KERNEL_NAME, .data.const, .data.global and .debug_* .\n";
+    auto expectedError = "DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : someSection currently supports only : .text (aliased to .text.Intel_Symbol_Table_Void_Program), .text.KERNEL_NAME, .data.const, .data.global and .debug_* .\n";
     EXPECT_STREQ(expectedError, errors.c_str());
 }
 
 TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     NEO::Elf::ElfEncoder<> elfEncoder;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, std::string{});
@@ -190,6 +191,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
+    ASSERT_EQ(1U, sections.textSections.size());
     ASSERT_EQ(2U, sections.textKernelSections.size());
     ASSERT_EQ(2U, sections.gtpinInfoSections.size());
 
@@ -205,6 +207,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
 
     auto stringSection = decodedElf.sectionHeaders[decodedElf.elfFileHeader->shStrNdx];
     const char *strings = stringSection.data.toArrayRef<const char>().begin();
+    EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::text.data(), strings + sections.textSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someKernel").c_str(), strings + sections.textKernelSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel").c_str(), strings + sections.textKernelSections[1]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someKernel").c_str(), strings + sections.gtpinInfoSections[0]->header->name);
@@ -217,6 +220,26 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::spv.data(), strings + sections.spirvSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataConstZeroInit.data(), strings + sections.constZeroInitDataSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit.data(), strings + sections.globalZeroInitDataSections[0]->header->name);
+}
+
+TEST(ExtractZebinSections, GivenEmptyTextSectionThenIgnoresIt) {
+    NEO::Elf::ElfEncoder<> elfEncoder;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, ArrayRef<const uint8_t>{});
+
+    auto encodedElf = elfEncoder.encode();
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
+
+    ZebinSections sections;
+    std::string errors;
+    std::string warnings;
+    auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    EXPECT_EQ(0U, sections.textSections.size());
 }
 
 TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitWarning) {
@@ -618,22 +641,22 @@ version: '100'
 
 TEST(ExtractZeInfoKernelSections, GivenKnownSectionsThenCapturesThemProperly) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env:   
+    execution_env:
       grf_count: 128
       simd_size: 32
     debug_env:
       sip_surface_bti: 0
-    payload_arguments: 
+    payload_arguments:
       - arg_type:        global_id_offset
         offset:          0
         size:            12
-    per_thread_payload_arguments: 
+    per_thread_payload_arguments:
       - arg_type:        local_id
         offset:          0
         size:            192
-    binding_table_indices: 
+    binding_table_indices:
       - bti_value:       0
         arg_index:       0
     per_thread_memory_buffers:
@@ -1168,9 +1191,9 @@ kernels:
 
 TEST(ExtractZeInfoKernelSections, GivenUnknownSectionThenEmitsAnError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    apple : 
+    apple :
         - red
         - green
 ...
@@ -1511,6 +1534,25 @@ kernels:
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidSingleChannelLocalSizeThenPopulateKernelDescriptorSucceeds) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        local_size
+          offset:          16
+          size:            4
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_EQ(16u, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[0]);
+    EXPECT_EQ(NEO::undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[1]);
+    EXPECT_EQ(NEO::undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[2]);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
@@ -1906,9 +1948,9 @@ kernels:
 }
 TEST(ReadZeInfoExecutionEnvironment, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env: 
+    execution_env:
         barrier_count : 7
         disable_mid_thread_preemption : true
         grf_count : 13
@@ -1934,6 +1976,11 @@ kernels:
         work_group_walk_order_dimensions: [0, 1, 2]
         thread_scheduling_mode: age_based
         indirect_stateless_count: 2
+        has_lsc_stores_with_non_default_l1_cache_controls: true
+        has_printf_calls: true
+        has_indirect_calls: true
+        require_assert_buffer: true
+        require_sync_buffer: true
 ...
 )===";
 
@@ -1981,13 +2028,80 @@ kernels:
     using ThreadSchedulingMode = NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ThreadSchedulingMode;
     EXPECT_EQ(ThreadSchedulingMode::ThreadSchedulingModeAgeBased, execEnv.threadSchedulingMode);
     EXPECT_EQ(2, execEnv.indirectStatelessCount);
+    EXPECT_TRUE(execEnv.hasLscStoresWithNonDefaultL1CacheControls);
+    EXPECT_TRUE(execEnv.hasPrintfCalls);
+    EXPECT_TRUE(execEnv.hasIndirectCalls);
+    EXPECT_TRUE(execEnv.requireAssertBuffer);
+    EXPECT_TRUE(execEnv.requireSyncBuffer);
+}
+
+TEST(ReadZeInfoExecutionEnvironment, GivenMinimalExecutionEnvThenSetProperMembersToDefaults) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size: 32
+        grf_count: 128
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
+    EXPECT_FALSE(execEnv.hasSample);
+
+    auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(32, execEnv.simdSize);
+    EXPECT_EQ(128, execEnv.grfCount);
+
+    namespace Defaults = NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Defaults;
+    EXPECT_EQ(Defaults::barrierCount, execEnv.barrierCount);
+    EXPECT_EQ(Defaults::disableMidThreadPreemption, execEnv.disableMidThreadPreemption);
+    EXPECT_EQ(Defaults::has4GBBuffers, execEnv.has4GBBuffers);
+    EXPECT_EQ(Defaults::hasDpas, execEnv.hasDpas);
+    EXPECT_EQ(Defaults::hasFenceForImageAccess, execEnv.hasFenceForImageAccess);
+    EXPECT_EQ(Defaults::hasGlobalAtomics, execEnv.hasGlobalAtomics);
+    EXPECT_EQ(Defaults::hasMultiScratchSpaces, execEnv.hasMultiScratchSpaces);
+    EXPECT_EQ(Defaults::hasNoStatelessWrite, execEnv.hasNoStatelessWrite);
+    EXPECT_EQ(Defaults::hasStackCalls, execEnv.hasStackCalls);
+    EXPECT_EQ(Defaults::hasRTCalls, execEnv.hasRTCalls);
+    EXPECT_EQ(Defaults::hasSample, execEnv.hasSample);
+    EXPECT_EQ(Defaults::hwPreemptionMode, execEnv.hwPreemptionMode);
+    EXPECT_EQ(Defaults::inlineDataPayloadSize, execEnv.inlineDataPayloadSize);
+    EXPECT_EQ(Defaults::offsetToSkipPerThreadDataLoad, execEnv.offsetToSkipPerThreadDataLoad);
+    EXPECT_EQ(Defaults::offsetToSkipSetFfidGp, execEnv.offsetToSkipSetFfidGp);
+    EXPECT_EQ(Defaults::requiredSubGroupSize, execEnv.requiredSubGroupSize);
+    EXPECT_EQ(Defaults::slmSize, execEnv.slmSize);
+    EXPECT_EQ(Defaults::subgroupIndependentForwardProgress, execEnv.subgroupIndependentForwardProgress);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[0], execEnv.requiredWorkGroupSize[0]);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[1], execEnv.requiredWorkGroupSize[1]);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[2], execEnv.requiredWorkGroupSize[2]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[0], execEnv.workgroupWalkOrderDimensions[0]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[1], execEnv.workgroupWalkOrderDimensions[1]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[2], execEnv.workgroupWalkOrderDimensions[2]);
+    EXPECT_EQ(Defaults::threadSchedulingMode, execEnv.threadSchedulingMode);
+    EXPECT_EQ(Defaults::indirectStatelessCount, execEnv.indirectStatelessCount);
+    EXPECT_EQ(Defaults::hasLscStoresWithNonDefaultL1CacheControls, execEnv.hasLscStoresWithNonDefaultL1CacheControls);
+    EXPECT_EQ(Defaults::hasPrintfCalls, execEnv.hasPrintfCalls);
+    EXPECT_EQ(Defaults::hasIndirectCalls, execEnv.hasIndirectCalls);
+    EXPECT_EQ(Defaults::requireAssertBuffer, execEnv.requireAssertBuffer);
+    EXPECT_EQ(Defaults::requireSyncBuffer, execEnv.requireSyncBuffer);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env: 
+    execution_env:
         simd_size : 8
         something_new : 36
 ...
@@ -2011,7 +2125,7 @@ kernels:
 
 TEST(ReadZeInfoExecutionEnvironment, GivenActualKernelStartOffsetThenDontTreatItAsInvalidEntry) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     execution_env:
         simd_size : 8
@@ -2036,9 +2150,9 @@ kernels:
 
 TEST(ReadZeInfoExecutionEnvironment, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env: 
+    execution_env:
         simd_size : true
 ...
 )===";
@@ -2060,9 +2174,9 @@ kernels:
 
 TEST(ReadZeInfoExecutionEnvironment, GivenInvalidLengthForKnownCollectionEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env: 
+    execution_env:
         required_work_group_size: [5, 2]
 ...
 )===";
@@ -2084,7 +2198,7 @@ kernels:
 
 TEST(ReadZeInfoAttributes, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     user_attributes:
       intel_reqd_sub_group_size: 16
@@ -2094,6 +2208,7 @@ kernels:
       work_group_size_hint: [256, 2, 1]
       new_user_hint: new_user_hint_value
       invalid_kernel: invalid_kernel_reason
+      intel_reqd_thread_group_dispatch_size: 8
 ...
 )===";
 
@@ -2125,11 +2240,12 @@ kernels:
     EXPECT_TRUE(equals(attributes.otherHints[0].first, "new_user_hint"));
     EXPECT_TRUE(equals(attributes.otherHints[0].second, "new_user_hint_value"));
     EXPECT_TRUE(equals(attributes.invalidKernel.value(), "invalid_kernel_reason"));
+    EXPECT_EQ(8, attributes.intelReqdThreadgroupDispatchSize.value());
 }
 
 TEST(ReadZeInfoDebugEnvironment, givenSipSurfaceBtiEntryThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     debug_env:
         sip_surface_bti: 0
@@ -2155,7 +2271,7 @@ kernels:
 
 TEST(ReadZeInfoDebugEnvironment, givenSipSurfaceOffsetEntryThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     debug_env:
         sip_surface_offset: 0
@@ -2181,7 +2297,7 @@ kernels:
 
 TEST(ReadZeInfoDebugEnvironment, givenUnknownEntryThenEmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     debug_env:
         sip_surface_bti: 0
@@ -2206,7 +2322,7 @@ kernels:
 
 TEST(ReadZeInfoDebugEnvironment, givenInvalidValueForKnownEntryThenFail) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     debug_env:
         sip_surface_bti: any
@@ -2232,7 +2348,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenValidDebugEnvironmentWithInvalidSipSurf
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
       debug_env:
         sip_surface_bti: 123
@@ -2252,7 +2368,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenValidDebugEnvironmentWithSIPSurfaceBTIS
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
       debug_env:
         sip_surface_bti: 0
@@ -2358,7 +2474,7 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenKernelAttributesWhenPopulatingKernelDescriptorThenKernelLanguageSourcesAreSetAccordingly) {
     ConstStringRef zeinfo = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     execution_env:
         simd_size: 8
@@ -2366,6 +2482,7 @@ kernels:
       intel_reqd_sub_group_size: 16
       intel_reqd_workgroup_walk_order: [0, 1, 2]
       reqd_work_group_size: [256, 2, 1]
+      intel_reqd_thread_group_dispatch_size: 8
       vec_type_hint:   uint
       work_group_size_hint: [256, 2, 1]
       new_user_hint: new_user_hint_value
@@ -2376,9 +2493,17 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
-    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint)", kernelDescriptor->kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint) intel_reqd_thread_group_dispatch_size(8)", kernelDescriptor->kernelMetadata.kernelLanguageAttributes.c_str());
     EXPECT_EQ(16U, kernelDescriptor->kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(8U, kernelDescriptor->kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.isInvalid);
+}
+
+TEST(BaseKernelDescriptorAndPayloadArgumentPoinetrsExt, givenKernelDescriptorAndPayloadArgWhenProperlyCreatedThenExtraFieldsSetToNullPtr) {
+    NEO::KernelDescriptor kd;
+    NEO::Zebin::ZeInfo::KernelPayloadArgBaseT arg;
+
+    EXPECT_EQ(nullptr, arg.pPayArgExt);
 }
 
 TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKernelSourceAttributesThenKernelIsInvalidFlagIsSet) {
@@ -2407,7 +2532,7 @@ TEST(PopulateKernelSourceAttributes, GivenRequiredWalkOrderAttributeWhenPopulati
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenUnknownAttributeWhenPopulatingKernelDescriptorThenErrorIsReturned) {
     ConstStringRef zeinfo = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
     execution_env:
         simd_size: 8
@@ -2446,9 +2571,9 @@ TEST(ReadEnumChecked, GivenInvalidEnumStringThenReturnErrorAndFail) {
 
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_payload_arguments: 
+    per_thread_payload_arguments:
         - arg_type : packed_local_ids
           offset : 8
           size : 16
@@ -2483,9 +2608,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenUnknownEntryThenEmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_payload_arguments: 
+    per_thread_payload_arguments:
         - arg_type : packed_local_ids
           offset : 8
           size : 16
@@ -2511,9 +2636,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_payload_arguments: 
+    per_thread_payload_arguments:
         - arg_type : packed_local_ids
           offset : true
           size : 16
@@ -2537,9 +2662,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenZeroSizeEntryThenSkipsItAndEmitsWarning) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_payload_arguments: 
+    per_thread_payload_arguments:
         - arg_type : packed_local_ids
           offset : 16
           size : 0
@@ -2564,12 +2689,12 @@ kernels:
 
 TEST(ReadZeInfoPayloadArguments, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    payload_arguments: 
+    payload_arguments:
         - arg_type : arg_bypointer
           offset : 16
-          size : 8	
+          size : 8
           arg_index	: 1
           addrmode : stateless
           addrspace	: global
@@ -2634,9 +2759,9 @@ kernels:
 
 TEST(ReadZeInfoPayloadArguments, GivenUnknownEntryThenEmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    payload_arguments: 
+    payload_arguments:
         - arg_type : arg_byvalue
           offset : 24
           size : 4
@@ -2703,9 +2828,9 @@ kernels:
 
 TEST(ReadZeInfoBindingTableIndices, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    payload_arguments: 
+    payload_arguments:
         - arg_type : arg_byvalue
           offset : 24
           size : true
@@ -2731,9 +2856,9 @@ kernels:
 
 TEST(ReadZeInfoBindingTableIndices, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    binding_table_indices: 
+    binding_table_indices:
         - bti_value : 1
           arg_index : 7
         - bti_value : 5
@@ -2765,9 +2890,9 @@ kernels:
 
 TEST(ReadZeInfoBindingTableIndices, GivenUnknownEntryThenEmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    binding_table_indices: 
+    binding_table_indices:
         - bti_value : 1
           arg_index : 7
           something_new : true
@@ -2795,9 +2920,9 @@ kernels:
 
 TEST(ReadZeInfoPayloadArguments, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    binding_table_indices: 
+    binding_table_indices:
         - bti_value : 1
           arg_index : any
 ...
@@ -2820,9 +2945,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_memory_buffers: 
+    per_thread_memory_buffers:
       - type:            scratch
         usage:           single_space
         size:            64
@@ -2871,11 +2996,11 @@ kernels:
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenPerSimtThreadPrivateMemoryThenSetsProperFlag) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    execution_env:   
+    execution_env:
       simd_size: 16
-    per_thread_memory_buffers: 
+    per_thread_memory_buffers:
       - type:            global
         usage:           private_space
         size:            128
@@ -2906,9 +3031,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenUnknownEntryThenEmmitsError) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_memory_buffers: 
+    per_thread_memory_buffers:
       - type:            scratch
         usage:           single_space
         size:            64
@@ -2938,9 +3063,9 @@ kernels:
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
-kernels:         
+kernels:
   - name:            some_kernel
-    per_thread_memory_buffers: 
+    per_thread_memory_buffers:
       - type:            scratch
         usage:           single_space
         size:            eight
@@ -3299,7 +3424,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEmitsError) {
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsUnknownAttributeAndNoKernelsSectionThenEmitsError) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3313,10 +3438,26 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\n"
-                 "DeviceBinaryFormat::zebin::ZeInfo : Expected exactly 1 of kernels, got : 0\n",
+    EXPECT_EQ(NEO::DecodeError::unkownZeinfoAttribute, error);
+    EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\n",
                  errors.c_str());
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenSuccessReturned) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    auto zeInfo = std::string("version:\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\n";
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error) << errors.c_str();
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
@@ -3334,7 +3475,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin::ZeInfo : Expected exactly 1 of kernels, got : 2\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::zebin::ZeInfo : Expected at most 1 of kernels, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
@@ -3468,7 +3609,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenDecodeZeInfoFailsThenDecodingFails) {
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     std::string brokenZeInfo = "version : \'" + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
-    - 
+    -
 )===";
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
@@ -3541,6 +3682,10 @@ functions:
         simd_size: 8
         barrier_count: 1
         has_rtcalls: true
+        has_printf_calls: true
+        has_indirect_calls: true
+        require_assert_buffer: true
+        require_sync_buffer: true
 )===";
 
     uint8_t kernelIsa[8]{0U};
@@ -3548,6 +3693,48 @@ functions:
     zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
     zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    ASSERT_EQ(1U, programInfo.externalFunctions.size());
+    auto &funInfo = programInfo.externalFunctions[0];
+    EXPECT_STREQ("fun1", funInfo.functionName.c_str());
+    EXPECT_EQ(128U, funInfo.numGrfRequired);
+    EXPECT_EQ(8U, funInfo.simdSize);
+    EXPECT_EQ(1U, funInfo.barrierCount);
+    EXPECT_EQ(true, funInfo.hasRTCalls);
+    EXPECT_EQ(true, funInfo.hasIndirectCalls);
+    EXPECT_EQ(true, funInfo.hasPrintfCalls);
+    EXPECT_EQ(true, funInfo.requireAssertBuffer);
+    EXPECT_EQ(true, funInfo.requireSyncBuffer);
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoWithEmptyKernelsAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:        []
+functions:
+    - name: fun1
+      execution_env:
+        grf_count: 128
+        simd_size: 8
+        barrier_count: 1
+        has_rtcalls: true
+)===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
@@ -3617,7 +3804,7 @@ functions:
     - name: fun
       execution_env:
         grf_count: 128
-        simd_size: 8 
+        simd_size: 8
 )===";
 
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3681,7 +3868,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     ConstStringRef zeinfo = R"===(
     kernels:
         - name : some_kernel
-          execution_env:   
+          execution_env:
             simd_size: 32
             grf_count: 128
 )===";
@@ -3703,6 +3890,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, Defaults::hasDpas);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasSample, Defaults::hasSample);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasIndirectCalls, Defaults::hasIndirectCalls);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesPrintf, Defaults::hasPrintfCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::zebin);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.bufferAddressingMode, (Defaults::has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless);
@@ -3747,10 +3936,10 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPerThreadPayloadArgYamlEntriesTh
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         grf_count: 128
         simd_size: 32
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        local_id
           offset:          aaa
           size:            8
@@ -3765,10 +3954,10 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPayloadArgYamlEntriesThenFails) 
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         grf_count: 128
         simd_size: 32
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        global_id_offset
           offset:          aaa
           size:            12
@@ -3783,10 +3972,10 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPerThreadMemoryBufferYamlEntries
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         grf_count: 128
         simd_size: 32
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
         - type:        scratch
           usage:       spill_fill_space
           size:        eight
@@ -3801,7 +3990,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidSimdSizeThenFails) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
@@ -3816,7 +4005,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSimdSizeThenSetsItCorrectly) {
         std::string zeinfo = R"===(
     kernels:
         - name : some_kernel
-          execution_env:   
+          execution_env:
             simd_size: )===" +
                              std::to_string(simdSize) + "\n";
         auto err = decodeZeInfoKernelEntry(zeinfo);
@@ -3855,7 +4044,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidThreadSchedulingModesThenPopulateC
         std::string zeinfo = R"===(
         kernels:
             - name: some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
                 thread_scheduling_mode: )===" +
                              str.str() +
@@ -3874,9 +4063,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidLocalIdThenAlignUpChannelSizeToGrf
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 16
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        local_id
           offset:          0
           size:            192
@@ -3894,9 +4083,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidPerThreadArgThenPopulatesKernelDes
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 32
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        local_id
           offset:          0
           size:            192
@@ -3912,9 +4101,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPayloadArgThenFails) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        local_id
           offset:          0
           size:            12
@@ -3932,9 +4121,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenZebinAppendElwsThenInjectsElwsArg) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        local_size
           offset:          16
           size:            12
@@ -3957,9 +4146,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidBindingTableYamlEntriesThenFails
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        arg_byvalue
           offset:          0
           size:            12
@@ -3978,9 +4167,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidBindingTableEntriesThenGeneratesSs
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        arg_bypointer
           offset:          0
           size:            8
@@ -4017,9 +4206,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenBtiEntryForWrongArgTypeThenFail) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        arg_byvalue
           offset:          0
           size:            12
@@ -4038,9 +4227,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidArgSamplerThenGeneratesDsh) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type:        arg_bypointer
           size:            8
           addrspace:       sampler
@@ -4071,11 +4260,11 @@ kernels:
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsNotPrivateThenFails) {
     {
         ConstStringRef zeinfo = R"===(
-  kernels:         
+  kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            global
             usage:           spill_fill_space
             size:            64
@@ -4089,11 +4278,11 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAn
 
     {
         ConstStringRef zeinfo = R"===(
-  kernels:         
+  kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            global
             usage:           single_space
             size:            64
@@ -4108,11 +4297,11 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAn
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsSlmThenFails) {
     ConstStringRef zeinfo = R"===(
-  kernels:         
+  kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            slm
             usage:           spill_fill_space
             size:            64
@@ -4126,11 +4315,11 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsSlmThenF
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsPrivateThenSetsProperFieldsInDescriptor) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            global
             usage:           private_space
             size:            256
@@ -4144,11 +4333,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, givenPerSimtThreadBufferWhenPopulatingThenCalculatesCorrectSize) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            global
             usage:           private_space
             size:            256
@@ -4163,12 +4352,12 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchAndSimtThreadThenSetsProperFieldsInDescriptor) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
         spill_size: 2048
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           spill_fill_space
             size:            2048
@@ -4185,12 +4374,12 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferBiggerThanMinimalWhenSlotAndSimtThreadIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
         private_size: 2048
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            2048
@@ -4208,13 +4397,13 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryForSpillAndPrivateDefinedInSeparateFieldsThenProperFieldsInDescriptorAreSet) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
         private_size: 256
         spill_size: 512
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           single_space
             size:            1024
@@ -4235,13 +4424,13 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryForSpillAndPrivateDefinedInOlderZeInfoThenFallbackToLegacySlotMeaning) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
         private_size: 256
         spill_size: 512
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           single_space
             size:            1024
@@ -4262,11 +4451,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            1540
@@ -4281,11 +4470,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenSlotIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            1024
@@ -4301,11 +4490,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenSlotIsInvalidThenFails) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            512
@@ -4319,11 +4508,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWithInvalidSizeThenErrorIsReturned) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            0
@@ -4336,11 +4525,11 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWithMultipleScratchEntriesForTheSameSlotThenFails) {
     ConstStringRef zeinfo = R"===(
-kernels:         
+kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_memory_buffers: 
+      per_thread_memory_buffers:
           - type:            scratch
             usage:           private_space
             size:            512
@@ -4358,7 +4547,7 @@ TEST(DecodeZebinTest, GivenKernelWithoutCorrespondingTextSectionThenFail) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
 )===";
     NEO::ProgramInfo programInfo;
@@ -4405,11 +4594,28 @@ TEST(DecodeZebinTest, givenGtpinInfoSectionsWhenDecodingZebinThenProperlySetIgcI
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo2->igcInfoForGtpin), mockGtpinData2.data(), mockGtpinData2.size()));
 }
 
+TEST(DecodeZebinTest, givenTextSectionThenTreatItAsExternalFunctions) {
+    std::string errors, warnings;
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t data[0x10]{0u};
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel", ArrayRef<const uint8_t>::fromAny(data, 0x10));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, ArrayRef<const uint8_t>::fromAny(data, 0x10));
+
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::ProgramInfo programInfo;
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    ASSERT_EQ(2U, programInfo.kernelInfos.size());
+    EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::externalFunctions.data(), programInfo.kernelInfos[1]->kernelDescriptor.kernelMetadata.kernelName.c_str());
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidExecutionEnvironmentThenPopulateKernelDescriptorProperly) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         barrier_count : 7
         disable_mid_thread_preemption : true
         grf_count : 13
@@ -4491,9 +4697,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenOffsetIsNonZeroThenFa
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        local_id
           offset:          4
           size:            192
@@ -4508,9 +4714,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenSizeIsInvalidThenFail
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        local_id
           offset:          0
           size:            7
@@ -4530,10 +4736,10 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenSizeIsValidThenCalcul
             std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: )===" +
                                  std::to_string(simdSize) + R"===(
-              per_thread_payload_arguments: 
+              per_thread_payload_arguments:
                 - arg_type:        local_id
                   offset:          0
                   size:            )===" +
@@ -4558,9 +4764,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenOffsetIsNonZero
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 1
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        packed_local_ids
           offset:          4
           size:            6
@@ -4575,9 +4781,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenSizeIsInvalidTh
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 1
-      per_thread_payload_arguments: 
+      per_thread_payload_arguments:
         - arg_type:        packed_local_ids
           offset:          0
           size:            1
@@ -4597,10 +4803,10 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenSizeIsValidThen
             std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: )===" +
                                  std::to_string(simdSize) + R"===(
-              per_thread_payload_arguments: 
+              per_thread_payload_arguments:
                 - arg_type:        packed_local_ids
                   offset:          0
                   size:            )===" +
@@ -4635,12 +4841,12 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenBufferPointerArgWhenAddressSpaceIsKnown
         std::string zeinfo = R"===(
         kernels:
             - name : 'some_kernel'
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : arg_bypointer
                   offset : 16
-                  size : 8	
+                  size : 8
                   arg_index	: 0
                   addrmode : stateless
                   )===" + (addressSpace.first.empty() ? "" : ("addrspace	: " + addressSpace.first.str())) +
@@ -4663,9 +4869,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAddressSpaceIsImageThenPo
     ConstStringRef zeinfo = R"===(
     kernels:
         - name : 'some_kernel'
-            execution_env:   
+            execution_env:
                 simd_size: 32
-            payload_arguments: 
+            payload_arguments:
               - arg_type : arg_bypointer
                 arg_index	: 0
                 addrspace:       image
@@ -4694,12 +4900,12 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAccessQualifierIsKnownThe
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : arg_bypointer
                   offset : 16
-                  size : 8	
+                  size : 8
                   arg_index	: 0
                   addrmode : stateless
                   )===" + (accessQualifier.first.empty() ? "" : ("access_type	: " + accessQualifier.first.str())) +
@@ -4722,12 +4928,12 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenNonPointerArgWhenAddressSpaceIsStateles
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : arg_bypointer
                   offset : 16
-                  size : 8	
+                  size : 8
                   arg_index	: 0
                   addrmode : stateless
                   addrspace : )===" +
@@ -4745,12 +4951,12 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsUkn
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
-      execution_env:   
+      execution_env:
         simd_size: 8
-      payload_arguments: 
+      payload_arguments:
         - arg_type : arg_bypointer
             offset : 16
-            size : 8	
+            size : 8
             arg_index	: 0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
@@ -4771,19 +4977,19 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : arg_bypointer
                   offset : 16
-                  size : 8	
+                  size : 8
                   arg_index	: 0
                   )===" + (addressingMode.first.empty() ? "" : ("addrmode	: " + addressingMode.first.str())) +
                              R"===(
         )===";
         uint32_t expectedArgsCount = 1U;
-        bool statefulOrBindlessAdressing = (AddressingMode::memoryAddressingModeStateful == addressingMode.second) || (AddressingMode::memoryAddressingModeBindless == addressingMode.second);
-        if (statefulOrBindlessAdressing) {
+        bool statefulOrBindlessAddressing = (AddressingMode::memoryAddressingModeStateful == addressingMode.second) || (AddressingMode::memoryAddressingModeBindless == addressingMode.second);
+        if (statefulOrBindlessAddressing) {
             zeinfo += R"===(
                 -arg_type : arg_bypointer
                     offset : 24
@@ -4826,7 +5032,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
             break;
         }
 
-        if (statefulOrBindlessAdressing) {
+        if (statefulOrBindlessAddressing) {
             auto &argAsImage = kernelDescriptor->payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
             auto &argAsSampler = kernelDescriptor->payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
             switch (addressingMode.second) {
@@ -4837,6 +5043,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
                 break;
             case AddressingMode::memoryAddressingModeBindless:
                 EXPECT_EQ(24U, argAsImage.bindless);
+                EXPECT_EQ(8U, argAsImage.size);
                 EXPECT_EQ(32U, argAsSampler.bindless);
                 break;
             }
@@ -4848,9 +5055,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeIsInvalidThe
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : local_size
                   offset : 16
                   size : 7
@@ -4868,9 +5075,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeValidThenPop
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : local_size
                   offset : 16
                   size : )===" +
@@ -4892,9 +5099,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobaIdOffsetWhenArgSizeIsInvali
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : global_id_offset
                   offset : 16
                   size : 7
@@ -4957,9 +5164,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeIsInvalidTh
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : group_count
                   offset : 16
                   size : 7
@@ -4977,9 +5184,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeValidThenPo
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : group_count
                   offset : 16
                   size : )===" +
@@ -5001,9 +5208,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeIsIn
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : enqueued_local_size
                   offset : 16
                   size : 7
@@ -5042,9 +5249,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeVali
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : enqueued_local_size
                   offset : 16
                   size : )===" +
@@ -5066,9 +5273,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidTh
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : global_size
                   offset : 16
                   size : 7
@@ -5083,9 +5290,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsInvalidThenF
     ConstStringRef zeInfoRegionGroupSize = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_size
                   offset : 16
                   size : 7
@@ -5098,9 +5305,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsInvalidThenF
     ConstStringRef zeInfoRegionGroupDim = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_dimension
                   offset : 16
                   size : 7
@@ -5113,9 +5320,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsInvalidThenF
     ConstStringRef zeInfoRegionGroupCount = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_wg_count
                   offset : 16
                   size : 7
@@ -5130,9 +5337,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     ConstStringRef zeInfoRegionGroupSize = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_size
                   offset : 16
                   size : 12
@@ -5149,9 +5356,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     ConstStringRef zeInfoRegionGroupDim = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_dimension
                   offset : 16
                   size : 4
@@ -5167,9 +5374,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     ConstStringRef zeInfoRegionGroupCount = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_wg_count
                   offset : 16
                   size : 4
@@ -5185,9 +5392,9 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     ConstStringRef zeInfoRegionGroupBarrier = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : region_group_barrier_buffer
                   offset : 16
                   size : 8
@@ -5208,9 +5415,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPo
         std::string zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type : global_size
                   offset : 16
                   size : )===" +
@@ -5232,9 +5439,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeBufferOffsetWhenOffsetAndSizeVal
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type: buffer_offset
                   offset: 8
                   size: 4
@@ -5269,7 +5476,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenPureStatefulArgWithBufferAddressWhenThe
                   arg_index: 0
               binding_table_indices:
                 - bti_value: 0
-                  arg_index: 0         
+                  arg_index: 0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
@@ -5288,9 +5495,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenNoArgsThenPopulatesKernelDescriptor) {
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              
+
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
@@ -5342,9 +5549,9 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeWorkDimensionsWhenSizeIsValidThe
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
-              execution_env:   
+              execution_env:
                 simd_size: 32
-              payload_arguments: 
+              payload_arguments:
                 - arg_type: work_dimensions
                   offset: 32
                   size: 4
@@ -5354,6 +5561,27 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeWorkDimensionsWhenSizeIsValidThe
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(32U, kernelDescriptor->payloadMappings.dispatchTraits.workDim);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeBufferSizeWhenSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: buffer_size
+                  offset: 32
+                  size: 8
+                  arg_index: 0
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    EXPECT_EQ(32, arg.bufferSize);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeImplicitArgBufferWhenPopulatingKernelDescriptorThenProperOffsetIsSetAndImplicitArgsAreRequired) {
@@ -5373,6 +5601,46 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(4u, kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer);
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvRequireImplicitArgBufferTrueWhenPopulatingKernelDescriptorThenImplicitArgsAreRequired) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+        require_iab: true
+      payload_arguments:
+        - arg_type: work_dimensions
+            offset: 32
+            size: 4
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer));
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvRequireImplicitArgBufferFalseWhenPopulatingKernelDescriptorThenImplicitArgsAreNotRequired) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+        require_iab: false
+      payload_arguments:
+        - arg_type: work_dimensions
+            offset: 32
+            size: 4
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer));
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSizeIsInvalidThenPopulateKernelDescriptorFails) {
@@ -5549,6 +5817,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsV
     const auto printfSurfaceAddress = kernelDescriptor->payloadMappings.implicitArgs.printfSurfaceAddress;
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesPrintf);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeAssertBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
@@ -5677,7 +5946,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
     auto &args = kernelDescriptor->payloadMappings.explicitArgs;
 
     EXPECT_EQ(64U, args[0].as<ArgDescImage>().bindful);
-    EXPECT_TRUE(args[0].getExtendedTypeInfo().isMediaImage);
     EXPECT_TRUE(args[0].getExtendedTypeInfo().isTransformable);
     EXPECT_EQ(NEOImageType::imageType2DMedia, args[0].as<ArgDescImage>().imageType);
 
@@ -5745,30 +6013,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
                   offset:          8
                   size:            4
                   arg_index:       2
-                - arg_type:        arg_bypointer
-                  offset:          12
-                  size:            0
-                  arg_index:       3
-                  addrmode:        bindless
-                  addrspace:       sampler
-                  access_type:     readwrite
-                  sampler_type:    vme
-                - arg_type:        vme_mb_block_type
-                  offset:          20
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_subpixel_mode
-                  offset:          24
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_sad_adjust_mode
-                  offset:          28
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_search_path_type
-                  offset:          32
-                  size:            4
-                  arg_index:       3
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
@@ -5784,13 +6028,11 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(undefined<uint8_t>, sampler0.size);
 
     auto &sampler1 = args[1].as<ArgDescSampler>();
-    EXPECT_TRUE(args[1].getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ(80U, sampler1.bindful);
     EXPECT_EQ(1U, sampler1.index);
     EXPECT_EQ(undefined<uint8_t>, sampler1.size);
 
     auto &sampler2 = args[2].as<ArgDescSampler>();
-    EXPECT_TRUE(args[2].getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ(96U, sampler2.bindful);
     EXPECT_EQ(0U, sampler2.metadataPayload.samplerSnapWa);
     EXPECT_EQ(4U, sampler2.metadataPayload.samplerNormalizedCoords);
@@ -5798,18 +6040,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(2U, sampler2.index);
     EXPECT_EQ(undefined<uint8_t>, sampler2.size);
 
-    auto &sampler3 = args[3].as<ArgDescSampler>();
-    EXPECT_TRUE(args[3].getExtendedTypeInfo().isAccelerator);
-    EXPECT_TRUE(args[3].getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    EXPECT_EQ(12U, sampler3.bindless);
-    auto vmePayload = static_cast<NEO::ArgDescVme *>(kd.payloadMappings.explicitArgsExtendedDescriptors[3].get());
-    EXPECT_EQ(20U, vmePayload->mbBlockType);
-    EXPECT_EQ(24U, vmePayload->subpixelMode);
-    EXPECT_EQ(28U, vmePayload->sadAdjustMode);
-    EXPECT_EQ(32U, vmePayload->searchPathType);
-
     EXPECT_TRUE(kd.kernelAttributes.flags.usesSamplers);
-    EXPECT_TRUE(kd.kernelAttributes.flags.usesVme);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessSamplerArgumentWithMetadataThenKernelDescriptorIsPopulated) {
@@ -6038,18 +6269,18 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
     elfNotes.at(0).type = Zebin::Elf::IntelGTSectionType::productFamily;
     elfNotes.at(1).type = Zebin::Elf::IntelGTSectionType::gfxCore;
     elfNotes.at(2).type = Zebin::Elf::IntelGTSectionType::lastSupported + 1; // unsupported
-    std::vector<uint8_t *> descDatas;
+    std::vector<uint8_t *> descData;
 
     uint8_t platformDescData[4u];
     memcpy_s(platformDescData, 4u, &targetDevice.productFamily, 4u);
-    descDatas.push_back(platformDescData);
+    descData.push_back(platformDescData);
 
     uint8_t coreDescData[4u];
     memcpy_s(coreDescData, 4u, &targetDevice.coreFamily, 4u);
-    descDatas.push_back(coreDescData);
+    descData.push_back(coreDescData);
 
     uint8_t mockDescData[4]{0};
-    descDatas.push_back(mockDescData);
+    descData.push_back(mockDescData);
 
     const auto sectionDataSize = std::accumulate(elfNotes.begin(), elfNotes.end(), size_t{0u},
                                                  [](auto totalSize, const auto &elfNote) {
@@ -6057,7 +6288,7 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
                                                  });
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
 
-    appendIntelGTSectionData(elfNotes, noteIntelGTSectionData.get(), descDatas, sectionDataSize);
+    appendIntelGTSectionData(elfNotes, noteIntelGTSectionData.get(), descData, sectionDataSize);
     zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
     std::string outErrReason, outWarning;
     auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
@@ -6065,7 +6296,7 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    auto validationRes = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    auto validationRes = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(validationRes);
     EXPECT_TRUE(outErrReason.empty());
 
@@ -6123,7 +6354,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTargetDeviceThenUseOnlyItForValidation) {
@@ -6155,7 +6386,7 @@ TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTar
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaroundFlagSetToTrueWhenValidatingDeviceBinaryThenDoNotUseProductConfigForValidation) {
@@ -6165,7 +6396,7 @@ TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaro
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.aotConfig.value = aotConfig.value + 0x10; // ensure mismatch and valiation error if AOT config is used
+    targetDevice.aotConfig.value = aotConfig.value + 0x10; // ensure mismatch and validation error if AOT config is used
     targetDevice.applyValidationWorkaround = true;
 
     std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
@@ -6203,7 +6434,7 @@ TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaro
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
@@ -6230,7 +6461,7 @@ TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenVali
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGeneratorIdWhenValidatingTargetDeviceThenGeneratorIsSetCorrectly) {
@@ -6260,12 +6491,31 @@ TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGener
         EXPECT_TRUE(outErrReason.empty());
 
         SingleDeviceBinary singleDeviceBinary{};
-        EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+        EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 
         bool isIgcGeneratedExpectation = static_cast<bool>(generatorId);
         bool isIgcGenerated = static_cast<bool>(singleDeviceBinary.generator);
         EXPECT_EQ(isIgcGeneratedExpectation, isIgcGenerated);
     }
+}
+
+TEST_F(IntelGTNotesFixture, GivenForceCompatibilityModeWhenValidatingTargetDeviceWithNoNotesThenReturnTrue) {
+    DebugManagerStateRestore dbgRestore;
+    TargetDevice targetDevice;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.maxPointerSizeInBytes = 8;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+
+    std::string outErrReason, outWarning;
+    auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+    SingleDeviceBinary singleDeviceBinary{};
+
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
+    NEO::debugManager.flags.ForceCompatibilityMode.set(true);
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndNoNotesThenReturnFalse) {
@@ -6281,7 +6531,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndN
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAndValidNotesThenReturnFalse) {
@@ -6334,7 +6584,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAn
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndInvalidNoteTypeThenReturnFalse) {
@@ -6360,7 +6610,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndI
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSecionSizeWhichWilLCauseOOBAccessThenReturnFalse) {
@@ -6386,7 +6636,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_FALSE(result);
     EXPECT_TRUE(outWarning.empty());
     auto errStr{"DeviceBinaryFormat::zebin : Offsetting will cause out-of-bound memory read! Section size: " + std::to_string(incorrectSectionDataSize) +
@@ -6415,7 +6665,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInI
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outErrReason.empty());
 }
 
@@ -6440,22 +6690,152 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenIndirectDetectionVers
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outErrReason.empty());
     EXPECT_EQ(indirectDetectionVersion, singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection);
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
     singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
     std::string errors;
     std::string warnings;
+    zebin.elfHeader->machine = productFamily;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(indirectDetectionVersion, programInfo.indirectDetectionVersion);
+}
+
+TEST_F(IntelGTNotesFixture, GivenIndirectAccessBufferVersionInIntelGTNotesWhenValidatingTargetDeviceThenVersionIsPopulatedCorrectly) {
+
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
+    TargetDevice targetDevice = getTargetDevice(rootDeviceEnvironment);
+    if (zebin.elfHeader->identity.eClass == NEO::Elf::EI_CLASS_64) {
+        targetDevice.maxPointerSizeInBytes = 8;
+    }
+    const uint32_t indirectAccessBufferMajorVersion = 4u;
+
+    {
+        std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+        for (int i = 0; i < 2; i++) {
+            auto &inserted = elfNoteSections.emplace_back();
+            inserted.descSize = 4u;
+            inserted.nameSize = 8u;
+        }
+
+        elfNoteSections.at(0).type = Zebin::Elf::IntelGTSectionType::productFamily;
+        elfNoteSections.at(1).type = Zebin::Elf::IntelGTSectionType::productConfig;
+
+        elfNoteSections.emplace_back();
+        elfNoteSections.at(2).type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
+        elfNoteSections.at(2).descSize = sizeof(uint32_t);
+        elfNoteSections.at(2).nameSize = 8u;
+
+        std::vector<uint8_t *> descData;
+
+        uint8_t productFamilyData[4];
+        memcpy_s(productFamilyData, 4, &targetDevice.productFamily, 4);
+        descData.push_back(productFamilyData);
+
+        uint8_t productConfigData[4];
+        memcpy_s(productConfigData, 4, &targetDevice.aotConfig.value, 4);
+        descData.push_back(productConfigData);
+
+        uint8_t indirectAccessBufferData[4];
+        memcpy_s(indirectAccessBufferData, 4, &indirectAccessBufferMajorVersion, 4);
+        descData.push_back(indirectAccessBufferData);
+
+        const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                     [](auto totalSize, const auto &elfNoteSection) {
+                                                         return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                     });
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+        zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    }
+
+    std::string outErrReason, outWarning;
+    auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    SingleDeviceBinary singleDeviceBinary{};
+    singleDeviceBinary.targetDevice = targetDevice;
+
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
+    EXPECT_EQ(indirectAccessBufferMajorVersion, singleDeviceBinary.generatorFeatureVersions.indirectAccessBuffer);
+
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    NEO::ProgramInfo programInfo;
+    singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
+
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error);
+    EXPECT_EQ(indirectAccessBufferMajorVersion, programInfo.indirectAccessBufferMajorVersion);
+}
+
+TEST_F(IntelGTNotesFixture, GivenFailFromValidateTargetDeviceWhenDecodingBinaryThenInvalidBinaryReturend) {
+
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
+    TargetDevice targetDevice = getTargetDevice(rootDeviceEnvironment);
+    if (zebin.elfHeader->identity.eClass == NEO::Elf::EI_CLASS_64) {
+        targetDevice.maxPointerSizeInBytes = 8;
+    }
+
+    {
+        std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+        for (int i = 0; i < 2; i++) {
+            auto &inserted = elfNoteSections.emplace_back();
+            inserted.descSize = 4u;
+            inserted.nameSize = 8u;
+        }
+
+        elfNoteSections.at(0).type = Zebin::Elf::IntelGTSectionType::productFamily;
+        elfNoteSections.at(1).type = Zebin::Elf::IntelGTSectionType::productConfig;
+
+        std::vector<uint8_t *> descData;
+
+        uint8_t productFamilyData[4] = {0};
+        descData.push_back(productFamilyData);
+
+        uint8_t productConfigData[4] = {0};
+        descData.push_back(productConfigData);
+
+        const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                     [](auto totalSize, const auto &elfNoteSection) {
+                                                         return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                     });
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+        zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    }
+
+    std::string outErrReason, outWarning;
+    auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    SingleDeviceBinary singleDeviceBinary{};
+    singleDeviceBinary.targetDevice = targetDevice;
+
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
+
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    NEO::ProgramInfo programInfo;
+    singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
+
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
 }
 
 TEST_F(IntelGTNotesFixture, GivenNotNullTerminatedVersioningStringWhenGettingIntelGTNotesThenEmitWarningAndDontUseIt) {
@@ -6502,7 +6882,7 @@ TEST_F(IntelGTNotesFixture, GivenInvalidVersioningWhenValidatingTargetDeviceThen
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .11\n", outErrReason.c_str());
 }
@@ -6526,7 +6906,7 @@ TEST_F(IntelGTNotesFixture, GivenIncompatibleVersioningWhenValidatingTargetDevic
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", outErrReason.c_str());
 }
@@ -6536,7 +6916,7 @@ TEST(ValidateTargetDeviceTests, givenMismatechAotConfigWhenValidatingTargetDevic
     targetDevice.aotConfig.value = 0x00001234;
     targetDevice.maxPointerSizeInBytes = 8u;
 
-    auto mismatchedAotConfig = static_cast<AOT::PRODUCT_CONFIG>(0x00004321); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    auto mismatchedAotConfig = static_cast<AOT::PRODUCT_CONFIG>(0x00004321); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     Zebin::Elf::ZebinTargetFlags targetMetadata;
     auto res = validateTargetDevice(targetDevice, Zebin::Elf::EI_CLASS_64, productFamily, renderCoreFamily, mismatchedAotConfig, targetMetadata);
     EXPECT_FALSE(res);
@@ -6551,7 +6931,7 @@ TEST(ValidateTargetDeviceTests, givenMismatchedProductFamilyWhenValidatingTarget
 
     Zebin::Elf::ZebinTargetFlags targetMetadata;
     auto mismatchedPlatformFamily = IGFX_UNKNOWN;
-    for (int i = 0; i < IGFX_MAX_PRODUCT; i++) {
+    for (int i = 0; i < NEO::maxProductEnumValue; i++) {
         const auto hwInfo = NEO::hardwareInfoTable[i];
         if (nullptr != hwInfo && hwInfo->platform.eRenderCoreFamily != renderCoreFamily) {
             mismatchedPlatformFamily = hwInfo->platform.eProductFamily;
@@ -6633,11 +7013,11 @@ TEST(ValidateTargetDeviceTests, givenDeviceInCompatModeWhenValidatingTargetDevic
                                             productConfigToCompare,
                                             targetMetadata);
 
-            auto prodConfCompatPairItr = AOT::compatibilityMapping.find(productConfigToCompare);
+            auto prodConfCompatPairItr = AOT::getCompatibilityMapping().find(productConfigToCompare);
 
             if (targetDevice.aotConfig.value == productConfigToCompare) {
                 EXPECT_TRUE(res);
-            } else if (prodConfCompatPairItr != AOT::compatibilityMapping.end()) {
+            } else if (prodConfCompatPairItr != AOT::getCompatibilityMapping().end()) {
                 auto prodConfVec = prodConfCompatPairItr->second;
                 auto found = std::find(prodConfVec.begin(), prodConfVec.end(), currentDevice.second);
                 if (found != prodConfVec.end()) {
@@ -6924,6 +7304,28 @@ kernels:
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [5] : [per_thread_payload_arguments:] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -\n", errors.c_str());
 }
 
+TEST(ParsingEmptyOptionalVectorTypesZeInfo, givenEmptyKernelsEntryInZeInfoWhenParsingZeInfoThenZeroKernelsAreParsed) {
+    NEO::Yaml::YamlParser parser;
+    bool parseResult = true;
+    std::string errors;
+    std::string warnings;
+
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:         []
+functions:
+  - name:            test_function
+    execution_env:
+      grf_count:       16
+      simd_size:       32
+kernels_misc_info:
+  - name:            ''
+...
+)===";
+    parseResult = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseResult);
+    EXPECT_EQ(0u, errors.size());
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidInlineSamplersThenPopulateKernelDescriptorSucceeds) {
     ConstStringRef zeinfo = R"===(
 kernels:
@@ -7070,6 +7472,135 @@ kernels:
     EXPECT_EQ(0U, *reinterpret_cast<const uint32_t *>(kernelDescriptor->generatedSsh.data() + 128U));
     EXPECT_EQ(64U, *reinterpret_cast<const uint32_t *>(kernelDescriptor->generatedSsh.data() + 132U));
     ASSERT_EQ(192u, kernelDescriptor->generatedSsh.size());
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsFalse) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          24
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithWriteOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          32
+          size:            8
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     writeonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadWriteAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          24
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readwrite
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithIndirectCallsWhenPopulatingKernelDescriptorThenHasIndirectCallsIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        has_indirect_calls: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasIndirectCalls);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithPrintfCallsWhenPopulatingKernelDescriptorThenUsesPrintfFlagIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        has_printf_calls: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesPrintf);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelRequiringAssertBufferWhenPopulatingKernelDescriptorThenUsesAssertFlagIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        require_assert_buffer: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesAssert);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelRequiringSyncBufferWhenPopulatingKernelDescriptorThenUsesSyncBufferFlagIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        require_sync_buffer: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesSyncBuffer);
 }
 
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {

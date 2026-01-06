@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,8 +146,6 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::printCommandQueueGroupsProperties(device);
 
     executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

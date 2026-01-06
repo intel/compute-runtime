@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ using ClEnqueueCopyImageToBufferTests = ApiTests;
 
 namespace ULT {
 
-struct ClEnqueueCopyImageToBufferTests : public ApiFixture<>,
+struct ClEnqueueCopyImageToBufferTests : public ApiFixture,
                                          public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();

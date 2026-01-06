@@ -11,13 +11,17 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/hardware_interface_base.inl"
+
+#include "encode_dispatch_kernel_args_ext.h"
 
 namespace NEO {
 
@@ -37,6 +41,13 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     CommandQueue &commandQueue,
     Kernel &kernel,
     const bool &enable) {
+    bool containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(kernel.getDescriptor());
+    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired() && containsStatefulAccess;
+    if (!enable && stateCacheInvalidationWaRequired) {
+        PipeControlArgs args{};
+        args.stateCacheInvalidationEnable = true;
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
+    }
 }
 
 template <typename GfxFamily>
@@ -83,13 +94,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
     auto &device = commandQueue.getDevice();
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
-
-    bool kernelSystemAllocation = false;
-    if (kernel.isBuiltIn) {
-        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
-    } else {
-        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
-    }
+    bool kernelSystemAllocation = kernel.isBuiltInKernel() ? kernel.getDestinationAllocationInSystemMemory()
+                                                           : kernel.isAnyKernelArgumentUsingSystemMemory();
 
     TagNodeBase *timestampPacketNode = nullptr;
     if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > walkerArgs.currentDispatchIndex)) {
@@ -104,19 +110,21 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
-            bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
-
-            GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
+            if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+                GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
+                                                                          commandQueue,
+                                                                          FlushL3Args{.containsPrintBuffer = kernel.hasPrintfOutput(),
+                                                                                      .usingSharedObjects = kernel.isUsingSharedObjArgs(),
+                                                                                      .signalEvent = walkerArgs.event != nullptr,
+                                                                                      .blocking = walkerArgs.blocking,
+                                                                                      .usingSystemAllocation = kernelSystemAllocation});
+            }
         }
     }
-
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
-    if constexpr (heaplessModeEnabled == false) {
-        if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-            EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, 0, rootDeviceEnvironment);
-        }
+    if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
     }
 
     GpgpuWalkerHelper<GfxFamily>::template setGpgpuWalkerThreadData<WalkerType>(&walkerCmd, kernelInfo.kernelDescriptor, startWorkGroups,
@@ -151,7 +159,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         scratchAddress,
         device);
 
+    EncodeKernelArgsExt argsExtended{};
+
     EncodeWalkerArgs encodeWalkerArgs{
+        .argsExtended = &argsExtended,
         .kernelExecutionType = kernel.getExecutionType(),
         .requiredDispatchWalkOrder = kernelAttributes.dispatchWalkOrder,
         .localRegionSize = kernelAttributes.localRegionSize,
@@ -159,18 +170,21 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         .requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr,
         .hasSample = kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample};
 
+    HardwareInterfaceHelper::setEncodeWalkerArgsExt(encodeWalkerArgs, kernelInfo);
+
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
-    EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, rootDeviceEnvironment, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeComputeDispatchAllWalker<WalkerType, InterfaceDescriptorType>(walkerCmd, interfaceDescriptor, rootDeviceEnvironment, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template overrideDefaultValues<WalkerType, InterfaceDescriptorType>(walkerCmd, *interfaceDescriptor);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
-    if (timestampPacketNode && debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
-        printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
-    }
+    PRINT_STRING((timestampPacketNode && debugManager.flags.PrintTimestampPacketUsage.get() == 1), stdout,
+                 "\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64,
+                 SysCalls::getProcessId(),
+                 walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress(),
+                 commandStream.getCurrentGpuAddressPosition());
 
     uint32_t workgroupSize = static_cast<uint32_t>(walkerArgs.localWorkSizes[0] * walkerArgs.localWorkSizes[1] * walkerArgs.localWorkSizes[2]);
 

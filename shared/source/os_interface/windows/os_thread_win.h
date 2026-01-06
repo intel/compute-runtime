@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ class ThreadWin : public Thread {
   public:
     ThreadWin(std::thread *thread);
     void join() override;
+    void detach() override;
     void yield() override;
     ~ThreadWin() override = default;
 

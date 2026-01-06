@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -348,6 +348,18 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 #endif
 
 /*************************************************
+ *   cl_khr_spirv_queries extension              *
+ *************************************************/
+
+#ifndef cl_khr_spirv_queries
+#define cl_khr_spirv_queries 1
+#define CL_KHR_SPIRV_QUERIES_EXTENSION_NAME "cl_khr_spirv_queries"
+#define CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR 0x12B9
+#define CL_DEVICE_SPIRV_EXTENSIONS_KHR 0x12BA
+#define CL_DEVICE_SPIRV_CAPABILITIES_KHR 0x12BB
+#endif
+
+/*************************************************
  *   cl_ext_float_atomics extension              *
  *************************************************/
 
@@ -373,4 +385,12 @@ typedef cl_bitfield cl_device_fp_atomic_capabilities_ext;
 
 /* bits 19 and beyond are currently unused */
 
+#endif
+
+/*************************************************
+ *   CL_PLATFORM_UNLOADABLE_KHR                  *
+ *************************************************/
+
+#if !defined(CL_PLATFORM_UNLOADABLE_KHR)
+#define CL_PLATFORM_UNLOADABLE_KHR 0x0921
 #endif

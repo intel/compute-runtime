@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,7 @@ NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
 NEO_LEGACY_PLATFORMS_SUPPORT=${NEO_LEGACY_PLATFORMS_SUPPORT:-FALSE}
 NEO_CURRENT_PLATFORMS_SUPPORT=${NEO_CURRENT_PLATFORMS_SUPPORT:-TRUE}
 NEO_BUILD_WITH_L0=${NEO_BUILD_WITH_L0:-TRUE}
+NEO_STRICT_DEPENDENCIES=${NEO_STRICT_DEPENDENCIES:-TRUE}
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
@@ -61,12 +62,16 @@ mkdir -p $BUILD_DIR/debian
 COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/copyright"
 CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/control"
 SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/shlibs.local"
+DEV_INSTALL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/debian/libze-intel-gpu-dev.install"
 
 cp -pR ${REPO_DIR}/scripts/packaging/ubuntu/debian/* $BUILD_DIR/debian/
 cp $COPYRIGHT $BUILD_DIR/debian/
 cp $CONTROL $BUILD_DIR/debian/
 if [ -f "${SHLIBS}" ]; then
     cp $SHLIBS $BUILD_DIR/debian/
+fi
+if [ -f "${DEV_INSTALL}" ]; then
+    cp -v $DEV_INSTALL $BUILD_DIR/debian/
 fi
 
 if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
@@ -81,7 +86,7 @@ if [ ! -z "${LEVEL_ZERO_DEVEL_VERSION}" ]; then
     perl -pi -e "s/^ level-zero-devel(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
 fi
 
-if [ -z "${BRANCH_SUFFIX}" ]; then
+if [[ -z "${BRANCH_SUFFIX}" ]] && [[ "${NEO_STRICT_DEPENDENCIES}" == "TRUE" ]]; then
     GMM_VERSION=$(apt-cache policy libigdgmm12 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${GMM_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm12(?=,|$)/ libigdgmm12 (>=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
@@ -92,15 +97,15 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     fi
     IGC_CORE_VERSION=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_CORE_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (>=$IGC_CORE_VERSION), intel-igc-core-2 (<<$IGC_CORE_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
     IGC_VERSION=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (>=$IGC_VERSION), intel-igc-opencl-2 (<<$IGC_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
     IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (>=$IGC_DEVEL_VERSION), intel-igc-opencl-devel (<<$IGC_DEVEL_VERSION+~)/" "$BUILD_DIR/debian/control"
     fi
 fi
 

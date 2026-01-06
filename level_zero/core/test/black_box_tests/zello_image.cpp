@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,7 @@
 #include "zello_common.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iostream>
-#include <memory>
-#include <vector>
 
 #define imageIndex(buf, x, y, z, chan) \
     (buf)[(chan) +                     \
@@ -57,7 +54,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
 
     const size_t hostSize = hostWidth * hostHeight * hostDepth * channels;
 
-    // GPU image should be big enough to accomodate host image plus offsets
+    // GPU image should be big enough to accommodate host image plus offsets
     const uint32_t gpuWidth = hostWidth + std::max(inOffsetX, outOffsetX);
     const uint32_t gpuHeight = hostHeight + std::max(inOffsetY, outOffsetY);
     const uint32_t gpuDepth = hostDepth + std::max(inOffsetZ, outOffsetZ);
@@ -135,26 +132,28 @@ void testAppendImageFunction(ze_context_handle_t &context,
         std::cout << "source" << std::endl;
         for (size_t i = 0; i < hostSize; ++i) {
             std::cout << static_cast<uint32_t>(srcBuffer[i]) << " ";
-            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1)
+            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1) {
                 std::cout << std::endl
                           << "---" << std::endl;
-            else if (i % rowWidth == rowWidth - 1)
+            } else if (i % rowWidth == rowWidth - 1) {
                 std::cout << std::endl;
-            else if (i % pixelWidth == pixelWidth - 1)
+            } else if (i % pixelWidth == pixelWidth - 1) {
                 std::cout << "| ";
+            }
         }
         std::cout << std::endl;
 
         std::cout << "destination" << std::endl;
         for (size_t i = 0; i < hostSize; ++i) {
             std::cout << static_cast<uint32_t>(dstBuffer[i]) << " ";
-            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1)
+            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1) {
                 std::cout << std::endl
                           << "---" << std::endl;
-            else if (i % rowWidth == rowWidth - 1)
+            } else if (i % rowWidth == rowWidth - 1) {
                 std::cout << std::endl;
-            else if (i % pixelWidth == pixelWidth - 1)
+            } else if (i % pixelWidth == pixelWidth - 1) {
                 std::cout << "| ";
+            }
         }
         std::cout << std::endl;
     }
@@ -245,7 +244,7 @@ int main(int argc, char *argv[]) {
         testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
         LevelZeroBlackBoxTests::printResult(aubMode, success1D, blackBoxName, caseName);
     }
-    LevelZeroBlackBoxTests::teardown(context, cmdQueue);
+    LevelZeroBlackBoxTests::teardown(cmdQueue);
 
     bool outputValidationSuccessful = !((do1D && !success1D) || (do2D && !success2D) || (do3D && !success3D));
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

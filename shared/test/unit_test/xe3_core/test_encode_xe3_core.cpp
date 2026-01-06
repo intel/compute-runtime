@@ -9,10 +9,13 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -24,8 +27,6 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE3_CORE);
@@ -67,7 +68,7 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenInterfaceDescriptorDataWhenAdjustI
     MockDevice mockDevice;
     uint32_t threadsPerGroup = 1;
     uint32_t threadGroups[] = {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()};
-    EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, mockDevice, *defaultHwInfo, threadGroups, 1, 0, threadsPerGroup, walkerCmd);
+    EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, mockDevice, *defaultHwInfo, threadGroups, 0, 1, 0, threadsPerGroup, walkerCmd);
     EXPECT_EQ(2u, iddArg.getBindingTableEntryCount());
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_BETWEEN_1_AND_4_SAMPLERS_USED, iddArg.getSamplerCount());
 }
@@ -80,10 +81,13 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenDebugVariableSetwhenProgramingStat
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 
     constexpr uint64_t gpuVa = 0x100000;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
     constexpr size_t numCachelines = 3;
 
     const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+
+    auto rootDeviceEnv = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    auto usage = CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, rootDeviceEnv->getProductHelper(), rootDeviceEnv->getHardwareInfo());
+    uint32_t mocs = rootDeviceEnv->getGmmHelper()->getMOCS(usage);
 
     static constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
@@ -113,10 +117,10 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenDebugVariableSetwhenProgramingStat
             EXPECT_EQ(statePrefetchCmd[i].getAddress(), gpuVa + (i * MemoryConstants::pageSize64k));
             EXPECT_FALSE(statePrefetchCmd[i].getKernelInstructionPrefetch());
             EXPECT_FALSE(statePrefetchCmd[i].getParserStall());
-            EXPECT_EQ(mocsIndexForL3, statePrefetchCmd[i].getMemoryObjectControlState());
+            EXPECT_EQ(mocs, statePrefetchCmd[i].getMemoryObjectControlState());
 
             if (programmedSize > expectedSize) {
-                // cacheline alignemnt
+                // cacheline alignment
                 EXPECT_TRUE((programmedSize - expectedSize) < MemoryConstants::cacheLineSize);
                 expectedSize = 0;
             } else {
@@ -314,7 +318,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.isKernelUsingSystemAllocation = true;
+    dispatchArgs.postSyncArgs.isUsingSystemAllocation = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -340,7 +344,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenEventHost
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.isHostScopeSignalEvent = true;
+    dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -366,8 +370,8 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.isKernelUsingSystemAllocation = true;
-    dispatchArgs.isHostScopeSignalEvent = true;
+    dispatchArgs.postSyncArgs.isUsingSystemAllocation = true;
+    dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -379,7 +383,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_EQ(postSyncData.getSystemMemoryFenceRequest(), !pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice);
 }
 
 XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCalledThenDisablePipelinedThreadArbitrationPolicy) {
@@ -392,8 +396,12 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
 
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EXPECT_TRUE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+        EXPECT_TRUE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
+
+        streamProperties.stateComputeMode.setPropertiesAll(false, 1, 1, PreemptionMode::Disabled, false);
+        EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
 
     {
@@ -402,8 +410,9 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
 
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EXPECT_FALSE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+        EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
 }
 
@@ -422,7 +431,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -437,7 +446,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -452,7 +461,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -553,7 +562,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenCommandContainerWhenNumGrfRequiredI
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled);
+    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -583,7 +592,7 @@ XE3_CORETEST_F(Xe3SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgram
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0, sbaCmd.getL1CacheControlCachePolicy());
 }
 
 XE3_CORETEST_F(Xe3SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -348,16 +348,18 @@ template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D10>::flushAndWait(D3DQuery *query) {
     query->End();
     d3dDevice->Flush();
-    while (query->GetData(nullptr, 0, 0) != S_OK)
+    while (query->GetData(nullptr, 0, 0) != S_OK) {
         ;
+    }
 }
 
 template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D11>::flushAndWait(D3DQuery *query) {
     d3d11DeviceContext->End(query);
     d3d11DeviceContext->Flush();
-    while (d3d11DeviceContext->GetData(query, nullptr, 0, 0) != S_OK)
+    while (d3d11DeviceContext->GetData(query, nullptr, 0, 0) != S_OK) {
         ;
+    }
 }
 
 template <>

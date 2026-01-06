@@ -1,24 +1,19 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_callbacks.h"
+#include "shared/source/gmm_helper/windows/gmm_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "gmm_memory.h"
-
 namespace NEO {
-
-long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
-    return notifyAubCaptureImpl(csrHandle, gfxAddress, gfxSize, allocate);
-}
 
 bool Wddm::configureDeviceAddressSpace() {
     GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
@@ -30,6 +25,7 @@ bool Wddm::configureDeviceAddressSpace() {
 
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate = getGdi()->createAllocation;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate = getGdi()->destroyAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate2 = getGdi()->destroyAllocation2;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = getGdi()->mapGpuVirtualAddress;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident = getGdi()->makeResident;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEvict = getGdi()->evict;
@@ -40,11 +36,18 @@ bool Wddm::configureDeviceAddressSpace() {
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock = getGdi()->unlock2;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape = getGdi()->escape;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = getGdi()->freeGpuVirtualAddress;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCapture;
+
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    if (needsNotifyAubCaptureCallback()) {
+        deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCaptureFuncFactory[hwInfo->platform.eRenderCoreFamily];
+    }
 
     GMM_DEVICE_INFO deviceInfo{};
     deviceInfo.pGfxPartition = &gfxPartition;
     deviceInfo.pDeviceCb = &deviceCallbacks;
+    memcpy_s(deviceInfo.MsSegId, sizeof(deviceInfo.MsSegId), segmentId, sizeof(segmentId));
+    deviceInfo.AdapterLocalMemory = dedicatedVideoMemory;
+    deviceInfo.AdapterCpuVisibleLocalMemory = lmemBarSize;
     if (!gmmMemory->setDeviceInfo(&deviceInfo)) {
         return false;
     }
@@ -55,11 +58,12 @@ bool Wddm::configureDeviceAddressSpace() {
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
+    minAddress = windowsMinAddress;
     auto svmSize = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    bool obtainMinAddress = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
+    bool obtainMinAddress = hwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
     return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency, minAddress, obtainMinAddress);
 }
 

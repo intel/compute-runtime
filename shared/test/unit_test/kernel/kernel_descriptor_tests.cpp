@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,13 +79,12 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowSize);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres);
 
-    EXPECT_EQ(0U, desc.payloadMappings.explicitArgsExtendedDescriptors.size());
-
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_TRUE(desc.kernelMetadata.printfStringsMap.empty());
     EXPECT_EQ(0U, desc.kernelMetadata.compiledSubGroupsNumber);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(0U, desc.kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_EQ(nullptr, desc.external.debugData.get());
     EXPECT_EQ(nullptr, desc.external.igcInfoForGtpin);
 }
@@ -171,11 +170,11 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToS
 
     EXPECT_EQ(0u, desc.bindlessArgsMap[0x40]);
     EXPECT_EQ(1u, desc.bindlessArgsMap[0x100]);
-    EXPECT_EQ(2u, desc.bindlessArgsMap[0x80]);
+    EXPECT_EQ(3u, desc.bindlessArgsMap[0x80]);
 
     EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
     EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
-    EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x80)->second);
+    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x80)->second);
 
     desc.bindlessArgsMap.clear();
     desc.initBindlessOffsetToSurfaceState();
@@ -228,13 +227,13 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessExplicitAndImplicitArgsWhenIni
 
     EXPECT_EQ(0u, desc.bindlessArgsMap[0x40]);
     EXPECT_EQ(1u, desc.bindlessArgsMap[0x100]);
-    EXPECT_EQ(2u, desc.bindlessArgsMap[0x140]);
-    EXPECT_EQ(3u, desc.bindlessArgsMap[0x220]);
+    EXPECT_EQ(3u, desc.bindlessArgsMap[0x140]);
+    EXPECT_EQ(4u, desc.bindlessArgsMap[0x220]);
 
     EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
     EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
-    EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x140)->second);
-    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x220)->second);
+    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x140)->second);
+    EXPECT_EQ(4u, desc.getBindlessOffsetToSurfaceState().find(0x220)->second);
 
     desc.bindlessArgsMap.clear();
     desc.initBindlessOffsetToSurfaceState();
@@ -271,4 +270,21 @@ TEST(KernelDescriptor, GivenDescriptorWithoutStatefulArgsWhenInitBindlessOffsets
 
     desc.initBindlessOffsetToSurfaceState();
     EXPECT_EQ(0u, desc.bindlessArgsMap.size());
+}
+
+TEST(KernelDescriptor, GivenDescriptorWhenGettingPerThreadDataOffsetThenItReturnsCorrectValue) {
+    NEO::KernelDescriptor desc{};
+
+    desc.kernelAttributes.crossThreadDataSize = 64u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(0u, desc.getPerThreadDataOffset());
+
+    // crossThreadData is fully consumed by inlineDataPayload
+    desc.kernelAttributes.crossThreadDataSize = 40u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(0u, desc.getPerThreadDataOffset());
+
+    desc.kernelAttributes.crossThreadDataSize = 128u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(64u, desc.getPerThreadDataOffset());
 }

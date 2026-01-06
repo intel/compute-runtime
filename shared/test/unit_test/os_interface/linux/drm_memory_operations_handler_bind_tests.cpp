@@ -700,7 +700,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenMakeResidentTwiceThenAllocIsBound
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvaialableThenMemoryManagerReturnsSupportForIndirectAllocationsAsPack) {
+TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvailableThenMemoryManagerReturnsSupportForIndirectAllocationsAsPack) {
     mock->bindAvailable = true;
     EXPECT_TRUE(memoryManager->allowIndirectAllocationsAsPack(0u));
 }
@@ -1438,7 +1438,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenCallin
 
 using DrmResidencyHandlerTests = ::testing::Test;
 
-HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -1463,7 +1463,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatI
     }
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceAllResourcesUncached.set(1);
 
@@ -1491,7 +1491,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForP
     }
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(1);
 
@@ -1509,7 +1509,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhe
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverriden, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverridden, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(1);
 
@@ -1531,7 +1531,7 @@ namespace NEO {
 extern bool disableBindDefaultInTests;
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailableWhenSupported, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailableWhenSupported, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
@@ -1549,7 +1549,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvai
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableFailedThenBindIsNot, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableFailedThenBindIsNot, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
@@ -1566,7 +1566,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryin
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableSuccedAndReportNoBindAvailableInDrmThenBindIsNotAvailable, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableSuccedAndReportNoBindAvailableInDrmThenBindIsNotAvailable, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
@@ -1669,7 +1669,7 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeyNotSetThenNoSupp
     EXPECT_EQ(0u, drm.context.setPairQueryCalled);
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned, IsWithinXeGfxFamily) {
+HWTEST2_F(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(-1);
     debugManager.flags.EnableSetPair.set(1);

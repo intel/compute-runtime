@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/tools/source/sysman/firmware/firmware_imp.h"
 
 #include "mock_zes_sysman_firmware_prelim.h"
 

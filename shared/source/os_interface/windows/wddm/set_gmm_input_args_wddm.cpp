@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
@@ -18,7 +18,7 @@ void Wddm::setGmmInputArgs(void *args) {
     gmmInArgs->pSkuTable = gfxFeatureTable.get();
     gmmInArgs->pWaTable = gfxWorkaroundTable.get();
 
-    gmmInArgs->stAdapterBDF = this->adapterBDF;
+    gmmInArgs->stAdapterBDF.Data = this->adapterBDF.data;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
     gmmInArgs->DeviceRegistryPath = deviceRegistryPath.c_str();
 }

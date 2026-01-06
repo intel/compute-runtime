@@ -1,14 +1,18 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "gtest/gtest.h"
 
 class EnqueueHandlerTest : public NEO::ClDeviceFixture,
                            public testing::Test {
@@ -23,4 +27,23 @@ class EnqueueHandlerTest : public NEO::ClDeviceFixture,
         ClDeviceFixture::tearDown();
     }
     NEO::MockContext *context;
+};
+
+template <template <typename> class CsrType>
+class EnqueueHandlerTestT : public EnqueueHandlerTest {
+  public:
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        NEO::EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType<FamilyType>>();
+        EnqueueHandlerTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        EnqueueHandlerTest::TearDown();
+    }
 };

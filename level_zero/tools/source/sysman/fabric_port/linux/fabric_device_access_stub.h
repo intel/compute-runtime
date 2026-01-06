@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "fabric_device_access.h"
 
 namespace L0 {
+struct OsSysman;
 
 class FabricDeviceAccessStub : public FabricDeviceAccess {
   public:
@@ -18,7 +19,7 @@ class FabricDeviceAccessStub : public FabricDeviceAccess {
     ~FabricDeviceAccessStub();
 
     ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) override;
-    ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) override;
+    ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) override;
 
     ze_result_t getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled) override;
     ze_result_t getPortBeaconState(const zes_fabric_port_id_t portId, bool &enabled) override;

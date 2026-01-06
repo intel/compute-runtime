@@ -72,8 +72,8 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         return nullptr;
     }
 
-    imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    imgInfo.plane = static_cast<ImagePlane>(GmmTypesConverter::convertPlane(imagePlane));
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     bool isSharedResource = false;
@@ -122,7 +122,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, surface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0, false);
+    return Image::createSharedImage(context, surface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0, 0, false);
 }
 
 void D3DSurface::synchronizeObject(UpdateData &updateData) {

@@ -68,15 +68,14 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
-    NEO::Device *activeDevice = getActiveDevice();
-    if (activeDevice->getRootDeviceEnvironment().osInterface) {
-        NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
+bool DeviceImp::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
+    if (device.getRootDeviceEnvironment().osInterface) {
+        NEO::DriverModelType driverType = device.getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
         if (driverType == NEO::DriverModelType::drm) {
-            return queryFabricStatsDrm(this, pPeerDevice, latency, bandwidth);
+            return queryPeerAccessDrm(device, peerDevice, handlePtr, handle);
         }
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return false;
 }
 
 } // namespace L0

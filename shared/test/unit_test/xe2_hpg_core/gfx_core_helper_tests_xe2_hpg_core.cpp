@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/program/kernel_info.h"
-#include "shared/source/xe2_hpg_core/hw_cmds.h"
+#include "shared/source/xe2_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,6 +22,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+
+#include "metrics_library_api_1_0.h"
 
 using GfxCoreHelperTestsXe2HpgCore = GfxCoreHelperTest;
 
@@ -459,73 +463,66 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenNonBcsEngineIsVerifiedThenR
     EXPECT_FALSE(EngineHelpers::isBcs(static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS8 + 1)));
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenPipecontrolWaIsProgrammedThenFlushL1Cache) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[64] = {};
-    LinearStream cmdStream(buffer, sizeof(buffer));
-    uint64_t gpuAddress = 0x1234;
-
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, gpuAddress, this->pDevice->getRootDeviceEnvironment());
-
-    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControl->getDataportFlush());
-    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
-}
-
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
 
-    auto hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto hwInfo = *defaultHwInfo;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(-1);
+    EXPECT_EQ(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper), !hwInfo.capabilityTable.isIntegratedDevice);
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
+
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -534,7 +531,7 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenProgramGlobalFenceAsMiMemF
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDefaultMemorySynchronizationCommandsWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
@@ -547,9 +544,9 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDefaultMemorySynchronizati
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(rootDeviceEnvironment) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);
         EXPECT_EQ(1u, hwParser.cmdList.size());
@@ -572,7 +569,7 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDontProgramGlobalFenceAsMi
     LinearStream commandStream(buffer, 128);
     uint64_t gpuAddress = 0x12345678;
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -596,7 +593,7 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenProgramGlobalFenceAsMiMemF
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -670,7 +667,7 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallUseGem
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
+    EXPECT_FALSE(productHelper.isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo));
 }
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnTrue) {
@@ -683,26 +680,9 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForI
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isNewCoherencyModelSupported());
-}
-
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.deferMOCSToPatIndex());
-}
-
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    std::vector<uint64_t> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 22, 23, 26, 27, 30, 31};
-    for (auto patIndex : listOfCoherentPatIndexes) {
-        EXPECT_TRUE(productHelper.isCoherentAllocation(patIndex).value());
-    }
-    std::vector<uint64_t> listOfNonCoherentPatIndexes = {3, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 28, 29};
-    for (auto patIndex : listOfNonCoherentPatIndexes) {
-        EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
-    }
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(false));
 }
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsTimestampWaitSupportedForEventsThenTrueIsReturned) {
@@ -767,9 +747,15 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenAllocDataWhenSetExtraAlloc
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory) {
             if (allocProperties.allocationType == AllocationType::commandBuffer ||
-                allocProperties.allocationType == AllocationType::ringBuffer ||
-                allocProperties.allocationType == AllocationType::semaphoreBuffer) {
+                allocProperties.allocationType == AllocationType::ringBuffer) {
                 EXPECT_FALSE(allocData.flags.useSystemMemory);
+                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+            } else if (allocProperties.allocationType == AllocationType::semaphoreBuffer) {
+                if (getHelper<ProductHelper>().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo())) {
+                    EXPECT_FALSE(allocData.flags.useSystemMemory);
+                } else {
+                    EXPECT_TRUE(allocData.flags.useSystemMemory);
+                }
                 EXPECT_TRUE(allocData.flags.requiresCpuAccess);
             } else {
                 EXPECT_FALSE(allocData.flags.useSystemMemory);
@@ -789,23 +775,17 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenNumGrfAndSimdSizeWhenAdjus
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    std::array<std::array<uint32_t, 4>, 12> values = {{
-        {GrfConfig::defaultGrfNumber, 16u, 0u, 1024u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {GrfConfig::defaultGrfNumber, 16u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 32u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 32u, 0u, 2048u},
-        {GrfConfig::largeGrfNumber, 16u, 0u, 512u},
-        {GrfConfig::largeGrfNumber, 16u, 1u, 512u},
-        {GrfConfig::largeGrfNumber, 32u, 0u, 1024u},
-        {GrfConfig::largeGrfNumber, 32u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 1u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 1u, 0u, 64u},
-        {GrfConfig::largeGrfNumber, 1u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 1u, 32u},
+    std::array<std::array<uint32_t, 3>, 6> values = {{
+        {GrfConfig::defaultGrfNumber, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
+        {GrfConfig::defaultGrfNumber, 32u, 1024u},
+        {GrfConfig::largeGrfNumber, 16u, 512u},
+        {GrfConfig::largeGrfNumber, 32u, 1024u},
+        {GrfConfig::defaultGrfNumber, 1u, 64u},
+        {GrfConfig::largeGrfNumber, 1u, 64u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, isHwLocalIdGeneration, defaultMaxWorkGroupSize, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
     }
 }
 
@@ -813,23 +793,17 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenParamsWhenCalculateNumThre
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto totalWgSize = 2048u;
-    std::array<std::array<uint32_t, 4>, 12> values = {{
-        {GrfConfig::defaultGrfNumber, 16u, 0u, 64u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {GrfConfig::defaultGrfNumber, 16u, 1u, 64u},
-        {GrfConfig::defaultGrfNumber, 32u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 32u, 0u, 64u},
-        {GrfConfig::defaultGrfNumber, 1u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 1u, 0u, 64u},
-        {GrfConfig::largeGrfNumber, 16u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 16u, 1u, 32u},
-        {GrfConfig::largeGrfNumber, 32u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 32u, 1u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 1u, 32u},
+    std::array<std::array<uint32_t, 3>, 6> values = {{
+        {GrfConfig::defaultGrfNumber, 16u, 64u}, // Grf Size, SIMT Size, Max Num of threads
+        {GrfConfig::defaultGrfNumber, 32u, 32u},
+        {GrfConfig::defaultGrfNumber, 1u, 64u},
+        {GrfConfig::largeGrfNumber, 16u, 32u},
+        {GrfConfig::largeGrfNumber, 32u, 32u},
+        {GrfConfig::largeGrfNumber, 1u, 64u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThdreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThdreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, isHwLocalIdGeneration, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThdreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThdreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, rootDeviceEnvironment));
     }
 }
 
@@ -867,3 +841,67 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCoreWithEnginesCheck, whenGetEnginesC
     EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgWhenSetStallOnlyBarrierThenResourceBarrierProgrammed) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+    EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+}
+
+struct GfxCoreHelperTestsXe2HpgCoreResourceBarrier : public GfxCoreHelperTestsXe2HpgCore,
+                                                     public ::testing::WithParamInterface<uint32_t> {
+};
+
+XE2_HPG_CORETEST_P(GfxCoreHelperTestsXe2HpgCoreResourceBarrier, givenXe2HpgWhenSetStallOnlyBarrierWithDebugFlagThenSetL1CacheFlush) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    DebugManagerStateRestore restorer;
+    auto mode = GetParam();
+    debugManager.flags.ResourceBarrierL1FlushMode.set(mode);
+
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    if (mode == 1) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 2) {
+        EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 3) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(GfxCoreHelperTestsXe2HpgCoreResourceBarrierValues,
+                         GfxCoreHelperTestsXe2HpgCoreResourceBarrier,
+                         ::testing::Values(1, 2, 3));

@@ -15,6 +15,10 @@
 namespace NEO {
 struct ImageInfo;
 class MultiGraphicsAllocation;
+class Context;
+enum class AllocationType;
+enum class UnifiedSharingHandleType;
+struct UnifiedSharingMemoryDescription;
 
 class UnifiedSharingFunctions : public SharingFunctions {
   public:

@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -132,7 +133,7 @@ TEST_F(DebugApiTest, givenSubDeviceWhenCallingDebugAttachThenErrorIsReturned) {
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.isSubdevice = true;
 
     auto result = zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
@@ -189,7 +190,7 @@ TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaia
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.isSubdevice = true;
 
     auto result = zetDeviceGetDebugProperties(deviceImp.toHandle(), &debugProperties);
@@ -202,7 +203,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugAttachIsCalledThenSessi
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t debugSession = nullptr;
@@ -216,7 +217,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugDetachIsCalledThenSucce
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t debugSession = deviceImp.debugSession->toHandle();
@@ -227,7 +228,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugDetachIsCalledThenSucce
 }
 
 TEST_F(DebugApiTest, givenDeviceWithoutSessionWhenDebugDetachIsCalledThenSuccessIsReturned) {
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     zet_debug_session_handle_t debugSession = 0;
     auto result = zetDebugDetach(debugSession);
@@ -240,7 +241,7 @@ TEST_F(DebugApiTest, WhenUnsupportedFunctionCalledThenErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t session = deviceImp.debugSession->toHandle();
@@ -314,7 +315,7 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
 TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan3WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
-    versionHeader->version.major = 4;
+    versionHeader->version.major = 99;
     mockBuiltins->stateSaveAreaHeader = stateSaveAreaHeader;
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
@@ -400,15 +401,15 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPrope
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned) {
 
-    setUpV3HeaderHeapless();
+    setUpV3HeaderWithoutHeapless();
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(18u, count);
+    EXPECT_EQ(17u, count);
 
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
 
-    EXPECT_EQ(18u, count);
+    EXPECT_EQ(17u, count);
 
     auto validateRegsetProps = [](const zet_debug_regset_properties_t &regsetProps,
                                   zet_debug_regset_type_intel_gpu_t type, zet_debug_regset_flags_t flags,
@@ -439,8 +440,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThen
     validateRegsetProps(regsetProps[13], ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
     validateRegsetProps(regsetProps[14], ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 1, 32, 4);
     validateRegsetProps(regsetProps[15], ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
-    validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
-    validateRegsetProps(regsetProps[17], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
+    validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
@@ -486,7 +486,7 @@ TEST(DebugSessionTest, givenDebugSessionWhenConvertingToAndFromHandleCorrectHand
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
 
@@ -502,7 +502,7 @@ TEST(DebugSessionTest, givenDebugSessionWhenGettingConnectedDeviceThenCorrectDev
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
 
@@ -516,7 +516,7 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
     deviceImp.debugSession.reset(session);
@@ -533,7 +533,7 @@ TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThe
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -554,7 +554,7 @@ TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenDebugAttachCalledT
     neoDevice->incRefInternal();
     auto neoSubdevice = std::unique_ptr<NEO::SubDevice>(neoDevice->createSubDevice(0));
 
-    auto deviceImp = std::make_unique<MockDeviceImp>(neoSubdevice.get(), neoSubdevice->getExecutionEnvironment());
+    auto deviceImp = std::make_unique<MockDeviceImp>(neoSubdevice.get());
     deviceImp->isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -575,7 +575,7 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCor
     osInterface->debugAttachAvailable = false;
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.isSubdevice = false;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -596,14 +596,15 @@ TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCa
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     zet_debug_session_handle_t debugSession = nullptr;
     zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(std::string("ZE_AFFINITY_MASK is not recommended while using program debug API\n"), output);
 }
 

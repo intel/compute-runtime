@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@ using GenGfxFamily = NEO::Xe2HpgCoreFamily;
 
 #include "shared/test/common/cmd_parse/cmd_parse_mem_fence.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mem_set.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_resource_barrier.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_state_context_data_base_address.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_state_prefetch.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_system_mem_fence_address.inl"
@@ -22,6 +23,7 @@ using STATE_SYSTEM_MEM_FENCE_ADDRESS = GenStruct::STATE_SYSTEM_MEM_FENCE_ADDRESS
 using STATE_PREFETCH = GenStruct::STATE_PREFETCH;
 using MEM_SET = GenStruct::MEM_SET;
 using STATE_CONTEXT_DATA_BASE_ADDRESS = GenStruct::STATE_CONTEXT_DATA_BASE_ADDRESS;
+using RESOURCE_BARRIER = GenStruct::RESOURCE_BARRIER;
 
 template <>
 size_t CmdParse<GenGfxFamily>::getAdditionalCommandLength(void *cmd) {
@@ -48,6 +50,11 @@ size_t CmdParse<GenGfxFamily>::getAdditionalCommandLength(void *cmd) {
     {
         if (genCmdCast<STATE_CONTEXT_DATA_BASE_ADDRESS *>(cmd)) {
             return sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS) / sizeof(uint32_t);
+        }
+    }
+    {
+        if (genCmdCast<RESOURCE_BARRIER *>(cmd)) {
+            return sizeof(RESOURCE_BARRIER) / sizeof(uint32_t);
         }
     }
 

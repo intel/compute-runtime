@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,6 @@
 
 #include "level_zero/sysman/source/api/vf_management/sysman_os_vf.h"
 #include "level_zero/sysman/source/api/vf_management/sysman_vf_imp.h"
-#include "level_zero/sysman/source/device/os_sysman.h"
-
-#include <iostream>
 
 namespace L0 {
 namespace Sysman {

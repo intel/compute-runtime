@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -13,8 +14,13 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 using namespace NEO;
 
 using GfxCoreHelperXe2AndLaterTests = ::testing::Test;
@@ -23,6 +29,13 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsTimestampSh
 
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
+}
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherentTimestampsModeEnabledThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isNonCoherentTimestampsModeEnabled());
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
@@ -105,4 +118,45 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalT
     storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*(++storeRegMemIt));
     EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::globalTimestampUn);
     EXPECT_EQ(storeRegMem->getMemoryAddress(), sndAddress + sizeof(uint32_t));
+}
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsCacheFlushPriorImageReadRequiredThenTrueIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isCacheFlushPriorImageReadRequired());
+}
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsExtendedUsmPoolSizeEnabledThenTrueIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isExtendedUsmPoolSizeEnabled());
+}
+
+class MockGmmResourceInfoWithDenyCompression : public MockGmmResourceInfo {
+  public:
+    MockGmmResourceInfoWithDenyCompression(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
+
+    bool isResourceDenyCompressionEnabled() override {
+        return true;
+    }
+};
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenXe2AndLaterWhenIsCompressionAppliedForImportedResourceWithDenyCompressionEnabledThenFalseIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = GMM_RESOURCE_TYPE::RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth64 = 1024;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.NotCompressed = 0; // Compression enabled in flags
+
+    auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfoWithDenyCompression>(&gmmParams);
+    MockGmm mockGmm(mockExecutionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
+    mockGmm.gmmResourceInfo.reset(mockGmmResourceInfo.release());
+
+    // Even though NotCompressed = 0 (compression enabled), the deny compression should override it
+    EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
 }

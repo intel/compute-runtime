@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@ HWTEST_EXCLUDE_PRODUCT(QueueFamilyNameTest, givenRcsWhenGettingQueueFamilyNameTh
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin, IGFX_XE2_HPG_CORE);
-HWTEST_EXCLUDE_PRODUCT(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(MidThreadPreemptionTests, GivenValueArgWhenOverrideMidThreadPreemptionSupportThenNothingChange, IGFX_XE2_HPG_CORE);

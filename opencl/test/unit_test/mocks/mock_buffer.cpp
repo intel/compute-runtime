@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,21 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+
+namespace NEO {
+class Context;
+class GmmHelper;
+} // namespace NEO
+
+MockBufferStorage::MockBufferStorage() : mockGfxAllocation(data, sizeof(data) / 2),
+                                         multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
+    initDevice();
+}
 
 MockBufferStorage::MockBufferStorage(bool unaligned) : mockGfxAllocation(unaligned ? alignUp(&data, 4) : alignUp(&data, 64), sizeof(data) / 2),
                                                        multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
@@ -39,7 +50,7 @@ void MockBuffer::setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHe
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = compressed;
-        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
     }
 
     if (graphicsAllocation->getDefaultGmm()) {

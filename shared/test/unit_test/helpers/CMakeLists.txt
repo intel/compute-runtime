@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,12 +15,15 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties_test.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
@@ -49,6 +52,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/topology_tests.cpp
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)
@@ -61,7 +65,6 @@ endif()
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_xehp_and_later.cpp
   )
@@ -82,6 +85,7 @@ endif()
 if(TESTS_XE2_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_xe2_and_later.cpp
   )
 endif()
 

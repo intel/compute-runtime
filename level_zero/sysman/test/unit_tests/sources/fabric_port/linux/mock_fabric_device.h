@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ class MockFabricFsAccess : public L0::Sysman::FsAccessInterface {
 
 class MockFabricSysFsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
-    ze_result_t getRealPath(const std::string path, std::string &buf) override {
+    ze_result_t getRealPath(const std::string &path, std::string &buf) override {
         buf.append("/mockRealPath");
         return mockRealPathStatus;
     }

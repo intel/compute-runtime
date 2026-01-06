@@ -13,7 +13,12 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 
+#include <map>
 #include <memory>
+
+namespace NEO {
+struct HardwareInfo;
+} // namespace NEO
 
 struct _zet_debug_session_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_zet_debug_session_handle_t>);
@@ -45,8 +50,12 @@ struct DebugSession : _zet_debug_session_handle_t {
     static ze_result_t getRegisterSetProperties(Device *device, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
     virtual ze_result_t getThreadRegisterSetProperties(ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
     MOCKABLE_VIRTUAL bool areRequestedThreadsStopped(ze_device_thread_t thread);
+    virtual bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) = 0;
+    virtual bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) = 0;
+    virtual void closeExternalSipHandles() = 0;
+    virtual bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) = 0;
 
-    Device *getConnectedDevice() { return connectedDevice; }
+    Device *getConnectedDevice() const { return connectedDevice; }
     zet_debug_config_t getDebugConfig() { return config; }
 
     static bool isThreadAll(ze_device_thread_t thread) {

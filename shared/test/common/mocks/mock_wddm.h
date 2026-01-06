@@ -26,7 +26,7 @@ extern NTSTATUS (*pCallEscape)(D3DKMT_ESCAPE &escapeCommand);
 extern uint32_t (*pGetTimestampFrequency)();
 extern bool (*pPerfOpenEuStallStream)(uint32_t sampleRate, uint32_t minBufferSize);
 extern bool (*pPerfDisableEuStallStream)();
-extern bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize);
+extern bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode);
 
 class GraphicsAllocation;
 
@@ -56,6 +56,7 @@ class WddmMock : public Wddm {
     using Wddm::hwDeviceId;
     using Wddm::isReadOnlyFlagFallbackAvailable;
     using Wddm::isReadOnlyFlagFallbackSupported;
+    using Wddm::lmemBarSize;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
@@ -66,6 +67,7 @@ class WddmMock : public Wddm {
     using Wddm::populateIpVersion;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
+    using Wddm::segmentId;
     using Wddm::setNewResourceBoundToPageTable;
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
@@ -76,10 +78,11 @@ class WddmMock : public Wddm {
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock() override;
 
-    bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type) override;
+    bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *memoryFlags) override;
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, uint64_t *outSharedHandle) override;
+    NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, uint64_t *outSharedHandle, bool createNTHandle) override;
     bool createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) override;
     bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
 
@@ -94,10 +97,7 @@ class WddmMock : public Wddm {
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
     void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) override;
-    void unlockResource(const D3DKMT_HANDLE &handle) override;
-    void kmDafLock(D3DKMT_HANDLE handle) override;
-    bool isKmDafEnabled() const override;
-    void setKmDafEnabled(bool state);
+    void unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) override;
     void setHwContextId(unsigned long hwContextId);
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
@@ -105,7 +105,7 @@ class WddmMock : public Wddm {
     void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override;
     void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
-    VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
+    VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) override;
     NTSTATUS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size, D3DGPU_VIRTUAL_ADDRESS *reservedAddress) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem) override;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
@@ -155,7 +155,7 @@ class WddmMock : public Wddm {
     uint32_t getTimestampFrequency() const override;
     bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) override;
     bool perfDisableEuStallStream() override;
-    bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) override;
+    bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult evictResult;
@@ -173,14 +173,13 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult applyAdditionalContextFlagsResult;
     WddmMockHelpers::CallResult lockResult;
     WddmMockHelpers::CallResult unlockResult;
-    WddmMockHelpers::KmDafLockCall kmDafLockResult;
     WddmMockHelpers::WaitFromCpuResult waitFromCpuResult;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
-    WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
+    WddmMockHelpers::WaitOnPagingFenceFromCpuResult waitOnPagingFenceFromCpuResult;
     WddmMockHelpers::CallResult setAllocationPriorityResult;
     WddmMockHelpers::CallResult delayPagingFenceFromCpuResult;
 
@@ -203,8 +202,8 @@ class WddmMock : public Wddm {
     bool callBaseMapGpuVa = true;
     std::unordered_multiset<void *> reservedAddresses;
     uintptr_t virtualAllocAddress = NEO::windowsMinAddress;
-    bool kmDafEnabled = false;
     uint64_t mockPagingFence = 0u;
+    MemoryFlags *memoryFlagsToPass = nullptr;
     bool callBaseCreatePagingLogger = true;
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;

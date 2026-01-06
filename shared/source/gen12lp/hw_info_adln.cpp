@@ -7,7 +7,6 @@
 
 #include "shared/source/gen12lp/hw_info_adln.h"
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_adln.h"
 #include "shared/source/helpers/constants.h"
@@ -24,57 +23,47 @@ const PLATFORM ADLN::platform = {
     IGFX_GEN12LP_CORE,
     IGFX_GEN12LP_CORE,
     PLATFORM_NONE, // default init
-    0,             // usDeviceID
+    0x46D0,        // usDeviceID
     0,             // usRevId. 0 sets the stepping to A0
     0,             // usDeviceID_PCH
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable ADLN::capabilityTable{
-    EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, true}},
-        {aub_stream::ENGINE_CCS, {true, true}}},    // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},       // kmdNotifyProperties
-    MemoryConstants::max64BitAppAddress,            // gpuAddressSpace
-    0,                                              // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
-    "",                                             // deviceName
-    nullptr,                                        // preferredPlatformName
-    PreemptionMode::ThreadGroup,                    // defaultPreemptionMode
-    aub_stream::ENGINE_RCS,                         // defaultEngineType
-    0,                                              // maxRenderFrequency
-    30,                                             // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Adln, // aubDeviceId
-    1,                                              // extraQuantityThreadsPerEU
-    64,                                             // slmSize
-    sizeof(ADLN::GRF),                              // grfSize
-    36u,                                            // timestampValidBits
-    32u,                                            // kernelTimestampValidBits
-    false,                                          // blitterOperationsSupported
-    true,                                           // ftrSupportsInteger64BitAtomics
-    false,                                          // ftrSupportsFP64
-    false,                                          // ftrSupportsFP64Emulation
-    false,                                          // ftrSupports64BitMath
-    true,                                           // ftrSvm
-    false,                                          // ftrSupportsCoherency
-    false,                                          // ftrRenderCompressedBuffers
-    false,                                          // ftrRenderCompressedImages
-    true,                                           // instrumentationEnabled
-    true,                                           // ftr64KBpages
-    false,                                          // supportCacheFlushAfterWalker
-    true,                                           // supportsImages
-    true,                                           // supportsOcl21Features
-    false,                                          // supportsOnDemandPageFaults
-    false,                                          // supportsIndependentForwardProgress
-    false,                                          // hostPtrTrackingEnabled
-    true,                                           // isIntegratedDevice
-    true,                                           // supportsMediaBlock
-    false,                                          // p2pAccessSupported
-    false,                                          // p2pAtomicAccessSupported
-    true,                                           // fusedEuEnabled
-    false,                                          // l0DebuggerSupported;
-    true,                                           // supportsFloatAtomics
-    0                                               // cxlType
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
+        {aub_stream::ENGINE_RCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
+    }),
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = MemoryConstants::max64BitAppAddress,
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::ThreadGroup,
+    .defaultEngineType = aub_stream::ENGINE_RCS,
+    .maxRenderFrequency = 0,
+    .extraQuantityThreadsPerEU = 1,
+    .maxProgrammableSlmSize = 64,
+    .grfSize = sizeof(ADLN::GRF),
+    .timestampValidBits = 36u,
+    .kernelTimestampValidBits = 32u,
+    .blitterOperationsSupported = false,
+    .ftrSupportsFP64 = false,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = false,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = false,
+    .supportsImages = true,
+    .supportsOnDemandPageFaults = false,
+    .supportsIndependentForwardProgress = false,
+    .isIntegratedDevice = true,
+    .supportsMediaBlock = true,
+    .fusedEuEnabled = true,
+    .l0DebuggerSupported = false,
 };
 
 WorkaroundTable ADLN::workaroundTable = {};
@@ -109,7 +98,8 @@ void ADLN::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
 void ADLN::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
+    gtSysInfo->NumThreadsPerEu = 7u;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLN::maxEuPerSubslice;
@@ -122,6 +112,8 @@ void ADLN::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo AdlnHwConfig::hwInfo = {

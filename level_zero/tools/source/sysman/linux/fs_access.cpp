@@ -9,7 +9,6 @@
 
 #include <climits>
 
-#include <array>
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
@@ -75,7 +74,7 @@ ze_result_t FsAccess::readValue(const std::string file, T &val) {
     auto lock = this->obtainMutex();
 
     std::string readVal(64, '\0');
-    int fd = pFdCache->getFd(file);
+    int fd = pFdCache->getFd(std::move(file));
     if (fd < 0) {
         return getResult(errno);
     }
@@ -106,19 +105,19 @@ FsAccess *FsAccess::create() {
 }
 
 ze_result_t FsAccess::read(const std::string file, uint64_t &val) {
-    return readValue<uint64_t>(file, val);
+    return readValue<uint64_t>(std::move(file), val);
 }
 
 ze_result_t FsAccess::read(const std::string file, double &val) {
-    return readValue<double>(file, val);
+    return readValue<double>(std::move(file), val);
 }
 
 ze_result_t FsAccess::read(const std::string file, int32_t &val) {
-    return readValue<int32_t>(file, val);
+    return readValue<int32_t>(std::move(file), val);
 }
 
 ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
-    return readValue<uint32_t>(file, val);
+    return readValue<uint32_t>(std::move(file), val);
 }
 
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
@@ -322,7 +321,7 @@ std::string ProcfsAccess::fullPath(const ::pid_t pid) {
 }
 
 std::string ProcfsAccess::fdDirPath(const ::pid_t pid) {
-    // Returns the full path to file descritpor directory
+    // Returns the full path to file descriptor directory
     // for process pid
     return std::string(fullPath(pid) + fdDir);
 }
@@ -406,17 +405,17 @@ const std::string SysfsAccess::drmDriverDevNodeDir = "/dev/dri/";
 const std::string SysfsAccess::intelGpuBindEntry = "/sys/bus/pci/drivers/i915/bind";
 const std::string SysfsAccess::intelGpuUnbindEntry = "/sys/bus/pci/drivers/i915/unbind";
 
-std::string SysfsAccess::fullPath(const std::string file) {
+std::string SysfsAccess::fullPath(const std::string &file) {
     // Prepend sysfs directory path for this device
     return std::string(dirname + file);
 }
 
 SysfsAccess::SysfsAccess(const std::string dev) {
     // dev could be either /dev/dri/cardX or /dev/dri/renderDX
-    std::string fileName = FsAccess::getBaseName(dev);
+    std::string fileName = FsAccess::getBaseName(std::move(dev));
     std::string devicesDir = drmPath + fileName + std::string("/") + devicesPath;
 
-    FsAccess::listDirectory(devicesDir, deviceNames);
+    FsAccess::listDirectory(std::move(devicesDir), deviceNames);
     for (auto &&next : deviceNames) {
         if (!next.compare(0, primaryDevName.length(), primaryDevName)) {
             dirname = drmPath + next + std::string("/");
@@ -426,7 +425,7 @@ SysfsAccess::SysfsAccess(const std::string dev) {
 }
 
 SysfsAccess *SysfsAccess::create(const std::string dev) {
-    return new SysfsAccess(dev);
+    return new SysfsAccess(std::move(dev));
 }
 
 ze_result_t SysfsAccess::canRead(const std::string file) {
@@ -521,11 +520,11 @@ ze_result_t SysfsAccess::getRealPath(const std::string path, std::string &val) {
 }
 
 ze_result_t SysfsAccess::bindDevice(std::string device) {
-    return FsAccess::write(intelGpuBindEntry, device);
+    return FsAccess::write(intelGpuBindEntry, std::move(device));
 }
 
 ze_result_t SysfsAccess::unbindDevice(std::string device) {
-    return FsAccess::write(intelGpuUnbindEntry, device);
+    return FsAccess::write(intelGpuUnbindEntry, std::move(device));
 }
 
 bool SysfsAccess::fileExists(const std::string file) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,7 +194,7 @@ TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsTrueAndCorruptedDataWhenReques
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestSingleIsCalledThenErrorDeviceLostIsReturned) {
+TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccurredWhenRequestSingleIsCalledThenErrorDeviceLostIsReturned) {
     pKmdSysManager->allowSetCalls = false;
     pKmdSysManager->mockEscapeResult = STATUS_DEVICE_REMOVED;
 
@@ -214,7 +214,7 @@ TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestS
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
-TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestMultipleIsCalledThenErrorDeviceLostIsReturned) {
+TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccurredWhenRequestMultipleIsCalledThenErrorDeviceLostIsReturned) {
     pKmdSysManager->allowSetCalls = false;
     pKmdSysManager->mockEscapeResult = STATUS_DEVICE_REMOVED;
 

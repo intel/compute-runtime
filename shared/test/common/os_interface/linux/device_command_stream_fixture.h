@@ -45,6 +45,11 @@ class Ioctls {
     std::atomic<int32_t> gemVmDestroy;
     std::atomic<int32_t> primeFdToHandle;
     std::atomic<int32_t> handleToPrimeFd;
+    std::atomic<int32_t> syncObjFdToHandle;
+    std::atomic<int32_t> syncObjWait;
+    std::atomic<int32_t> syncObjSignal;
+    std::atomic<int32_t> syncObjTimelineWait;
+    std::atomic<int32_t> syncObjTimelineSignal;
     std::atomic<int32_t> gemMmapOffset;
     std::atomic<int32_t> gemSetDomain;
     std::atomic<int32_t> gemWait;
@@ -276,6 +281,11 @@ struct DrmMockCustom : public Drm {
     bool failOnPrimeFdToHandle = false;
     bool failOnSecondPrimeFdToHandle = false;
     bool failOnPrimeHandleToFd = false;
+    bool failOnSyncObjFdToHandle = false;
+    bool failOnSyncObjWait = false;
+    bool failOnSyncObjSignal = false;
+    bool failOnSyncObjTimelineWait = false;
+    bool failOnSyncObjTimelineSignal = false;
 
     // DRM_IOCTL_I915_GEM_CREATE_EXT
     uint64_t createExtSize = 0;

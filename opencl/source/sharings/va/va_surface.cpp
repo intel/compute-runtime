@@ -7,6 +7,7 @@
 
 #include "opencl/source/sharings/va/va_surface.h"
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -108,24 +109,24 @@ VAStatus VASurface::getSurfaceDescription(SharedSurfaceInfo &surfaceInfo, VAShar
     return vaStatus;
 }
 
-void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags, bool supportOcl21) {
+void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags) {
     bool isRGBPFormat = debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
 
     if (plane == 0) {
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_Y;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeY;
         sharedSurfaceInfo.channelOrder = CL_R;
     } else if (plane == 1) {
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_U;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeU;
         sharedSurfaceInfo.channelOrder = isRGBPFormat ? CL_R : CL_RG;
     } else if (plane == 2) {
         UNRECOVERABLE_IF(!isRGBPFormat);
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_V;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeV;
         sharedSurfaceInfo.channelOrder = CL_R;
     } else {
         UNRECOVERABLE_IF(true);
     }
 
-    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &sharedSurfaceInfo.gmmImgFormat, supportOcl21); // vaImage.format.fourcc == VA_FOURCC_NV12
+    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &sharedSurfaceInfo.gmmImgFormat); // vaImage.format.fourcc == VA_FOURCC_NV12
 
     if (debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT8;
@@ -192,10 +193,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     sharedSurfaceInfo.imgInfo.imgDesc.imageType = ImageType::image2D;
 
-    bool supportOcl21 = context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features;
-
     if (VASurface::isSupportedPlanarFormat(sharedSurfaceInfo.imageFourcc)) {
-        applyPlanarOptions(sharedSurfaceInfo, plane, flags, supportOcl21);
+        applyPlanarOptions(sharedSurfaceInfo, plane, flags);
     } else if (VASurface::isSupportedPackedFormat(sharedSurfaceInfo.imageFourcc)) {
         applyPackedOptions(sharedSurfaceInfo);
     } else {
@@ -224,7 +223,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     lock.unlock();
 
     cl_image_format imgFormat = {sharedSurfaceInfo.channelOrder, sharedSurfaceInfo.channelType};
-    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, supportOcl21);
+    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     sharedSurfaceInfo.imgInfo.surfaceFormat = &imgSurfaceFormat->surfaceFormat;
     sharedSurfaceInfo.imgInfo.imgDesc.imageRowPitch = sharedSurfaceInfo.imgInfo.rowPitch;
 

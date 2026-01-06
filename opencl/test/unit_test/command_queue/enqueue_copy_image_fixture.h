@@ -6,13 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
-
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
-#include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
 
@@ -24,8 +22,8 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::setUp();
         context = new MockContext(pClDevice);
-        srcImage = Image2dHelper<>::create(context);
-        dstImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
+        dstImage = Image2dHelperUlt<>::create(context);
     }
 
     void TearDown(void) override {
@@ -56,7 +54,7 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
 
 struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
                                     public ::testing::Test,
-                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t, bool>> {
+                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>> {
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);

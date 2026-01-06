@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,16 +13,11 @@
 static bool inverseOrder = false;
 
 void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList1;
     ze_command_list_handle_t cmdList2;
 
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList1));
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList2));
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList1);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList2);
 
     constexpr size_t allocSize = 4096;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -91,13 +86,13 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_DEVICE,
                                                      0);
 
     auto buffer = reinterpret_cast<uint32_t *>(dstBuffer);
-    auto offsetedBuffer = &(buffer[1]);
+    auto offsetBuffer = &(buffer[1]);
 
     int loopIters = 2;
     int i = inverseOrder ? 1 : 0;
@@ -109,7 +104,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
         }
 
         if (i == 1) {
-            SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &offsetedBuffer));
+            SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &offsetBuffer));
             SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList2, kernel, &dispatchTraits,
                                                                  events[1], 1, &events[0]));
         }
@@ -174,8 +169,6 @@ int main(int argc, char *argv[]) {
     inverseOrder = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--inverse");
 
     executeKernelAndValidate(context, device, outputValidationSuccessful);
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

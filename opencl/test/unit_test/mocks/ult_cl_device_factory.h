@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class MockClDevice;
 struct UltDeviceFactory;
 
 struct UltClDeviceFactory {
+  public:
     UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount);
     UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment);
     ~UltClDeviceFactory();
@@ -27,6 +28,9 @@ struct UltClDeviceFactory {
     std::unique_ptr<UltDeviceFactory> pUltDeviceFactory;
     std::vector<MockClDevice *> rootDevices;
     std::vector<ClDevice *> subDevices;
+
+  protected:
+    void initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment);
 };
 
 } // namespace NEO

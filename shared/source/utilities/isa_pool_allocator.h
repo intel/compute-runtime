@@ -10,6 +10,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 #include <mutex>
 
@@ -17,40 +18,14 @@ namespace NEO {
 class GraphicsAllocation;
 class Device;
 
-class SharedIsaAllocation {
-  public:
-    SharedIsaAllocation(GraphicsAllocation *graphicsAllocation, size_t offset, size_t size, std::mutex *mtx)
-        : graphicsAllocation(graphicsAllocation), offset(offset), size(size), mtx(*mtx){};
-
-    GraphicsAllocation *getGraphicsAllocation() const {
-        return graphicsAllocation;
-    }
-
-    size_t getOffset() const {
-        return offset;
-    }
-
-    size_t getSize() const {
-        return size;
-    }
-
-    std::unique_lock<std::mutex> obtainSharedAllocationLock() {
-        return std::unique_lock<std::mutex>(mtx);
-    }
-
-  private:
-    GraphicsAllocation *graphicsAllocation;
-    const size_t offset;
-    const size_t size;
-    std::mutex &mtx; // This mutex is shared across all users of this GA
-};
+using SharedIsaAllocation = SharedPoolAllocation;
 
 // Each shared GA is maintained by single ISAPool
 class ISAPool : public AbstractBuffersPool<ISAPool, GraphicsAllocation> {
     using BaseType = AbstractBuffersPool<ISAPool, GraphicsAllocation>;
 
   public:
-    ISAPool(ISAPool &&pool);
+    ISAPool(ISAPool &&pool) noexcept;
     ISAPool &operator=(ISAPool &&other) = delete;
     ISAPool(Device *device, bool isBuiltin, size_t storageSize);
     ~ISAPool() override;
@@ -69,19 +44,22 @@ class ISAPool : public AbstractBuffersPool<ISAPool, GraphicsAllocation> {
 class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAllocation> {
   public:
     ISAPoolAllocator(Device *device);
-    SharedIsaAllocation *requestGraphicsAllocationForIsa(bool isBuiltin, size_t size);
+    SharedIsaAllocation *requestGraphicsAllocationForIsa(bool isBuiltin, size_t sizeWithPadding);
     void freeSharedIsaAllocation(SharedIsaAllocation *sharedIsaAllocation);
 
   private:
+    void initAllocParams();
     SharedIsaAllocation *tryAllocateISA(bool isBuiltin, size_t size);
 
     size_t getAllocationSize(bool isBuiltin) const {
-        return isBuiltin ? buitinAllocationSize : userAllocationSize;
+        return isBuiltin ? builtinAllocationSize : userAllocationSize;
     }
+    size_t alignToPoolSize(size_t size) const;
 
     Device *device;
     size_t userAllocationSize = MemoryConstants::pageSize2M * 2;
-    size_t buitinAllocationSize = MemoryConstants::pageSize64k;
+    size_t builtinAllocationSize = MemoryConstants::pageSize64k;
+    size_t poolAlignment = 1u;
     std::mutex allocatorMtx;
 };
 

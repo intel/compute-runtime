@@ -7,10 +7,10 @@
 
 #include "shared/source/aub/aub_helper.h"
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
@@ -23,7 +23,6 @@ namespace NEO {
 
 bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     switch (type) {
-    case AllocationType::pipe:
     case AllocationType::constantSurface:
     case AllocationType::globalSurface:
     case AllocationType::kernelIsa:
@@ -41,6 +40,7 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     case AllocationType::assertBuffer:
     case AllocationType::tagBuffer:
     case AllocationType::syncDispatchToken:
+    case AllocationType::hostFunction:
         return true;
     case AllocationType::bufferHostMemory:
         return NEO::debugManager.isTbxPageFaultManagerEnabled() ||
@@ -57,23 +57,9 @@ uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
     return 32ull * MemoryConstants::gigaByte;
 }
 
-int AubHelper::getMemTrace(uint64_t pdEntryBits) {
-    if (pdEntryBits & BIT(PageTableEntry::localMemoryBit)) {
-        return AubMemDump::AddressSpaceValues::TraceLocal;
-    }
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
-}
-
 uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
-    pdEntryBits &= ~BIT(PageTableEntry::localMemoryBit);
+    pdEntryBits &= ~makeBitMask<PageTableEntry::localMemoryBit>();
     return pdEntryBits;
-}
-
-uint32_t AubHelper::getMemType(uint32_t addressSpace) {
-    if (addressSpace == AubMemDump::AddressSpaceValues::TraceLocal) {
-        return MemType::local;
-    }
-    return MemType::system;
 }
 
 uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper) {

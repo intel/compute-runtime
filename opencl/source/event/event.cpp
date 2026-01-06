@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,32 +10,36 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/perf_counter.h"
-#include "shared/source/utilities/range.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
-#include "opencl/source/event/event_tracker.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
+
+#include "metrics_library_api_1_0.h"
 
 #include <algorithm>
 #include <iostream>
+#include <span>
 
 namespace NEO {
 Event::Event(
@@ -49,9 +53,6 @@ Event::Event(
       cmdQueue(cmdQueue),
       cmdType(cmdType),
       taskCount(taskCount) {
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyCreation(this);
-    }
     flushStamp.reset(new FlushStampTracker(true));
 
     DBG_LOG(EventsDebugEnable, "Event()", this);
@@ -91,12 +92,8 @@ Event::Event(
 }
 
 Event::~Event() {
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyDestruction(this);
-    }
-
     DBG_LOG(EventsDebugEnable, "~Event()", this);
-    // no commands should be registred
+    // no commands should be registered
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
 
     submitCommand(true);
@@ -123,6 +120,8 @@ Event::~Event() {
         {
             TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
             cmdQueue->handlePostCompletionOperations(true);
+
+            this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations(true);
         }
         if (timeStampNode != nullptr) {
             timeStampNode->returnTag();
@@ -327,7 +326,7 @@ uint64_t Event::getProfilingInfoData(const ProfilingInfo &profilingInfo) const {
 bool Event::calcProfilingData() {
     if (!dataCalculated && !profilingCpuPath) {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
-            const auto timestamps = timestampPacketContainer->peekNodes();
+            const auto &timestamps = timestampPacketContainer->peekNodes();
 
             if (debugManager.flags.PrintTimestampPacketContents.get()) {
 
@@ -464,7 +463,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 }
 
 void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
-    const auto timestamps = timestampContainer->peekNodes();
+    const auto &timestamps = timestampContainer->peekNodes();
 
     globalStartTS = timestamps[0]->getGlobalStartValue(0);
     globalEndTS = timestamps[0]->getGlobalEndValue(0);
@@ -491,10 +490,16 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    std::span<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
     auto waitStatus = WaitStatus::notReady;
-    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
-    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
+    auto skipWaitOnTaskCount = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
+
+    if (this->getWaitForTaskCountRequired()) {
+        skipWaitOnTaskCount = false;
+        this->setWaitForTaskCountRequired(false);
+    }
+
+    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, skipWaitOnTaskCount);
     if (waitStatus == WaitStatus::gpuHang) {
         return WaitStatus::gpuHang;
     }
@@ -508,7 +513,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     {
         TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
 
-        bool checkQueueCompletionForPostSyncOperations = !(waitedOnTimestamps && !cmdQueue->isOOQEnabled() &&
+        bool checkQueueCompletionForPostSyncOperations = !(skipWaitOnTaskCount && !cmdQueue->isOOQEnabled() &&
                                                            (this->timestampPacketContainer->peekNodes() == cmdQueue->getTimestampPacketContainer()->peekNodes()));
 
         cmdQueue->handlePostCompletionOperations(checkQueueCompletionForPostSyncOperations);
@@ -648,9 +653,6 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
             break;
         }
     }
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
-    }
 }
 
 void Event::submitCommand(bool abortTasks) {
@@ -675,6 +677,14 @@ void Event::submitCommand(bool abortTasks) {
         }
 
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
+        if (abortTasks) {
+            if (timestampPacketContainer.get() != nullptr) {
+                const auto &timestamps = timestampPacketContainer->peekNodes();
+                for (auto i = 0u; i < timestamps.size(); i++) {
+                    timestamps[i]->markAsAborted();
+                }
+            }
+        }
         if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }
@@ -776,7 +786,7 @@ bool Event::isCompleted() {
         return true;
     }
 
-    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    std::span<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
 
     if (cmdQueue->isCompleted(getCompletionStamp(), states)) {
         gpuStateWaited = true;
@@ -831,21 +841,18 @@ bool Event::areTimestampsCompleted() {
 
             for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
                 for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
-                    if (printWaitForCompletion) {
-                        printf("\nChecking TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
-                    }
+                    PRINT_STRING(printWaitForCompletion, stdout,
+                                 "\nChecking TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
+
                     this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(this->cmdQueue->getGpgpuCommandStreamReceiver().getRootDeviceIndex()));
                     if (timestamp->getContextEndValue(i) == 1) {
-                        if (printWaitForCompletion) {
-                            printf("\nTS not ready");
-                        }
+                        PRINT_STRING(printWaitForCompletion, stdout, "\nTS not ready");
                         return false;
                     }
                 }
             }
-            if (printWaitForCompletion) {
-                printf("\nTS ready");
-            }
+            PRINT_STRING(printWaitForCompletion, stdout, "\nTS ready");
+
             this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations(true);
             const auto &bcsStates = this->cmdQueue->peekActiveBcsStates();
             for (auto currentBcsIndex = 0u; currentBcsIndex < bcsStates.size(); currentBcsIndex++) {
@@ -888,7 +895,7 @@ inline void Event::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t
     }
     setStatus(statusToPropagate);
 
-    // event may be completed after this operation, transtition the state to not block others.
+    // event may be completed after this operation, transition the state to not block others.
     this->updateExecutionStatus();
 }
 
@@ -912,10 +919,10 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     // Note from spec :
     //    "All callbacks registered for an event object must be called.
     //     All enqueued callbacks shall be called before the event object is destroyed."
-    // That's why each registered calback increments the internal refcount
+    // That's why each registered callback increments the internal refcount
     incRefInternal();
-    DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", (uint32_t)type);
-    callbacks[(uint32_t)target].pushFrontOne(*new Callback(this, fn, type, data));
+    DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", static_cast<uint32_t>(type));
+    callbacks[static_cast<uint32_t>(target)].pushFrontOne(*new Callback(this, fn, type, data));
 
     // Callback added after event reached its "completed" state
     if (updateStatusAndCheckCompletion()) {
@@ -946,7 +953,7 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
     }
 
     // run through all needed callback targets and execute callbacks
-    for (uint32_t i = 0; i <= (uint32_t)target; ++i) {
+    for (uint32_t i = 0; i <= static_cast<uint32_t>(target); ++i) {
         auto cb = callbacks[i].detachNodes();
         auto curr = cb;
         while (curr != nullptr) {
@@ -954,7 +961,7 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
             if (terminated) {
                 curr->overrideCallbackExecutionStatusTarget(execStatus);
             }
-            DBG_LOG(EventsDebugEnable, "event", this, "executing callback", "ECallbackTarget", (uint32_t)target);
+            DBG_LOG(EventsDebugEnable, "event", this, "executing callback", "ECallbackTarget", static_cast<uint32_t>(target));
             curr->execute();
             decRefInternal();
             delete curr;

@@ -14,7 +14,7 @@
 #include <memory>
 #include <vector>
 
-struct _ze_module_handle_t : BaseHandle {};
+struct _ze_module_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_MODULE> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_module_handle_t>);
 
 namespace NEO {

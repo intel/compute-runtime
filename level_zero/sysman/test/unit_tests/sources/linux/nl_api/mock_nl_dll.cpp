@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_dll.h"
-
-#include <level_zero/zes_api.h>
 
 #include "gtest/gtest.h"
 #include "iaf_netlink.h"
@@ -29,6 +27,7 @@ struct nlattr MockNlDll::mockNlattr;
 struct nlattr MockNlDll::mockNextNlattr;
 struct genl_ops MockNlDll::mockGenlOps;
 nl_recvmsg_msg_cb_t MockNlDll::mockCb = mockCallback;
+const std::string MockNlDll::mockStr = "mockString";
 
 extern "C" {
 int mockGenlConnect(struct nl_sock *sock) {
@@ -118,6 +117,11 @@ void *mockNlaData(const struct nlattr *attr) {
 uint32_t mockNlaGetU32(const struct nlattr *attr) {
     EXPECT_EQ(&MockNlDll::mockNlattr, attr);
     return MockNlDll::mockU32Val;
+}
+
+char *mockNlaGetString(const struct nlattr *attr) {
+    EXPECT_EQ(&MockNlDll::mockNlattr, attr);
+    return const_cast<char *>(MockNlDll::mockStr.c_str());
 }
 
 uint64_t mockNlaGetU64(const struct nlattr *attr) {
@@ -241,6 +245,7 @@ MockNlDll::MockNlDll() {
     funcMap["nl_socket_modify_cb"] = reinterpret_cast<void *>(&mockNlSocketModifyCb);
     funcMap["nla_data"] = reinterpret_cast<void *>(&mockNlaData);
     funcMap["nla_get_u32"] = reinterpret_cast<void *>(&mockNlaGetU32);
+    funcMap["nla_get_string"] = reinterpret_cast<void *>(&mockNlaGetString);
     funcMap["nla_get_u64"] = reinterpret_cast<void *>(&mockNlaGetU64);
     funcMap["nla_get_u8"] = reinterpret_cast<void *>(&mockNlaGetU8);
     funcMap["nla_is_nested"] = reinterpret_cast<void *>(&mockNlaIsNested);

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -13,6 +14,9 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include <cstdint>
+#include <new>
 
 using namespace NEO;
 
@@ -74,7 +78,7 @@ typedef CreateImage1DTest CreateImage1DType;
 
 HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCorrect) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
@@ -108,7 +112,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
         ASSERT_TRUE(false);
     }
 
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
 
     ASSERT_EQ(true, image->isMemObjZeroCopy());
     EXPECT_FALSE(image->isImageFromImage());

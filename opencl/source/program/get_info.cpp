@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,12 @@
 
 #include "shared/source/helpers/get_info.h"
 
-#include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 
 #include "program.h"
@@ -146,8 +143,9 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
                 if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
-                } else
+                } else {
                     continue;
+                }
             }
             debugDataSizes.push_back(buildInfos[rootDeviceIndex].debugDataSize);
         }
@@ -173,8 +171,9 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
                 if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
-                } else
+                } else {
                     continue;
+                }
             }
             auto dbgDataSize = buildInfos[rootDeviceIndex].debugDataSize;
             memcpy_s(outputDebugData[i], dbgDataSize, buildInfos[rootDeviceIndex].debugData.get(), dbgDataSize);

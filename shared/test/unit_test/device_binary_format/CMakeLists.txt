@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,6 +23,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_debug_binary_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}zebin_decoder_exclusive_tests.cpp
 )
 
 add_subdirectories()

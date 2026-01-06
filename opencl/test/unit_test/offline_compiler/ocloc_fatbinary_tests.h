@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,14 +10,38 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 
+#include "environment.h"
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 
 #include <memory>
 
+extern Environment *gEnvironment;
+
 namespace NEO {
-class OclocEnabledAcronyms : public ::testing::Test {
+
+class OclocTest : public ::testing::Test {
+    void SetUp() override {
+        std::string spvFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".spv";
+        std::string binFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".bin";
+        std::string dbgFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".dbg";
+
+        constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
+        std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
+
+        writeDataToFile(spvFile.c_str(), byteArrayView);
+        writeDataToFile(binFile.c_str(), byteArrayView);
+        writeDataToFile(dbgFile.c_str(), byteArrayView);
+    }
+
+  protected:
+    const std::string clCopybufferFilename = "some_kernel.cl";
+    std::string copyKernelSources = "example_kernel(){}";
+};
+
+class OclocEnabledAcronyms : public OclocTest {
   public:
     std::vector<DeviceAotInfo> enabledProducts{};
     std::vector<ConstStringRef> enabledProductsAcronyms{};
@@ -28,7 +52,8 @@ class OclocEnabledAcronyms : public ::testing::Test {
 class OclocFatBinaryProductAcronymsTests : public OclocEnabledAcronyms {
   public:
     OclocFatBinaryProductAcronymsTests() {
-        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+        mockArgHelperFilesMap[clCopybufferFilename] = copyKernelSources;
+        oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(mockArgHelperFilesMap);
         oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(true);
 
         enabledProducts = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
@@ -37,7 +62,9 @@ class OclocFatBinaryProductAcronymsTests : public OclocEnabledAcronyms {
         enabledReleasesAcronyms = oclocArgHelperWithoutInput->productConfigHelper->getReleasesAcronyms();
     }
 
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
+  protected:
+    std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput;
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
 };
 
 class OclocFatBinaryTest : public OclocEnabledAcronyms {

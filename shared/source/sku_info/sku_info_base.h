@@ -70,7 +70,8 @@ struct FeatureTableBase {
         uint32_t ftrXe2PlusTiling : 1;
         uint32_t ftrL3TransientDataFlush : 1;
         uint32_t ftrPml5Support : 1;
-        uint32_t reserved : 18;
+        uint32_t ftrHeaplessMode : 1;
+        uint32_t reserved : 17;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

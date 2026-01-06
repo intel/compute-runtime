@@ -97,13 +97,7 @@ target_include_directories(igdrcl_tests PRIVATE
                            ${KHRONOS_GL_HEADERS_DIR}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
-if(WIN32)
-  target_include_directories(igdrcl_tests PRIVATE
-                             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
-  )
-endif()
-
-target_link_libraries(igdrcl_tests gmock-gtest ${NEO_EXTRA_LIBS})
+target_link_libraries(igdrcl_tests neo_gtest ${NEO_EXTRA_LIBS})
 
 set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 

@@ -9,11 +9,12 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "events.h"
-#include "os_events.h"
 
 #include <mutex>
 
 namespace L0 {
+class OsEvents;
+struct OsSysman;
 
 class EventsImp : public Events, NEO::NonCopyableAndNonMovableClass {
   public:

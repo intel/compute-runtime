@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,10 @@ inline void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     if (queue) {
         queue->flush();
         releaseVirtualEvent(*queue);
+
+        if (queue->waitOnDestructionNeeded()) {
+            queue->waitForAllEngines(false, nullptr, true, false);
+        }
         queue->release();
         retVal = CL_SUCCESS;
     }

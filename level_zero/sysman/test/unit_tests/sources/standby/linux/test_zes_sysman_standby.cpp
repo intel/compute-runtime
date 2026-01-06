@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ TEST_F(ZesStandbyFixtureI915, GivenValidDeviceHandleAndStandbyNotSupportedWhenCa
     EXPECT_EQ(count, 0u);
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds, IsXeCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, [](const std::string &filePath, struct stat *statbuf) -> int {
         statbuf->st_mode = S_IRUSR;
@@ -145,7 +145,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenComponentCountZeroWhenCallingzesStandbyGet
     pSysmanDeviceImp->pStandbyHandleContext->handleList.pop_back();
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetPropertiesThenVerifyzesStandbyGetPropertiesCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetPropertiesThenVerifyzesStandbyGetPropertiesCallSucceeds, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_properties_t properties = {};
@@ -160,7 +160,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallSucceedsForDefaultMode, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallSucceedsForDefaultMode, IsXeCore) {
 
     mockKMDInterfaceSetup();
     pSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
@@ -175,7 +175,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallSucceedsForNeverMode, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallSucceedsForNeverMode, IsXeCore) {
 
     zes_standby_promo_mode_t mode = {};
     mockKMDInterfaceSetup();
@@ -190,7 +190,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenInvalidStandbyFileWhenReadisCalledThenExpectFailure, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenInvalidStandbyFileWhenReadisCalledThenExpectFailure, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_promo_mode_t mode = {};
@@ -203,7 +203,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenInvalidStandbyFileWhenReadisCalledThenExpe
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallFailsForInvalidMode, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThenVerifyzesStandbyGetModeCallFailsForInvalidMode, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_promo_mode_t mode = {};
@@ -217,7 +217,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeOnUnavailableFileThenVerifyzesStandbyGetModeCallFailsForUnsupportedFeature, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeOnUnavailableFileThenVerifyzesStandbyGetModeCallFailsForUnsupportedFeature, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_promo_mode_t mode = {};
@@ -233,7 +233,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeWithInsufficientPermissionsThenVerifyzesStandbyGetModeCallFailsForInsufficientPermissions, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGetModeWithInsufficientPermissionsThenVerifyzesStandbyGetModeCallFailsForInsufficientPermissions, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_promo_mode_t mode = {};
@@ -248,7 +248,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbyGet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeThenwithUnwritableFileVerifySysmanzesySetModeCallFailedWithInsufficientPermissions, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeThenwithUnwritableFileVerifySysmanzesySetModeCallFailedWithInsufficientPermissions, IsXeCore) {
 
     mockKMDInterfaceSetup();
     auto handles = getStandbyHandles(mockHandleCount);
@@ -260,7 +260,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeOnUnavailableFileThenVerifyzesStandbySetModeCallFailsForUnsupportedFeature, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeOnUnavailableFileThenVerifyzesStandbySetModeCallFailsForUnsupportedFeature, IsXeCore) {
 
     mockKMDInterfaceSetup();
     auto handles = getStandbyHandles(mockHandleCount);
@@ -272,7 +272,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverThenVerifySysmanzesSetModeCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverThenVerifySysmanzesSetModeCallSucceeds, IsXeCore) {
 
     mockKMDInterfaceSetup();
     auto handles = getStandbyHandles(mockHandleCount);
@@ -289,7 +289,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultThenVerifySysmanzesSetModeCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultThenVerifySysmanzesSetModeCallSucceeds, IsXeCore) {
 
     mockKMDInterfaceSetup();
     auto handles = getStandbyHandles(mockHandleCount);
@@ -306,7 +306,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenOnSubdeviceNotSetWhenValidatingosStandbyGetPropertiesThenSuccessIsReturned, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenOnSubdeviceNotSetWhenValidatingosStandbyGetPropertiesThenSuccessIsReturned, IsXeCore) {
 
     mockKMDInterfaceSetup();
     zes_standby_properties_t properties = {};
@@ -318,7 +318,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenOnSubdeviceNotSetWhenValidatingosStandbyGe
     EXPECT_EQ(properties.onSubdevice, onSubdevice);
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultWithLegacyPathThenVerifySysmanzesSetModeCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultWithLegacyPathThenVerifySysmanzesSetModeCallSucceeds, IsXeCore) {
 
     mockKMDInterfaceSetup();
     pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
@@ -339,7 +339,7 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySet
     }
 }
 
-HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverWithLegacyPathThenVerifySysmanzesSetModeCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverWithLegacyPathThenVerifySysmanzesSetModeCallSucceeds, IsXeCore) {
 
     mockKMDInterfaceSetup();
     pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
@@ -425,7 +425,7 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
     }
 };
 
-HWTEST2_F(ZesStandbyMultiDeviceFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesStandbyMultiDeviceFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds, IsXeCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, [](const std::string &filePath, struct stat *statbuf) -> int {
         statbuf->st_mode = S_IRUSR;

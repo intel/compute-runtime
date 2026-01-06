@@ -5408,7 +5408,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT;
+        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN; // patched
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
         TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
@@ -7924,5 +7924,192 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
     }
 } STATE_CONTEXT_DATA_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS));
+
+typedef struct tagRESOURCE_BARRIER {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 23);
+            uint32_t PredicateEnable : BITFIELD_RANGE(24, 24);
+            uint32_t Reserved_25 : BITFIELD_RANGE(25, 25);
+            uint32_t Opcode : BITFIELD_RANGE(26, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
+            uint32_t WaitStage : BITFIELD_RANGE(0, 11);
+            uint32_t SignalStage : BITFIELD_RANGE(12, 23);
+            uint32_t Reserved_56 : BITFIELD_RANGE(24, 29);
+            uint32_t BarrierType : BITFIELD_RANGE(30, 31);
+            // DWORD 2
+            uint32_t Reserved_64 : BITFIELD_RANGE(0, 20);
+            uint32_t L1DataportCacheInvalidate : BITFIELD_RANGE(21, 21);
+            uint32_t DepthCache : BITFIELD_RANGE(22, 22);
+            uint32_t ColorCache : BITFIELD_RANGE(23, 23);
+            uint32_t L1DataportUavFlush : BITFIELD_RANGE(24, 24);
+            uint32_t Texture_Ro : BITFIELD_RANGE(25, 25);
+            uint32_t State_Ro : BITFIELD_RANGE(26, 26);
+            uint32_t Vf_Ro : BITFIELD_RANGE(27, 27);
+            uint32_t Amfs : BITFIELD_RANGE(28, 28);
+            uint32_t ConstantCache : BITFIELD_RANGE(29, 29);
+            uint32_t Reserved_94 : BITFIELD_RANGE(30, 31);
+            // DWORD 3
+            uint64_t Reserved_96 : BITFIELD_RANGE(0, 2);
+            uint64_t BarrierIdAddress : BITFIELD_RANGE(3, 63);
+        } Common;
+        uint32_t RawData[5];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_DWORD_COUNT_N = 0x3,
+    } DWORD_LENGTH;
+    typedef enum tagOPCODE {
+        OPCODE_RESOURCE_BARRIER = 0x3,
+    } OPCODE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_GFX_EXEC = 0x5,
+    } COMMAND_TYPE;
+    typedef enum tagWAIT_STAGE {
+        WAIT_STAGE_NONE = 0x0,
+        WAIT_STAGE_TOP = 0x1,
+        WAIT_STAGE_COLOR = 0x2,
+        WAIT_STAGE_GPGPU = 0x4,
+        WAIT_STAGE_COLOR_AND_COMPUTE = 0x6,
+        WAIT_STAGE_GEOM = 0x10,
+        WAIT_STAGE_GEOMETRY_AND_COMPUTE = 0x14,
+        WAIT_STAGE_RASTER = 0x20,
+        WAIT_STAGE_DEPTH = 0x40,
+        WAIT_STAGE_PIXEL = 0x80,
+    } WAIT_STAGE;
+    typedef enum tagSIGNAL_STAGE {
+        SIGNAL_STAGE_NONE = 0x0,
+        SIGNAL_STAGE_TOP = 0x1,
+        SIGNAL_STAGE_COLOR = 0x2,
+        SIGNAL_STAGE_GPGPU = 0x4,
+        SIGNAL_STAGE_COLOR_AND_COMPUTE = 0x6,
+        SIGNAL_STAGE_GEOM = 0x10,
+        SIGNAL_STAGE_GEOMETRY_AND_COMPUTE = 0x14,
+        SIGNAL_STAGE_RASTER = 0x20,
+        SIGNAL_STAGE_DEPTH = 0x40,
+        SIGNAL_STAGE_PIXEL = 0x80,
+    } SIGNAL_STAGE;
+    typedef enum tagBARRIER_TYPE {
+        BARRIER_TYPE_IMMEDIATE = 0x0,
+        BARRIER_TYPE_SIGNAL = 0x1,
+        BARRIER_TYPE_WAIT = 0x2,
+        BARRIER_TYPE_UAV = 0x3,
+    } BARRIER_TYPE;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common.Opcode = OPCODE_RESOURCE_BARRIER;
+        TheStructure.Common.CommandType = COMMAND_TYPE_GFX_EXEC;
+        TheStructure.Common.WaitStage = WAIT_STAGE_NONE;
+        TheStructure.Common.SignalStage = SIGNAL_STAGE_NONE;
+        TheStructure.Common.BarrierType = BARRIER_TYPE_IMMEDIATE;
+    }
+    static tagRESOURCE_BARRIER sInit() {
+        RESOURCE_BARRIER state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 5);
+        return TheStructure.RawData[index];
+    }
+    inline void setPredicateEnable(const bool value) {
+        TheStructure.Common.PredicateEnable = value;
+    }
+    inline bool getPredicateEnable() const {
+        return TheStructure.Common.PredicateEnable;
+    }
+    inline void setOpcode(const OPCODE value) {
+        TheStructure.Common.Opcode = value;
+    }
+    inline OPCODE getOpcode() const {
+        return static_cast<OPCODE>(TheStructure.Common.Opcode);
+    }
+    inline void setWaitStage(const WAIT_STAGE value) {
+        TheStructure.Common.WaitStage = value;
+    }
+    inline WAIT_STAGE getWaitStage() const {
+        return static_cast<WAIT_STAGE>(TheStructure.Common.WaitStage);
+    }
+    inline void setSignalStage(const SIGNAL_STAGE value) {
+        TheStructure.Common.SignalStage = value;
+    }
+    inline SIGNAL_STAGE getSignalStage() const {
+        return static_cast<SIGNAL_STAGE>(TheStructure.Common.SignalStage);
+    }
+    inline void setBarrierType(const BARRIER_TYPE value) {
+        TheStructure.Common.BarrierType = value;
+    }
+    inline BARRIER_TYPE getBarrierType() const {
+        return static_cast<BARRIER_TYPE>(TheStructure.Common.BarrierType);
+    }
+    inline void setL1DataportCacheInvalidate(const bool value) {
+        TheStructure.Common.L1DataportCacheInvalidate = value;
+    }
+    inline bool getL1DataportCacheInvalidate() const {
+        return TheStructure.Common.L1DataportCacheInvalidate;
+    }
+    inline void setDepthCache(const bool value) {
+        TheStructure.Common.DepthCache = value;
+    }
+    inline bool getDepthCache() const {
+        return TheStructure.Common.DepthCache;
+    }
+    inline void setColorCache(const bool value) {
+        TheStructure.Common.ColorCache = value;
+    }
+    inline bool getColorCache() const {
+        return TheStructure.Common.ColorCache;
+    }
+    inline void setL1DataportUavFlush(const bool value) {
+        TheStructure.Common.L1DataportUavFlush = value;
+    }
+    inline bool getL1DataportUavFlush() const {
+        return TheStructure.Common.L1DataportUavFlush;
+    }
+    inline void setTextureRo(const bool value) {
+        TheStructure.Common.Texture_Ro = value;
+    }
+    inline bool getTextureRo() const {
+        return TheStructure.Common.Texture_Ro;
+    }
+    inline void setStateRo(const bool value) {
+        TheStructure.Common.State_Ro = value;
+    }
+    inline bool getStateRo() const {
+        return TheStructure.Common.State_Ro;
+    }
+    inline void setVfRo(const bool value) {
+        TheStructure.Common.Vf_Ro = value;
+    }
+    inline bool getVfRo() const {
+        return TheStructure.Common.Vf_Ro;
+    }
+    inline void setAmfs(const bool value) {
+        TheStructure.Common.Amfs = value;
+    }
+    inline bool getAmfs() const {
+        return TheStructure.Common.Amfs;
+    }
+    inline void setConstantCache(const bool value) {
+        TheStructure.Common.ConstantCache = value;
+    }
+    inline bool getConstantCache() const {
+        return TheStructure.Common.ConstantCache;
+    }
+    typedef enum tagBARRIERIDADDRESS {
+        BARRIERIDADDRESS_BIT_SHIFT = 0x3,
+        BARRIERIDADDRESS_ALIGN_SIZE = 0x8,
+    } BARRIERIDADDRESS;
+    inline void setBarrierIdAddress(const uint64_t value) {
+        TheStructure.Common.BarrierIdAddress = value >> BARRIERIDADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getBarrierIdAddress() const {
+        return TheStructure.Common.BarrierIdAddress << BARRIERIDADDRESS_BIT_SHIFT;
+    }
+} RESOURCE_BARRIER;
+STATIC_ASSERT(20 == sizeof(RESOURCE_BARRIER));
 
 #pragma pack()

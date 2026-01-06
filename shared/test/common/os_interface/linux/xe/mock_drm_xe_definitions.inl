@@ -19,12 +19,33 @@ std::unique_ptr<DrmMockXe> DrmMockXe::create(RootDeviceEnvironment &rootDeviceEn
 void DrmMockXe::testMode(int f, int a) {
     forceIoctlAnswer = f;
     setIoctlAnswer = a;
+    setIoctlAnswers = {};
 }
+
+void DrmMockXe::testModeMulti(const std::initializer_list<int> &answers) {
+    setIoctlAnswers = std::queue<int>(answers);
+    if (!setIoctlAnswers.empty()) {
+        forceIoctlAnswer = 1;
+    }
+}
+
+int DrmMockXe::getIoctlAnswer() {
+    if (!setIoctlAnswers.empty()) {
+        setIoctlAnswer = setIoctlAnswers.front();
+        setIoctlAnswers.pop();
+
+        if (setIoctlAnswers.empty()) {
+            forceIoctlAnswer = 0;
+        }
+    }
+    return setIoctlAnswer;
+}
+
 int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     int ret = -1;
     ioctlCalled = true;
     if (forceIoctlAnswer) {
-        return setIoctlAnswer;
+        return getIoctlAnswer();
     }
     switch (request) {
     case DrmIoctl::gemVmCreate: {
@@ -43,8 +64,9 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::gemVmDestroy: {
         struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
-        if (v->vm_id == testValueVmId)
+        if (v->vm_id == testValueVmId) {
             ret = 0;
+        }
     } break;
     case DrmIoctl::gemMmapOffset: {
         gemMmapOffsetCalled++;
@@ -54,7 +76,16 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             break;
         }
         struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
-        v->offset = v->handle;
+        if (v->flags == 1) { // DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER flag
+            if (v->handle != 0) {
+                ret = -1;
+                break;
+            }
+            v->offset = testValuePciBarrierOff;
+        } else {
+            v->offset = v->handle;
+        }
+
         ret = 0;
 
     } break;
@@ -71,6 +102,21 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             v->fileDescriptor = testValuePrime;
             ret = 0;
         }
+    } break;
+    case DrmIoctl::syncObjFdToHandle: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjTimelineWait: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjWait: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjSignal: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjTimelineSignal: {
+        ret = 0;
     } break;
     case DrmIoctl::gemCreate: {
         ioctlCnt.gemCreate++;
@@ -285,33 +331,75 @@ void DrmMockXe::initInstance() {
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(this->queryMemUsage);
     xeQueryMemUsage->num_mem_regions = 3;
     xeQueryMemUsage->mem_regions[0] = {
-        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-        1,                             // instance
-        MemoryConstants::pageSize,     // min page size
-        2 * MemoryConstants::gigaByte, // total size
-        MemoryConstants::megaByte      // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_VRAM,
+        .instance = 1,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = 2 * MemoryConstants::gigaByte,
+        .used = MemoryConstants::megaByte,
+        .cpu_visible_size = 2 * MemoryConstants::gigaByte,
     };
     xeQueryMemUsage->mem_regions[1] = {
-        DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
-        0,                              // instance
-        MemoryConstants::pageSize,      // min page size
-        MemoryConstants::gigaByte,      // total size
-        MemoryConstants::kiloByte       // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_SYSMEM,
+        .instance = 0,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = MemoryConstants::gigaByte,
+        .used = MemoryConstants::kiloByte,
+        .cpu_visible_size = MemoryConstants::gigaByte,
     };
     xeQueryMemUsage->mem_regions[2] = {
-        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-        2,                             // instance
-        MemoryConstants::pageSize,     // min page size
-        4 * MemoryConstants::gigaByte, // total size
-        MemoryConstants::gigaByte      // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_VRAM,
+        .instance = 2,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = 4 * MemoryConstants::gigaByte,
+        .used = MemoryConstants::gigaByte,
+        .cpu_visible_size = 4 * MemoryConstants::gigaByte,
     };
 
-    this->queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
+    this->queryGtList.resize(1 + (6 * 12)); // 1 qword for num gts and 12 qwords per gt
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
     xeQueryGtList->num_gt = 4;
     xeQueryGtList->gt_list[0] = tile0MainGt;
     xeQueryGtList->gt_list[1] = tile1MediaGt;
     xeQueryGtList->gt_list[2] = tile1MainGt;
     xeQueryGtList->gt_list[3] = tile2MainGt;
+    this->reset();
+}
+
+void DrmMockXe::changeTilesQueryDataToIrregular() {
+    this->reset();
+    constexpr drm_xe_gt tile00MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 0,
+        .gt_id = 0,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b100,
+        .far_mem_regions = 0x011,
+    };
+
+    constexpr drm_xe_gt tile01MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 1,
+        .gt_id = 3,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b010,
+        .far_mem_regions = 0x101,
+    };
+
+    auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(this->queryEngines);
+    xeQueryEngines->num_engines = 6;
+    xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_COPY, 0, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 2, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COPY, 3, tile01MainGt.gt_id}, {}};
+    xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COPY, 4, tile01MainGt.gt_id}, {}};
+    xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, tile01MainGt.gt_id}, {}};
+
+    this->queryGtList.resize(1 + (2 * 12)); // 1 qword for num gts and 12 qwords per gt
+    auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
+    xeQueryGtList->num_gt = 2;
+    xeQueryGtList->gt_list[0] = tile00MainGt;
+    xeQueryGtList->gt_list[1] = tile01MainGt;
     this->reset();
 }

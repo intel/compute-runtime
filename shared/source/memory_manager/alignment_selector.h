@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class AlignmentSelector {
     void addCandidateAlignment(size_t alignment, bool applyForSmallerSize, float maxMemoryWastage, HeapIndex heap);
 
     CandidateAlignment selectAlignment(size_t size) const;
+    CandidateAlignment selectAlignment(size_t size, size_t maximumPossibleAlignment) const;
     auto &peekCandidateAlignments() const { return candidateAlignments; }
 
   private:

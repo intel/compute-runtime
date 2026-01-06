@@ -12,8 +12,12 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+
 namespace L0 {
 namespace ult {
+
+extern OpenConnectionUpstreamHelperFunc openConnectionUpstreamFuncXe;
 
 void DebugApiLinuxXeFixture::setUp(NEO::HardwareInfo *hwInfo) {
     if (hwInfo != nullptr) {
@@ -39,6 +43,17 @@ void DebugApiLinuxXeFixture::setUp(NEO::HardwareInfo *hwInfo) {
 
     mockDrm->setFileDescriptor(SysCalls::fakeFileDescriptor);
     SysCalls::drmVersion = "xe";
+
+    L0::ult::openConnectionUpstreamFuncXe = [this](int pid, L0::Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd) -> ze_result_t {
+        if (this->mockDrm->debuggerOpenRetval < 0) {
+            debugFd = -1;
+            return DebugSessionLinux::translateDebuggerOpenErrno(this->mockDrm->getErrno());
+        } else {
+            open->version = 1;
+            debugFd = 10;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
 }
 
 void DebugApiLinuxMultiDeviceFixtureXe::setUp() {

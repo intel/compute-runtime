@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
+const uint64_t L0::Event::completionTimeoutMs = 1;
 namespace ult {
 
 Mock<Event>::Mock() : WhiteBox<::L0::Event>(0, nullptr),

@@ -9,11 +9,14 @@ set(NEO_CORE_tests_compiler_mocks
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_igc_interface.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_igc_interface.cpp
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_compiler_mocks})
 
 set(NEO_CORE_tests_mocks
+    ${NEO_CORE_tests_compiler_mocks}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ail_configuration.h
@@ -21,15 +24,12 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_assert_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtinslib.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
@@ -37,8 +37,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_product_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cpu_page_fault_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
@@ -87,6 +85,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_product_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_settings_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
@@ -98,8 +97,10 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_reuse_cleaner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_pool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_zebin_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_align_malloc_memory_manager.h
 )
 
 if(WIN32)
@@ -109,6 +110,7 @@ if(WIN32)
 else()
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_dlopen.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
@@ -126,6 +128,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface32.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
@@ -136,7 +139,8 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_os_library.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_kmdaf_listener.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gmm_memory.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gmm_memory.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_os_time_win.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_allocation.h
@@ -159,7 +163,7 @@ set_target_properties(neo_shared_mocks PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_
 set_property(TARGET neo_shared_mocks APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 target_include_directories(neo_shared_mocks PRIVATE
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_compile_definitions(neo_shared_mocks PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_shared_mocks)

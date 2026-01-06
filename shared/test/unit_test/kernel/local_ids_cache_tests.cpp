@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ struct LocalIdsCacheFixture {
 };
 
 using LocalIdsCacheTests = Test<LocalIdsCacheFixture>;
-TEST_F(LocalIdsCacheTests, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCommitedIntoLeastUsedEntry) {
+TEST_F(LocalIdsCacheTests, GivenCacheMissWhenGetLocalIdsForGroupThenNewEntryIsCommittedIntoLeastUsedEntry) {
     localIdsCache->cache.resize(2);
     localIdsCache->cache[0].accessCounter = 2U;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};

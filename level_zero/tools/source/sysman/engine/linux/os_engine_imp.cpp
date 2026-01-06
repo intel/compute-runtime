@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,15 @@
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
+
+#include <linux/perf_event.h>
 
 namespace L0 {
 
@@ -55,16 +60,20 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 
 void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
         initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }
 
 void LinuxEngineImp::init() {
     auto i915EngineClass = engineToI915Map.find(engineGroup);
+    if (i915EngineClass == engineToI915Map.end()) {
+        checkErrorNumberAndUpdateStatus();
+        return;
+    }
     vfConfigs.clear();
     // I915_PMU_ENGINE_BUSY macro provides the perf type config which we want to listen to get the engine busyness.
     auto fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
@@ -82,7 +91,7 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
 void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
         DEBUG_BREAK_IF(fdPair.first < 0);
-        close(static_cast<int>(fdPair.first));
+        NEO::SysCalls::close(static_cast<int>(fdPair.first));
     }
     fdList.clear();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
-    context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    context.hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     callBaseIsVmBindAvailable = true;
 
     this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);

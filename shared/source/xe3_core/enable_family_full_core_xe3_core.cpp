@@ -15,10 +15,13 @@
 
 namespace NEO {
 
-extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 using Family = Xe3CoreFamily;
 static auto gfxFamily = IGFX_XE3_CORE;
+
+template <typename GfxFamily>
+struct GmmCallbacks;
 
 struct EnableCoreXe3Core {
     EnableCoreXe3Core() {
@@ -27,6 +30,7 @@ struct EnableCoreXe3Core {
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<DebuggerL0Hw<Family>>();
+        populateFactoryTable<GmmCallbacks<Family>>();
     }
 };
 

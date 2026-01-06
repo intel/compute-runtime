@@ -7,13 +7,15 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
+#include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace NEO {
@@ -24,9 +26,10 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanProductHelper;
+class WddmSysmanImp;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
-extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
+extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[NEO::maxProductEnumValue];
 static const std::map<zes_power_domain_t, KmdSysman::PowerDomainsType> powerGroupToDomainTypeMap = {
     {ZES_POWER_DOMAIN_CARD, KmdSysman::PowerDomainsType::powerDomainCard},
     {ZES_POWER_DOMAIN_PACKAGE, KmdSysman::PowerDomainsType::powerDomainPackage},
@@ -59,6 +62,9 @@ class SysmanProductHelper {
     virtual ze_result_t getPowerPropertiesFromPmt(zes_power_properties_t *pProperties) = 0;
     virtual ze_result_t getPowerPropertiesExtFromPmt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain) = 0;
     virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
+
+    // Firmware
+    virtual bool isLateBindingSupported() = 0;
 
     // Pmt
     virtual std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() = 0;

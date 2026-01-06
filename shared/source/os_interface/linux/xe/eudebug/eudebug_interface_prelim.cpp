@@ -9,6 +9,8 @@
 
 #include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 
+#include <cstring>
+
 namespace NEO {
 uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
     switch (param) {
@@ -90,11 +92,305 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
     return 0;
 }
 
-static_assert(sizeof(EuDebugConnect) == sizeof(prelim_drm_xe_eudebug_connect));
-static_assert(offsetof(EuDebugConnect, extensions) == offsetof(prelim_drm_xe_eudebug_connect, extensions));
-static_assert(offsetof(EuDebugConnect, pid) == offsetof(prelim_drm_xe_eudebug_connect, pid));
-static_assert(offsetof(EuDebugConnect, flags) == offsetof(prelim_drm_xe_eudebug_connect, flags));
-static_assert(offsetof(EuDebugConnect, version) == offsetof(prelim_drm_xe_eudebug_connect, version));
+EuDebugInterfaceType EuDebugInterfacePrelim::getInterfaceType() const {
+    return EuDebugInterfaceType::prelim;
+}
+
+std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> EuDebugInterfacePrelim::toEuDebugEventEuAttention(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_eu_attention *event = static_cast<const prelim_drm_xe_eudebug_event_eu_attention *>(drmType);
+    EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));
+
+    pEuAttentionEvent->base.len = event->base.len;
+    pEuAttentionEvent->base.type = event->base.type;
+    pEuAttentionEvent->base.flags = event->base.flags;
+    pEuAttentionEvent->base.seqno = event->base.seqno;
+    pEuAttentionEvent->base.reserved = event->base.reserved;
+
+    memcpy(pEuAttentionEvent->bitmask, event->bitmask, event->bitmask_size);
+    pEuAttentionEvent->bitmaskSize = event->bitmask_size;
+    pEuAttentionEvent->flags = event->flags;
+    pEuAttentionEvent->lrcHandle = event->lrc_handle;
+    pEuAttentionEvent->execQueueHandle = event->exec_queue_handle;
+    pEuAttentionEvent->clientHandle = event->client_handle;
+
+    auto deleter = [](EuDebugEventEuAttention *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)>(pEuAttentionEvent, deleter);
+}
+
+EuDebugEventClient EuDebugInterfacePrelim::toEuDebugEventClient(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_client *event = static_cast<const prelim_drm_xe_eudebug_event_client *>(drmType);
+    EuDebugEventClient euClientEvent = {};
+
+    euClientEvent.base.len = event->base.len;
+    euClientEvent.base.type = event->base.type;
+    euClientEvent.base.flags = event->base.flags;
+    euClientEvent.base.seqno = event->base.seqno;
+    euClientEvent.base.reserved = event->base.reserved;
+
+    euClientEvent.clientHandle = event->client_handle;
+
+    return euClientEvent;
+}
+
+EuDebugEventVm EuDebugInterfacePrelim::toEuDebugEventVm(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_vm *event = static_cast<const prelim_drm_xe_eudebug_event_vm *>(drmType);
+    EuDebugEventVm euVmEvent = {};
+
+    euVmEvent.base.len = event->base.len;
+    euVmEvent.base.type = event->base.type;
+    euVmEvent.base.flags = event->base.flags;
+    euVmEvent.base.seqno = event->base.seqno;
+    euVmEvent.base.reserved = event->base.reserved;
+
+    euVmEvent.clientHandle = event->client_handle;
+    euVmEvent.vmHandle = event->vm_handle;
+
+    return euVmEvent;
+}
+
+std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> EuDebugInterfacePrelim::toEuDebugEventExecQueue(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_exec_queue *event = static_cast<const prelim_drm_xe_eudebug_event_exec_queue *>(drmType);
+    EuDebugEventExecQueue *pExecQueueEvent = static_cast<EuDebugEventExecQueue *>(malloc(sizeof(EuDebugEventExecQueue) + event->width * sizeof(uint64_t)));
+
+    pExecQueueEvent->base.len = event->base.len;
+    pExecQueueEvent->base.type = event->base.type;
+    pExecQueueEvent->base.flags = event->base.flags;
+    pExecQueueEvent->base.seqno = event->base.seqno;
+    pExecQueueEvent->base.reserved = event->base.reserved;
+
+    pExecQueueEvent->execQueueHandle = event->exec_queue_handle;
+    pExecQueueEvent->engineClass = event->engine_class;
+    pExecQueueEvent->width = event->width;
+    pExecQueueEvent->vmHandle = event->vm_handle;
+    pExecQueueEvent->clientHandle = event->client_handle;
+    memcpy(pExecQueueEvent->lrcHandle, event->lrc_handle, event->width * sizeof(uint64_t));
+
+    auto deleter = [](EuDebugEventExecQueue *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)>(pExecQueueEvent, deleter);
+}
+
+std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)> EuDebugInterfacePrelim::toEuDebugEventExecQueuePlacements(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_exec_queue_placements *event = static_cast<const prelim_drm_xe_eudebug_event_exec_queue_placements *>(drmType);
+    EuDebugEventExecQueuePlacements *euExecQueuePlacementsEvent = static_cast<EuDebugEventExecQueuePlacements *>(malloc(sizeof(EuDebugEventExecQueuePlacements) + event->num_placements * sizeof(uint64_t)));
+
+    euExecQueuePlacementsEvent->base.len = event->base.len;
+    euExecQueuePlacementsEvent->base.type = event->base.type;
+    euExecQueuePlacementsEvent->base.flags = event->base.flags;
+    euExecQueuePlacementsEvent->base.seqno = event->base.seqno;
+    euExecQueuePlacementsEvent->base.reserved = event->base.reserved;
+
+    euExecQueuePlacementsEvent->clientHandle = event->client_handle;
+    euExecQueuePlacementsEvent->execQueueHandle = event->exec_queue_handle;
+    euExecQueuePlacementsEvent->lrcHandle = event->lrc_handle;
+    euExecQueuePlacementsEvent->numPlacements = event->num_placements;
+    euExecQueuePlacementsEvent->vmHandle = event->vm_handle;
+    memcpy(euExecQueuePlacementsEvent->instances, event->instances, event->num_placements * sizeof(uint64_t));
+
+    auto deleter = [](EuDebugEventExecQueuePlacements *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)>(euExecQueuePlacementsEvent, deleter);
+}
+
+EuDebugEventMetadata EuDebugInterfacePrelim::toEuDebugEventMetadata(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_metadata *event = static_cast<const prelim_drm_xe_eudebug_event_metadata *>(drmType);
+    EuDebugEventMetadata metadataEvent = {};
+
+    metadataEvent.base.len = event->base.len;
+    metadataEvent.base.type = event->base.type;
+    metadataEvent.base.flags = event->base.flags;
+    metadataEvent.base.seqno = event->base.seqno;
+    metadataEvent.base.reserved = event->base.reserved;
+
+    metadataEvent.clientHandle = event->client_handle;
+    metadataEvent.len = event->len;
+    metadataEvent.metadataHandle = event->metadata_handle;
+    metadataEvent.type = event->type;
+
+    return metadataEvent;
+}
+
+EuDebugEventVmBind EuDebugInterfacePrelim::toEuDebugEventVmBind(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_vm_bind *event = static_cast<const prelim_drm_xe_eudebug_event_vm_bind *>(drmType);
+    EuDebugEventVmBind vmBindEvent = {};
+
+    vmBindEvent.base.len = event->base.len;
+    vmBindEvent.base.type = event->base.type;
+    vmBindEvent.base.flags = event->base.flags;
+    vmBindEvent.base.seqno = event->base.seqno;
+    vmBindEvent.base.reserved = event->base.reserved;
+
+    vmBindEvent.clientHandle = event->client_handle;
+    vmBindEvent.flags = event->flags;
+    vmBindEvent.numBinds = event->num_binds;
+    vmBindEvent.vmHandle = event->vm_handle;
+
+    return vmBindEvent;
+}
+
+NEO::EuDebugEventVmBindOp EuDebugInterfacePrelim::toEuDebugEventVmBindOp(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_vm_bind_op *event = static_cast<const prelim_drm_xe_eudebug_event_vm_bind_op *>(drmType);
+    EuDebugEventVmBindOp vmBindOpEvent = {};
+
+    vmBindOpEvent.base.len = event->base.len;
+    vmBindOpEvent.base.type = event->base.type;
+    vmBindOpEvent.base.flags = event->base.flags;
+    vmBindOpEvent.base.seqno = event->base.seqno;
+    vmBindOpEvent.base.reserved = event->base.reserved;
+
+    vmBindOpEvent.vmBindRefSeqno = event->vm_bind_ref_seqno;
+    vmBindOpEvent.numExtensions = event->num_extensions;
+    vmBindOpEvent.addr = event->addr;
+    vmBindOpEvent.range = event->range;
+
+    return vmBindOpEvent;
+}
+
+EuDebugEventVmBindOpMetadata EuDebugInterfacePrelim::toEuDebugEventVmBindOpMetadata(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_vm_bind_op_metadata *event = static_cast<const prelim_drm_xe_eudebug_event_vm_bind_op_metadata *>(drmType);
+    EuDebugEventVmBindOpMetadata vmBindOpMetadataEvent = {};
+
+    vmBindOpMetadataEvent.base.len = event->base.len;
+    vmBindOpMetadataEvent.base.type = event->base.type;
+    vmBindOpMetadataEvent.base.flags = event->base.flags;
+    vmBindOpMetadataEvent.base.seqno = event->base.seqno;
+    vmBindOpMetadataEvent.base.reserved = event->base.reserved;
+
+    vmBindOpMetadataEvent.vmBindOpRefSeqno = event->vm_bind_op_ref_seqno;
+    vmBindOpMetadataEvent.metadataHandle = event->metadata_handle;
+    vmBindOpMetadataEvent.metadataCookie = event->metadata_cookie;
+
+    return vmBindOpMetadataEvent;
+}
+
+EuDebugEventVmBindUfence EuDebugInterfacePrelim::toEuDebugEventVmBindUfence(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_vm_bind_ufence *event = static_cast<const prelim_drm_xe_eudebug_event_vm_bind_ufence *>(drmType);
+    EuDebugEventVmBindUfence vmBindUfenceEvent = {};
+
+    vmBindUfenceEvent.base.len = event->base.len;
+    vmBindUfenceEvent.base.type = event->base.type;
+    vmBindUfenceEvent.base.flags = event->base.flags;
+    vmBindUfenceEvent.base.seqno = event->base.seqno;
+    vmBindUfenceEvent.base.reserved = event->base.reserved;
+
+    vmBindUfenceEvent.vmBindRefSeqno = event->vm_bind_ref_seqno;
+
+    return vmBindUfenceEvent;
+}
+
+std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebugInterfacePrelim::toEuDebugEventPageFault(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_pagefault *event = static_cast<const prelim_drm_xe_eudebug_event_pagefault *>(drmType);
+    EuDebugEventPageFault *pPageFaultEvent = static_cast<EuDebugEventPageFault *>(malloc(sizeof(EuDebugEventPageFault) + event->bitmask_size * sizeof(uint8_t)));
+
+    pPageFaultEvent->base.len = event->base.len;
+    pPageFaultEvent->base.type = event->base.type;
+    pPageFaultEvent->base.flags = event->base.flags;
+    pPageFaultEvent->base.seqno = event->base.seqno;
+    pPageFaultEvent->base.reserved = event->base.reserved;
+
+    memcpy(pPageFaultEvent->bitmask, event->bitmask, event->bitmask_size);
+    pPageFaultEvent->bitmaskSize = event->bitmask_size;
+    pPageFaultEvent->clientHandle = event->client_handle;
+    pPageFaultEvent->flags = event->flags;
+    pPageFaultEvent->execQueueHandle = event->exec_queue_handle;
+    pPageFaultEvent->lrcHandle = event->lrc_handle;
+    pPageFaultEvent->pagefaultAddress = event->pagefault_address;
+
+    auto deleter = [](EuDebugEventPageFault *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEuControl EuDebugInterfacePrelim::toEuDebugEuControl(const void *drmType) {
+    const prelim_drm_xe_eudebug_eu_control *euControl = static_cast<const prelim_drm_xe_eudebug_eu_control *>(drmType);
+    EuDebugEuControl control = {};
+
+    control.bitmaskPtr = euControl->bitmask_ptr;
+    control.bitmaskSize = euControl->bitmask_size;
+    control.clientHandle = euControl->client_handle;
+    control.cmd = euControl->cmd;
+    control.flags = euControl->flags;
+    control.execQueueHandle = euControl->exec_queue_handle;
+    control.lrcHandle = euControl->lrc_handle;
+    control.seqno = euControl->seqno;
+
+    return control;
+}
+
+EuDebugConnect EuDebugInterfacePrelim::toEuDebugConnect(const void *drmType) {
+    const prelim_drm_xe_eudebug_connect *event = static_cast<const prelim_drm_xe_eudebug_connect *>(drmType);
+    EuDebugConnect connectEvent = {};
+
+    connectEvent.extensions = event->extensions;
+    connectEvent.flags = event->flags;
+    connectEvent.pid = event->pid;
+    connectEvent.version = event->version;
+
+    return connectEvent;
+}
+
+std::unique_ptr<void, void (*)(void *)> EuDebugInterfacePrelim::toDrmEuDebugConnect(const EuDebugConnect &connect) {
+    struct prelim_drm_xe_eudebug_connect *pDrmConnect = new prelim_drm_xe_eudebug_connect();
+
+    pDrmConnect->extensions = connect.extensions;
+    pDrmConnect->pid = connect.pid;
+    pDrmConnect->flags = connect.flags;
+    pDrmConnect->version = connect.version;
+
+    auto deleter = [](void *ptr) { delete static_cast<prelim_drm_xe_eudebug_connect *>(ptr); };
+    return std::unique_ptr<void, void (*)(void *)>(pDrmConnect, deleter);
+}
+
+std::unique_ptr<void, void (*)(void *)> EuDebugInterfacePrelim::toDrmEuDebugEuControl(const EuDebugEuControl &euControl) {
+    struct prelim_drm_xe_eudebug_eu_control *pDrmEuControl = new prelim_drm_xe_eudebug_eu_control();
+
+    pDrmEuControl->bitmask_ptr = euControl.bitmaskPtr;
+    pDrmEuControl->bitmask_size = euControl.bitmaskSize;
+    pDrmEuControl->client_handle = euControl.clientHandle;
+    pDrmEuControl->cmd = euControl.cmd;
+    pDrmEuControl->flags = euControl.flags;
+    pDrmEuControl->exec_queue_handle = euControl.execQueueHandle;
+    pDrmEuControl->lrc_handle = euControl.lrcHandle;
+    pDrmEuControl->seqno = euControl.seqno;
+
+    auto deleter = [](void *ptr) {
+        delete static_cast<prelim_drm_xe_eudebug_eu_control *>(ptr);
+    };
+    return std::unique_ptr<void, void (*)(void *)>(pDrmEuControl, deleter);
+}
+
+std::unique_ptr<void, void (*)(void *)> EuDebugInterfacePrelim::toDrmEuDebugVmOpen(const EuDebugVmOpen &vmOpen) {
+    struct prelim_drm_xe_eudebug_vm_open *pDrmVmOpen = new prelim_drm_xe_eudebug_vm_open();
+
+    pDrmVmOpen->client_handle = vmOpen.clientHandle;
+    pDrmVmOpen->extensions = vmOpen.extensions;
+    pDrmVmOpen->flags = vmOpen.flags;
+    pDrmVmOpen->timeout_ns = vmOpen.timeoutNs;
+    pDrmVmOpen->vm_handle = vmOpen.vmHandle;
+
+    auto deleter = [](void *ptr) { delete static_cast<prelim_drm_xe_eudebug_vm_open *>(ptr); };
+    return std::unique_ptr<void, void (*)(void *)>(pDrmVmOpen, deleter);
+}
+
+std::unique_ptr<void, void (*)(void *)> EuDebugInterfacePrelim::toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) {
+    struct prelim_drm_xe_eudebug_ack_event *pDrmAckEvent = new prelim_drm_xe_eudebug_ack_event();
+
+    pDrmAckEvent->type = ackEvent.type;
+    pDrmAckEvent->flags = ackEvent.flags;
+    pDrmAckEvent->seqno = ackEvent.seqno;
+
+    auto deleter = [](void *ptr) { delete static_cast<prelim_drm_xe_eudebug_ack_event *>(ptr); };
+    return std::unique_ptr<void, void (*)(void *)>(pDrmAckEvent, deleter);
+}
 
 static_assert(sizeof(EuDebugEvent) == sizeof(prelim_drm_xe_eudebug_event));
 static_assert(offsetof(EuDebugEvent, len) == offsetof(prelim_drm_xe_eudebug_event, len));
@@ -103,73 +399,6 @@ static_assert(offsetof(EuDebugEvent, flags) == offsetof(prelim_drm_xe_eudebug_ev
 static_assert(offsetof(EuDebugEvent, seqno) == offsetof(prelim_drm_xe_eudebug_event, seqno));
 static_assert(offsetof(EuDebugEvent, reserved) == offsetof(prelim_drm_xe_eudebug_event, reserved));
 
-static_assert(sizeof(EuDebugEventEuAttention) == sizeof(prelim_drm_xe_eudebug_event_eu_attention));
-static_assert(offsetof(EuDebugEventEuAttention, base) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, base));
-static_assert(offsetof(EuDebugEventEuAttention, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, client_handle));
-static_assert(offsetof(EuDebugEventEuAttention, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, exec_queue_handle));
-static_assert(offsetof(EuDebugEventEuAttention, lrcHandle) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, lrc_handle));
-static_assert(offsetof(EuDebugEventEuAttention, flags) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, flags));
-static_assert(offsetof(EuDebugEventEuAttention, bitmaskSize) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, bitmask_size));
-static_assert(offsetof(EuDebugEventEuAttention, bitmask) == offsetof(prelim_drm_xe_eudebug_event_eu_attention, bitmask));
-
-static_assert(sizeof(EuDebugEventClient) == sizeof(prelim_drm_xe_eudebug_event_client));
-static_assert(offsetof(EuDebugEventClient, base) == offsetof(prelim_drm_xe_eudebug_event_client, base));
-static_assert(offsetof(EuDebugEventClient, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_client, client_handle));
-
-static_assert(sizeof(EuDebugEventVm) == sizeof(prelim_drm_xe_eudebug_event_vm));
-static_assert(offsetof(EuDebugEventVm, base) == offsetof(prelim_drm_xe_eudebug_event_vm, base));
-static_assert(offsetof(EuDebugEventVm, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_vm, client_handle));
-static_assert(offsetof(EuDebugEventVm, vmHandle) == offsetof(prelim_drm_xe_eudebug_event_vm, vm_handle));
-
-static_assert(sizeof(EuDebugEventExecQueue) == sizeof(prelim_drm_xe_eudebug_event_exec_queue));
-static_assert(offsetof(EuDebugEventExecQueue, base) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, base));
-static_assert(offsetof(EuDebugEventExecQueue, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, client_handle));
-static_assert(offsetof(EuDebugEventExecQueue, vmHandle) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, vm_handle));
-static_assert(offsetof(EuDebugEventExecQueue, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, exec_queue_handle));
-static_assert(offsetof(EuDebugEventExecQueue, engineClass) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, engine_class));
-static_assert(offsetof(EuDebugEventExecQueue, width) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, width));
-static_assert(offsetof(EuDebugEventExecQueue, lrcHandle) == offsetof(prelim_drm_xe_eudebug_event_exec_queue, lrc_handle));
-
-static_assert(sizeof(EuDebugEventMetadata) == sizeof(prelim_drm_xe_eudebug_event_metadata));
-static_assert(offsetof(EuDebugEventMetadata, base) == offsetof(prelim_drm_xe_eudebug_event_metadata, base));
-static_assert(offsetof(EuDebugEventMetadata, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_metadata, client_handle));
-static_assert(offsetof(EuDebugEventMetadata, metadataHandle) == offsetof(prelim_drm_xe_eudebug_event_metadata, metadata_handle));
-static_assert(offsetof(EuDebugEventMetadata, type) == offsetof(prelim_drm_xe_eudebug_event_metadata, type));
-static_assert(offsetof(EuDebugEventMetadata, len) == offsetof(prelim_drm_xe_eudebug_event_metadata, len));
-
-static_assert(sizeof(EuDebugEventVmBind) == sizeof(prelim_drm_xe_eudebug_event_vm_bind));
-static_assert(offsetof(EuDebugEventVmBind, base) == offsetof(prelim_drm_xe_eudebug_event_vm_bind, base));
-static_assert(offsetof(EuDebugEventVmBind, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_vm_bind, client_handle));
-static_assert(offsetof(EuDebugEventVmBind, vmHandle) == offsetof(prelim_drm_xe_eudebug_event_vm_bind, vm_handle));
-static_assert(offsetof(EuDebugEventVmBind, flags) == offsetof(prelim_drm_xe_eudebug_event_vm_bind, flags));
-static_assert(offsetof(EuDebugEventVmBind, numBinds) == offsetof(prelim_drm_xe_eudebug_event_vm_bind, num_binds));
-
-static_assert(sizeof(EuDebugEventVmBindOp) == sizeof(prelim_drm_xe_eudebug_event_vm_bind_op));
-static_assert(offsetof(EuDebugEventVmBindOp, base) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op, base));
-static_assert(offsetof(EuDebugEventVmBindOp, vmBindRefSeqno) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op, vm_bind_ref_seqno));
-static_assert(offsetof(EuDebugEventVmBindOp, numExtensions) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op, num_extensions));
-static_assert(offsetof(EuDebugEventVmBindOp, addr) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op, addr));
-static_assert(offsetof(EuDebugEventVmBindOp, range) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op, range));
-
-static_assert(sizeof(EuDebugEventVmBindOpMetadata) == sizeof(prelim_drm_xe_eudebug_event_vm_bind_op_metadata));
-static_assert(offsetof(EuDebugEventVmBindOpMetadata, base) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op_metadata, base));
-static_assert(offsetof(EuDebugEventVmBindOpMetadata, vmBindOpRefSeqno) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op_metadata, vm_bind_op_ref_seqno));
-static_assert(offsetof(EuDebugEventVmBindOpMetadata, metadataHandle) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op_metadata, metadata_handle));
-static_assert(offsetof(EuDebugEventVmBindOpMetadata, metadataCookie) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_op_metadata, metadata_cookie));
-
-static_assert(sizeof(EuDebugEventVmBindUfence) == sizeof(prelim_drm_xe_eudebug_event_vm_bind_ufence));
-static_assert(offsetof(EuDebugEventVmBindUfence, base) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_ufence, base));
-static_assert(offsetof(EuDebugEventVmBindUfence, vmBindRefSeqno) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_ufence, vm_bind_ref_seqno));
-
-static_assert(sizeof(EuDebugEventPageFault) == sizeof(prelim_drm_xe_eudebug_event_pagefault));
-static_assert(offsetof(EuDebugEventPageFault, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, client_handle));
-static_assert(offsetof(EuDebugEventPageFault, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, exec_queue_handle));
-static_assert(offsetof(EuDebugEventPageFault, lrcHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, lrc_handle));
-static_assert(offsetof(EuDebugEventPageFault, flags) == offsetof(prelim_drm_xe_eudebug_event_pagefault, flags));
-static_assert(offsetof(EuDebugEventPageFault, bitmaskSize) == offsetof(prelim_drm_xe_eudebug_event_pagefault, bitmask_size));
-static_assert(offsetof(EuDebugEventPageFault, pagefaultAddress) == offsetof(prelim_drm_xe_eudebug_event_pagefault, pagefault_address));
-static_assert(offsetof(EuDebugEventPageFault, bitmask) == offsetof(prelim_drm_xe_eudebug_event_pagefault, bitmask));
-
 static_assert(sizeof(EuDebugReadMetadata) == sizeof(prelim_drm_xe_eudebug_read_metadata));
 static_assert(offsetof(EuDebugReadMetadata, clientHandle) == offsetof(prelim_drm_xe_eudebug_read_metadata, client_handle));
 static_assert(offsetof(EuDebugReadMetadata, metadataHandle) == offsetof(prelim_drm_xe_eudebug_read_metadata, metadata_handle));
@@ -177,29 +406,6 @@ static_assert(offsetof(EuDebugReadMetadata, flags) == offsetof(prelim_drm_xe_eud
 static_assert(offsetof(EuDebugReadMetadata, reserved) == offsetof(prelim_drm_xe_eudebug_read_metadata, reserved));
 static_assert(offsetof(EuDebugReadMetadata, ptr) == offsetof(prelim_drm_xe_eudebug_read_metadata, ptr));
 static_assert(offsetof(EuDebugReadMetadata, size) == offsetof(prelim_drm_xe_eudebug_read_metadata, size));
-
-static_assert(sizeof(EuDebugEuControl) == sizeof(prelim_drm_xe_eudebug_eu_control));
-static_assert(offsetof(EuDebugEuControl, clientHandle) == offsetof(prelim_drm_xe_eudebug_eu_control, client_handle));
-static_assert(offsetof(EuDebugEuControl, cmd) == offsetof(prelim_drm_xe_eudebug_eu_control, cmd));
-static_assert(offsetof(EuDebugEuControl, flags) == offsetof(prelim_drm_xe_eudebug_eu_control, flags));
-static_assert(offsetof(EuDebugEuControl, seqno) == offsetof(prelim_drm_xe_eudebug_eu_control, seqno));
-static_assert(offsetof(EuDebugEuControl, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_eu_control, exec_queue_handle));
-static_assert(offsetof(EuDebugEuControl, lrcHandle) == offsetof(prelim_drm_xe_eudebug_eu_control, lrc_handle));
-static_assert(offsetof(EuDebugEuControl, reserved) == offsetof(prelim_drm_xe_eudebug_eu_control, reserved));
-static_assert(offsetof(EuDebugEuControl, bitmaskSize) == offsetof(prelim_drm_xe_eudebug_eu_control, bitmask_size));
-static_assert(offsetof(EuDebugEuControl, bitmaskPtr) == offsetof(prelim_drm_xe_eudebug_eu_control, bitmask_ptr));
-
-static_assert(sizeof(EuDebugVmOpen) == sizeof(prelim_drm_xe_eudebug_vm_open));
-static_assert(offsetof(EuDebugVmOpen, extensions) == offsetof(prelim_drm_xe_eudebug_vm_open, extensions));
-static_assert(offsetof(EuDebugVmOpen, clientHandle) == offsetof(prelim_drm_xe_eudebug_vm_open, client_handle));
-static_assert(offsetof(EuDebugVmOpen, vmHandle) == offsetof(prelim_drm_xe_eudebug_vm_open, vm_handle));
-static_assert(offsetof(EuDebugVmOpen, flags) == offsetof(prelim_drm_xe_eudebug_vm_open, flags));
-static_assert(offsetof(EuDebugVmOpen, timeoutNs) == offsetof(prelim_drm_xe_eudebug_vm_open, timeout_ns));
-
-static_assert(sizeof(EuDebugAckEvent) == sizeof(prelim_drm_xe_eudebug_ack_event));
-static_assert(offsetof(EuDebugAckEvent, type) == offsetof(prelim_drm_xe_eudebug_ack_event, type));
-static_assert(offsetof(EuDebugAckEvent, flags) == offsetof(prelim_drm_xe_eudebug_ack_event, flags));
-static_assert(offsetof(EuDebugAckEvent, seqno) == offsetof(prelim_drm_xe_eudebug_ack_event, seqno));
 
 static_assert(sizeof(DebugMetadataCreate) == sizeof(prelim_drm_xe_debug_metadata_create));
 static_assert(offsetof(DebugMetadataCreate, extensions) == offsetof(prelim_drm_xe_debug_metadata_create, extensions));

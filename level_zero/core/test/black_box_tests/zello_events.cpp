@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,7 @@
 #include "zello_common.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 #include <vector>
 
 void createCmdQueueAndCmdList(ze_device_handle_t &device,
@@ -61,12 +59,12 @@ bool testEventsDeviceSignalDeviceWait(ze_context_handle_t &context, ze_device_ha
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> deviceEvents(numEvents), hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolDevice,
-                                                     0, false, nullptr, nullptr,
+                                                     0, false, nullptr,
                                                      numEvents, deviceEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
                                                      0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -152,7 +150,7 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -211,7 +209,7 @@ bool testEventsDeviceSignalHostWaitWithNonZeroOrdinal(ze_context_handle_t &conte
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -272,7 +270,7 @@ bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
                                                      ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
-                                                     false, nullptr, nullptr,
+                                                     false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -345,8 +343,6 @@ int main(int argc, char *argv[]) {
         outputValidationSuccessful = testEventsDeviceSignalHostWaitWithNonZeroOrdinal(context, device);
         LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;

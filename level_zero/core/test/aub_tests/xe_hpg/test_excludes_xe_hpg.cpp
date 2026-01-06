@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 namespace L0 {
 namespace ult {
-HWTEST_EXCLUDE_PRODUCT(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked_PlatformsSupportingSingleAddressSpace, IGFX_XE_HPG_CORE);
+HWTEST_EXCLUDE_PRODUCT(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, IGFX_XE_HPG_CORE);
 
 HWTEST_EXCLUDE_PRODUCT(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedThenSbaAddressesAreTracked_PlatformsSupportingGlobalBindless, IGFX_XE_HPG_CORE);
 } // namespace ult

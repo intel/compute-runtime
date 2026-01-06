@@ -7,27 +7,27 @@
 
 #include "level_zero/tools/source/sysman/vf_management/linux/os_vf_imp.h"
 
-#include "shared/source/os_interface/driver_info.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/sysman_const.h"
 
 namespace L0 {
+
 static const std::string pathForVfTelemetryPrefix = "iov/vf";
 
 ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t *address) {
     std::string pathForVfBdf = "device/virtfn";
     std::string vfRealPath = "";
     std::string vfPath = pathForVfBdf + std::to_string(vfIdMinusOne);
-    ze_result_t result = pSysfsAccess->getRealPath(vfPath, vfRealPath);
+    ze_result_t result = pSysfsAccess->getRealPath(std::move(vfPath), vfRealPath);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     std::size_t loc = vfRealPath.find_last_of("/");
     if (loc == std::string::npos) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the last occurence of '/' and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the last occurrence of '/' and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     std::string vfBdfString = vfRealPath.substr(loc + 1);
@@ -36,7 +36,7 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
     uint16_t domain = -1;
     uint8_t bus = -1, device = -1, function = -1;
     if (NEO::parseBdfString(vfBdfString, domain, bus, device, function) != vfBdfTokensNum) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the correct token sum and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the correct token sum and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     address->domain = domain;
@@ -96,7 +96,7 @@ bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
 
     auto result = pSysfsAccess->read(pathForDeviceMemUsed.data(), lMemUsed);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", __FUNCTION__, result);
         return false;
     }
     return true;
@@ -108,7 +108,7 @@ bool LinuxVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
 
     auto result = pSysfsAccess->read(pathForDeviceMemQuota.data(), lMemQuota);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
         return false;
     }
     return true;
@@ -132,9 +132,9 @@ LinuxVfImp::LinuxVfImp(
 void LinuxVfImp::cleanup() {
     for (auto pEngineUtilsData : pEngineUtils) {
         DEBUG_BREAK_IF(pEngineUtilsData.busyTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.busyTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.busyTicksFd));
         DEBUG_BREAK_IF(pEngineUtilsData.totalTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.totalTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.totalTicksFd));
     }
     pEngineUtils.clear();
 }
@@ -157,7 +157,7 @@ uint32_t OsVf::getNumEnabledVfs(OsSysman *pOsSysman) {
     auto result = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
     if (result != ZE_RESULT_SUCCESS) {
         numberOfVfs = 0;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", __FUNCTION__, result);
     }
     return numberOfVfs;
 }

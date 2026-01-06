@@ -1,16 +1,23 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#ifndef _ZEX_EVENT_H
+#define _ZEX_EVENT_H
+#if defined(__cplusplus)
 #pragma once
+#endif
+
 #include <level_zero/ze_api.h>
 
 #include "zex_common.h"
 
-namespace L0 {
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(
@@ -41,4 +48,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent);
 
-} // namespace L0
+ZE_APIEXPORT ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue);
+
+#if defined(__cplusplus)
+} // extern "C"
+#endif
+
+#endif // _ZEX_EVENT_H

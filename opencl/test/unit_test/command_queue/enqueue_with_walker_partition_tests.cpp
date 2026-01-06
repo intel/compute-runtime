@@ -1,28 +1,26 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
+#include <list>
+
 struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
     void SetUp() override {
-        if (!OSInterface::osEnableLocalMemory) {
-            GTEST_SKIP();
-        }
         debugManager.flags.EnableWalkerPartition.set(1u);
         debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 

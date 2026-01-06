@@ -35,13 +35,13 @@ endif()
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
-                           ${KMDAF_HEADERS_DIR}
 )
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${ENGINE_NODE_DIR}
                            ${KHRONOS_HEADERS_DIR}
                            ${KHRONOS_GL_HEADERS_DIR}
+                           ${KHRONOS_SPIRV_HEADERS_DIR}
                            ${CIF_BASE_DIR}
                            ${IGC_OCL_ADAPTOR_DIR}
                            ${VISA_INCLUDE_DIR}

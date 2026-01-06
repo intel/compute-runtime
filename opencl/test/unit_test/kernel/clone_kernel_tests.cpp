@@ -9,8 +9,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/accelerators/intel_accelerator.h"
-#include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -43,7 +41,6 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
         pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-        pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.resize(1);
 
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
         pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 72;
@@ -238,7 +235,7 @@ TEST_F(CloneKernelTest, givenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
     metaPayload.imgHeight = 0x8;
     metaPayload.imgDepth = 0xc;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context.get()));
     ASSERT_NE(nullptr, image);
 
     auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
@@ -284,68 +281,6 @@ TEST_F(CloneKernelTest, givenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
 
     auto pImgDepth = ptrOffset(crossThreadData, clonedArg.metadataPayload.imgDepth);
     EXPECT_EQ(imageDepth, *pImgDepth);
-}
-
-TEST_F(CloneKernelTest, givenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorrect) {
-    pKernelInfo->addArgAccelerator(0, undefined<SurfaceStateHeapOffset>, 0x4, 0x14, 0x1c, 0xc);
-
-    cl_motion_estimation_desc_intel desc = {
-        CL_ME_MB_TYPE_4x4_INTEL,
-        CL_ME_SUBPIXEL_MODE_QPEL_INTEL,
-        CL_ME_SAD_ADJUST_MODE_HAAR_INTEL,
-        CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL};
-
-    cl_accelerator_intel accelerator = VmeAccelerator::create(
-        context.get(),
-        CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL, sizeof(desc), &desc,
-        retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, accelerator);
-
-    auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
-    pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgAccelerator);
-    pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgAccelerator);
-
-    retVal = pSourceKernel[rootDeviceIndex]->setArg(0, sizeof(cl_accelerator_intel), &accelerator);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
-    EXPECT_EQ(Kernel::ACCELERATOR_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
-    EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
-
-    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
-    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
-
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
-    ASSERT_TRUE(pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    const auto clonedArgDescVme = reinterpret_cast<ArgDescVme *>(pClonedKernel[rootDeviceIndex]->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[0].get());
-
-    uint32_t *pMbBlockType = ptrOffset(crossThreadData, clonedArgDescVme->mbBlockType);
-    EXPECT_EQ(desc.mb_block_type, *pMbBlockType);
-
-    uint32_t *pSubpixelMode = ptrOffset(crossThreadData, clonedArgDescVme->subpixelMode);
-    EXPECT_EQ(desc.subpixel_mode, *pSubpixelMode);
-
-    uint32_t *pSadAdjustMode = ptrOffset(crossThreadData, clonedArgDescVme->sadAdjustMode);
-    EXPECT_EQ(desc.sad_adjust_mode, *pSadAdjustMode);
-
-    uint32_t *pSearchPathType = ptrOffset(crossThreadData, clonedArgDescVme->searchPathType);
-    EXPECT_EQ(desc.search_path_type, *pSearchPathType);
-
-    retVal = clReleaseAcceleratorINTEL(accelerator);
-    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(CloneKernelTest, givenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect) {
@@ -522,7 +457,6 @@ TEST_F(CloneKernelTest, givenArgImmediateWhenCloningKernelThenKernelInfoIsCorrec
 }
 
 TEST_F(CloneKernelTest, givenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect) {
-    REQUIRE_SVM_OR_SKIP(device1);
     void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 
@@ -550,7 +484,6 @@ TEST_F(CloneKernelTest, givenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect
 }
 
 TEST_F(CloneKernelTest, givenUnifiedMemoryExecInfoWhenCloningKernelThenUnifiedMemoryAllocationIsCorrect) {
-    REQUIRE_SVM_OR_SKIP(device1);
     void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
@@ -102,5 +101,5 @@ TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(static_cast<int>(NEO::DecodeError::invalidBinary), res) << oclocStdout;
-    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nNEO::Yaml : Could not parse line : [1] : [kernels ] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -")) << oclocStdout;
+    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nDeviceBinaryFormat::zebin::ZeInfo : Expected at most 1 of kernels, got : 2")) << oclocStdout;
 }

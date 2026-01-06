@@ -14,6 +14,7 @@
 
 namespace L0 {
 namespace Sysman {
+struct OsSysman;
 
 class StandbyImp : public Standby, NEO::NonCopyableAndNonMovableClass {
   public:

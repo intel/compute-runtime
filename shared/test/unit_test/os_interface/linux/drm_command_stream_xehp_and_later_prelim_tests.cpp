@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
@@ -142,7 +143,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = static_cast<uint32_t>(drmCtxSize);
 
-    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1 : 0;
     auto tagPtr = const_cast<TagAddressType *>(testDrmCsr->getTagAddress());
     *tagPtr = hasFirstSubmission;
     uint64_t tagAddress = castToUint64(tagPtr);
@@ -375,7 +376,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     };
     template <typename GfxFamily>
     void setUpT() {
-        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
@@ -414,7 +415,9 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     template <typename GfxFamily>
     void tearDownT() {
         memoryManager->waitForDeletions();
-        memoryManager->peekGemCloseWorker()->close(true);
+        if (memoryManager->peekGemCloseWorker()) {
+            memoryManager->peekGemCloseWorker()->close(true);
+        }
         delete csr;
         // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
@@ -462,7 +465,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
@@ -475,12 +479,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     for (uint32_t contextIndex = 0; contextIndex < drmContextIds.size(); contextIndex++) {
         expectedValue << SysCalls::getProcessId() << ": Drm Submission of contextIndex: " << contextIndex << ", with context id " << drmContextIds[contextIndex] << "\n";
     }
-    EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
+    EXPECT_STREQ(capture.getCapturedStdout().c_str(), expectedValue.str().c_str());
 }
 
 struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
     void SetUp() override {
-        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -535,7 +539,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesWhenFlushIsCalledThenExecIsExecutedOnEveryTile) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     auto csr = createCsr<FamilyType>();
 
@@ -636,7 +640,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceExecutionTile.set(1);
     debugManager.flags.EnableWalkerPartition.set(0);
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -678,7 +682,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
     DebugManagerStateRestore debugRestore{};
     debugManager.flags.EnableWalkerPartition.set(0);
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -718,7 +722,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTileCsrWhenFlushThenVmHandleIdEqualsTileId) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
         int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {

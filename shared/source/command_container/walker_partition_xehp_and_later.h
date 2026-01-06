@@ -319,7 +319,7 @@ void programMiLoadRegisterMem(void *&inputAddress, uint32_t &totalBytesProgramme
 
 template <typename GfxFamily>
 void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &flushArgs) {
-    auto singleBarrierSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(flushArgs.tlbInvalidation);
+    auto singleBarrierSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 
     auto pipeControl = putCommand(inputAddress, totalBytesProgrammed, singleBarrierSize);
 
@@ -345,7 +345,7 @@ void programPostSyncPipeControlCommand(void *&inputAddress,
                                                                                    rootDeviceEnvironment,
                                                                                    flushArgs);
 
-    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, flushArgs.tlbInvalidation));
+    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData));
 }
 
 template <typename GfxFamily>
@@ -408,7 +408,7 @@ template <typename GfxFamily>
 uint64_t computeSelfCleanupEndSectionSize(size_t fieldsForCleanupCount, WalkerPartitionArgs &args) {
     size_t extraSize = 0;
     if (args.pipeControlBeforeCleanupCrossTileSync) {
-        extraSize += 2 * NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        extraSize += 2 * NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
     return fieldsForCleanupCount * computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup) +
            2 * computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() + extraSize;
@@ -474,7 +474,7 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
             sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
     size += (args.semaphoreProgrammingRequired ? NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount : 0u);
     size += computeWalkerSectionSize<GfxFamily, WalkerType>();
-    size += args.emitPipeControlStall ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) : 0u;
+    size += args.emitPipeControlStall ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() : 0u;
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {
         size += computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
     }
@@ -545,7 +545,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
 }
 
 /* SAMPLE COMMAND BUFFER STRUCTURE, birds eye view for 16 partitions, 4 tiles
-//inital setup section
+//initial setup section
 1. MI_LOAD_REGISTER(PREDICATION_MASK, active partition mask )
 //loop 1 - loop as long as there are partitions to be serviced
 2. MI_ATOMIC_INC( ATOMIC LOCATION #31 within CMD buffer )
@@ -705,7 +705,7 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
                                         ? sizeof(LOAD_REGISTER_MEM<GfxFamily>)
                                         : 0u;
     const auto pipeControlSize = args.emitPipeControlStall
-                                     ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false)
+                                     ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier()
                                      : 0u;
     const auto bbStartSize = isStartAndControlSectionRequired<GfxFamily>(args)
                                  ? sizeof(BATCH_BUFFER_START<GfxFamily>)
@@ -828,9 +828,9 @@ uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
     }
 
     if (args.usePostSync) {
-        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
     } else {
-        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     offset += (computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() +

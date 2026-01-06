@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include <stddef.h>
+#include <cstddef>
 
 template <typename T, size_t n>
 constexpr size_t arrayCount(const T (&)[n]) {

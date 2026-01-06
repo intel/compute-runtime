@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using WddmTests = WddmTestWithMockGdiDll;
 
 TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
     constexpr static uintptr_t mockedInternalGpuVaRange = 0x9876u;
-    auto gmmMemory = new MockGmmMemoryBase(wddm->rootDeviceEnvironment.getGmmClientContext());
+    auto gmmMemory = new MockGmmMemory(wddm->rootDeviceEnvironment.getGmmClientContext());
     gmmMemory->overrideInternalGpuVaRangeLimit(mockedInternalGpuVaRange);
     wddm->gmmMemory.reset(gmmMemory);
 

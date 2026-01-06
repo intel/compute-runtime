@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/timer_util.h"
 
 #include <atomic>
@@ -14,7 +15,7 @@
 #include <vector>
 
 namespace NEO {
-class PerfProfiler {
+class PerfProfiler : NonCopyableAndNonMovableClass {
 
     struct SystemLog {
         unsigned int id;
@@ -95,4 +96,7 @@ class PerfProfiler {
     std::unique_ptr<std::ostream> sysLogFile;
     std::vector<SystemLog> systemLogs;
 };
+
+static_assert(NonCopyableAndNonMovable<PerfProfiler>);
+
 }; // namespace NEO

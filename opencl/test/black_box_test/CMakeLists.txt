@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,6 +24,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_dependencies(${TEST_NAME} ${NEO_DYNAMIC_LIB_NAME})
     target_include_directories(${TEST_NAME} PRIVATE ${KHRONOS_HEADERS_DIR})
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${OPENCL_BLACK_BOX_TEST_PROJECT_FOLDER})
+
+    target_link_libraries(${TEST_NAME} PUBLIC ocloc_lib)
+    target_include_directories(${TEST_NAME} PUBLIC "${NEO_SOURCE_DIR}/shared/offline_compiler/source")
 
     if(UNIX)
       find_package(OpenCL QUIET)

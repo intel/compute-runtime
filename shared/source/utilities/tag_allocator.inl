@@ -6,13 +6,14 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
 template <typename TagType>
-TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
+TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment,
                                     size_t tagSize, ValueT initialValue, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield)
     : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield), initialValue(initialValue), initializeTags(initializeTags) {
 
@@ -37,9 +38,8 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
         node->initialize();
     }
 
-    if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        printf("\nPID: %u, TSP taken from pool and initialized(%d): 0x%" PRIX64, SysCalls::getProcessId(), initializeTags, node->getGpuAddress());
-    }
+    PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                 "\nPID: %u, TSP taken from pool and initialized(%d): 0x%" PRIX64, SysCalls::getProcessId(), initializeTags, node->getGpuAddress());
 
     return node;
 }
@@ -50,9 +50,8 @@ void TagAllocator<TagType>::returnTagToFreePool(TagNodeBase *node) {
     [[maybe_unused]] auto usedNode = usedTags.removeOne(*nodeT).release();
     DEBUG_BREAK_IF(usedNode == nullptr);
 
-    if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        printf("\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), nodeT->getGpuAddress());
-    }
+    PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                 "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), nodeT->getGpuAddress());
 
     freeTags.pushFrontOne(*nodeT);
 }
@@ -74,9 +73,8 @@ void TagAllocator<TagType>::releaseDeferredTags() {
     while (currentNode != nullptr) {
         auto nextNode = currentNode->next;
         if (currentNode->canBeReleased()) {
-            if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-                printf("\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), currentNode->getGpuAddress());
-            }
+            PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                         "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), currentNode->getGpuAddress());
             pendingFreeTags.pushFrontOne(*currentNode);
         } else {
             pendingDeferredTags.pushFrontOne(*currentNode);
@@ -257,6 +255,7 @@ size_t TagNode<TagType>::getSinglePacketSize() const {
 template <typename TagType>
 void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] const void *source) {
     if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
+        UNRECOVERABLE_IF(packetIndex >= tagForCpuAccess->getPacketCount());
         return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
     } else {
         UNRECOVERABLE_IF(true);

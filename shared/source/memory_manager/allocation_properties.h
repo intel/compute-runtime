@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -23,12 +24,13 @@ struct AllocationProperties {
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
-            uint32_t isUSMDeviceAllocation : 1;
+            uint32_t isHostInaccessibleAllocation : 1;
             uint32_t use32BitFrontWindow : 1;
             uint32_t forceSystemMemory : 1;
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
-            uint32_t reserved : 18;
+            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t reserved : 17;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -50,6 +52,7 @@ struct AllocationProperties {
     bool makeGPUVaDifferentThanCPUPtr = false;
     uint32_t cacheRegion = 0;
     bool makeDeviceBufferLockable = false;
+    bool isaPaddingIncluded = false;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
@@ -108,9 +111,11 @@ struct AllocationData {
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
             uint32_t use32BitFrontWindow : 1;
-            uint32_t isUSMDeviceMemory : 1;
+            uint32_t isHostInaccessibleAllocation : 1;
             uint32_t zeroMemory : 1;
-            uint32_t reserved : 16;
+            uint32_t cantBeReadOnly : 1;
+            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t reserved : 14;
         } flags;
         uint32_t allFlags = 0;
     };

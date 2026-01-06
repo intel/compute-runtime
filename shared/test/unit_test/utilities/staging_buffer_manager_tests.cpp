@@ -15,14 +15,13 @@
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
 struct MockOSIface : OSInterface {
-    bool isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const override {
+    bool isSizeWithinThresholdForStaging(const void *ptr, size_t size) const override {
         return isSizeWithinThresholdValue;
     }
     bool isSizeWithinThresholdValue = true;
@@ -32,8 +31,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
   public:
     void setUp() {
         DeviceFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(&hardwareInfo);
-        this->svmAllocsManager = std::make_unique<MockSVMAllocsManager>(pDevice->getMemoryManager(), false);
+        this->svmAllocsManager = std::make_unique<MockSVMAllocsManager>(pDevice->getMemoryManager());
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -52,7 +50,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
     void *allocateDeviceBuffer(size_t size) {
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = pDevice;
         return svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     }
@@ -72,7 +70,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr);
+        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr, false);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         EXPECT_EQ(0, ret.chunkCopyStatus);
@@ -134,7 +132,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, pixelElemSize, chunkTransfer, csr, isRead);
+        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, rowPitch * globalRegion[1], pixelElemSize, false, chunkTransfer, csr, isRead);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         for (auto rowId = 0u; rowId < globalRegion[1]; rowId++) {
@@ -147,7 +145,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
         EXPECT_EQ(expectedChunks, chunkCounter);
 
         auto expectedNewUsmAllocations = 1u;
-        if (isRead) {
+        if (isRead && rowPitch * globalRegion[1] > stagingBufferSize) {
             expectedNewUsmAllocations = 2u;
         }
         EXPECT_EQ(expectedNewUsmAllocations, newUsmAllocations);
@@ -183,7 +181,14 @@ class StagingBufferManagerFixture : public DeviceFixture {
         delete[] nonUsmBuffer;
     }
 
-    constexpr static size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    void fillUserData(unsigned int *userData, size_t size) {
+        for (auto i = 0u; i < size; i++) {
+            userData[i] = i;
+        }
+    }
+
+    constexpr static size_t stagingBufferSize = MemoryConstants::pageSize;
+    constexpr static size_t pitchSize = stagingBufferSize / 2;
     constexpr static size_t pixelElemSize = 1u;
     DebugManagerStateRestore restorer;
     std::unique_ptr<MockSVMAllocsManager> svmAllocsManager;
@@ -198,53 +203,44 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
     constexpr size_t bufferSize = 1024;
     auto usmBuffer = allocateDeviceBuffer(bufferSize);
     unsigned char nonUsmBuffer[bufferSize];
-    auto svmData = svmAllocsManager->getSVMAlloc(usmBuffer);
-    auto alloc = svmData->gpuAllocations.getDefaultGraphicsAllocation();
     struct {
         void *dstPtr;
         void *srcPtr;
         size_t size;
         bool hasDependencies;
-        bool usedByOsContext;
         bool expectValid;
-    } copyParamsStruct[7]{
-        {usmBuffer, nonUsmBuffer, bufferSize, false, true, true},             // nonUsm -> usm without dependencies
-        {usmBuffer, nonUsmBuffer, bufferSize, true, true, false},             // nonUsm -> usm with dependencies
-        {nonUsmBuffer, nonUsmBuffer, bufferSize, false, true, false},         // nonUsm -> nonUsm without dependencies
-        {usmBuffer, usmBuffer, bufferSize, false, true, false},               // usm -> usm without dependencies
-        {nonUsmBuffer, usmBuffer, bufferSize, false, true, false},            // usm -> nonUsm without dependencies
-        {usmBuffer, nonUsmBuffer, bufferSize, false, false, true},            // nonUsm -> usm unused by os context, small transfer
-        {usmBuffer, nonUsmBuffer, stagingBufferSize * 2, false, false, false} // nonUsm -> usm unused by os context, large transfer
+    } copyParamsStruct[6]{
+        {usmBuffer, nonUsmBuffer, bufferSize, false, true},     // nonUsm -> usm without dependencies
+        {usmBuffer, nonUsmBuffer, bufferSize, true, false},     // nonUsm -> usm with dependencies
+        {nonUsmBuffer, nonUsmBuffer, bufferSize, false, false}, // nonUsm -> nonUsm without dependencies
+        {usmBuffer, usmBuffer, bufferSize, false, false},       // usm -> usm without dependencies
+        {nonUsmBuffer, usmBuffer, bufferSize, false, true},     // usm -> nonUsm without dependencies
+        {nonUsmBuffer, usmBuffer, bufferSize, true, false}      // usm -> nonUsm with dependencies
     };
-    for (auto i = 0; i < 7; i++) {
-        if (copyParamsStruct[i].usedByOsContext) {
-            alloc->updateTaskCount(1, 0);
-        } else {
-            alloc->releaseUsageInOsContext(0);
-        }
-        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies, 0u);
+    for (auto i = 0; i < 6; i++) {
+        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
         stagingBufferManager->resetDetectedPtrs();
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStagingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
 
     stagingBufferManager->registerHostPtr(nonUsmBuffer);
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     this->osInterface->isSizeWithinThresholdValue = false;
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     this->pDevice->getRootDeviceEnvironmentRef().osInterface.reset(nullptr);
-    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
@@ -390,7 +386,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
         return expectedErrorCode;
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -424,7 +420,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedRemainderCopyThenRe
         }
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -452,7 +448,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
-    ultCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&ultCsr->directSubmissionAvailable, true};
     ultCsr->callFlushTagUpdate = false;
 
     auto usmBuffer = allocateDeviceBuffer(totalCopySize);
@@ -467,7 +463,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
         reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
         return 0;
     };
-    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     if (ultCsr->flushTagUpdateCalled) {
         flushTagsCalled++;
     }
@@ -484,6 +480,37 @@ HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBuffer
     memoryManager->forceFailureInPrimaryAllocation = true;
     auto [heapAllocator, stagingBuffer] = stagingBufferManager->requestStagingBuffer(size);
     EXPECT_EQ(stagingBuffer, 0u);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyD2HThenCopyData) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t remainder = 1024;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = new unsigned char[totalCopySize];
+    memset(usmBuffer, 0xFF, totalCopySize);
+    memset(nonUsmBuffer, 0, totalCopySize);
+
+    size_t chunkCounter = 0;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        std::swap(chunkSrc, chunkDst);
+        chunkCounter++;
+        memcpy(chunkDst, chunkSrc, chunkSize);
+        reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
+        return 0;
+    };
+    auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, true);
+    auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0, memcmp(usmBuffer, nonUsmBuffer, totalCopySize));
+    EXPECT_EQ(9u, chunkCounter);
+    EXPECT_EQ(2u, newUsmAllocations);
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+    delete[] nonUsmBuffer;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteThenWholeRegionCovered) {
@@ -504,21 +531,20 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteWithMult
     size_t expectedChunks = 4;
     const size_t globalOrigin[3] = {0, 0, 0};
     const size_t globalRegion[3] = {4, 8, 1};
-    imageTransferThroughStagingBuffers(false, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+    imageTransferThroughStagingBuffers(false, pitchSize, globalOrigin, globalRegion, expectedChunks);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteWithRemainderThenWholeRegionCovered) {
     size_t expectedChunks = 4;
     const size_t globalOrigin[3] = {0, 0, 0};
     const size_t globalRegion[3] = {4, 7, 1};
-    imageTransferThroughStagingBuffers(false, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+    imageTransferThroughStagingBuffers(false, pitchSize, globalOrigin, globalRegion, expectedChunks);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenRegionCovered) {
-    size_t expectedChunks = 8;
     const size_t globalOrigin[3] = {0, 0, 0};
-    const size_t globalRegion[3] = {4, expectedChunks, 1};
-    imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
+    const size_t globalRegion[3] = {4, 1, 1};
+    imageTransferThroughStagingBuffers(true, 4, globalOrigin, globalRegion, 1);
 }
 
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenDownloadAllocationsCalledForAllReadChunks) {
@@ -548,22 +574,22 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithOrigi
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithMultipleRowsPerChunkThenWholeRegionCovered) {
     size_t expectedChunks = 4;
     const size_t globalOrigin[3] = {0, 0, 0};
-    const size_t globalRegion[3] = {4, 8, 1};
-    imageTransferThroughStagingBuffers(true, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+    const size_t globalRegion[3] = {pitchSize, 8, 1};
+    imageTransferThroughStagingBuffers(true, pixelElemSize * globalRegion[0], globalOrigin, globalRegion, expectedChunks);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithRemainderThenWholeRegionCovered) {
     size_t expectedChunks = 4;
     const size_t globalOrigin[3] = {0, 0, 0};
-    const size_t globalRegion[3] = {4, 7, 1};
-    imageTransferThroughStagingBuffers(true, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+    const size_t globalRegion[3] = {pitchSize, 7, 1};
+    imageTransferThroughStagingBuffers(true, pixelElemSize * globalRegion[0], globalOrigin, globalRegion, expectedChunks);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithRemainderAndTransfersWithinLimitThenWholeRegionCovered) {
     size_t expectedChunks = 2;
     const size_t globalOrigin[3] = {0, 0, 0};
-    const size_t globalRegion[3] = {4, 3, 1};
-    imageTransferThroughStagingBuffers(true, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+    const size_t globalRegion[3] = {pitchSize, 3, 1};
+    imageTransferThroughStagingBuffers(true, pixelElemSize * globalRegion[0], globalOrigin, globalRegion, expectedChunks);
 }
 
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringChunkReadFromImageThenReturnImmediatelyWithFailure) {
@@ -579,7 +605,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringChunkReadF
     };
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
     ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(2u, chunkCounter);
@@ -601,7 +627,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangAfterChunkReadFr
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(4u, chunkCounter);
@@ -624,7 +650,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringRemainderC
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(remainderCounter - 1, chunkCounter);
@@ -643,7 +669,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteThen
         ++chunkCounter;
         return expectedErrorCode;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
@@ -666,12 +692,180 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteWith
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(remainderCounter, chunkCounter);
     delete[] ptr;
 }
+
+struct Image3DTestInfo {
+    size_t expectedChunks;
+    size_t slicePitch;
+    size_t slices;
+};
+class StagingBufferManager3DImageTest : public StagingBufferManagerTest,
+                                        public ::testing::WithParamInterface<Image3DTestInfo> {};
+
+HWTEST_P(StagingBufferManager3DImageTest, givenStagingBufferWhenPerformImageTransferCalledWith3DImageThenSplitCorrectly) {
+    size_t expectedChunks = GetParam().expectedChunks;
+    auto rowPitch = 4u;
+    auto rowsNum = 4u;
+    auto slicePitch = GetParam().slicePitch;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {rowPitch, rowsNum, GetParam().slices};
+    auto size = stagingBufferSize * expectedChunks / sizeof(unsigned int);
+    auto ptr = new unsigned int[size];
+    fillUserData(ptr, size);
+
+    size_t chunkCounter = 0;
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        // Verify that staging buffer contains correct data based on origin offset.
+        auto offset = origin[0] + origin[1] * rowPitch + origin[2] * slicePitch;
+        auto userPtr = ptr + (offset / sizeof(uint32_t));
+        EXPECT_EQ(0, memcmp(userPtr, stagingBuffer, region[0] * region[1] * region[2]));
+
+        ++chunkCounter;
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(expectedChunks, chunkCounter);
+    delete[] ptr;
+}
+
+Image3DTestInfo imageTestsInfo[] = {
+    {8u, StagingBufferManagerFixture::stagingBufferSize, 8},     // (4, 4, 8) split into (4, 4, 1) * 8
+    {4u, StagingBufferManagerFixture::stagingBufferSize / 2, 8}, // (4, 4, 8) split into (4, 4, 2) * 4
+    {5u, StagingBufferManagerFixture::stagingBufferSize / 2, 9}, // (4, 4, 9) split into (4, 4, 2) * 4 + (4, 4, 1)
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    StagingBufferManagerTest_,
+    StagingBufferManager3DImageTest,
+    testing::ValuesIn(imageTestsInfo));
+
+TEST_F(StagingBufferManager3DImageTest, givenStagingBufferWhenPerformImageTransferCalledWith3DImageAndSlicePitchThenCopyDataCorrectly) {
+    auto rowPitch = 16u;
+    auto slicePitch = 256u;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {16u, 4u, 4u};
+    auto size = stagingBufferSize;
+    auto userDst = new char[size];
+    auto imageData = new char[size];
+    memset(userDst, 0, size);
+    memset(imageData, 0xFF, size);
+
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        for (auto sliceId = 0u; sliceId < 4u; sliceId++) {
+            auto offset = (sliceId * slicePitch);
+            memcpy(ptrOffset(stagingBuffer, offset), imageData + offset, region[0] * region[1]);
+        }
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(userDst, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+
+    for (auto sliceId = 0u; sliceId < 4u; sliceId++) {
+        auto sliceOffset = (sliceId * slicePitch);
+        EXPECT_EQ(0, memcmp(userDst + sliceOffset, imageData + sliceOffset, rowPitch * globalRegion[1]));
+    }
+    EXPECT_NE(0, memcmp(userDst, imageData, stagingBufferSize));
+
+    delete[] userDst;
+    delete[] imageData;
+}
+
+HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringSliceRemainderChunkReadFromImageThenReturnImmediatelyWithFailure) {
+    auto expectedChunks = 5u;
+    size_t rowPitch = 4u;
+    auto rowsNum = 4u;
+    size_t slicePitch = pitchSize;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {rowPitch, rowsNum, 9};
+    auto size = stagingBufferSize * expectedChunks / sizeof(unsigned int);
+    auto ptr = new unsigned int[size];
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    size_t chunkCounter = 0;
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        ++chunkCounter;
+        if (chunkCounter == expectedChunks - 1) {
+            ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+        }
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
+    EXPECT_EQ(expectedChunks - 1, chunkCounter);
+    delete[] ptr;
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteWithSliceRemainderThenReturnWithFailure) {
+    auto expectedChunks = 5u;
+    size_t rowPitch = 4u;
+    auto rowsNum = 4u;
+    size_t slicePitch = pitchSize;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {rowPitch, rowsNum, 9};
+    auto size = stagingBufferSize * expectedChunks / sizeof(unsigned int);
+    auto ptr = new unsigned int[size];
+
+    size_t chunkCounter = 0;
+    constexpr int expectedErrorCode = 1;
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        ++chunkCounter;
+        if (chunkCounter == expectedChunks) {
+            return expectedErrorCode;
+        }
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false);
+    EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(expectedChunks, chunkCounter);
+    delete[] ptr;
+}
+
+struct ImageMipMapTestInfo {
+    size_t region[3];
+    size_t expectedMipMapIndex;
+};
+class StagingBufferManagerImageMipMapTest : public StagingBufferManagerTest,
+                                            public ::testing::WithParamInterface<ImageMipMapTestInfo> {};
+
+TEST_P(StagingBufferManagerImageMipMapTest, givenStagingBufferWhenPerformImageTransferWithMipMappedImageThenOriginsSetCorrectly) {
+    constexpr auto mipMapLevel = 10u;
+    size_t globalOrigin[4] = {};
+    auto region = GetParam().region;
+    auto expectedMipMapIndex = GetParam().expectedMipMapIndex;
+    globalOrigin[expectedMipMapIndex] = mipMapLevel;
+    unsigned int ptr[256];
+
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        // Verify that mip map level was forwarded to passed lambda function at correct origin index.
+        EXPECT_EQ(mipMapLevel, origin[expectedMipMapIndex]);
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, region, region[0], region[0] * region[1], pixelElemSize, true, chunkWrite, csr, false);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+}
+
+ImageMipMapTestInfo imageMipMapTestsInfo[] = {
+    {{4u, 1u, 1u}, 1},
+    {{4u, 4u, 1u}, 2},
+    {{4u, 4u, 4u}, 3},
+    {{4u, 1u, 1u}, 2},  // 2D image with (4, 1, 1) region
+    {{4u, 1u, 1u}, 3}}; // 3D image with (4, 1, 1) region
+
+INSTANTIATE_TEST_SUITE_P(
+    StagingBufferManagerTest_,
+    StagingBufferManagerImageMipMapTest,
+    testing::ValuesIn(imageMipMapTestsInfo));
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformBufferTransferThenCopyData) {
     constexpr size_t numOfChunkCopies = 8;
@@ -701,6 +895,26 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteThe
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
     delete[] ptr;
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenReadBufferThenDataCopiedCorrectly) {
+    size_t expectedChunks = 4;
+    auto ptr = new unsigned char[stagingBufferSize * expectedChunks];
+    auto bufferData = new unsigned char[stagingBufferSize * expectedChunks];
+    memset(ptr, 0, stagingBufferSize * expectedChunks);
+    memset(bufferData, 0xFF, stagingBufferSize * expectedChunks);
+
+    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
+        memcpy(stagingBuffer, bufferData + offset, size);
+        return 0;
+    };
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, true);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0, memcmp(ptr, bufferData, stagingBufferSize * expectedChunks));
+
+    delete[] ptr;
+    delete[] bufferData;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteWithRemainderThenReturnWithFailure) {

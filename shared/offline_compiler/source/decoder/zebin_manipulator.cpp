@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -221,9 +221,9 @@ Usage: ocloc disasm -file <file> [-dump <dump_dir>] [-device <device_type>] [-sk
 
   -dump <dump_dir>           Optional. Path for files representing decoded binary. Default is './dump'.
 
-  -device <device_type>      Optional. Target device of input binary. 
+  -device <device_type>      Optional. Target device of input binary.
 
-  -skip-asm-translation      Optional. Skips parsing intelGTNotes for device and skips kernel 
+  -skip-asm-translation      Optional. Skips parsing intelGTNotes for device and skips kernel
                              translation to assembly.
 
   --help                     Print this usage message.
@@ -616,7 +616,7 @@ ErrorCode ZebinEncoder<numBits>::appendSymtab(ElfEncoderT &encoder, const Sectio
     }
 
     size_t numLocalSymbols = 0;
-    auto symbols = parseSymbols(symTabLines, encoder, numLocalSymbols, secNameToId);
+    auto symbols = parseSymbols(symTabLines, encoder, numLocalSymbols, std::move(secNameToId));
 
     auto &symtabSection = encoder.appendSection(section.type, section.name, ArrayRef<const uint8_t>::fromAny(symbols.data(), symbols.size()));
     symtabSection.info = static_cast<uint32_t>(numLocalSymbols);

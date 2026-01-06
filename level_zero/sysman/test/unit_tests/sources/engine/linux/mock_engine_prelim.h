@@ -85,7 +85,7 @@ struct MockEngineNeoDrmPrelim : public Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915QueryEngineInfo};
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
+        this->engineInfo = std::make_unique<NEO::EngineInfo>(this, engineInfosPerTile);
         return true;
     }
 
@@ -114,7 +114,7 @@ struct MockEngineNeoDrmPrelim : public Drm {
         i915QueryEngineInfo[1].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
         i915QueryEngineInfo[1].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new EngineInfo(this, numberOfTiles, distanceInfos, queryItems, i915QueryEngineInfo));
+        this->engineInfo = std::make_unique<NEO::EngineInfo>(this, numberOfTiles, distanceInfos, queryItems, i915QueryEngineInfo);
         return true;
     }
 };

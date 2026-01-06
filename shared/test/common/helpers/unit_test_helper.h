@@ -129,10 +129,12 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     static uint64_t getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(bool isHeaplessEnabled, WalkerPartition::WalkerPartitionArgs &testArgs);
     static GenCmdList::iterator findWalkerTypeCmd(GenCmdList::iterator begin, GenCmdList::iterator end);
     static std::vector<GenCmdList::iterator> findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end);
-    static typename GfxFamily::WalkerVariant getWalkerVariant(void *walkerItor);
     static void getSpaceAndInitWalkerCmd(LinearStream &stream, bool heapless);
     static void *getInitWalkerCmd(bool heapless);
     static size_t getWalkerSize(bool isHeaplessEnabled);
+    template <typename WalkerType>
+    static uint64_t getWalkerActivePostSyncAddress(WalkerType *walkerCmd);
+    static void skipStatePrefetch(GenCmdList::iterator &iter);
 
     static bool isHeaplessAllowed();
 };

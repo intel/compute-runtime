@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,9 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include <algorithm>
 
 namespace L0 {
 
@@ -34,7 +37,7 @@ ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pPropertie
 ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTemperature) {
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
             return false;
         }
         return true;
@@ -62,7 +65,7 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTem
         key = "COMPUTE_TEMPERATURES";
         result = pPmt->readValue(key, computeTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for COMPUTE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for COMPUTE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         // Check max temperature among IA, GT and LLC sensors across COMPUTE_TEMPERATURES
@@ -72,7 +75,7 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTem
         key = "CORE_TEMPERATURES";
         result = pPmt->readValue(key, coreTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for CORE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for CORE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         // Check max temperature among CORE0, CORE1, CORE2, CORE3 sensors across CORE_TEMPERATURES
@@ -82,9 +85,9 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTem
     // SOC_TEMPERATURES is present in all product families
     uint64_t socTemperature = 0;
     key = "SOC_TEMPERATURES";
-    result = pPmt->readValue(key, socTemperature);
+    result = pPmt->readValue(std::move(key), socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     // Check max temperature among possible sensors like PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC across SOC_TEMPERATURES
@@ -103,9 +106,9 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
     }
     uint32_t globalMaxTemperature = 0;
     std::string key("TileMaxTemperature");
-    ze_result_t result = pPmt->readValue(key, globalMaxTemperature);
+    ze_result_t result = pPmt->readValue(std::move(key), globalMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for TileMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for TileMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     *pTemperature = static_cast<double>(globalMaxTemperature);
@@ -119,7 +122,7 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperatureNoSubDevice(double *pTemper
     std::string key = "SOC_TEMPERATURES";
     auto result = pPmt->readValue(key, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
@@ -128,9 +131,9 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperatureNoSubDevice(double *pTemper
         // In DG1 platform, Gpu Max Temperature is obtained from COMPUTE_TEMPERATURE only
         uint32_t computeTemperature = 0;
         std::string key("COMPUTE_TEMPERATURES");
-        ze_result_t result = pPmt->readValue(key, computeTemperature);
+        ze_result_t result = pPmt->readValue(std::move(key), computeTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for COMPUTE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for COMPUTE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
 
@@ -148,9 +151,9 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
     }
     uint32_t gpuMaxTemperature = 0;
     std::string key("GTMaxTemperature");
-    ze_result_t result = pPmt->readValue(key, gpuMaxTemperature);
+    ze_result_t result = pPmt->readValue(std::move(key), gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for GTMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for GTMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
@@ -163,7 +166,7 @@ ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
     if (productFamily == IGFX_PVC) {
         numHbmModules = 4u;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -174,7 +177,7 @@ ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
         std::string key = "HBM" + std::to_string(hbmModuleIndex) + "MaxDeviceTemperature";
         result = pPmt->readValue(key, maxDeviceTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for %s is returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for %s is returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
             return result;
         }
         maxDeviceTemperatureList.push_back(maxDeviceTemperature);

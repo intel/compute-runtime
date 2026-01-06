@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -378,6 +378,53 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerLimitsE
         EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits.source);
         EXPECT_EQ(ZES_LIMIT_UNIT_POWER, allLimits.limitUnit);
         EXPECT_EQ(ZES_POWER_LEVEL_SUSTAINED, allLimits.level);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThresholdSuccessfullyThenProcessIdIsCapturedCorrectly) {
+    init(true);
+
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        double energyThreshold = 5000.0;
+        ze_result_t result = zesPowerSetEnergyThreshold(handle, energyThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        zes_energy_threshold_t retrievedThreshold;
+        result = zesPowerGetEnergyThreshold(handle, &retrievedThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        EXPECT_EQ(retrievedThreshold.threshold, energyThreshold);
+        EXPECT_EQ(retrievedThreshold.processId, 999u); // Mock getCurrentProcessId() returns 999
+        EXPECT_TRUE(retrievedThreshold.enable);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenEnergyThresholdSetFailsThenProcessIdShouldNotMatch) {
+    init(true);
+
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    pKmdSysManager->mockEnergyThresholdProcessId = 12345;
+    for (auto handle : handles) {
+        // Set failure flag for set operation
+        pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::CurrentEnergyThreshold] = 1;
+
+        // Attempt to set threshold value (should fail)
+        double failedEnergyThreshold = 8000.0;
+        ze_result_t result = zesPowerSetEnergyThreshold(handle, failedEnergyThreshold);
+        EXPECT_NE(ZE_RESULT_SUCCESS, result); // Should fail due to mock failure
+
+        // Reset failure flag for get operation to work
+        pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::CurrentEnergyThreshold] = 0;
+
+        zes_energy_threshold_t currentThreshold;
+        result = zesPowerGetEnergyThreshold(handle, &currentThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        // Validate values - threshold and process ID should remain unchanged
+        EXPECT_NE(currentThreshold.processId, 999u);                  // Process ID should remain unchanged
+        EXPECT_NE(currentThreshold.threshold, failedEnergyThreshold); // Should NOT be the failed set value
     }
 }
 

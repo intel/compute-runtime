@@ -16,7 +16,7 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 using namespace NEO;
 
@@ -52,15 +52,11 @@ ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAnd
         EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
 
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
         EXPECT_EQ(setParamBool, workaroundTable.flags.waUntypedBufferCompression);
     }
-}
-
-ADLSTEST_F(AdlsHwInfo, whenPlatformIsAdlsThenExpectSvmIsSet) {
-    const HardwareInfo &hardwareInfo = ADLS::hwInfo;
-    EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
 using AdlsProductHelper = ProductHelperTest;
@@ -107,7 +103,6 @@ ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesS
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
@@ -123,5 +118,27 @@ ADLSTEST_F(AdlsProductHelper, givenA0SteppingAndAdlsPlatformWhenAskingIfWAIsRequ
         productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_EQ(paramBool, productHelper->pipeControlWARequired(hwInfo));
+    }
+}
+
+ADLSTEST_F(AdlsProductHelper, givenRevisionEnumThenProperValueForIsWorkaroundRequiredIsReturned) {
+    using us = unsigned short;
+    constexpr us a0 = 0x0;
+    constexpr us b0 = 0x4;
+    constexpr us undefined = 0x5;
+    us steppings[] = {a0, b0, undefined};
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = stepping;
+
+        if (stepping == a0) {
+            EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, *productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, *productHelper));
+        } else if (stepping == b0 || stepping == undefined) {
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, *productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, *productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, *productHelper));
+        }
     }
 }

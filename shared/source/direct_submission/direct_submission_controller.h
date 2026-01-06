@@ -17,6 +17,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <unordered_map>
 
@@ -29,13 +30,6 @@ class ProductHelper;
 using SteadyClock = std::chrono::steady_clock;
 using HighResolutionClock = std::chrono::high_resolution_clock;
 
-struct TimeoutParams {
-    std::chrono::microseconds maxTimeout;
-    std::chrono::microseconds timeout;
-    int32_t timeoutDivisor;
-    bool directSubmissionEnabled;
-};
-
 struct WaitForPagingFenceRequest {
     CommandStreamReceiver *csr;
     uint64_t pagingFenceValue;
@@ -47,6 +41,15 @@ enum class TimeoutElapsedMode {
     fullyElapsed
 };
 
+struct ContextGroupKey {
+    uint32_t rootDeviceIndex;
+    uint32_t contextGroupId;
+
+    bool operator==(const ContextGroupKey &other) const {
+        return rootDeviceIndex == other.rootDeviceIndex && contextGroupId == other.contextGroupId;
+    }
+};
+
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
@@ -54,22 +57,22 @@ class DirectSubmissionController {
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
 
-    void setTimeoutParamsForPlatform(const ProductHelper &helper);
     void registerDirectSubmission(CommandStreamReceiver *csr);
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
     void startThread();
-    void startControlling();
     void stopThread();
 
     static bool isSupported();
 
     void enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue);
     void drainPagingFenceQueue();
+    void notifyNewSubmission(const CommandStreamReceiver *csr);
 
   protected:
     struct DirectSubmissionState {
-        DirectSubmissionState(DirectSubmissionState &&other) {
+        DirectSubmissionState(DirectSubmissionState &&other) noexcept {
+            isActive = other.isActive.load();
             isStopped = other.isStopped.load();
             taskCount = other.taskCount.load();
         }
@@ -77,6 +80,7 @@ class DirectSubmissionController {
             if (this == &other) {
                 return *this;
             }
+            this->isActive = other.isActive.load();
             this->isStopped = other.isStopped.load();
             this->taskCount = other.taskCount.load();
             return *this;
@@ -88,22 +92,29 @@ class DirectSubmissionController {
         DirectSubmissionState(const DirectSubmissionState &other) = delete;
         DirectSubmissionState &operator=(DirectSubmissionState &&other) = delete;
 
+        std::atomic_bool isActive{false};
         std::atomic_bool isStopped{true};
         std::atomic<TaskCountType> taskCount{0};
     };
 
     static void *controlDirectSubmissionsState(void *self);
-    void checkNewSubmissions();
+    MOCKABLE_VIRTUAL void checkNewSubmissions();
     bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
+    bool isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
+    bool waitPredicate() { return !keepControlling || !pagingFenceRequests.empty() || activeSubmissionsCount; }
+    MOCKABLE_VIRTUAL void wait(std::unique_lock<std::mutex> &lock) {
+        condVar.wait(lock, [&]() { return waitPredicate(); });
+    }
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
+    MOCKABLE_VIRTUAL void overrideDirectSubmissionTimeouts(const ProductHelper &productHelper);
 
     void recalculateTimeout();
     void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
     void updateLastSubmittedThrottle(QueueThrottle throttle);
     size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
 
-    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
+    MOCKABLE_VIRTUAL void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL TimeoutElapsedMode timeoutElapsed();
     std::chrono::microseconds getSleepValue() const { return std::chrono::microseconds(this->timeout / this->bcsTimeoutDivisor); }
 
@@ -114,7 +125,7 @@ class DirectSubmissionController {
 
     std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;
-    std::atomic_bool runControlling = false;
+    std::atomic_uint activeSubmissionsCount = 0;
 
     SteadyClock::time_point timeSinceLastCheck{};
     SteadyClock::time_point lastTerminateCpuTimestamp{};
@@ -123,10 +134,9 @@ class DirectSubmissionController {
     std::chrono::microseconds timeout{defaultTimeout};
     int32_t timeoutDivisor = 1;
     int32_t bcsTimeoutDivisor = 1;
-    std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
-    bool adjustTimeoutOnThrottleAndAcLineStatus = false;
     bool isCsrIdleDetectionEnabled = false;
+    bool isCsrsContextGroupIdleDetectionEnabled = false;
 
     std::condition_variable condVar;
     std::mutex condVarMutex;

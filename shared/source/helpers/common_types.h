@@ -6,9 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/utilities/stackvec.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/sku_info/sku_info_base.h"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <type_traits>
 #include <vector>
@@ -17,10 +19,8 @@ namespace NEO {
 class GraphicsAllocation;
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
-using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
-using PrivateAllocsToReuseContainer = StackVec<std::pair<uint32_t, GraphicsAllocation *>, 8>;
 
 // std::to_underlying is C++23 feature
 template <typename EnumT>
@@ -36,6 +36,9 @@ template <typename EnumT>
 constexpr auto toEnum(std::underlying_type_t<EnumT> region) {
     return static_cast<EnumT>(region);
 }
+
+template <typename T, typename... Ts>
+constexpr bool isAnyOfType = (std::is_same_v<T, Ts> || ...);
 
 enum class DebugPauseState : uint32_t {
     disabled,
@@ -60,7 +63,8 @@ enum class TagNodeType {
     timestampPacket,
     hwTimeStamps,
     hwPerfCounter,
-    counter64b
+    counter64b,
+    fillPattern
 };
 
 enum class CacheRegion : uint16_t {
@@ -112,7 +116,8 @@ enum class AtomicAccessMode : uint32_t {
     none = 1,
     host = 2,
     device = 3,
-    system = 4
+    system = 4,
+    invalid = 5
 };
 
 enum class SynchronizedDispatchMode : uint32_t {
@@ -121,12 +126,28 @@ enum class SynchronizedDispatchMode : uint32_t {
     limited = 2
 };
 
+enum class LocalMemAllocationMode : uint32_t {
+    hwDefault = 0U,
+    localOnly = 1U,
+    localPreferred = 2U,
+    count = 3U
+};
+constexpr inline auto toLocalMemAllocationMode(std::underlying_type_t<LocalMemAllocationMode> modeFlag) {
+    DEBUG_BREAK_IF(modeFlag >= toUnderlying(LocalMemAllocationMode::count));
+    return toEnum<LocalMemAllocationMode>(modeFlag);
+}
+
 namespace InterruptId {
 static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();
 }
 
-namespace TypeTraits {
-template <typename T>
-constexpr bool isPodV = std::is_standard_layout_v<T> && std::is_trivial_v<T> && std::is_trivially_copyable_v<T>;
-}
+struct BcsSplitSettings {
+    BcsInfoMask allEngines = {};
+    BcsInfoMask h2dEngines = {};
+    BcsInfoMask d2hEngines = {};
+    size_t perEngineMaxSize = 1;
+    uint32_t minRequiredTotalCsrCount = 0;
+    uint32_t requiredTileCount = 0;
+    bool enabled = false;
+};
 } // namespace NEO

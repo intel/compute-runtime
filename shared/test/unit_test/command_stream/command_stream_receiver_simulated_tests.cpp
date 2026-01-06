@@ -1,31 +1,29 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_pool.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
-#include <array>
 #include <memory>
+
 using namespace NEO;
 
 using CommandStreamSimulatedTests = GfxCoreHelperTest;
@@ -198,83 +196,6 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     EXPECT_TRUE(banksBitfield.test(deviceIndex));
 }
 
-HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 6> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    if (csr->localMemoryEnabled) {
-        for (const uint32_t hint : localMemoryHints) {
-            EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, csr->getAddressSpace(hint));
-        }
-    }
-    std::array<uint32_t, 1> nonLocalMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype};
-
-    for (const uint32_t hint : nonLocalMemoryHints) {
-        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, csr->getAddressSpace(hint));
-    }
-}
-
-HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryDisabledWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 7> nonLocalMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                   AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    for (const uint32_t hint : nonLocalMemoryHints) {
-        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, csr->getAddressSpace(hint));
-    }
-}
-
-HWTEST_F(CommandStreamSimulatedTests, givenAUBDumpForceAllToLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenTraceLocalIsReturned) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 7> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    if (csr->localMemoryEnabled) {
-        for (const uint32_t hint : localMemoryHints) {
-            EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, csr->getAddressSpace(hint));
-        }
-    }
-}
-
 HWTEST_F(CommandStreamSimulatedTests, givenMultipleBitsInStorageInfoWhenQueryingDeviceIndexThenLowestDeviceIndexIsReturned) {
     StorageInfo storageInfo;
 
@@ -307,6 +228,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSimulatedCommandStreamReceiverWhenClo
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     int dummy = 1;
@@ -327,6 +249,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     GmmRequirements gmmRequirements{};
@@ -360,6 +283,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     GmmRequirements gmmRequirements{};
@@ -392,6 +316,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemor
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
     csr->multiOsContextCapable = true;
@@ -418,6 +343,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     firstMockHardwareContext->storeAllocationParams = true;
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -460,6 +386,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     firstMockHardwareContext->storeAllocationParams = true;
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -502,6 +429,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
     csr->multiOsContextCapable = true;
@@ -528,7 +456,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCommandBufferAllocationWhenWriteMemor
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
-    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, mockManager->hintToWriteMemory);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceBatchBuffer, mockManager->hintToWriteMemory);
     EXPECT_TRUE(mockManager->writeMemory2Called);
 }
 
@@ -540,6 +468,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     int dummy = 1;
@@ -616,6 +545,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenBarrierNodesWhenProgramStallingComman
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
 
     TagAllocatorBase *allocator = pDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
     auto barrierNode = allocator->getTag();
@@ -670,7 +600,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenEmptyBarrierNodesWhenProgramStallingC
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
-
+    csr->initializeEngine();
     {
         TimestampPacketContainer barrierNodes{};
 

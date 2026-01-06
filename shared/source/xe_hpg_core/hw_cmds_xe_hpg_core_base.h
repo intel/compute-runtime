@@ -7,15 +7,14 @@
 
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/is_pod_v.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstring>
 #include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -32,7 +31,6 @@ struct XeHpgCore {
     static constexpr uint32_t timestampPacketCount = 1u;
 
     static constexpr bool isUsingL3Control = true;
-    static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
@@ -62,7 +60,6 @@ struct XeHpgCore {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = true;
     };
 
@@ -104,12 +101,14 @@ struct XeHpgCoreFamily : public XeHpgCore {
     using Parse = CmdParse<XeHpgCoreFamily>;
     using GfxFamily = XeHpgCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
+    using PorWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
+    using StallingBarrierType = PIPE_CONTROL;
     static const COMPUTE_WALKER cmdInitGpgpuWalker;
     static const CFE_STATE cmdInitCfeState;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
@@ -148,7 +147,9 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static const STATE_SIP cmdInitStateSip;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr bool samplerArbitrationControl = false;
     static constexpr size_t indirectDataAlignment = COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
+    static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_XE_HPG_CORE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;
@@ -187,8 +188,6 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static auto getPostSyncType() {
         return std::decay_t<POSTSYNC_DATA>{};
     }
-
-    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 } // namespace NEO

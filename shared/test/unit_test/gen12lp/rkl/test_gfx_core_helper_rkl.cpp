@@ -36,3 +36,24 @@ RKLTEST_F(GfxCoreHelperTestRkl, givenRklSteppingBWhenAdjustDefaultEngineTypeCall
     gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
+
+RKLTEST_F(GfxCoreHelperTestRkl, givenRevisionEnumThenProperValueForIsWorkaroundRequiredIsReturned) {
+    using us = unsigned short;
+    constexpr us a0 = 0x0;
+    constexpr us b0 = 0x4;
+    constexpr us undefined = 0x5;
+    us steppings[] = {a0, b0, undefined};
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = stepping;
+        auto &productHelper = getHelper<ProductHelper>();
+
+        if (stepping == a0) {
+            EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
+        } else if (stepping == b0 || stepping == undefined) {
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
+        }
+    }
+}

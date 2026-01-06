@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,12 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include <optional>
+
+extern std::optional<uint32_t> blitterMaskOverride;
+
 namespace L0 {
 namespace ult {
-
 struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
     virtual void setUp() {
         MulticontextL0AubFixture::setUp(2, EnabledCommandStreamers::single, true);
@@ -67,6 +70,9 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
 struct SynchronizedDispatchMultiTileFixture : public SimpleMultiTileFixture {
     void setUp() override {
         debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+        if (blitterMaskOverride.has_value()) {
+            debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
+        }
         SimpleMultiTileFixture::setUp();
     }
 };
@@ -80,7 +86,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
 
     constexpr uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
 
     auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     memset(outBuffer, 0, size);
@@ -96,7 +102,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel.get(), &groupCount, nullptr, 0, nullptr));
     commandList->close();
 
-    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     cmdQ->synchronize(std::numeric_limits<uint32_t>::max());
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);
@@ -105,7 +111,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     const uint32_t expectedGlobalWorkSize[3] = {128, 1, 1};
     uint64_t expectedTokenValue = 0;
 
-    auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    auto compareEqual = aub_stream::CompareOperationValues::CompareEqual;
 
     EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, compareEqual));
     EXPECT_TRUE(csr->expectMemory(reinterpret_cast<void *>(rootDevice->getSyncDispatchTokenAllocation()->getGpuAddress()), &expectedTokenValue, sizeof(uint64_t), compareEqual));
@@ -117,13 +123,17 @@ struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
     void setUp() override {
         debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
         debugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
+        if (blitterMaskOverride.has_value()) {
+            debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
+        }
         SimpleMultiTileFixture::setUp();
     }
 };
 
 using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;
 
-HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeCore) {
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     if (!rootDevice->isImplicitScalingCapable()) {
         GTEST_SKIP();
     }
@@ -137,7 +147,7 @@ HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatching
     commandList->getCsr(true)->overrideDispatchPolicy(NEO::DispatchMode::immediateDispatch);
 
     constexpr uint8_t size = 3 * sizeof(uint32_t);
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
     auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     auto readBackBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 
@@ -166,7 +176,7 @@ HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatching
 
     const uint32_t expectedGlobalWorkSize[3] = {groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ};
 
-    auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    auto compareEqual = aub_stream::CompareOperationValues::CompareEqual;
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);
 

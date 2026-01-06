@@ -17,6 +17,7 @@ namespace L0 {
 namespace Sysman {
 
 class OsFirmware;
+struct OsSysman;
 
 class FirmwareImp : public Firmware, NEO::NonCopyableAndNonMovableClass {
   public:

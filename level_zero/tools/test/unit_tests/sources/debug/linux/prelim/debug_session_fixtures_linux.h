@@ -1,10 +1,12 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+#include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -23,7 +25,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <atomic>
 #include <queue>
@@ -107,7 +109,7 @@ struct MockIoctlHandlerI915 : public L0::ult::MockIoctlHandler {
         EuControlArg() : euControlBitmask(nullptr) {
             memset(&euControl, 0, sizeof(euControl));
         }
-        EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
+        EuControlArg(EuControlArg &&in) noexcept : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
         prelim_drm_i915_debug_eu_control euControl = {};
         std::unique_ptr<uint8_t[]> euControlBitmask;
         size_t euControlBitmaskSize = 0;
@@ -233,7 +235,30 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
+        threadControlCallCount++;
         numThreadsPassedToThreadControl = threads.size();
+        if (reachSteadyStateCount) {
+            reachSteadyStateCount--;
+            std::vector<EuThread::ThreadId> threads;
+            uint32_t lastThread = threadControlCallCount;
+            if (reachSteadyStateCount == 0) {
+                lastThread = threadControlCallCount - 1;
+            }
+
+            for (uint32_t i = 0; i < lastThread; i++) {
+                threads.push_back({0, 0, 0, 0, i});
+            }
+
+            std::unique_ptr<uint8_t[]> attBitmask;
+            size_t attBitmaskSize = 0;
+            auto &hwInfo = this->getConnectedDevice()->getNEODevice()->getHardwareInfo();
+            auto &l0GfxCoreHelper = this->getConnectedDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+            l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, attBitmask, attBitmaskSize);
+            bitmask = std::move(attBitmask);
+            bitmaskSize = attBitmaskSize;
+            return 0;
+        }
         return L0::DebugSessionLinuxi915::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
@@ -377,6 +402,50 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
 
     TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
 
+    DebugSessionImp::SlmAccessProtocol slmAccessProtocol = SlmAccessProtocol::v1;
+    DebugSessionImp::SlmAccessProtocol getSlmAccessProtocol() const override {
+        return slmAccessProtocol;
+    }
+
+    std::optional<ze_result_t> validateThreadAndDescForMemoryAccessResult;
+    ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t threadId, const zet_debug_memory_space_desc_t *desc) override {
+        return validateThreadAndDescForMemoryAccessResult.has_value() ? validateThreadAndDescForMemoryAccessResult.value() : DebugSessionLinuxi915::validateThreadAndDescForMemoryAccess(threadId, desc);
+    }
+
+    template <typename T>
+    struct MemAccessArgsRecorder {
+        EuThread::ThreadId threadId;
+        const zet_debug_memory_space_desc_t *desc;
+        size_t size;
+        T buffer;
+    };
+
+    std::optional<ze_result_t> readSlmForceReturn;
+    std::optional<MemAccessArgsRecorder<void *>> readSlmArgs;
+    ze_result_t readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
+        readSlmArgs = MemAccessArgsRecorder<void *>{threadId, desc, size, buffer};
+        return readSlmForceReturn.has_value() ? readSlmForceReturn.value() : DebugSessionLinuxi915::readSlm(threadId, desc, size, buffer);
+    }
+
+    std::optional<ze_result_t> writeSlmForceReturn;
+    std::optional<MemAccessArgsRecorder<const void *>> writeSlmArgs;
+    ze_result_t writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override {
+        writeSlmArgs = MemAccessArgsRecorder<const void *>{threadId, desc, size, buffer};
+        return writeSlmForceReturn.has_value() ? writeSlmForceReturn.value() : DebugSessionLinuxi915::writeSlm(threadId, desc, size, buffer);
+    }
+
+    std::optional<EuThread::ThreadId> convertToThreadIdReturn;
+    EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override {
+        return convertToThreadIdReturn.has_value() ? convertToThreadIdReturn.value() : DebugSessionLinuxi915::convertToThreadId(thread);
+    }
+
+    std::optional<ze_result_t> readBarrierForceReturn;
+    std::optional<MemAccessArgsRecorder<void *>> readBarrierArgs;
+    ze_result_t readBarrierMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
+        readBarrierArgs = MemAccessArgsRecorder<void *>{threadId, desc, size, buffer};
+        return readBarrierForceReturn.has_value() ? readBarrierForceReturn.value() : DebugSessionLinuxi915::readBarrierMemory(threadId, desc, size, buffer);
+    }
+
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     bool allThreadsStopped = false;
     int64_t returnTimeDiff = -1;
@@ -386,6 +455,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     uint32_t writeRegistersCallCount = 0;
     uint32_t writeRegistersReg = 0;
     uint32_t handleEventCalledCount = 0;
+    uint32_t threadControlCallCount = 0;
     uint64_t vmHandle = UINT64_MAX;
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;
@@ -409,6 +479,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     bool synchronousInternalEventRead = false;
     bool failInternalEventsThreadStart = false;
     float threadStartLimit = -1.0;
+    uint32_t reachSteadyStateCount = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxi915 : public MockDebugSessionLinuxi915 {

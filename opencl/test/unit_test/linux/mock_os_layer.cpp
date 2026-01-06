@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include <cassert>
+#include <cstdarg>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -225,10 +226,11 @@ int drmContextCreate(NEO::GemContextCreateExt *create) {
 int drmContextDestroy(NEO::GemContextDestroy *destroy) {
     assert(destroy);
 
-    if (destroy->contextId == 1)
+    if (destroy->contextId == 1) {
         return 0;
-    else
+    } else {
         return -1;
+    }
 }
 
 int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
@@ -268,19 +270,17 @@ int drmQueryItem(NEO::Query *query) {
             queryItemArg->length = static_cast<int32_t>(sizeof(NEO::QueryTopologyInfo) + dataSize);
             return 0;
         }
-    } else {
-        if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            auto topologyArg = reinterpret_cast<NEO::QueryTopologyInfo *>(queryItemArg->dataPtr);
-            topologyArg->maxSlices = 1;
-            topologyArg->maxSubslices = 1;
-            topologyArg->maxEusPerSubslice = 3;
-            topologyArg->subsliceOffset = 1;
-            topologyArg->subsliceStride = 1;
-            topologyArg->euOffset = 2;
-            topologyArg->euStride = 1;
-            memset(topologyArg->data, 0xFF, dataSize);
-            return failOnEuTotal || failOnSubsliceTotal;
-        }
+    } else if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
+        auto topologyArg = reinterpret_cast<NEO::QueryTopologyInfo *>(queryItemArg->dataPtr);
+        topologyArg->maxSlices = 1;
+        topologyArg->maxSubslices = 1;
+        topologyArg->maxEusPerSubslice = 3;
+        topologyArg->subsliceOffset = 1;
+        topologyArg->subsliceStride = 1;
+        topologyArg->euOffset = 2;
+        topologyArg->euStride = 1;
+        memset(topologyArg->data, 0xFF, dataSize);
+        return failOnEuTotal || failOnSubsliceTotal;
     }
 
     return drmQuery(query);

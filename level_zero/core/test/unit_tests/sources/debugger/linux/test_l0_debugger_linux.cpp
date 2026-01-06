@@ -9,6 +9,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -196,21 +197,22 @@ TEST(L0DebuggerLinux, givenPrintDebugSettingsAndIncorrectSetupWhenInitializingDe
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string("Debugging not enabled. VmBind: 0, per-context VMs: 1\n"), output);
     EXPECT_FALSE(result);
 
     drmMock->bindAvailable = true;
     drmMock->setPerContextVMRequired(false);
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
-    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(*defaultHwInfo)) {
         EXPECT_NE(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
         EXPECT_TRUE(result);
 
@@ -237,7 +239,7 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
 
-    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(*defaultHwInfo)) {
         EXPECT_TRUE(result);
         EXPECT_TRUE(drmMock->registerClassesCalled);
     } else {

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -78,12 +78,26 @@ if(NOT DEFINED NEO_VERSION_HOTFIX)
   set(NEO_VERSION_HOTFIX 0)
 endif()
 
+set(NEO_OCL_VERSION_SUFFIX "")
+if(NOT ("${NEO_VERSION_HOTFIX}" STREQUAL "0"))
+  set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
+endif()
+
+if(NEO_VERSION_BUILD MATCHES "^([0-9]+)\\.([0-9]+)$")
+  set(NEO_VERSION_BUILD "${CMAKE_MATCH_1}")
+  if(NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL "") AND NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL ".${CMAKE_MATCH_2}"))
+    message(FATAL_ERROR "Inconsistent hotfix version provided: ${NEO_VERSION_HOTFIX} vs ${CMAKE_MATCH_2}")
+  endif()
+  set(NEO_VERSION_HOTFIX "${CMAKE_MATCH_2}")
+  set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
+endif()
+
 # OpenCL package version
-set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}")
+set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}${NEO_OCL_VERSION_SUFFIX}")
 
 # Level-Zero package version
 set(NEO_L0_VERSION_MAJOR 1)
-set(NEO_L0_VERSION_MINOR 6)
+set(NEO_L0_VERSION_MINOR 14)
 
 # Remove leading zeros
 string(REGEX REPLACE "^0+([0-9]+)" "\\1" NEO_VERSION_BUILD "${NEO_VERSION_BUILD}")

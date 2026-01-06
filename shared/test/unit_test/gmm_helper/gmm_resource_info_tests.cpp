@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,8 @@ struct MockGmmHandleAllocator : NEO::GmmHandleAllocator {
 TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreatingGmmResourceInfoHandles) {
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment executionEnvironment{&hwInfo};
-    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
+    NEO::MockGmmClientContext gmmClientCtx{};
+    gmmClientCtx.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -80,7 +81,8 @@ TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreating
 TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenDecodingResourceInfoThenExistingHandleIsOpened) {
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment executionEnvironment{&hwInfo};
-    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
+    NEO::MockGmmClientContext gmmClientCtx{};
+    gmmClientCtx.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -138,7 +140,8 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenD
 TEST(GmmResourceInfo, GivenResourceInfoWhenRefreshIsCalledTiwceThenOpenHandleIsCalledTwice) {
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment executionEnvironment{&hwInfo};
-    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
+    NEO::MockGmmClientContext gmmClientCtx{};
+    gmmClientCtx.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 

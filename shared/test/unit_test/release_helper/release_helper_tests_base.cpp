@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -115,19 +116,6 @@ void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo256Returne
     }
 }
 
-void ReleaseHelperTestsBase::whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnDebugKey() {
-    DebugManagerStateRestore restorer;
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        debugManager.flags.Enable10ThreadsPerEu.set(0);
-        EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
-        debugManager.flags.Enable10ThreadsPerEu.set(1);
-        EXPECT_EQ(10u, releaseHelper->getNumThreadsPerEu());
-    }
-}
-
 void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
@@ -168,5 +156,120 @@ void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenFalseReturned() 
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
         EXPECT_FALSE(releaseHelper->isDummyBlitWaRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isBlitImageAllowedForDepthFormat());
+    }
+}
+
+void ReleaseHelperTestsBase::whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsPostImageWriteFlushRequiredCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isPostImageWriteFlushRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto grfCount : releaseHelper->getSupportedNumGrfs()) {
+            uint32_t maxThreadsPerEuCount = 17;
+            EXPECT_EQ(maxThreadsPerEuCount, releaseHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount));
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->shouldQueryPeerAccess());
+    }
+}
+
+void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->shouldQueryPeerAccess());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isUsmCompressionSupportedOnPeerAccess());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsUsmCompressionSupportedOnPeerAccessCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isUsmCompressionSupportedOnPeerAccess());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired());
     }
 }

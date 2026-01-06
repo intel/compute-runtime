@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
 
@@ -207,7 +207,7 @@ TEST_F(ProductConfigHelperTests, GivenDifferentAotConfigsInDeviceAotInfosWhenCom
     DeviceAotInfo rhs{};
     ASSERT_TRUE(lhs == rhs);
 
-    lhs.aotConfig = {AOT::CONFIG_MAX_PLATFORM};
+    lhs.aotConfig = {AOT::getConfixMaxPlatform()};
     rhs.aotConfig = {AOT::UNKNOWN_ISA};
 
     EXPECT_FALSE(lhs == rhs);
@@ -255,7 +255,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorre
         numSupportedAcronyms++;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
     }
-    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
+    for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
         if (!productConfigHelper->isSupportedProductConfig(value)) {
             continue;
         }
@@ -267,7 +267,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorre
 
 TEST_F(AotDeviceInfoTests, givenGenericAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
     for (const auto &[acronym, value] : AOT::genericIdAcronyms) {
-        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value) << acronym;
     }
 }
 
@@ -280,7 +280,7 @@ TEST_F(AotDeviceInfoTests, givenProductIpVersionStringWhenHelperSearchForProduct
         ipVersion << deviceConfig.second;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(ipVersion.str()), deviceConfig.second);
     }
-    for (const auto &deviceConfig : AOT::rtlIdAcronyms) {
+    for (const auto &deviceConfig : AOT::getRtlIdAcronyms()) {
         if (!productConfigHelper->isSupportedProductConfig(deviceConfig.second)) {
             continue;
         }
@@ -341,7 +341,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenSti
 
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
     }
-    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
+    for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
         if (!productConfigHelper->isSupportedProductConfig(value)) {
             continue;
         }
@@ -717,6 +717,30 @@ TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamil
             EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
         }
     }
+}
+
+TEST_F(AotDeviceInfoTests, givenExistingIpVersionWhenGetDeviceIdFromIpVersionCalledThenFirstDeviceIdIsReturned) {
+    auto &deviceAot = productConfigHelper->getDeviceAotInfo();
+
+    std::vector<unsigned short> deviceIds = *deviceAot[0].deviceIds;
+
+    while (deviceIds.size() < 2u) {
+        deviceIds.push_back(10u);
+    }
+
+    uint32_t productId0 = static_cast<uint32_t>(deviceIds[0]);
+    uint32_t productId1 = static_cast<uint32_t>(deviceIds[1]);
+
+    auto &productIpVersion = deviceAot[0].aotConfig.value;
+    auto id = productConfigHelper->getDeviceIdFromIpVersion(productIpVersion);
+    EXPECT_EQ(id, productId0);
+    EXPECT_NE(id, productId1);
+}
+
+TEST_F(AotDeviceInfoTests, givenNonExistingIpVersionWhenGetDeviceIdFromIpVersionCalledThenZeroIsReturned) {
+    uint32_t productIpVersion = 0;
+    auto id = productConfigHelper->getDeviceIdFromIpVersion(productIpVersion);
+    EXPECT_EQ(id, 0u);
 }
 
 TEST_F(AotDeviceInfoTests, givenTmpStringWhenSearchForDeviceAcronymThenCorrectResultIsReturned) {

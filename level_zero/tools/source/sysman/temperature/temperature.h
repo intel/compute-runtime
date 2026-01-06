@@ -9,6 +9,7 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -41,7 +42,7 @@ struct TemperatureHandleContext {
     void releaseTemperatureHandles();
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<std::unique_ptr<Temperature>> handleList = {};
+    std::vector<std::unique_ptr<Temperature>> handleList;
 
     bool isTempInitDone() {
         return tempInitDone;

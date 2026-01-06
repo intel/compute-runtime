@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 
@@ -29,6 +28,15 @@ zexMemOpenIpcHandles(
     ze_ipc_memory_flags_t flags,
     void **pptr) {
     return L0::Context::fromHandle(toInternalType(hContext))->openIpcMemHandles(toInternalType(hDevice), numIpcHandles, pIpcHandles, flags, pptr);
+}
+
+ze_result_t ZE_APICALL
+zeIntelMemMapDeviceMemToHost(
+    ze_context_handle_t hContext,
+    const void *ptr,
+    void **pptr,
+    void *pNext) {
+    return L0::Context::fromHandle(hContext)->mapDeviceMemToHost(ptr, pptr, pNext);
 }
 
 } // namespace L0
@@ -54,4 +62,13 @@ zexMemOpenIpcHandles(
     void **pptr) {
     return L0::zexMemOpenIpcHandles(hContext, hDevice, numIpcHandles, pIpcHandles, flags, pptr);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelMemMapDeviceMemToHost(
+    ze_context_handle_t hContext,
+    const void *ptr,
+    void **pptr,
+    void *pNext) {
+    return L0::zeIntelMemMapDeviceMemToHost(hContext, ptr, pptr, pNext);
 }
+} // extern "C"

@@ -18,6 +18,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/directory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/generic_pool_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/generic_pool_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h
@@ -28,13 +30,18 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/logger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/logger_neo_only.h
     ${CMAKE_CURRENT_SOURCE_DIR}/lookup_array.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mem_lifetime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/range.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocators.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/shared_pool_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager.cpp

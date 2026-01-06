@@ -33,7 +33,6 @@ inline constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-
 inline constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 inline constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 inline constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
-inline constexpr ConstStringRef disableZebin = "-cl-intel-disable-zebin";
 inline constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 inline constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 inline constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
@@ -45,7 +44,14 @@ inline constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-coun
 inline constexpr ConstStringRef useCMCompiler = "-cmc";
 inline constexpr ConstStringRef enableFP64GenEmu = "-cl-fp64-gen-emu";
 inline constexpr ConstStringRef enableDivergentBarriers = "-cl-intel-enable-divergent-barrier-handling";
-
+inline constexpr ConstStringRef optDisableSendWarWa = "-ze-opt-disable-sendwarwa";
+inline constexpr ConstStringRef kernelTypes = "-Didx_t=uint -Dcoord2_t=uint2 -Dcoord4_t=uint4 -Doffset_t=uint";
+inline constexpr ConstStringRef wideStatelessTypes = "-Didx_t=ulong -Dcoord2_t=ulong2 -Dcoord4_t=ulong4 -Doffset_t=ulong";
+inline const std::string kernelOptions = kernelTypes.str();
+inline const std::string kernelStatelessOptions =
+    greaterThan4gbBuffersRequired.str() + " " + kernelTypes.str();
+inline const std::string kernelWideStatelessOptions =
+    greaterThan4gbBuffersRequired.str() + " " + wideStatelessTypes.str();
 inline constexpr size_t nullterminateSize = 1U;
 inline constexpr size_t spaceSeparatorSize = 1U;
 

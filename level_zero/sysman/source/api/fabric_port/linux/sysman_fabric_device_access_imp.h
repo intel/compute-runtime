@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,13 @@
 
 #include "level_zero/sysman/source/api/fabric_port/linux/sysman_fabric_device_access.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
-#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+#include <map>
 
 namespace L0 {
 namespace Sysman {
+class LinuxSysmanImp;
+struct OsSysman;
 
 struct Port {
     bool onSubdevice;
@@ -29,7 +32,7 @@ class FabricDeviceAccessNl : public FabricDeviceAccess {
     ~FabricDeviceAccessNl() override;
 
     ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) override;
-    ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) override;
+    ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) override;
 
     ze_result_t getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled) override;
     ze_result_t getPortBeaconState(const zes_fabric_port_id_t portId, bool &enabled) override;

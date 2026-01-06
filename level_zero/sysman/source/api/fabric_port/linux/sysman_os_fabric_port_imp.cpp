@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,15 +51,15 @@ ze_result_t LinuxFabricDeviceImp::getFabricDevicePath(std::string &fabricDeviceP
     std::string devicePciPath("");
     ze_result_t result = pSysfsAccess->getRealPath("device/", devicePciPath);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to get device path> <result: 0x%x>\n", __func__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to get device path> <result: 0x%x>\n", __func__, result);
         return result;
     }
     std::vector<std::string> list;
     result = pFsAccess->listDirectory(devicePciPath, list);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to get list of files in device directory> <result: 0x%x>\n", __func__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to get list of files in device directory> <result: 0x%x>\n", __func__, result);
         return result;
     }
 
@@ -74,8 +74,8 @@ ze_result_t LinuxFabricDeviceImp::getFabricDevicePath(std::string &fabricDeviceP
     }
     if (fabricDevicePath.empty()) {
         // This device does not have a fabric
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <Device does not have fabric>\n", __func__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <Device does not have fabric>\n", __func__);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     return result;
@@ -88,16 +88,16 @@ void LinuxFabricDeviceImp::getLinkErrorCount(zes_fabric_port_error_counters_t *p
     std::string linkFailureFile = fabricLinkErrorPath + "/link_failures";
     ze_result_t result = pFsAccess->read(linkFailureFile, linkErrorCount);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkFailureFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkFailureFile.c_str(), result);
         linkErrorCount = 0;
     }
     uint64_t linkDegradeCount = 0;
     std::string linkDegradeFile = fabricLinkErrorPath + "/link_degrades";
     result = pFsAccess->read(linkDegradeFile, linkDegradeCount);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkDegradeFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, linkDegradeFile.c_str(), result);
         linkDegradeCount = 0;
     }
     pErrors->linkFailureCount = linkErrorCount;
@@ -111,16 +111,16 @@ void LinuxFabricDeviceImp::getFwErrorCount(zes_fabric_port_error_counters_t *pEr
     std::string fwErrorFile = fabricFwErrorPath + "/fw_error";
     ze_result_t result = pFsAccess->read(fwErrorFile, fwErrorCount);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwErrorFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwErrorFile.c_str(), result);
         fwErrorCount = 0;
     }
     uint64_t fwCommErrorCount = 0;
     std::string fwCommErrorFile = fabricFwErrorPath + "/fw_comm_errors";
     result = pFsAccess->read(fwCommErrorFile, fwCommErrorCount);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwCommErrorFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, fwCommErrorFile.c_str(), result);
         fwCommErrorCount = 0;
     }
     pErrors->fwErrorCount = fwErrorCount;
@@ -152,19 +152,19 @@ ze_result_t LinuxFabricDeviceImp::performSweep() {
 
     result = forceSweep();
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): forceSweep() failed and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): forceSweep() failed and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     result = routingQuery(start, end);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, start, end, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, start, end, result);
         return result;
     }
     while (end < start) {
         uint32_t newStart;
         result = routingQuery(newStart, end);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, newStart, end, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, newStart, end, result);
             return result;
         }
     }
@@ -212,7 +212,7 @@ ze_result_t LinuxFabricDeviceImp::enable(const zes_fabric_port_id_t portId) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->enable(portId);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -222,7 +222,7 @@ ze_result_t LinuxFabricDeviceImp::disable(const zes_fabric_port_id_t portId) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->disable(portId);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -232,7 +232,7 @@ ze_result_t LinuxFabricDeviceImp::enableUsage(const zes_fabric_port_id_t portId)
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->enableUsage(portId);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -242,7 +242,7 @@ ze_result_t LinuxFabricDeviceImp::disableUsage(const zes_fabric_port_id_t portId
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->disableUsage(portId);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -276,13 +276,13 @@ ze_result_t LinuxFabricPortImp::getConfig(zes_fabric_port_config_t *pConfig) {
     bool enabled = false;
     result = pLinuxFabricDeviceImp->getPortEnabledState(portId, enabled);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortEnabledState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortEnabledState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     pConfig->enabled = enabled == true;
     result = pLinuxFabricDeviceImp->getPortBeaconState(portId, enabled);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortBeaconState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortBeaconState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     pConfig->beaconing = enabled == true;

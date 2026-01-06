@@ -8,7 +8,6 @@
 #include "unified_image.h"
 
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -24,7 +23,7 @@ namespace NEO {
 Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description,
                                               const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet) {
 
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
@@ -48,7 +47,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     auto sharingHandler = new UnifiedImage(context->getSharing<UnifiedSharingFunctions>(), description.type);
 
     return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, std::move(*multiGraphicsAllocation), nullptr,
-                                    flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0u, imageDesc->num_mip_levels, false);
+                                    flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0u, imageDesc->num_mip_levels, false);
 }
 
 } // namespace NEO

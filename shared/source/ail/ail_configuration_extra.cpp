@@ -46,7 +46,7 @@ const std::set<std::string_view> applicationsMicrosecontResolutionAdjustment = {
 
 const uint32_t microsecondAdjustment = 1000;
 
-AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
+AILConfigurationCreateFunctionType ailConfigurationFactory[NEO::maxProductEnumValue];
 
 void AILConfiguration::apply(HardwareInfo &hwInfo) {
     auto search = applicationMap.find(processName);

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/tools/source/sysman/os_sysman.h"
+#include "level_zero/tools/source/sysman/ras/os_ras.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
+
+#include <set>
 
 namespace L0 {
 

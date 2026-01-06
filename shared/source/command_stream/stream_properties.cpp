@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode) {
+void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
@@ -47,7 +47,7 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
         this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     }
 
-    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false);
+    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false, hasPeerAccess);
 }
 
 void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
@@ -61,6 +61,15 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
+    pipelinedEuThreadArbitration.set(properties.pipelinedEuThreadArbitration.value);
+    enableL1FlushUavCoherencyMode.set(properties.enableL1FlushUavCoherencyMode.value);
+    enablePageFaultException.set(properties.enablePageFaultException.value);
+    enableSystemMemoryReadFence.set(properties.enableSystemMemoryReadFence.value);
+    enableMemoryException.set(properties.enableMemoryException.value);
+    enableBreakpoints.set(properties.enableBreakpoints.value);
+    enableForceExternalHaltAndForceException.set(properties.enableForceExternalHaltAndForceException.value);
+    enableOutOfBoundariesInTranslationException.set(properties.enableOutOfBoundariesInTranslationException.value);
+    lscSamplerBackingThreshold.set(properties.lscSamplerBackingThreshold.value);
 
     copyPropertiesExtra(properties);
 }
@@ -84,6 +93,15 @@ bool StateComputeModeProperties::isDirty() const {
            devicePreemptionMode.isDirty ||
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
            enableVariableRegisterSizeAllocation.isDirty ||
+           pipelinedEuThreadArbitration.isDirty ||
+           enableL1FlushUavCoherencyMode.isDirty ||
+           enablePageFaultException.isDirty ||
+           enableSystemMemoryReadFence.isDirty ||
+           enableMemoryException.isDirty ||
+           enableBreakpoints.isDirty ||
+           enableForceExternalHaltAndForceException.isDirty ||
+           enableOutOfBoundariesInTranslationException.isDirty ||
+           lscSamplerBackingThreshold.isDirty ||
            isDirtyExtra();
 }
 
@@ -101,6 +119,15 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     isCoherencyRequired.isDirty = false;
     devicePreemptionMode.isDirty = false;
     enableVariableRegisterSizeAllocation.isDirty = false;
+    pipelinedEuThreadArbitration.isDirty = false;
+    enableL1FlushUavCoherencyMode.isDirty = false;
+    enablePageFaultException.isDirty = false;
+    enableSystemMemoryReadFence.isDirty = false;
+    enableMemoryException.isDirty = false;
+    enableBreakpoints.isDirty = false;
+    enableForceExternalHaltAndForceException.isDirty = false;
+    enableOutOfBoundariesInTranslationException.isDirty = false;
+    lscSamplerBackingThreshold.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -126,16 +153,17 @@ void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
 }
 
 void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy) {
-    bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
-                                             (NEO::debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
-                                              (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
-    if (setDefaultThreadArbitrationPolicy) {
-        threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
-    }
-    if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = debugManager.flags.OverrideThreadArbitrationPolicy.get();
-    }
     if (this->scmPropertiesSupport.threadArbitrationPolicy) {
+        bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
+                                                 (NEO::debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
+                                                  (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
+        if (setDefaultThreadArbitrationPolicy) {
+            threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
+        }
+        if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+            threadArbitrationPolicy = debugManager.flags.OverrideThreadArbitrationPolicy.get();
+        }
+
         this->threadArbitrationPolicy.set(threadArbitrationPolicy);
     }
 }
@@ -162,11 +190,20 @@ void StateComputeModeProperties::resetState() {
     this->devicePreemptionMode.value = StreamProperty::initValue;
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
+    this->pipelinedEuThreadArbitration.value = StreamProperty::initValue;
+    this->enableL1FlushUavCoherencyMode.value = StreamProperty::initValue;
+    this->enablePageFaultException.value = StreamProperty::initValue;
+    this->enableSystemMemoryReadFence.value = StreamProperty::initValue;
+    this->enableMemoryException.value = StreamProperty::initValue;
+    this->enableBreakpoints.value = StreamProperty::initValue;
+    this->enableForceExternalHaltAndForceException.value = StreamProperty::initValue;
+    this->enableOutOfBoundariesInTranslationException.value = StreamProperty::initValue;
+    this->lscSamplerBackingThreshold.value = StreamProperty::initValue;
 
     resetStateExtra();
 }
 
-void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
+void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
@@ -180,9 +217,44 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
     }
 
     if (this->scmPropertiesSupport.pipelinedEuThreadArbitration) {
-        setPipelinedEuThreadArbitration();
+        this->pipelinedEuThreadArbitration.set(true);
     }
 
+    if (this->scmPropertiesSupport.enableL1FlushUavCoherencyMode) {
+        this->enableL1FlushUavCoherencyMode.set(this->scmPropertiesSupport.enableL1FlushUavCoherencyMode);
+    }
+
+    if (this->scmPropertiesSupport.enablePageFaultException) {
+        this->enablePageFaultException.set(this->scmPropertiesSupport.enablePageFaultException);
+    }
+    if (this->scmPropertiesSupport.enableMemoryException) {
+        this->enableMemoryException.set(this->scmPropertiesSupport.enableMemoryException);
+    }
+    if (this->scmPropertiesSupport.enableBreakpoints) {
+        this->enableBreakpoints.set(this->scmPropertiesSupport.enableBreakpoints);
+    }
+    if (this->scmPropertiesSupport.enableForceExternalHaltAndForceException) {
+        this->enableForceExternalHaltAndForceException.set(this->scmPropertiesSupport.enableForceExternalHaltAndForceException);
+    }
+    if (this->scmPropertiesSupport.enableOutOfBoundariesInTranslationException) {
+        this->enableOutOfBoundariesInTranslationException.set(this->scmPropertiesSupport.enableOutOfBoundariesInTranslationException);
+    }
+
+    int32_t lscSamplerBackingThreshold = -1;
+    if (debugManager.flags.LSCSamplerBackingThreshold.get() != -1) {
+        lscSamplerBackingThreshold = debugManager.flags.LSCSamplerBackingThreshold.get();
+    }
+    if (lscSamplerBackingThreshold != -1 && this->scmPropertiesSupport.lscSamplerBackingThreshold) {
+        this->lscSamplerBackingThreshold.set(lscSamplerBackingThreshold);
+    }
+
+    if (this->scmPropertiesSupport.enableSystemMemoryReadFence) {
+        if (debugManager.flags.EnableSystemMemoryReadFence.get() != -1) {
+            this->enableSystemMemoryReadFence.set(!!debugManager.flags.EnableSystemMemoryReadFence.get());
+        } else if (hasPeerAccess.has_value()) {
+            this->enableSystemMemoryReadFence.set(hasPeerAccess.value());
+        }
+    }
     setPropertiesExtraPerContext();
     if (clearDirtyState) {
         clearIsDirtyPerContext();
@@ -310,42 +382,31 @@ void PipelineSelectProperties::resetState() {
     clearIsDirty();
 
     this->modeSelected.value = StreamProperty::initValue;
-    this->mediaSamplerDopClockGate.value = StreamProperty::initValue;
     this->systolicMode.value = StreamProperty::initValue;
 }
 
-void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode) {
+void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool systolicMode) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     this->modeSelected.set(modeSelected);
-
-    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
-    }
 
     if (this->pipelineSelectPropertiesSupport.systolicMode) {
         this->systolicMode.set(systolicMode);
     }
 }
 
-void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState) {
+void PipelineSelectProperties::setPropertiesModeSelected(bool modeSelected, bool clearDirtyState) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->modeSelected.isDirty = false;
-        this->mediaSamplerDopClockGate.isDirty = false;
     }
 
     this->modeSelected.set(modeSelected);
 
-    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
-    }
-
     if (clearDirtyState) {
         this->modeSelected.isDirty = false;
-        this->mediaSamplerDopClockGate.isDirty = false;
     }
 }
 
@@ -363,7 +424,6 @@ void PipelineSelectProperties::copyPropertiesAll(const PipelineSelectProperties 
     clearIsDirty();
 
     modeSelected.set(properties.modeSelected.value);
-    mediaSamplerDopClockGate.set(properties.mediaSamplerDopClockGate.value);
     systolicMode.set(properties.systolicMode.value);
 }
 
@@ -373,12 +433,11 @@ void PipelineSelectProperties::copyPropertiesSystolicMode(const PipelineSelectPr
 }
 
 bool PipelineSelectProperties::isDirty() const {
-    return modeSelected.isDirty || mediaSamplerDopClockGate.isDirty || systolicMode.isDirty;
+    return modeSelected.isDirty || systolicMode.isDirty;
 }
 
 void PipelineSelectProperties::clearIsDirty() {
     modeSelected.isDirty = false;
-    mediaSamplerDopClockGate.isDirty = false;
     systolicMode.isDirty = false;
 }
 
@@ -537,12 +596,4 @@ void StateBaseAddressProperties::clearIsDirty() {
     surfaceStateBaseAddress.isDirty = false;
     dynamicStateBaseAddress.isDirty = false;
     indirectObjectBaseAddress.isDirty = false;
-}
-
-void StateComputeModeProperties::setPipelinedEuThreadArbitration() {
-    this->pipelinedEuThreadArbitration = true;
-}
-
-bool StateComputeModeProperties::isPipelinedEuThreadArbitrationEnabled() const {
-    return pipelinedEuThreadArbitration;
 }

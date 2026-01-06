@@ -13,19 +13,29 @@
 #include <fcntl.h>
 #include <iostream>
 #include <poll.h>
-#include <stdio.h>
 #include <string>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef SYS_pidfd_open
+#define SYS_pidfd_open 434
+#endif
+
+#ifndef SYS_pidfd_getfd
+#define SYS_pidfd_getfd 438
+#endif
+
 namespace NEO {
 
 namespace SysCalls {
-
+char **getEnviron() {
+    return environ;
+}
 void exit(int code) {
     std::exit(code);
 }
@@ -45,6 +55,10 @@ unsigned long getNumThreads() {
         return taskStat.st_nlink - 2;
     }
     return 0;
+}
+
+bool isShutdownInProgress() {
+    return false;
 }
 
 int mkdir(const std::string &path) {
@@ -182,6 +196,20 @@ struct dirent *readdir(DIR *dir) {
 
 int closedir(DIR *dir) {
     return ::closedir(dir);
+}
+
+int pidfdopen(pid_t pid, unsigned int flags) {
+    long retval = ::syscall(SYS_pidfd_open, pid, flags);
+    return static_cast<int>(retval);
+}
+
+int pidfdgetfd(int pidfd, int targetfd, unsigned int flags) {
+    long retval = ::syscall(SYS_pidfd_getfd, pidfd, targetfd, flags);
+    return static_cast<int>(retval);
+}
+
+int prctl(int option, unsigned long arg) {
+    return ::prctl(option, arg);
 }
 
 off_t lseek(int fd, off_t offset, int whence) noexcept {

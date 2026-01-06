@@ -24,7 +24,7 @@ const std::string mockRemove("remove");
 const std::string mockRescan("rescan");
 const std::string mockSlotPath("/sys/bus/pci/slots/");
 const std::string mockSlotPath1("/sys/bus/pci/slots/1/");
-const std::string mockCorrectRootAddress("0000:8a:00.0");
+const std::string mockCorrectRootAddress("0000:8a:00");
 const std::string mockWrongRootAddress("0000:7a:00.0");
 
 struct MockDiagnosticsFwInterface : public FirmwareUtil {
@@ -80,10 +80,8 @@ struct MockDiagFsAccess : public FsAccess {
     ze_result_t write(const std::string file, std::string val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockWriteError != ZE_RESULT_SUCCESS) {
-                return mockWriteError;
-            }
+        } else if (mockWriteError != ZE_RESULT_SUCCESS) {
+            return mockWriteError;
         }
         if (!file.compare(mockSlotPath1 + "power")) {
             return ZE_RESULT_SUCCESS;
@@ -143,10 +141,8 @@ struct MockDiagSysfsAccess : public SysfsAccess {
     ze_result_t write(const std::string file, const int val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockError != ZE_RESULT_SUCCESS) {
-                return mockError;
-            }
+        } else if (mockError != ZE_RESULT_SUCCESS) {
+            return mockError;
         }
         if (std::string::npos != file.find(mockQuiescentGpuFile)) {
             if (checkErrorAfterCount) {

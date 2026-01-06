@@ -5,11 +5,14 @@
  *
  */
 
+#include "ail_configuration_dg2.inl"
+
 #include "shared/source/ail/ail_configuration_base.inl"
 #include "shared/source/helpers/hw_info.h"
 
 #include <algorithm>
 #include <map>
+#include <vector>
 
 namespace NEO {
 

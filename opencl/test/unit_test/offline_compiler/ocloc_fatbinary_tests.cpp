@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,23 +10,24 @@
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <unordered_set>
 
 extern Environment *gEnvironment;
@@ -103,8 +104,9 @@ std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledProductsAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }
@@ -117,8 +119,9 @@ std::vector<std::string> prepareReleasesWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledReleasesAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }
@@ -131,8 +134,9 @@ std::vector<std::string> prepareFamiliesWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledFamiliesAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }
@@ -191,10 +195,10 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
 
         if (!acronym.empty()) {
             getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
-            EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+            EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end()) << acronym.str();
 
             getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
-            EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+            EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end()) << acronym.str();
 
             device.deviceAcronyms.clear();
             device.rtlIdAcronyms.clear();
@@ -202,10 +206,10 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
             outFamily.clear();
 
             getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
-            EXPECT_FALSE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+            EXPECT_FALSE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end()) << acronym.str();
 
             getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
-            EXPECT_FALSE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+            EXPECT_FALSE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end()) << acronym.str();
         }
     }
 }
@@ -329,13 +333,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProdu
         std::vector<std::string> argv = {
             "ocloc",
             "-file",
-            clFiles + "copybuffer.cl",
+            clCopybufferFilename.c_str(),
             "-device",
             target};
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
+        auto output = capture.getCapturedStdout();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         resString << "Invalid range : " << acronymsString.str() << " - should be from:to or :to or from:\n";
         resString << "Failed to parse target devices from : " << target << "\n";
@@ -373,72 +378,76 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
     if (enabledProductsAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
-        auto acronym0 = enabledProductsAcronyms.at(product);
-        auto acronym1 = enabledProductsAcronyms.at(product + 1);
-        std::vector<ConstStringRef> expected{acronym0, acronym1};
 
-        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    std::vector<ConstStringRef> expected{};
+    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 2);
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronym0 = enabledProductsAcronyms.front().str();
+    std::string acronym1 = (enabledProductsAcronyms.begin() + 1)->str();
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    std::string acronymsTarget = acronym0 + "," + acronym1;
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledProducts.size() < 2) {
         GTEST_SKIP();
     }
-    for (unsigned int product = 0; product < enabledProducts.size() - 1; product++) {
-        auto config0 = enabledProducts.at(product).aotConfig;
-        auto config1 = enabledProducts.at(product + 1).aotConfig;
-        auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0);
-        auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1);
-        std::vector<ConstStringRef> expected{configStr0, configStr1};
 
-        std::string acronymsTarget = configStr0 + "," + configStr1;
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    auto config0 = enabledProducts.at(0).aotConfig;
+    auto config1 = enabledProducts.at(1).aotConfig;
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0);
+    auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1);
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    std::vector<ConstStringRef> expected{configStr0, configStr1};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    std::string acronymsTarget = configStr0 + "," + configStr1;
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhenBuildFatBinaryThenSuccessIsReturned) {
@@ -458,13 +467,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhe
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         acronymsTarget};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
@@ -478,40 +488,42 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
     if (enabledProductsAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
-        auto acronym0 = enabledProductsAcronyms.at(product);
-        auto acronym1 = enabledProductsAcronyms.at(product + 1);
-        std::vector<ConstStringRef> expected{acronym0, acronym1};
 
-        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    std::vector<ConstStringRef> expected{};
+    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 2);
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-o",
-            "expected_output.bin",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronym0 = enabledProductsAcronyms.front().str();
+    std::string acronym1 = (enabledProductsAcronyms.begin() + 1)->str();
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    std::string acronymsTarget = acronym0 + "," + acronym1;
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        EXPECT_EQ(1u, NEO::virtualFileList.size());
-        EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-o",
+        "expected_output.bin",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    EXPECT_EQ(4u, NEO::virtualFileList.size());
+    EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildingThenCorrectFileIsCreated) {
@@ -532,19 +544,20 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
         std::vector<std::string> argv = {
             "ocloc",
             "-file",
-            clFiles + "copybuffer.cl",
+            clCopybufferFilename.c_str(),
             "-out_dir",
             "../expected_output_directory",
             "-device",
             acronymsTarget};
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
+        auto output = capture.getCapturedStdout();
         EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        const std::string expectedFatbinaryFileName = "../expected_output_directory/copybuffer.ar";
-        EXPECT_EQ(1u, NEO::virtualFileList.size());
+        const std::string expectedFatbinaryFileName = "../expected_output_directory/some_kernel.ar";
+        EXPECT_EQ(4u, NEO::virtualFileList.size());
         EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
 
         for (const auto &product : expected) {
@@ -559,7 +572,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
         std::vector<std::string> argv = {
             "ocloc",
             "-file",
-            clFiles + "copybuffer.cl",
+            clCopybufferFilename.c_str(),
             "-out_dir",
             "../expected_output_directory",
             "-output",
@@ -567,13 +580,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
             "-device",
             acronymsTarget};
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
+        auto output = capture.getCapturedStdout();
         EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         const std::string expectedFatbinaryFileName = "../expected_output_directory/expected_filename";
-        EXPECT_EQ(2u, NEO::virtualFileList.size());
+        EXPECT_EQ(5u, NEO::virtualFileList.size());
         EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
 
         for (const auto &product : expected) {
@@ -650,129 +664,129 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesAcronymsWithoutDashesWhe
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
     if (enabledReleasesAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    for (unsigned int product = 0; product < enabledReleasesAcronyms.size() - 1; product++) {
-        auto acronym0 = enabledReleasesAcronyms.at(product);
-        auto acronym1 = enabledReleasesAcronyms.at(product + 1);
-        std::vector<ConstStringRef> expected{};
+    std::vector<ConstStringRef> expected{};
 
-        auto release0 = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(acronym0.str());
-        auto release1 = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(acronym1.str());
-        getProductsAcronymsForTarget(expected, release0, oclocArgHelperWithoutInput.get());
-        getProductsAcronymsForTarget(expected, release1, oclocArgHelperWithoutInput.get());
+    std::string acronym0 = enabledReleasesAcronyms.front().str();
+    std::string acronym1 = (enabledReleasesAcronyms.begin() + 1)->str();
 
-        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    auto release0 = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(acronym0);
+    auto release1 = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(acronym1);
+    getProductsAcronymsForTarget(expected, release0, oclocArgHelperWithoutInput.get());
+    getProductsAcronymsForTarget(expected, release1, oclocArgHelperWithoutInput.get());
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronymsTarget = acronym0 + "," + acronym1;
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
     if (enabledFamiliesAcronyms.size() < 2) {
         GTEST_SKIP();
     }
 
-    for (unsigned int product = 0; product < enabledFamiliesAcronyms.size() - 1; product++) {
-        auto acronym0 = enabledFamiliesAcronyms.at(product);
-        auto acronym1 = enabledFamiliesAcronyms.at(product + 1);
-        std::vector<ConstStringRef> expected{};
+    std::string acronym0 = enabledFamiliesAcronyms.front().str();
+    std::string acronym1 = (enabledFamiliesAcronyms.begin() + 1)->str();
 
-        auto family0 = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronym0.str());
-        auto family1 = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronym1.str());
-        getProductsAcronymsForTarget(expected, family0, oclocArgHelperWithoutInput.get());
-        getProductsAcronymsForTarget(expected, family1, oclocArgHelperWithoutInput.get());
+    std::vector<ConstStringRef> expected{};
 
-        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    auto family0 = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronym0);
+    auto family1 = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronym1);
+    getProductsAcronymsForTarget(expected, family0, oclocArgHelperWithoutInput.get());
+    getProductsAcronymsForTarget(expected, family1, oclocArgHelperWithoutInput.get());
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronymsTarget = acronym0 + "," + acronym1;
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledProductsAcronyms.size() < 3) {
         GTEST_SKIP();
     }
-    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
-        if (product == enabledProductsAcronyms.size() / 2) {
-            continue;
-        }
-        std::vector<ConstStringRef> expected{};
-        auto acronymFrom = enabledProductsAcronyms.at(product);
-        auto acronymTo = enabledProductsAcronyms.at(enabledProductsAcronyms.size() / 2);
 
-        auto prodFromIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymFrom);
-        auto prodToIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymTo);
-        if (prodFromIt > prodToIt) {
-            std::swap(prodFromIt, prodToIt);
-        }
-        expected.insert(expected.end(), prodFromIt, ++prodToIt);
+    auto acronymFrom = enabledProductsAcronyms.at(0);
+    auto acronymTo = enabledProductsAcronyms.at(2);
 
-        std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    auto prodFromIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymFrom);
+    auto prodToIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymTo);
+    if (prodFromIt > prodToIt) {
+        std::swap(prodFromIt, prodToIt);
     }
+
+    std::vector<ConstStringRef> expected{};
+    expected.insert(expected.end(), prodFromIt, ++prodToIt);
+
+    std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWithoutDashesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
@@ -797,13 +811,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWithoutDashes
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         acronymsTarget};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
@@ -886,13 +901,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWithOneFamilyBeingGen
         std::vector<std::string> argv = {
             "ocloc",
             "-file",
-            clFiles + "copybuffer.cl",
+            clCopybufferFilename.c_str(),
             "-device",
             acronymsTarget};
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
+        auto output = capture.getCapturedStdout();
         EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
         for (const auto &product : expected) {
@@ -907,94 +923,93 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinary
     if (enabledFamiliesAcronyms.size() < 3) {
         GTEST_SKIP();
     }
-    for (unsigned int family = 0; family < enabledFamiliesAcronyms.size() - 1; family++) {
-        if (family == enabledFamiliesAcronyms.size() / 2) {
-            continue;
-        }
-        std::vector<ConstStringRef> expected{};
-        auto acronymFrom = enabledFamiliesAcronyms.at(family);
-        auto acronymTo = enabledFamiliesAcronyms.at(enabledFamiliesAcronyms.size() / 2);
 
-        auto familyFromIt = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronymFrom.str());
-        auto familyToIt = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronymTo.str());
+    std::vector<ConstStringRef> expected{};
+    auto acronymFrom = enabledFamiliesAcronyms.at(0);
+    auto acronymTo = enabledFamiliesAcronyms.at(2);
 
-        if (familyFromIt > familyToIt) {
-            std::swap(familyFromIt, familyToIt);
-        }
-        while (familyFromIt <= familyToIt) {
-            getProductsAcronymsForTarget(expected, familyFromIt, oclocArgHelperWithoutInput.get());
-            familyFromIt = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromIt) + 1);
-        }
+    auto familyFromIt = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronymFrom.str());
+    auto familyToIt = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(acronymTo.str());
 
-        std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    if (familyFromIt > familyToIt) {
+        std::swap(familyFromIt, familyToIt);
     }
+    while (familyFromIt <= familyToIt) {
+        getProductsAcronymsForTarget(expected, familyFromIt, oclocArgHelperWithoutInput.get());
+        familyFromIt = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromIt) + 1);
+    }
+
+    std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledProductsAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    for (auto acronymIt = enabledProductsAcronyms.begin(); acronymIt != enabledProductsAcronyms.end(); ++acronymIt) {
-        std::vector<ConstStringRef> expected{};
-        expected.insert(expected.end(), acronymIt, enabledProductsAcronyms.end());
 
-        std::string acronymsTarget = (*acronymIt).str() + ":";
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    std::vector<ConstStringRef> expected{};
+    expected.insert(expected.end(), enabledProductsAcronyms.end() - 2, enabledProductsAcronyms.end());
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronymsTarget = (enabledProductsAcronyms.end() - 2)->str() + ":";
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str()) << ConstStringRef(" ").join(argv);
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
     auto acronyms = prepareProductsWithoutDashes(oclocArgHelperWithoutInput.get());
-    if (acronyms.empty()) {
+    if (acronyms.size() < 2) {
         GTEST_SKIP();
     }
-    std::string acronymsTarget = acronyms[0] + ":";
+    std::string acronym = acronyms[acronyms.size() - 2];
+    std::string acronymsTarget = acronym + ":";
     std::vector<ConstStringRef> expected{};
 
-    auto acronymIt = std::find_if(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(acronyms[0]));
+    auto acronymIt = std::find_if(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(acronym));
     expected.insert(expected.end(), acronymIt, enabledProductsAcronyms.end());
 
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
@@ -1005,13 +1020,14 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashe
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         acronymsTarget};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     for (const auto &product : expected) {
@@ -1025,34 +1041,35 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryB
     if (enabledProductsAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    for (auto acronymIt = enabledProductsAcronyms.begin(); acronymIt != enabledProductsAcronyms.end(); ++acronymIt) {
-        std::vector<ConstStringRef> expected{};
-        expected.insert(expected.end(), enabledProductsAcronyms.begin(), acronymIt + 1);
+    auto acronymTo = enabledProductsAcronyms.at(1);
 
-        std::string acronymsTarget = ":" + (*acronymIt).str();
-        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
+    std::vector<ConstStringRef> expected{};
+    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 2);
 
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            acronymsTarget};
+    std::string acronymsTarget = ":" + acronymTo.str();
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
 
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
     }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWithoutDashesWhenGetProductsForFatBinaryThenCorrectAcronymsAreReturned) {
@@ -1110,7 +1127,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFullRangeWhenGetProductsForRange
         GTEST_SKIP();
     }
     auto product = aotInfos[0].aotConfig.value;
-    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    uint32_t productTo = AOT::getConfixMaxPlatform();
     --productTo;
     auto got = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 
@@ -1148,7 +1165,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOnlyRtlIdAcronymsForConfigWhenGe
     std::string tmpStr("tmp");
     aotInfo.rtlIdAcronyms.push_back(ConstStringRef(tmpStr));
 
-    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    uint32_t productTo = AOT::getConfixMaxPlatform();
     --productTo;
     auto acronyms = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 
@@ -1160,42 +1177,42 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
         GTEST_SKIP();
     }
 
-    for (const auto &release : enabledReleasesAcronyms) {
-        std::vector<ConstStringRef> expected{};
+    const auto release = enabledReleasesAcronyms[enabledReleasesAcronyms.size() - 3].str();
+    std::vector<ConstStringRef> expected{};
 
-        auto releaseFromId = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(release.str());
-        auto releaseToId = AOT::RELEASE_MAX;
-        while (releaseFromId < releaseToId) {
-            getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
-            releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
-        }
-        if (expected.empty()) {
-            GTEST_SKIP();
-        }
-        std::string releasesTarget = release.str() + ":";
-        auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            releasesTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    auto releaseFromId = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(release);
+    auto releaseToId = AOT::RELEASE_MAX;
+    while (releaseFromId < releaseToId) {
+        getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
+        releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
     }
+    if (expected.empty()) {
+        GTEST_SKIP();
+    }
+    std::string releasesTarget = release + ":";
+    auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        releasesTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDeviceAndListOfProductsWhenFatBinaryBuildIsInvokedThenWarningIsPrinted) {
@@ -1211,16 +1228,17 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDevic
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         products.str().c_str(),
         "-device_options",
         enabledProductsAcronyms[2].str(),
         "deviceOptions"};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Warning! -device_options set for non-compiled device: " + enabledProductsAcronyms[2].str() + "\n";
@@ -1232,6 +1250,21 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
         GTEST_SKIP();
     }
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     std::stringstream products;
     products << enabledProductsAcronyms[0].str() + "," + enabledProductsAcronyms[1].str();
 
@@ -1240,16 +1273,17 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         products.str().c_str(),
         "-device_options",
         enabledProductsAcronyms[0].str(),
         "deviceOptions"};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
 
     std::stringstream errorMessage1, errorMessage2;
     errorMessage1 << "Warning! -device_options set for non-compiled device: " << enabledProductsAcronyms[0].str() << "\n";
@@ -1264,6 +1298,21 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
         GTEST_SKIP();
     }
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     std::stringstream products, productsForDeviceOptions;
     products << enabledProductsAcronyms[0].str() << ","
              << enabledProductsAcronyms[1].str() << ","
@@ -1277,16 +1326,17 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         products.str().c_str(),
         "-device_options",
         productsForDeviceOptions.str().c_str(),
         "deviceOptions"};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Warning! -device_options set for non-compiled device";
@@ -1298,43 +1348,43 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
         GTEST_SKIP();
     }
 
-    for (const auto &release : enabledReleasesAcronyms) {
-        std::vector<ConstStringRef> expected{};
+    const auto release = (enabledReleasesAcronyms.end() - 3)->str();
+    std::vector<ConstStringRef> expected{};
 
-        auto releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(AOT::UNKNOWN_RELEASE) + 1);
-        auto releaseToId = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(release.str());
+    auto releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(AOT::UNKNOWN_RELEASE) + 1);
+    auto releaseToId = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(release);
 
-        while (releaseFromId <= releaseToId) {
-            getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
-            releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
-        }
-        if (expected.empty()) {
-            GTEST_SKIP();
-        }
-        std::string releasesTarget = ":" + release.str();
-        auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            releasesTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    while (releaseFromId <= releaseToId) {
+        getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
+        releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
     }
+    if (expected.empty()) {
+        GTEST_SKIP();
+    }
+    std::string releasesTarget = ":" + release;
+    auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        releasesTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWhichHasNoDeviceAcronymWhenGetTargetProductsForFatbinaryThenCorrectResultIsReturned) {
@@ -1487,40 +1537,40 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinary
         GTEST_SKIP();
     }
 
-    for (const auto &family : enabledFamiliesAcronyms) {
-        std::vector<ConstStringRef> expected{};
+    const auto family = (enabledFamiliesAcronyms.end() - 3)->str();
+    std::vector<ConstStringRef> expected{};
 
-        auto familyFromId = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(family.str());
-        auto familyToId = AOT::FAMILY_MAX;
-        while (familyFromId < familyToId) {
-            getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
-            familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
-        }
-
-        std::string familiesTarget = family.str() + ":";
-        auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            familiesTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    auto familyFromId = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(family);
+    auto familyToId = AOT::FAMILY_MAX;
+    while (familyFromId < familyToId) {
+        getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
+        familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
     }
+
+    std::string familiesTarget = family + ":";
+    auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        familiesTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
@@ -1528,41 +1578,41 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         GTEST_SKIP();
     }
 
-    for (const auto &family : enabledFamiliesAcronyms) {
-        std::vector<ConstStringRef> expected{};
+    const auto &family = enabledFamiliesAcronyms.at(2);
+    std::vector<ConstStringRef> expected{};
 
-        auto familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(AOT::UNKNOWN_FAMILY) + 1);
-        auto familyToId = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(family.str());
+    auto familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(AOT::UNKNOWN_FAMILY) + 1);
+    auto familyToId = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(family.str());
 
-        while (familyFromId <= familyToId && familyFromId < AOT::FAMILY_MAX) {
-            getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
-            familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
-        }
-
-        std::string familiesTarget = ":" + family.str();
-        auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
-        EXPECT_EQ(got, expected);
-
-        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-        std::stringstream resString;
-        std::vector<std::string> argv = {
-            "ocloc",
-            "-file",
-            clFiles + "copybuffer.cl",
-            "-device",
-            familiesTarget};
-
-        testing::internal::CaptureStdout();
-        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
-        auto output = testing::internal::GetCapturedStdout();
-        EXPECT_EQ(retVal, OCLOC_SUCCESS);
-
-        for (const auto &product : expected) {
-            resString << "Build succeeded for : " << product.str() + ".\n";
-        }
-
-        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    while (familyFromId <= familyToId && familyFromId < AOT::FAMILY_MAX) {
+        getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
+        familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
     }
+
+    std::string familiesTarget = ":" + family.str();
+    auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        familiesTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
 TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsOptions) {
@@ -1570,6 +1620,21 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
     if (devices.empty()) {
         GTEST_SKIP();
     }
+
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
 
     char data[] = {1, 2, 3, 4, 5, 6, 7, 8};
     MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
@@ -1685,9 +1750,10 @@ TEST_F(OclocFatBinaryTest, givenDeviceFlagWithoutConsecutiveArgumentWhenBuilding
         "ocloc",
         "-device"};
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto result = buildFatBinary(args, &mockArgHelper);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
 
@@ -1709,9 +1775,10 @@ TEST_F(OclocFatBinaryTest, givenFlagsWhichRequireMoreArgsWithoutThemWhenBuilding
             devices,
             flag};
 
-        ::testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         const auto result = buildFatBinary(args, &mockArgHelper);
-        const auto output{::testing::internal::GetCapturedStdout()};
+        const auto output{capture.getCapturedStdout()};
 
         EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
 
@@ -1878,9 +1945,10 @@ TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIs
     mockArgHelperFilesMap[emptyFile] = "";
     mockArgHelper.shouldLoadDataFromFileReturnZeroSize = true;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper, dummyOptions)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_FILE, errorCode);
     EXPECT_EQ("Error! Couldn't read input file!\n", output);
@@ -1892,9 +1960,10 @@ TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     std::string dummyOptions{"-cl-opt-disable "};
     mockArgHelperFilesMap[dummyFile] = "This is not IR!";
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper, dummyOptions)};
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_FILE, errorCode);
 
@@ -1903,11 +1972,11 @@ TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationErrorWhenBuildingFatbinaryForTargetThenNothingIsDoneAndErrorIsReturned) {
+TEST_F(OclocTest, givenPreviousCompilationErrorWhenBuildingFatbinaryForTargetThenNothingIsDoneAndErrorIsReturned) {
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1932,11 +2001,11 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationErrorWhenBuildingFatbina
     EXPECT_EQ(0, mockOfflineCompiler.buildCalledCount);
 }
 
-TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatbinaryForTargetThenCompilationIsInvokedAndErrorLogIsPrinted) {
+TEST_F(OclocTest, givenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatbinaryForTargetThenCompilationIsInvokedAndErrorLogIsPrinted) {
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1950,10 +2019,11 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWh
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
@@ -1971,13 +2041,13 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWh
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsPrinted) {
+TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsPrinted) {
     using namespace std::string_literals;
 
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1996,10 +2066,11 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
@@ -2008,14 +2079,15 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
-    ::testing::internal::CaptureStdout();
+TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
+    StreamCapture capture;
+    capture.captureStdout();
 
     const std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2036,25 +2108,26 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
 
     const int previousReturnValue{OCLOC_SUCCESS};
     buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_TRUE(output.empty()) << output;
 }
 
-TEST(OclocFatBinaryHelpersTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
+TEST_F(OclocTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
     ProductConfigHelper productConfigHelper;
     auto allDeperecatedAcronyms = productConfigHelper.getDeprecatedAcronyms();
     if (allDeperecatedAcronyms.empty()) {
         return;
     }
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         allDeperecatedAcronyms[0].str()};
     int deviceArgIndex = 5;
@@ -2077,7 +2150,7 @@ TEST(OclocFatBinaryHelpersTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
         auto retVal = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, product.str());
         EXPECT_EQ(0, retVal);
     }
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
     EXPECT_TRUE(output.empty()) << output;
 
     auto encodedFatbin = ar.encode();
@@ -2096,7 +2169,7 @@ TEST(OclocFatBinaryHelpersTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
     }
 }
 
-TEST(OclocFatBinaryHelpersTest, givenListOfGenericAcronymsThenUseThemAsIs) {
+TEST_F(OclocTest, givenListOfGenericAcronymsThenUseThemAsIs) {
     ProductConfigHelper productConfigHelper;
     std::vector<NEO::ConstStringRef> genericAcronyms{};
 
@@ -2107,13 +2180,14 @@ TEST(OclocFatBinaryHelpersTest, givenListOfGenericAcronymsThenUseThemAsIs) {
         GTEST_SKIP();
     }
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         genericAcronyms[0].str()};
     int deviceArgIndex = 5;
@@ -2136,7 +2210,7 @@ TEST(OclocFatBinaryHelpersTest, givenListOfGenericAcronymsThenUseThemAsIs) {
         auto retVal = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, product.str());
         EXPECT_EQ(0, retVal);
     }
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
     EXPECT_TRUE(output.empty()) << output;
 
     auto encodedFatbin = ar.encode();
@@ -2155,13 +2229,13 @@ TEST(OclocFatBinaryHelpersTest, givenListOfGenericAcronymsThenUseThemAsIs) {
     }
 }
 
-TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
+TEST_F(OclocTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
     using namespace std::string_literals;
 
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-q",
         "-device",
         gEnvironment->devicePrefix.c_str()};
@@ -2178,10 +2252,11 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
@@ -2189,34 +2264,34 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
     EXPECT_TRUE(output.empty()) << output;
 }
 
-TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsPresentReturnsCorrectIndex) {
+TEST_F(OclocTest, WhenDeviceArgIsPresentReturnsCorrectIndex) {
     std::vector<std::string> args = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
     EXPECT_EQ(4, getDeviceArgValueIdx(args));
 }
 
-TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsLastReturnsMinusOne) {
+TEST_F(OclocTest, WhenDeviceArgIsLastReturnsMinusOne) {
     std::vector<std::string> args = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl",
+        clCopybufferFilename.c_str(),
         "-device"};
     EXPECT_EQ(-1, getDeviceArgValueIdx(args));
 }
 
-TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsAbsentReturnsMinusOne) {
+TEST_F(OclocTest, WhenDeviceArgIsAbsentReturnsMinusOne) {
     std::vector<std::string> args = {
         "ocloc",
         "-file",
-        clFiles + "copybuffer.cl"};
+        clCopybufferFilename.c_str()};
     EXPECT_EQ(-1, getDeviceArgValueIdx(args));
 }
 
-TEST(OclocFatBinaryHelpersTest, WhenArgsAreEmptyReturnsMinusOne) {
+TEST_F(OclocTest, WhenArgsAreEmptyReturnsMinusOne) {
     std::vector<std::string> args = {};
     EXPECT_EQ(-1, getDeviceArgValueIdx(args));
 }

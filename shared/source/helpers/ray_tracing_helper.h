@@ -61,7 +61,7 @@ class RayTracingHelper : public NonCopyableAndNonMovableClass {
         UNRECOVERABLE_IF(hwInfo.gtSystemInfo.EUCount == 0)
 
         uint32_t maxNumEUsPerDSS = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
-        uint32_t maxNumThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        uint32_t maxNumThreadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu;
         uint32_t maxSIMTThreadsPerThread = CommonConstants::maximalSimdSize;
 
         return std::min(maxSizeOfRtStacksPerDss, maxNumEUsPerDSS * maxNumThreadsPerEU * maxSIMTThreadsPerThread);
