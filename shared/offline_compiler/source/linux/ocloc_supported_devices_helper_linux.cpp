@@ -86,7 +86,11 @@ std::string SupportedDevicesHelper::getDataFromFormerOcloc() const {
     }
 
     // Use formerOclocFree since memory was allocated by former ocloc
-    Commands::formerOclocFree(getOclocFormerLibName(), &numOutputs, &dataOutputs, &ouputLengths, &outputNames);
+    auto freeResult = Commands::formerOclocFree(getOclocFormerLibName(), &numOutputs, &dataOutputs, &ouputLengths, &outputNames);
+    if (!freeResult) {
+        // Fallback to regular oclocFreeOutput if formerOclocFree fails
+        oclocFreeOutput(&numOutputs, &dataOutputs, &ouputLengths, &outputNames);
+    }
     return retData;
 }
 

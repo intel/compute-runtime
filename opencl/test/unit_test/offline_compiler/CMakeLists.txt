@@ -81,7 +81,6 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_supported_devices_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/former_ocloc_free_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/offline_compiler_ext_tests.cpp
