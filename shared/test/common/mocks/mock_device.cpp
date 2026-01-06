@@ -12,7 +12,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -84,10 +83,6 @@ void MockDevice::setOSTime(OSTime *osTime) {
 
 void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
     executionEnvironment->memoryManager.reset(memoryManager);
-}
-
-void MockDevice::setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
-    performanceCounters = std::move(perfCounters);
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {

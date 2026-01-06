@@ -10,32 +10,26 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
-#include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -46,7 +40,10 @@
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
+#include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/helpers/task_information.h"
@@ -58,8 +55,8 @@
 
 #include "CL/cl_ext.h"
 
-#include <cstdarg>
 #include <limits>
+#include <map>
 
 namespace NEO {
 

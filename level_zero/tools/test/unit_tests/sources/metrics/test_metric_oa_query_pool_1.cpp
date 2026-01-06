@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/utilities/metrics_library.h"
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/context/context_imp.h"

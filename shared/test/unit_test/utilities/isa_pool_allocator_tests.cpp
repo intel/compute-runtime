@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
-#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_product_helper.h"

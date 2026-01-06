@@ -100,7 +100,9 @@ class MockDevice : public RootDevice {
 
     void injectMemoryManager(MemoryManager *);
 
-    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters);
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
+        performanceCounters = std::move(perfCounters);
+    }
 
     size_t getMaxParameterSizeFromIGC() const override {
         if (callBaseGetMaxParameterSizeFromIGC) {

@@ -7,68 +7,70 @@
 
 #include "opencl/test/unit_test/program/program_tests.h"
 
-#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/ail/ail_configuration.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
-#include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
-#include "patch_list.h"
-#include "patch_shared.h"
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-namespace NEO {
-using namespace iOpenCL;
-} // namespace NEO
 
 using namespace NEO;
 

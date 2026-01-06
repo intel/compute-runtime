@@ -6,15 +6,12 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/sku_info/sku_info_base.h"
-#include "shared/source/xe3_core/hw_cmds_base.h"
-#include "shared/source/xe3_core/hw_info_xe3_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,18 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
-
-#include "aubstream/engine_node.h"
-#include "gtest/gtest.h"
-#include "metrics_library_api_1_0.h"
-
-#include <array>
-#include <bitset>
-#include <list>
-#include <memory>
-#include <vector>
+#include "shared/test/common/test_macros/hw_test.h"
 
 using GfxCoreHelperTestsXe3Core = GfxCoreHelperTest;
 

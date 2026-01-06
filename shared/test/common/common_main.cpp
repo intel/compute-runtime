@@ -10,7 +10,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"

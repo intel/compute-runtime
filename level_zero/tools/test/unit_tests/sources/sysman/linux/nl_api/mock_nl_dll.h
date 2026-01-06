@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/os_library.h"
-
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/linux/nl_api/nl_api.h"
 
