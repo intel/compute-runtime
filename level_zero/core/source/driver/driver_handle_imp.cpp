@@ -223,9 +223,23 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
+    if (memoryManager != nullptr) {
+        if (this->svmAllocsManager) {
+            this->svmAllocsManager->cleanupUSMAllocCaches();
+            if (this->usmHostMemAllocPool) {
+                this->usmHostMemAllocPool->cleanup();
+            }
+            if (this->usmHostMemAllocPoolManager) {
+                this->usmHostMemAllocPoolManager->cleanup();
+            }
+        }
+    }
     for (auto &device : this->devices) {
         // release temporary pointers before default context destruction
         device->bcsSplitReleaseResources();
+        if (device->getNEODevice()) {
+            device->getNEODevice()->cleanupUsmAllocationPool();
+        }
     }
 
     if (this->defaultContext) {
@@ -238,15 +252,6 @@ DriverHandleImp::~DriverHandleImp() {
 
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
-        if (this->svmAllocsManager) {
-            this->svmAllocsManager->cleanupUSMAllocCaches();
-            if (this->usmHostMemAllocPool) {
-                this->usmHostMemAllocPool->cleanup();
-            }
-            if (this->usmHostMemAllocPoolManager) {
-                this->usmHostMemAllocPoolManager->cleanup();
-            }
-        }
     }
 
     this->stagingBufferManager.reset();
@@ -327,13 +332,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     if (this->numDevices == 1) {
         this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
     }
-    if (NEO::debugManager.flags.EnableUsmPoolLazyInit.get() != -1) {
-        this->lazyInitUsmPools = 1 == NEO::debugManager.flags.EnableUsmPoolLazyInit.get();
-    }
-    if (!this->lazyInitUsmPools) {
-        this->initHostUsmAllocPoolOnce();
-        this->initDeviceUsmAllocPoolOnce();
-    }
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 
@@ -354,6 +352,13 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     }
     createContext(&DefaultDescriptors::contextDesc, static_cast<uint32_t>(this->devicesToExpose.size()), this->devicesToExpose.data(), &defaultContext);
     this->stagingBufferManager = std::make_unique<NEO::StagingBufferManager>(svmAllocsManager, this->rootDeviceIndices, this->deviceBitfields, false);
+    if (NEO::debugManager.flags.EnableUsmPoolLazyInit.get() != -1) {
+        this->lazyInitUsmPools = 1 == NEO::debugManager.flags.EnableUsmPoolLazyInit.get();
+    }
+    if (!this->lazyInitUsmPools) {
+        this->initHostUsmAllocPoolOnce();
+        this->initDeviceUsmAllocPoolOnce();
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -383,6 +388,10 @@ void DriverHandleImp::initHostUsmAllocPoolOnce() {
     });
 }
 
+NEO::UsmMemAllocPool::CustomCleanupFn DriverHandleImp::getPoolCleanupFn() {
+    return [this](const void *ptr) { static_cast<ContextImp *>(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
+}
+
 void DriverHandleImp::initDeviceUsmAllocPoolOnce() {
     std::call_once(this->deviceUsmPoolOnceFlag, [this]() {
         for (auto &device : this->devices) {
@@ -410,11 +419,13 @@ void DriverHandleImp::initHostUsmAllocPool() {
     if (usmHostAllocPoolingEnabled) {
         if (useUsmPoolManager) {
             usmHostMemAllocPoolManager.reset(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, nullptr));
+            usmHostMemAllocPoolManager->setCustomCleanup(getPoolCleanupFn());
             usmHostMemAllocPoolManager->initialize(this->svmAllocsManager);
         } else {
             NEO::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                           rootDeviceIndices, deviceBitfields);
             usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
+            usmHostMemAllocPool->setCustomCleanup(getPoolCleanupFn());
             usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
         }
     }
@@ -454,12 +465,14 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
     if (enabled) {
         if (useUsmPoolManager) {
             device.resetUsmAllocationPoolManager(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &device));
+            device.getUsmMemAllocPoolsManager()->setCustomCleanup(getPoolCleanupFn());
             if (trackResidency) {
                 device.getUsmMemAllocPoolsManager()->enableResidencyTracking();
             }
             device.getUsmMemAllocPoolsManager()->initialize(this->svmAllocsManager);
         } else {
             device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
+            device.getUsmMemAllocPool()->setCustomCleanup(getPoolCleanupFn());
             if (trackResidency) {
                 device.getUsmMemAllocPool()->enableResidencyTracking();
             }

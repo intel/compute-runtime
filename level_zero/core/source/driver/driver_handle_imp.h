@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -22,8 +23,6 @@ namespace NEO {
 class Device;
 class MemoryManager;
 class OsLibrary;
-class UsmMemAllocPool;
-class UsmMemAllocPoolsManager;
 enum class AllocationType;
 struct SvmAllocationData;
 } // namespace NEO
@@ -118,6 +117,7 @@ struct DriverHandleImp : public DriverHandle {
     void initHostUsmAllocPoolOnce();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
     void initDeviceUsmAllocPoolOnce();
+    NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
     NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <functional>
 using namespace NEO;
 
 using UnifiedMemoryPoolingStaticTest = ::testing::Test;
@@ -561,6 +562,26 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenTrackResidencySetWhenInitializingTh
     }
 
     usmMemAllocPoolsManager->cleanup();
+}
+
+TEST_P(UnifiedMemoryPoolingManagerTest, givenCustomCleanupFunctionWhenPoolsAreAddedAndCleanedUpThenCustomCleanupIsSetAndCalled) {
+    auto customCleanup = [](std::vector<void *> *vec, const void *ptr) {
+        std::erase(*vec, ptr);
+    };
+    std::vector<void *> poolPtrs;
+
+    usmMemAllocPoolsManager->setCustomCleanup(std::bind(customCleanup, &poolPtrs, std::placeholders::_1));
+
+    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
+    for (auto &[_, bucket] : usmMemAllocPoolsManager->pools) {
+        for (const auto &pool : bucket) {
+            poolPtrs.push_back(addrToPtr(pool->getPoolAddress()));
+        }
+    }
+    EXPECT_GT(poolPtrs.size(), 0u);
+    usmMemAllocPoolsManager->cleanup();
+    EXPECT_EQ(0u, poolPtrs.size());
 }
 
 TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocatingGreaterThan2MBOrWrongAlignmentOrWrongFlagsThenDoNotPool) {

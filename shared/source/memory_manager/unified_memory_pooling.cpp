@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,9 @@ size_t UsmMemAllocPool::getPoolSize() const {
 
 void UsmMemAllocPool::cleanup() {
     if (isInitialized()) {
+        if (this->customCleanup) {
+            this->customCleanup(this->pool);
+        }
         [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, false);
         DEBUG_BREAK_IF(false == status);
         this->svmMemoryManager = nullptr;
@@ -276,6 +279,7 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
             if (trackResidency) {
                 pool->enableResidencyTracking();
             }
+            pool->setCustomCleanup(this->customCleanup);
             this->pools[poolInfo].push_back(std::move(pool));
         }
     }

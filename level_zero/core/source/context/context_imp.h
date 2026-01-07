@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,6 +183,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
         return devices;
     }
 
+    MOCKABLE_VIRTUAL void freePeerAllocationsFromAll(const void *ptr, bool blocking);
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
     ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,

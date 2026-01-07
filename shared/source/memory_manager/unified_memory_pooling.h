@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/sorted_vector.h"
 
+#include <functional>
 #include <map>
-
 namespace NEO {
 class GraphicsAllocation;
 class MemoryManager;
@@ -38,6 +38,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         evict
     };
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
+    using CustomCleanupFn = std::function<void(const void *)>;
 
     UsmMemAllocPool() = default;
     MOCKABLE_VIRTUAL ~UsmMemAllocPool() = default;
@@ -85,12 +86,17 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         }
     }
 
+    void setCustomCleanup(CustomCleanupFn customCleanup) {
+        this->customCleanup = customCleanup;
+    }
+
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
   protected:
     MemoryOperationsStatus evictPool();
     MemoryOperationsStatus makePoolResident();
+    CustomCleanupFn customCleanup = nullptr;
     std::unique_ptr<HeapAllocator> chunkAllocator;
     void *pool{};
     void *poolEnd{};
@@ -111,6 +117,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
 
 class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
+    using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
     static constexpr size_t maxEmptyPoolsPerBucket = 1u;
 
     UsmMemAllocPoolsManager(InternalMemoryType memoryType,
@@ -135,9 +142,13 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     size_t getOffsetInPool(const void *ptr);
     UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
     void enableResidencyTracking() { this->trackResidency = true; }
+    void setCustomCleanup(CustomCleanupFn customCleanup) {
+        this->customCleanup = customCleanup;
+    }
 
   protected:
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
+    CustomCleanupFn customCleanup = nullptr;
     SVMAllocsManager *svmMemoryManager{};
     MemoryManager *memoryManager{};
     Device *device{nullptr};

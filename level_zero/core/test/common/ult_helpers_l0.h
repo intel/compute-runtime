@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ struct L0UltHelper {
         }
         for (auto device : driverHandle->devices) {
             device->getNEODevice()->cleanupUsmAllocationPool();
+            device->getNEODevice()->resetUsmAllocationPool(nullptr);
         }
         driverHandle->svmAllocsManager->cleanupUSMAllocCaches();
     }

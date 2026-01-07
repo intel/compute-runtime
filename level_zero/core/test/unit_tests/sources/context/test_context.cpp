@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -461,7 +461,7 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
     res = context->getStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    driverHandle->getSvmAllocsManager()->cleanupUSMAllocCaches();
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
 
     for (auto device : driverHandle->devices) {
         L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);

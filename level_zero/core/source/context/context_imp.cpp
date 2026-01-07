@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -487,6 +487,12 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
     }
 }
 
+void ContextImp::freePeerAllocationsFromAll(const void *ptr, bool blocking) {
+    for (auto &pairDevice : this->devices) {
+        this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
+    }
+}
+
 NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
     DEBUG_BREAK_IF(nullptr == svmData);
     NEO::UsmMemAllocPool *usmPool = nullptr;
@@ -560,13 +566,11 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         ipcHandleIterator++;
     }
 
-    for (auto &pairDevice : this->devices) {
-        this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
-    }
-
     if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
         return ZE_RESULT_SUCCESS;
     }
+
+    this->freePeerAllocationsFromAll(ptr, blocking);
 
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
 
@@ -590,13 +594,11 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        for (auto &pairDevice : this->devices) {
-            this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
-        }
-
         if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
             return ZE_RESULT_SUCCESS;
         }
+
+        this->freePeerAllocationsFromAll(ptr, blocking);
 
         this->driverHandle->svmAllocsManager->freeSVMAllocDefer(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;

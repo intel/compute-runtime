@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,9 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+
 namespace L0 {
 namespace ult {
 template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int usmPoolManagerFlag = -1, bool multiDevice = false, bool initDriver = true>
@@ -88,7 +90,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     constexpr static uint32_t numRootDevices = multiDevice ? 2u : 1u;
     L0::ContextImp *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;
-    NEO::ExecutionEnvironment *executionEnvironment;
+    NEO::ExecutionEnvironment *executionEnvironment{};
     std::vector<std::unique_ptr<NEO::Device>> devices;
     L0::Device *l0Devices[numRootDevices];
     constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
@@ -292,6 +294,16 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
 
     result = context->freeMem(pooledAllocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(AllocUsmHostEnabledMemoryTest, givenDefaultContextWhenCallingPoolCleanupThenFreePeerAllocations) {
+    auto context = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto contextHandle = context->toHandle();
+    std::swap(driverHandle->defaultContext, contextHandle);
+    EXPECT_EQ(0u, context->freePeerAllocationsFromAllCalled);
+    driverHandle->usmHostMemAllocPool->cleanup();
+    EXPECT_EQ(1u, context->freePeerAllocationsFromAllCalled);
+    std::swap(driverHandle->defaultContext, contextHandle);
 }
 
 using AllocUsmDeviceDefaultSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0>;

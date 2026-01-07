@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,6 +134,7 @@ struct Mock<ContextImp> : public ContextImp {
     ADDMETHOD(createImage, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage), (hDevice, desc, phImage));
     ADDMETHOD_OVERLOAD(freeMem, _BL, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, bool blocking), (ptr, blocking));
     ADDMETHOD(freeMemExt, ze_result_t, false, ZE_RESULT_SUCCESS, (const ze_memory_free_ext_desc_t *pMemFreeDesc, void *ptr), (pMemFreeDesc, ptr));
+    ADDMETHOD_NOBASE_VOIDRETURN(freePeerAllocationsFromAll, (const void *ptr, bool blocking));
     ADDMETHOD(registerMemoryFreeCallback, ze_result_t, false, ZE_RESULT_SUCCESS, (zex_memory_free_callback_ext_desc_t * pfnCallbackDesc, void *ptr), (pfnCallbackDesc, ptr));
     ADDMETHOD(getIpcMemHandles, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *p, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles), (p, numIpcHandles, pIpcHandles));
     ADDMETHOD(putIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle), (ipcHandle));
