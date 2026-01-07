@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"

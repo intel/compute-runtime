@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 
 #include <cstring>
 
@@ -88,6 +89,16 @@ void applyAdditionalApiOptions(std::string &apiOptions) {
         if (pos != std::string::npos) {
             apiOptions.erase(pos, CompilerOptions::largeGrf.size());
         }
+    }
+}
+
+void applyExtraInternalOptions(std::string &internalOptions, const HardwareInfo &hwInfo, const CompilerProductHelper &compilerProductHelper, HeaplessMode heaplessMode) {
+
+    bool enableE64 = heaplessMode == HeaplessMode::enabled;
+    enableE64 |= (heaplessMode == HeaplessMode::defaultMode) && compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+
+    if (enableE64) {
+        CompilerOptions::concatenateAppend(internalOptions, enable64bitAddressing);
     }
 }
 

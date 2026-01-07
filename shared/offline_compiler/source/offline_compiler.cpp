@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"

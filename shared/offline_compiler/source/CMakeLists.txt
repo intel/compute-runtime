@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,8 +23,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/ail/ail_ov_comp_wa.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.h
-    ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options_extra.h
-    ${NEO_SHARED_DIRECTORY}/compiler_interface${BRANCH_DIR_SUFFIX}compiler_options_extra.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_cache.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_cache.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include <functional>
 
 namespace NEO {
+class CompilerProductHelper;
+struct HardwareInfo;
 namespace CompilerOptions {
 inline constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
 inline constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
@@ -47,6 +49,7 @@ inline constexpr ConstStringRef enableDivergentBarriers = "-cl-intel-enable-dive
 inline constexpr ConstStringRef optDisableSendWarWa = "-ze-opt-disable-sendwarwa";
 inline constexpr ConstStringRef kernelTypes = "-Didx_t=uint -Dcoord2_t=uint2 -Dcoord4_t=uint4 -Doffset_t=uint";
 inline constexpr ConstStringRef wideStatelessTypes = "-Didx_t=ulong -Dcoord2_t=ulong2 -Dcoord4_t=ulong4 -Doffset_t=ulong";
+inline constexpr ConstStringRef enable64bitAddressing = "-ze-intel-64bit-addressing";
 inline const std::string kernelOptions = kernelTypes.str();
 inline const std::string kernelStatelessOptions =
     greaterThan4gbBuffersRequired.str() + " " + kernelTypes.str();
@@ -196,6 +199,7 @@ enum class HeaplessMode {
     disabled,
     defaultMode,
 };
+void applyExtraInternalOptions(std::string &internalOptions, const HardwareInfo &hwInfo, const CompilerProductHelper &compilerProductHelper, HeaplessMode heaplessMode);
 
 } // namespace CompilerOptions
 } // namespace NEO
