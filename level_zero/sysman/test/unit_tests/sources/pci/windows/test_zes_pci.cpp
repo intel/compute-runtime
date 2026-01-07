@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -453,13 +453,14 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureThenCallFails) {
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureThenCallSucceedsWithProperValueReturned) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
     extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(extProps.maxPciGenSupported, -1);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {

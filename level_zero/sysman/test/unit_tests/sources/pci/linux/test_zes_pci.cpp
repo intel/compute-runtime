@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -701,7 +701,7 @@ TEST_F(ZesPciFixture, GivenValidConfigMemoryDataWhenCallingGetRebarCapabilityPos
     EXPECT_TRUE(pLinuxPciImp->getRebarCapabilityPos(mockBuf, true));
 }
 
-TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureOni915KmdThenVerifyApiCallFails) {
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureOni915KmdThenVerifyApiCallSuceedsWithProperValue) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
     extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
@@ -709,7 +709,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetProperties
 
     ze_result_t result = zesDevicePciGetProperties(device, &properties);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(extProps.maxPciGenSupported, -1);
 }
 
 TEST_F(ZesPciFixture, GivenPciBdfInfoPointerIsNotInitializedWhenPciGetPropertiesIsInvokedThenErrorIsReturned) {

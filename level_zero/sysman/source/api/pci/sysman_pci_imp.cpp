@@ -123,9 +123,10 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
     while (pNext) {
         result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(const_cast<void *>(pNext));
-        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES && pOsPci->isPciDowngradePropertiesAvailable) {
+        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
             auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
-            *pDowngradeExpProps = pciDowngradeProperties;
+            pDowngradeExpProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
+            pDowngradeExpProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
             result = ZE_RESULT_SUCCESS;
             break;
         }
@@ -182,6 +183,7 @@ ze_result_t PciImp::pciGetStats(zes_pci_stats_t *pStats) {
 
 void PciImp::pciGetStaticFields() {
     pciDowngradeProperties.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    pciDowngradeProperties.maxPciGenSupported = -1;
     pciProperties.pNext = &pciDowngradeProperties;
     pOsPci->getProperties(&pciProperties);
     pciProperties.pNext = nullptr;
