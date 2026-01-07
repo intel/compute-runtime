@@ -1076,7 +1076,7 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
-    return !useAdditionalBlitProperties();
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
