@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,57 +41,37 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherent
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
     DebugManagerStateRestore restorer;
 
-    auto pInHwInfo = *defaultHwInfo;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsBMG) {
     DebugManagerStateRestore restorer;
 
-    auto pInHwInfo = *defaultHwInfo;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalTimestampOffsetsThenOffsetsEncoded, IsAtLeastXe2HpgCore) {

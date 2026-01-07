@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,16 +91,10 @@ PTLTEST_F(PtlProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPip
     auto productHelper = &mockDevice->getProductHelper();
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsSupportedWhenCheckedThenReturnsTrue) {
@@ -109,17 +103,7 @@ PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsSupportedWhen
     csr.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-}
-
-PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsNotSupportedWhenCheckedThenReturnsFalse) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {

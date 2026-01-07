@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,7 +256,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWhenEnqueueingBarrierThenProgramNonS
 
     auto it = hwParser.cmdList.begin();
 
-    if (device->getProductHelper().isResolveDependenciesByPipeControlsSupported(device->getHardwareInfo(), false, cmdQ.taskCount, cmdQ.getGpgpuCommandStreamReceiver())) {
+    if (device->getProductHelper().isResolveDependenciesByPipeControlsSupported()) {
         EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(it));
     } else {
         EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));

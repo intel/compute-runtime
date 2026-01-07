@@ -641,12 +641,11 @@ bool ProductHelperHw<gfxProduct>::isPlatformQuerySupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    constexpr bool enabled = false;
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
-    return enabled;
+    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,15 +195,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     const bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
-    const auto &hwInfo = this->getDevice().getHardwareInfo();
-    auto &productHelper = getDevice().getProductHelper();
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
     bool isNonStallingIoqBarrier = commandType == CL_COMMAND_BARRIER && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::gpuKernel &&
-                                                                   productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled(), this->taskCount, computeCommandStreamReceiver);
+                                                                   this->isBarrierForImplicitDependenciesAllowed &&
+                                                                   !this->isOOQEnabled() &&
+                                                                   this->taskCount == computeCommandStreamReceiver.peekTaskCount();
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
                 eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::onCsr);

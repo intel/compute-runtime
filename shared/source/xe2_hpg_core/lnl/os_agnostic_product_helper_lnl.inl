@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,12 +20,11 @@ bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const Allocatio
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
-    return enabled;
+    return true;
 }
 
 template <>

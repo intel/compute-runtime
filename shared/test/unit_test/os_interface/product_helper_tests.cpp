@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -783,22 +783,13 @@ HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPi
     csr.taskCount = 2;
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
@@ -809,22 +800,13 @@ HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPi
     csr.taskCount = 2;
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {

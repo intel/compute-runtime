@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -185,9 +185,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = false;
-    const auto &hwInfo = device->getHardwareInfo();
     const auto &productHelper = device->getProductHelper();
-    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled(), mockCmdQHw->taskCount, mockCmdQHw->getGpgpuCommandStreamReceiver());
+    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported();
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, isResolveDependenciesByPipeControlsEnabled, nullptr);
     auto sizeWithDisabled = mockCmdQHw->requestedCmdStreamSize;
 

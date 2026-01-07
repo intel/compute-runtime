@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,7 +177,7 @@ class ProductHelper {
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
     virtual bool isStatefulAddressingModeSupported() const = 0;
     virtual bool isPlatformQuerySupported() const = 0;
-    virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const = 0;
+    virtual bool isResolveDependenciesByPipeControlsSupported() const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
     virtual bool isHostUsmPoolAllocatorSupported() const = 0;
     virtual bool isDeviceUsmPoolAllocatorSupported() const = 0;

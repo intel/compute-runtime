@@ -138,6 +138,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         this->isForceStateless = compilerProductHelper.isForceToStatelessRequired();
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled);
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
+        this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
     }
 }
 

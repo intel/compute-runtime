@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -559,6 +559,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool pendingL3FlushForHostVisibleResources = false;
+    bool isBarrierForImplicitDependenciesAllowed = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

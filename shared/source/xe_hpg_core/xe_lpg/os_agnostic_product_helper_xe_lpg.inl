@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,12 +39,11 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
-    return enabled;
+    return true;
 }
 
 template <>

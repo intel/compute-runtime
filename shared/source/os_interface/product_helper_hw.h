@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,7 +117,7 @@ class ProductHelperHw : public ProductHelper {
     bool isStatefulAddressingModeSupported() const override;
     uint32_t getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const override;
     bool isPlatformQuerySupported() const override;
-    bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
+    bool isResolveDependenciesByPipeControlsSupported() const override;
     bool isBufferPoolAllocatorSupported() const override;
     bool isHostUsmPoolAllocatorSupported() const override;
     bool isDeviceUsmPoolAllocatorSupported() const override;

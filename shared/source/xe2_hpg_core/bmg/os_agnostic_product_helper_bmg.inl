@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,11 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    const bool enabled = false;
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
-    return enabled;
+    return false;
 }
 
 template <>

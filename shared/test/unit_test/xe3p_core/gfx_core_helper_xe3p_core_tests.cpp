@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1020,29 +1020,19 @@ XE3P_CORETEST_F(ProductHelperTestXe3p, when64bAddressingIsEnabledForRTThenResour
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
 
-    auto pInHwInfo = *defaultHwInfo;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenIsTranslationExceptionSupportedThenTrueIsReturned) {
