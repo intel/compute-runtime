@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,11 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
-#include <climits>
-
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <fcntl.h>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string_view>
@@ -75,7 +74,7 @@ bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
     ssize_t bytesRead = 0;
     std::array<char, 16> offsetString = {'\0'};
     if (fd > 0) {
-        offset = ULONG_MAX;
+        offset = std::numeric_limits<uint64_t>::max();
         bytesRead = SysCalls::pread(fd, offsetString.data(), offsetString.size() - 1, 0);
     }
     if (bytesRead <= 0) {
@@ -85,7 +84,7 @@ bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
     std::replace(offsetString.begin(), offsetString.end(), '\n', '\0');
     offset = std::strtoul(offsetString.data(), nullptr, 10);
 
-    if (offset == ULONG_MAX) {
+    if (offset == std::numeric_limits<uint64_t>::max()) {
         return false;
     }
     return true;

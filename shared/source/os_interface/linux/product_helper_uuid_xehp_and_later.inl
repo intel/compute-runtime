@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32
         return false;
     }
 
-    uint64_t offset = ULONG_MAX;
+    uint64_t offset = std::numeric_limits<uint64_t>::max();
     if (!PmtUtil::readOffset(telemDir, offset)) {
         return false;
     }
