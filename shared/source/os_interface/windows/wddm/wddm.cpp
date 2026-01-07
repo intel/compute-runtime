@@ -1252,9 +1252,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
 }
 
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
-    const auto osContextWin = static_cast<OsContextWin *>(&osContext);
-    const auto &monitoredFence = osContextWin->getMonitoredFence();
-    bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
+    bool hangDetected = osContext.isHangDetected();
 
     PRINT_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
 

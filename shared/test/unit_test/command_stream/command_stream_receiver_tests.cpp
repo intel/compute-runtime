@@ -444,6 +444,20 @@ HWTEST_F(CommandStreamReceiverTest, givenCheckingGpuHangWhenGpuHangDetectedThenG
     EXPECT_EQ(1u, driverModel->getDeviceStateCalledCount);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCheckingGpuHangWhenNoGpuHangDetectedThenFalseIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+    auto driverModel = driverModelMock.get();
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+
+    EXPECT_FALSE(csr.isGpuHangDetected());
+    EXPECT_EQ(0u, driverModel->getDeviceStateCalledCount);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = true;
@@ -493,6 +507,32 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
     EXPECT_EQ(WaitStatus::ready, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTaskAlreadyCompletedAndGpuHangDetectedOnFinalCheckWhenWaitingForCompletionThenGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.callBaseWaitForCompletionWithTimeout = true;
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 1000000us; // Long period so periodic check won't trigger
+
+    // Task is already complete from the start
+    TagAddressType tasksCount[16] = {5};
+    csr.tagAddress = tasksCount;
+
+    constexpr auto enableTimeout = false;
+    constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
+    constexpr auto taskCountToWait = 1; // Less than tasksCount[0], so task is already done
+
+    // Even though task is complete, the final hang check should detect the GPU hang
+    const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
