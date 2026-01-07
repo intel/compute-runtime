@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,15 +133,15 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return BaseClass::reserveLinearStreamSize(size);
     }
 
-    NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
-        residencyContainerSnapshot = residencyContainer;
+    NEO::SubmissionStatus submitBatchBuffer(size_t offset, void *endingCmdPtr, bool isCooperative) override {
+        residencyContainerSnapshot = this->csr->getResidencyAllocations();
         if (submitBatchBufferReturnValue.has_value()) {
             return *submitBatchBufferReturnValue;
         }
         if (this->startingCmdBuffer == nullptr) {
             this->startingCmdBuffer = &this->commandStream;
         }
-        return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
+        return BaseClass::submitBatchBuffer(offset, endingCmdPtr, isCooperative);
     }
 
     ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,

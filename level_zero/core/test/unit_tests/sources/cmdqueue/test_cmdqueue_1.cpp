@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -578,10 +578,9 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                           false,
                                                           returnValue));
     commandQueue->startingCmdBuffer = &commandQueue->commandStream;
-    ResidencyContainer container;
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
-    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
     EXPECT_EQ(ret, NEO::SubmissionStatus::success);
     EXPECT_EQ((peekTaskCountBefore + 1), commandQueue->csr->peekTaskCount());
@@ -605,10 +604,9 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                           false,
                                                           returnValue));
     commandQueue->startingCmdBuffer = &commandQueue->commandStream;
-    ResidencyContainer container;
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
-    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::failed);
     EXPECT_EQ(peekTaskCountBefore, commandQueue->csr->peekTaskCount());
     EXPECT_EQ(flushedTaskCountBefore, commandQueue->csr->peekLatestFlushedTaskCount());
@@ -631,8 +629,7 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
                                                           false,
                                                           returnValue));
     commandQueue->startingCmdBuffer = &commandQueue->commandStream;
-    ResidencyContainer container;
-    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::outOfMemory);
 
     commandQueue->destroy();
@@ -652,8 +649,7 @@ TEST_F(CommandQueueCreate, WhenSubmitBatchBufferThenDisableFlatRingBuffer) {
                                                           false,
                                                           returnValue));
     commandQueue->startingCmdBuffer = &commandQueue->commandStream;
-    ResidencyContainer container;
-    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, nullptr, false);
 
     EXPECT_EQ(ret, NEO::SubmissionStatus::success);
     EXPECT_TRUE(csr->latestFlushedBatchBuffer.disableFlatRingBuffer);
@@ -1153,9 +1149,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandQueueSubmitBatchBuffer : public MockCommandQueue<gfxCoreFamily> {
   public:
     MockCommandQueueSubmitBatchBuffer(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : MockCommandQueue<gfxCoreFamily>(device, csr, desc) {}
-
     ADDMETHOD_NOBASE(submitBatchBuffer, NEO::SubmissionStatus, NEO::SubmissionStatus::success,
-                     (size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                     (size_t offset, void *endingCmdPtr,
                       bool isCooperative));
 };
 

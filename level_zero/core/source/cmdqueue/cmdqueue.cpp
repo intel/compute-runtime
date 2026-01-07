@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,7 +129,7 @@ NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
     return waitStatus;
 }
 
-NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, void *endingCmdPtr,
                                                          bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 

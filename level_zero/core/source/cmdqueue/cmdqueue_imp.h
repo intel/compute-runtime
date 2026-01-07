@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,7 +125,7 @@ struct CommandQueueImp : public CommandQueue {
     void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
 
   protected:
-    MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+    MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, void *endingCmdPtr,
                                                              bool isCooperative);
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds);
