@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace NEO {
 
 void Wddm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
-    gmmInArgs->FileDescriptor = 0U;
+    gmmInArgs->FileDescriptor = this->adapterBDF.data;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }
 

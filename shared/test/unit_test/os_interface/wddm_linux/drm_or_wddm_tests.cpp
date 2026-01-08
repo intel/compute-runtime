@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
@@ -156,4 +158,17 @@ TEST(DrmOrWddmTest, GivenInufficientPermissionsForDirectoryWhenDiscoveringDevice
     EXPECT_FALSE(executionEnvironment->isDevicePermissionError());
     EXPECT_FALSE(devices.empty());
     EXPECT_NE(0u, SysCalls::openFuncCalled);
+}
+
+TEST(DrmOrWddmTest, givenWddmWhenSetGmmInputArgsThenFileDescriptorIsSetToAdapterBdfData) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    uint32_t expectedBdf = 1234u;
+    wddm->adapterBDF.data = expectedBdf;
+
+    GMM_INIT_IN_ARGS gmmInArgs = {};
+    wddm->setGmmInputArgs(&gmmInArgs);
+
+    EXPECT_EQ(expectedBdf, gmmInArgs.FileDescriptor);
 }
