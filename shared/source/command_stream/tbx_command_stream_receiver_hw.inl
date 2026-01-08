@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -426,6 +426,12 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
     uint64_t gpuAddress = 0;
     void *cpuAddress = nullptr;
     size_t size = 0;
+
+    auto hostFunctionsActive = this->hostFunctionStreamer.get() != nullptr;
+    std::unique_lock<CommandStreamReceiver::MutexType> lockCsr(this->tagAllocationDownloadMutex, std::defer_lock);
+    if (hostFunctionsActive && gfxAllocation.getAllocationType() == AllocationType::tagBuffer) {
+        lockCsr.lock();
+    }
 
     this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size);
 

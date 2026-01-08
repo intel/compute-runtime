@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -760,7 +760,8 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
     auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
 
-    this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this->tagAllocation,
+    this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
+                                                                        this->tagAllocation,
                                                                         hostFunctionIdAddress,
                                                                         this->downloadAllocationImpl,
                                                                         nPartitions,
@@ -770,6 +771,19 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
 
 HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {
     return *hostFunctionStreamer.get();
+}
+
+void CommandStreamReceiver::initializeTagAllocationOnTbx() {
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+    // initialize full page tables for the first time
+    if (tagAllocation->isTbxWritable(allBanks)) {
+        this->writeMemory(*tagAllocation, false, 0, 0);
+    }
+}
+
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainTagAllocationDownloadLock() {
+    return std::unique_lock<CommandStreamReceiver::MutexType>(this->tagAllocationDownloadMutex);
 }
 
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
@@ -941,6 +955,10 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
+
+    if (isTbxMode()) {
+        initializeTagAllocationOnTbx();
+    }
 
     return true;
 }
