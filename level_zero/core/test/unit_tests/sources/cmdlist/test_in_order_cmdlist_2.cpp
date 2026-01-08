@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -566,7 +566,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    auto initialMainTaskCount = mainQueueCsr->taskCount.load();
+    auto mainTaskCount = mainQueueCsr->taskCount.load();
     auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
 
     {
@@ -581,7 +581,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), copyItor);
-        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 1, copyQueueCsr->taskCount);
     }
 
@@ -599,7 +599,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), copyItor);
 
-        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 2, copyQueueCsr->taskCount);
     }
 
@@ -617,10 +617,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), fillItor);
 
-        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
-
+    mainTaskCount++;
     {
         auto offset = cmdStream->getUsed();
 
@@ -636,11 +636,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_EQ(cmdList.end(), fillItor);
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
+            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         }
         EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
-
+    if (immCmdList->isWalkerPostSyncSkipEnabled) {
+        mainTaskCount++;
+    }
     auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     zeDesc.type = ZE_IMAGE_TYPE_2D;
@@ -665,7 +667,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 4, copyQueueCsr->taskCount);
     }
 
@@ -682,7 +684,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 5, copyQueueCsr->taskCount);
     }
 
@@ -699,7 +701,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 6, copyQueueCsr->taskCount);
     }
     context->freeMem(data);
@@ -1982,6 +1984,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
 HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
@@ -2094,11 +2097,13 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto walker = genCmdCast<WalkerType *>(*walkerItor);
         auto &postSync = walker->getPostSync();
         using PostSyncType = std::decay_t<decltype(postSync)>;
-
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(1u, postSync.getImmediateData());
-        EXPECT_EQ(regularCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
-
+        if (regularCmdList->isWalkerPostSyncSkipEnabled) {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        } else {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+            EXPECT_EQ(1u, postSync.getImmediateData());
+            EXPECT_EQ(regularCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+        }
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), sdiItor);
     }
@@ -2122,11 +2127,13 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto walker = genCmdCast<WalkerType *>(*walkerItor);
         auto &postSync = walker->getPostSync();
         using PostSyncType = std::decay_t<decltype(postSync)>;
-
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(2u, postSync.getImmediateData());
-        EXPECT_EQ(regularCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
-
+        if (regularCmdList->isWalkerPostSyncSkipEnabled) {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        } else {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+            EXPECT_EQ(2u, postSync.getImmediateData());
+            EXPECT_EQ(regularCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+        }
         auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), sdiItor);
     }
@@ -4107,6 +4114,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
 HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);

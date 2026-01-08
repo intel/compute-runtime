@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -318,8 +318,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
                 }
             } else {
-                inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                inOrderExecInfo = this->inOrderExecInfo.get();
+                if (!this->isWalkerPostSyncSkipEnabled || event) {
+                    inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+                    inOrderExecInfo = this->inOrderExecInfo.get();
+                }
                 if (event && event->isCounterBased()) {
                     isCounterBasedEvent = true;
                     if (event->getInOrderIncrementValue(this->partitionCount) > 0) {
@@ -501,6 +503,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     } else {
         launchParams.skipInOrderNonWalkerSignaling = false;
+    }
+    if (this->isWalkerPostSyncSkipEnabled && !event) {
+        this->latestOperationHasWalkerWithoutPostSync = true;
     }
 
     if (textureFlushRequired) {

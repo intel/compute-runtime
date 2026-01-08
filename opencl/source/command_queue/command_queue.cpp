@@ -139,6 +139,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled);
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
         this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
+        this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->isBarrierForImplicitDependenciesAllowed);
     }
 }
 
@@ -1053,10 +1054,6 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
 
         timestampPacketContainer->add(newTag);
     }
-}
-
-size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const {
-    return dispatchInfo.size();
 }
 
 bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,

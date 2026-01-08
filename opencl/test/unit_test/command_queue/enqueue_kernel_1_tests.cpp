@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -938,7 +938,8 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     // Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
-    size_t timestampPacketSurfacesCount = (mockCsr->peekTimestampPacketWriteEnabled() && !mockCsr->heaplessStateInitialized) ? 1 : 0;
+    auto isWalkerPostSyncSkipEnabled = pDevice->getGfxCoreHelper().isWalkerPostSyncSkipEnabled(true);
+    size_t timestampPacketSurfacesCount = (!isWalkerPostSyncSkipEnabled && mockCsr->peekTimestampPacketWriteEnabled() && !mockCsr->heaplessStateInitialized) ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
     size_t commandBufferCount = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;

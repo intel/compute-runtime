@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,9 +211,15 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnque
 
     auto &postSyncData = walker->getPostSync();
     using PostSyncType = std::decay_t<decltype(postSyncData)>;
-
-    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
-    EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
-    EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
-    EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    if (cmdQ->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSyncData.getOperation());
+        EXPECT_FALSE(postSyncData.getDataportPipelineFlush());
+        EXPECT_FALSE(postSyncData.getDataportSubsliceCacheFlush());
+        EXPECT_EQ(0ull, postSyncData.getMocs());
+    } else {
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+        EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
+        EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
+        EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    }
 }

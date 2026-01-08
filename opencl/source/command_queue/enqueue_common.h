@@ -212,6 +212,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
+        bool canSkipCurrentPostSync = false;
         size_t nodesCount = 0u;
         if (isCacheFlushCommand(commandType) || isFlushWithPostSyncWrite || isNonStallingIoqBarrierWithDependencies) {
             nodesCount = 1;
@@ -220,8 +221,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 // TSP not needed. Release current node.
                 timestampPacketContainer->moveNodesToNewContainer(*deferredTimestampPackets);
             } else {
-                nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
+                nodesCount = multiDispatchInfo.size();
             }
+            canSkipCurrentPostSync = this->isWalkerPostSyncSkipEnabled && !event;
         }
 
         if (isCacheFlushForBcsRequired() && enqueueWithBlitAuxTranslation) {
@@ -230,7 +232,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (nodesCount > 0) {
-            obtainNewTimestampPacketNodes(nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, computeCommandStreamReceiver);
+            obtainNewTimestampPacketNodes(canSkipCurrentPostSync ? 0 : nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, computeCommandStreamReceiver);
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies && timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0) {
                 csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
             }

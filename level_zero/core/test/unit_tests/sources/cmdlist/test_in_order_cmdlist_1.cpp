@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2673,8 +2673,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         auto &postSync = walker->getPostSync();
 
         using PostSyncType = std::decay_t<decltype(postSync)>;
-
-        if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
+        if (immCmdList->isWalkerPostSyncSkipEnabled) {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        } else if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
             EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
             EXPECT_EQ(1u, postSync.getImmediateData());
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
@@ -4137,12 +4138,61 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto walker = genCmdCast<WalkerType *>(*walkerItor);
     auto &postSync = walker->getPostSync();
 
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+    if (immCmdList->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(0u, postSync.getDestinationAddress());
+    } else {
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+    }
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);
 
     context->freeMem(alloc);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenWalkerPostSyncSkipEnabledWhenAppendKernelWithEventThenSignalWalker) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenWalkerPostSyncSkipEnabledWhenAppendKernelWithoutEventThenDontSignalWalker) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    EXPECT_EQ(0u, postSync.getDestinationAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenProgrammingComputeCopyThenSignalFromSdi) {
@@ -4353,13 +4403,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto walker = genCmdCast<WalkerType *>(*walkerItor);
     auto &postSync = walker->getPostSync();
     using PostSyncType = std::decay_t<decltype(postSync)>;
-
-    if (!immCmdList->inOrderAtomicSignalingEnabled) {
+    if (immCmdList->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+    } else if (!immCmdList->inOrderAtomicSignalingEnabled) {
         EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(1u, postSync.getImmediateData());
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
     }
-
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);

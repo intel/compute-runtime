@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::isCompleted;
     using BaseClass::isForceStateless;
     using BaseClass::isGpgpuSubmissionForBcsRequired;
+    using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestSentEnqueueType;
     using BaseClass::minimalSizeForBcsSplit;

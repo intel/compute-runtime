@@ -425,6 +425,43 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
 
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    if (cmdQ->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
+    } else {
+        EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+    }
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdQ->getCS(0), 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto it = hwParser.itorWalker;
+    auto walker = genCmdCast<WalkerType *>(*it);
+
+    ASSERT_NE(nullptr, walker);
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+        EXPECT_NE(nullptr, pipeControl);
+    }
+    it = find<PIPE_CONTROL *>(++it, hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), it);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWithEventWhenEnqueueingThenWriteWalkerStamp) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
 
     HardwareParse hwParser;
@@ -444,6 +481,35 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    clReleaseEvent(event);
+}
+
+HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKernelWithoutEventThenDontObtainTimestampPacket) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBarrierThenObtainTimestampPacket) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+    cmdQ->enqueueBarrierWithWaitList(1, &event, nullptr);
+    EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {
@@ -606,34 +672,35 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
     TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
     uint64_t latestNode = 0;
-
+    cl_event event{};
     {
-        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
         ASSERT_GT(timestampPacketContainer->peekNodes().size(), 0u);
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
         EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+        clReleaseEvent(event);
     }
 
     {
-        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
 
         EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-        ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
         EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(0u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        clReleaseEvent(event);
     }
 
     {
-        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
 
-        EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
-        ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 1u);
-        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(1u)->getGpuAddress());
+        EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(0u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        clReleaseEvent(event);
     }
 
     cmdQ->flush();
-    EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
     cmdQ->finish(false);
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
@@ -822,18 +889,25 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenWa
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     cmdQ->flush();
 
-    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
-
+    if (cmdQ->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(0u, timestampPacketContainer->peekNodes().size());
+    } else {
+        EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    }
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
-    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
-    for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
-        timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
+
+    if (!cmdQ->isWalkerPostSyncSkipEnabled) {
+        ASSERT_EQ(deferredTimestampPackets->peekNodes().size(), 1u);
+        for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
+            timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
+        }
     }
 
     cmdQ->finish(false);
 
-    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, cmdQ->isWalkerPostSyncSkipEnabled ? 1u : 0u);
 }
 
 HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinishThenDontWaitOnTimestamp) {
@@ -952,7 +1026,7 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     csr.callBaseWaitForCompletionWithTimeout = false;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
-
+    auto expectedTimestampPacketNodes = cmdQ->isWalkerPostSyncSkipEnabled ? 0ull : 1ull;
     TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
     TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
 
@@ -971,14 +1045,14 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     clWaitForEvents(1, &clEvent);
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(expectedTimestampPacketNodes, timestampPacketContainer->peekNodes().size());
 
     *tagAddress = csr.heaplessStateInitialized ? 3 : 2;
 
     clReleaseEvent(clEvent);
 
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
-    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+    EXPECT_EQ(expectedTimestampPacketNodes, timestampPacketContainer->peekNodes().size());
 
     cmdQ.reset();
 }
@@ -1068,9 +1142,9 @@ HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDefe
 
     TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
     TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
-
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cl_event event1{}, event2{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
 
     cmdQ->flush();
 
@@ -1087,6 +1161,8 @@ HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDefe
 
     *tagAddress = 3;
 
+    clReleaseEvent(event1);
+    clReleaseEvent(event2);
     cmdQ.reset();
 }
 
@@ -1120,9 +1196,9 @@ HWTEST_F(TimestampPacketTests, givenNewBcsSubmissionWhileWaitingThenDontReleaseD
     cmdQ->bcsStates[0].engineType = aub_stream::EngineType::ENGINE_BCS;
 
     cmdQ->bcsEngines[0] = &bcsEngine;
-
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cl_event event1{}, event2{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
 
     cmdQ->flush();
 
@@ -1144,6 +1220,8 @@ HWTEST_F(TimestampPacketTests, givenNewBcsSubmissionWhileWaitingThenDontReleaseD
     cmdQ->bcsEngines[0] = nullptr;
     cmdQ->bcsStates[0].engineType = aub_stream::EngineType::NUM_ENGINES;
 
+    clReleaseEvent(event1);
+    clReleaseEvent(event2);
     cmdQ.reset();
 }
 
@@ -1839,13 +1917,14 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
 
     csr.storeMakeResidentAllocations = true;
     csr.timestampPacketWriteEnabled = true;
-
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
     EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables) {
@@ -1893,10 +1972,14 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     UserEvent userEvent;
     cl_event clEvent = &userEvent;
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
-    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
-    auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
+    if (cmdQ->isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
+    } else {
+        ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
+        auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
+        EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
+    }
 
-    EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
     EXPECT_FALSE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
     userEvent.setStatus(CL_COMPLETE);
     EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));

@@ -929,4 +929,12 @@ bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
     return false;
 }
 
+template <typename Family>
+bool GfxCoreHelperHw<Family>::isWalkerPostSyncSkipEnabled(bool isBarrierUsedForImplicitDependency) const {
+    if (debugManager.flags.EnableWalkerPostSyncSkip.get() != -1) {
+        return debugManager.flags.EnableWalkerPostSyncSkip.get() == 1;
+    }
+    return false;
+}
+
 } // namespace NEO

@@ -221,10 +221,12 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenDontRequestPipeControlOn
     cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
 
     cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
-
-    EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // dont obtain new node
-    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
-
+    if (cmdQ.isWalkerPostSyncSkipEnabled) {
+        EXPECT_EQ(0u, cmdQ.timestampPacketContainer->peekNodes().size());
+    } else {
+        EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // dont obtain new node
+        EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
+    }
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 }
 
@@ -313,7 +315,8 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequest
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 
     MockKernelWithInternals mockKernel(*device, context);
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
+    cl_event event{};
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event); // obtain first TimestampPackets<uint32_t>
 
     TimestampPacketContainer cmdQNodes;
     cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
@@ -324,6 +327,7 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequest
     EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
 
     EXPECT_TRUE(cmdQ.isStallingCommandsOnNextFlushRequired());
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteDisabledWhenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
@@ -428,10 +432,12 @@ HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequireFlushWhenEnqueueingK
     auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get());
     csr.timestampPacketAllocator.reset(mockTagAllocator);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
-    // obtain first node for cmdQ and event1
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    // obtain first node for cmdQ and event
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto size = cmdQ->timestampPacketContainer->peekNodes().size();
     EXPECT_EQ(size, 1u);
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
@@ -478,11 +484,12 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingNonBlockedThenM
 
     MockKernelWithInternals mockKernel(*device, context);
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
-
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cl_event event{};
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto timestampPacketNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMakeItResidentOnSubmit) {
@@ -497,14 +504,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMake
 
     UserEvent userEvent;
     cl_event clEvent = &userEvent;
-
-    cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
+    cl_event event{};
+    cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, &event);
     auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
     userEvent.setStatus(CL_COMPLETE);
     EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
     cmdQ->isQueueBlocked();
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenVirtualEventIncrementsRefInternalAndDecrementsAfterCompleteEvent) {

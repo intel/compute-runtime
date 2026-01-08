@@ -391,8 +391,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     // virtual event that holds last Enqueue information
     Event *virtualEvent = nullptr;
 
-    size_t estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const;
-
     uint64_t getSliceCount() const { return sliceCount; }
 
     TimestampPacketContainer *getDeferredTimestampPackets() const { return deferredTimestampPackets.get(); }
@@ -560,6 +558,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool pendingL3FlushForHostVisibleResources = false;
     bool isBarrierForImplicitDependenciesAllowed = false;
+    bool isWalkerPostSyncSkipEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

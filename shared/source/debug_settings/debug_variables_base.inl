@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -469,6 +469,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EmitMemAdvisePriorToCopyForNonUsm, -1, "Enable M
 DECLARE_DEBUG_VARIABLE(int32_t, TreatNonUsmForTransfersAsSharedSystem, -1, "-1: default, 0: import non-usm as external host ptr on copy/fill (legacy mode), 1: treat non usm on copy/fill as shared system usm")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMadviseSharedSystemPrefetchRegion, -1, "-1: default (madvise), 0: system memory, 1: same-tile local memory")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePrintsRedirection, -1, "-1, 0: redirection inactive, 1: stdout, 2: stderr, 3: file, Force redirecton of PRINT_STRING messages")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPostSyncSkip, -1, "Do not program post sync in compute walker if there's no signal event. -1: default, 0: disabled, 1: enabled")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

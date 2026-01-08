@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1980,4 +1980,16 @@ HWTEST_F(GfxCoreHelperTest, whenGettingSurfaceBaseAddressAlignmentMaskThenCorrec
 HWTEST_F(GfxCoreHelperTest, whenGettingSurfaceBaseAddressAlignmentThenCorrectValueReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment(), gfxCoreHelper.getSurfaceBaseAddressAlignment());
+}
+
+HWTEST_F(GfxCoreHelperTest, whenIsWalkerPostSyncSkipEnabledCalledThenReturnFalse) {
+    DebugManagerStateRestore restorer{};
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
 }

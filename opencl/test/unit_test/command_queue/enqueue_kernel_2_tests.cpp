@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1159,7 +1159,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     clReleaseEvent(outEvent);
 }
 
-HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenRelaxedOrderingDisabledWhenDispatchingWithDependencyThenMarkAsStallingCmd, IsAtLeastXeHpcCore) {
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenRelaxedOrderingDisabledWhenDispatchingWithDependencyThenMarkAsStallingCmd, IsXeHpcCore) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     MockKernelWithInternals mockKernel(*pClDevice);

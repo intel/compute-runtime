@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -477,6 +477,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     bool latestOperationHasOptimizedCbEvent = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+    bool latestOperationHasWalkerWithoutPostSync = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
     bool allowCbWaitEventsNoopDispatch = false;
@@ -485,6 +486,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool useAdditionalBlitProperties = false;
     bool isPostImageWriteFlushRequired = false;
     bool latestFlushIsDualCopyOffload = false;
+    bool isWalkerPostSyncSkipEnabled = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
