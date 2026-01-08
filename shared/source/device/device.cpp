@@ -1367,7 +1367,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
     }
     if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
         std::stringstream contextEngineInfo;
-        contextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";
+        contextEngineInfo << "SecondaryContexts::getEngine-> engineType: " << EngineHelpers::engineTypeToString(engines[secondaryEngineIndex].getEngineType()).c_str() << " engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " osContext->priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";
         PRINT_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "%s", contextEngineInfo.str().c_str());
     }
     return &engines[secondaryEngineIndex];

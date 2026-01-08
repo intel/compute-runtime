@@ -2254,7 +2254,7 @@ HWTEST_F(DeviceTests, givenPriorityLevelWhenGetSecondaryEnginesThenPriorityLevel
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
     std::stringstream expectedContextEngineInfo;
-    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 0 priorityLevel: " << priorityLevel;
+    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineType: CCS engineUsage: Regular index: 0 osContext->priorityLevel: " << priorityLevel;
 
     auto engineControl = secondaryEngines.getEngine(EngineUsage::regular, priorityLevel);
     auto capturedStdout = capture.getCapturedStdout();
@@ -2285,7 +2285,7 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     StreamCapture capture;
     auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
-    expectedContextEngineInfoForPrimary << "SecondaryContexts::getEngine-> engineUsage: Regular index: 0 priorityLevel: " << priorityLevel;
+    expectedContextEngineInfoForPrimary << "SecondaryContexts::getEngine-> engineType: CCS engineUsage: Regular index: 0 osContext->priorityLevel: " << priorityLevel;
 
     ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
 
@@ -2297,19 +2297,19 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
     auto capturedStdout = capture.getCapturedStdout();
 
     EXPECT_NE(nullptr, engineControl);
-    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfoForPrimary.str().c_str()));
+    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfoForPrimary.str().c_str())) << capturedStdout;
     EXPECT_TRUE(engineControl->osContext->hasPriorityLevel());
     EXPECT_EQ(priorityLevel, engineControl->osContext->getPriorityLevel());
 
     // second context
 
-    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 1 priorityLevel: std::nullopt";
+    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineType: CCS engineUsage: Regular index: 1 osContext->priorityLevel: std::nullopt";
     capture.captureStdout();
     engineControl = secondaryEngines.getEngine(EngineUsage::regular, std::nullopt);
     capturedStdout = capture.getCapturedStdout();
 
     EXPECT_NE(nullptr, engineControl);
-    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfo.str().c_str()));
+    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfo.str().c_str())) << capturedStdout;
     EXPECT_FALSE(engineControl->osContext->hasPriorityLevel());
 }
 
