@@ -87,7 +87,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     }
 
     void setCustomCleanup(CustomCleanupFn customCleanup) {
-        this->customCleanup = customCleanup;
+        this->customCleanup = std::move(customCleanup);
     }
 
     static constexpr auto chunkAlignment = 512u;
@@ -143,7 +143,7 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
     void enableResidencyTracking() { this->trackResidency = true; }
     void setCustomCleanup(CustomCleanupFn customCleanup) {
-        this->customCleanup = customCleanup;
+        this->customCleanup = std::move(customCleanup);
     }
 
   protected:
