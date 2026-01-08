@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
@@ -49,6 +50,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     void setUpT() {
         MemoryManagementFixture::setUp();
 
+        MockSipWrapper sipWrapper;
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         setUpT<GfxFamily>(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release(), false);
     } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
@@ -87,6 +89,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
+        MockSipWrapper sipWrapper;
         device = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
         mock->reset();
     }

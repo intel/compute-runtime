@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,8 @@ class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
         backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
         ultHwConfig.csrBaseCallCreatePreemption = false;
 
+        DebugManagerStateRestore restore;
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
         MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mockExp = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
 
@@ -74,6 +75,11 @@ void MockSipKernel::createTempSipAllocation(size_t osContextCount) {
                                            MemoryConstants::pageSize,
                                            MemoryPool::system4KBPages,
                                            osContextCount);
+}
+
+MockSipWrapper::MockSipWrapper() : mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1), mockFtellReturnBackup(&IoFunctions::mockFtellReturn, 1), mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, const_cast<char *>(MockSipKernel::dummyBinaryForSip)) {
+
+    debugManager.flags.LoadBinarySipFromFile.set("dummySip");
 }
 
 } // namespace NEO

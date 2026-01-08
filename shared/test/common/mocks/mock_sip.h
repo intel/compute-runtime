@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include <memory>
@@ -55,4 +57,16 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, uint16_t mmeNum);
 } // namespace MockSipData
+
+class MockSipWrapper {
+  public:
+    MockSipWrapper();
+
+  protected:
+    DebugManagerStateRestore dbgRestore;
+    VariableBackup<size_t> mockFreadReturnBackup;
+    VariableBackup<long> mockFtellReturnBackup;
+    VariableBackup<char *> mockFreadBufferBackup;
+};
+
 } // namespace NEO
