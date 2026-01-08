@@ -568,7 +568,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
     if (isPrimaryEngine) {
-        osContext->overridePriority(gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel()));
+        osContext->overridePriority(gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getLowestQueuePriorityLevel()));
     }
     DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 

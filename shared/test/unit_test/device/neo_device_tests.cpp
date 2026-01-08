@@ -2252,7 +2252,7 @@ HWTEST_F(DeviceTests, givenPriorityLevelWhenGetSecondaryEnginesThenPriorityLevel
 
     capture.captureStdout();
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
+    auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getLowestQueuePriorityLevel());
     std::stringstream expectedContextEngineInfo;
     expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineType: CCS engineUsage: Regular index: 0 osContext->priorityLevel: " << priorityLevel;
 
@@ -2284,7 +2284,7 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
 
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     StreamCapture capture;
-    auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
+    auto priorityLevel = gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getLowestQueuePriorityLevel());
     expectedContextEngineInfoForPrimary << "SecondaryContexts::getEngine-> engineType: CCS engineUsage: Regular index: 0 osContext->priorityLevel: " << priorityLevel;
 
     ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
