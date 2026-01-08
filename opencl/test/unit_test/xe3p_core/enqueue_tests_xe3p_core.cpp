@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -338,6 +338,27 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgra
 
         EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
         EXPECT_FALSE(walkerCmd->getPostSync().getL2TransientFlush());
+    }
+
+    {
+        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(false);
+        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(false);
+        NEO::debugManager.flags.FlushAllCaches.set(true);
+
+        commandsOffset = commandStream.getUsed();
+
+        HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                          heap, heap, heap, dispatchInfo, walkerArgs);
+
+        HardwareParse hwParse;
+        hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
+        auto itorWalker = find<WalkerType *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+        EXPECT_NE(hwParse.cmdList.end(), itorWalker);
+        auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
+        EXPECT_NE(nullptr, walkerCmd);
+
+        EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
+        EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
     }
 }
 

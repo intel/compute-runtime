@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,13 @@ void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType
             l2Flush = l2TransientFlush;
             l2TransientFlush = false;
         }
+
+        if (debugManager.flags.FlushAllCaches.get()) {
+            flushInPostSync = true;
+            l2Flush = true;
+            l2TransientFlush = true;
+        }
+
         if (debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
             flushInPostSync = true;
             l2Flush = true;
