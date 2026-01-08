@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -263,5 +263,52 @@ TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferS
         delete[] pSrc;
     }
 }
+struct SvmMemcpyOverlapTestParams {
+    ptrdiff_t srcOffset;
+    ptrdiff_t dstOffset;
+    cl_int expectedResult;
+    const char *description;
+};
 
+class ClEnqueueSVMMemcpyOverlapTests : public ClEnqueueSVMMemcpyTests,
+                                       public ::testing::WithParamInterface<SvmMemcpyOverlapTestParams> {
+};
+
+INSTANTIATE_TEST_SUITE_P(SvmMemcpyOverlapVariations,
+                         ClEnqueueSVMMemcpyOverlapTests,
+                         ::testing::Values(
+                             SvmMemcpyOverlapTestParams{0, 32, CL_MEM_COPY_OVERLAP, "src end overlaps dst beginning"},
+                             SvmMemcpyOverlapTestParams{32, 0, CL_MEM_COPY_OVERLAP, "src beginning overlaps dst end"},
+                             SvmMemcpyOverlapTestParams{0, 0, CL_MEM_COPY_OVERLAP, "src completely overlaps dst"},
+                             SvmMemcpyOverlapTestParams{0, 64, CL_SUCCESS, "no overlap - adjacent"}));
+
+TEST_P(ClEnqueueSVMMemcpyOverlapTests, SvmMemcpyOverlapDetection) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
+    const size_t dataSize = 64;
+    void *pSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, dataSize * 2, 4);
+    ASSERT_NE(nullptr, pSvm);
+
+    const auto &params = GetParam();
+    char *src = static_cast<char *>(pSvm) + params.srcOffset;
+    char *dst = static_cast<char *>(pSvm) + params.dstOffset;
+
+    auto retVal = clEnqueueSVMMemcpy(
+        pCommandQueue, // cl_command_queue command_queue
+        CL_TRUE,       // cl_bool blocking_copy
+        dst,           // void *dst_ptr
+        src,           // const void *src_ptr
+        dataSize,      // size_t size
+        0,             // cl_uint num_events_in_wait_list
+        nullptr,       // const cl_event *event_wait_list
+        nullptr        // cl_event *event
+    );
+
+    EXPECT_EQ(params.expectedResult, retVal) << params.description;
+
+    clSVMFree(pContext, pSvm);
+}
 } // namespace ULT

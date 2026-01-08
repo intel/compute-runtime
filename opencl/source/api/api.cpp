@@ -4900,6 +4900,17 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
     }
 
     if (size != 0) {
+        const uintptr_t srcStart = reinterpret_cast<uintptr_t>(srcPtr);
+        const uintptr_t srcEnd = srcStart + size;
+        const uintptr_t dstStart = reinterpret_cast<uintptr_t>(dstPtr);
+        const uintptr_t dstEnd = dstStart + size;
+
+        if ((srcStart < dstEnd) && (dstStart < srcEnd)) {
+            retVal = CL_MEM_COPY_OVERLAP;
+            TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
+            return retVal;
+        }
+
         if (pCommandQueue->isValidForStagingBufferCopy(device, dstPtr, srcPtr, size, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingBufferMemcpy(blockingCopy, dstPtr, srcPtr, size, event);
         } else {
