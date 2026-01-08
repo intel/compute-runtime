@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,11 +27,19 @@ set(TEST_KERNEL_BINDLESS
 set(TEST_KERNEL_VRT
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_variable_register_per_thread.cl
 )
+set(ADDITIONAL_INTERNAL_OPTIONS "-ze-intel-64bit-addressing")
 
 macro(macro_for_each_platform)
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     level_zero_generate_kernels(l0_test_kernel_outputs ${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} "-g" ${TEST_MODULES})
+    if("${CORE_TYPE_LOWER}" STREQUAL "xe3p_core")
+      foreach(GRF_SIZE ${GRF_SIZES} ${${PLATFORM_IT}_${CORE_TYPE}_GRF_ADDITIONAL_SIZES})
+        set(INTERNAL_OPTIONS "-cl-intel-exp-register-file-size ${GRF_SIZE} ${ADDITIONAL_INTERNAL_OPTIONS}")
+        set(OPTIONS " -g")
+        level_zero_generate_kernels_with_internal_options(l0_vrt_test_kernel_outputs ${PLATFORM_IT_LOWER} "grf_${GRF_SIZE}" ${DEVICE_ID} ${REVISION_ID} "${OPTIONS}" "${INTERNAL_OPTIONS}" ${TEST_KERNEL_VRT})
+      endforeach()
+    endif()
 
     if("${CORE_TYPE_LOWER}" STREQUAL "xe3_core")
       foreach(GRF_SIZE ${GRF_SIZES})
