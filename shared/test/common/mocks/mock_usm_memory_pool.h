@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,5 +77,11 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     }
     bool canAddPools = true;
     bool canAddPoolCallBase = false;
+};
+
+class MockUsmMemAllocPoolsFacade : public UsmMemAllocPoolsFacade {
+  public:
+    using UsmMemAllocPoolsFacade::pool;
+    using UsmMemAllocPoolsFacade::poolManager;
 };
 } // namespace NEO

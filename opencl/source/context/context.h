@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -251,8 +251,8 @@ class Context : public BaseObject<_cl_context> {
     BufferPoolAllocator &getBufferPoolAllocator(BufferPoolType type) {
         return bufferPoolAllocators[type];
     }
-    UsmMemAllocPool &getDeviceMemAllocPool() {
-        return usmDeviceMemAllocPool;
+    UsmMemAllocPoolsFacade &getDeviceMemAllocPoolsManager() {
+        return usmDeviceMemAllocPoolsManager;
     }
 
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
@@ -304,7 +304,7 @@ class Context : public BaseObject<_cl_context> {
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
     std::array<BufferPoolAllocator, BufferPoolType::NumBufferPoolTypes> bufferPoolAllocators;
-    UsmDeviceMemAllocPool usmDeviceMemAllocPool;
+    UsmMemAllocPoolsFacade usmDeviceMemAllocPoolsManager;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;

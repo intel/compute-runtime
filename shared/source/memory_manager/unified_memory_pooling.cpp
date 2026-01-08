@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/utilities/heap_allocator.h"
 
 namespace NEO {
@@ -351,6 +352,99 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr
                 return pool.get();
             }
         }
+    }
+    return nullptr;
+}
+
+bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager) {
+    bool poolManagerEnabled = false;
+    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
+        poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
+    }
+
+    if (poolManagerEnabled) {
+        this->poolManager = std::make_unique<UsmMemAllocPoolsManager>(memoryType, rootDeviceIndices, subdeviceBitfields, device);
+        return this->poolManager->initialize(svmMemoryManager);
+    } else {
+        this->pool = std::make_unique<UsmMemAllocPool>();
+        UnifiedMemoryProperties memoryProperties(memoryType, MemoryConstants::pageSize2M,
+                                                 rootDeviceIndices, subdeviceBitfields);
+        auto usmPoolParams = UsmPoolParams::getUsmPoolParams(device->getGfxCoreHelper());
+        if (memoryType == InternalMemoryType::deviceUnifiedMemory && debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
+            usmPoolParams.poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
+        } else if (memoryType == InternalMemoryType::hostUnifiedMemory && debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
+            usmPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
+        }
+        if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
+            memoryProperties.device = device;
+        }
+        return this->pool->initialize(svmMemoryManager, memoryProperties, usmPoolParams.poolSize, usmPoolParams.minServicedSize, usmPoolParams.maxServicedSize);
+    }
+    return false;
+}
+
+bool UsmMemAllocPoolsFacade::isInitialized() const {
+    if (this->poolManager) {
+        return this->poolManager->isInitialized();
+    } else if (this->pool) {
+        return this->pool->isInitialized();
+    }
+    return false;
+}
+
+void UsmMemAllocPoolsFacade::cleanup() {
+    if (this->poolManager) {
+        this->poolManager->cleanup();
+        this->poolManager.reset();
+    } else if (this->pool) {
+        this->pool->cleanup();
+        this->pool.reset();
+    }
+}
+
+void *UsmMemAllocPoolsFacade::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) {
+    if (this->poolManager) {
+        return this->poolManager->createUnifiedMemoryAllocation(size, memoryProperties);
+    } else if (this->pool) {
+        return this->pool->createUnifiedMemoryAllocation(size, memoryProperties);
+    }
+    return nullptr;
+}
+
+bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, bool blocking) {
+    if (this->poolManager) {
+        return this->poolManager->freeSVMAlloc(ptr, blocking);
+    } else if (this->pool) {
+        return this->pool->freeSVMAlloc(ptr, blocking);
+    }
+    return false;
+}
+
+size_t UsmMemAllocPoolsFacade::getPooledAllocationSize(const void *ptr) {
+    if (this->poolManager) {
+        return this->poolManager->getPooledAllocationSize(ptr);
+    } else if (this->pool) {
+        return this->pool->getPooledAllocationSize(ptr);
+    }
+    return 0u;
+}
+
+void *UsmMemAllocPoolsFacade::getPooledAllocationBasePtr(const void *ptr) {
+    if (this->poolManager) {
+        return this->poolManager->getPooledAllocationBasePtr(ptr);
+    } else if (this->pool) {
+        return this->pool->getPooledAllocationBasePtr(ptr);
+    }
+    return nullptr;
+}
+
+UsmMemAllocPool *UsmMemAllocPoolsFacade::getPoolContainingAlloc(const void *ptr) {
+    if (this->poolManager) {
+        if (auto poolPtr = this->poolManager->getPoolContainingAlloc(ptr)) {
+            return poolPtr;
+        }
+    } else if (this->pool && this->pool->isInPool(ptr)) {
+        return this->pool.get();
     }
     return nullptr;
 }

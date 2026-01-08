@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -810,6 +810,9 @@ TEST_F(ContextUsmPoolParamsTest, whenGettingUsmPoolParamsThenReturnCorrectValues
 }
 
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedWithCorrectParams) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+
     mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
 
@@ -823,7 +826,7 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
     platform->initializeHostUsmAllocationPool();
 
     EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
-    EXPECT_TRUE(context->getDeviceMemAllocPool().isInitialized());
+    EXPECT_TRUE(context->getDeviceMemAllocPoolsManager().isInitialized());
 
     {
         auto mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&platform->getHostMemAllocPool());
@@ -838,6 +841,9 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
 }
 
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedOnlyWithHwCsr) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+
     mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
 
@@ -851,13 +857,13 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
         auto platform = static_cast<MockPlatform *>(context->getDevice(0)->getPlatform());
         EXPECT_NE(nullptr, platform);
         EXPECT_FALSE(platform->getHostMemAllocPool().isInitialized());
-        EXPECT_FALSE(context->getDeviceMemAllocPool().isInitialized());
+        EXPECT_FALSE(context->getDeviceMemAllocPoolsManager().isInitialized());
         context->initializeDeviceUsmAllocationPool();
         platform->initializeHostUsmAllocationPool();
 
         EXPECT_EQ(DeviceFactory::isHwModeSelected(), platform->getHostMemAllocPool().isInitialized());
-        EXPECT_EQ(DeviceFactory::isHwModeSelected(), context->getDeviceMemAllocPool().isInitialized());
-        context->getDeviceMemAllocPool().cleanup();
+        EXPECT_EQ(DeviceFactory::isHwModeSelected(), context->getDeviceMemAllocPoolsManager().isInitialized());
+        context->getDeviceMemAllocPoolsManager().cleanup();
         platform->getHostMemAllocPool().cleanup();
         context->usmPoolInitialized = false;
         platform->usmPoolInitialized = false;
