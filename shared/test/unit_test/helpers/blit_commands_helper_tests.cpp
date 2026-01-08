@@ -1438,8 +1438,7 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     EXPECT_EQ(expectedSize, totalSize);
 }
 
-using IsWithinGen12LPAndXe3Core = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE3_CORE>;
-HWTEST2_F(BlitTests, givenXyCopyBltCommandWhenApplyBlitPropertiesIsCalledThenNothingChanged, IsWithinGen12LPAndXe3Core) {
+HWTEST_F(BlitTests, givenXyCopyBltCommandWhenApplyBlitPropertiesIsCalledWithUninitializedPropertiesThenNothingChanged) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     auto bltCmdBefore = bltCmd;
