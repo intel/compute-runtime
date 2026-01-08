@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
-    EXPECT_TRUE(productHelper->useSharedSystemUsm());
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
 }
 
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return true;
+    return false;
 }
 
 template <>
