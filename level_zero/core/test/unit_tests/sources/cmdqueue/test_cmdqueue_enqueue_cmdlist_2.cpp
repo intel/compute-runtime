@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1360,6 +1360,105 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
     EXPECT_EQ(nullptr, commandList->getLatestTagGpuAllocation());
+
+    commandList->destroy();
+}
+
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    returnValue = mockCmdQHw->initialize(false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_command_list_handle_t commandListHandle = commandList->toHandle();
+
+    mockCmdQHw->setPatchingPreamble(true, false);
+
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    uint64_t hostFunctionAddress = 0xABCDEF00;
+    uint64_t hostFunctionUserData = 0x12345678;
+    CmdListHostFunctionParameters params{};
+    commandList->appendHostFunction(&hostFunctionAddress, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
+    commandList->close();
+
+    auto miStoreSize = sizeof(MI_STORE_DATA_IMM);
+    auto semaphoreSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    auto encodedMiStoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(miStoreSize);
+    auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
+    size_t expectedSize = encodedMiStoreSize + encodedMiSemaphoreSize;
+
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(mockCmdQHw->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, semWaitCmds.size()); // semaphore will be encoded using mi store cmds
+
+    auto miStoreCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(8u, miStoreCmds.size()); // 3 for mi store, 3 for mi semaphore wait, 2 for batch buffer start
+
+    // read programmed mi store commands and reconstruct mi store and mi semaphore wait commands
+
+    MI_STORE_DATA_IMM storeDataImm{};
+    MI_SEMAPHORE_WAIT semaphoreWait{};
+    void *storeDataAddress = &storeDataImm;
+    void *semaphoreWaitAddress = &semaphoreWait;
+
+    auto offset = 0u;
+    for (auto i = 0u; i < 3; i++) {
+
+        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
+        auto dword0 = miStoreCmd->getDataDword0();
+        memcpy(ptrOffset(storeDataAddress, offset), &dword0, sizeof(uint32_t));
+        offset += 4u;
+        if (miStoreCmd->getStoreQword()) {
+            auto dword1 = miStoreCmd->getDataDword1();
+            memcpy(ptrOffset(storeDataAddress, offset), &dword1, sizeof(uint32_t));
+            offset += 4u;
+        }
+    }
+
+    offset = 0u;
+    for (auto i = 3u; i < 6; i++) {
+        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
+        auto dword0 = miStoreCmd->getDataDword0();
+        memcpy(ptrOffset(semaphoreWaitAddress, offset), &dword0, sizeof(uint32_t));
+        offset += 4u;
+        if (miStoreCmd->getStoreQword()) {
+            auto dword1 = miStoreCmd->getDataDword1();
+            memcpy(ptrOffset(semaphoreWaitAddress, offset), &dword1, sizeof(uint32_t));
+            offset += 4u;
+        }
+    }
+
+    auto expectedHostFunctionMappedMemory = mockCmdQHw->getCsr()->getHostFunctionStreamer().getHostFunctionIdGpuAddress(0);
+
+    auto expectedHostFunctionIdProgrammed = 1u;
+    EXPECT_EQ(expectedHostFunctionIdProgrammed, storeDataImm.getDataDword0());
+    EXPECT_EQ(expectedHostFunctionMappedMemory, storeDataImm.getAddress());
+
+    auto expectedSemaphoreWaitClearedId = 0u;
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
+    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
 
     commandList->destroy();
 }

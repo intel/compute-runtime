@@ -265,6 +265,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
 
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, cmdList);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
     }
     linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
@@ -490,6 +491,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
     }
 
     linearStreamSizeEstimate += this->estimateCommandListPatchPreamble(ctx, numCommandLists);
@@ -936,6 +938,28 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(C
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFunctions(CommandListExecutionContext &ctx, CommandList *commandList) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+
+    size_t encodeSize = 0;
+    if (this->patchingPreamble) {
+        uint32_t hostFunctionsCount = commandList->getHostFunctionPatchListCount();
+        if (hostFunctionsCount > 0) {
+            auto miStoreSize = sizeof(MI_STORE_DATA_IMM);
+            auto semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+            auto encodedMiStoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(miStoreSize);
+            auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(semaphoreSize);
+
+            auto encodedHostFuncCmdSize = encodedMiStoreSize + (this->partitionCount * encodedMiSemaphoreSize);
+            encodeSize = encodedHostFuncCmdSize * hostFunctionsCount;
+            ctx.bufferSpaceForPatchPreamble += encodeSize;
+        }
+    }
+
+    return encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleData(CommandListExecutionContext &ctx) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
@@ -1143,6 +1167,8 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         getCommandListPatchPreambleData(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, cmdList);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, cmdList);
+
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
                                                                                    cmdListState.requiredState,

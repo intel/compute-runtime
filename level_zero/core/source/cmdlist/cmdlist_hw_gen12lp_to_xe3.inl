@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,9 +42,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
                                        PatchPauseOnEnqueueSemaphoreEnd,
                                        PatchPauseOnEnqueuePipeControlStart,
-                                       PatchPauseOnEnqueuePipeControlEnd,
-                                       PatchHostFunctionId,
-                                       PatchHostFunctionWait>) {
+                                       PatchPauseOnEnqueuePipeControlEnd>) {
             UNRECOVERABLE_IF(patch.pCommand == nullptr);
         } else if constexpr (std::is_same_v<PatchT, PatchFrontEndState>) {
             using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
@@ -53,7 +51,9 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         } else if constexpr (NEO::isAnyOfType<PatchT,
                                               PatchComputeWalkerInlineDataScratch,
                                               PatchComputeWalkerImplicitArgsScratch,
-                                              PatchNoopSpace>) {
+                                              PatchNoopSpace,
+                                              PatchHostFunctionId,
+                                              PatchHostFunctionWait>) {
             // nothing to clear
 
         } else {
@@ -70,6 +70,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     this->frontEndPatchListCount = 0;
     this->activeScratchPatchElements = 0;
+    this->hostFunctionPatchListCount = 0;
 }
 
 } // namespace L0

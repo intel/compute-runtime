@@ -1923,20 +1923,29 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
 
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
+    this->hostFunctionPatchListCount++;
+
     auto additionalSize = 1 + this->partitionCount;
     commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
-    commandsToPatch.push_back(PatchHostFunctionId{
+    auto gpuAddressInCmdStream = commandContainer.getCommandStream()->getCurrentGpuAddressPosition();
+    auto cpuBufferCmd = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM));
 
-        .pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
+    commandsToPatch.push_back(PatchHostFunctionId{
+        .cmdBufferSpace = cpuBufferCmd,
+        .gpuAddress = gpuAddressInCmdStream,
         .callbackAddress = hostFunction.hostFunctionAddress,
         .userDataAddress = hostFunction.userDataAddress,
     });
 
     for (auto partitionId = 0u; partitionId < this->partitionCount; partitionId++) {
 
+        gpuAddressInCmdStream = commandContainer.getCommandStream()->getCurrentGpuAddressPosition();
+        cpuBufferCmd = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
+
         commandsToPatch.push_back(PatchHostFunctionWait{
-            .pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
+            .cmdBufferSpace = cpuBufferCmd,
+            .gpuAddress = gpuAddressInCmdStream,
             .partitionId = partitionId,
         });
     }

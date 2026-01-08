@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,13 +62,15 @@ struct PatchNoopSpace {
 };
 
 struct PatchHostFunctionId {
-    void *pCommand = nullptr;
+    void *cmdBufferSpace = nullptr;
+    uint64_t gpuAddress = 0;
     uint64_t callbackAddress = 0;
     uint64_t userDataAddress = 0;
 };
 
 struct PatchHostFunctionWait {
-    void *pCommand = nullptr;
+    void *cmdBufferSpace = nullptr;
+    uint64_t gpuAddress = 0;
     uint32_t partitionId = 0;
 };
 

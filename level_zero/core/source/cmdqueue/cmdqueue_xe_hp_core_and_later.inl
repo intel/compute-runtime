@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,6 +169,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                   void **patchPreambleBuffer) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
     uint32_t hostFunctionsCounter = 0;
 
@@ -272,25 +273,45 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 }
             }
         } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionId>) {
-            auto callbackAddress = commandToPatch.callbackAddress;
-            auto userDataAddress = commandToPatch.userDataAddress;
 
-            NEO::HostFunction hostFunction = {.hostFunctionAddress = callbackAddress,
-                                              .userDataAddress = userDataAddress};
-
+            NEO::HostFunction hostFunction = {.hostFunctionAddress = commandToPatch.callbackAddress,
+                                              .userDataAddress = commandToPatch.userDataAddress};
             csr->ensureHostFunctionWorkerStarted();
 
-            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
-                                                                      commandToPatch.pCommand,
-                                                                      csr->getHostFunctionStreamer(),
-                                                                      std::move(hostFunction));
+            if (this->patchingPreamble) {
+                MI_STORE_DATA_IMM miStore{};
+                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
+                                                                          &miStore,
+                                                                          csr->getHostFunctionStreamer(),
+                                                                          std::move(hostFunction));
+
+                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, &miStore, sizeof(MI_STORE_DATA_IMM));
+            } else {
+                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
+                                                                          commandToPatch.cmdBufferSpace,
+                                                                          csr->getHostFunctionStreamer(),
+                                                                          std::move(hostFunction));
+            }
+
             hostFunctionsCounter++;
         } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionWait>) {
-            auto partitionId = static_cast<uint32_t>(commandToPatch.partitionId);
-            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
-                                                                                     commandToPatch.pCommand,
-                                                                                     csr->getHostFunctionStreamer(),
-                                                                                     partitionId);
+            auto partitionId = commandToPatch.partitionId;
+
+            if (this->patchingPreamble) {
+                MI_SEMAPHORE_WAIT miSemaphore{};
+                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
+                                                                                         &miSemaphore,
+                                                                                         csr->getHostFunctionStreamer(),
+                                                                                         partitionId);
+                auto size = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, &miSemaphore, size);
+            } else {
+                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
+                                                                                         commandToPatch.cmdBufferSpace,
+                                                                                         csr->getHostFunctionStreamer(),
+                                                                                         partitionId);
+            }
+
         } else {
             UNRECOVERABLE_IF(true);
         }

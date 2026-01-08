@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1493,29 +1493,20 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     }
 
     {
-        pCommandList->commandsToPatch.push_back(PatchHostFunctionId{
-            .pCommand = reinterpret_cast<void *>(0xab)});
+        CommandToPatch commandToPatch{
+            PatchHostFunctionId{}};
+
+        pCommandList->commandsToPatch.push_back(commandToPatch);
         EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
         EXPECT_TRUE(pCommandList->commandsToPatch.empty());
     }
-
     {
-        pCommandList->commandsToPatch.push_back(PatchHostFunctionId{});
-        EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
-        pCommandList->commandsToPatch.clear();
-    }
+        CommandToPatch commandToPatch{
+            PatchHostFunctionWait{}};
 
-    {
-        pCommandList->commandsToPatch.push_back(PatchHostFunctionWait{
-            .pCommand = reinterpret_cast<void *>(0xab)});
+        pCommandList->commandsToPatch.push_back(commandToPatch);
         EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
         EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-    }
-
-    {
-        pCommandList->commandsToPatch.push_back(PatchHostFunctionWait{});
-        EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
-        pCommandList->commandsToPatch.clear();
     }
 }
 

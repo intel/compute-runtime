@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,14 +176,11 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
 
         EXPECT_EQ(reinterpret_cast<uint64_t>(pHostFunction), hostFunctionToPatch->callbackAddress);
         EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), hostFunctionToPatch->userDataAddress);
-        EXPECT_NE(nullptr, hostFunctionToPatch->pCommand);
     }
 
     {
         auto *hostFunctionWaitToPatch = std::get_if<PatchHostFunctionWait>(&commandList->commandsToPatch[1]);
         ASSERT_NE(nullptr, hostFunctionWaitToPatch);
-
-        EXPECT_NE(nullptr, hostFunctionWaitToPatch->pCommand);
     }
 }
 

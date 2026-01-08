@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -518,6 +518,11 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t getFrontEndPatchListCount() const {
         return frontEndPatchListCount;
     }
+
+    uint32_t getHostFunctionPatchListCount() const {
+        return hostFunctionPatchListCount;
+    }
+
     size_t getTotalNoopSpace() const {
         return totalNoopSpace;
     }
@@ -640,6 +645,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t maxLocalSubRegionSize = 0;
     uint32_t frontEndPatchListCount = 0;
     uint32_t activeScratchPatchElements = 0;
+    uint32_t hostFunctionPatchListCount = 0;
 
     bool isSyncModeQueue = false;
     bool isTbxMode = false;
