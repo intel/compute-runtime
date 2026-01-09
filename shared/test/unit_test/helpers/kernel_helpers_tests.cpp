@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -309,31 +309,6 @@ TEST_F(KernelHelperTest, GivenThreadGroupCountWhenSyncBufferCreatedThenAllocatio
     pair = KernelHelper::getSyncBufferAllocationOffset(*pDevice, requestedNumberOfWorkgroups);
     EXPECT_EQ(offset, pair.second);
     EXPECT_EQ(allocation, pair.first);
-}
-
-TEST_F(KernelHelperTest, GivenThreadGroupCountAndRegionSizeWhenRegionBarrierCreatedThenAllocationIsRetrieved) {
-    const size_t requestedNumberOfWorkgroups = 4;
-    const size_t localRegionSize = 2;
-    auto offset = KernelHelper::getRegionGroupBarrierSize(requestedNumberOfWorkgroups, localRegionSize);
-
-    auto pair = KernelHelper::getRegionGroupBarrierAllocationOffset(*pDevice, requestedNumberOfWorkgroups, localRegionSize);
-    auto allocation = pair.first;
-
-    EXPECT_EQ(0u, pair.second);
-    EXPECT_NE(nullptr, allocation);
-
-    pair = KernelHelper::getRegionGroupBarrierAllocationOffset(*pDevice, requestedNumberOfWorkgroups, localRegionSize);
-    EXPECT_EQ(offset, pair.second);
-    EXPECT_EQ(allocation, pair.first);
-}
-
-TEST_F(KernelHelperTest, GivenThreadGroupCountWhenGetRegionGroupBarrierSizeThenProvideMinimalOffsetSize) {
-    const size_t requestedNumberOfWorkgroups = 1;
-    const size_t localRegionSize = 4;
-    auto offset = KernelHelper::getRegionGroupBarrierSize(requestedNumberOfWorkgroups, localRegionSize);
-
-    constexpr size_t minOffset = 64;
-    EXPECT_EQ(minOffset, offset);
 }
 
 TEST_F(KernelHelperTest, givenVariousIsaSizesWhenComputingAlignedSizeWithPaddingThenResultIsAlignedToMaxOfKernelAlignAndCacheLineSize) {

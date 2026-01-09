@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,6 @@ struct KernelMutableStateDefaultCopyableParams {
     std::vector<uint32_t> slmArgOffsetValues;
 
     size_t syncBufferIndex = std::numeric_limits<size_t>::max();
-    size_t regionGroupBarrierIndex = std::numeric_limits<size_t>::max();
 
     static constexpr size_t dimMax{3U};
     uint32_t globalOffsets[dimMax] = {};

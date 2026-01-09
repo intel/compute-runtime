@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,13 +43,6 @@ struct KernelHelper {
     static ErrorCode checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device);
 
     static bool isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor);
-
-    static inline size_t getRegionGroupBarrierSize(const size_t threadGroupCount, const size_t localRegionSize) {
-        const size_t ratio = (threadGroupCount / localRegionSize) + (threadGroupCount % localRegionSize ? 1 : 0);
-        return alignUp(ratio * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
-    }
-
-    static std::pair<GraphicsAllocation *, size_t> getRegionGroupBarrierAllocationOffset(Device &device, const size_t threadGroupCount, const size_t localRegionSize);
 
     static inline size_t getSyncBufferSize(const size_t requestedNumberOfWorkgroups) {
         return alignUp(std::max(requestedNumberOfWorkgroups, static_cast<size_t>(CommonConstants::minimalSyncBufferSize)), static_cast<size_t>(CommonConstants::maximalSizeOfAtomicType));

@@ -104,7 +104,7 @@ void MutableKernel::makeKernelResidencySnapshotContainer(bool saveSyncAndRegionA
         uint32_t idx = 0;
         auto kernelImp = static_cast<L0::KernelImp *>(this->kernel);
         for (const auto &allocation : kernel->getInternalResidencyContainer()) {
-            if (idx != kernelImp->getSyncBufferIndex() && idx != kernelImp->getRegionGroupBarrierIndex()) {
+            if (idx != kernelImp->getSyncBufferIndex()) {
                 kernelResidencySnapshotContainer.emplace_back(allocation);
             }
             idx++;

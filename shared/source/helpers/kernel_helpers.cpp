@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(Device &device, uint16_t numGrfRequi
                                             EngineGroupType engineGroupType, bool implicitScalingEnabled, bool forceSingleTileQuery) {
     uint32_t numSubDevicesForExecution = 1;
 
-    auto deviceBitfield = device.getDeviceBitfield();
     if (!forceSingleTileQuery && implicitScalingEnabled) {
+        auto deviceBitfield = device.getDeviceBitfield();
         numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
     }
 
@@ -130,14 +130,6 @@ bool KernelHelper::isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescrip
         }
     }
     return false;
-}
-
-std::pair<GraphicsAllocation *, size_t> KernelHelper::getRegionGroupBarrierAllocationOffset(Device &device, const size_t threadGroupCount, const size_t localRegionSize) {
-    device.allocateSyncBufferHandler();
-
-    size_t size = KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
-
-    return device.syncBufferHandler->obtainAllocationAndOffset(size);
 }
 
 std::pair<GraphicsAllocation *, size_t> KernelHelper::getSyncBufferAllocationOffset(Device &device, const size_t requestedNumberOfWorkgroups) {

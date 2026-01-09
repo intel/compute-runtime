@@ -565,15 +565,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         this->privateState.perThreadDataSize = 0;
     }
 
-    if (this->sharedState->heaplessEnabled && this->sharedState->localDispatchSupport) {
-        this->sharedState->maxWgCountPerTileCcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, true);
-        if (this->sharedState->rcsAvailable) {
-            this->sharedState->maxWgCountPerTileRcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::renderCompute, true);
-        }
-        if (this->sharedState->cooperativeSupport) {
-            this->sharedState->maxWgCountPerTileCooperative = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, true);
-        }
-    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1223,8 +1214,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     bool platformImplicitScaling = gfxHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     sharedState.implicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling);
 
-    sharedState.rcsAvailable = gfxHelper.isRcsAvailable(hwInfo);
-    sharedState.cooperativeSupport = productHelper.isCooperativeEngineSupported(hwInfo);
     sharedState.walkerInlineDataSize = gfxHelper.getDefaultWalkerInlineDataSize();
     sharedState.surfaceStateAlignmentMask = gfxHelper.getSurfaceBaseAddressAlignmentMask();
     sharedState.surfaceStateAlignment = gfxHelper.getSurfaceBaseAddressAlignment();
@@ -1440,10 +1429,6 @@ bool KernelImp::usesSyncBuffer() {
     return this->getImmutableData()->getDescriptor().kernelAttributes.flags.usesSyncBuffer;
 }
 
-bool KernelImp::usesRegionGroupBarrier() const {
-    return this->getImmutableData()->getDescriptor().kernelAttributes.flags.usesRegionGroupBarrier;
-}
-
 void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
     if (privateState.syncBufferIndex == std::numeric_limits<size_t>::max()) {
         privateState.syncBufferIndex = this->privateState.internalResidencyContainer.size();
@@ -1457,19 +1442,6 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
     if (privateState.pImplicitArgs) {
         privateState.pImplicitArgs->setSyncBufferPtr(static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
     }
-}
-
-void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    if (privateState.regionGroupBarrierIndex == std::numeric_limits<size_t>::max()) {
-        privateState.regionGroupBarrierIndex = this->privateState.internalResidencyContainer.size();
-        this->privateState.internalResidencyContainer.push_back(gfxAllocation);
-    } else {
-        this->privateState.internalResidencyContainer[privateState.regionGroupBarrierIndex] = gfxAllocation;
-    }
-
-    NEO::patchPointer(getCrossThreadDataSpan(),
-                      this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.regionGroupBarrierBuffer,
-                      static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
 }
 
 uint32_t KernelImp::getSurfaceStateHeapDataSize() const {

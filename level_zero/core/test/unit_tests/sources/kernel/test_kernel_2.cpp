@@ -122,7 +122,6 @@ void fillKernelMutableStateWithMockData(KernelMutableState &state) {
     state.slmArgSizes.push_back(252U);
     state.slmArgOffsetValues.push_back(151U);
     state.syncBufferIndex = std::numeric_limits<size_t>::max() - 10;
-    state.regionGroupBarrierIndex = std::numeric_limits<size_t>::max() - 11;
     state.globalOffsets[0] = 71;
     state.globalOffsets[1] = 72;
     state.globalOffsets[2] = 73;
@@ -165,7 +164,6 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_TRUE(state1.slmArgSizes == state2.slmArgSizes);
     EXPECT_TRUE(state1.slmArgOffsetValues == state2.slmArgOffsetValues);
     EXPECT_TRUE(state1.syncBufferIndex == state2.syncBufferIndex);
-    EXPECT_TRUE(state1.regionGroupBarrierIndex == state2.regionGroupBarrierIndex);
 
     EXPECT_EQ(0, std::memcmp(state1.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state1.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
@@ -213,7 +211,6 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_TRUE(state3.slmArgSizes == state2.slmArgSizes);
     EXPECT_TRUE(state3.slmArgOffsetValues == state2.slmArgOffsetValues);
     EXPECT_TRUE(state3.syncBufferIndex == state2.syncBufferIndex);
-    EXPECT_TRUE(state3.regionGroupBarrierIndex == state2.regionGroupBarrierIndex);
 
     EXPECT_EQ(0, std::memcmp(state3.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state3.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
@@ -270,13 +267,8 @@ TEST_F(KernelImpTest, GivenKernelPrivateStateWhenKernelImpClonedThenSharedStateI
     EXPECT_EQ(kernel2->sharedState->surfaceStateAlignment, kernel1.sharedState->surfaceStateAlignment);
     EXPECT_EQ(kernel2->sharedState->implicitArgsVersion, kernel1.sharedState->implicitArgsVersion);
     EXPECT_EQ(kernel2->sharedState->walkerInlineDataSize, kernel1.sharedState->walkerInlineDataSize);
-    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileCcs, kernel1.sharedState->maxWgCountPerTileCcs);
-    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileRcs, kernel1.sharedState->maxWgCountPerTileRcs);
-    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileCooperative, kernel1.sharedState->maxWgCountPerTileCooperative);
     EXPECT_EQ(kernel2->sharedState->heaplessEnabled, kernel1.sharedState->heaplessEnabled);
     EXPECT_EQ(kernel2->sharedState->implicitScalingEnabled, kernel1.sharedState->implicitScalingEnabled);
-    EXPECT_EQ(kernel2->sharedState->rcsAvailable, kernel1.sharedState->rcsAvailable);
-    EXPECT_EQ(kernel2->sharedState->cooperativeSupport, kernel1.sharedState->cooperativeSupport);
 }
 
 TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
@@ -1192,62 +1184,6 @@ TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenKernelSpecif
     EXPECT_EQ(0, memcmp(testPerThreadDataBuffer, kernel.KernelImp::getPerThreadData(), perThreadSizeNeeded));
 
     alignedFree(testPerThreadDataBuffer);
-}
-
-TEST_F(KernelImpTest, givenHeaplessAndLocalDispatchEnabledWheSettingGroupSizeThenGetMaxWgCountPerTileCalculated) {
-    Mock<Module> module(device, nullptr);
-    Mock<::L0::KernelImp> kernel;
-    kernel.module = &module;
-
-    kernel.sharedState->heaplessEnabled = false;
-    kernel.sharedState->localDispatchSupport = false;
-    kernel.setGroupSize(128, 1, 1);
-
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
-
-    kernel.sharedState->heaplessEnabled = true;
-    kernel.setGroupSize(64, 2, 1);
-
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
-
-    kernel.sharedState->localDispatchSupport = true;
-    kernel.setGroupSize(32, 4, 1);
-
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
-
-    kernel.sharedState->rcsAvailable = true;
-    kernel.setGroupSize(16, 8, 1);
-
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
-
-    kernel.sharedState->cooperativeSupport = true;
-    kernel.setGroupSize(8, 8, 2);
-
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileRcs);
-    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCooperative);
-}
-
-TEST_F(KernelImpTest, givenCorrectEngineTypeWhenGettingMaxWgCountPerTileThenReturnActualValue) {
-    Mock<Module> module(device, nullptr);
-    Mock<::L0::KernelImp> kernel;
-    kernel.module = &module;
-
-    kernel.sharedState->maxWgCountPerTileCcs = 4;
-    kernel.sharedState->maxWgCountPerTileRcs = 2;
-    kernel.sharedState->maxWgCountPerTileCooperative = 100;
-
-    EXPECT_EQ(4u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::compute));
-    EXPECT_EQ(2u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::renderCompute));
-    EXPECT_EQ(100u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::cooperativeCompute));
 }
 
 using KernelArgumentInfoTests = Test<ModuleImmutableDataFixture>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,9 +167,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual void printPrintfOutput(bool hangDetected) = 0;
 
     virtual bool usesSyncBuffer() = 0;
-    virtual bool usesRegionGroupBarrier() const = 0;
     virtual void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) = 0;
-    virtual void patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) = 0;
 
     virtual NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() = 0;
     virtual void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) = 0;
@@ -177,8 +175,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() = 0;
 
     virtual ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) = 0;
-
-    virtual uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const = 0;
 
     static Kernel *fromHandle(ze_kernel_handle_t handle) { return static_cast<Kernel *>(handle); }
 

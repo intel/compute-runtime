@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,9 +126,7 @@ struct KernelImp : Kernel {
     void printPrintfOutput(bool hangDetected) override;
 
     bool usesSyncBuffer() override;
-    bool usesRegionGroupBarrier() const override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
-    void patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return privateState.surfaceStateHeapData.data(); }
     uint32_t getSurfaceStateHeapDataSize() const override;
@@ -202,16 +200,6 @@ struct KernelImp : Kernel {
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return privateState.pImplicitArgs.ptr.get(); }
 
-    uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const override {
-        auto value = this->sharedState->maxWgCountPerTileCcs;
-        if (engineGroupType == NEO::EngineGroupType::renderCompute) {
-            value = this->sharedState->maxWgCountPerTileRcs;
-        } else if (engineGroupType == NEO::EngineGroupType::cooperativeCompute) {
-            value = this->sharedState->maxWgCountPerTileCooperative;
-        }
-        return value;
-    }
-
     KernelExt *getExtension(uint32_t extensionType);
 
     bool checkKernelContainsStatefulAccess();
@@ -225,17 +213,6 @@ struct KernelImp : Kernel {
             return nullptr;
         }
         return privateState.internalResidencyContainer[privateState.syncBufferIndex];
-    }
-
-    size_t getRegionGroupBarrierIndex() const {
-        return privateState.regionGroupBarrierIndex;
-    }
-
-    NEO::GraphicsAllocation *getRegionGroupBarrierAllocation() const {
-        if (std::numeric_limits<size_t>::max() == privateState.regionGroupBarrierIndex) {
-            return nullptr;
-        }
-        return privateState.internalResidencyContainer[privateState.regionGroupBarrierIndex];
     }
 
     const std::vector<uint32_t> &getSlmArgSizes() {
