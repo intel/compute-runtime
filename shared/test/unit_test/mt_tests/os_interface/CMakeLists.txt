@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,5 +13,6 @@ if(UNIX)
 else()
   target_sources(neo_shared_mt_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_thread_win_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/residency_controller_tests.cpp
   )
 endif()

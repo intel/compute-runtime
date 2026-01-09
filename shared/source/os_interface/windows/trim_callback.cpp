@@ -128,7 +128,14 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     if (flags.TrimToBudget) {
         StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 5> csrLocks;
         this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
-            csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+            if (NEO::EngineHelpers::isBcs(engine.getEngineType())) {
+                csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+            }
+        });
+        this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
+            if (!NEO::EngineHelpers::isBcs(engine.getEngineType())) {
+                csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+            }
         });
         auto lock = this->acquireLock();
         trimResidencyToBudget(bytes);
