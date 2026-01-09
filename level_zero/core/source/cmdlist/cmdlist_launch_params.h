@@ -30,7 +30,6 @@ struct CmdListKernelLaunchParams {
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
-    uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
     uint32_t numKernelsInSplitLaunch = 0;
     uint32_t numKernelsExecutedInSplitLaunch = 0;
     uint32_t reserveExtraPayloadSpace = 0;
@@ -42,7 +41,6 @@ struct CmdListKernelLaunchParams {
     bool isDestinationAllocationInSystemMemory = false;
     bool isDestinationAllocationImported = false;
     bool isHostSignalScopeEvent = false;
-    bool isExpLaunchKernel = false;
     bool skipInOrderNonWalkerSignaling = false;
     bool pipeControlSignalling = false;
     bool omitAddingKernelArgumentResidency = false;

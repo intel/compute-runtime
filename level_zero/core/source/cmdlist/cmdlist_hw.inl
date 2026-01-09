@@ -3560,29 +3560,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize) {
-    auto neoDevice = device->getNEODevice();
-
-    auto threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
-    auto [gfxAllocation, bufferOffset] = NEO::KernelHelper::getRegionGroupBarrierAllocationOffset(*neoDevice, threadGroupCount, localRegionSize);
-
-    kernel.patchRegionGroupBarrier(gfxAllocation, bufferOffset);
-
-    if (!isImmediateType()) {
-        auto patchIndex = commandsToPatch.size();
-        commandsToPatch.push_back(PatchNoopSpace{});
-
-        auto &regionBarrierSpace = std::get<PatchNoopSpace>(commandsToPatch[patchIndex]);
-        regionBarrierSpace.offset = bufferOffset;
-        regionBarrierSpace.pDestination = ptrOffset(gfxAllocation->getUnderlyingBuffer(), bufferOffset);
-        regionBarrierSpace.patchSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
-        regionBarrierSpace.gpuAddress = gfxAllocation->getGpuAddressToPatch() + bufferOffset;
-
-        this->totalNoopSpace += regionBarrierSpace.patchSize;
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation) {
     auto baseAddr = event->getPacketAddress(this->device);
     writeKernelTimestamp(baseAddr, event, outTimeStampSyncCmds, beforeWalker ? event->getGlobalStartOffset() : event->getGlobalEndOffset(), maskLsb, workloadPartition, copyOperation, true);
@@ -5090,9 +5067,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const {
     auto &kernelDescriptor = kernel.getImmutableData()->getDescriptor();
 
-    if (launchParams.localRegionSize == NEO::localRegionSizeParamNotSet) {
-        launchParams.localRegionSize = kernelDescriptor.kernelAttributes.localRegionSize;
-    }
     if (launchParams.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::none) {
         launchParams.requiredDispatchWalkOrder = kernelDescriptor.kernelAttributes.dispatchWalkOrder;
     }

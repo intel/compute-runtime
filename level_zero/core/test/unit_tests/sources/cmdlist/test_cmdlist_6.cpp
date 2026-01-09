@@ -50,34 +50,6 @@ HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImm
     EXPECT_EQ(2u, commandList->partitionCount);
 }
 
-HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBarrierSyncBufferThenEnsureCorrectSize, IsAtLeastXeCore) {
-    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
-
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo.TileCount = 3;
-
-    Mock<KernelImp> mockKernel;
-
-    auto cmdListImmediate = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(static_cast<L0::CommandListImp *>(commandList.get()));
-    auto whiteBoxCmdList = static_cast<WhiteBox<::L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdListImmediate);
-
-    ze_group_count_t threadGroupDimensions = {};
-    threadGroupDimensions.groupCountX = 32;
-    threadGroupDimensions.groupCountY = 2;
-    threadGroupDimensions.groupCountZ = 2;
-
-    size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
-
-    size_t localRegionSize = 4;
-
-    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize);
-
-    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
-
-    size_t expectedOffset = alignUp((requestedNumberOfWorkgroups / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
-
-    EXPECT_EQ(patchData.second, expectedOffset);
-}
-
 using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true, false, -1>>;
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsXeCore) {

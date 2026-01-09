@@ -267,10 +267,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 return retVal;
             }
         }
-
-        if (kernel->usesRegionGroupBarrier()) {
-            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
-        }
     }
 
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());

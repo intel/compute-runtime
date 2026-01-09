@@ -362,7 +362,6 @@ struct CommandListCoreFamily : public CommandListImp {
                                   const void **pRanges);
 
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions, size_t &patchIndex);
-    void programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize);
     void appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation);
     void adjustWriteKernelTimestamp(uint64_t address, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool workloadPartition, bool copyOperation, bool globalTimestamp);
     void writeTimestamp(NEO::CommandContainer &container, uint32_t regOffset, uint64_t address, bool maskLsb, bool workloadPartition, void **postSyncCmdBuffer, bool copyOperation);
