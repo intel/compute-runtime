@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -823,7 +823,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     CmdListKernelLaunchParams launchParams = {};
     launchParams.localRegionSize = 4;
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
-    EXPECT_EQ(std::numeric_limits<size_t>::max(), launchParams.regionBarrierPatchIndex);
 
     auto patchPtr = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[regionGroupBarrier.stateless]);
     EXPECT_NE(0u, patchPtr);
@@ -868,15 +867,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     std::unique_ptr<L0::CommandList> cmdListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0, result, false));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdListRegular->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
-    EXPECT_NE(std::numeric_limits<size_t>::max(), launchParams.regionBarrierPatchIndex);
 
     auto &cmdsToPatch = cmdListRegular->getCommandsToPatch();
     ASSERT_NE(0u, cmdsToPatch.size());
-
-    auto *noopParam = std::get_if<PatchNoopSpace>(&cmdsToPatch[launchParams.regionBarrierPatchIndex]);
-    EXPECT_NE(nullptr, noopParam);
-    EXPECT_NE(0u, noopParam->patchSize);
-    EXPECT_EQ(noopParam->patchSize, cmdListRegular->getTotalNoopSpace());
 
     cmdListRegular->reset();
     EXPECT_EQ(0u, cmdListRegular->getTotalNoopSpace());

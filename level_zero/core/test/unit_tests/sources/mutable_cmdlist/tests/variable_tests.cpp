@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -343,35 +343,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(groupSizeValues[0], enqLocalWorkSizePatch[0]);
     EXPECT_EQ(groupSizeValues[1], enqLocalWorkSizePatch[1]);
     EXPECT_EQ(groupSizeValues[2], enqLocalWorkSizePatch[2]);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableTest,
-            givenGroupSizeVariableNonCommitDispatchWithCalculateRegionWhenSettingGroupSizeThenGroupSizeIsPatchedImmediatelyAndMaxWgCalculated) {
-    using WalkerType = typename FamilyType::PorWalkerType;
-
-    debugManager.flags.OverrideMaxWorkGroupCount.set(64);
-
-    createMutableComputeWalker<FamilyType, WalkerType>(0);
-
-    this->calculateRegion = true;
-    this->stageCommitMode = false;
-    this->slmInlineSize = 1024;
-    createVariableDispatch(false, true, false, false);
-    uint32_t groupSizeValues[3] = {4, 2, 1};
-    const void *argValue = &groupSizeValues;
-
-    Variable *groupSize = getVariable(L0::MCL::VariableType::groupSize);
-
-    auto ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    uint32_t *localWorkSizePatch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.localWorkSize));
-    EXPECT_EQ(groupSizeValues[0], localWorkSizePatch[0]);
-    EXPECT_EQ(groupSizeValues[1], localWorkSizePatch[1]);
-    EXPECT_EQ(groupSizeValues[2], localWorkSizePatch[2]);
-
-    EXPECT_EQ(64u, this->variableDispatch->maxWgCountPerTile);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -850,32 +821,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(slmArgument->desc.commitRequired);
     EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
     EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableTest,
-            givenSingleSlmVariableInNonCommitModeWithCalculateRegionWhenMutatingSlmArgumentThenSlmSizeChangedImmediatelyAndMaxWgCalculated) {
-    using WalkerType = typename FamilyType::PorWalkerType;
-
-    debugManager.flags.OverrideMaxWorkGroupCount.set(64);
-
-    createMutableComputeWalker<FamilyType, WalkerType>(0);
-
-    uint32_t slmSize = 1 * MemoryConstants::kiloByte;
-
-    this->calculateRegion = true;
-    this->stageCommitMode = false;
-    createVariableDispatch(false, false, false, true);
-    Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
-    EXPECT_EQ(nullptr, slmArgument->slmValue.nextSlmVariable);
-    EXPECT_EQ(0u, slmArgument->slmValue.slmOffsetValue);
-
-    auto ret = slmArgument->setValue(slmSize, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_FALSE(slmArgument->desc.commitRequired);
-    EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
-    EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
-    EXPECT_EQ(64u, this->variableDispatch->maxWgCountPerTile);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

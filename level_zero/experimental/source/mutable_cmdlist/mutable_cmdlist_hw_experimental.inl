@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -257,20 +257,18 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
     auto dispatch = (*dispatches.rbegin()).get();
     uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
     MutableKernelDispatchParameters dispatchParams = {
-        initialGroupCount,                                             // groupCount
-        static_cast<L0::KernelImp *>(kernel)->getGroupSize(),          // groupSize
-        static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(),      // globalOffset
-        kernel->getPerThreadDataSizeForWholeThreadGroup(),             // perThreadSize
-        kernel->getRequiredWorkgroupOrder(),                           // walkOrder
-        kernel->getNumThreadsPerThreadGroup(),                         // numThreadsPerThreadGroup
-        kernel->getThreadExecutionMask(),                              // threadExecutionMask
-        kernel->getMaxWgCountPerTile(getBase()->getEngineGroupType()), // maxWorkGroupCountPerTile
-        0,                                                             // maxCooperativeGroupCount
-        NEO::localRegionSizeParamNotSet,                               // localRegionSize
-        NEO::RequiredPartitionDim::none,                               // requiredPartitionDim
-        NEO::RequiredDispatchWalkOrder::none,                          // requiredDispatchWalkOrder
-        kernel->requiresGenerationOfLocalIdsByRuntime(),               // generationOfLocalIdsByRuntime
-        false};                                                        // cooperativeDispatch
+        initialGroupCount,                                        // groupCount
+        static_cast<L0::KernelImp *>(kernel)->getGroupSize(),     // groupSize
+        static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(), // globalOffset
+        kernel->getPerThreadDataSizeForWholeThreadGroup(),        // perThreadSize
+        kernel->getRequiredWorkgroupOrder(),                      // walkOrder
+        kernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
+        kernel->getThreadExecutionMask(),                         // threadExecutionMask
+        0,                                                        // maxCooperativeGroupCount
+        NEO::RequiredPartitionDim::none,                          // requiredPartitionDim
+        NEO::RequiredDispatchWalkOrder::none,                     // requiredDispatchWalkOrder
+        kernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
+        false};                                                   // cooperativeDispatch
 
     auto mutableCommandWalker = (*mutableWalkerCmds.rbegin()).get();
     ret = addVariableDispatch(kernel->getKernelDescriptor(), *dispatch,

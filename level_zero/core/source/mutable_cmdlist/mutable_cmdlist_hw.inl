@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -318,7 +318,6 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             mutableCmdlistAppendLaunchParams.kernelMutation = true;
             mutableCmdlistAppendLaunchParams.requiredDispatchWalkOrderFromApi = launchParams.requiredDispatchWalkOrder;
             mutableCmdlistAppendLaunchParams.requiredPartitionDimFromApi = launchParams.requiredPartitionDim;
-            mutableCmdlistAppendLaunchParams.localRegionSizeFromApi = launchParams.localRegionSize;
             mutableCmdlistAppendLaunchParams.isCooperativeFromApi = launchParams.isCooperative;
 
             currentKernelVariables = &mutableCmdlistAppendLaunchParams.currentMutableKernel->getKernelVariables();
@@ -357,7 +356,6 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     this->appendKernelMutableComputeWalker = (*mutableWalkerCmds.rbegin()).get();
     retVal = this->parseDispatchedKernel(kernel, appendKernelMutableComputeWalker, mutableCmdlistAppendLaunchParams.extraPayloadSpaceForKernelGroup,
                                          static_cast<L0::KernelImp *>(kernel)->getSyncBufferAllocation(),
-                                         static_cast<L0::KernelImp *>(kernel)->getRegionGroupBarrierAllocation(),
                                          false);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
@@ -370,16 +368,10 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             appendKernelDispatch->syncBufferSize = NEO::KernelHelper::getSyncBufferSize(threadGroupCount);
             appendKernelDispatch->syncBufferNoopPatchIndex = launchParams.syncBufferPatchIndex;
         }
-        if (appendKernelDispatch->regionBarrier != nullptr) {
-            size_t threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
-            appendKernelDispatch->regionBarrierSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, launchParams.localRegionSize);
-            appendKernelDispatch->regionBarrierNoopPatchIndex = launchParams.regionBarrierPatchIndex;
-        }
 
         if (mutableCmdlistAppendLaunchParams.kernelMutation) {
             // base kernel from append has current allocations, these must be imported into mutable residency, their position saved for future updates of allocations
-            mutableCmdlistAppendLaunchParams.currentMutableKernel->saveResidencyAllocationIndices(static_cast<L0::KernelImp *>(kernel)->getSyncBufferIndex(),
-                                                                                                  static_cast<L0::KernelImp *>(kernel)->getRegionGroupBarrierIndex());
+            mutableCmdlistAppendLaunchParams.currentMutableKernel->saveResidencyAllocationIndices(static_cast<L0::KernelImp *>(kernel)->getSyncBufferIndex());
             mutableCmdlistAppendLaunchParams.currentMutableKernel->makeKernelResidencySnapshotContainer(true);
 
             auto &residencyContainer = mutableCmdlistAppendLaunchParams.currentMutableKernel->getKernelResidencySnapshotContainer();
@@ -460,20 +452,18 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
             uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
             MutableKernelDispatchParameters dispatchParams = {
-                initialGroupCount,                                             // groupCount
-                static_cast<L0::KernelImp *>(kernel)->getGroupSize(),          // groupSize
-                static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(),      // globalOffset
-                kernel->getPerThreadDataSizeForWholeThreadGroup(),             // perThreadSize
-                kernel->getRequiredWorkgroupOrder(),                           // walkOrder
-                kernel->getNumThreadsPerThreadGroup(),                         // numThreadsPerThreadGroup
-                kernel->getThreadExecutionMask(),                              // threadExecutionMask
-                kernel->getMaxWgCountPerTile(getBase()->getEngineGroupType()), // maxWorkGroupCountPerTile
-                0,                                                             // maxCooperativeGroupCount
-                launchParams.localRegionSize,                                  // localRegionSize
-                launchParams.requiredPartitionDim,                             // requiredPartitionDim
-                launchParams.requiredDispatchWalkOrder,                        // requiredDispatchWalkOrder
-                kernel->requiresGenerationOfLocalIdsByRuntime(),               // generationOfLocalIdsByRuntime
-                launchParams.isCooperative};                                   // cooperativeDispatch
+                initialGroupCount,                                        // groupCount
+                static_cast<L0::KernelImp *>(kernel)->getGroupSize(),     // groupSize
+                static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(), // globalOffset
+                kernel->getPerThreadDataSizeForWholeThreadGroup(),        // perThreadSize
+                kernel->getRequiredWorkgroupOrder(),                      // walkOrder
+                kernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
+                kernel->getThreadExecutionMask(),                         // threadExecutionMask
+                0,                                                        // maxCooperativeGroupCount
+                launchParams.requiredPartitionDim,                        // requiredPartitionDim
+                launchParams.requiredDispatchWalkOrder,                   // requiredDispatchWalkOrder
+                kernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
+                launchParams.isCooperative};                              // cooperativeDispatch
 
             if (launchParams.isCooperative) {
                 dispatchParams.maxCooperativeGroupCount = kernel->suggestMaxCooperativeGroupCount(base->getEngineGroupType(), false);
@@ -861,7 +851,6 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
     launchParams.omitAddingWaitEventsResidency = true;
     launchParams.requiredDispatchWalkOrder = parentMutableAppendLaunchParams.requiredDispatchWalkOrderFromApi;
     launchParams.requiredPartitionDim = parentMutableAppendLaunchParams.requiredPartitionDimFromApi;
-    launchParams.localRegionSize = parentMutableAppendLaunchParams.localRegionSizeFromApi;
     launchParams.isCooperative = parentMutableAppendLaunchParams.isCooperativeFromApi;
 
     auto retVal = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(viewKernel, threadGroupDimensions, event, launchParams);
@@ -880,7 +869,6 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                          viewKernelMutableComputeWalker,
                                          (parentMutableAppendLaunchParams.maxKernelGroupIndirectHeap - mutableKernel->getKernel()->getIndirectSize()),
                                          nullptr,
-                                         nullptr,
                                          true);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
@@ -897,20 +885,18 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
     uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
 
     MutableKernelDispatchParameters dispatchParams = {
-        initialGroupCount,                                                 // groupCount
-        static_cast<L0::KernelImp *>(viewKernel)->getGroupSize(),          // groupSize
-        static_cast<L0::KernelImp *>(viewKernel)->getGlobalOffsets(),      // globalOffset
-        viewKernel->getPerThreadDataSizeForWholeThreadGroup(),             // perThreadSize
-        viewKernel->getRequiredWorkgroupOrder(),                           // walkOrder
-        viewKernel->getNumThreadsPerThreadGroup(),                         // numThreadsPerThreadGroup
-        viewKernel->getThreadExecutionMask(),                              // threadExecutionMask
-        viewKernel->getMaxWgCountPerTile(getBase()->getEngineGroupType()), // maxWorkGroupCountPerTile
-        0,                                                                 // maxCooperativeGroupCount
-        launchParams.localRegionSize,                                      // localRegionSize
-        launchParams.requiredPartitionDim,                                 // requiredPartitionDim
-        launchParams.requiredDispatchWalkOrder,                            // requiredDispatchWalkOrder
-        viewKernel->requiresGenerationOfLocalIdsByRuntime(),               // generationOfLocalIdsByRuntime
-        launchParams.isCooperative};                                       // cooperativeDispatch
+        initialGroupCount,                                            // groupCount
+        static_cast<L0::KernelImp *>(viewKernel)->getGroupSize(),     // groupSize
+        static_cast<L0::KernelImp *>(viewKernel)->getGlobalOffsets(), // globalOffset
+        viewKernel->getPerThreadDataSizeForWholeThreadGroup(),        // perThreadSize
+        viewKernel->getRequiredWorkgroupOrder(),                      // walkOrder
+        viewKernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
+        viewKernel->getThreadExecutionMask(),                         // threadExecutionMask
+        0,                                                            // maxCooperativeGroupCount
+        launchParams.requiredPartitionDim,                            // requiredPartitionDim
+        launchParams.requiredDispatchWalkOrder,                       // requiredDispatchWalkOrder
+        viewKernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
+        launchParams.isCooperative};                                  // cooperativeDispatch
 
     retVal = addVariableDispatch(viewKernel->getKernelDescriptor(), *viewKernelDispatch,
                                  viewKernelAppendLaunchParams.groupSizeVariable,

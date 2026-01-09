@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ struct MutableWalkerSpecificFieldsArguments {
     uint32_t slmTotalSize;
     uint32_t slmPolicy;
     uint32_t partitionCount;
-    uint32_t maxWgCountPerTile;
     NEO::RequiredPartitionDim requiredPartitionDim;
     bool isRequiredDispatchWorkGroupOrder;
     bool isSlmKernel;

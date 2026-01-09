@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,9 +68,8 @@ HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBar
     size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
 
     size_t localRegionSize = 4;
-    size_t patchIndex = 0;
 
-    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize, patchIndex);
+    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,6 @@ struct KernelData {
     bool passInlineData = false;
     bool requiresWorkgroupWalkOrder = false;
     bool usesSyncBuffer = false;
-    bool usesRegionGroupBarrier = false;
 };
 
 struct KernelDispatchOffsets {
@@ -78,9 +77,6 @@ struct KernelDispatch {
     NEO::GraphicsAllocation *syncBuffer = nullptr;
     size_t syncBufferSize = 0;
     size_t syncBufferNoopPatchIndex = undefined<size_t>;
-    NEO::GraphicsAllocation *regionBarrier = nullptr;
-    size_t regionBarrierSize = 0;
-    size_t regionBarrierNoopPatchIndex = undefined<size_t>;
 
     uint32_t slmTotalSize = 0;
     uint32_t slmInlineSize = 0;
@@ -95,9 +91,7 @@ struct MutableKernelDispatchParameters {
     uint32_t walkOrder = 0;
     uint32_t numThreadsPerThreadGroup = 0;
     uint32_t threadExecutionMask = 0;
-    uint32_t maxWorkGroupCountPerTile = 0;
     uint32_t maxCooperativeGroupCount = 0;
-    uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     bool generationOfLocalIdsByRuntime = false;

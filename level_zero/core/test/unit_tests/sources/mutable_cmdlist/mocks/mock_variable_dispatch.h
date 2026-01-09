@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
 
     using BaseClass = ::L0::MCL::VariableDispatch;
     using BaseClass::alignedSlmSize;
-    using BaseClass::calculateRegion;
     using BaseClass::cleanCommitVariableDispatch;
     using BaseClass::cmdListEngineType;
     using BaseClass::commitGroupCount;
@@ -42,9 +41,7 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
     using BaseClass::kernelDispatch;
     using BaseClass::lastSlmArgumentVar;
     using BaseClass::localIdGenerationByRuntime;
-    using BaseClass::localRegionSize;
     using BaseClass::maxCooperativeGroupCount;
-    using BaseClass::maxWgCountPerTile;
     using BaseClass::mutableCommandWalker;
     using BaseClass::numChannels;
     using BaseClass::numThreadsPerThreadGroup;
@@ -75,19 +72,17 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
              uint32_t grfSize,
              const ::L0::MCL::MutableKernelDispatchParameters &dispatchParams,
              uint32_t partitionCount,
-             NEO::EngineGroupType cmdListEngineType,
-             bool calculateRegion) : ::L0::MCL::VariableDispatch(kernelDispatch,
-                                                                 std::move(mutableIndirectData),
-                                                                 mutableCommandWalker,
-                                                                 groupSizeVariable,
-                                                                 groupCountVariable,
-                                                                 globalOffsetVariable,
-                                                                 lastSlmArgumentVariable,
-                                                                 grfSize,
-                                                                 dispatchParams,
-                                                                 partitionCount,
-                                                                 cmdListEngineType,
-                                                                 calculateRegion) {}
+             NEO::EngineGroupType cmdListEngineType) : ::L0::MCL::VariableDispatch(kernelDispatch,
+                                                                                   std::move(mutableIndirectData),
+                                                                                   mutableCommandWalker,
+                                                                                   groupSizeVariable,
+                                                                                   groupCountVariable,
+                                                                                   globalOffsetVariable,
+                                                                                   lastSlmArgumentVariable,
+                                                                                   grfSize,
+                                                                                   dispatchParams,
+                                                                                   partitionCount,
+                                                                                   cmdListEngineType) {}
 };
 
 using VariableDispatch = WhiteBox<::L0::MCL::VariableDispatch>;

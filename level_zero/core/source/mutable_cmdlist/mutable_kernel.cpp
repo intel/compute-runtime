@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,10 +114,6 @@ void MutableKernel::makeKernelResidencySnapshotContainer(bool saveSyncAndRegionA
             this->syncBufferSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
             kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->syncBuffer);
         }
-        if (this->kernelDispatch->regionBarrier != nullptr) {
-            this->regionBarrierSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
-            kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->regionBarrier);
-        }
     }
 
     // add isa allocation as last to save the indices of other allocations as the same during initial making of snapshot at saveResidencyAllocationIndices call
@@ -134,15 +130,6 @@ void MutableKernel::updateResidencySnapshotContainer() {
             // allocation was added during mutation - when not used kernel was selected and it did not had allocation assigned, then add it to snapshot
             this->syncBufferSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
             kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->syncBuffer);
-        }
-    }
-
-    if (this->kernelDispatch->regionBarrier != nullptr) {
-        if (this->regionBarrierSnapshotResidencyIndex != std::numeric_limits<size_t>::max()) {
-            kernelResidencySnapshotContainer[this->regionBarrierSnapshotResidencyIndex] = this->kernelDispatch->regionBarrier;
-        } else {
-            this->regionBarrierSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
-            kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->regionBarrier);
         }
     }
 }

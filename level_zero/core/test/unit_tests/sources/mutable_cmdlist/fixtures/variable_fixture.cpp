@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,8 +172,7 @@ void VariableFixture::createVariableDispatch(bool useGroupCount, bool useGroupSi
                                                           this->grfSize,
                                                           this->dispatchParams,
                                                           this->partitionCount,
-                                                          this->engineGroupType,
-                                                          this->calculateRegion);
+                                                          this->engineGroupType);
 }
 
 void VariableFixture::createMutableIndirectOffset() {

@@ -269,7 +269,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
 
         if (kernel->usesRegionGroupBarrier()) {
-            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize, launchParams.regionBarrierPatchIndex);
+            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
         }
     }
 

@@ -3553,7 +3553,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize, size_t &patchIndex) {
+void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize) {
     auto neoDevice = device->getNEODevice();
 
     auto threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
@@ -3562,11 +3562,10 @@ void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &ker
     kernel.patchRegionGroupBarrier(gfxAllocation, bufferOffset);
 
     if (!isImmediateType()) {
-        patchIndex = commandsToPatch.size();
+        auto patchIndex = commandsToPatch.size();
         commandsToPatch.push_back(PatchNoopSpace{});
-        auto &cmd = commandsToPatch[patchIndex];
-        auto &regionBarrierSpace = std::get<PatchNoopSpace>(cmd);
 
+        auto &regionBarrierSpace = std::get<PatchNoopSpace>(commandsToPatch[patchIndex]);
         regionBarrierSpace.offset = bufferOffset;
         regionBarrierSpace.pDestination = ptrOffset(gfxAllocation->getUnderlyingBuffer(), bufferOffset);
         regionBarrierSpace.patchSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);

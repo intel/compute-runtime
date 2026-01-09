@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,7 +150,7 @@ struct MutableCommandListImp : public MutableCommandList {
 
   protected:
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
-                                      size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer, NEO::GraphicsAllocation *regionBarrier,
+                                      size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                       bool resetSlmArgumentValues);
     ze_result_t addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
                                     Variable *lastSlmArgumentVariable, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams);

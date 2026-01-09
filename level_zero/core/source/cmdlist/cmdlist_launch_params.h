@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ struct CmdListKernelLaunchParams {
     CommandToPatchContainer *outListCommands = nullptr;
     CmdListKernelLaunchParamsExt launchParamsExt{};
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
-    size_t regionBarrierPatchIndex = std::numeric_limits<size_t>::max();
     size_t scratchAddressPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,6 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::vector<L0::MCL::Variable *> getVariableList(uint64_t commandId, L0::MCL::VariableType varType, L0::Kernel *kernelOption);
     void overridePatchedScratchAddress(uint64_t scratchAddress);
     void enableCooperativeSyncBuffer(uint32_t kernelMask);
-    void enableRegionBarrierBuffer(uint32_t kernelMask);
     void setupGroupCountOffsets(uint32_t kernelMask);
     bool isAllocationInMutableResidency(MutableCommandList *mcl, NEO::GraphicsAllocation *allocation) const;
     void prepareBigIsaKernel();

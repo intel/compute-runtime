@@ -328,7 +328,7 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
 
     if (args.updateGroupCount || args.updateGroupSize) {
         if (args.partitionCount > 1) {
-            this->updateImplicitScalingData<WalkerType>(device, args.partitionCount, args.totalWorkGroupSize, args.threadGroupCount, args.maxWgCountPerTile,
+            this->updateImplicitScalingData<WalkerType>(device, args.partitionCount, args.totalWorkGroupSize, args.threadGroupCount,
                                                         args.requiredPartitionDim, args.isRequiredDispatchWorkGroupOrder, args.cooperativeKernel);
         }
     }

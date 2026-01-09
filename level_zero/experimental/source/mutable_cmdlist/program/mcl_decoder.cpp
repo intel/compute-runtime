@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,9 +123,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
             0,                                    // walkOrder
             1,                                    // numThreadsPerThreadGroup
             std::numeric_limits<uint32_t>::max(), // threadExecutionMask
-            1,                                    // maxWorkGroupCountPerTile
             0,                                    // maxCooperativeGroupCount
-            NEO::localRegionSizeParamNotSet,      // localRegionSize
             NEO::RequiredPartitionDim::none,      // requiredPartitionDim
             NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
             false,                                // generationOfLocalIdsByRuntime
@@ -133,7 +131,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
 
         dispatch.varDispatch = std::make_unique<VariableDispatch>(&dispatch, std::move(mutableIndirectData), mutableCommandWalker,
                                                                   groupSize, groupCount, nullptr, nullptr, args.device->getHwInfo().capabilityTable.grfSize,
-                                                                  dispatchParams, args.partitionCount, args.cmdListEngine, false);
+                                                                  dispatchParams, args.partitionCount, args.cmdListEngine);
     }
 }
 

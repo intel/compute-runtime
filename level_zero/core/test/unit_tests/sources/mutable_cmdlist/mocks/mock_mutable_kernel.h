@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@ struct WhiteBox<::L0::MCL::MutableKernel>
     using BaseClass::kernelResidencySnapshotContainer;
     using BaseClass::kernelVariables;
     using BaseClass::maxPerThreadDataSize;
-    using BaseClass::regionBarrierSnapshotResidencyIndex;
     using BaseClass::syncBufferSnapshotResidencyIndex;
 };
 

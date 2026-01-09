@@ -189,12 +189,11 @@ ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescript
         perThreadData = {reinterpret_cast<uint8_t *>(ptrOffset(iohCpuBase, kernelDispatch.offsets.perThreadOffset)), perThreadDataSize};
     }
 
-    bool calcRegion = false;
     auto mutableIndirectData = std::make_unique<MutableIndirectData>(std::move(offsets), crossThreadData, perThreadData, inlineData);
     kernelDispatch.varDispatch = std::make_unique<VariableDispatch>(&kernelDispatch, std::move(mutableIndirectData), mutableComputeWalker,
                                                                     groupSize, groupCount, globalOffset, lastSlmArgumentVariable,
                                                                     base->getDevice()->getHwInfo().capabilityTable.grfSize,
-                                                                    dispatchParams, base->getPartitionCount(), base->getEngineGroupType(), calcRegion);
+                                                                    dispatchParams, base->getPartitionCount(), base->getEngineGroupType());
 
     return ZE_RESULT_SUCCESS;
 }
@@ -249,11 +248,6 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
             kernelDataEntry->syncBufferAddressOffset = kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.stateless;
             kernelDataEntry->syncBufferPointerSize = kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.pointerSize;
         }
-        if (kernel->usesRegionGroupBarrier()) {
-            kernelDataEntry->usesRegionGroupBarrier = true;
-            kernelDataEntry->regionGroupBarrierBufferOffset = kernelDescriptor.payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless;
-            kernelDataEntry->regionGroupBarrierBufferPointerSize = kernelDescriptor.payloadMappings.implicitArgs.regionGroupBarrierBuffer.pointerSize;
-        }
         kernelDataEntry->numLocalIdChannels = kernelDescriptor.kernelAttributes.numLocalIdChannels;
     }
 
@@ -261,7 +255,7 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
 }
 
 ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
-                                                         size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer, NEO::GraphicsAllocation *regionBarrier,
+                                                         size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                                          bool resetSlmArgumentValues) {
     auto kernelData = getKernelData(kernel);
     auto &kernelDescriptor = kernel->getKernelDescriptor();
@@ -327,9 +321,6 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     if (dispatch.kernelData->usesSyncBuffer) {
         dispatch.syncBuffer = syncBuffer;
     }
-    if (dispatch.kernelData->usesRegionGroupBarrier) {
-        dispatch.regionBarrier = regionBarrier;
-    }
 
     const auto &args = kernelDescriptor.payloadMappings.explicitArgs;
     auto &kernelExt = MclKernelExt::get(kernel);
@@ -382,7 +373,7 @@ ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_
         auto &mutableKernels = nextAppendKernel.kernelGroup->getKernelsInGroup();
         for (uint32_t i = 0; i < numKernels; i++) {
             auto kernelData = getKernelData(Kernel::fromHandle(phKernels[i]));
-            allocateSyncBufferHandler |= (kernelData->usesSyncBuffer || kernelData->usesRegionGroupBarrier);
+            allocateSyncBufferHandler |= kernelData->usesSyncBuffer;
             if (!mutableKernels[i]->checkKernelCompatible()) {
                 return ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE;
             }
@@ -623,18 +614,11 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
             auto newKernelDispatch = newMutableKernel->getKernelDispatch();
 
             newKernelDispatch->syncBufferNoopPatchIndex = oldKernelDispatch->syncBufferNoopPatchIndex;
-            newKernelDispatch->regionBarrierNoopPatchIndex = oldKernelDispatch->regionBarrierNoopPatchIndex;
 
             if (newKernelDispatch->syncBufferNoopPatchIndex != undefined<size_t> &&
                 newKernelDispatch->kernelData->usesSyncBuffer == false) {
                 // disable noop patch index if sync buffer is not used
                 disableAddressNoopPatch(newKernelDispatch->syncBufferNoopPatchIndex);
-            }
-
-            if (newKernelDispatch->regionBarrierNoopPatchIndex != undefined<size_t> &&
-                newKernelDispatch->kernelData->usesRegionGroupBarrier == false) {
-                // disable noop patch index if region barrier buffer is not used
-                disableAddressNoopPatch(newKernelDispatch->regionBarrierNoopPatchIndex);
             }
         }
 

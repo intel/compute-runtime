@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,7 +216,6 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     uint8_t indirectOffset = 0;
     uint8_t scratchOffset = 8;
 
-    bool calculateRegion = false;
     bool inlineData = false;
     bool usePerThread = false;
     bool stageCommitMode = true;

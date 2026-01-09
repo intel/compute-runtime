@@ -33,16 +33,16 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
                                    std::unique_ptr<MutableIndirectData> mutableIndirectData, MutableComputeWalker *mutableCommandWalker,
                                    Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable,
                                    uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount,
-                                   NEO::EngineGroupType cmdListEngineType, bool calculateRegion)
+                                   NEO::EngineGroupType cmdListEngineType)
     : kernelDispatch(kernelDispatch),
       indirectData(std::move(mutableIndirectData)), mutableCommandWalker(mutableCommandWalker),
       groupSizeVar(groupSizeVariable), groupCountVar(groupCountVariable), globalOffsetVar(globalOffsetVariable), lastSlmArgumentVar(lastSlmArgumentVariable),
       perThreadDataSize(dispatchParams.perThreadSize),
       grfSize(grfSize), walkOrder(dispatchParams.walkOrder), numThreadsPerThreadGroup(dispatchParams.numThreadsPerThreadGroup),
-      threadExecutionMask(dispatchParams.threadExecutionMask), maxWgCountPerTile(dispatchParams.maxWorkGroupCountPerTile), maxCooperativeGroupCount(dispatchParams.maxCooperativeGroupCount),
-      localRegionSize(dispatchParams.localRegionSize), requiredPartitionDim(dispatchParams.requiredPartitionDim), requiredDispatchWalkOrder(dispatchParams.requiredDispatchWalkOrder),
+      threadExecutionMask(dispatchParams.threadExecutionMask), maxCooperativeGroupCount(dispatchParams.maxCooperativeGroupCount),
+      requiredPartitionDim(dispatchParams.requiredPartitionDim), requiredDispatchWalkOrder(dispatchParams.requiredDispatchWalkOrder),
       partitionCount(partitionCount), cmdListEngineType(cmdListEngineType),
-      localIdGenerationByRuntime(dispatchParams.generationOfLocalIdsByRuntime), calculateRegion(calculateRegion), isCooperative(dispatchParams.cooperativeDispatch) {
+      localIdGenerationByRuntime(dispatchParams.generationOfLocalIdsByRuntime), isCooperative(dispatchParams.cooperativeDispatch) {
 
     if (groupSizeVar != nullptr) {
         groupSizeVar->getDesc().size = 3 * sizeof(uint32_t);
@@ -63,13 +63,6 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
             uint64_t gpuAddress = 0;
             groupCountVar->fillCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, noopPtr, noopSize, this->syncBufferOffset, gpuAddress);
             UNRECOVERABLE_IF(noopSize != kernelDispatch->syncBufferSize);
-        }
-        if (kernelDispatch->regionBarrierNoopPatchIndex != undefined<size_t>) {
-            void *noopPtr = nullptr;
-            size_t noopSize = 0;
-            uint64_t gpuAddress = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopPtr, noopSize, this->regionBarrierOffset, gpuAddress);
-            UNRECOVERABLE_IF(noopSize != kernelDispatch->regionBarrierSize);
         }
     }
 
@@ -95,7 +88,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
                                                                                                : nullptr;
 
     this->slmTotalSize = kernelDispatch->slmTotalSize;
-    if (calcVar != nullptr && (this->isCooperative || this->calculateRegion) && this->slmTotalSize > 0) {
+    if (calcVar != nullptr && this->isCooperative && this->slmTotalSize > 0) {
         this->alignedSlmSize = calcVar->getAlignedSlmSize(this->slmTotalSize);
     }
 
@@ -169,15 +162,6 @@ void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &de
         return;
     }
 
-    if (this->calculateRegion) {
-        constexpr uint32_t singleTile = 1;
-        const size_t localWorkSizes[3] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
-        this->maxWgCountPerTile = NEO::KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), kernelDispatch->kernelData->grfCount,
-                                                                          kernelDispatch->kernelData->simdSize, kernelDispatch->kernelData->barrierCount, singleTile,
-                                                                          this->alignedSlmSize, numChannels,
-                                                                          localWorkSizes, this->cmdListEngineType);
-    }
-
     if (this->localIdGenerationByRuntime || kernelDispatch->kernelData->numLocalIdChannels == 0) {
         mutableCommandWalker->setGenerateLocalId(false, 0, kernelDispatch->kernelData->numLocalIdChannels);
     } else {
@@ -216,7 +200,6 @@ void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &de
         .slmTotalSize = this->slmTotalSize,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
-        .maxWgCountPerTile = this->maxWgCountPerTile,
         .requiredPartitionDim = this->requiredPartitionDim,
         .isRequiredDispatchWorkGroupOrder = this->requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none,
         .isSlmKernel = this->isSlmKernel,
@@ -283,52 +266,6 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
         }
     }
 
-    if (kernelDispatch->kernelData->usesRegionGroupBarrier) {
-        auto newSize = NEO::KernelHelper::getRegionGroupBarrierSize(this->threadGroupCount, this->localRegionSize);
-        if (newSize > kernelDispatch->regionBarrierSize) {
-            auto regionBarrierPair = device.syncBufferHandler->obtainAllocationAndOffset(newSize);
-            uint64_t newAddress = regionBarrierPair.first->getGpuAddressToPatch() + regionBarrierPair.second;
-            indirectData->setAddress(kernelDispatch->kernelData->regionGroupBarrierBufferOffset,
-                                     newAddress,
-                                     kernelDispatch->kernelData->regionGroupBarrierBufferPointerSize);
-
-            groupCountVar->updateAllocationResidency(kernelDispatch->regionBarrier, regionBarrierPair.first);
-
-            kernelDispatch->regionBarrierSize = newSize;
-            kernelDispatch->regionBarrier = regionBarrierPair.first;
-            this->regionBarrierOffset = regionBarrierPair.second;
-
-            void *newCpuPtr = ptrOffset(kernelDispatch->regionBarrier->getUnderlyingBuffer(), this->regionBarrierOffset);
-            uint64_t newGpuAddress = kernelDispatch->regionBarrier->getGpuAddressToPatch() + this->regionBarrierOffset;
-            if (kernelDispatch->regionBarrierNoopPatchIndex == undefined<size_t>) {
-                kernelDispatch->regionBarrierNoopPatchIndex = groupCountVar->createNewCmdListNoopPatchData(newCpuPtr, newSize, this->regionBarrierOffset, newGpuAddress);
-            } else {
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, newCpuPtr, newSize, this->regionBarrierOffset, newGpuAddress);
-            }
-        } else {
-            // mutation of kernels - check noop patch needs update and repatch the region barrier address
-            // if new size is not bigger (else branch - here), then region barrier must exists and so noop patch must exists
-            // but noop patch could be reused by other kernel, so at group count mutation must check and update noop patch
-            UNRECOVERABLE_IF(kernelDispatch->regionBarrierNoopPatchIndex == undefined<size_t>);
-
-            void *noopCpuPtr = nullptr;
-            size_t noopSize = 0;
-            size_t noopOffset = 0;
-            uint64_t noopGpuAddress = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopCpuPtr, noopSize, noopOffset, noopGpuAddress);
-
-            void *currentNoopPtr = ptrOffset(kernelDispatch->regionBarrier->getUnderlyingBuffer(), this->regionBarrierOffset);
-            if (noopSize != kernelDispatch->regionBarrierSize || noopOffset != this->regionBarrierOffset || noopCpuPtr != currentNoopPtr) {
-                uint64_t currentKernelPatchGpuAddress = kernelDispatch->regionBarrier->getGpuAddressToPatch() + this->regionBarrierOffset;
-                indirectData->setAddress(kernelDispatch->kernelData->regionGroupBarrierBufferOffset,
-                                         currentKernelPatchGpuAddress,
-                                         kernelDispatch->kernelData->regionGroupBarrierBufferPointerSize);
-
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, currentNoopPtr, kernelDispatch->regionBarrierSize, this->regionBarrierOffset, currentKernelPatchGpuAddress);
-            }
-        }
-    }
-
     if (stageData) {
         this->commitGroupCount = true;
         return;
@@ -349,7 +286,6 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
         .slmTotalSize = this->slmTotalSize,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
-        .maxWgCountPerTile = this->maxWgCountPerTile,
         .requiredPartitionDim = this->requiredPartitionDim,
         .isRequiredDispatchWorkGroupOrder = this->requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none,
         .isSlmKernel = this->isSlmKernel,
@@ -450,7 +386,7 @@ const MutableIndirectData::Offsets &VariableDispatch::getIndirectDataOffsets() c
 
 void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData) {
     this->slmTotalSize = slmArgTotalSize + kernelDispatch->slmInlineSize;
-    if (this->isCooperative || this->calculateRegion) {
+    if (this->isCooperative) {
         this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSize(this->slmTotalSize);
     }
 
@@ -474,15 +410,6 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
         return;
     }
 
-    if (this->calculateRegion) {
-        constexpr uint32_t singleTile = 1;
-        const size_t localWorkSizes[3] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
-        this->maxWgCountPerTile = NEO::KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), kernelDispatch->kernelData->grfCount,
-                                                                          kernelDispatch->kernelData->simdSize, kernelDispatch->kernelData->barrierCount, singleTile,
-                                                                          this->alignedSlmSize, numChannels,
-                                                                          localWorkSizes, this->cmdListEngineType);
-    }
-
     mutableCommandWalker->updateSlmSize(device, this->slmTotalSize);
     kernelDispatch->slmTotalSize = this->slmTotalSize;
 
@@ -500,7 +427,6 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
         .slmTotalSize = this->slmTotalSize,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
-        .maxWgCountPerTile = this->maxWgCountPerTile,
         .requiredPartitionDim = this->requiredPartitionDim,
         .isRequiredDispatchWorkGroupOrder = this->requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none,
         .isSlmKernel = this->isSlmKernel,
@@ -555,17 +481,6 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
         kernelDispatch->slmTotalSize = this->slmTotalSize;
     }
 
-    if (this->commitGroupSize || this->commitSlmSize) {
-        if (this->calculateRegion) {
-            constexpr uint32_t singleTile = 1;
-            const size_t localWorkSizes[3] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
-            this->maxWgCountPerTile = NEO::KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), kernelDispatch->kernelData->grfCount,
-                                                                              kernelDispatch->kernelData->simdSize, kernelDispatch->kernelData->barrierCount, singleTile,
-                                                                              this->alignedSlmSize, numChannels,
-                                                                              localWorkSizes, this->cmdListEngineType);
-        }
-    }
-
     MutableWalkerSpecificFieldsArguments args{
         .threadGroupDimensions = this->groupCount.data(),
         .threadGroupCount = this->threadGroupCount,
@@ -576,7 +491,6 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
         .slmTotalSize = this->slmTotalSize,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
-        .maxWgCountPerTile = this->maxWgCountPerTile,
         .requiredPartitionDim = this->requiredPartitionDim,
         .isRequiredDispatchWorkGroupOrder = this->requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none,
         .isSlmKernel = this->isSlmKernel,

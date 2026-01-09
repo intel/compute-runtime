@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ struct MutableAppendLaunchKernelWithParams {
     ze_mutable_command_exp_flags_t mutationFlags = 0;
     NEO::RequiredPartitionDim requiredPartitionDimFromApi = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrderFromApi = NEO::RequiredDispatchWalkOrder::none;
-    uint32_t localRegionSizeFromApi = NEO::localRegionSizeParamNotSet;
 
     bool kernelArgumentMutation = false;
     bool kernelMutation = false;

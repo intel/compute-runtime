@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,9 +72,8 @@ class MutableKernel {
         return kernelResidencySnapshotContainer;
     }
 
-    void saveResidencyAllocationIndices(size_t syncBuffer, size_t regionBarrier) {
+    void saveResidencyAllocationIndices(size_t syncBuffer) {
         syncBufferSnapshotResidencyIndex = syncBuffer;
-        regionBarrierSnapshotResidencyIndex = regionBarrier;
     }
 
     void updateResidencySnapshotContainer();
@@ -92,7 +91,6 @@ class MutableKernel {
     KernelDispatch *kernelDispatch = nullptr;
     L0::Kernel *kernel = nullptr;
     size_t syncBufferSnapshotResidencyIndex = std::numeric_limits<size_t>::max();
-    size_t regionBarrierSnapshotResidencyIndex = std::numeric_limits<size_t>::max();
 
     uint32_t inlineDataSize = 0;
     uint32_t maxPerThreadDataSize = 0;

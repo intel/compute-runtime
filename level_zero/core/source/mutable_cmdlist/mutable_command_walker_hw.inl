@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateImplicitScalingData(const NEO::Dev
                                                                   uint32_t partitionCount,
                                                                   uint32_t workgroupSize,
                                                                   uint32_t threadGroupCount,
-                                                                  uint32_t maxWgCountPerTile,
                                                                   NEO::RequiredPartitionDim requiredPartitionDim,
                                                                   bool isRequiredDispatchWorkGroupOrder,
                                                                   bool cooperativeKernel) {
@@ -44,7 +43,7 @@ void MutableComputeWalkerHw<GfxFamily>::updateImplicitScalingData(const NEO::Dev
         partitionCount,                    // partitionCount
         workgroupSize,                     // workgroupSize
         threadGroupCount,                  // threadGroupCount
-        maxWgCountPerTile,                 // maxWgCountPerTile
+        1,                                 // maxWgCountPerTile
         useSecondaryBatchBuffer,           // useSecondaryBatchBuffer
         onlyRegularCmdList,                // apiSelfCleanup
         dcFlushEnable,                     // dcFlush

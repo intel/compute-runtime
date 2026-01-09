@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -248,20 +248,6 @@ void MutableCommandListFixtureInit::enableCooperativeSyncBuffer(uint32_t kernelM
         mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
         mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless = offset;
         mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.pointerSize = sizeof(uint64_t);
-    }
-}
-
-void MutableCommandListFixtureInit::enableRegionBarrierBuffer(uint32_t kernelMask) {
-    CrossThreadDataOffset offset = this->crossThreadOffset + (this->kernelArgCount * this->nextArgOffset) + 32;
-    if (kernelMask & kernel1Bit) {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier = true;
-        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless = offset;
-        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.pointerSize = sizeof(uint64_t);
-    }
-    if (kernelMask & kernel2Bit) {
-        mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier = true;
-        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless = offset;
-        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.pointerSize = sizeof(uint64_t);
     }
 }
 

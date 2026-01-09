@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct VariableDispatch {
                      std::unique_ptr<MutableIndirectData> mutableIndirectData, MutableComputeWalker *mutableCommandWalker,
                      Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable,
                      uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount,
-                     NEO::EngineGroupType cmdListEngineType, bool calculateRegion);
+                     NEO::EngineGroupType cmdListEngineType);
 
     void setGroupSize(const uint32_t groupSize[3], NEO::Device &device, bool stageData);
     void setGroupCount(const uint32_t groupCount[3], const NEO::Device &device, bool stageData);
@@ -105,12 +105,10 @@ struct VariableDispatch {
     uint32_t numThreadsPerThreadGroup;
     uint32_t threadExecutionMask;
     uint32_t threadGroupCount = 1;
-    uint32_t maxWgCountPerTile = 1;
     uint32_t maxCooperativeGroupCount = 0;
     uint32_t slmTotalSize = 0;
     uint32_t alignedSlmSize = 0;
 
-    uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
 
@@ -121,7 +119,6 @@ struct VariableDispatch {
     bool commitGroupSize = false;
     bool commitSlmSize = false;
     bool localIdGenerationByRuntime = false;
-    bool calculateRegion = false;
     bool isCooperative = false;
     bool isSlmKernel = false;
 };
