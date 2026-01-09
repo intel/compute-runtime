@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,11 +31,11 @@ struct BlitColorTests : public DeviceFixture, public testing::TestWithParam<size
 };
 
 template <typename FamilyType>
-class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed {
+class GivenLinearStreamWhenCallDispatchBlitMemoryFillThenCorrectDepthIsProgrammed {
   public:
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
-    GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed(Device *device) : device(device) {}
+    GivenLinearStreamWhenCallDispatchBlitMemoryFillThenCorrectDepthIsProgrammed(Device *device) : device(device) {}
     void testBodyImpl(size_t patternSize, COLOR_DEPTH expectedDepth) {
         uint32_t streamBuffer[100] = {};
         LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -56,7 +56,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
         memset(patternToCommand, 4, patternSize);
         auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), patternToCommand, patternSize, 0);
 
-        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, device->getRootDeviceEnvironmentRef());
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, device->getRootDeviceEnvironmentRef());
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));

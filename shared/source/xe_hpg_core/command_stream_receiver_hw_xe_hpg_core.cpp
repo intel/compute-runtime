@@ -149,7 +149,7 @@ size_t BlitCommandsHelper<Family>::getNumberOfBlitsForByteFill(const Vec3<size_t
 
 template <>
 BlitCommandsResult BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
-    return NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
+    return NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(blitProperties, linearStream, rootDeviceEnvironment);
 }
 
 template <>

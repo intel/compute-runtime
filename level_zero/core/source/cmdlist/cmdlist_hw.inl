@@ -2946,7 +2946,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         blitProperties.computeStreamPartitionCount = this->partitionCount;
         blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
-        auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
+        auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
             using PatchCmdType = NEO::InOrderPatchCommandHelpers::PatchCmdType;
             PatchCmdType patchCmdType;
