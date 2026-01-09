@@ -17,6 +17,8 @@
 
 #include "gtest/gtest.h"
 
+#include <atomic>
+
 using namespace NEO;
 
 struct WddmResidencyControllerMTTest : ::testing::Test {
@@ -63,7 +65,7 @@ TEST_F(WddmResidencyControllerMTTest, givenAllocationsToTrimWhenCCSCsrIsLockedTh
     allocation1.getResidencyData().resident[csrBCS->getOsContext().getContextId()] = true;
     wddm->getResidencyController().getEvictionAllocations().push_back(&allocation1);
 
-    bool threadOwnOwnership = false;
+    std::atomic<bool> threadOwnOwnership = false;
     std::thread th = std::thread([&]() {
         auto ccsCsrLock = csrCCS->obtainUniqueOwnership();
         threadOwnOwnership = true;
@@ -71,8 +73,6 @@ TEST_F(WddmResidencyControllerMTTest, givenAllocationsToTrimWhenCCSCsrIsLockedTh
         }
         EXPECT_TRUE(csrBCS->isOwnershipMutexLocked());
         ccsCsrLock.unlock();
-        while (!csrCCS->isOwnershipMutexLocked()) {
-        }
     });
     std::thread th2 = std::thread([&]() {
         while (!threadOwnOwnership) {
@@ -81,4 +81,5 @@ TEST_F(WddmResidencyControllerMTTest, givenAllocationsToTrimWhenCCSCsrIsLockedTh
     });
     th.join();
     th2.join();
+    EXPECT_EQ(csrCCS->obtainUniqueOwnershipCalledTimes, 2u);
 }

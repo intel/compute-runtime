@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <atomic>
 #include <optional>
 #include <vector>
 
@@ -291,6 +292,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         createHostFunctionWorkerCounter++;
     }
 
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainUniqueOwnership() override {
+        obtainUniqueOwnershipCalledTimes++;
+        return BaseClass::obtainUniqueOwnership();
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -306,6 +312,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t startHostFunctionWorkerCalledTimes = 0;
     uint32_t createHostFunctionWorkerCounter = 0;
     uint32_t signalHostFunctionWorkerCounter = 0;
+    std::atomic<uint32_t> obtainUniqueOwnershipCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
