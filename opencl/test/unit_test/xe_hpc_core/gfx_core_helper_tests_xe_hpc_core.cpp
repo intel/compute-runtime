@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -657,6 +657,7 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenMultitileConfigWhenConfigurin
     auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrBlitterRing = true;
 
     for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;

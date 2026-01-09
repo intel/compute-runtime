@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() cons
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return true;
+    return hwInfo.featureTable.flags.ftrBlitterRing;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

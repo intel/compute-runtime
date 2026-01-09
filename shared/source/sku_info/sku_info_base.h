@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,8 @@ struct FeatureTableBase {
         uint32_t ftrL3TransientDataFlush : 1;
         uint32_t ftrPml5Support : 1;
         uint32_t ftrHeaplessMode : 1;
-        uint32_t reserved : 17;
+        uint32_t ftrBlitterRing : 1;
+        uint32_t reserved : 16;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

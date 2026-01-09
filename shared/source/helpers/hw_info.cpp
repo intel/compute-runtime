@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,6 +163,7 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Rele
     featureTable->flags.ftrAstcLdr2D = true;
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
+    featureTable->flags.ftrBlitterRing = true;
     featureTable->flags.ftrFbc = true;
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;

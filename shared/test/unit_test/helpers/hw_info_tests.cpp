@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
     expectedFeatureTable.flags.ftrCCSNode = true;
     expectedFeatureTable.flags.ftrCCSRing = true;
     expectedFeatureTable.flags.ftrFbc = true;
+    expectedFeatureTable.flags.ftrBlitterRing = true;
     expectedFeatureTable.flags.ftrGpGpuMidBatchPreempt = true;
     expectedFeatureTable.flags.ftrGpGpuThreadGroupLevelPreempt = true;
     expectedFeatureTable.flags.ftrIA32eGfxPTEs = true;

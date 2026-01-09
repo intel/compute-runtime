@@ -673,6 +673,7 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenMultitileConfigWhenConfiguringHwIn
     auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrBlitterRing = true;
 
     for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
@@ -681,6 +682,17 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenMultitileConfigWhenConfiguringHwIn
         productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
+    }
+
+    hwInfo.featureTable.flags.ftrBlitterRing = false;
+
+    for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
+        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
+        hwInfo.capabilityTable.blitterOperationsSupported = false;
+
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
     }
 }
 
