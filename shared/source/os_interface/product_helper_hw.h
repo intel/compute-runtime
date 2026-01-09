@@ -123,6 +123,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDeviceUsmPoolAllocatorSupported() const override;
     bool isDeviceUsmAllocationReuseSupported() const override;
     bool isHostUsmAllocationReuseSupported() const override;
+    bool isPoolManagerEnabled() const override;
     bool useLocalPreferredForCacheableBuffers() const override;
     bool useGemCreateExtInAllocateMemoryByKMD() const override;
     bool isTlbFlushRequired() const override;

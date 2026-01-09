@@ -835,10 +835,15 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFac
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmAllocationPoolManager.set(-1);
     mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get());
-
     EXPECT_TRUE(mockUsmMemAllocPoolsFacade.isInitialized());
-    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
-    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+
+    if (device->getProductHelper().isPoolManagerEnabled()) {
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    } else {
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    }
 }
 
 TEST_P(UnifiedMemoryPoolingFacadeTest, givenPoolManagerDisabledAndCustomPoolSizeWhenInitializingPoolsFacadeThenPoolHasCorrectSize) {
