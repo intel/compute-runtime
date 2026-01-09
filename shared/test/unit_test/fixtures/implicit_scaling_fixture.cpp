@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,6 @@ ImplicitScalingDispatchCommandArgs ImplicitScalingFixture::createDispatchCommand
         partitionCount,                  // partitionCount
         1,                               // workgroupSize
         1,                               // threadGroupCount
-        1,                               // maxWgCountPerTile
         true,                            // useSecondaryBatchBuffer
         false,                           // apiSelfCleanup
         dcFlushFlag,                     // dcFlush

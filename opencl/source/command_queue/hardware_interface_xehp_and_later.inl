@@ -187,8 +187,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     uint32_t workgroupSize = static_cast<uint32_t>(walkerArgs.localWorkSizes[0] * walkerArgs.localWorkSizes[1] * walkerArgs.localWorkSizes[2]);
 
-    uint32_t maxWgCountPerTile = kernel.getMaxWorkGroupCount(dim, walkerArgs.localWorkSizes, &commandQueue, true);
-
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = queueCsr.getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
@@ -206,7 +204,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             partitionCount,                      // partitionCount
             workgroupSize,                       // workgroupSize
             threadGroupCount,                    // threadGroupCount
-            maxWgCountPerTile,                   // maxWgCountPerTile
             false,                               // useSecondaryBatchBuffer
             false,                               // apiSelfCleanup
             queueCsr.getDcFlushSupport(),        // dcFlush

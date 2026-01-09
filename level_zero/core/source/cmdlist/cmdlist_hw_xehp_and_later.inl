@@ -339,8 +339,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
-    auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
-
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
 
@@ -404,7 +402,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
         .partitionCount = this->partitionCount,
         .reserveExtraPayloadSpace = launchParams.reserveExtraPayloadSpace,
-        .maxWgCountPerTile = maxWgCountPerTile,
         .defaultPipelinedThreadArbitrationPolicy = this->defaultPipelinedThreadArbitrationPolicy,
         .isIndirect = launchParams.isIndirect,
         .isPredicate = launchParams.isPredicate,

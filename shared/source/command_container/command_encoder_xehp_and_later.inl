@@ -437,7 +437,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.partitionCount,                                                                     // partitionCount
             workgroupSize,                                                                           // workgroupSize
             threadGroupCount,                                                                        // threadGroupCount
-            args.maxWgCountPerTile,                                                                  // maxWgCountPerTile
             !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),         // useSecondaryBatchBuffer
             !args.isKernelDispatchedFromImmediateCmdList,                                            // apiSelfCleanup
             args.postSyncArgs.dcFlushEnable,                                                         // dcFlush

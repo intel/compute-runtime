@@ -70,7 +70,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
             .partitionCount = 1,
             .reserveExtraPayloadSpace = 0,
-            .maxWgCountPerTile = 1,
             .defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent,
             .isIndirect = false,
             .isPredicate = false,

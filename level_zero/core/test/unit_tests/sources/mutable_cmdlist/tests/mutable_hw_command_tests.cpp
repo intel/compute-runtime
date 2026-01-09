@@ -593,7 +593,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         walkerArgs.partitionCount,       // partitionCount
         walkerArgs.totalWorkGroupSize,   // workgroupSize
         walkerArgs.threadGroupCount,     // threadGroupCount
-        1,                               // maxWgCountPerTile
         false,                           // useSecondaryBatchBuffer
         true,                            // apiSelfCleanup
         false,                           // dcFlush

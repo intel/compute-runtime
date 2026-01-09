@@ -132,7 +132,6 @@ struct EncodeDispatchKernelArgs {
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t partitionCount = 0u;
     uint32_t reserveExtraPayloadSpace = 0;
-    uint32_t maxWgCountPerTile = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
     bool isIndirect = false;
     bool isPredicate = false;

@@ -202,8 +202,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
 
-    auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
-
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         .device = neoDevice,
         .dispatchInterface = kernel,
@@ -240,7 +238,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
         .partitionCount = 0,
         .reserveExtraPayloadSpace = launchParams.reserveExtraPayloadSpace,
-        .maxWgCountPerTile = maxWgCountPerTile,
         .defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent,
         .isIndirect = launchParams.isIndirect,
         .isPredicate = launchParams.isPredicate,

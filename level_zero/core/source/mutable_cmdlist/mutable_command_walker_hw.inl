@@ -43,7 +43,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateImplicitScalingData(const NEO::Dev
         partitionCount,                    // partitionCount
         workgroupSize,                     // workgroupSize
         threadGroupCount,                  // threadGroupCount
-        1,                                 // maxWgCountPerTile
         useSecondaryBatchBuffer,           // useSecondaryBatchBuffer
         onlyRegularCmdList,                // apiSelfCleanup
         dcFlushEnable,                     // dcFlush
