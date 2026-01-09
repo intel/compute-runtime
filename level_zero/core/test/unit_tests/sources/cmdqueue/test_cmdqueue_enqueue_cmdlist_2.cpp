@@ -766,7 +766,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBi
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandQueue->getCsr()->getOsContext().getContextId());
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandQueue->getCsr()->getOsContext().getContextId()) = true;
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -880,7 +880,7 @@ HWTEST_F(CommandQueueExecuteCommandListsMultiDeviceTest, GivenDirtyFlagForContex
     uint32_t firstDeviceFirstContextId = neoDevice->getMemoryManager()->getFirstContextIdForRootDevice(0);
     EXPECT_EQ(0u, firstDeviceFirstContextId);
 
-    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set();
+    std::fill(bindlessHeapsHelperPtr->stateCacheDirtyForContext.begin(), bindlessHeapsHelperPtr->stateCacheDirtyForContext.end(), true);
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 

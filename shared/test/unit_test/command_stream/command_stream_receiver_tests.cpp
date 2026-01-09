@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5202,7 +5202,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
 
-    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
 
     flushTaskFlags.implicitFlush = true;
     auto usedSpaceBefore = commandStreamReceiver.commandStream.getUsed();
@@ -5252,7 +5252,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
 
-    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -5283,7 +5283,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenContextInitializedAndDirtyFlagForCon
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
 
-    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
 
     // only state cache flush is dispatched in dynamic preamble
     auto immediateBufferStartOffset = commandStream.getUsed();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,7 +220,7 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto contextId = csr->getOsContext().getContextId();
     auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
-    bindlessHeapHelper->stateCacheDirtyForContext.set(contextId);
+    bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
     ASSERT_TRUE(bindlessHeapHelper->getStateDirtyForContext(contextId));
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
@@ -587,7 +587,7 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndStateC
     auto csr = commandListImmediate.getCsr(false);
     auto contextId = csr->getOsContext().getContextId();
     auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
-    bindlessHeapHelper->stateCacheDirtyForContext.set(contextId);
+    bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
     ASSERT_TRUE(bindlessHeapHelper->getStateDirtyForContext(contextId));
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
 

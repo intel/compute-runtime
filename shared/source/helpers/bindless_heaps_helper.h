@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
 
     size_t reuseSlotCountThreshold = 512;
     uint64_t reservedRangeBase = 0;
-    std::bitset<64> stateCacheDirtyForContext;
+    std::vector<bool> stateCacheDirtyForContext;
     DeviceBitfield deviceBitfield;
     const size_t surfaceStateSize;
 

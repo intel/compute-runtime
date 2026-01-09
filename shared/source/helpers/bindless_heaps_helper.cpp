@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,7 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
                                                                                              isMultiOsContextCapable(isMultiOsContextCapable) {
 
+    stateCacheDirtyForContext.resize(memManager->getRegisteredEngines(rootDeviceIndex).size(), false);
     for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
 
@@ -179,7 +180,7 @@ void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
     uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
 
-    stateCacheDirtyForContext.reset(contextIdShifted);
+    stateCacheDirtyForContext.at(contextIdShifted) = false;
 }
 
 bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
@@ -188,7 +189,7 @@ bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
     uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
 
-    return stateCacheDirtyForContext.test(contextIdShifted);
+    return stateCacheDirtyForContext.at(contextIdShifted);
 }
 
 SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {
@@ -201,7 +202,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
             if ((surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() + surfaceStateInHeapVectorReuse[releasePoolIndex][1].size()) > reuseSlotCountThreshold) {
 
                 // invalidate all contexts
-                stateCacheDirtyForContext.set();
+                std::fill(stateCacheDirtyForContext.begin(), stateCacheDirtyForContext.end(), true);
                 allocateFromReusePool = true;
                 allocatePoolIndex = releasePoolIndex;
                 releasePoolIndex = allocatePoolIndex == 0 ? 1 : 0;
