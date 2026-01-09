@@ -353,6 +353,22 @@ set(CLOC_LIB_SRCS
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
 )
+
+if(WIN32)
+  if(DEFINED OCLOC_LIB_RC_FILE)
+    list(APPEND CLOC_LIB_SRCS ${OCLOC_LIB_RC_FILE})
+    set(OCLOC_LIB_RC_PATH ${OCLOC_LIB_RC_FILE})
+  else()
+    list(APPEND CLOC_LIB_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_lib.rc)
+    set(OCLOC_LIB_RC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_lib.rc)
+  endif()
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set_source_files_properties(${OCLOC_LIB_RC_PATH} PROPERTIES COMPILE_FLAGS "/D_WIN64 /DNEO_VERSION_BUILD=${NEO_VERSION_BUILD}")
+  else()
+    set_source_files_properties(${OCLOC_LIB_RC_PATH} PROPERTIES COMPILE_FLAGS "/DNEO_VERSION_BUILD=${NEO_VERSION_BUILD}")
+  endif()
+endif()
+
 add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS}
             ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader_creator.cpp
             ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
@@ -386,6 +402,7 @@ endif()
 
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
+target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${NEO_BUILD_DIR})
 
 target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${OCLOC_SUPPORTED_CORE_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
                            IGA_LIBRARY_NAME="${IGA_LIBRARY_FILENAME}"
@@ -410,6 +427,14 @@ set(OCLOC_SRCS
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
     ${OCLOC_DIRECTORY}/source/main.cpp
 )
+
+if(WIN32)
+  if(DEFINED OCLOC_EXE_RC_FILE)
+    list(APPEND OCLOC_SRCS ${OCLOC_EXE_RC_FILE})
+  else()
+    list(APPEND OCLOC_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_exe.rc)
+  endif()
+endif()
 
 add_executable(${OCLOC_NAME} ${OCLOC_SRCS})
 target_link_libraries(${OCLOC_NAME} ${OCLOC_NAME}_lib)
