@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -671,4 +671,45 @@ TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContext
     alignedFree(hostBuffer);
 }
 
+TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCreatedWithUseHostPtrOrCopyHostPtrThenSizeIsNotExtended) {
+    DebugManagerStateRestore restorer;
+
+    constexpr size_t bufferSize = 16;
+    alignas(4096) unsigned char hostMem[bufferSize] = {};
+
+    auto pageSizeNumber = 2;
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+
+    auto buffer = clCreateBuffer(pContext, CL_MEM_USE_HOST_PTR, bufferSize, hostMem, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(bufferSize, bufferObj->getSize());
+    clReleaseMemObject(buffer);
+
+    buffer = clCreateBuffer(pContext, CL_MEM_COPY_HOST_PTR, bufferSize, hostMem, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(bufferSize, bufferObj->getSize());
+    clReleaseMemObject(buffer);
+
+    buffer = clCreateBufferWithProperties(pContext, nullptr, CL_MEM_USE_HOST_PTR, bufferSize, hostMem, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(bufferSize, bufferObj->getSize());
+    clReleaseMemObject(buffer);
+
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, CL_MEM_COPY_HOST_PTR, bufferSize, hostMem, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(bufferSize, bufferObj->getSize());
+    clReleaseMemObject(buffer);
+}
 } // namespace ULT
