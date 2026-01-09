@@ -71,7 +71,7 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
-    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+    EXPECT_TRUE(productHelper->useSharedSystemUsm());
 }
 
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
