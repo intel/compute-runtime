@@ -455,7 +455,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     } else {
         args.partitionCount = 1;
-        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, *args.device, args.partitionCount, workgroupSize, threadGroupCount, args.maxWgCountPerTile, isRequiredDispatchWorkGroupOrder);
 
         if (!args.makeCommandView) {
             auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();

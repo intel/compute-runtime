@@ -178,16 +178,6 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder) {
-    if constexpr (std::is_same_v<WalkerType, typename Family::COMPUTE_WALKER_2>) {
-        using QUANTUMSIZE = typename Family::COMPUTE_WALKER_2::QUANTUMSIZE;
-        auto quantumSize = static_cast<QUANTUMSIZE>(getQuantumSizeHw<Family, WalkerType>(0));
-        walkerCmd.setQuantumsize(quantumSize);
-    }
-}
-
-template <typename Family>
-template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
     constexpr bool heaplessModeEnabled = std::is_same_v<WalkerType, typename Family::COMPUTE_WALKER_2>;
     if constexpr (heaplessModeEnabled) {

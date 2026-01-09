@@ -327,18 +327,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     }
 
     if (args.updateGroupCount || args.updateGroupSize) {
-        if (args.partitionCount == 1) {
-            NEO::EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*cpuBufferWalker,
-                                                                          device,
-                                                                          args.partitionCount,
-                                                                          args.totalWorkGroupSize,
-                                                                          args.threadGroupCount,
-                                                                          args.maxWgCountPerTile,
-                                                                          args.isRequiredDispatchWorkGroupOrder);
-        }
-    }
-
-    if (args.updateGroupCount || args.updateGroupSize) {
         if (args.partitionCount > 1) {
             this->updateImplicitScalingData<WalkerType>(device, args.partitionCount, args.totalWorkGroupSize, args.threadGroupCount, args.maxWgCountPerTile,
                                                         args.requiredPartitionDim, args.isRequiredDispatchWorkGroupOrder, args.cooperativeKernel);

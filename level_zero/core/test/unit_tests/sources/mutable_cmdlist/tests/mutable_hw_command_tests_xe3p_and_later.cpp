@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,48 +123,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
 
     auto *cpuBufferScratchAddressPatch = reinterpret_cast<uint64_t *>(ptrOffset(mutableWalker->getHostMemoryInlineDataPointer(), this->scratchOffset));
     EXPECT_EQ(scratchPatchAddress, *cpuBufferScratchAddressPatch);
-}
-
-HWTEST2_F(MutableHwCommandTestXe3p,
-          givenMutableComputeWalkerWhenSettingWalkerRegionFieldsFromEncodersThenCorrectFieldsAreSet,
-          IsXe3pCore) {
-    using WalkerType = typename FamilyType::PorWalkerType;
-
-    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
-    alignas(8) uint8_t controlWalkerBuffer[sizeof(WalkerType)];
-    auto controlWalker = reinterpret_cast<WalkerType *>(controlWalkerBuffer);
-    *controlWalker = walkerTemplate;
-
-    this->stageCommit = true;
-    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
-    auto walkerArgs = createMutableWalkerSpecificFieldsArguments();
-    fillWalkerFields<WalkerType>(controlWalkerBuffer);
-
-    NEO::EncodeDispatchKernel<FamilyType>::setWalkerRegionSettings(*controlWalker, *neoDevice,
-                                                                   walkerArgs.partitionCount,
-                                                                   walkerArgs.totalWorkGroupSize,
-                                                                   walkerArgs.threadGroupCount,
-                                                                   walkerArgs.maxWgCountPerTile,
-                                                                   walkerArgs.isRequiredDispatchWorkGroupOrder);
-
-    fillWalkerFields<WalkerType>(this->cmdBufferCpuPtr);
-    walkerArgs.updateGroupCount = true;
-
-    mutableWalker->updateSpecificFields(*neoDevice, walkerArgs);
-    auto walkerCmdCpu = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
-
-    EXPECT_EQ(controlWalker->getQuantumsize(), walkerCmdCpu->getQuantumsize());
-
-    this->stageCommit = false;
-    walkerArgs.updateGroupCount = false;
-    walkerArgs.updateGroupSize = true;
-    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
-    fillWalkerFields<WalkerType>(this->cmdBufferCpuPtr);
-
-    mutableWalker->updateSpecificFields(*neoDevice, walkerArgs);
-    auto walkerCmdGpu = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-
-    EXPECT_EQ(controlWalker->getQuantumsize(), walkerCmdGpu->getQuantumsize());
 }
 
 } // namespace ult

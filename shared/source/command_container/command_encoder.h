@@ -281,9 +281,6 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
                                           const uint32_t grfCount, const uint32_t threadsPerThreadGroup, WalkerType &walkerCmd);
 
     template <typename WalkerType>
-    static void setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder);
-
-    template <typename WalkerType>
     static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <bool heaplessModeEnabled>

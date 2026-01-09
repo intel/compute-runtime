@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,6 @@ template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family
 template uint64_t NEO::EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching<false>(CommandContainer &container, EncodeDispatchKernelArgs &args);
 template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<false>(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 template void NEO::EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd);
-template void NEO::EncodeDispatchKernel<Family>::setWalkerRegionSettings<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount,
-                                                                                                    uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder);
 template void NEO::EncodeDispatchKernel<Family>::overrideDefaultValues<Family::DefaultWalkerType, Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType &walkerCmd, Family::DefaultWalkerType::InterfaceDescriptorType &interfaceDescriptor);
 template void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
 template void NEO::EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker<Family::DefaultWalkerType, Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType &walkerCmd, const Family::DefaultWalkerType::InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -525,14 +525,6 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         } else {
             inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, args.partitionCount));
         }
-
-        NEO::EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*inputWalker,
-                                                                      device,
-                                                                      args.partitionCount,
-                                                                      args.workgroupSize,
-                                                                      args.threadGroupCount,
-                                                                      args.maxWgCountPerTile,
-                                                                      args.isRequiredDispatchWorkGroupOrder);
 
         appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, args.tileCount, workgroupCount);
     }

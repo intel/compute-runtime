@@ -227,7 +227,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             timestampPacketNode->setPacketsUsed(implicitScalingArgs.partitionCount);
         }
     } else {
-        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(walkerCmd, device, 1, workgroupSize, threadGroupCount, maxWgCountPerTile, requiredWalkOrder != 0);
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<WalkerType>();
         *computeWalkerOnStream = walkerCmd;
     }

@@ -1,17 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
-
-namespace NEO {
-template <typename Family, typename WalkerType>
-uint32_t getQuantumSizeHw(uint32_t selectedQuantumSize);
-}
-
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_from_xe3_and_later.inl"
 #include "shared/source/command_container/command_encoder_from_xe3p_and_later.inl"
@@ -54,45 +48,6 @@ size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKernelArg
         using WalkerType = typename Family::COMPUTE_WALKER;
         return offsetof(WalkerType, TheStructure.Common.InlineData);
     }
-}
-
-template <>
-uint32_t getQuantumSizeHw<Family, Family::COMPUTE_WALKER_2>(uint32_t selectedQuantumSize) {
-    constexpr uint32_t quantumDisabled = 0;
-    uint32_t quantumSize = quantumDisabled;
-
-    using QUANTUMSIZE = typename Family::COMPUTE_WALKER_2::QUANTUMSIZE;
-
-    static_assert(quantumDisabled == static_cast<uint32_t>(QUANTUMSIZE::QUANTUMSIZE_QUANTUM_DISPATCH_DISABLED), "Quantum size disabled value mismatch");
-
-    switch (selectedQuantumSize) {
-    case 4:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_4;
-        break;
-    case 8:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_8;
-        break;
-    case 14:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_14;
-        break;
-    case 16:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_16;
-        break;
-    case 20:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_20;
-        break;
-    case 24:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_24;
-        break;
-    case 28:
-        quantumSize = QUANTUMSIZE::QUANTUMSIZE_QUANTUM_SIZE_28;
-        break;
-    default:
-        UNRECOVERABLE_IF(selectedQuantumSize != NEO::localRegionSizeParamNotSet);
-        break;
-    }
-
-    return quantumSize;
 }
 
 template <>
@@ -433,8 +388,6 @@ template void NEO::EncodeDispatchKernel<Family>::adjustWalkOrder<Family::COMPUTE
 template void NEO::EncodeDispatchKernel<Family>::programBarrierEnable<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType &interfaceDescriptor, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hwInfo);
 template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
 template void NEO::EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd);
-template void NEO::EncodeDispatchKernel<Family>::setWalkerRegionSettings<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const NEO::Device &device, uint32_t partitionCount,
-                                                                                                 uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder);
 template void NEO::EncodeDispatchKernel<Family>::overrideDefaultValues<Family::COMPUTE_WALKER, Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER &walkerCmd, Family::COMPUTE_WALKER::InterfaceDescriptorType &interfaceDescriptor);
 template void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
 template void NEO::EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker<Family::COMPUTE_WALKER, Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER &walkerCmd, const Family::COMPUTE_WALKER::InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
