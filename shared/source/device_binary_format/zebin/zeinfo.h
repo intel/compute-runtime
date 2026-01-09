@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,10 +139,7 @@ inline constexpr ConstStringRef dataGlobalBuffer("global_base");
 inline constexpr ConstStringRef assertBuffer("assert_buffer");
 inline constexpr ConstStringRef indirectDataPointer("indirect_data_pointer");
 inline constexpr ConstStringRef scratchPointer("scratch_pointer");
-inline constexpr ConstStringRef regionGroupSize("region_group_size");
 inline constexpr ConstStringRef regionGroupDimension("region_group_dimension");
-inline constexpr ConstStringRef regionGroupWgCount("region_group_wg_count");
-inline constexpr ConstStringRef regionGroupBarrierBuffer("region_group_barrier_buffer");
 inline constexpr ConstStringRef inlineSampler("inline_sampler");
 inline constexpr ConstStringRef bufferSize("buffer_size");
 
@@ -403,7 +400,6 @@ inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 inline constexpr HasSampleT hasSample = false;
 inline constexpr PrivateSizeT privateSize = 0;
 inline constexpr SpillSizeT spillSize = 0;
-inline constexpr LocalRegionSizeT localRegionSize = -1;
 inline constexpr WalkOrderT dispatchWalkOrder = -1;
 inline constexpr PartitionDimT partitionDim = -1;
 inline constexpr RequireImplicitArgBufferT requireImplicitArgBuffer = false;
@@ -451,7 +447,6 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     HasSampleT hasSample = Defaults::hasSample;
     PrivateSizeT privateSize = Defaults::privateSize;
     SpillSizeT spillSize = Defaults::spillSize;
-    LocalRegionSizeT localRegionSize = Defaults::localRegionSize;
     WalkOrderT dispatchWalkOrder = Defaults::dispatchWalkOrder;
     PartitionDimT partitionDim = Defaults::partitionDim;
     RequireImplicitArgBufferT requireImplicitArgBuffer = Defaults::requireImplicitArgBuffer;
@@ -559,10 +554,7 @@ enum ArgType : uint8_t {
     argTypeAssertBuffer,
     argTypeIndirectDataPointer,
     argTypeScratchPointer,
-    argTypeRegionGroupSize,
     argTypeRegionGroupDimension,
-    argTypeRegionGroupWgCount,
-    argTypeRegionGroupBarrierBuffer,
     argTypeInlineSampler,
     argTypeBufferSize,
     argTypeMax

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint32_t numThreadsRequired = 0u;
         uint32_t spillFillScratchMemorySize = 0u;
         uint32_t privateScratchMemorySize = 0u;
-        uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
         NEO::RequiredDispatchWalkOrder dispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
         NEO::RequiredPartitionDim partitionDim = NEO::RequiredPartitionDim::none;
         ThreadArbitrationPolicy threadArbitrationPolicy = NotPresent;
@@ -144,8 +143,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool hasSample : 1;
                 bool usesAssert : 1;
                 // 3
-                bool usesRegionGroupBarrier : 1;
-                bool reserved : 7;
+                bool reserved : 8;
             };
             std::array<bool, 4> packed;
         } flags = {};
@@ -176,9 +174,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             CrossThreadDataOffset numWorkGroups[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset workDim = undefined<CrossThreadDataOffset>;
 
-            CrossThreadDataOffset regionGroupSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset regionGroupDimension = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset regionGroupWgCount = undefined<CrossThreadDataOffset>;
         } dispatchTraits;
 
         struct {
@@ -204,7 +200,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             ArgDescPointer syncBufferAddress;
             ArgDescPointer rtDispatchGlobals;
             ArgDescPointer assertBufferAddress;
-            ArgDescPointer regionGroupBarrierBuffer;
             CrossThreadDataOffset privateMemorySize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset maxWorkGroupSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;

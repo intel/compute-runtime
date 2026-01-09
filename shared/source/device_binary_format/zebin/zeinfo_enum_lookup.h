@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler::Vme;
 using ArgType = Types::Kernel::ArgType;
 
 inline constexpr ConstStringRef name = "argument type";
-inline constexpr LookupArray<ConstStringRef, ArgType, 47> lookup({{
+inline constexpr LookupArray<ConstStringRef, ArgType, 44> lookup({{
     {packedLocalIds, ArgType::argTypePackedLocalIds},
     {localId, ArgType::argTypeLocalId},
     {localSize, ArgType::argTypeLocalSize},
@@ -64,10 +64,7 @@ inline constexpr LookupArray<ConstStringRef, ArgType, 47> lookup({{
     {assertBuffer, ArgType::argTypeAssertBuffer},
     {indirectDataPointer, ArgType::argTypeIndirectDataPointer},
     {scratchPointer, ArgType::argTypeScratchPointer},
-    {regionGroupSize, ArgType::argTypeRegionGroupSize},
     {regionGroupDimension, ArgType::argTypeRegionGroupDimension},
-    {regionGroupWgCount, ArgType::argTypeRegionGroupWgCount},
-    {regionGroupBarrierBuffer, ArgType::argTypeRegionGroupBarrierBuffer},
     {inlineSampler, ArgType::argTypeInlineSampler},
     {bufferSize, ArgType::argTypeBufferSize},
 }});

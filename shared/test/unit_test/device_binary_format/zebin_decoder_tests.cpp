@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5287,21 +5287,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidTh
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsInvalidThenFails) {
-    ConstStringRef zeInfoRegionGroupSize = R"===(
-        kernels:
-            - name : some_kernel
-              execution_env:
-                simd_size: 32
-              payload_arguments:
-                - arg_type : region_group_size
-                  offset : 16
-                  size : 7
-)===";
-    auto err = decodeZeInfoKernelEntry(zeInfoRegionGroupSize);
-    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid size for argument of type region_group_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
-    EXPECT_TRUE(warnings.empty()) << warnings;
-
     ConstStringRef zeInfoRegionGroupDim = R"===(
         kernels:
             - name : some_kernel
@@ -5312,47 +5297,13 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsInvalidThenF
                   offset : 16
                   size : 7
 )===";
-    err = decodeZeInfoKernelEntry(zeInfoRegionGroupDim);
+    auto err = decodeZeInfoKernelEntry(zeInfoRegionGroupDim);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid size for argument of type region_group_dimension in context of : some_kernel. Expected 4. Got : 7\n", errors.c_str());
-    EXPECT_TRUE(warnings.empty()) << warnings;
-
-    ConstStringRef zeInfoRegionGroupCount = R"===(
-        kernels:
-            - name : some_kernel
-              execution_env:
-                simd_size: 32
-              payload_arguments:
-                - arg_type : region_group_wg_count
-                  offset : 16
-                  size : 7
-)===";
-    err = decodeZeInfoKernelEntry(zeInfoRegionGroupCount);
-    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid size for argument of type region_group_wg_count in context of : some_kernel. Expected 4. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenReturnSuccess) {
-    ConstStringRef zeInfoRegionGroupSize = R"===(
-        kernels:
-            - name : some_kernel
-              execution_env:
-                simd_size: 32
-              payload_arguments:
-                - arg_type : region_group_size
-                  offset : 16
-                  size : 12
-)===";
-    auto err = decodeZeInfoKernelEntry(zeInfoRegionGroupSize);
-    EXPECT_EQ(NEO::DecodeError::success, err);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_TRUE(warnings.empty()) << warnings;
-    for (uint32_t i = 0; i < 3; ++i) {
-        EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupSize[i]);
-    }
-    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
-
     ConstStringRef zeInfoRegionGroupDim = R"===(
         kernels:
             - name : some_kernel
@@ -5363,49 +5314,12 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
                   offset : 16
                   size : 4
 )===";
-    err = decodeZeInfoKernelEntry(zeInfoRegionGroupDim);
+    auto err = decodeZeInfoKernelEntry(zeInfoRegionGroupDim);
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupDimension);
-    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
-
-    ConstStringRef zeInfoRegionGroupCount = R"===(
-        kernels:
-            - name : some_kernel
-              execution_env:
-                simd_size: 32
-              payload_arguments:
-                - arg_type : region_group_wg_count
-                  offset : 16
-                  size : 4
-)===";
-    err = decodeZeInfoKernelEntry(zeInfoRegionGroupCount);
-    EXPECT_EQ(NEO::DecodeError::success, err);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_TRUE(warnings.empty()) << warnings;
-
-    EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupWgCount);
-    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
-
-    ConstStringRef zeInfoRegionGroupBarrier = R"===(
-        kernels:
-            - name : some_kernel
-              execution_env:
-                simd_size: 32
-              payload_arguments:
-                - arg_type : region_group_barrier_buffer
-                  offset : 16
-                  size : 8
-)===";
-    err = decodeZeInfoKernelEntry(zeInfoRegionGroupBarrier);
-    EXPECT_EQ(NEO::DecodeError::success, err);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_TRUE(warnings.empty()) << warnings;
-
-    EXPECT_EQ(16, kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless);
-    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
