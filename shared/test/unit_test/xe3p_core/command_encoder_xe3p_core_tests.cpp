@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -612,7 +612,6 @@ static void whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorr
     EncodeWalkerArgs walkerArgs{
         .kernelExecutionType = KernelExecutionType::concurrent,
         .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 113,
         .requiredSystemFence = true,
         .hasSample = false};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,21 +210,6 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
         walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK);
     } else {
         UNRECOVERABLE_IF(walkerArgs.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none);
-    }
-
-    if constexpr (heaplessModeEnabled) {
-        using QUANTUMSIZE = typename Family::COMPUTE_WALKER_2::QUANTUMSIZE;
-
-        auto quantumSize = static_cast<QUANTUMSIZE>(getQuantumSizeHw<Family, WalkerType>(walkerArgs.localRegionSize));
-
-        walkerCmd.setQuantumsize(quantumSize);
-
-        if (quantumSize != QUANTUMSIZE::QUANTUMSIZE_QUANTUM_DISPATCH_DISABLED) {
-            walkerCmd.setQuantumLocalityCheckEnable(true);
-            walkerCmd.getInterfaceDescriptor().setThreadPreemption(false);
-            DEBUG_BREAK_IF(walkerCmd.getThreadGroupBatchSize() != WalkerType::THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_1);
-            walkerCmd.setThreadGroupBatchSize(WalkerType::THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_1);
-        }
     }
 }
 

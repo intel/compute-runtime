@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, whenEncodeAdditionalWalkerFiel
     EncodeWalkerArgs walkerArgs{
         .kernelExecutionType = KernelExecutionType::concurrent,
         .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 113,
         .requiredSystemFence = true,
         .hasSample = false};

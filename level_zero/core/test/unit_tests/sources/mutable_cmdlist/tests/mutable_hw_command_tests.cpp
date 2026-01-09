@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -461,7 +461,6 @@ HWTEST2_F(MutableHwCommandTest,
     NEO::EncodeWalkerArgs encodeWalkerArgs{
         .kernelExecutionType = NEO::KernelExecutionType::defaultType,
         .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
-        .localRegionSize = NEO::localRegionSizeParamNotSet,
         .maxFrontEndThreads = neoDevice->getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = false,
         .hasSample = false};

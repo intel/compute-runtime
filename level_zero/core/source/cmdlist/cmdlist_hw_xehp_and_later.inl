@@ -402,7 +402,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
-        .localRegionSize = launchParams.localRegionSize,
         .partitionCount = this->partitionCount,
         .reserveExtraPayloadSpace = launchParams.reserveExtraPayloadSpace,
         .maxWgCountPerTile = maxWgCountPerTile,

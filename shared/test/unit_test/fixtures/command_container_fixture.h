@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .preemptionMode = PreemptionMode::Disabled,
             .requiredPartitionDim = NEO::RequiredPartitionDim::none,
             .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
-            .localRegionSize = NEO::localRegionSizeParamNotSet,
             .partitionCount = 1,
             .reserveExtraPayloadSpace = 0,
             .maxWgCountPerTile = 1,

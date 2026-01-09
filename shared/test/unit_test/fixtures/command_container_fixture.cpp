@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,6 @@ EncodeWalkerArgs CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(const
     EncodeWalkerArgs args{
         .kernelExecutionType = KernelExecutionType::defaultType,
         .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 0,
         .requiredSystemFence = false,
         .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample};

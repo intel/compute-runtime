@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -413,7 +413,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .argsExtended = args.extendedArgs,
         .kernelExecutionType = kernelExecutionType,
         .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
-        .localRegionSize = args.localRegionSize,
         .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = args.postSyncArgs.requiresSystemMemoryFence(),
         .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample,

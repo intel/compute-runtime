@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,6 @@ struct EncodeDispatchKernelArgs {
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
-    uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
     uint32_t partitionCount = 0u;
     uint32_t reserveExtraPayloadSpace = 0;
     uint32_t maxWgCountPerTile = 0;
@@ -175,7 +174,6 @@ struct EncodeWalkerArgs {
     EncodeKernelArgsExt *argsExtended = nullptr;
     KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
-    uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
     uint32_t maxFrontEndThreads = 0;
     bool requiredSystemFence = false;
     bool hasSample = false;

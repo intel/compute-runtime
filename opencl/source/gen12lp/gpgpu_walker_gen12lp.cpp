@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     EncodeWalkerArgs encodeWalkerArgs{
         .kernelExecutionType = kernel.getExecutionType(),
         .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 0,
         .requiredSystemFence = false,
         .hasSample = false};

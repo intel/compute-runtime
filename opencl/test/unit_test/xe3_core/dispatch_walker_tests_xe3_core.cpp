@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, whenEncodeAdditionalWalkerFieldsIsCal
     EncodeWalkerArgs walkerArgs{
         .kernelExecutionType = KernelExecutionType::concurrent,
         .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 113,
         .requiredSystemFence = true,
         .hasSample = false};
@@ -94,7 +93,6 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, givenHasSampleSetWhenEncodingExtraPar
     EncodeWalkerArgs walkerArgs{
         .kernelExecutionType = KernelExecutionType::defaultType,
         .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
-        .localRegionSize = 0,
         .maxFrontEndThreads = 0,
         .requiredSystemFence = false,
         .hasSample = false};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -294,7 +294,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
         NEO::EncodeWalkerArgs encodeWalkerArgs{
             .kernelExecutionType = kernelExecutionType,
             .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
-            .localRegionSize = NEO::localRegionSizeParamNotSet,
             .maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads,
             .requiredSystemFence = false,
             .hasSample = false};

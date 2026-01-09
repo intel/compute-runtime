@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,7 +165,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         .argsExtended = &argsExtended,
         .kernelExecutionType = kernel.getExecutionType(),
         .requiredDispatchWalkOrder = kernelAttributes.dispatchWalkOrder,
-        .localRegionSize = kernelAttributes.localRegionSize,
         .maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr,
         .hasSample = kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample};
