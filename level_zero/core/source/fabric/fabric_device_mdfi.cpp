@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 
@@ -16,18 +15,18 @@ namespace L0 {
 
 bool FabricDeviceMdfi::getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) {
 
-    DeviceImp *currentDeviceImp = static_cast<DeviceImp *>(device);
-    DeviceImp *neighborDeviceImp = static_cast<DeviceImp *>(neighborVertex->device);
+    Device *currentDevice = device;
+    Device *neighborDevice = neighborVertex->device;
 
     // Ignore root devices
-    if (!currentDeviceImp->isSubdevice || !neighborDeviceImp->isSubdevice) {
+    if (!currentDevice->isSubdevice || !neighborDevice->isSubdevice) {
         return false;
     }
 
     const uint32_t currRootDeviceIndex = device->getRootDeviceIndex();
     const uint32_t neighborRootDeviceIndex = neighborVertex->device->getRootDeviceIndex();
-    const uint32_t currSubDeviceId = static_cast<DeviceImp *>(device)->getPhysicalSubDeviceId();
-    const uint32_t neighborSubDeviceId = static_cast<DeviceImp *>(neighborVertex->device)->getPhysicalSubDeviceId();
+    const uint32_t currSubDeviceId = device->getPhysicalSubDeviceId();
+    const uint32_t neighborSubDeviceId = neighborVertex->device->getPhysicalSubDeviceId();
 
     if (currRootDeviceIndex == neighborRootDeviceIndex &&
         currSubDeviceId < neighborSubDeviceId) {

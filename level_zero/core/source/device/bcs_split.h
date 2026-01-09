@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ enum class TransferDirection;
 
 namespace L0 {
 struct CommandQueue;
-struct DeviceImp;
+struct Device;
 class BcsSplit;
 
 namespace BcsSplitParams {
@@ -104,11 +104,11 @@ class BcsSplit {
 
     bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled);
     void releaseResources();
-    DeviceImp &getDevice() const { return device; }
+    Device &getDevice() const { return device; }
 
     CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
 
-    BcsSplit(DeviceImp &device) : events(*this), device(device){};
+    BcsSplit(Device &device) : events(*this), device(device){};
 
   protected:
     std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction);
@@ -116,7 +116,7 @@ class BcsSplit {
     void setupEnginesMask();
     bool setupQueues();
 
-    DeviceImp &device;
+    Device &device;
     NEO::BcsSplitSettings splitSettings = {};
     uint32_t clientCount = 0u;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ TEST_F(MultipleDeviceQueryPeerAccessWddmTests, givenDeviceQueryPeerAccessThenRet
     void *handlePtr = nullptr;
     uint64_t handle = std::numeric_limits<uint64_t>::max();
 
-    bool canAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &handlePtr, &handle);
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &handlePtr, &handle);
     EXPECT_FALSE(canAccess);
 }
 

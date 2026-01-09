@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,10 +56,10 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0, false);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 1u);
 }
@@ -73,10 +73,10 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 2u);
 }
@@ -105,14 +105,14 @@ HWTEST2_F(DeviceCopyQueueGroupGen12LpTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = mockDevice.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
@@ -130,15 +130,15 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 3u);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = mockDevice.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
@@ -174,16 +174,16 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 3u);
 
     count = 2;
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = mockDevice.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(2u, count);
 
@@ -219,15 +219,15 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 2u);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = mockDevice.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
@@ -256,15 +256,15 @@ HWTEST2_F(CommandQueueGroupTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 2u);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = mockDevice.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ze_context_handle_t hContext;
@@ -292,7 +292,7 @@ HWTEST2_F(CommandQueueGroupTest,
         desc.commandQueueGroupOrdinal = i;
         ze_command_list_handle_t hCommandList = {};
 
-        res = context->createCommandList(&deviceImp, &desc, &hCommandList);
+        res = context->createCommandList(&mockDevice, &desc, &hCommandList);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         CommandList *commandList = CommandList::fromHandle(hCommandList);

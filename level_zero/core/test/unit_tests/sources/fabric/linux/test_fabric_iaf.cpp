@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/fabric/linux/fabric_device_iaf.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -53,14 +53,14 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenFabricVerticesAreCreatedThenEnu
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
 
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     subDeviceFabric->setIafNlApi(new MockIafNlApi());
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDeviceFabric->enumerate());
     delete subDeviceFabric;
 
-    FabricDeviceIaf *deviceFabric = new FabricDeviceIaf(deviceImp);
+    FabricDeviceIaf *deviceFabric = new FabricDeviceIaf(device);
     deviceFabric->subDeviceIafs[0]->setIafNlApi(new MockIafNlApi());
     EXPECT_EQ(ZE_RESULT_SUCCESS, deviceFabric->enumerate());
     delete deviceFabric;
@@ -73,9 +73,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenPortStatusQueryIsUnsuccessfulTh
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
 
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     MockIafNlApi *mockNlApi = new MockIafNlApi();
     mockNlApi->fPortStatusQueryStatus = ZE_RESULT_ERROR_UNKNOWN;
     subDeviceFabric->setIafNlApi(mockNlApi);
@@ -83,7 +83,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenPortStatusQueryIsUnsuccessfulTh
     EXPECT_EQ(subDeviceFabric->connections.size(), 0u);
     delete subDeviceFabric;
 
-    subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    subDeviceFabric = new FabricSubDeviceIaf(device);
     mockNlApi = new MockIafNlApi();
     mockNlApi->fPortStatusQueryStatus = ZE_RESULT_SUCCESS;
     mockNlApi->fPortStatusQueryHealthStatus = IAF_FPORT_HEALTH_DEGRADED;
@@ -100,9 +100,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenPortPropertiesQueryIsUnsuccessf
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
 
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     MockIafNlApi *mockNlApi = new MockIafNlApi();
     mockNlApi->fportPropertiesStatus = ZE_RESULT_ERROR_UNKNOWN;
     subDeviceFabric->setIafNlApi(mockNlApi);
@@ -118,9 +118,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenSubDevicePropertiesGetIsUnsucce
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
 
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     MockIafNlApi *mockNlApi = new MockIafNlApi();
     mockNlApi->subDevicePropertiesStatus = ZE_RESULT_ERROR_UNKNOWN;
     subDeviceFabric->setIafNlApi(mockNlApi);
@@ -135,9 +135,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenNoPortsCanBeEnumeratedThenRetur
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
 
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     MockIafNlApi *mockNlApi = new MockIafNlApi();
     mockNlApi->portEnumerationEnable = false;
     subDeviceFabric->setIafNlApi(mockNlApi);
@@ -150,9 +150,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenGetPortsReturnsErrorThenReturnE
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
-    auto deviceImp = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = driverHandle->devices[0];
 
-    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(deviceImp);
+    FabricSubDeviceIaf *subDeviceFabric = new FabricSubDeviceIaf(device);
     MockIafNlApi *mockNlApi = new MockIafNlApi();
     mockNlApi->getPortsStatus = ZE_RESULT_ERROR_UNKNOWN;
     subDeviceFabric->setIafNlApi(mockNlApi);

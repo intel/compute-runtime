@@ -3414,15 +3414,15 @@ TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledTh
     auto mockDrm = new DrmMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
     struct DebugSession : public DebugSessionLinuxXe {
         using DebugSessionLinuxXe::createTileSession;
         using DebugSessionLinuxXe::DebugSessionLinuxXe;
     };
-    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr, nullptr);
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &mockDevice, 10, nullptr, nullptr);
     ASSERT_NE(nullptr, session);
 
-    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
+    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &mockDevice, nullptr)};
     EXPECT_EQ(nullptr, tileSession);
 }
 
@@ -3522,7 +3522,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixtureXe : public DebugApiLinuxMultiDevice
         zet_debug_config_t config = {};
         config.pid = 0x1234;
 
-        session = std::make_unique<MockDebugSessionLinuxXe>(config, deviceImp, 10);
+        session = std::make_unique<MockDebugSessionLinuxXe>(config, l0Device, 10);
         ASSERT_NE(nullptr, session);
         session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
 

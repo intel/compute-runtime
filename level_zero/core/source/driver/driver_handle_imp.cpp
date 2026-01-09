@@ -29,7 +29,7 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/core/source/driver/extension_injector.h"
@@ -504,8 +504,7 @@ void DriverHandleImp::setupDevicesToExpose() {
                 continue;
             }
 
-            auto deviceImpl = static_cast<DeviceImp *>(device);
-            numDevices += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
+            numDevices += (device->numSubDevices > 0 ? device->numSubDevices : 1u);
         }
     } else {
         numDevices = this->numDevices;
@@ -514,16 +513,14 @@ void DriverHandleImp::setupDevicesToExpose() {
     this->devicesToExpose.reserve(numDevices);
 
     for (auto device : devices) {
-
-        auto deviceImpl = static_cast<DeviceImp *>(device);
-        if (deviceImpl->numSubDevices > 0 && exposeSubDevices) {
+        if (device->numSubDevices > 0 && exposeSubDevices) {
 
             if (device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->isExposeSingleDeviceMode()) {
                 this->devicesToExpose.push_back(device);
                 continue;
             }
 
-            for (auto subdevice : deviceImpl->subDevices) {
+            for (auto subdevice : device->subDevices) {
                 this->devicesToExpose.push_back(subdevice);
             }
         } else {
@@ -822,13 +819,12 @@ bool DriverHandleImp::isRemoteImageNeeded(Image *image, Device *device) {
 }
 
 ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **peerImage) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     auto imageAllocPtr = reinterpret_cast<const void *>(image->getAllocation()->getGpuAddress());
 
-    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerImageAllocationsMutex);
+    std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (deviceImp->peerImageAllocations.find(imageAllocPtr) != deviceImp->peerImageAllocations.end()) {
-        *peerImage = deviceImp->peerImageAllocations[imageAllocPtr];
+    if (device->peerImageAllocations.find(imageAllocPtr) != device->peerImageAllocations.end()) {
+        *peerImage = device->peerImageAllocations[imageAllocPtr];
     } else {
         uint64_t handle = 0;
 
@@ -852,7 +848,7 @@ ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        deviceImp->peerImageAllocations.insert(std::make_pair(imageAllocPtr, *peerImage));
+        device->peerImageAllocations.insert(std::make_pair(imageAllocPtr, *peerImage));
     }
 
     return ZE_RESULT_SUCCESS;
@@ -863,14 +859,14 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             void *basePtr,
                                                             uintptr_t *peerGpuAddress,
                                                             NEO::SvmAllocationData **peerAllocData) {
-    return getPeerAllocation(device, static_cast<DeviceImp *>(device)->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData);
+    return getPeerAllocation(device, device->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData);
 }
 
 NEO::GraphicsAllocation *DriverHandleImp::getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation) {
     NEO::SvmAllocationData allocData(graphicsAllocation.getRootDeviceIndex());
     allocData.gpuAllocations.addAllocation(&graphicsAllocation);
 
-    return getPeerAllocation(device, static_cast<DeviceImp *>(device)->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr);
+    return getPeerAllocation(device, device->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr);
 }
 
 NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
@@ -1000,12 +996,11 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
 
 void DriverHandleImp::initializeVertexes() {
     for (auto &device : this->devices) {
-        auto deviceImpl = static_cast<DeviceImp *>(device);
         auto fabricVertex = FabricVertex::createFromDevice(device);
         if (fabricVertex == nullptr) {
             continue;
         }
-        deviceImpl->setFabricVertex(fabricVertex);
+        device->setFabricVertex(fabricVertex);
         this->fabricVertices.push_back(fabricVertex);
     }
 

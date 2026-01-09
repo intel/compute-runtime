@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
@@ -105,7 +105,6 @@ uint32_t DebugSession::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
 }
 
 ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
     const auto &topologyMap = getTopologyMap();
 
     // set slice for single slice config to allow subslice remapping
@@ -116,10 +115,10 @@ ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_
 
     if (thread.slice != UINT32_MAX) {
         if (thread.subslice != UINT32_MAX) {
-            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
+            connectedDevice->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
         } else {
             uint32_t dummy = 0;
-            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
+            connectedDevice->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
         }
     }
 
@@ -127,21 +126,18 @@ ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_
 }
 
 EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
     UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
 
     uint32_t deviceIndex = 0;
-    deviceImp->toPhysicalSliceId(getTopologyMap(), thread.slice, thread.subslice, deviceIndex);
+    connectedDevice->toPhysicalSliceId(getTopologyMap(), thread.slice, thread.subslice, deviceIndex);
 
     EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
     return threadId;
 }
 
 ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
-
     ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
-    deviceImp->toApiSliceId(getTopologyMap(), thread.slice, thread.subslice, threadId.tileIndex);
+    connectedDevice->toApiSliceId(getTopologyMap(), thread.slice, thread.subslice, threadId.tileIndex);
 
     return thread;
 }

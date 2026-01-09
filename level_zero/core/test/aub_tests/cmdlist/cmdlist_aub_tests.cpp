@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -395,7 +395,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
     zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
 
-    auto bcsSplit = static_cast<DeviceImp *>(rootDevice)->bcsSplit.get();
+    auto bcsSplit = static_cast<Device *>(rootDevice)->bcsSplit.get();
     ASSERT_NE(nullptr, bcsSplit);
 
     auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);
@@ -535,7 +535,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
     zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
 
-    auto bcsSplit = static_cast<DeviceImp *>(rootDevice)->bcsSplit.get();
+    auto bcsSplit = static_cast<Device *>(rootDevice)->bcsSplit.get();
     ASSERT_NE(nullptr, bcsSplit);
 
     auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);

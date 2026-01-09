@@ -1079,7 +1079,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
     expectedEnginesCount = 2;
     debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
 
-    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
 
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
@@ -1091,7 +1091,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
 HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineSetToOneWhenSelectingQueueThenReturnAllQueues, IsAtLeastXeHpcCore) {
     debugManager.flags.SplitBcsPerEngineMaxSize.set(1);
 
-    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
     constexpr TransferDirection direction = TransferDirection::hostToLocal;
@@ -1113,7 +1113,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineGreaterThanOneWhenSe
     debugManager.flags.SplitBcsMaskH2D.set(static_cast<int32_t>(0b11110));
     debugManager.flags.SplitBcsMask.set(static_cast<int32_t>(0b11110));
 
-    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
     constexpr TransferDirection direction = TransferDirection::hostToLocal;
@@ -1392,7 +1392,7 @@ HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeede
 HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhenInitializingThenEnableInBcsSplitObject, IsAtLeastXeHpcCore) {
     debugManager.flags.SplitBcsAggregatedEventsMode.set(-1);
 
-    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
 
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 

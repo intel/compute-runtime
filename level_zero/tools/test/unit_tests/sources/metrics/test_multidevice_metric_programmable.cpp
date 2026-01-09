@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,14 +39,14 @@ class OaMultiDeviceMetricProgrammableFixture : public MultiDeviceFixture,
 void OaMultiDeviceMetricProgrammableFixture::TearDown() {
     MultiDeviceFixture::tearDown();
 
-    auto &deviceImp = *static_cast<DeviceImp *>(rootDevice);
-    auto &rootDeviceOaSourceImp = deviceImp.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &l0Device = *static_cast<Device *>(rootDevice);
+    auto &rootDeviceOaSourceImp = l0Device.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     auto rootDeviceMetricEnumeration = static_cast<MetricEnumeration *>(&rootDeviceOaSourceImp.getMetricEnumeration());
     rootDeviceMetricEnumeration->cleanupExtendedMetricInformation();
 
     for (auto &subDevice : subDevices) {
-        auto &subDeviceImp = *static_cast<DeviceImp *>(subDevice);
-        auto &subDeviceOaSourceImp = subDeviceImp.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &subDeviceRef = *static_cast<Device *>(subDevice);
+        auto &subDeviceOaSourceImp = subDeviceRef.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto subDeviceMetricEnumeration = static_cast<MetricEnumeration *>(&subDeviceOaSourceImp.getMetricEnumeration());
         subDeviceMetricEnumeration->cleanupExtendedMetricInformation();
     }
@@ -95,16 +95,16 @@ void OaMultiDeviceMetricProgrammableFixture::SetUp() {
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
 
     rootDevice = driverHandle->devices[0];
-    auto &deviceImp = *static_cast<DeviceImp *>(rootDevice);
-    auto &rootDeviceOaSourceImp = deviceImp.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &l0Device = *static_cast<Device *>(rootDevice);
+    auto &rootDeviceOaSourceImp = l0Device.getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     rootDeviceOaSourceImp.setInitializationState(ZE_RESULT_SUCCESS);
     auto rootDeviceMetricEnumeration = static_cast<MetricEnumeration *>(&rootDeviceOaSourceImp.getMetricEnumeration());
     rootDeviceMetricEnumeration->setInitializationState(ZE_RESULT_SUCCESS);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     for (uint32_t i = 0; i < subDeviceCount; i++) {
-        subDevices.push_back(deviceImp.subDevices[i]);
-        auto deviceContext = new MetricDeviceContext(*deviceImp.subDevices[i]);
+        subDevices.push_back(l0Device.subDevices[i]);
+        auto deviceContext = new MetricDeviceContext(*l0Device.subDevices[i]);
         auto oaMetricSource = static_cast<OaMetricSourceImp *>(&deviceContext->getMetricSource<OaMetricSourceImp>());
         auto metricEnumeration = static_cast<MetricEnumeration *>(&oaMetricSource->getMetricEnumeration());
         metricEnumeration->setAdapterGroup(&mockAdapterGroup);
@@ -113,7 +113,7 @@ void OaMultiDeviceMetricProgrammableFixture::SetUp() {
 
         MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = static_cast<MetricsDiscovery::IConcurrentGroup_1_13 &>(mockConcurrentGroup);
         EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
-        static_cast<DeviceImp *>(deviceImp.subDevices[i])->metricContext.reset(deviceContext);
+        static_cast<Device *>(l0Device.subDevices[i])->metricContext.reset(deviceContext);
     }
 }
 
@@ -948,7 +948,7 @@ struct MultiDeviceCreatedMetricGroupManagerTest : public MultiDeviceFixture,
         MultiDeviceFixture::numSubDevices = 2;
         MultiDeviceFixture::setUp();
         rootDevice = driverHandle->devices[0];
-        rootDeviceMetricContext = &(static_cast<DeviceImp *>(rootDevice)->getMetricDeviceContext());
+        rootDeviceMetricContext = &(static_cast<Device *>(rootDevice)->getMetricDeviceContext());
     }
 
     void TearDown() override {

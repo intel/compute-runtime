@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
@@ -295,7 +295,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnableMetricAPIOnUnsupportedPlat
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
-        static_cast<DeviceImp *>(device)->activateMetricGroups();
+        device->activateMetricGroups();
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
     }
 }
@@ -316,7 +316,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummy
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
-        static_cast<DeviceImp *>(device)->activateMetricGroups();
+        device->activateMetricGroups();
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
     }
 }
@@ -336,7 +336,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenMetri
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
-        static_cast<DeviceImp *>(device)->activateMetricGroups();
+        device->activateMetricGroups();
 
         // Disable Metrics
         EXPECT_EQ(zetDeviceDisableMetricsExp(device->toHandle()), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
@@ -373,7 +373,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenUnsup
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
-        static_cast<DeviceImp *>(device)->activateMetricGroups();
+        device->activateMetricGroups();
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zetCommandListAppendMarkerExp(nullptr, metricGroups[0], 0), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
@@ -1304,7 +1304,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulAndActiva
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
-        auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        auto &metricSource = (static_cast<Device *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
         MockMultiDomainDeferredActivationTracker *mockTracker = new MockMultiDomainDeferredActivationTracker(0);
         metricSource.setActivationTracker(mockTracker);
     }
@@ -1326,7 +1326,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsup
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
-        auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        auto &metricSource = (static_cast<Device *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
 
         char name[ZET_MAX_METRIC_GROUP_NAME] = {};
         char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};
@@ -1344,7 +1344,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsup
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
-        auto &deviceContext = (static_cast<DeviceImp *>(device))->getMetricDeviceContext();
+        auto &deviceContext = (static_cast<Device *>(device))->getMetricDeviceContext();
 
         char name[ZET_MAX_METRIC_GROUP_NAME] = {};
         char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};

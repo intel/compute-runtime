@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -149,8 +149,8 @@ TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThen
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &mockDevice);
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 0, 0)));
     EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 1, numSubslicesPerSlice - 1, 7, 0)));
@@ -167,8 +167,8 @@ TEST(DeviceWithDebugSessionTest, GivenDeviceWithDebugSessionWhenCallingReleaseRe
 
     zet_debug_config_t config = {};
     auto session = new DebugSessionMock(config, device.get());
-    static_cast<DeviceImp *>(device.get())->setDebugSession(session);
-    static_cast<DeviceImp *>(device.get())->releaseResources();
+    static_cast<Device *>(device.get())->setDebugSession(session);
+    static_cast<Device *>(device.get())->releaseResources();
 
     EXPECT_TRUE(session->closeConnectionCalled);
 }
@@ -184,9 +184,9 @@ TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     size_t bitmaskSize = 32;
@@ -206,9 +206,9 @@ TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvai
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -228,9 +228,9 @@ TEST(DebugSessionTest, givenNoPendingInterruptWhenSendInterruptCalledThenInterru
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->interruptSent = true;
 
     sessionMock->sendInterrupts();
@@ -243,9 +243,9 @@ TEST(DebugSessionTest, givenPendingInterruptWhenNewInterruptForThreadCalledThenE
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
 
@@ -261,9 +261,9 @@ TEST(DebugSessionTest, givenInterruptAlreadySentWhenSendInterruptCalledSecondTim
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     sessionMock->threadStopped = 0;
 
@@ -289,9 +289,9 @@ TEST(DebugSessionTest, givenInterruptRequestWhenInterruptImpFailsInSendInterrupt
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->interruptImpResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -316,9 +316,9 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 0};
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
@@ -366,9 +366,9 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 0};
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
@@ -404,9 +404,9 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     sessionMock->callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason = true;
 
@@ -482,9 +482,9 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->allThreads[thread]->stopThread(1u);
@@ -500,9 +500,9 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->skipReadSystemRoutineIdent = 1;
@@ -521,9 +521,9 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->skipReadSystemRoutineIdent = 1;
@@ -553,9 +553,9 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->threadStopped = 0;
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
@@ -570,9 +570,9 @@ TEST(DebugSessionTest, givenV3SipHeaderWhenCalculatingThreadOffsetThenCorrectRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, true, 3);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice, true, 3);
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
 
@@ -588,9 +588,9 @@ TEST(DebugSessionTest, givenSipHeaderGreaterThan3WhenCalculatingThreadOffsetThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, true, 3);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice, true, 3);
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data())->versionHeader;
@@ -605,9 +605,9 @@ TEST(DebugSessionTest, givenStoppedThreadAndNoSrMagicWhenAddingNewlyStoppedThenT
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->skipReadSystemRoutineIdent = false;
@@ -640,9 +640,9 @@ TEST(DebugSessionTest, givenStoppedThreadAndValidSrMagicWhenAddingNewlyStoppedTh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->skipReadSystemRoutineIdent = false;
@@ -678,9 +678,9 @@ TEST(DebugSessionTest, givenNoInterruptsSentWhenGenerateEventsAndResumeCalledThe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     sessionMock->interruptSent = false;
     sessionMock->triggerEvents = false;
@@ -695,9 +695,9 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     ze_device_thread_t apiThread2 = {0, 0, 1, 1};
@@ -732,9 +732,9 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, false});
@@ -762,9 +762,9 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, false});
@@ -787,9 +787,9 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCheckingThreadSta
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->readSystemRoutineIdentRetVal = false;
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
 
@@ -805,9 +805,9 @@ TEST(DebugSessionTest, givenPendingInterruptsWhenGeneratingEventsThenStoppedEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     ze_device_thread_t apiThread2 = {0, 0, 1, 1};
@@ -833,9 +833,9 @@ TEST(DebugSessionTest, givenEmptyStateSaveAreaWhenGetStateSaveAreaCalledThenRead
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     decltype(sessionMock->stateSaveAreaHeader) emptyHeader;
     sessionMock->stateSaveAreaHeader.swap(emptyHeader);
 
@@ -850,9 +850,9 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
     EuThread::ThreadId thread2 = {0, 0, 0, 1, 1};
@@ -901,9 +901,9 @@ TEST(DebugSessionTest, givenPFThreadWithAIPEqStartIPWhenCallingFillResumeAndStop
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
 
@@ -931,9 +931,9 @@ TEST(DebugSessionTest, givenDbgRegAndCRThenisAIPequalToThreadStartIPReturnsCorre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->callBaseisAIPequalToThreadStartIP = true;
     uint32_t dbg[4] = {0xDEADBEEF, 0, 0, 0};
     uint32_t cr[4] = {0, 0, 0xDEADBEEF, 0};
@@ -948,9 +948,9 @@ TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndS
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
 
@@ -987,9 +987,9 @@ TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     std::vector<EuThread::ThreadId> resumeThreads;
     std::vector<EuThread::ThreadId> stoppedThreads;
     std::vector<EuThread::ThreadId> interruptedThreads;
@@ -1015,9 +1015,9 @@ TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsC
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     sessionMock->skipCheckThreadIsResumed = false;
 
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
@@ -1046,9 +1046,9 @@ TEST(DebugSessionTest, givenCr0RegisterWhenIsFEOrFEHOnlyExceptionReasonThenTrueR
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cr0[1] = 1 << 26;
@@ -1074,9 +1074,9 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
 
@@ -1109,9 +1109,9 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -1156,9 +1156,9 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -1231,9 +1231,9 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
     auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
                 pStateSaveAreaHeader->regHeader.state_area_offset +
@@ -1283,9 +1283,9 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenRes
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->forceStateSaveAreaSize = 0;
 
     auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
@@ -1337,9 +1337,9 @@ TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     EuThread::ThreadId thread(0, apiThread);
@@ -1358,9 +1358,9 @@ TEST(DebugSessionTest, givenAllThreadsRunningWhenResumeCalledThenErrorUnavailabl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     ze_device_thread_t thread = {0, 0, 0, 1};
     auto result = sessionMock->resume(thread);
@@ -1373,9 +1373,9 @@ TEST(DebugSessionTest, givenErrorFromResumeImpWhenResumeCalledThenErrorReturned)
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
 
     ze_device_thread_t thread = {0, 0, 0, 1};
@@ -1392,9 +1392,9 @@ TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->readSbaBufferResult = ZE_RESULT_ERROR_UNKNOWN;
 
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -1409,9 +1409,9 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->readRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
 
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -1426,9 +1426,9 @@ HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledTh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->readRegistersSizeToFill = 6 * sizeof(uint32_t);
@@ -1464,9 +1464,9 @@ TEST(DebugSessionTest, givenNullptrStateSaveAreaGpuVaWhenCallingCheckIsThreadRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1484,9 +1484,9 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->skipReadSystemRoutineIdent = false;
@@ -1520,9 +1520,9 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->readSystemRoutineIdentRetVal = false;
@@ -1542,9 +1542,9 @@ TEST(DebugSessionTest, givenSipVersion1WhenCallingCheckThreadIsResumedWithSaveAr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->readSystemRoutineIdentRetVal = false;
@@ -1575,9 +1575,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1610,9 +1610,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1642,9 +1642,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterBiggerThanPreviousThenThreadIsResu
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1674,9 +1674,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterOverflowingZeroThenThreadIsResumed
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1697,11 +1697,11 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->writeRegistersResult = ZE_RESULT_SUCCESS;
@@ -1742,11 +1742,11 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->readRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->writeRegistersResult = ZE_RESULT_SUCCESS;
@@ -1789,11 +1789,11 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->writeRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1835,11 +1835,11 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->writeRegistersResult = ZE_RESULT_SUCCESS;
@@ -1889,9 +1889,9 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->writeRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1934,9 +1934,9 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &mockDevice);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->debugArea.reserved1 = 1u;
 
@@ -1972,8 +1972,8 @@ struct DebugSessionTestSwFifoFixture : public ::testing::Test {
         config.pid = 0x1234;
         auto hwInfo = *NEO::defaultHwInfo.get();
         NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-        MockDeviceImp deviceImp(neoDevice);
-        session = std::make_unique<MockDebugSession>(config, &deviceImp);
+        MockDeviceImp mockDevice(neoDevice);
+        session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
         stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
         stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoHead;
@@ -2153,8 +2153,8 @@ TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringF
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     session->stateSaveAreaHeader.clear();
     session->stateSaveAreaHeader.resize(stateSaveAreaHeader.size());
@@ -2176,8 +2176,8 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     // Declare node whose valid field is 0
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
@@ -2197,8 +2197,8 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     // Declare node whose valid field is 0
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
@@ -2213,9 +2213,9 @@ TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDeb
 
     const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
 
-    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    MockDeviceImp mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
 
-    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &mockDevice);
     session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
     session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
     session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
@@ -2229,8 +2229,8 @@ TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDeb
 TEST_F(DebugSessionTest, givenNoDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsNotDumped) {
     const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
 
-    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    MockDeviceImp mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &mockDevice);
 
     session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
     session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
@@ -2245,9 +2245,9 @@ TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadAndRead
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DumpDebugSurfaceFile.set(filePath);
 
-    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    MockDeviceImp mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
 
-    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &mockDevice);
     session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
 
@@ -2263,8 +2263,8 @@ TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderI
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     session->readMemoryBuffer.resize(stateSaveAreaHeader.size());
     memcpy_s(session->readMemoryBuffer.data(), session->readMemoryBuffer.size(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
@@ -2284,8 +2284,8 @@ TEST_F(DebugSessionTest, givenSsaHeaderVersionGreaterThan3WhenStateSaveAreIsRead
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     session->readMemoryBuffer.resize(stateSaveAreaHeader.size());
     memcpy_s(session->readMemoryBuffer.data(), session->readMemoryBuffer.size(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
@@ -2302,9 +2302,9 @@ TEST(DebugSessionTest, givenStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRun
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->allThreads[thread]->stopThread(1u);
@@ -2329,9 +2329,9 @@ TEST(DebugSessionTest, givenSizeBiggerThanPreviousWhenAllocatingStateSaveAreaMem
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EXPECT_EQ(0u, sessionMock->stateSaveAreaMemory.size());
     sessionMock->allocateStateSaveAreaMemory(0x1000);
@@ -2347,9 +2347,9 @@ TEST(DebugSessionTest, givenTheSameSizeWhenAllocatingStateSaveAreaMemoryThenNewM
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EXPECT_EQ(0u, sessionMock->stateSaveAreaMemory.size());
     sessionMock->allocateStateSaveAreaMemory(0x1000);
@@ -2368,9 +2368,9 @@ TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledT
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
@@ -2404,9 +2404,9 @@ TEST_F(MultiTileDebugSessionTest, givenThreadFromSingleTileWhenResumeCalledThenT
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadTile0]->stopThread(1u);
@@ -2456,9 +2456,9 @@ TEST_F(MultiTileDebugSessionTest, givenRunningThreadsWhenResumeCalledThenThreads
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
@@ -2478,9 +2478,9 @@ TEST_F(MultiTileDebugSessionTest, givenErrorFromResumeWithinDeviceWhenResumeCall
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
@@ -2507,9 +2507,9 @@ TEST_F(MultiTileDebugSessionTest, givenOneDeviceRequestWhenSendingInterruptsThen
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
     // Second subdevice's slice
@@ -2531,9 +2531,9 @@ TEST_F(MultiTileDebugSessionTest, givenTwoDevicesInRequestsWhenSendingInterrupts
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
 
@@ -2562,9 +2562,9 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenSendingInterruptsThe
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
     sessionMock->tileAttachEnabled = true;
@@ -2595,9 +2595,9 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenSendingInterruptsTh
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
 
@@ -2620,9 +2620,9 @@ TEST_F(MultiTileDebugSessionTest, givenTwoInterruptsSentWhenCheckingTriggerEvent
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
     ze_device_thread_t apiThread = {UINT32_MAX, 0, 0, 0};
@@ -2651,9 +2651,9 @@ TEST_F(MultiTileDebugSessionTest, givenTwoDevicesInRequestsWhenAllInterruptsRetu
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
     sessionMock->interruptImpResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -2693,9 +2693,9 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturn
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_ERROR_UNKNOWN;
 
@@ -2727,9 +2727,9 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
     ASSERT_NE(nullptr, sessionMock);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -2812,27 +2812,27 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveHeaderGreaterThanV3WhenC
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.fc);
-    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.msg);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.scalar);
-    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.msg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeaderV3.scalar);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockDevice.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
@@ -3065,27 +3065,27 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenT
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockDevice.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenGetSbaRegsetDescCalledThenNullIsReturned) {
@@ -3107,21 +3107,21 @@ using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.fc);
-    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
@@ -3129,7 +3129,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescC
     session->stateSaveAreaHeader.swap(emptyHeader);
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenValidRegisterWhenGettingSizeThenCorrectSizeIsReturned) {
@@ -3495,7 +3495,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRe
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     // Test switch label at line 1135 for version 3 - GRF case
-    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
 }
@@ -3507,55 +3507,55 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRe
     const SIP::regset_desc *result;
 
     // ADDR case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.addr);
 
     // FLAG case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.flag);
 
     // CE case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.emask);
 
     // SR case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sr);
 
     // CR case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.cr);
 
     // TDR case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.tdr);
 
     // ACC case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.acc);
 
     // MME case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.mme);
 
     // SP case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sp);
 
     // DBG case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
 
     // FC case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.fc);
 
     // SCALAR case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.scalar);
 
     // MSG case
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.msg);
 }
 
@@ -3563,7 +3563,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRe
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     // Test default case in switch (line 1135)
-    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, 999999, deviceImp.get()); // Invalid type
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, 999999, mockDevice.get()); // Invalid type
     EXPECT_EQ(nullptr, result);
 }
 
@@ -3571,12 +3571,12 @@ TEST_F(DebugSessionRegistersAccessTest, givenVersion2StateSaveAreaWhenTypeToRegs
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     // Test version < 3 path - should use regHeader instead of regHeaderV3
-    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.grf);
 
     // Test another case for version < 3
-    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get());
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.addr);
 }
 
@@ -3887,9 +3887,9 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
@@ -3952,9 +3952,9 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
@@ -4020,9 +4020,9 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
@@ -4204,13 +4204,13 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
         }
     };
 
-    MockDeviceImp deviceImp;
+    MockDeviceImp mockDevice;
     MockDebugSessionSlmV2 session;
     EuThread::ThreadId threadId;
     zet_debug_memory_space_desc_t memDesc;
 
-    DebugSessionSlmV2Test() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
-                              session(zet_debug_config_t{}, &deviceImp),
+    DebugSessionSlmV2Test() : mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                              session(zet_debug_config_t{}, &mockDevice),
                               threadId(0, 0, 0, 0, 0),
                               memDesc{.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM, .address = memDescAddress} {}
 
@@ -4424,9 +4424,9 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
@@ -4490,9 +4490,9 @@ TEST(DebugSessionTest, givenCanonicalOrDecanonizedAddressWhenCheckingValidAddres
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
 
     zet_debug_memory_space_desc_t desc;
     desc.address = 0xffffffff12345678;
@@ -4512,9 +4512,9 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
     auto gmmHelper = neoDevice->getGmmHelper();
     auto addressWidth = gmmHelper->getAddressWidth();
     uint64_t address = maxNBitValue(addressWidth) << 1 | 0x4000;
@@ -4608,9 +4608,9 @@ TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, false);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice, false);
     ASSERT_NE(nullptr, sessionMock);
 
     EXPECT_EQ(0u, sessionMock->allThreads.size());
@@ -4689,11 +4689,11 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDevic
     zet_debug_session_handle_t debugSession = nullptr;
 
     L0::Device *device = driverHandle->devices[0];
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
     auto sessionMock = new MockDebugSession(config, device, true);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
 
@@ -4713,12 +4713,12 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     L0::Device *device = driverHandle->devices[0];
     auto neoDevice = device->getNEODevice();
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
     auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
     auto subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
@@ -4733,7 +4733,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
     EXPECT_EQ(sessionMock->tileSessions[0].first, L0::DebugSession::fromHandle(debugSession0));
     EXPECT_TRUE(sessionMock->tileSessions[0].first->isAttached());
 
-    EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
+    EXPECT_NE(nullptr, l0Device->getDebugSession(config));
 
     EXPECT_FALSE(tileSession1->attachTileCalled);
     result = zetDebugAttach(subDevice1->toHandle(), &config, &debugSession1);
@@ -4751,7 +4751,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
     result = zetDebugDetach(debugSession1);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
+    EXPECT_NE(nullptr, l0Device->getDebugSession(config));
     EXPECT_FALSE(sessionMock->tileSessions[1].second);
     EXPECT_FALSE(sessionMock->tileSessions[1].first->isAttached());
 
@@ -4762,7 +4762,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
     result = zetDebugDetach(debugSession0);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(nullptr, deviceImp->getDebugSession(config));
+    EXPECT_EQ(nullptr, l0Device->getDebugSession(config));
 }
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDuringDebugSessionCreateThenErrorIsReturned) {
@@ -4774,12 +4774,12 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDurin
 
     L0::Device *device = driverHandle->devices[0];
     auto neoDevice = device->getNEODevice();
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
     auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     sessionMock->tileSessions[0].second = true;
 
@@ -4801,12 +4801,12 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedTileDeviceWhenAttachingToRootDevi
 
     L0::Device *device = driverHandle->devices[0];
     auto neoDevice = device->getNEODevice();
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
     auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
     auto result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession0);
@@ -4814,7 +4814,7 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedTileDeviceWhenAttachingToRootDevi
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, debugSession0);
 
-    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession1);
+    result = zetDebugAttach(l0Device->toHandle(), &config, &debugSession1);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 
     result = zetDebugDetach(debugSession0);
@@ -4831,16 +4831,16 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedRootDeviceWhenAttachingToTiletDev
 
     L0::Device *device = driverHandle->devices[0];
     auto neoDevice = device->getNEODevice();
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
     auto sessionMock = new MockDebugSession(config, device, true);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
 
-    auto result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSessionRoot);
+    auto result = zetDebugAttach(l0Device->toHandle(), &config, &debugSessionRoot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession0);
@@ -4857,12 +4857,12 @@ TEST_F(MultiTileDebugSessionTest, givenTileSessionAndStoppedThreadWhenGettingNot
 
     L0::Device *device = driverHandle->devices[0];
     auto neoDevice = device->getNEODevice();
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
     auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
-    deviceImp->setDebugSession(sessionMock);
+    l0Device->setDebugSession(sessionMock);
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     static_cast<MockDebugSession *>(sessionMock->tileSessions[0].first)->allThreads[thread]->stopThread(1u);
@@ -4900,9 +4900,9 @@ TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInt
     config.pid = 0x1234;
 
     L0::Device *device = driverHandle->devices[0];
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, l0Device);
 
     sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
     ze_device_thread_t apiThread = {0, 0, 0, 0};
@@ -4917,11 +4917,11 @@ TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInt
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
-    // Test with device that has no SIP external lib interface (default deviceImp)
+    // Test with device that has no SIP external lib interface (default mockDevice)
     SIP::intelgt_state_save_area_V3 ssa = {};
     ssa.sip_flags = 0; // No heapless flag set
 
-    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
     EXPECT_FALSE(result); // Should return false because no SIP interface and no heapless flag
 }
 
@@ -4929,7 +4929,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterf
     SIP::intelgt_state_save_area_V3 ssa = {};
     ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS;
 
-    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
     EXPECT_TRUE(result); // Should return true because of heapless flag
 }
 
@@ -4937,7 +4937,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterf
     SIP::intelgt_state_save_area_V3 ssa = {};
     ssa.sip_flags = 0; // No heapless flag set
 
-    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
     EXPECT_FALSE(result); // Should return false
 }
 
@@ -5023,7 +5023,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidCou
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithModeFlagsTypeThenReturnsModeFlagsRegsetDesc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get());
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(result, DebugSessionImp::getModeFlagsRegsetDesc());
 }
@@ -5031,7 +5031,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfa
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithDebugScratchTypeThenReturnsDebugScratchRegsetDesc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get());
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(result, DebugSessionImp::getDebugScratchRegsetDesc());
 }
@@ -5039,7 +5039,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfa
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithThreadScratchTypeThenReturnsThreadScratchRegsetDesc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get());
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(result, DebugSessionImp::getThreadScratchRegsetDesc());
 }
@@ -5047,7 +5047,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfa
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithSbaTypeThenReturnsSbaRegsetDesc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get());
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get());
     EXPECT_NE(nullptr, result);
     // The result should be the SBA regset descriptor from getSbaRegsetDesc
 }
@@ -5056,63 +5056,63 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfa
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     // Test with a register type that should go to the default case
-    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get());
     // For normal devices without SIP interface, this should return the regular GRF regset
     EXPECT_NE(result, nullptr);
     EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithoutSipLibInterfaceWhenCalledWithVersion3ThenReturnsCorrectRegsetDescForSwitchCases) {
-    // Use the normal deviceImp which should not have a SIP external lib interface
+    // Use the normal mockDevice which should not have a SIP external lib interface
 
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
     EXPECT_EQ(3u, pStateSaveAreaHeader->versionHeader.version.major);
 
     // Test some specific switch cases in the version 3 branch
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.grf);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.addr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.flag);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.emask);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.sr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.cr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.tdr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.acc);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.mme);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.sp);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.fc);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.scalar);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()),
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockDevice.get()),
               &pStateSaveAreaHeader->regHeaderV3.msg);
 
     // Test default case with invalid type
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x9999, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x9999, mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidParametersWhenCalledThenHandlesDecisionBranches) {
@@ -5154,13 +5154,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibBinaryFail());
 
     uint32_t count = 0; // query path
-    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 
     rootEnv.sipExternalLib.reset(originalSipLib);
@@ -5176,13 +5176,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibCreateMapFail());
 
     uint32_t count = 0; // initial query count path
-    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 
     rootEnv.sipExternalLib.reset(originalSipLib);
@@ -5204,17 +5204,17 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhen
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibMinimal());
 
     uint32_t count = 0;
-    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_GT(count, 0u);
     std::vector<zet_debug_regset_properties_t> props(count);
-    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, props.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     bool threadScratchFound = false;
     for (auto &p : props) {
@@ -5246,7 +5246,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhe
         }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     auto mockSipLib = new MockSipExternalLibAccess();
@@ -5279,7 +5279,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
@@ -5308,7 +5308,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
@@ -5339,7 +5339,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
@@ -5362,7 +5362,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAcce
         bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
         uint32_t getSipLibCommandRegisterType() override { return cmdType; }
     };
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibCmdType());
@@ -5381,7 +5381,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     header.versionHeader.version.major = 3;
     header.regHeaderV3.sip_flags = SIP::SIP_FLAG_HEAPLESS;
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->num, 0u);
@@ -5393,7 +5393,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     header.versionHeader.version.major = 3;
     header.regHeaderV3.sip_flags = 0; // Not heapless
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
@@ -5405,7 +5405,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     NEO::StateSaveAreaHeader header = {};
     header.versionHeader.version.major = 5;
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->num, 0u);
@@ -5416,7 +5416,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     NEO::StateSaveAreaHeader header = {};
     header.versionHeader.version.major = 2;
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
@@ -5428,7 +5428,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     NEO::StateSaveAreaHeader header = {};
     header.versionHeader.version.major = 6;
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     EXPECT_EQ(result, nullptr);
 }
@@ -5437,7 +5437,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     NEO::StateSaveAreaHeader header = {};
     header.versionHeader.version.major = 7;
 
-    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(mockDevice.get(), header);
 
     EXPECT_EQ(result, nullptr);
 }
@@ -5446,7 +5446,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGe
     // Test the false branch of: isHeaplessMode(device, pStateSaveArea->regHeaderV3) || version.major == 5
     // Version 3, no heapless flag, no SIP external lib -> THREAD_SCRATCH should NOT be included
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
 
@@ -5454,12 +5454,12 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGe
     rootEnv.sipExternalLib.reset(nullptr);
 
     uint32_t count = 0;
-    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_GT(count, 0u);
 
     std::vector<zet_debug_regset_properties_t> props(count);
-    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, props.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     bool threadScratchFound = false;
@@ -5496,7 +5496,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropert
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibForV5());
@@ -5522,12 +5522,12 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropert
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
 
     uint32_t count = 0;
-    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_GT(count, 0u);
 
     std::vector<zet_debug_regset_properties_t> props(count);
-    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, props.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     bool threadScratchFound = false;
@@ -5710,12 +5710,12 @@ struct DebugSessionBarrierMemTest : public ::testing::Test {
         }
     };
 
-    MockDeviceImp deviceImp;
+    MockDeviceImp mockDevice;
     MockDebugSessionBarrierMem session;
     EuThread::ThreadId threadId;
 
-    DebugSessionBarrierMemTest() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
-                                   session(zet_debug_config_t{}, &deviceImp),
+    DebugSessionBarrierMemTest() : mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                                   session(zet_debug_config_t{}, &mockDevice),
                                    threadId(0, 0, 0, 0, 0) {}
 
     void SetUp() override {

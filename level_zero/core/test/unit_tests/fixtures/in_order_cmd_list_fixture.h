@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -411,7 +411,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
         this->device = driverHandle->devices[0];
 
-        bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+        bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
     }
 
     uint32_t queryCopyOrdinal() {

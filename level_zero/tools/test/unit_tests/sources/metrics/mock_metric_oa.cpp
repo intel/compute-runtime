@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/test/common/mocks/mock_os_library.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
@@ -112,13 +112,13 @@ void MetricMultiDeviceFixture::setUp() {
     mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
     mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
     mockMetricEnumerationSubDevices.resize(subDeviceCount);
     mockMetricsLibrarySubDevices.resize(subDeviceCount);
 
     for (uint32_t i = 0; i < subDeviceCount; i++) {
-        auto &metricsSubDeviceContext = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsSubDeviceContext = l0Device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         mockMetricEnumerationSubDevices[i] = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricsSubDeviceContext));
         mockMetricEnumerationSubDevices[i]->setMockedApi(&mockMetricsDiscoveryApi);
         mockMetricEnumerationSubDevices[i]->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
@@ -128,7 +128,7 @@ void MetricMultiDeviceFixture::setUp() {
         mockMetricsLibrarySubDevices[i]->handle = std::make_unique<MockOsLibrary>();
 
         metricsSubDeviceContext.setInitializationState(ZE_RESULT_SUCCESS);
-        deviceImp.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
+        l0Device.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
     }
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
@@ -137,8 +137,8 @@ void MetricMultiDeviceFixture::setUp() {
 
 void MetricMultiDeviceFixture::tearDown() {
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     for (uint32_t i = 0; i < subDeviceCount; i++) {
 
@@ -204,12 +204,12 @@ void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDev
 void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {
 
     OaMetricStreamerImp *pStreamerImp = static_cast<OaMetricStreamerImp *>(MetricStreamer::fromHandle(hStreamer));
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto &l0Device = *static_cast<Device *>(devices[0]);
 
-    for (size_t index = 0; index < deviceImp.subDevices.size(); index++) {
+    for (size_t index = 0; index < l0Device.subDevices.size(); index++) {
         zet_metric_streamer_handle_t metricStreamerSubDeviceHandle = pStreamerImp->getMetricStreamers()[index];
         OaMetricStreamerImp *pStreamerSubDevImp = static_cast<OaMetricStreamerImp *>(MetricStreamer::fromHandle(metricStreamerSubDeviceHandle));
-        auto device = deviceImp.subDevices[index];
+        auto device = l0Device.subDevices[index];
         auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto &metricsLibrary = metricSource.getMetricsLibrary();
         metricSource.setMetricStreamer(nullptr);

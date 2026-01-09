@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,14 +112,14 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysm
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThenErrorReturnedWhileQueryingSysmanAPIs) {
     ze_device_handle_t hSysman = device->toHandle();
-    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
+    auto pSysmanDeviceOriginal = device->getSysmanHandle();
 
     // L0::SysmanDeviceHandleContext::init() would return nullptr as:
     // L0::SysmanDeviceHandleContext::init() --> sysmanDevice->init() --> pOsSysman->init() --> pSysfsAccess->getRealPath()
     // pSysfsAccess->getRealPath() would fail because pSysfsAccess is not mocked in this test case.
     auto pSysmanDeviceLocal = L0::SysmanDeviceHandleContext::init(hSysman);
     EXPECT_EQ(pSysmanDeviceLocal, nullptr);
-    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceLocal);
+    device->setSysmanHandle(pSysmanDeviceLocal);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEnumSchedulers(hSysman, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceProcessesGetState(hSysman, &count, nullptr));
@@ -160,13 +160,13 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThen
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceSetEccState(device, &newState, &props));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetEccState(device, &props));
-    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
+    device->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndSysmanHandleIsSetToNullWhenSysmanAPICalledThenErrorIsReturned) {
     ze_device_handle_t hSysman = device->toHandle();
-    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
-    static_cast<DeviceImp *>(device)->setSysmanHandle(nullptr);
+    auto pSysmanDeviceOriginal = device->getSysmanHandle();
+    device->setSysmanHandle(nullptr);
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::schedulerGet(hSysman, &count, nullptr));
@@ -207,7 +207,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndSysmanHandleIsSetToNullWhen
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceSetEccState(device, &newState, &props));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceGetEccState(device, &props));
-    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
+    device->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
 using MockDeviceSysmanGetTest = Test<DeviceFixture>;
@@ -899,9 +899,9 @@ TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHa
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
-    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
+    auto l0Device = static_cast<L0::Device *>(pLinuxSysmanImp->getDeviceHandle());
 
-    deviceImp->driverInfo.reset(nullptr);
+    l0Device->driverInfo.reset(nullptr);
     FirmwareUtil *pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
@@ -970,20 +970,20 @@ TEST_F(SysmanDeviceFixture, GivenDriverEventsUtilAsNullWhenSysmanDriverDestructo
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
     ze_device_handle_t hSysman = device->toHandle();
-    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
+    auto pSysmanDeviceOriginal = device->getSysmanHandle();
     auto pSysmanDeviceLocal = L0::SysmanDeviceHandleContext::init(hSysman);
     EXPECT_EQ(pSysmanDeviceLocal, nullptr);
-    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceLocal);
+    device->setSysmanHandle(pSysmanDeviceLocal);
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getSubDevices(&count, nullptr));
     std::vector<ze_device_handle_t> subDeviceHandles(count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getSubDevices(&count, subDeviceHandles.data()));
     for (auto subDeviceHandle : subDeviceHandles) {
-        L0::DeviceImp *subDeviceHandleImp = static_cast<DeviceImp *>(Device::fromHandle(subDeviceHandle));
+        L0::Device *subDeviceHandleImp = static_cast<Device *>(Device::fromHandle(subDeviceHandle));
         EXPECT_EQ(subDeviceHandleImp->getSysmanHandle(), device->getSysmanHandle());
     }
-    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
+    device->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {
@@ -999,19 +999,19 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
 TEST_F(SysmanMultiDeviceFixture, GivenSysmanEnvironmentVariableSetWhenCreateL0DeviceThenSysmanHandleCreateIsAttempted) {
     driverHandle->enableSysman = true;
     // In SetUp of SysmanMultiDeviceFixture, sysman handle for device is already created, so new sysman handle should not be created
-    static_cast<DeviceImp *>(device)->createSysmanHandle(true);
+    device->createSysmanHandle(true);
     EXPECT_EQ(device->getSysmanHandle(), pSysmanDevice);
 
-    static_cast<DeviceImp *>(device)->createSysmanHandle(false);
+    device->createSysmanHandle(false);
     EXPECT_EQ(device->getSysmanHandle(), pSysmanDevice);
 
     // delete previously allocated sysman handle and then attempt to create sysman handle again
     delete pSysmanDevice;
     device->setSysmanHandle(nullptr);
-    static_cast<DeviceImp *>(device)->createSysmanHandle(true);
+    device->createSysmanHandle(true);
     EXPECT_EQ(device->getSysmanHandle(), nullptr);
 
-    static_cast<DeviceImp *>(device)->createSysmanHandle(false);
+    device->createSysmanHandle(false);
     EXPECT_EQ(device->getSysmanHandle(), nullptr);
 }
 

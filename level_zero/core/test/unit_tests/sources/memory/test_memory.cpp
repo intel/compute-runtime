@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
@@ -179,11 +179,11 @@ struct IpcMemoryImplicitScalingTest : public ::testing::Test {
 TEST_F(IpcMemoryImplicitScalingTest,
        whenGettingAllocationProperityOfAnIpcBufferWithImplicitScalingThenTheSameSubDeviceIsNotReturned) {
     uint32_t nSubDevices = 0;
-    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->getSubDevices(&nSubDevices, nullptr));
+    L0::Device *l0Device = static_cast<L0::Device *>(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, l0Device->getSubDevices(&nSubDevices, nullptr));
     EXPECT_EQ(2u, nSubDevices);
     std::vector<ze_device_handle_t> subDevices(nSubDevices);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->getSubDevices(&nSubDevices, subDevices.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, l0Device->getSubDevices(&nSubDevices, subDevices.data()));
 
     for (auto subDevice : subDevices) {
         constexpr size_t size = 1ul << 18;
@@ -4561,8 +4561,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMPrepareIndirectAllocation
     L0::Device *device1 = driverHandle->devices[1];
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
-    L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    L0::Device *l0Device0 = static_cast<L0::Device *>(device0);
+    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4601,8 +4601,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWit
     L0::Device *device1 = driverHandle->devices[1];
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
-    L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    L0::Device *l0Device0 = static_cast<L0::Device *>(device0);
+    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4649,8 +4649,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsRes
     L0::Device *device1 = driverHandle->devices[1];
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
-    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
+    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     // disable device usm pooling - allocation will not be pooled but pool will be initialized
@@ -4694,8 +4694,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsRes
     L0::Device *device1 = driverHandle->devices[1];
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
-    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
+    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     // disable device usm pooling - allocation will not be pooled but pool will be initialized
@@ -4822,8 +4822,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenSubDeviceAllocationPassedToAppen
 
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device = driverHandle->devices[1];
-    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
-    L0::Device *device1 = deviceImp->subDevices[0];
+    L0::Device *l0Device = static_cast<L0::Device *>(device);
+    L0::Device *device1 = l0Device->subDevices[0];
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -5019,7 +5019,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
          givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceThenPeerAllocationIsUsed) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
-    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
+    L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -5040,19 +5040,19 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
     // set argument in device 1's list with ptr from device 0: peer allocation is created
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 1u);
+    EXPECT_EQ(static_cast<uint32_t>(l0Device1->peerAllocations.getNumAllocs()), 1u);
 
     // set argument in device 1's list with ptr1 from device 0: another peer allocation is created
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
+    EXPECT_EQ(static_cast<uint32_t>(l0Device1->peerAllocations.getNumAllocs()), 2u);
 
     // set argument in device 1's list with ptr from device 0 plus offset: no new peer allocation is created
     // since a peer allocation is already available
     void *ptrOffset = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4);
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptrOffset);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
+    EXPECT_EQ(static_cast<uint32_t>(l0Device1->peerAllocations.getNumAllocs()), 2u);
 
     result = context->freeMem(ptr1);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5187,17 +5187,17 @@ TEST_F(MultipleDevicePeerAllocationTest,
     auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
-    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+    Device *l0Device1 = static_cast<Device *>(device1);
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_NE(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     result = context->freeMem(ptr);
 
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_EQ(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_EQ(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5222,28 +5222,28 @@ TEST_F(MultipleDevicePeerAllocationTest,
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
 
-    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
-    EXPECT_EQ(0u, deviceImp1->peerAllocations.allocations.size());
+    Device *l0Device1 = static_cast<Device *>(device1);
+    EXPECT_EQ(0u, l0Device1->peerAllocations.allocations.size());
     auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
-    EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
+    EXPECT_EQ(1u, l0Device1->peerAllocations.allocations.size());
 
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_NE(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     uintptr_t peerGpuAddress2 = 0u;
     peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
-    EXPECT_EQ(1u, deviceImp1->peerAllocations.allocations.size());
+    EXPECT_EQ(1u, l0Device1->peerAllocations.allocations.size());
     EXPECT_EQ(peerGpuAddress, peerGpuAddress2);
 
     result = context->freeMem(ptr);
 
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_EQ(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_EQ(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

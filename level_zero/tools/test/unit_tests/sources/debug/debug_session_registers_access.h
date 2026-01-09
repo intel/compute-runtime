@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ struct DebugSessionRegistersAccess {
     ze_device_thread_t stoppedThread = {0, 0, 0, 0};
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
     std::unique_ptr<MockDebugSession> session;
-    std::unique_ptr<MockDeviceImp> deviceImp;
+    std::unique_ptr<MockDeviceImp> mockDevice;
     NEO::MockDevice *neoDevice = nullptr;
 };
 

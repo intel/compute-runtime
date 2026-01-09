@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1957,15 +1957,15 @@ HWTEST_F(CommandListCreate, givenCounterDeviceAllocFromDifferentRootDeviceWhenGe
     ASSERT_NE(counterDeviceAlloc.getRootDeviceIndex(), peerAllocation.getRootDeviceIndex());
     ASSERT_NE(counterDeviceAlloc.getGpuAddress(), peerAllocation.getGpuAddress());
 
-    auto deviceImp = static_cast<DeviceImp *>(this->device);
+    auto device = this->device;
     NEO::SvmAllocationData allocData(peerDeviceIndex);
     allocData.gpuAllocations.addAllocation(&peerAllocation);
-    deviceImp->peerCounterAllocations.allocations.insert({reinterpret_cast<void *>(peerAllocation.getGpuAddress()), allocData});
+    device->peerCounterAllocations.allocations.insert({reinterpret_cast<void *>(peerAllocation.getGpuAddress()), allocData});
 
     auto result = commandList->getDeviceCounterAllocForResidency(&peerAllocation);
     EXPECT_EQ(result->getGpuAddress(), peerAllocation.getGpuAddress());
 
-    deviceImp->peerCounterAllocations.remove(allocData);
+    device->peerCounterAllocations.remove(allocData);
 }
 
 HWTEST_F(CommandListCreate, givenNullptrPeerAllocationWhenGetDeviceCounterAllocForResidencyThenAbortIsThrown) {

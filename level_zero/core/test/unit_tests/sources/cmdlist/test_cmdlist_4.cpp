@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1280,7 +1280,7 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingRegu
 HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    reinterpret_cast<L0::DeviceImp *>(device)->createInternalCommandList(&desc, &commandList);
+    reinterpret_cast<L0::Device *>(device)->createInternalCommandList(&desc, &commandList);
     auto whiteboxCommandList = reinterpret_cast<WhiteBox<::L0::CommandListImp> *>(L0::CommandList::fromHandle(commandList));
     EXPECT_TRUE(whiteboxCommandList->internalUsage);
     whiteboxCommandList->destroy();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
@@ -32,7 +32,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenInvalidMetricGroupTypeWhenZetMetricSt
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -186,8 +186,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetMetri
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    zet_device_handle_t metricDeviceHandle = l0Device.subDevices[0]->toHandle();
 
     ze_event_handle_t eventHandle = {};
 
@@ -198,7 +198,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetMetri
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -284,7 +284,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -346,8 +346,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 TEST_F(MetricStreamerMultiDeviceTest, GivenSubDeviceMetricHandleWhenCallingZetContextActivateMetricGroupsWithRootDeviceMetricGroupsThenCallFails) {
 
     zet_device_handle_t metricDeviceHandle = devices[0]->toHandle();
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    zet_device_handle_t metricSubDeviceDeviceHandle = deviceImp.subDevices[0]->toHandle();
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    zet_device_handle_t metricSubDeviceDeviceHandle = l0Device.subDevices[0]->toHandle();
 
     zet_metric_group_handle_t metricGroupHandle{};
 
@@ -414,7 +414,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsAndCloseIoStreamFailsWh
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -512,7 +512,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -589,8 +589,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCalledThenReturnsSuccess) {
 
     zet_device_handle_t metricDeviceHandle = devices[0]->toHandle();
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     ze_event_handle_t eventHandle = {};
 
@@ -601,7 +601,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -696,8 +696,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
 TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCalledAndReadIoStreamFailsThenReturnsFailure) {
 
     zet_device_handle_t metricDeviceHandle = devices[0]->toHandle();
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     ze_event_handle_t eventHandle = {};
 
@@ -708,7 +708,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
@@ -794,7 +794,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenMultipleMarkerInsertionsWhenZetComman
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();

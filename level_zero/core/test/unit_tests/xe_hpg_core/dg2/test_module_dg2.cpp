@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -40,7 +40,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
          false,
          false,
          device->getNEODevice()->getDeviceBitfield()});
-    static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
+    static_cast<L0::Device *>(device)->setDebugSurface(debugSurface);
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -89,7 +89,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
          false,
          false,
          device->getNEODevice()->getDeviceBitfield()});
-    static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
+    static_cast<L0::Device *>(device)->setDebugSurface(debugSurface);
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 

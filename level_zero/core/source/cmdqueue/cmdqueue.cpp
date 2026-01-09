@@ -25,7 +25,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
@@ -202,7 +201,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNa
 
 void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
     for (auto &kernelWeakPtr : this->printfKernelContainer) {
-        std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(this->getDevice())->printfKernelMutex);
+        std::lock_guard<std::mutex> lock(this->getDevice()->printfKernelMutex);
         if (!kernelWeakPtr.expired()) {
             kernelWeakPtr.lock()->printPrintfOutput(hangDetected);
         }

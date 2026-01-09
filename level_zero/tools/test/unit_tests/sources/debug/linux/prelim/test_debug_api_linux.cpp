@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,9 +160,9 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     ASSERT_NE(nullptr, sessionMock);
 
     // Only one SS will be active if maxSS == 2
@@ -214,9 +214,9 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlic
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     ASSERT_NE(nullptr, sessionMock);
 
     ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
@@ -265,8 +265,8 @@ TEST(DebugSessionLinuxi915Test, GivenDeviceWithSingleSliceWhenCallingAreRequeste
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    MockDeviceImp mockDevice(neoDevice);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     ASSERT_NE(nullptr, sessionMock);
 
     ze_device_thread_t thread = {UINT32_MAX, 0, 0, 0};
@@ -377,17 +377,17 @@ TEST(DebugSessionLinuxi915Test, GivenRootDebugSessionWhenCreateTileSessionCalled
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
     struct DebugSession : public DebugSessionLinuxi915 {
         using DebugSessionLinuxi915::createTileSession;
         using DebugSessionLinuxi915::DebugSessionLinuxi915;
     };
 
-    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &mockDevice, 10, nullptr);
     ASSERT_NE(nullptr, session);
 
-    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
+    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &mockDevice, nullptr)};
     EXPECT_NE(nullptr, tileSession);
 }
 
@@ -399,9 +399,9 @@ TEST(DebugSessionLinuxi915Test, GivenRootLinuxSessionWhenCallingTileSepcificFunc
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     ASSERT_NE(nullptr, sessionMock);
 
     EXPECT_THROW(sessionMock->attachTile(), std::exception);
@@ -416,9 +416,9 @@ TEST(DebugSessionLinuxi915Test, GivenContextStateSaveAreaBindInfoWhenGettingCSSA
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     ASSERT_NE(nullptr, sessionMock);
 
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -976,12 +976,12 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice);
-    auto mockSession = new MockDebugSessionLinuxi915(config, &deviceImp, 10);
+    MockDeviceImp mockDevice(neoDevice);
+    auto mockSession = new MockDebugSessionLinuxi915(config, &mockDevice, 10);
     mockSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-    deviceImp.debugSession.reset(mockSession);
+    mockDevice.debugSession.reset(mockSession);
 
-    zet_debug_session_handle_t session = deviceImp.debugSession->toHandle();
+    zet_debug_session_handle_t session = mockDevice.debugSession->toHandle();
 
     zet_debug_event_t event = {};
     auto result = L0::DebugApiHandlers::debugReadEvent(session, 0, &event);
@@ -7987,7 +7987,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebug
 
     zet_debug_config_t config = {};
 
-    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 1);
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 1);
     auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
@@ -8012,7 +8012,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebug
 TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSessionInitializedThenEuThreadsAreCreated) {
     zet_debug_config_t config = {};
 
-    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 1);
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 1);
     auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
@@ -8046,16 +8046,16 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootS
         return session;
     });
 
-    auto result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession);
+    auto result = zetDebugAttach(l0Device->toHandle(), &config, &debugSession);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, debugSession);
 
-    EXPECT_TRUE(deviceImp->getDebugSession(config)->isAttached());
+    EXPECT_TRUE(l0Device->getDebugSession(config)->isAttached());
 
-    auto session = static_cast<MockDebugSessionLinuxi915 *>(deviceImp->getDebugSession(config));
+    auto session = static_cast<MockDebugSessionLinuxi915 *>(l0Device->getDebugSession(config));
     EXPECT_FALSE(session->tileAttachEnabled);
 
-    result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    result = zetDebugAttach(l0Device->subDevices[0]->toHandle(), &config, &debugSession);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 
     zetDebugDetach(debugSession);
@@ -8073,16 +8073,16 @@ TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSe
         return session;
     });
 
-    auto result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    auto result = zetDebugAttach(l0Device->subDevices[0]->toHandle(), &config, &debugSession);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, debugSession);
 
-    EXPECT_FALSE(deviceImp->getDebugSession(config)->isAttached());
+    EXPECT_FALSE(l0Device->getDebugSession(config)->isAttached());
 
-    auto session = static_cast<MockDebugSessionLinuxi915 *>(deviceImp->getDebugSession(config));
+    auto session = static_cast<MockDebugSessionLinuxi915 *>(l0Device->getDebugSession(config));
     EXPECT_TRUE(session->tileAttachEnabled);
 
-    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSessionRoot);
+    result = zetDebugAttach(l0Device->toHandle(), &config, &debugSessionRoot);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_EQ(nullptr, debugSessionRoot);
 
@@ -8093,10 +8093,10 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, deviceImp);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, l0Device);
 
     auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
@@ -8139,7 +8139,7 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
     ASSERT_NE(nullptr, debugSession);
 
     ze_device_thread_t thread = {sliceCount * 2 - 1, 0, 0, 0};
@@ -8155,13 +8155,13 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
     EXPECT_EQ(UINT32_MAX, deviceIndex);
 
-    debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, deviceImp->subDevices[0], 10);
+    debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, l0Device->subDevices[0], 10);
 
     thread = {sliceCount - 1, 0, 0, 0};
     deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
     EXPECT_EQ(0u, deviceIndex);
 
-    debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, deviceImp->subDevices[1], 10);
+    debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, l0Device->subDevices[1], 10);
 
     thread = {sliceCount - 1, 0, 0, 0};
     deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
@@ -8175,7 +8175,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceAndInterruptSentForTileWh
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     sessionMock->createTileSessionsIfEnabled();
@@ -8247,7 +8247,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         zet_debug_config_t config = {};
         config.pid = 0x1234;
 
-        session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+        session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
         ASSERT_NE(nullptr, session);
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -8267,7 +8267,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         auto handler = new MockIoctlHandlerI915;
         session->ioctlHandler.reset(handler);
 
-        uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+        uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
         DebugSessionLinuxi915::UuidData isaUuidData = {
             .handle = isaUUID,
@@ -8330,7 +8330,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8366,7 +8366,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8412,7 +8412,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8465,7 +8465,7 @@ struct RootSessionTileFixture : public DebugApiLinuxMultiDeviceFixture, public M
 
         zet_debug_config_t config = {};
         config.pid = 0x1234;
-        rootSession = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+        rootSession = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
         ASSERT_NE(nullptr, rootSession);
         rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
         rootSession->debugArea.isShared = true;
@@ -8573,7 +8573,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8620,7 +8620,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8664,7 +8664,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8705,7 +8705,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWitho
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getSubDevice(0)->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getSubDevice(0)->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8740,7 +8740,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8781,7 +8781,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemor
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8868,7 +8868,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanc
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8897,7 +8897,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanc
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalseReturned) {
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     zet_debug_memory_space_desc_t desc;
     desc.address = isaGpuVa;
@@ -8915,7 +8915,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAdd
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -8952,7 +8952,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+    uint32_t devices = static_cast<uint32_t>(l0Device->getNEODevice()->getDeviceBitfield().to_ulong());
 
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
@@ -9069,7 +9069,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
-    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
+    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, l0Device, 10);
     auto handler = new MockIoctlHandlerI915;
     debugSession->ioctlHandler.reset(handler);
 
@@ -9098,7 +9098,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
 }
 
 TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
-    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
+    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, l0Device, 10);
 
     uint64_t ctxHandle = 2;
     uint64_t vmHandle = 7;
@@ -9129,7 +9129,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitf
 }
 
 TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
-    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
+    auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, l0Device, 10);
 
     uint64_t ctxHandle = 2;
     uint64_t vmHandle = 7;
@@ -9162,15 +9162,15 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBit
 
 struct DebugApiLinuxTestSlm : public DebugApiLinuxTest {
     NEO::MockDevice *neoDevice;
-    MockDeviceImp deviceImp;
+    MockDeviceImp mockDevice;
     MockDebugSessionLinuxi915 session;
     ze_device_thread_t zeThreadId;
     zet_debug_memory_space_desc_t desc;
     std::vector<uint8_t> buffer;
 
     DebugApiLinuxTestSlm() : neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0)),
-                             deviceImp(neoDevice),
-                             session(zet_debug_config_t{1234}, &deviceImp, 10),
+                             mockDevice(neoDevice),
+                             session(zet_debug_config_t{1234}, &mockDevice, 10),
                              zeThreadId(0, 1, 2, 3),
                              desc{.type = ZET_DEBUG_MEMORY_SPACE_TYPE_FORCE_UINT32, .address = 0x1000},
                              buffer(64) {
@@ -9265,12 +9265,12 @@ struct DebugApiSlmAccessProtocolTest : public ::testing::Test {
         }
     };
 
-    MockDeviceImp deviceImp;
+    MockDeviceImp mockDevice;
     MockDebugSessionSlm session;
     EuThread::ThreadId threadId;
     zet_debug_memory_space_desc_t desc;
-    DebugApiSlmAccessProtocolTest() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
-                                      session(zet_debug_config_t{}, &deviceImp, 0),
+    DebugApiSlmAccessProtocolTest() : mockDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                                      session(zet_debug_config_t{}, &mockDevice, 0),
                                       threadId(1, 2, 3, 4, 5) {}
 };
 

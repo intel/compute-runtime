@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -218,7 +218,7 @@ struct MultiDeviceQueryPeerAccessDrmFixture {
         TempAlloc(NEO::Device &device) : neoDevice(device) {}
         ~TempAlloc() {
             if (handlePtr) {
-                MockDeviceImp::freeMemoryAllocation(neoDevice, handlePtr);
+                MockDevice::freeMemoryAllocation(neoDevice, handlePtr);
             }
         }
     };
@@ -246,7 +246,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenTwoRootDevicesFromSameFamilyT
     EXPECT_EQ(family0, family1);
 
     TempAlloc alloc(*device0->getNEODevice());
-    bool canAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     ASSERT_NE(nullptr, alloc.handlePtr);
     EXPECT_TRUE(canAccess);
@@ -255,8 +255,8 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenTwoRootDevicesFromSameFamilyT
 TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenQueryPeerAccessCalledTwiceThenQueryPeerAccessReturnsTheSameValueEachTime) {
     TempAlloc alloc(*device0->getNEODevice());
 
-    bool firstAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
-    bool secondAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool firstAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool secondAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     EXPECT_EQ(firstAccess, secondAccess);
 }
@@ -268,7 +268,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenDeviceFailsAllocateMemoryThen
     VariableBackup<ze_context_handle_t> backupContext(&driverHandle->defaultContext, failingContext.toHandle());
 
     TempAlloc alloc(*device0->getNEODevice());
-    bool canAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     EXPECT_FALSE(canAccess);
     EXPECT_EQ(1u, failingContext.allocDeviceMemCalled);
@@ -278,7 +278,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenDeviceFailsImportFdHandleThen
     driverHandle->importFdHandleResult = nullptr;
 
     TempAlloc alloc(*device0->getNEODevice());
-    bool canAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     EXPECT_FALSE(canAccess);
     EXPECT_EQ(1u, driverHandle->importFdHandleCalled);
@@ -288,7 +288,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenDeviceFailPeekInternalHandleT
     TempAlloc alloc(*device0->getNEODevice());
 
     currMemoryManager->failOnObtainFdFromHandle = true;
-    bool canAccess = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     EXPECT_FALSE(canAccess);
 }

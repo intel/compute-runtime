@@ -2213,7 +2213,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForInterna
     auto internalEngine = neoDevice->getInternalEngine();
     auto internalCsr = internalEngine.commandStreamReceiver;
 
-    reinterpret_cast<L0::DeviceImp *>(device)->createInternalCommandQueue(&desc, &commandQueueHandle);
+    reinterpret_cast<L0::Device *>(device)->createInternalCommandQueue(&desc, &commandQueueHandle);
     auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
     EXPECT_EQ(commandQueue->getCsr(), internalCsr);
     commandQueue->destroy();

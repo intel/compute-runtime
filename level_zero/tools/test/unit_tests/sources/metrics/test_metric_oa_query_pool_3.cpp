@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
@@ -27,7 +26,7 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricQueryPoolDestroyIs
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricSource);
 
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
@@ -182,7 +181,7 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricGroupDeactivateIsC
 TEST_F(MetricQueryPoolTest, givenMetricGroupIsActiveWhenQueryPoolDestroyIsCalledThenMetricLibraryIsNotReleased) {
 
     zet_device_handle_t metricDevice = device->toHandle();
-    auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -287,16 +286,16 @@ TEST_F(MetricQueryPoolTest, givenMetricGroupIsActiveWhenQueryPoolDestroyIsCalled
 
 TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto &l0Device = *static_cast<Device *>(devices[0]);
     auto subDevice = ClientOptionsData_1_0{};
     auto subDeviceIndex = ClientOptionsData_1_0{};
     auto subDeviceCount = ClientOptionsData_1_0{};
     auto workloadPartition = ClientOptionsData_1_0{};
 
     // Sub devices
-    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+    for (uint32_t i = 0, count = l0Device.numSubDevices; i < count; ++i) {
 
-        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricSource = l0Device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto &metricsLibrary = metricSource.getMetricsLibrary();
 
         metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
@@ -308,7 +307,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptio
         EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
 
         EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
-        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(deviceImp.numSubDevices, 1u));
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(l0Device.numSubDevices, 1u));
 
         EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
         EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, false);
@@ -317,16 +316,16 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptio
 
 TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWithWorkloadPartitionWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto &l0Device = *static_cast<Device *>(devices[0]);
     auto subDevice = ClientOptionsData_1_0{};
     auto subDeviceIndex = ClientOptionsData_1_0{};
     auto subDeviceCount = ClientOptionsData_1_0{};
     auto workloadPartition = ClientOptionsData_1_0{};
 
     // Sub devices
-    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+    for (uint32_t i = 0, count = l0Device.numSubDevices; i < count; ++i) {
 
-        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricSource = l0Device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto &metricsLibrary = metricSource.getMetricsLibrary();
 
         metricsLibrary.enableWorkloadPartition();
@@ -340,7 +339,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenSubDeviceWithWorkloadPartitionWhenGe
         EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
 
         EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
-        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(deviceImp.numSubDevices, 1u));
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, std::max(l0Device.numSubDevices, 1u));
 
         EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
         EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, true);
@@ -452,8 +451,8 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPo
 
 TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsAreEnumeratedThenWorkPartitionIsEnabledForSubdevices) {
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -515,7 +514,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsA
 
     for (uint32_t i = 0, count = subDeviceCount; i < count; ++i) {
 
-        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricSource = l0Device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto &metricsLibrary = metricSource.getMetricsLibrary();
         metricsLibrary.getSubDeviceClientOptions(subDeviceClientOptions, subDeviceIndexClientOptions,
                                                  subDeviceCountClientOptions, workloadPartitionClientOptions);
@@ -528,9 +527,9 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsA
     EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 1u);
 
-    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+    for (uint32_t i = 0, count = l0Device.numSubDevices; i < count; ++i) {
 
-        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricSource = l0Device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         auto &metricsLibrary = metricSource.getMetricsLibrary();
         metricsLibrary.getSubDeviceClientOptions(subDeviceClientOptions, subDeviceIndexClientOptions,
                                                  subDeviceCountClientOptions, workloadPartitionClientOptions);
@@ -544,8 +543,8 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    zet_device_handle_t metricDeviceHandle = l0Device.subDevices[0]->toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -647,10 +646,10 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    auto &l0Device = *static_cast<Device *>(devices[0]);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, deviceImp.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, l0Device.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};

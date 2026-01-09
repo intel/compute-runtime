@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/debug_env_reader.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 
 namespace L0 {
@@ -36,7 +36,7 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
 
     std::unique_lock<std::mutex> lock(debugSessionMutex);
 
-    auto rootSession = L0::Device::fromHandle(hDevice)->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>()->getDebugSession(*config);
+    auto rootSession = L0::Device::fromHandle(hDevice)->getNEODevice()->getRootDevice()->getSpecializedDevice<L0::Device>()->getDebugSession(*config);
 
     if (session && session->isAttached()) {
         if (session->getDebugConfig().pid != config->pid) {
@@ -82,7 +82,7 @@ ze_result_t debugDetach(zet_debug_session_handle_t hDebug) {
             delete session;
         } else {
             std::unique_lock<std::mutex> lock(debugSessionMutex);
-            auto rootL0Device = device->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>();
+            auto rootL0Device = device->getNEODevice()->getRootDevice()->getSpecializedDevice<L0::Device>();
             zet_debug_config_t dummy = {};
             auto rootSession = rootL0Device->getDebugSession(dummy);
             session->setDetached();

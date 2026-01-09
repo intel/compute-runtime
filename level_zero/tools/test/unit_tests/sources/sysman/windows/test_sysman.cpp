@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
@@ -38,9 +38,9 @@ TEST_F(SysmanDeviceFixture, GivenMockEnvValuesWhenGettingEnvValueThenCorrectValu
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
-    auto deviceImp = static_cast<L0::DeviceImp *>(pWddmSysmanImp->getDeviceHandle());
+    auto l0Device = static_cast<L0::Device *>(pWddmSysmanImp->getDeviceHandle());
 
-    deviceImp->driverInfo.reset(nullptr);
+    l0Device->driverInfo.reset(nullptr);
     FirmwareUtil *pFwUtilInterfaceOld = pWddmSysmanImp->pFwUtilInterface;
     pWddmSysmanImp->pFwUtilInterface = nullptr;
 

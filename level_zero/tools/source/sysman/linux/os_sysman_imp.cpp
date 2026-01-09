@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
@@ -332,13 +332,13 @@ void LinuxSysmanImp::releaseSysmanDeviceResources() {
 }
 
 void LinuxSysmanImp::releaseDeviceResources() {
-    auto devicePtr = static_cast<DeviceImp *>(pDevice);
+    auto devicePtr = pDevice;
     executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
     devicePciBdf = devicePtr->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
     rootDeviceIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
     releaseSysmanDeviceResources();
-    auto device = static_cast<DeviceImp *>(getDeviceHandle());
+    auto device = getDeviceHandle();
     executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
     device->releaseResources();
     executionEnvironment->memoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
@@ -382,7 +382,7 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
 
 ze_result_t LinuxSysmanImp::initDevice() {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = static_cast<DeviceImp *>(getDeviceHandle());
+    auto device = getDeviceHandle();
 
     auto neoDevice = NEO::DeviceFactory::createDevice(*executionEnvironment, devicePciBdf, rootDeviceIndex);
     if (neoDevice == nullptr) {

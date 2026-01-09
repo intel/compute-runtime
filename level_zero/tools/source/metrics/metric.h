@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,6 @@ static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_programmable_exp_handle_t
 
 namespace L0 {
 struct Device;
-struct DeviceImp;
 
 struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier-naming)
     constexpr static int32_t LOG_ERROR{1};      // NOLINT(readability-identifier-naming)
@@ -122,7 +121,7 @@ class MetricSource {
                                                                          std::vector<MetricImp *> &excludedMetrics);
 
     template <typename T>
-    ze_result_t activatePreferDeferredHierarchical(DeviceImp *deviceImp, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activatePreferDeferredHierarchical(Device *device, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;

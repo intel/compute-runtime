@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMulti
 
     EXPECT_TRUE(device->isImplicitScalingCapable());
 
-    static_cast<DeviceImp *>(device)->releaseResources();
+    static_cast<Device *>(device)->releaseResources();
     delete device;
 }
 
@@ -87,7 +87,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
 
     EXPECT_TRUE(device->isImplicitScalingCapable());
 
-    static_cast<DeviceImp *>(device)->releaseResources();
+    static_cast<Device *>(device)->releaseResources();
     delete device;
 }
 
@@ -110,12 +110,12 @@ using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = Test<SingleRootMulti
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingThenExpectedQueueGroupsAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     uint32_t numCopyQueues = 0;
@@ -133,12 +133,12 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkC
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
           givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingThenCommandListCreatedWithCorrectDevice, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     uint32_t numCopyQueues = 0;
@@ -155,7 +155,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     ze_command_list_handle_t hComputeCommandList{};
     ze_command_list_desc_t computeDesc{};
     computeDesc.commandQueueGroupOrdinal = numEngineGroups - 1;
-    res = deviceImp->createCommandList(&computeDesc, &hComputeCommandList);
+    res = device->createCommandList(&computeDesc, &hComputeCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
@@ -173,7 +173,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     ze_command_list_handle_t hCopyCommandList{};
     ze_command_list_desc_t copyDesc{};
     copyDesc.commandQueueGroupOrdinal = numEngineGroups + 1;
-    res = deviceImp->createCommandList(&copyDesc, &hCopyCommandList);
+    res = device->createCommandList(&copyDesc, &hCopyCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
@@ -187,12 +187,12 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
           givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingWhenPassingIncorrectIndexThenInvalidArgumentIsReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     uint32_t numCopyQueues = 0;
@@ -219,7 +219,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
     const uint32_t newIndex = 2;
     debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
-    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+    auto &engineGroups = static_cast<MockDeviceImp *>(device)->subDeviceCopyEngineGroups;
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
@@ -236,7 +236,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
             ze_command_queue_desc_t desc = {};
             desc.ordinal = ordinal + 1;
             desc.index = index;
-            ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+            ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
 
             EXPECT_EQ(ZE_RESULT_SUCCESS, res);
             EXPECT_NE(nullptr, commandQueue);
@@ -255,7 +255,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
     const uint32_t newIndex = 999;
     debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
-    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+    auto &engineGroups = static_cast<MockDeviceImp *>(device)->subDeviceCopyEngineGroups;
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
@@ -270,7 +270,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
     ze_command_queue_desc_t desc = {};
     desc.ordinal = expectedCopyOrdinal + 1;
     desc.index = 0;
-    ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
     EXPECT_EQ(nullptr, commandQueue);
@@ -281,7 +281,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
     const uint32_t newIndex = 0;
     debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
-    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+    auto &engineGroups = static_cast<MockDeviceImp *>(device)->subDeviceCopyEngineGroups;
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
@@ -298,7 +298,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
             ze_command_queue_desc_t desc = {};
             desc.ordinal = ordinal + 1;
             desc.index = index;
-            ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+            ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
 
             EXPECT_EQ(ZE_RESULT_SUCCESS, res);
             EXPECT_NE(nullptr, commandQueue);
@@ -315,12 +315,12 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
           givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingThenImmediateCommandListCreatedWithCorrectDevice, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     uint32_t numCopyQueues = 0;
@@ -337,7 +337,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     ze_command_list_handle_t hComputeCommandList{};
     ze_command_queue_desc_t computeDesc{};
     computeDesc.ordinal = numEngineGroups - 1;
-    res = deviceImp->createCommandListImmediate(&computeDesc, &hComputeCommandList);
+    res = device->createCommandListImmediate(&computeDesc, &hComputeCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
@@ -346,7 +346,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     ze_command_list_handle_t hCopyCommandList{};
     ze_command_queue_desc_t copyDesc{};
     copyDesc.ordinal = numEngineGroups + 1;
-    res = deviceImp->createCommandListImmediate(&copyDesc, &hCopyCommandList);
+    res = device->createCommandListImmediate(&copyDesc, &hCopyCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
@@ -358,13 +358,13 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingWhenRequestingFewerGroupsThenExpectedGroupsAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     count--;
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     uint32_t numCopyQueues = 0;
@@ -381,13 +381,13 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkC
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingWhenRequestingOnlyOneGroupThenOneQueueGroupIsReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups + subDeviceNumEngineGroups);
 
     count = 1;
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(count, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -402,12 +402,12 @@ using MultiDeviceCommandQueueGroupWithNoCopyEnginesTest = Test<SingleRootMultiSu
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesTest,
           givenNoCopyEngineSupportAndCCSAndImplicitScalingThenExpectedQueueGroupsAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (uint32_t i = 0; i < count; i++) {
@@ -421,12 +421,12 @@ using MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest = Te
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest,
           givenNoCopyEngineSupportAndCCSAndNoImplicitScalingThenOnlyTheQueueGroupsFromSubDeviceAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
-    ze_result_t res = deviceImp->getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, numEngineGroups);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp->getCommandQueueGroupProperties(&count, properties.data());
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (uint32_t i = 0; i < count; i++) {
@@ -444,10 +444,10 @@ HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupI
     hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GE(count, 1u);
 }
@@ -458,10 +458,10 @@ HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAr
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GE(count, 2u);
 }
@@ -474,10 +474,10 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGro
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo.set();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 2u);
 }
@@ -504,14 +504,14 @@ HWTEST2_F(DeviceCopyQueueGroupXeHpcTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = device.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
@@ -538,15 +538,15 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportAndCCSThenFourQueueGroupsAre
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.featureTable.ftrBcsInfo.set();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GE(count, 4u);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = device.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
@@ -596,15 +596,15 @@ HWTEST2_P(CommandQueueGroupTestXeHpc, givenVaryingBlitterSupportAndCCSThenBCSGro
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(2);
     hwInfo.featureTable.ftrBcsInfo.set(GetParam());
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp device(neoMockDevice);
 
     uint32_t count = 0;
-    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    ze_result_t res = device.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GE(count, 3u);
 
     std::vector<ze_command_queue_group_properties_t> properties(count);
-    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    res = device.getCommandQueueGroupProperties(&count, properties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();

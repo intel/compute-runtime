@@ -65,27 +65,27 @@ TEST_F(MultiDeviceContextTests,
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_device_handle_t device0 = driverHandle->devices[0]->toHandle();
-    DeviceImp *deviceImp0 = static_cast<DeviceImp *>(device0);
+    Device *l0Device0 = static_cast<Device *>(device0);
     uint32_t subDeviceCount0 = 0;
-    ze_result_t res = deviceImp0->getSubDevices(&subDeviceCount0, nullptr);
+    ze_result_t res = l0Device0->getSubDevices(&subDeviceCount0, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(subDeviceCount0, numSubDevices);
     std::vector<ze_device_handle_t> subDevices0(subDeviceCount0);
-    res = deviceImp0->getSubDevices(&subDeviceCount0, subDevices0.data());
+    res = l0Device0->getSubDevices(&subDeviceCount0, subDevices0.data());
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     ze_device_handle_t device1 = driverHandle->devices[1]->toHandle();
-    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+    Device *l0Device1 = static_cast<Device *>(device1);
     uint32_t subDeviceCount1 = 0;
-    res = deviceImp1->getSubDevices(&subDeviceCount1, nullptr);
+    res = l0Device1->getSubDevices(&subDeviceCount1, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(subDeviceCount1, numSubDevices);
     std::vector<ze_device_handle_t> subDevices1(subDeviceCount1);
-    res = deviceImp1->getSubDevices(&subDeviceCount1, subDevices1.data());
+    res = l0Device1->getSubDevices(&subDeviceCount1, subDevices1.data());
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     uint32_t subSubDeviceCount1 = 0;
-    res = static_cast<DeviceImp *>(subDevices1[0])->getSubDevices(&subSubDeviceCount1, nullptr);
+    res = static_cast<Device *>(subDevices1[0])->getSubDevices(&subSubDeviceCount1, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     res = driverHandle->createContext(&desc, 1u, &device1, &hContext);
@@ -103,7 +103,7 @@ TEST_F(MultiDeviceContextTests,
 
     EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(device1)));
     for (auto subDevice : subDevices1) {
-        auto l0SubDevice = static_cast<DeviceImp *>(subDevice);
+        auto l0SubDevice = static_cast<Device *>(subDevice);
         EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(l0SubDevice));
 
         for (auto &subSubDevice : l0SubDevice->subDevices) {
@@ -180,11 +180,11 @@ TEST_F(MultiDeviceContextTests,
     auto peerAlloc = driverHandle->getPeerAllocation(driverHandle->devices[1], allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
-    DeviceImp *deviceImp1 = static_cast<DeviceImp *>(driverHandle->devices[1]);
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
 
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_NE(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     res = contextImp->unMapVirtualMem(ptr, pagesize);
@@ -197,8 +197,8 @@ TEST_F(MultiDeviceContextTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     {
-        auto iter = deviceImp1->peerAllocations.allocations.find(ptr);
-        EXPECT_EQ(iter, deviceImp1->peerAllocations.allocations.end());
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_EQ(iter, l0Device1->peerAllocations.allocations.end());
     }
 
     res = contextImp->destroy();
@@ -404,8 +404,7 @@ struct ContextHostAllocTests : public ::testing::Test {
         driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
 
         for (uint32_t i = 0; i < numberOfDevicesInContext; i++) {
-            L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(L0::Device::fromHandle(zeDevices[i]));
-            currSvmAllocsManager->expectedRootDeviceIndexes.push_back(deviceImp->getRootDeviceIndex());
+            currSvmAllocsManager->expectedRootDeviceIndexes.push_back(L0::Device::fromHandle(zeDevices[i])->getRootDeviceIndex());
         }
     }
 
@@ -464,8 +463,8 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
 
     for (auto device : driverHandle->devices) {
-        L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-        deviceImp->releaseResources();
+        L0::Device *l0Device = static_cast<Device *>(device);
+        l0Device->releaseResources();
     }
 
     res = context->getStatus();

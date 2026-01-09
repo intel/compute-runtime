@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,10 +34,10 @@ TEST_F(DebugApiTest, givenReadThreadScratchRegisterCalledThenSuccessReturned) {
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
     setIsScratchInGrf(neoDevice, true);
 
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    L0::Device *l0Device = static_cast<Device *>(device);
     auto session = new MockDebugSession(config, device, true);
     session->initialize();
-    deviceImp->setDebugSession(session);
+    l0Device->setDebugSession(session);
     SIP::version version = {3, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ze_device_thread_t stoppedThread = {0, 0, 0, 0};
@@ -228,16 +228,16 @@ struct DebugSessionScratchRegistersTestV2 : public ::testing::Test {
     };
     static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
     DebugSessionScratchRegistersTestV2() : neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
-                                           deviceImp(std::make_unique<MockDeviceImp>(neoDevice)),
-                                           session(zet_debug_config_t{}, static_cast<L0::DeviceImp *>(deviceImp.get())),
+                                           mockDevice(std::make_unique<MockDeviceImp>(neoDevice)),
+                                           session(zet_debug_config_t{}, static_cast<L0::Device *>(mockDevice.get())),
                                            threadId(5, 7, 9, 3, 1) {
         session.allThreads[threadId] = std::make_unique<EuThread>(threadId);
         session.allThreads[threadId]->stopThread(testMemoryHandle);
         setIsScratchInGrf(neoDevice, false);
     }
 
-    NEO::MockDevice *neoDevice; // deviceImp takes ownership of neoDevice
-    std::unique_ptr<MockDeviceImp> deviceImp;
+    NEO::MockDevice *neoDevice; // mockDevice takes ownership of neoDevice
+    std::unique_ptr<MockDeviceImp> mockDevice;
     MockDebugSessionScratch session;
     EuThread::ThreadId threadId;
 };

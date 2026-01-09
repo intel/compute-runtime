@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -189,8 +189,7 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
 }
 
 void CommandList::migrateSharedAllocations() {
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
     std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
     auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
     for (auto &alloc : driverHandleImp->sharedMakeResidentAllocations) {

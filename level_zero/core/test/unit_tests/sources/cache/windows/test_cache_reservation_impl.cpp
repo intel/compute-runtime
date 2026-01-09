@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 using namespace NEO;
@@ -20,9 +20,9 @@ class CacheReservationFixture : public DeviceFixture {
   public:
     void setUp() {
         DeviceFixture::setUp();
-        auto deviceImp = static_cast<DeviceImp *>(device);
-        ASSERT_NE(nullptr, deviceImp->cacheReservation.get());
-        cache = deviceImp->cacheReservation.get();
+        auto l0Device = static_cast<Device *>(device);
+        ASSERT_NE(nullptr, l0Device->cacheReservation.get());
+        cache = l0Device->cacheReservation.get();
     }
     void tearDown() {
         DeviceFixture::tearDown();

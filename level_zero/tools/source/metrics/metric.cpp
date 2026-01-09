@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -42,10 +41,10 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
             metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription, 0);
         }
 
-        auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
-        uint32_t subDeviceCount = deviceImp->numSubDevices;
+        auto device = &metricDeviceContext.getDevice();
+        uint32_t subDeviceCount = device->numSubDevices;
         std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-        deviceImp->getSubDevices(&subDeviceCount, subDevices.data());
+        device->getSubDevices(&subDeviceCount, subDevices.data());
 
         for (auto &subDeviceHandle : subDevices) {
             auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
@@ -291,38 +290,38 @@ ze_result_t MetricDeviceContext::activateMetricGroups() {
 
 void MetricDeviceContext::enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed) {
 
-    auto deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    std::lock_guard<std::mutex> lock(deviceImp->getMetricDeviceContext().enableMetricsMutex);
+    auto device = L0::Device::fromHandle(hDevice);
+    std::lock_guard<std::mutex> lock(device->getMetricDeviceContext().enableMetricsMutex);
     // Initialize device.
-    isFailed |= !deviceImp->metricContext->enable();
+    isFailed |= !device->metricContext->enable();
 
     // Initialize sub devices if available.
-    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
-        isFailed |= !deviceImp->subDevices[i]->getMetricDeviceContext().enable();
+    for (uint32_t i = 0; i < device->numSubDevices; ++i) {
+        isFailed |= !device->subDevices[i]->getMetricDeviceContext().enable();
     }
 }
 
 ze_result_t MetricDeviceContext::disableMetricApiForDevice(zet_device_handle_t hDevice) {
 
-    auto deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    std::lock_guard<std::mutex> lock(deviceImp->getMetricDeviceContext().enableMetricsMutex);
+    auto device = L0::Device::fromHandle(hDevice);
+    std::lock_guard<std::mutex> lock(device->getMetricDeviceContext().enableMetricsMutex);
 
-    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
-        if (!deviceImp->subDevices[i]->getMetricDeviceContext().canDisable()) {
+    for (uint32_t i = 0; i < device->numSubDevices; ++i) {
+        if (!device->subDevices[i]->getMetricDeviceContext().canDisable()) {
             METRICS_LOG_ERR("%s", "Cannot disable sub device, since metrics resources are still in use.");
             return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
         }
     }
 
-    if (!deviceImp->getMetricDeviceContext().canDisable()) {
+    if (!device->getMetricDeviceContext().canDisable()) {
         METRICS_LOG_ERR("%s", "Cannot disable root device, since metrics resources are still in use.");
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
 
-    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
-        deviceImp->subDevices[i]->getMetricDeviceContext().disable();
+    for (uint32_t i = 0; i < device->numSubDevices; ++i) {
+        device->subDevices[i]->getMetricDeviceContext().disable();
     }
-    deviceImp->getMetricDeviceContext().disable();
+    device->getMetricDeviceContext().disable();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1162,8 +1161,8 @@ ze_result_t metricCalculationOperationCreate(
     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculationDesc, phCalculationOperation);
+    Device *device = L0::Device::fromHandle(hDevice);
+    return device->getMetricDeviceContext().calcOperationCreate(hContext, pCalculationDesc, phCalculationOperation);
 }
 
 ze_result_t metricCalculationOperationDestroy(
@@ -1214,8 +1213,8 @@ ze_result_t metricScopesGet(
     uint32_t *pMetricScopesCount,
     zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().metricScopesGet(hContext, pMetricScopesCount, phMetricScopes);
+    Device *device = L0::Device::fromHandle(hDevice);
+    return device->getMetricDeviceContext().metricScopesGet(hContext, pMetricScopesCount, phMetricScopes);
 }
 
 ze_result_t metricScopeGetProperties(

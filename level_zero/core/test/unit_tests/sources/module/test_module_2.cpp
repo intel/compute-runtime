@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,10 +84,10 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
     auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
-    auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
-    module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
+    auto module = new MockModule{&mockDevice, nullptr, ModuleType::user};
+    module->translationUnit.reset(new MockModuleTranslationUnit{&mockDevice});
 
     auto kernelInfo = new KernelInfo{};
     kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<const void *>(0xdeadbeef0000);
@@ -96,7 +96,7 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
 
     module->initializeKernelImmutableData();
     auto &kernelImmData = module->getKernelImmutableDataVector();
-    auto csr = deviceImp.getNEODevice()->getEngine(0).commandStreamReceiver;
+    auto csr = mockDevice.getNEODevice()->getEngine(0).commandStreamReceiver;
     csr->makeResident(*kernelImmData[0]->getIsaParentAllocation());
 
     module->destroy();
@@ -114,10 +114,10 @@ TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModul
     auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp mockDevice(neoMockDevice);
 
-    auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
-    module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
+    auto module = new MockModule{&mockDevice, nullptr, ModuleType::user};
+    module->translationUnit.reset(new MockModuleTranslationUnit{&mockDevice});
 
     auto kernelInfo = new KernelInfo{};
     kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<const void *>(0xdeadbeef0000);

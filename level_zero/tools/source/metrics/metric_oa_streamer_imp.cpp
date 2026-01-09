@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -312,11 +312,10 @@ ze_result_t OaMetricGroupImp::streamerOpen(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto pDevice = Device::fromHandle(hDevice);
-    const auto pDeviceImp = static_cast<const DeviceImp *>(pDevice);
     const auto isNotificationEnabled = hNotificationEvent != nullptr;
 
-    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
-        const uint32_t subDeviceCount = pDeviceImp->numSubDevices;
+    if (pDevice->metricContext->isImplicitScalingCapable()) {
+        const uint32_t subDeviceCount = pDevice->numSubDevices;
         auto pMetricStreamer = new OaMetricStreamerImp();
         UNRECOVERABLE_IF(pMetricStreamer == nullptr);
 
@@ -335,7 +334,7 @@ ze_result_t OaMetricGroupImp::streamerOpen(
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
             auto metricGroupsSubDevice = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(getMetricGroups()[i]));
-            result = metricGroupsSubDevice->openForDevice(pDeviceImp->subDevices[i], *desc, isNotificationEnabled, &metricStreamers[i]);
+            result = metricGroupsSubDevice->openForDevice(pDevice->subDevices[i], *desc, isNotificationEnabled, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);

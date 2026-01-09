@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3270,14 +3270,14 @@ TEST_F(EventPoolCreateMultiDeviceFlatHierarchy, givenFlatHierarchyWhenCallZeGetD
 
     uint32_t i = 0u;
     for (const auto device : driverHandle->devices) {
-        auto deviceImpl = static_cast<DeviceImp *>(device);
+        auto deviceImpl = static_cast<Device *>(device);
         for (const auto subdevice : deviceImpl->subDevices) {
             EXPECT_EQ(devices[i], subdevice);
             i++;
         }
     }
 
-    static_cast<DeviceImp *>(driverHandle->devices[1])->numSubDevices = 0;
+    static_cast<Device *>(driverHandle->devices[1])->numSubDevices = 0;
     driverHandle->setupDevicesToExpose();
     uint32_t deviceCount2 = 0;
     result = zeDeviceGet(driverHandle.get(), &deviceCount2, nullptr);
@@ -3290,7 +3290,7 @@ TEST_F(EventPoolCreateMultiDeviceFlatHierarchy, givenFlatHierarchyWhenCallZeGetD
 
     i = 0u;
     for (const auto device : driverHandle->devices) {
-        auto deviceImpl = static_cast<DeviceImp *>(device);
+        auto deviceImpl = static_cast<Device *>(device);
         if (deviceImpl->numSubDevices > 0) {
             for (const auto subdevice : deviceImpl->subDevices) {
                 EXPECT_EQ(devices2[i], subdevice);
@@ -3302,7 +3302,7 @@ TEST_F(EventPoolCreateMultiDeviceFlatHierarchy, givenFlatHierarchyWhenCallZeGetD
         }
     }
 
-    static_cast<DeviceImp *>(driverHandle->devices[1])->numSubDevices = numSubDevices;
+    static_cast<Device *>(driverHandle->devices[1])->numSubDevices = numSubDevices;
     delete[] devices2;
     delete[] devices;
 }
@@ -4702,7 +4702,7 @@ TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
     mockKernel->module = &mockModule;
 
     event->setKernelForPrintf(std::weak_ptr<Kernel>{mockKernel});
-    event->setKernelWithPrintfDeviceMutex(&static_cast<DeviceImp *>(this->device)->printfKernelMutex);
+    event->setKernelWithPrintfDeviceMutex(&static_cast<Device *>(this->device)->printfKernelMutex);
     EXPECT_FALSE(event->getKernelForPrintf().expired());
     EXPECT_NE(nullptr, event->getKernelWithPrintfDeviceMutex());
 

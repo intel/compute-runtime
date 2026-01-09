@@ -45,7 +45,6 @@
 #include "shared/source/program/program_initialization.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -1091,7 +1090,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
 }
 
 std::weak_ptr<Kernel> ModuleImp::getPrintfKernelWeakPtr(ze_kernel_handle_t kernelHandle) const {
-    std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(device)->printfKernelMutex);
+    std::lock_guard<std::mutex> lock(device->printfKernelMutex);
     Kernel *kernel = Kernel::fromHandle(kernelHandle);
     auto it = std::find_if(this->printfKernelContainer.begin(), this->printfKernelContainer.end(), [&kernel](const auto &kernelSharedPtr) { return kernelSharedPtr.get() == kernel; });
     if (it == this->printfKernelContainer.end()) {
@@ -1102,7 +1101,7 @@ std::weak_ptr<Kernel> ModuleImp::getPrintfKernelWeakPtr(ze_kernel_handle_t kerne
 }
 
 ze_result_t ModuleImp::destroyPrintfKernel(ze_kernel_handle_t kernelHandle) {
-    std::lock_guard<std::mutex> lock(static_cast<DeviceImp *>(device)->printfKernelMutex);
+    std::lock_guard<std::mutex> lock(device->printfKernelMutex);
     Kernel *kernel = Kernel::fromHandle(kernelHandle);
     auto it = std::find_if(this->printfKernelContainer.begin(), this->printfKernelContainer.end(), [&kernel](const auto &kernelSharedPtr) { return kernelSharedPtr.get() == kernel; });
     if (it == this->printfKernelContainer.end()) {

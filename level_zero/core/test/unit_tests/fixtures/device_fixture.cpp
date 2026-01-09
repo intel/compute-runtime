@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
@@ -255,9 +255,8 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
 
     device = driverHandle->devices[0];
     neoDevice = device->getNEODevice();
-    deviceImp = static_cast<L0::DeviceImp *>(device);
 
-    NEO::Device *activeDevice = deviceImp->getActiveDevice();
+    NEO::Device *activeDevice = device->getActiveDevice();
     auto &engineGroups = activeDevice->getRegularEngineGroups();
     numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 

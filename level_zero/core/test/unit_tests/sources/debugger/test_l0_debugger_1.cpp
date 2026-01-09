@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -265,7 +265,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
     }
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
-    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<L0::Device *>(device)->getDebugSurface();
 
     SurfaceStateBufferLength length;
     length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
@@ -378,7 +378,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
 
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
+    ASSERT_EQ(static_cast<Device *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
     returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -527,7 +527,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     ASSERT_NE(ssh, nullptr);
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
-    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<L0::Device *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
     EXPECT_EQ(debugSurfaceState->getL1CacheControlCachePolicy(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
@@ -599,7 +599,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
-    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<::L0::Device *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
@@ -660,7 +660,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
-    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<::L0::Device *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
@@ -710,7 +710,7 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
     auto globalBindlessBase = bindlessHelper->getGlobalHeapsBase();
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getCpuBase());
-    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<L0::Device *>(device)->getDebugSurface();
 
     EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getHeapGpuBase());
 
@@ -844,7 +844,7 @@ HWTEST2_F(L0DebuggerGlobalStatelessTest,
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(statelessSurfaceHeap->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
-    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    auto debugSurface = static_cast<::L0::Device *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 

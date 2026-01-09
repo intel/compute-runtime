@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include <sys/mman.h>
@@ -138,12 +137,12 @@ ze_result_t ContextImp::systemBarrier(ze_device_handle_t hDevice) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto deviceImp = static_cast<DeviceImp *>(Device::fromHandle(hDevice));
-    if (!deviceImp) {
+    auto device = Device::fromHandle(hDevice);
+    if (!device) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto neoDevice = deviceImp->getNEODevice();
+    auto neoDevice = device->getNEODevice();
 
     NEO::DriverModelType driverModelType = NEO::DriverModelType::unknown;
     if (neoDevice->getRootDeviceEnvironment().osInterface) {

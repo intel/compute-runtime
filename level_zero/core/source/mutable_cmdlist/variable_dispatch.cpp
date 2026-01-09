@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@
 #include "shared/source/program/sync_buffer_handler.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include "level_zero/core/source/mutable_cmdlist/variable.h"

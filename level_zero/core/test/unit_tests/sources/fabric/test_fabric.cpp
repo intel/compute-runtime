@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -80,19 +80,19 @@ TEST_F(FabricVertexFixture, givenFabricVerticesAreCreatedWhenzeFabricVertexGetPr
 
     // Setup pci address for all devices
     for (auto l0Device : driverHandle->devices) {
-        auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
+        auto device = l0Device;
 
-        for (auto l0SubDevice : deviceImp->subDevices) {
+        for (auto l0SubDevice : device->subDevices) {
 
-            auto subDeviceImp = static_cast<L0::DeviceImp *>(l0SubDevice);
+            auto subDevice = l0SubDevice;
             NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
             driverInfo->setPciBusInfo({0, 1, 2, 3});
-            subDeviceImp->driverInfo.reset(driverInfo);
+            subDevice->driverInfo.reset(driverInfo);
         }
 
         NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
         driverInfo->setPciBusInfo({0, 1, 2, 3});
-        deviceImp->driverInfo.reset(driverInfo);
+        device->driverInfo.reset(driverInfo);
         driverHandle->fabricVertices.push_back(FabricVertex::createFromDevice(l0Device));
     }
 
@@ -188,8 +188,8 @@ TEST_F(FabricVertexFixture, givenDevicesAreCreatedWhenZeDeviceGetFabricVertexExp
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeDeviceGetFabricVertexExp(l0Device->toHandle(), &hVertex));
         EXPECT_NE(hVertex, nullptr);
 
-        auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
-        for (auto l0SubDevice : deviceImp->subDevices) {
+        auto device = l0Device;
+        for (auto l0SubDevice : device->subDevices) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeDeviceGetFabricVertexExp(l0SubDevice->toHandle(), &hVertex));
             EXPECT_NE(hVertex, nullptr);
         }
@@ -203,8 +203,8 @@ TEST_F(FabricVertexFixture, givenDevicesAreCreatedWhenFabricVertexIsNotSetToDevi
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeDeviceGetFabricVertexExp(l0Device->toHandle(), &hVertex));
     EXPECT_NE(hVertex, nullptr);
 
-    auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
-    deviceImp->setFabricVertex(nullptr);
+    auto device = l0Device;
+    device->setFabricVertex(nullptr);
 
     hVertex = nullptr;
     EXPECT_EQ(ZE_RESULT_EXP_ERROR_DEVICE_IS_NOT_VERTEX, L0::zeDeviceGetFabricVertexExp(l0Device->toHandle(), &hVertex));
@@ -229,8 +229,8 @@ TEST(FabricVertexTestFixture, givenCompositeHierarchyWhenFabricVerticesGetExpIsC
     // Device 0 associated with value 0 in mask
     ze_device_handle_t hDevice{};
     EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[0], &hDevice), ZE_RESULT_SUCCESS);
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(hDevice);
-    EXPECT_FALSE(deviceImp->isSubdevice);
+    Device *device = static_cast<Device *>(hDevice);
+    EXPECT_FALSE(device->isSubdevice);
 
     uint32_t countSubDevices = 0;
     EXPECT_EQ(L0::zeFabricVertexGetSubVerticesExp(phVertices[0], &countSubDevices, nullptr), ZE_RESULT_SUCCESS);
@@ -241,14 +241,14 @@ TEST(FabricVertexTestFixture, givenCompositeHierarchyWhenFabricVerticesGetExpIsC
     for (auto subVertex : phSubvertices) {
         ze_device_handle_t hSubDevice{};
         EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(subVertex, &hSubDevice), ZE_RESULT_SUCCESS);
-        DeviceImp *subDeviceImp = static_cast<DeviceImp *>(hSubDevice);
-        EXPECT_TRUE(subDeviceImp->isSubdevice);
+        Device *subDevice = static_cast<Device *>(hSubDevice);
+        EXPECT_TRUE(subDevice->isSubdevice);
     }
 
     // Device 1 associated with value 1.1 in mask
     EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[1], &hDevice), ZE_RESULT_SUCCESS);
-    deviceImp = static_cast<DeviceImp *>(hDevice);
-    EXPECT_FALSE(deviceImp->isSubdevice);
+    device = static_cast<Device *>(hDevice);
+    EXPECT_FALSE(device->isSubdevice);
 
     phSubvertices.clear();
     countSubDevices = 0;
@@ -257,8 +257,8 @@ TEST(FabricVertexTestFixture, givenCompositeHierarchyWhenFabricVerticesGetExpIsC
 
     // Device 2 associated with value 2 in mask
     EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[1], &hDevice), ZE_RESULT_SUCCESS);
-    deviceImp = static_cast<DeviceImp *>(hDevice);
-    EXPECT_FALSE(deviceImp->isSubdevice);
+    device = static_cast<Device *>(hDevice);
+    EXPECT_FALSE(device->isSubdevice);
 
     phSubvertices.clear();
     countSubDevices = 0;
@@ -290,13 +290,13 @@ TEST(FabricVertexTestFixture, givenFlatHierarchyWhenFabricVerticesGetExpIsCalled
     ze_device_handle_t hDevice{};
     // Device 0 associated with value 0 in mask
     EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[0], &hDevice), ZE_RESULT_SUCCESS);
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(hDevice);
-    EXPECT_FALSE(deviceImp->isSubdevice);
+    Device *device = static_cast<Device *>(hDevice);
+    EXPECT_FALSE(device->isSubdevice);
 
     // Device 1 associated with value 2 in mask
     EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[1], &hDevice), ZE_RESULT_SUCCESS);
-    deviceImp = static_cast<DeviceImp *>(hDevice);
-    EXPECT_FALSE(deviceImp->isSubdevice);
+    device = static_cast<Device *>(hDevice);
+    EXPECT_FALSE(device->isSubdevice);
 
     multiDeviceFixture.tearDown();
 }

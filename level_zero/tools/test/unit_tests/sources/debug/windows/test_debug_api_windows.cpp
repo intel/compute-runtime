@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -629,7 +629,7 @@ TEST_F(DebugApiWindowsTest, givenInvalidTopologyDebugAttachCalledThenUnsupported
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
@@ -638,7 +638,7 @@ TEST_F(DebugApiWindowsTest, givenInvalidTopologyDebugAttachCalledThenUnsupported
         return session;
     });
 
-    auto session = DebugSession::create(config, &deviceImp, result, true);
+    auto session = DebugSession::create(config, &mockDevice, result, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, session);
 }
@@ -648,8 +648,8 @@ TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedEr
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice);
-    deviceImp.isSubdevice = true;
+    MockDeviceImp mockDevice(neoDevice);
+    mockDevice.isSubdevice = true;
 
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     mockWddm->debugAttachAvailable = false;
@@ -657,13 +657,13 @@ TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedEr
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto session = DebugSession::create(config, &deviceImp, result, false);
+    auto session = DebugSession::create(config, &mockDevice, result, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, session);
 
     result = ZE_RESULT_SUCCESS;
     mockWddm->debugAttachAvailable = true;
-    session = DebugSession::create(config, &deviceImp, result, false);
+    session = DebugSession::create(config, &mockDevice, result, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, session);
 }

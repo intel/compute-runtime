@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 
@@ -37,15 +36,13 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ret;
     }
 
-    DeviceImp &deviceImp = static_cast<DeviceImp &>(device);
-
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
     auto engineInfo = drm->getEngineInfo();
     if (engineInfo == nullptr) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    auto classInstance = engineInfo->getEngineInstance(deviceImp.getPhysicalSubDeviceId(), aub_stream::ENGINE_CCS);
+    auto classInstance = engineInfo->getEngineInstance(device.getPhysicalSubDeviceId(), aub_stream::ENGINE_CCS);
     if (classInstance == nullptr) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }

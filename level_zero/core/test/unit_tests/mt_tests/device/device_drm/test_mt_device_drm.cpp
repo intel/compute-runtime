@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -59,7 +58,7 @@ struct MultiDeviceQueryPeerAccessDrmFixture {
         TempAlloc(NEO::Device &device) : neoDevice(device) {}
         ~TempAlloc() {
             if (handlePtr) {
-                DeviceImp::freeMemoryAllocation(neoDevice, handlePtr);
+                Device::freeMemoryAllocation(neoDevice, handlePtr);
             }
         }
     };
@@ -79,7 +78,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenTwoDevicesWhenCanAccessPeerIs
 
     auto queryPeerAccess = [&queryCalled](NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) -> bool {
         queryCalled++;
-        return DeviceImp::queryPeerAccess(device, peerDevice, handlePtr, handle);
+        return Device::queryPeerAccess(device, peerDevice, handlePtr, handle);
     };
 
     std::atomic_bool started = false;
@@ -100,7 +99,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenTwoDevicesWhenCanAccessPeerIs
             peerDevice = device0;
         }
         for (auto i = 0; i < iterationCount; i++) {
-            bool canAccess = device->getNEODevice()->canAccessPeer(queryPeerAccess, DeviceImp::freeMemoryAllocation, peerDevice->getNEODevice());
+            bool canAccess = device->getNEODevice()->canAccessPeer(queryPeerAccess, Device::freeMemoryAllocation, peerDevice->getNEODevice());
             EXPECT_TRUE(canAccess);
         }
     };

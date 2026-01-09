@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
@@ -38,9 +38,9 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenCallingFunctionsThe
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp mockDevice(neoDevice);
 
-    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, nullptr);
+    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, nullptr);
     ASSERT_NE(nullptr, session);
 
     EXPECT_TRUE(session->closeConnection());
@@ -57,11 +57,11 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenCallingFunctionsThe
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    MockDeviceImp deviceImp(neoDevice);
-    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    MockDeviceImp mockDevice(neoDevice);
+    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, rootSession.get());
+    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, rootSession.get());
     ASSERT_NE(nullptr, session);
 
     DebugSessionLinuxi915::BindInfo cssaInfo = {0x1234000, 0x400};
@@ -102,11 +102,11 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    MockDeviceImp deviceImp(neoDevice);
-    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    MockDeviceImp mockDevice(neoDevice);
+    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, rootSession.get());
+    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, rootSession.get());
     ASSERT_NE(nullptr, session);
 
     session->readStateSaveAreaHeader();
@@ -127,11 +127,11 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    MockDeviceImp deviceImp(neoDevice);
-    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    MockDeviceImp mockDevice(neoDevice);
+    auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, rootSession.get());
+    auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &mockDevice, rootSession.get());
     ASSERT_NE(nullptr, session);
 
     const char *header = "cssa";
@@ -157,7 +157,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
 
         zet_debug_config_t config = {};
         config.pid = 0x1234;
-        auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+        auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
         ASSERT_NE(nullptr, session);
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
         session->createTileSessionsIfEnabled();
@@ -170,7 +170,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
         setupSessionClassHandlesAndUuidMap(session.get());
         setupVmToTile(session.get());
 
-        deviceImp->setDebugSession(session.release());
+        l0Device->setDebugSession(session.release());
     }
 
     void tearDown() {
@@ -187,7 +187,7 @@ TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingD
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
     ASSERT_NE(nullptr, session);
 
     auto handler = new MockIoctlHandlerI915;
@@ -231,7 +231,7 @@ TEST_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTile
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
     ASSERT_NE(nullptr, session);
 
     session->tileAttachEnabled = false;
@@ -649,7 +649,7 @@ TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsA
     rootSession->tileSessions[1].second = true;
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, l0Device);
 
     ze_device_thread_t apiThread = {0, 0, 0, 0};
 
@@ -777,7 +777,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmHandle] = 1;
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, l0Device);
     DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
 
@@ -836,7 +836,7 @@ TEST_F(TileAttachTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmHandle] = 1;
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, l0Device);
     DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
 
@@ -899,7 +899,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmHandle] = 1;
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, l0Device);
     DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
 

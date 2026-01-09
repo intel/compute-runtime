@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2143,7 +2143,7 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
-    auto device = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = static_cast<Device *>(driverHandle->devices[0]);
 
     auto &regularEngines = device->getNEODevice()->getRegularEngineGroups();
 
@@ -2205,7 +2205,7 @@ TEST(CommandList, givenLowPriorityCopyEngineWhenCreatingCmdListThenAssignCorrect
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
-    auto device = static_cast<DeviceImp *>(driverHandle->devices[0]);
+    auto device = static_cast<Device *>(driverHandle->devices[0]);
 
     auto &engines = device->getNEODevice()->getAllEngines();
 

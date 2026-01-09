@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ ze_result_t MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFrom
                                                                                         std::vector<zet_metric_group_handle_t> &metricGroupList) {
     const auto isCountCalculationPath = *maxMetricGroupCount == 0;
 
-    uint32_t subDeviceCount = static_cast<uint32_t>(static_cast<DeviceImp *>(&metricDeviceContext.getDevice())->subDevices.size());
+    uint32_t subDeviceCount = static_cast<uint32_t>(metricDeviceContext.getDevice().subDevices.size());
     std::vector<std::vector<zet_metric_group_handle_t>> metricGroupsPerSubDevice(subDeviceCount);
 
     auto cleanupCreatedGroups = [](std::vector<zet_metric_group_handle_t> &createdMetricGroupList) {

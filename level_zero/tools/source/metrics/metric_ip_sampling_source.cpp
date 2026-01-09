@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric.inl"
@@ -36,8 +35,8 @@ IpSamplingMetricSourceImp::IpSamplingMetricSourceImp(const MetricDeviceContext &
     activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
     type = MetricSource::metricSourceTypeIpSampling;
 
-    const auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
-    L0::L0GfxCoreHelper &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    const auto device = &metricDeviceContext.getDevice();
+    L0::L0GfxCoreHelper &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     ipSamplingCalculation = std::make_unique<IpSamplingCalculation>(l0GfxCoreHelper, *this);
 }
 
@@ -61,13 +60,13 @@ bool IpSamplingMetricSourceImp::isAvailable() {
 
 ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
 
-    const auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
+    const auto device = &metricDeviceContext.getDevice();
     if (metricDeviceContext.isImplicitScalingCapable()) {
         std::vector<IpSamplingMetricGroupImp *> subDeviceMetricGroup = {};
-        subDeviceMetricGroup.reserve(deviceImp->subDevices.size());
+        subDeviceMetricGroup.reserve(device->subDevices.size());
 
         // Prepare cached metric group for sub-devices
-        for (auto &subDevice : deviceImp->subDevices) {
+        for (auto &subDevice : device->subDevices) {
             IpSamplingMetricSourceImp &source = subDevice->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
             // 1 metric group available for IP Sampling
             uint32_t count = 1;
@@ -116,7 +115,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     }
 
     std::vector<IpSamplingMetricImp> metrics = {};
-    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     metrics.reserve(l0GfxCoreHelper.getIpSamplingMetricCount());
     metricCount = l0GfxCoreHelper.getIpSamplingMetricCount();
     zet_metric_properties_t metricProperties = {};
@@ -197,9 +196,9 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
 ze_result_t IpSamplingMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
                                                                           zet_metric_group_handle_t *phMetricGroups) {
 
-    DeviceImp &deviceImp = static_cast<DeviceImp &>(metricDeviceContext.getDevice());
+    Device &device = metricDeviceContext.getDevice();
     if (metricDeviceContext.isImplicitScalingCapable()) {
-        return MetricSource::activatePreferDeferredHierarchical<IpSamplingMetricSourceImp>(&deviceImp, count, phMetricGroups);
+        return MetricSource::activatePreferDeferredHierarchical<IpSamplingMetricSourceImp>(&device, count, phMetricGroups);
     }
 
     auto status = activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
@@ -404,14 +403,14 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_
     return result;
 }
 
-ze_result_t getDeviceTimestamps(DeviceImp *deviceImp, const ze_bool_t synchronizedWithHost,
+ze_result_t getDeviceTimestamps(Device *device, const ze_bool_t synchronizedWithHost,
                                 uint64_t *globalTimestamp, uint64_t *metricTimestamp) {
 
     ze_result_t result;
     uint64_t hostTimestamp;
     uint64_t deviceTimestamp;
 
-    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
+    result = device->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
     if (result != ZE_RESULT_SUCCESS) {
         *globalTimestamp = 0;
         *metricTimestamp = 0;
@@ -431,8 +430,8 @@ ze_result_t getDeviceTimestamps(DeviceImp *deviceImp, const ze_bool_t synchroniz
 ze_result_t IpSamplingMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
                                                              uint64_t *globalTimestamp,
                                                              uint64_t *metricTimestamp) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(&getMetricSource().getMetricDeviceContext().getDevice());
-    return getDeviceTimestamps(deviceImp, synchronizedWithHost, globalTimestamp, metricTimestamp);
+    Device *device = &getMetricSource().getMetricDeviceContext().getDevice();
+    return getDeviceTimestamps(device, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
 zet_metric_group_handle_t IpSamplingMetricGroupImp::getMetricGroupForSubDevice(const uint32_t subDeviceIndex) {
@@ -524,8 +523,8 @@ void MultiDeviceIpSamplingMetricGroupImp::closeSubDeviceStreamers(std::vector<Ip
 ze_result_t MultiDeviceIpSamplingMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
                                                                         uint64_t *globalTimestamp,
                                                                         uint64_t *metricTimestamp) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(&subDeviceMetricGroup[0]->getMetricSource().getMetricDeviceContext().getDevice());
-    return getDeviceTimestamps(deviceImp, synchronizedWithHost, globalTimestamp, metricTimestamp);
+    Device *device = &subDeviceMetricGroup[0]->getMetricSource().getMetricDeviceContext().getDevice();
+    return getDeviceTimestamps(device, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
 std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetricGroupImp::create(

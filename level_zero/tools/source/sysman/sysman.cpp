@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
@@ -21,7 +21,7 @@ bool sysmanInitFromCore = false;
 
 struct OsSysmanDriver *globalOsSysmanDriver = nullptr;
 
-void DeviceImp::createSysmanHandle(bool isSubDevice) {
+void Device::createSysmanHandle(bool isSubDevice) {
     if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
         if (this->getSysmanHandle() == nullptr) {
             // Sysman handles are created only during zeInit time device creation. And destroyed during L0::device destroy.
@@ -47,9 +47,9 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
         sysmanInitFromCore = true;
     }
 
-    L0::DeviceImp *device = static_cast<DeviceImp *>(Device::fromHandle(coreDevice));
+    L0::Device *device = Device::fromHandle(coreDevice);
     for (auto &subDevice : device->subDevices) {
-        static_cast<DeviceImp *>(subDevice)->setSysmanHandle(sysmanDevice);
+        subDevice->setSysmanHandle(sysmanDevice);
     }
 
     if (globalOsSysmanDriver == nullptr) {
@@ -58,11 +58,11 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     return sysmanDevice;
 }
 
-void DeviceImp::setSysmanHandle(SysmanDevice *pSysmanDev) {
+void Device::setSysmanHandle(SysmanDevice *pSysmanDev) {
     pSysmanDevice = pSysmanDev;
 }
 
-SysmanDevice *DeviceImp::getSysmanHandle() {
+SysmanDevice *Device::getSysmanHandle() {
     return pSysmanDevice;
 }
 

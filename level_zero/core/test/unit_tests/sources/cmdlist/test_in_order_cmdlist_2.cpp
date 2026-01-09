@@ -399,7 +399,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     }
 
     {
-        cmdQueueDesc.ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
+        cmdQueueDesc.ordinal = static_cast<Device *>(device)->getCopyEngineOrdinal();
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
@@ -2157,7 +2157,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenHostSynchronizeThenStoreFillAllocationsInReusableContainer, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     EXPECT_EQ(immCmdList->patternAllocations.size(), 0u);
-    EXPECT_TRUE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocDeviceMem(size);
@@ -2165,11 +2165,11 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenHostSynchronizeTh
 
     immCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(immCmdList->patternAllocations.size(), 1u);
-    EXPECT_TRUE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(immCmdList->patternAllocations.size(), 0u);
-    EXPECT_FALSE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_FALSE(static_cast<Device *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     context->freeMem(data);
 }
@@ -2177,7 +2177,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenHostSynchronizeTh
 HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenResetThenStoreFillAllocationsInReusableContainer, IsAtLeastXeCore) {
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     EXPECT_EQ(regularCmdList->patternAllocations.size(), 0u);
-    EXPECT_TRUE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocDeviceMem(size);
@@ -2185,11 +2185,11 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenResetThenStoreFil
 
     regularCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(regularCmdList->patternAllocations.size(), 1u);
-    EXPECT_TRUE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     regularCmdList->reset();
     EXPECT_EQ(regularCmdList->patternAllocations.size(), 0u);
-    EXPECT_FALSE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_FALSE(static_cast<Device *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
 
     context->freeMem(data);
 }
@@ -4221,7 +4221,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     }
 
     bool verifySplit(uint64_t expectedTaskCount) {
-        auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+        auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
         for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
             if (static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount() != expectedTaskCount) {
@@ -4236,7 +4236,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createBcsSplitImmCmdList() {
         auto cmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
-        auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+        auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
         cmdList->isBcsSplitNeeded = bcsSplit->setupDevice(cmdList->getCsr(false), false);
 
@@ -4260,7 +4260,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+    auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
     auto inOrderExecInfo = immCmdList.inOrderExecInfo;
 
@@ -4476,7 +4476,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 
-    auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+    auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
     for (auto &event : bcsSplit->events.barrier) {
         EXPECT_FALSE(event->isCounterBased());
@@ -4504,7 +4504,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     immCmdList->getCsr(false)->getNextBarrierCount();
 
     size_t offset = cmdStream->getUsed();
-    size_t subCopyOffset = static_cast<DeviceImp *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
+    size_t subCopyOffset = static_cast<Device *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
@@ -4529,7 +4529,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     size_t offset = cmdStream->getUsed();
-    size_t subCopyOffset = static_cast<DeviceImp *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
+    size_t subCopyOffset = static_cast<Device *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
 
     *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
     immCmdList->getCsr(false)->getNextBarrierCount();
@@ -4558,7 +4558,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     size_t offset = cmdStream->getUsed();
-    size_t subCopyOffset = static_cast<DeviceImp *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
+    size_t subCopyOffset = static_cast<Device *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
 
     *immCmdList->inOrderExecInfo->getBaseHostAddress() = 0;
 

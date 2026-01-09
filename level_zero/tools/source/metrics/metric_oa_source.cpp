@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric.inl"
@@ -49,8 +49,8 @@ ze_result_t OaMetricSourceImp::getTimerResolution(uint64_t &resolution) {
 }
 
 void OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(&getDevice());
-    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    Device *device = &getDevice();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     validBits = l0GfxCoreHelper.getOaTimestampValidBits();
 }
 
@@ -59,14 +59,14 @@ bool OaMetricSourceImp::isAvailable() {
 }
 
 ze_result_t OaMetricSourceImp::appendMetricMemoryBarrier(CommandList &commandList) {
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.getDevice());
+    Device *pDevice = commandList.getDevice();
 
-    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
+    if (pDevice->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
-        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+        pDevice = pDevice->subDevices[0];
     }
 
-    auto &metricContext = pDeviceImp->getMetricDeviceContext();
+    auto &metricContext = pDevice->getMetricDeviceContext();
     auto &metricsLibrary = metricContext.getMetricSource<OaMetricSourceImp>().getMetricsLibrary();
 
     // Obtain gpu commands.
@@ -165,9 +165,9 @@ bool OaMetricSourceImp::isImplicitScalingCapable() const {
 
 ze_result_t OaMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
                                                                   zet_metric_group_handle_t *phMetricGroups) {
-    DeviceImp &deviceImp = static_cast<DeviceImp &>(metricDeviceContext.getDevice());
+    Device &device = metricDeviceContext.getDevice();
     if (metricDeviceContext.isImplicitScalingCapable()) {
-        return MetricSource::activatePreferDeferredHierarchical<OaMetricSourceImp>(&deviceImp, count, phMetricGroups);
+        return MetricSource::activatePreferDeferredHierarchical<OaMetricSourceImp>(&device, count, phMetricGroups);
     }
 
     activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
@@ -402,14 +402,14 @@ ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metri
 ze_result_t OaMetricSourceImp::appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
 
     auto commandListImp = static_cast<CommandListImp *>(CommandList::fromHandle(hCommandList));
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandListImp->getDevice());
+    Device *pDevice = commandListImp->getDevice();
 
-    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
+    if (pDevice->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
-        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+        pDevice = pDevice->subDevices[0];
     }
 
-    OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
+    OaMetricSourceImp &metricSource = pDevice->metricContext->getMetricSource<OaMetricSourceImp>();
     auto &metricsLibrary = metricSource.getMetricsLibrary();
 
     // Obtain gpu commands.

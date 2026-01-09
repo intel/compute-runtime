@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,20 +15,17 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/fabric/fabric.h"
 
 namespace L0 {
 
 FabricDeviceIaf::FabricDeviceIaf(Device *device) : device(device) {
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-
-    if (deviceImp->numSubDevices == 0) {
+    if (device->numSubDevices == 0) {
         // Add one sub-device
         subDeviceIafs.push_back(std::make_unique<FabricSubDeviceIaf>(device));
     } else {
-        for (const auto &subDevice : deviceImp->subDevices) {
+        for (const auto &subDevice : device->subDevices) {
             subDeviceIafs.push_back(std::make_unique<FabricSubDeviceIaf>(subDevice));
         }
     }
@@ -122,8 +119,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
         return result;
     }
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    uint32_t physicalSubDeviceId = deviceImp->getPhysicalSubDeviceId();
+    uint32_t physicalSubDeviceId = device->getPhysicalSubDeviceId();
 
     // Remove ports which do not belong to this device
     for (auto iter = iafPorts.begin(); iter != iafPorts.end();) {
@@ -250,10 +246,10 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex,
     ze_uuid_t &uuid = edgeProperty.uuid;
     bool isConnected = false;
     uint32_t accumulatedBandwidth = 0;
-    DeviceImp *neighborDeviceImp = static_cast<DeviceImp *>(neighborVertex->device);
+    Device *neighborDevice = neighborVertex->device;
 
     // If the neighbor is a root device
-    if (neighborDeviceImp->isSubdevice == false) {
+    if (neighborDevice->isSubdevice == false) {
 
         std::vector<ze_fabric_edge_exp_properties_t> subEdgeProperties = {};
 
@@ -307,9 +303,9 @@ void FabricSubDeviceIaf::setIafNlApi(IafNlApi *iafNlApi) {
 
 std::unique_ptr<FabricDeviceInterface> FabricDeviceInterface::createFabricDeviceInterfaceIaf(const FabricVertex *fabricVertex) {
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(fabricVertex->device);
+    Device *device = fabricVertex->device;
 
-    if (deviceImp->isSubdevice) {
+    if (device->isSubdevice) {
         return std::unique_ptr<FabricDeviceInterface>(new (std::nothrow) FabricSubDeviceIaf(fabricVertex->device));
     }
 

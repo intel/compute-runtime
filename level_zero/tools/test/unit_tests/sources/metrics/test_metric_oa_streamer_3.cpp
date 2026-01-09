@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
 namespace L0 {
@@ -24,13 +24,13 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    zet_device_handle_t metricDeviceHandle = l0Device.subDevices[0]->toHandle();
 
     ze_event_handle_t eventHandle = {};
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, deviceImp.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, l0Device.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
     zet_metric_streamer_handle_t streamerHandle = {};
     zet_metric_streamer_desc_t streamerDesc = {};
@@ -39,7 +39,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricOaSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
@@ -122,8 +122,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
 TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalculateMetricValuesExpThenReturnsSuccess) {
 
     zet_device_handle_t metricDeviceHandle = devices[0]->toHandle();
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
 
     ze_event_handle_t eventHandle = {};
 
@@ -134,7 +134,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
 
-    auto &metricOaSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
@@ -245,7 +245,7 @@ TEST_F(MetricStreamerMultiDeviceTest, WhenStreamerOpenIsCalledWithoutNotificatio
     streamerDesc.samplingPeriod = 1000;
     streamerDesc.pNext = &hwBufferSizeDesc;
 
-    auto &metricOaSource = (static_cast<DeviceImp *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
@@ -328,7 +328,7 @@ TEST_F(MetricStreamerTest, givenRawReportSizeIsNotAlignedToOaBufferSizeWhenZetMe
     streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
-    auto &metricOaSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -401,7 +401,7 @@ TEST_F(MetricStreamerTest, givenValidArgumenteWhenZetMetricStreamerOpenIsCalledT
     streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
-    auto &metricOaSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<MetricGroup> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     metricsDeviceParams.ConcurrentGroupsCount = 1;

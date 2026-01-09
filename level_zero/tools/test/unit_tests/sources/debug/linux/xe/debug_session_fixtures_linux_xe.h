@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ struct DebugApiLinuxMultiDeviceFixtureXe : public MultipleDevicesWithCustomHwInf
         MultipleDevicesWithCustomHwInfo::tearDown();
     }
     NEO::Device *neoDevice = nullptr;
-    L0::DeviceImp *deviceImp = nullptr;
+    L0::Device *l0Device = nullptr;
     DrmMockXeDebug *mockDrm = nullptr;
     static constexpr uint8_t bufferSize = 16;
 };

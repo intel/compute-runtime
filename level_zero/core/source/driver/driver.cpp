@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
@@ -87,7 +86,7 @@ void DriverImp::initialize(ze_result_t *result) {
                 neoDeviceToExpose.push_back(Device::fromHandle(deviceToExpose)->getNEODevice());
             }
 
-            NEO::Device::initializePeerAccessForDevices(DeviceImp::queryPeerAccess, DeviceImp::freeMemoryAllocation, neoDeviceToExpose);
+            NEO::Device::initializePeerAccessForDevices(Device::queryPeerAccess, Device::freeMemoryAllocation, neoDeviceToExpose);
         }
     }
 

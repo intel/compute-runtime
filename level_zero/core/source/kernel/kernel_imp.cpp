@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,6 @@
 #include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -78,8 +77,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
     this->kernelInfo = kernelInfo;
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    auto neoDevice = deviceImp->getActiveDevice();
+    auto neoDevice = device->getActiveDevice();
 
     if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
         createRelocatedDebugData(globalConstBuffer, globalVarBuffer);
@@ -111,7 +109,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
-        auto &gfxCoreHelper = deviceImp->getNEODevice()->getGfxCoreHelper();
+        auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
 
         this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
@@ -138,7 +136,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalConstBuffer->getGpuAddressToPatch()),
                                  *globalConstBuffer->getGraphicsAllocation(), globalConstBuffer->getGpuAddress(), globalConstBuffer->getSize(),
-                                 kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *neoDevice, deviceImp->isImplicitScalingCapable());
+                                 kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *neoDevice, device->isImplicitScalingCapable());
         this->residencyContainer.push_back(globalConstBuffer->getGraphicsAllocation());
     } else if (nullptr != globalConstBuffer) {
         this->residencyContainer.push_back(globalConstBuffer->getGraphicsAllocation());
@@ -153,7 +151,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalConstBuffer->getGraphicsAllocation(), kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
-                                                         *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
+                                                         *neoDevice, device->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     if (NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless)) {
@@ -162,7 +160,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalVarBuffer->getGpuAddressToPatch()),
                                  *globalVarBuffer->getGraphicsAllocation(), globalVarBuffer->getGpuAddress(), globalVarBuffer->getSize(),
-                                 kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *neoDevice, deviceImp->isImplicitScalingCapable());
+                                 kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *neoDevice, device->isImplicitScalingCapable());
         this->residencyContainer.push_back(globalVarBuffer->getGraphicsAllocation());
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer->getGraphicsAllocation());
@@ -177,7 +175,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalVarBuffer->getGraphicsAllocation(), kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
-                                                         *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
+                                                         *neoDevice, device->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -611,7 +609,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
         if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
-            const auto device = static_cast<DeviceImp *>(module->getDevice());
+            const auto device = module->getDevice();
             const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
 
             CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
@@ -824,7 +822,7 @@ ze_result_t KernelImp::setArgUnknown(uint32_t argIndex, size_t argSize, const vo
 }
 
 ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const void *argVal) {
-    const auto device = static_cast<DeviceImp *>(this->module->getDevice());
+    const auto device = this->module->getDevice();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     const auto svmAllocsManager = driverHandle->getSvmAllocsManager();
     const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
@@ -1395,7 +1393,7 @@ ze_result_t KernelImp::destroy() {
 std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
     DEBUG_BREAK_IF(nullptr == this->ownedSharedState.get());
 
-    auto *device{static_cast<DeviceImp *>(this->module->getDevice())};
+    auto *device{this->module->getDevice()};
     const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     KernelAllocatorFn allocator = kernelFactory[productFamily];
     auto clone = static_cast<KernelImp *>(allocator(nullptr));
@@ -1419,7 +1417,7 @@ void KernelImp::createPrintfBuffer() {
         if (privateState.pImplicitArgs) {
             privateState.pImplicitArgs->setPrintfBuffer(sharedState.printfBuffer->getGpuAddress());
         }
-        sharedState.devicePrintfKernelMutex = &(static_cast<DeviceImp *>(this->module->getDevice())->printfKernelMutex);
+        sharedState.devicePrintfKernelMutex = &(this->module->getDevice()->printfKernelMutex);
     }
 }
 

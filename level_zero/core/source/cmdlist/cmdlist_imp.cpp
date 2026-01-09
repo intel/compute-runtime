@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
@@ -44,7 +43,7 @@ CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {
 
 ze_result_t CommandListImp::destroy() {
     if (this->isBcsSplitNeeded) {
-        static_cast<DeviceImp *>(this->device)->bcsSplit->releaseResources();
+        this->device->bcsSplit->releaseResources();
     }
 
     if (this->cmdQImmediate && !this->isSyncModeQueue) {
@@ -185,19 +184,18 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     auto queueProperties = CommandQueue::extractQueueProperties(cmdQdesc);
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
     const auto &hwInfo = device->getHwInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &productHelper = device->getProductHelper();
 
     if (!csr) {
         if (internalUsage) {
-            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
-                csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
+            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && device->getActiveDevice()->getInternalCopyEngine()) {
+                csr = device->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
             } else {
-                auto internalEngine = deviceImp->getActiveDevice()->getInternalEngine();
+                auto internalEngine = device->getActiveDevice()->getInternalEngine();
                 csr = internalEngine.commandStreamReceiver;
-                engineGroupType = deviceImp->getInternalEngineGroupType();
+                engineGroupType = device->getInternalEngineGroupType();
             }
         } else {
             if (queueProperties.interruptHint && !productHelper.isInterruptSupported()) {
@@ -279,12 +277,12 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
 void CommandListImp::enableImmediateBcsSplit() {
     if (device->getNEODevice()->isBcsSplitSupported() && isImmediateType() && !internalUsage && !isBcsSplitNeeded) {
-        isBcsSplitNeeded = static_cast<DeviceImp *>(getDevice())->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled());
+        isBcsSplitNeeded = getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled());
     }
 }
 
 void CommandListImp::enableCopyOperationOffload() {
-    if (isCopyOnly(false) || !static_cast<DeviceImp *>(device)->tryGetCopyEngineOrdinal().has_value()) {
+    if (isCopyOnly(false) || !device->tryGetCopyEngineOrdinal().has_value()) {
         return;
     }
 
@@ -307,7 +305,7 @@ void CommandListImp::enableCopyOperationOffload() {
     ze_command_queue_mode_t immediateQueueMode = this->isSyncModeQueue ? ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS : ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     NEO::CommandStreamReceiver *copyCsr = nullptr;
-    uint32_t ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
+    uint32_t ordinal = device->getCopyEngineOrdinal();
 
     device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false);
     UNRECOVERABLE_IF(!copyCsr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -203,7 +203,6 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
 
     L0::Device *device = nullptr;
     NEO::Device *neoDevice = nullptr;
-    L0::DeviceImp *deviceImp = nullptr;
 
     NEO::HardwareInfo hwInfo{};
     const uint32_t implicitScaling;
@@ -305,11 +304,9 @@ struct MultiSubDeviceFixture : public DeviceFixture {
             DeviceFixture::setUpImpl(hwInfo);
         }
 
-        deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
         subDevice = neoDevice->getSubDevice(0);
     }
 
-    L0::DeviceImp *deviceImp = nullptr;
     NEO::Device *subDevice = nullptr;
     DebugManagerStateRestore restorer;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;

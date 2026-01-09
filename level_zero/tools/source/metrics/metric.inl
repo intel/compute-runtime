@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 namespace L0 {
 
 template <typename T>
-ze_result_t MetricSource::activatePreferDeferredHierarchical(DeviceImp *deviceImp, const uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
-    for (auto &subDevice : deviceImp->subDevices) {
+ze_result_t MetricSource::activatePreferDeferredHierarchical(Device *device, const uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
+    for (auto &subDevice : device->subDevices) {
         T &source = subDevice->getMetricDeviceContext().getMetricSource<T>();
         auto status = source.activateMetricGroupsPreferDeferred(count, phMetricGroups);
         if (status != ZE_RESULT_SUCCESS) {

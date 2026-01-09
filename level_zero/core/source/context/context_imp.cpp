@@ -21,7 +21,7 @@
 #include "shared/source/utilities/cpu_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -49,9 +49,8 @@ ze_result_t ContextImp::destroy() {
 
 ze_result_t ContextImp::getStatus() {
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-    for (auto &device : driverHandleImp->devices) {
-        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-        if (deviceImp->resourcesReleased) {
+    for (auto device : driverHandleImp->devices) {
+        if (device->resourcesReleased) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
     }
@@ -462,12 +461,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 }
 
 void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *device) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    std::unique_lock<NEO::SpinLock> lock(device->peerAllocations.mutex);
 
-    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocations.mutex);
-
-    auto iter = deviceImp->peerAllocations.allocations.find(ptr);
-    if (iter != deviceImp->peerAllocations.allocations.end()) {
+    auto iter = device->peerAllocations.allocations.find(ptr);
+    if (iter != device->peerAllocations.allocations.end()) {
         auto peerAllocData = &iter->second;
         auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
         auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
@@ -479,10 +476,10 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
         } else {
             this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
         }
-        deviceImp->peerAllocations.allocations.erase(iter);
+        device->peerAllocations.allocations.erase(iter);
     }
 
-    for (auto &subDevice : deviceImp->subDevices) {
+    for (auto &subDevice : device->subDevices) {
         this->freePeerAllocations(ptr, blocking, subDevice);
     }
 }
@@ -1068,7 +1065,7 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
         if (alloc->device == nullptr) {
             *phDevice = nullptr;
         } else {
-            auto device = static_cast<NEO::Device *>(alloc->device)->getSpecializedDevice<DeviceImp>();
+            auto device = static_cast<NEO::Device *>(alloc->device)->getSpecializedDevice<Device>();
             DEBUG_BREAK_IF(device == nullptr);
             *phDevice = device->toHandle();
         }
@@ -1116,13 +1113,12 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
         }
     }
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
     const bool isSharedSystemAlloc = ((allocData == nullptr) && sharedSystemAllocEnabled);
 
     auto attrEval = static_cast<uint32_t>(attr);
 
     ze_device_memory_access_properties_t memProp;
-    deviceImp->getMemoryAccessProperties(&memProp);
+    device->getMemoryAccessProperties(&memProp);
     NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::invalid;
 
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS) {
@@ -1177,12 +1173,12 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
 
     if (isSharedSystemAlloc) {
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
-        unifiedMemoryManager->sharedSystemAtomicAccess(*deviceImp->getNEODevice(), mode, ptr, size);
+        unifiedMemoryManager->sharedSystemAtomicAccess(*device->getNEODevice(), mode, ptr, size);
     } else {
         auto memoryManager = device->getDriverHandle()->getMemoryManager();
-        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
-        memoryManager->setAtomicAccess(alloc, size, mode, deviceImp->getRootDeviceIndex());
-        deviceImp->atomicAccessAllocations[allocData] = attr;
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        memoryManager->setAtomicAccess(alloc, size, mode, device->getRootDeviceIndex());
+        device->atomicAccessAllocations[allocData] = attr;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1199,12 +1195,10 @@ ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, con
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
-
     if (isSharedSystemAlloc) {
 
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
-        auto mode = unifiedMemoryManager->getSharedSystemAtomicAccess(*deviceImp->getNEODevice(), ptr, size);
+        auto mode = unifiedMemoryManager->getSharedSystemAtomicAccess(*device->getNEODevice(), ptr, size);
         switch (mode) {
         case NEO::AtomicAccessMode::device:
             *pAttr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
@@ -1222,8 +1216,8 @@ ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, con
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else {
-        if (deviceImp->atomicAccessAllocations.find(allocData) != deviceImp->atomicAccessAllocations.end()) {
-            *pAttr = deviceImp->atomicAccessAllocations[allocData];
+        if (device->atomicAccessAllocations.find(allocData) != device->atomicAccessAllocations.end()) {
+            *pAttr = device->atomicAccessAllocations[allocData];
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

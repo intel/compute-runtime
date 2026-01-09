@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 
@@ -28,14 +28,13 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
     auto fabricVertex = new FabricVertex();
     UNRECOVERABLE_IF(fabricVertex == nullptr);
 
-    auto deviceImpl = static_cast<DeviceImp *>(device);
-    for (auto &subDevice : deviceImpl->subDevices) {
+    for (auto &subDevice : device->subDevices) {
         auto subVertex = FabricVertex::createFromDevice(subDevice);
         if (subVertex == nullptr) {
             continue;
         }
-        auto subDeviceImpl = static_cast<DeviceImp *>(subDevice);
-        subDeviceImpl->setFabricVertex(subVertex);
+
+        subDevice->setFabricVertex(subVertex);
         fabricVertex->subVertices.push_back(subVertex);
     }
 

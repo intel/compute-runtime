@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -753,7 +753,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingReleaseResour
 
 TEST_F(ZesDiagnosticsFixture, GivenSysmanImpPointerWhenCallingReleaseResourcesThenGfxPartitionIsRemovedForRootDevice) {
     pLinuxSysmanImp->diagnosticsReset = true;
-    auto devicePtr = static_cast<DeviceImp *>(pLinuxSysmanImp->pDevice);
+    auto devicePtr = static_cast<Device *>(pLinuxSysmanImp->pDevice);
     auto executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
     auto rootIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
 

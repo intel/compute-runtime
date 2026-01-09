@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3990,7 +3990,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->heapInfo.kernelHeapSize = 1;
@@ -3998,8 +3998,8 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
         kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
@@ -4020,7 +4020,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
 
         StreamCapture capture;
         capture.captureStdout();
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true);
         std::string output = capture.getCapturedStdout();
 
         auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
@@ -4051,7 +4051,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
             GTEST_SKIP();
         }
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
         bcsCsr->callBaseFlushBcsTask = false;
@@ -4063,8 +4063,8 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
         kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
@@ -4086,7 +4086,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         StreamCapture capture;
         capture.captureStdout();
         capture.captureStderr();
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true);
         std::string output = capture.getCapturedStdout();
         std::string error = capture.getCapturedStderr();
 
@@ -4564,7 +4564,7 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->heapInfo.kernelHeapSize = 1;
@@ -4585,8 +4585,8 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
         kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 1;
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());

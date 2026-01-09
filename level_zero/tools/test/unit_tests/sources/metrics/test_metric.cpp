@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
@@ -116,9 +116,9 @@ void MetricScopesMultiDeviceFixture::SetUp() {
     MultiDeviceFixture::setUp();
 
     rootDevice = driverHandle->devices[0];
-    auto &rootDeviceImp = *static_cast<DeviceImp *>(rootDevice);
-    subDevice = rootDeviceImp.subDevices[0];
-    auto &subDeviceImp = *static_cast<DeviceImp *>(subDevice);
+    auto &rootDeviceRef = *static_cast<Device *>(rootDevice);
+    subDevice = rootDeviceRef.subDevices[0];
+    auto &subDeviceRef = *static_cast<Device *>(subDevice);
 
     mockRootMetricSource = new MockMetricSource();
     mockRootMetricSource->isAvailableReturn = true;
@@ -127,7 +127,7 @@ void MetricScopesMultiDeviceFixture::SetUp() {
     mockRootDeviceContext->clearAllSources();
     mockRootDeviceContext->setMockMetricSource(mockRootMetricSource);
     mockRootDeviceContext->setMultiDeviceCapable(true);
-    rootDeviceImp.metricContext.reset(mockRootDeviceContext);
+    rootDeviceRef.metricContext.reset(mockRootDeviceContext);
 
     mockSubMetricSource = new MockMetricSource();
     mockSubMetricSource->isAvailableReturn = true;
@@ -136,7 +136,7 @@ void MetricScopesMultiDeviceFixture::SetUp() {
     mockSubDeviceContext->clearAllSources();
     mockSubDeviceContext->setMockMetricSource(mockSubMetricSource);
     mockSubDeviceContext->setMultiDeviceCapable(false);
-    subDeviceImp.metricContext.reset(mockSubDeviceContext);
+    subDeviceRef.metricContext.reset(mockSubDeviceContext);
 }
 
 void MetricScopesMultiDeviceFixture::TearDown() {
@@ -384,11 +384,11 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneThenReturnSuccess) {
     metricSource->isAvailableReturn = true;
     mockDeviceContext->setMockMetricSource(metricSource);
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    deviceImp->metricContext.reset(mockDeviceContext);
+    auto l0Device = static_cast<Device *>(device);
+    l0Device->metricContext.reset(mockDeviceContext);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
-    deviceImp->metricContext.reset();
+    l0Device->metricContext.reset();
 }
 
 TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneMultipleTimesThenEnableIsDoneOnlyOnce) {
@@ -399,14 +399,14 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneMultipleTimesThenEnableIsDon
     metricSource->isAvailableReturn = true;
     mockDeviceContext->setMockMetricSource(metricSource);
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    deviceImp->metricContext.reset(mockDeviceContext);
+    auto l0Device = static_cast<Device *>(device);
+    l0Device->metricContext.reset(mockDeviceContext);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
-    deviceImp->metricContext.reset();
+    l0Device->metricContext.reset();
 }
 
 TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThenReturnError) {
@@ -417,12 +417,12 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThen
     metricSource->isAvailableReturn = false;
     mockDeviceContext->setMockMetricSource(metricSource);
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    deviceImp->metricContext.reset(mockDeviceContext);
+    auto l0Device = static_cast<Device *>(device);
+    l0Device->metricContext.reset(mockDeviceContext);
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
-    deviceImp->metricContext.reset();
+    l0Device->metricContext.reset();
 }
 
 TEST_F(MetricScopesMultiDeviceFixture, WhenGettingMetricScopesForSubDeviceTheyAreCorrectlyEnumerated) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -231,7 +231,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
 }
 
 TEST_F(ZeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCachePropertiesWhenGetCachePropertiesIsCalledThenSetCountToOne) {
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    static_cast<Device *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
     ze_device_cache_properties_t deviceCacheProperties = {};
 
     uint32_t count = 10;
@@ -242,7 +242,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCacheProper
 
 TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithNoSupportForCacheReservationThenReturnZeroMaxCacheReservationSize) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    static_cast<Device *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
     ze_cache_reservation_ext_desc_t cacheReservationExtDesc = {};
     cacheReservationExtDesc.stype = ZE_STRUCTURE_TYPE_CACHE_RESERVATION_EXT_DESC;
@@ -258,7 +258,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
 }
 
 TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithSupportForCacheReservationThenReturnNonZeroMaxCacheReservationSize) {
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    static_cast<Device *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
     ze_cache_reservation_ext_desc_t cacheReservationExtDesc = {};
     cacheReservationExtDesc.stype = ZE_STRUCTURE_TYPE_CACHE_RESERVATION_EXT_DESC;
@@ -275,7 +275,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
 
 TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    static_cast<Device *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
     size_t cacheLevel = 3;
     size_t cacheReservationSize = 1024;
@@ -286,7 +286,7 @@ TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtOnDeviceW
 
 TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtWithCacheLevel0ThenDriverShouldDefaultToCacheLevel3) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+    static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
 
     size_t cacheLevel = 0;
     size_t cacheReservationSize = 1024;
@@ -303,7 +303,7 @@ TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtFailsToRe
 
     for (auto initialize : {false, true}) {
         auto mockCacheReservation = new MockCacheReservation(*device, initialize);
-        static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+        static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
 
         auto result = zeDeviceReserveCacheExt(device->toHandle(), cacheLevel, cacheReservationSize);
 
@@ -322,7 +322,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceRe
     size_t cacheReservationSize = 1024;
 
     auto mockCacheReservation = new MockCacheReservation(*device, true);
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+    static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
     mockDriverModel->getDriverModelTypeCallBase = false;
 
     auto result = zeDeviceReserveCacheExt(device->toHandle(), cacheLevel, cacheReservationSize);
@@ -331,7 +331,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceRe
 
 TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtWithDefaultCacheRegionThenDriverShouldDefaultToNonReservedRegion) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+    static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
 
     void *ptr = reinterpret_cast<void *>(0x123456789);
     size_t regionSize = 512;
@@ -345,7 +345,7 @@ TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtWithDef
 
 TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceSetCacheAdviceExtThenUnsupportedFeatureFlagReturned) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+    static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
 
     void *ptr = reinterpret_cast<void *>(0x123456789);
     size_t regionSize = 512;
@@ -358,7 +358,7 @@ TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceSe
 
 TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
-    static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
+    static_cast<Device *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
     void *ptr = reinterpret_cast<void *>(0x123456789);
     size_t regionSize = 512;
@@ -375,7 +375,7 @@ TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsTo
 
     for (auto initialize : {false, true}) {
         auto mockCacheReservation = new MockCacheReservation(*device, initialize);
-        static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
+        static_cast<Device *>(device)->cacheReservation.reset(mockCacheReservation);
 
         auto result = zeDeviceSetCacheAdviceExt(device->toHandle(), ptr, regionSize, cacheRegion);
 

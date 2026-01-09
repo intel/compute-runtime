@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
@@ -125,8 +125,8 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
         device->setSysmanHandle(new SysmanDeviceImp(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
-        for (auto &subDevice : static_cast<DeviceImp *>(device)->subDevices) {
-            static_cast<DeviceImp *>(subDevice)->setSysmanHandle(pSysmanDevice);
+        for (auto &subDevice : device->subDevices) {
+            static_cast<Device *>(subDevice)->setSysmanHandle(pSysmanDevice);
         }
 
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);

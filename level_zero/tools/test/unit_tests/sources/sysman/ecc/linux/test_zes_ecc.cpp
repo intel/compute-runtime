@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,8 +63,8 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
     EccImp *tempEccImp = new EccImp(pOsSysman);
-    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
-    deviceImp->driverInfo.reset(nullptr);
+    auto l0Device = static_cast<L0::Device *>(pLinuxSysmanImp->getDeviceHandle());
+    l0Device->driverInfo.reset(nullptr);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
     tempEccImp->init();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));

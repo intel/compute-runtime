@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -334,7 +334,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         }
         MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
     };
-    class MockDeviceHandle : public L0::DeviceImp {
+    class MockDeviceHandle : public L0::Device {
       public:
         MockDeviceHandle() {
         }
@@ -422,7 +422,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         }
         MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
     };
-    class MockDeviceHandle : public L0::DeviceImp {
+    class MockDeviceHandle : public L0::Device {
       public:
         MockDeviceHandle() {
         }
@@ -520,7 +520,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         std::unique_ptr<MockModule> tmpModule;
         std::unique_ptr<MockQueryKernelTimestampsKernel> tmpMockKernel;
     };
-    class MockDeviceHandle : public L0::DeviceImp {
+    class MockDeviceHandle : public L0::Device {
       public:
         MockDeviceHandle() {
         }

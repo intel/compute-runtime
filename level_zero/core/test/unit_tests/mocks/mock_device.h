@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,19 +10,37 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 namespace ult {
 
 struct Device : public ::L0::Device {
     using Base = L0::Device;
+    using Base::adjustCommandQueueDesc;
+    using Base::debugSession;
+    using Base::deviceInOrderCounterAllocator;
+    using Base::freeMemoryAllocation;
+    using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
+    using Base::inOrderTimestampAllocator;
+    using Base::queryPeerAccess;
+    using Base::resourcesReleased;
+    using Base::subDeviceCopyEngineGroups;
+    using Base::syncDispatchTokenAllocation;
     using L0::Device::getNEODevice;
     using L0::Device::neoDevice;
 };
 
 struct MockDevice : public Device {
+    MockDevice() : Device() {
+        resourcesReleased = true; // Prevent releaseResources() from being called
+    }
+    MockDevice(NEO::Device *device) : Device() {
+        device->incRefInternal();
+        neoDevice = device;
+        allocationsForReuse = std::make_unique<NEO::AllocationsList>();
+    }
     ~MockDevice() override = default;
 
     ADDMETHOD_NOBASE(canAccessPeer, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_bool_t *value));
@@ -101,8 +119,8 @@ struct MockDevice : public Device {
     }
 };
 
-struct MockDeviceImp : public L0::DeviceImp {
-    using Base = L0::DeviceImp;
+struct MockDeviceImp : public L0::Device {
+    using Base = L0::Device;
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;

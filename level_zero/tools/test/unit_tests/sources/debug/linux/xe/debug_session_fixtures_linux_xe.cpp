@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,8 +60,7 @@ void DebugApiLinuxMultiDeviceFixtureXe::setUp() {
     MultipleDevicesWithCustomHwInfo::setUp();
     neoDevice = driverHandle->devices[0]->getNEODevice();
 
-    L0::Device *device = driverHandle->devices[0];
-    deviceImp = static_cast<DeviceImp *>(device);
+    l0Device = driverHandle->devices[0];
 
     mockDrm = DrmMockXeDebug::create(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]).release();
     mockDrm->allowDebugAttach = true;

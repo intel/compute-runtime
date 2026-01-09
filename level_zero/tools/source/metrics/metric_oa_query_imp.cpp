@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -207,14 +206,14 @@ void MetricsLibrary::getSubDeviceClientOptions(
     ClientOptionsData_1_0 &subDeviceCount,
     ClientOptionsData_1_0 &workloadPartition) {
 
-    auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+    auto &device = metricSource.getDevice();
 
     std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
     uint32_t hwSubDeviceIndex = 0u;
     uint32_t hwSubDevicesCount = 0u;
     bool requiresSubDeviceHierarchy = false;
-    bool isSubDevice = deviceImp.isSubdevice;
-    if (deviceImp.getNEODevice()->getExecutionEnvironment()->getSubDeviceHierarchy(deviceImp.getNEODevice()->getRootDeviceIndex(), &subDeviceMap)) {
+    bool isSubDevice = device.isSubdevice;
+    if (device.getNEODevice()->getExecutionEnvironment()->getSubDeviceHierarchy(device.getNEODevice()->getRootDeviceIndex(), &subDeviceMap)) {
         hwSubDeviceIndex = std::get<1>(subDeviceMap);
         hwSubDevicesCount = std::get<2>(subDeviceMap);
         requiresSubDeviceHierarchy = true;
@@ -228,10 +227,10 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = false;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(device.getPhysicalSubDeviceId());
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
+        subDeviceCount.SubDeviceCount.Count = std::max(device.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
 
         workloadPartition.Type = ClientOptionsType::WorkloadPartition;
         workloadPartition.WorkloadPartition.Enabled = false;
@@ -246,14 +245,14 @@ void MetricsLibrary::getSubDeviceClientOptions(
         if (requiresSubDeviceHierarchy) {
             subDeviceIndex.SubDeviceIndex.Index = hwSubDeviceIndex;
         } else {
-            subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
+            subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(device.getPhysicalSubDeviceId());
         }
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
         if (requiresSubDeviceHierarchy) {
             subDeviceCount.SubDeviceCount.Count = hwSubDevicesCount;
         } else {
-            subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
+            subDeviceCount.SubDeviceCount.Count = std::max(device.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
         }
 
         workloadPartition.Type = ClientOptionsType::WorkloadPartition;
@@ -276,8 +275,7 @@ bool MetricsLibrary::createContext() {
         return engine.first == aub_stream::ENGINE_CCS;
     });
 
-    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-    const auto &commandStreamReceiver = *deviceImp.getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    const auto &commandStreamReceiver = *device.getNEODevice()->getDefaultEngine().commandStreamReceiver;
     const auto engineType = commandStreamReceiver.getOsContext().getEngineType();
     const bool isComputeUsed = NEO::EngineHelpers::isCcs(engineType);
 
@@ -465,7 +463,6 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    const auto &deviceImp = *static_cast<DeviceImp *>(device);
     auto metricPoolImp = new OaMetricQueryPoolImp(metricSource, hMetricGroup, *pDesc);
 
     if (metricSource.isImplicitScalingCapable()) {
@@ -480,9 +477,9 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
 
         auto &metricPools = metricPoolImp->getMetricQueryPools();
 
-        for (size_t i = 0; i < deviceImp.numSubDevices; ++i) {
+        for (size_t i = 0; i < device->numSubDevices; ++i) {
 
-            auto &subDevice = deviceImp.subDevices[i];
+            auto &subDevice = device->subDevices[i];
             auto &subDeviceMetricSource = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
             zet_metric_group_handle_t metricGroupHandle = useMetricGroupSubDevice
@@ -599,10 +596,10 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
     if (description.type == ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE) {
         // Get allocation size.
-        const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+        auto &device = metricSource.getDevice();
 
         allocationSize = (metricSource.isImplicitScalingCapable())
-                             ? deviceImp.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().getQueryReportGpuSize() * description.count * deviceImp.numSubDevices
+                             ? device.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().getQueryReportGpuSize() * description.count * device.numSubDevices
                              : metricsLibrary.getQueryReportGpuSize() * description.count;
 
         if (allocationSize == 0) {

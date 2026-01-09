@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cache/linux/cache_reservation_impl_prelim.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 using namespace NEO;
@@ -67,7 +67,7 @@ class CacheReservationFixture : public DeviceFixture {
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
         rootDeviceEnvironment.initGmm();
 
-        cache = static_cast<DeviceImp *>(device)->cacheReservation.get();
+        cache = static_cast<Device *>(device)->cacheReservation.get();
         ASSERT_NE(nullptr, cache);
     }
     void tearDown() {
@@ -317,7 +317,7 @@ class L2CacheReservationFixture : public DeviceFixture {
         rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-        cache = reinterpret_cast<MockCacheReservationImpl *>(static_cast<DeviceImp *>(device)->cacheReservation.get());
+        cache = reinterpret_cast<MockCacheReservationImpl *>(static_cast<Device *>(device)->cacheReservation.get());
         ASSERT_NE(nullptr, cache);
     }
     void tearDown() {

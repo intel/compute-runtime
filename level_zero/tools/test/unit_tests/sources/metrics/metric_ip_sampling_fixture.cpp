@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -32,10 +32,10 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
                          MultiDeviceFixture::numSubDevices));
     for (auto device : driverHandle->devices) {
         testDevices.push_back(device);
-        auto &deviceImp = *static_cast<DeviceImp *>(device);
-        const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+        auto &l0Device = *device;
+        const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
         for (uint32_t i = 0; i < subDeviceCount; i++) {
-            testDevices.push_back(deviceImp.subDevices[i]);
+            testDevices.push_back(l0Device.subDevices[i]);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,9 @@ void DebugSessionRegistersAccessV3::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
+    mockDevice = std::make_unique<MockDeviceImp>(neoDevice);
 
-    session = std::make_unique<MockDebugSession>(config, deviceImp.get(), true, 3);
+    session = std::make_unique<MockDebugSession>(config, mockDevice.get(), true, 3);
 
     session->allThreads[stoppedThreadId]->stopThread(1u);
     session->allThreads[stoppedThreadId]->reportAsStopped();
@@ -48,9 +48,9 @@ void DebugSessionRegistersAccess::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
+    mockDevice = std::make_unique<MockDeviceImp>(neoDevice);
 
-    session = std::make_unique<MockDebugSession>(config, deviceImp.get());
+    session = std::make_unique<MockDebugSession>(config, mockDevice.get());
 
     session->allThreads[stoppedThreadId]->stopThread(1u);
     session->allThreads[stoppedThreadId]->reportAsStopped();

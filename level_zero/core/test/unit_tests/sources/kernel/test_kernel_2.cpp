@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -832,7 +832,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -860,8 +860,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
         const auto globalConstantsSurfaceAddressSSIndex = 1;
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, globalConstBuffer.get(), nullptr, false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -903,7 +903,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -931,8 +931,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
         const auto globalVariablesSurfaceAddressSSIndex = 1;
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, globalVarBuffer.get(), false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -978,7 +978,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -1006,8 +1006,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, globalConstBuffer.get(), nullptr, false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -1064,7 +1064,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp mockDevice(device.get());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -1092,8 +1092,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, globalVarBuffer.get(), false);
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());

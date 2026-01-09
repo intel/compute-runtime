@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1032,8 +1032,8 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanMemo
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
-    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
-    deviceImp->driverInfo.reset(nullptr);
+    auto l0Device = static_cast<L0::Device *>(pLinuxSysmanImp->getDeviceHandle());
+    l0Device->driverInfo.reset(nullptr);
     VariableBackup<L0::FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 

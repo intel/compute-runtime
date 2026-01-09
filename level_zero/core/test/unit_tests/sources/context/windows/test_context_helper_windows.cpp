@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -91,7 +91,7 @@ TEST_F(ContextGetVirtualAddressSpaceTests, givenWddmDriverModelWhenCallingSystem
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
-    ze_result_t barrierRes = contextImp->systemBarrier(static_cast<DeviceImp *>(device)->toHandle());
+    ze_result_t barrierRes = contextImp->systemBarrier(static_cast<Device *>(device)->toHandle());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, barrierRes);
 
     res = contextImp->destroy();

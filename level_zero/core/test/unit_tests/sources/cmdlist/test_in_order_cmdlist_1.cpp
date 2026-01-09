@@ -1177,7 +1177,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
 
     EXPECT_EQ(0u, ultCsr1->makeResidentAllocations[immCmdList0->inOrderExecInfo->getDeviceCounterAllocation()]);
 
-    auto peerData = static_cast<L0::DeviceImp *>(device1)->peerCounterAllocations.get(reinterpret_cast<void *>(immCmdList0->inOrderExecInfo->getBaseDeviceAddress()));
+    auto peerData = static_cast<L0::Device *>(device1)->peerCounterAllocations.get(reinterpret_cast<void *>(immCmdList0->inOrderExecInfo->getBaseDeviceAddress()));
     ASSERT_NE(nullptr, peerData);
 
     auto peerAlloc = peerData->gpuAllocations.getDefaultGraphicsAllocation();

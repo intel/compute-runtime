@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
@@ -123,8 +122,8 @@ IpSamplingMetricCalcOpImp::IpSamplingMetricCalcOpImp(bool multidevice,
         }
     }
 
-    const auto deviceImp = static_cast<DeviceImp *>(&(metricSource.getMetricDeviceContext().getDevice()));
-    l0GfxCoreHelper = &(deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>());
+    const auto device = &(metricSource.getMetricDeviceContext().getDevice());
+    l0GfxCoreHelper = &(device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>());
 }
 
 void IpSamplingMetricCalcOpImp::clearScopesCaches() {
@@ -274,10 +273,10 @@ ze_result_t IpSamplingMetricCalcOpImp::getMultiScopeReportCount(const size_t raw
         std::vector<uint32_t> subDeviceIndexes{};
         std::vector<MetricScopeImp *>::iterator it = metricScopesInCalcOp.begin();
         if (isAggregateScopeIncluded) {
-            DeviceImp *deviceImp = static_cast<DeviceImp *>(&metricSource.getMetricDeviceContext().getDevice());
-            uint32_t subDeviceCount = deviceImp->numSubDevices;
+            Device *device = &metricSource.getMetricDeviceContext().getDevice();
+            uint32_t subDeviceCount = device->numSubDevices;
             std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-            deviceImp->getSubDevices(&subDeviceCount, subDevices.data());
+            device->getSubDevices(&subDeviceCount, subDevices.data());
             for (auto &subDeviceHandle : subDevices) {
                 auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
                 subDeviceIndexes.push_back(neoSubDevice->getSubDeviceIndex());
@@ -395,10 +394,10 @@ ze_result_t IpSamplingMetricCalcOpImp::updateCachesForMultiScopes(const size_t r
         if (aggregatedScope) {
             // Process data for the sub-devices not already processed above.
             std::map<uint64_t, void *> *aggregatedScopeCache = perScopeIpDataCaches[aggregatedScope->getId()];
-            DeviceImp *deviceImp = static_cast<DeviceImp *>(&metricSource.getMetricDeviceContext().getDevice());
-            uint32_t subDeviceCount = deviceImp->numSubDevices;
+            Device *device = &metricSource.getMetricDeviceContext().getDevice();
+            uint32_t subDeviceCount = device->numSubDevices;
             std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-            deviceImp->getSubDevices(&subDeviceCount, subDevices.data());
+            device->getSubDevices(&subDeviceCount, subDevices.data());
 
             std::vector<uint32_t> pendingSubDeviceIndexes{};
             for (auto &subDeviceHandle : subDevices) {

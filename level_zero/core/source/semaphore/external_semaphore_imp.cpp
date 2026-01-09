@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0 {
@@ -43,7 +42,6 @@ ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_e
 
 ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc) {
     this->device = Device::fromHandle(device);
-    auto deviceImp = static_cast<DeviceImp *>(this->device);
     this->desc = semaphoreDesc;
     NEO::ExternalSemaphore::Type externalSemaphoreType;
     void *handle = nullptr;
@@ -101,7 +99,7 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(deviceImp->getOsInterface(), externalSemaphoreType, handle, fd, name);
+    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(this->device->getOsInterface(), externalSemaphoreType, handle, fd, name);
     if (!this->neoExternalSemaphore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

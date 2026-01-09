@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,9 @@ class Device;
 }
 
 namespace L0 {
-struct DeviceImp;
+struct Device;
 
-ze_result_t queryFabricStatsDrm(DeviceImp *pSourceDevice, DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
+ze_result_t queryFabricStatsDrm(Device *pSourceDevice, Device *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
 bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle);
 
 } // namespace L0

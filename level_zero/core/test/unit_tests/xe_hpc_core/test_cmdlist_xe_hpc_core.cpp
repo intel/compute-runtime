@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1385,7 +1385,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalA
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
     commandList.reset();
-    EXPECT_FALSE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_FALSE(static_cast<Device *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
 HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
@@ -1402,7 +1402,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandLi
                                                                               NEO::EngineGroupType::renderCompute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_TRUE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
 HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
@@ -1417,7 +1417,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocati
                                                                               NEO::EngineGroupType::renderCompute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_TRUE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
+    EXPECT_TRUE(static_cast<Device *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
 struct AppendKernelXeHpcTestInput {

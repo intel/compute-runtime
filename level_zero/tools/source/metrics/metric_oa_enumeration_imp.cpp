@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_oa_programmable_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -94,9 +94,9 @@ ze_result_t MetricEnumeration::initialize() {
             cacheMetricInformation() == ZE_RESULT_SUCCESS) {
 
             if (metricSource.isImplicitScalingCapable()) {
-                const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
-                for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
-                    deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
+                auto &device = metricSource.getDevice();
+                for (size_t i = 0; i < device.numSubDevices; i++) {
+                    device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
                 }
             }
             initializationState = ZE_RESULT_SUCCESS;
@@ -165,16 +165,15 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     }
 
     auto &device = metricSource.getDevice();
-    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
     if (metricSource.isImplicitScalingCapable()) {
 
         // Open metrics device for each sub device.
-        for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
+        for (size_t i = 0; i < device.numSubDevices; i++) {
 
-            auto &subDeviceMetricEnumeraion = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
+            auto &subDeviceMetricEnumeraion = device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
             auto &metricsDevice = subDeviceMetricEnumeraion.pMetricsDevice;
-            auto subDeviceImp = static_cast<DeviceImp *>(deviceImp.subDevices[i]);
-            openMetricsSubDeviceFromAdapter(pAdapter, subDeviceImp->getPhysicalSubDeviceId(), &metricsDevice);
+            auto subDevice = device.subDevices[i];
+            openMetricsSubDeviceFromAdapter(pAdapter, subDevice->getPhysicalSubDeviceId(), &metricsDevice);
             subDeviceMetricEnumeraion.pAdapter = pAdapter;
             if (metricsDevice == nullptr) {
                 METRICS_LOG_ERR("unable to open metrics device %u", i);
@@ -193,8 +192,8 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         }
 
     } else {
-        auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
-        const uint32_t subDeviceIndex = deviceImp.getPhysicalSubDeviceId();
+        auto &device = metricSource.getDevice();
+        const uint32_t subDeviceIndex = device.getPhysicalSubDeviceId();
         if (subDeviceIndex == 0) {
             // Open metrics device for root device or sub device with index 0.
             openMetricsDeviceFromAdapter(pAdapter, &pMetricsDevice);
@@ -219,11 +218,10 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     if (pAdapter) {
 
         auto &device = metricSource.getDevice();
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
         if (metricSource.isImplicitScalingCapable()) {
 
-            for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
-                deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cleanupMetricsDiscovery();
+            for (size_t i = 0; i < device.numSubDevices; i++) {
+                device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cleanupMetricsDiscovery();
             }
         }
 
@@ -256,13 +254,12 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 
     auto &device = metricSource.getDevice();
-    const auto &deviceImp = *static_cast<DeviceImp *>(&device);
     if (metricSource.isImplicitScalingCapable()) {
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         // Get metric information from all sub devices.
-        for (auto subDevice : deviceImp.subDevices) {
+        for (auto subDevice : device.subDevices) {
             result = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cacheMetricInformation();
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
@@ -270,14 +267,14 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         }
 
         // Get metric groups count for one sub device.
-        const uint32_t metricGroupCount = deviceImp.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupCount();
+        const uint32_t metricGroupCount = device.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupCount();
 
         // Cache and aggregate all metric groups from all sub devices.
         for (uint32_t i = 0; i < metricGroupCount; i++) {
             auto metricGroupRootDevice = new OaMetricGroupImp(metricSource);
             metricGroupRootDevice->setRootDeviceFlag();
 
-            for (auto subDevice : deviceImp.subDevices) {
+            for (auto subDevice : device.subDevices) {
                 MetricGroup *metricGroupSubDevice = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupByIndex(i);
 
                 metricGroupRootDevice->getMetricGroups().push_back(static_cast<MetricGroupImp *>(metricGroupSubDevice));
@@ -628,15 +625,14 @@ ze_result_t MetricEnumeration::metricProgrammableGet(uint32_t *pCount, zet_metri
     // For Root device, create multi device programmables
     if (metricProgrammables.size() == 0 && metricSource.isImplicitScalingCapable()) {
         auto &device = metricSource.getDevice();
-        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
-        MetricEnumeration &metricEnumeration = deviceImp.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
+        MetricEnumeration &metricEnumeration = device.subDevices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
         const uint32_t programmableCount = static_cast<uint32_t>(metricEnumeration.getProgrammables().size());
         metricProgrammables.reserve(programmableCount);
 
         for (uint32_t index = 0; index < programmableCount; index++) {
             std::vector<MetricProgrammable *> subDeviceProgrammables{};
             // Get metric programmables from all sub devices.
-            for (auto subDevice : deviceImp.subDevices) {
+            for (auto subDevice : device.subDevices) {
                 MetricEnumeration &subDeviceEnumeration = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
                 subDeviceProgrammables.push_back(subDeviceEnumeration.getProgrammables()[index]);
             }
@@ -996,12 +992,12 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
                                                      uint64_t *metricTimestamp) {
     ze_result_t result;
     OaMetricSourceImp *metricSource = getMetricSource();
-    const auto deviceImp = static_cast<DeviceImp *>(&metricSource->getMetricDeviceContext().getDevice());
+    const auto device = &metricSource->getMetricDeviceContext().getDevice();
 
     uint64_t hostTimestamp;
     uint64_t deviceTimestamp;
 
-    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
+    result = device->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
     if (result != ZE_RESULT_SUCCESS) {
         *globalTimestamp = 0;
         *metricTimestamp = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
@@ -429,7 +429,7 @@ ze_result_t LinuxSchedulerImp::updateComputeUnitDebugNode(uint64_t val) {
     // I915 will be reloaded if we toggle value of enableEuDebug
     // Hence for graceful handling close all i915 clients before toggling enableEuDebug
     auto pDevice = pLinuxSysmanImp->getDeviceHandle();
-    auto devicePtr = static_cast<DeviceImp *>(pDevice);
+    auto devicePtr = pDevice;
     NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
     auto restorer = std::make_unique<L0::ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     pLinuxSysmanImp->releaseDeviceResources();

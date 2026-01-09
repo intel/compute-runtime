@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
@@ -94,13 +93,12 @@ ze_result_t ImageImp::destroy() {
 }
 
 ze_result_t ImageImp::destroyPeerImages(const void *ptr, Device *device) {
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
-    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerImageAllocationsMutex);
+    std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (deviceImp->peerImageAllocations.find(ptr) != deviceImp->peerImageAllocations.end()) {
-        delete deviceImp->peerImageAllocations[ptr];
-        deviceImp->peerImageAllocations.erase(ptr);
+    if (device->peerImageAllocations.find(ptr) != device->peerImageAllocations.end()) {
+        delete device->peerImageAllocations[ptr];
+        device->peerImageAllocations.erase(ptr);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -270,9 +268,7 @@ size_t ImageImp::getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &img
     NEO::StorageInfo storageInfo = {};
     NEO::ImageInfo info = imgInfo;
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-
-    NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),
+    NEO::Gmm gmm(device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->getGmmHelper(),
                  info,
                  storageInfo,
                  false);

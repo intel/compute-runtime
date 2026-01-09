@@ -723,12 +723,12 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    EXPECT_TRUE(deviceImp->allocationsForReuse->peekIsEmpty());
+    auto l0Device = static_cast<Device *>(device);
+    EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
 
     commandQueue->destroy();
 
-    EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
+    EXPECT_FALSE(l0Device->allocationsForReuse->peekIsEmpty());
 }
 
 struct DeviceWithDualStorage : Test<DeviceFixture> {
@@ -792,10 +792,10 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernel.toHandle(), dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    auto l0Device = static_cast<Device *>(device);
     commandList->close();
 
-    auto pageFaultCmdQueue = whiteboxCast(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
+    auto pageFaultCmdQueue = whiteboxCast(CommandList::whiteboxCast(l0Device->pageFaultCommandList)->cmdQImmediate);
 
     auto pageFaultCsr = pageFaultCmdQueue->getCsr();
     auto &pageFaultCsrStream = pageFaultCsr->getCS(0);

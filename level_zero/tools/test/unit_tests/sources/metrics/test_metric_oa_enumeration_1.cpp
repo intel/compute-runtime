@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -1687,10 +1687,10 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndMetricsIsDisable
 
     // Reset the disabled status
     devices[0]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
-    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
     for (uint32_t i = 0; i < subDeviceCount; i++) {
-        deviceImp.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
+        l0Device.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
     }
 }
 

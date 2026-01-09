@@ -51,7 +51,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
@@ -317,7 +316,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     commandContainer.setReservedSshSize(getReserveSshSize());
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
     auto createSecondaryCmdBufferInHostMem = isImmediateType() &&
                                              !device->isImplicitScalingCapable() &&
@@ -330,8 +328,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         createSecondaryCmdBufferInHostMem = isImmediateType() && static_cast<bool>(NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get());
     }
 
-    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(),
-                                                   deviceImp->allocationsForReuse.get(),
+    auto returnValue = commandContainer.initialize(device->getActiveDevice(),
+                                                   device->allocationsForReuse.get(),
                                                    NEO::EncodeStates<GfxFamily>::getSshHeapSize(),
                                                    !isCopyOnly(false),
                                                    createSecondaryCmdBufferInHostMem);
@@ -1420,10 +1418,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
                 return ZE_RESULT_SUCCESS;
             }
 
-            DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+            Device *device = L0::Device::fromHandle(hDevice);
             auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
 
-            unifiedMemoryManager->sharedSystemMemAdvise(*deviceImp->getNEODevice(), memAdviseOp, ptr, size);
+            unifiedMemoryManager->sharedSystemMemAdvise(*device->getNEODevice(), memAdviseOp, ptr, size);
 
             return ZE_RESULT_SUCCESS;
         } else {
@@ -1432,10 +1430,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
     }
 
     NEO::MemAdviseFlags flags{};
-    DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+    Device *adviceDevice = L0::Device::fromHandle(hDevice);
 
-    if (deviceImp->memAdviseSharedAllocations.find(allocData) != deviceImp->memAdviseSharedAllocations.end()) {
-        flags = deviceImp->memAdviseSharedAllocations[allocData];
+    if (adviceDevice->memAdviseSharedAllocations.find(allocData) != adviceDevice->memAdviseSharedAllocations.end()) {
+        flags = adviceDevice->memAdviseSharedAllocations[allocData];
     }
 
     const auto currentFlags = flags;
@@ -1490,10 +1488,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
         return ZE_RESULT_SUCCESS;
     }
 
-    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
-    memoryManager->setMemAdvise(alloc, flags, deviceImp->getRootDeviceIndex());
+    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(adviceDevice->getRootDeviceIndex());
+    memoryManager->setMemAdvise(alloc, flags, adviceDevice->getRootDeviceIndex());
 
-    deviceImp->memAdviseSharedAllocations[allocData] = flags;
+    adviceDevice->memAdviseSharedAllocations[allocData] = flags;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -3039,8 +3037,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
         if (driverHandle->isRemoteResourceNeeded(const_cast<void *>(buffer), alloc, allocData, device)) {
             uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
             uint64_t offset = sourcePtr - pbase;
@@ -3914,7 +3911,7 @@ inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_co
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
-    if (static_cast<DeviceImp *>(device)->calculationForDisablingEuFusionWithDpasNeeded) {
+    if (device->calculationForDisablingEuFusionWithDpasNeeded) {
         auto &productHelper = device->getProductHelper();
         uint32_t *groupCountPtr = nullptr;
         uint32_t groupCount[3] = {};

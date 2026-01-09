@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
@@ -79,9 +79,9 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenWit
         EXPECT_NE(streamerHandle, nullptr);
 
         const uint32_t reportSize = 64;
-        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+        Device *l0Device = static_cast<Device *>(device);
         size_t expectedSize = reportSize * UINT32_MAX;
-        expectedSize *= (!deviceImp->isSubdevice && deviceImp->isImplicitScalingCapable()) ? deviceImp->numSubDevices : 1u;
+        expectedSize *= (!l0Device->isSubdevice && l0Device->isImplicitScalingCapable()) ? l0Device->numSubDevices : 1u;
         EXPECT_EQ(hwBufferSizeDesc.sizeInBytes, expectedSize);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
