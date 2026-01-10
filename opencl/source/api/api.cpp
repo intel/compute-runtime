@@ -719,7 +719,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   size_t size,
                                   void *hostPtr,
                                   cl_int *errcodeRet) {
-    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1 && !(flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))) {
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
@@ -750,7 +750,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                                 cl_int *errcodeRet) {
 
     TRACING_ENTER(ClCreateBufferWithProperties, &context, &properties, &flags, &size, &hostPtr, &errcodeRet);
-    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1 && !(flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))) {
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
@@ -780,7 +780,7 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      cl_int *errcodeRet) {
 
     TRACING_ENTER(ClCreateBufferWithPropertiesINTEL, &context, &properties, &flags, &size, &hostPtr, &errcodeRet);
-    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1 && !(flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))) {
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
