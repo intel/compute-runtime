@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,9 +109,15 @@ inline bool isAligned(T *ptr) {
 }
 
 template <typename T1, typename T2>
-inline bool isAligned(T1 ptr, T2 alignment) {
+inline bool isAligned(T1 value, T2 alignment) {
     OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
-    return ((static_cast<size_t>(ptr)) & (static_cast<size_t>(alignment) - 1u)) == 0;
+    return ((static_cast<size_t>(value)) & (static_cast<size_t>(alignment) - 1u)) == 0;
+}
+
+template <typename T1, typename T2>
+inline bool isAligned(T1 *ptr, T2 alignment) {
+    OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
+    return ((reinterpret_cast<uintptr_t>(ptr)) & (static_cast<size_t>(alignment) - 1u)) == 0;
 }
 
 template <typename T>

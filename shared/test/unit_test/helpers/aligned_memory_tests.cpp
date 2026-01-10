@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -283,6 +283,14 @@ TYPED_TEST(IsAlignedTests, WhenCheckingForAlignmentThenReturnCorrectValue) {
 
     auto ptr3 = reinterpret_cast<TypeParam *>(reinterpret_cast<uintptr_t>(ptr) & ~((alignof(TypeParam) >> 1) - 1));
     EXPECT_FALSE(isAligned(ptr3));
+}
+
+TEST(IsAligned, GivenVariableWhenCheckingForPointerAlignmentThenReturnCorrectValue) {
+    void *alignedPtr = (void *)0x1000;
+    void *misalignedPtr = (void *)0x1001;
+
+    EXPECT_TRUE(isAligned(alignedPtr, 4));
+    EXPECT_FALSE(isAligned(misalignedPtr, 4));
 }
 
 TEST(IsAligned, GivenNonPointerTypeWhenCheckingForAlignmentThenReturnIsCorrect) {

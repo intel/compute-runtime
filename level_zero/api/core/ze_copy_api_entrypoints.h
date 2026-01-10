@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -49,6 +50,9 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFill(
     }
     if (false == Math::isPow2(patternSize)) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    if (!isAligned(ptr, patternSize)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
     }
 
     CmdListMemoryCopyParams memoryCopyParams = {};
