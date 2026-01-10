@@ -357,7 +357,7 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr
 }
 
 bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager) {
-    bool poolManagerEnabled = device->getProductHelper().isPoolManagerEnabled();
+    bool poolManagerEnabled = false;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
     }

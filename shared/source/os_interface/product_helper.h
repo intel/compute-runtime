@@ -183,7 +183,6 @@ class ProductHelper {
     virtual bool isDeviceUsmPoolAllocatorSupported() const = 0;
     virtual bool isDeviceUsmAllocationReuseSupported() const = 0;
     virtual bool isHostUsmAllocationReuseSupported() const = 0;
-    virtual bool isPoolManagerEnabled() const = 0;
     virtual bool useLocalPreferredForCacheableBuffers() const = 0;
     virtual bool useGemCreateExtInAllocateMemoryByKMD() const = 0;
     virtual bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const = 0;

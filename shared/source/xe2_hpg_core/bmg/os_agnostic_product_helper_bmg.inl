@@ -71,9 +71,4 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isPoolManagerEnabled() const {
-    return false;
-}
-
 } // namespace NEO

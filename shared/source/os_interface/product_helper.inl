@@ -1133,9 +1133,4 @@ bool ProductHelperHw<gfxProduct>::scanFullTopologyBitmap() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isPoolManagerEnabled() const {
-    return true;
-}
-
 } // namespace NEO
