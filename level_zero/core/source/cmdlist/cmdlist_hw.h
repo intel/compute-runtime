@@ -477,7 +477,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     bool latestOperationHasOptimizedCbEvent = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
-    bool latestOperationHasWalkerWithoutPostSync = false;
+    bool isPostSyncSkippedOnLatestInOrderOperation = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
     bool allowCbWaitEventsNoopDispatch = false;

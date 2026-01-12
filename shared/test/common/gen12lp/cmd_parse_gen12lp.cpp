@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,5 +142,6 @@ template void HardwareParse::findHardwareCommands<Gen12LpFamily>(IndirectHeap *)
 template const void *HardwareParse::getStatelessArgumentPointer<Gen12LpFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 template const typename Gen12LpFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<Gen12LpFamily>(IndirectHeap *ssh, uint32_t index);
 template bool HardwareParse::isStallingBarrier<Gen12LpFamily>(GenCmdList::iterator &iter);
+template void HardwareParse::verifyL1FlushOnStallingBarrier<Gen12LpFamily>(bool, bool);
 
 } // namespace NEO

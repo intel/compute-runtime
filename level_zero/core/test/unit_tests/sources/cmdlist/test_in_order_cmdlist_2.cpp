@@ -1026,6 +1026,42 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCrossEngineDependency
     EXPECT_NE(hwCmds.end(), itor);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenWalkerPostSyncSkipEnabledWhenAppendKernelsWithoutEventsThenFlushL1Cache) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    NEO::debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    NEO::HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdStream, 0);
+
+    auto isL1FlushRequired = MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(device->getProductHelper().getL1CachePolicy(false));
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(!isL1FlushRequired, isL1FlushRequired);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenWalkerPostSyncSkipEnabledWhenAppendKernelsWithEventsThenDontFlushL1Cache) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    NEO::debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    NEO::HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdStream, 0);
+
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(false, false);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterThenUseCorrectHwCommands, IsAtLeastXe2HpgCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;

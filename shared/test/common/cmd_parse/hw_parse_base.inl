@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,6 +171,10 @@ bool HardwareParse::isStallingBarrier(GenCmdList::iterator &iter) {
     EXPECT_EQ(pipeControlCmd->getConstantCacheInvalidationEnable(), false);
     EXPECT_EQ(pipeControlCmd->getStateCacheInvalidationEnable(), false);
     return true;
+}
+
+template <typename FamilyType>
+void HardwareParse::verifyL1FlushOnStallingBarrier(bool expectInvalidate, bool expectFlush) {
 }
 
 } // namespace NEO

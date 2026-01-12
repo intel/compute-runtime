@@ -3095,11 +3095,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
             return ret;
         }
     }
-    this->latestOperationHasWalkerWithoutPostSync = false;
 
     if (hasInOrderDependencies()) {
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasOptimizedCbEvent = false;
+            this->isPostSyncSkippedOnLatestInOrderOperation = false;
             return false;
         }
 
@@ -3110,10 +3110,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false, dualStreamCopyOffloadOperation);
 
         this->latestOperationHasOptimizedCbEvent = false;
+        this->isPostSyncSkippedOnLatestInOrderOperation = false;
         return true;
     }
 
     this->latestOperationHasOptimizedCbEvent = false;
+    this->isPostSyncSkippedOnLatestInOrderOperation = false;
     return false;
 }
 
@@ -3238,6 +3240,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                     args.textureCacheInvalidationEnable = true;
                 } else {
                     args.csStallOnly = true;
+                    if (this->isPostSyncSkippedOnLatestInOrderOperation) {
+                        auto l1CachePolicy = l1CachePolicyData.getL1CacheValue(this->device->getL0Debugger() != nullptr);
+                        args.isL1FlushRequired = NEO::MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(l1CachePolicy);
+                        args.isL1InvalidateRequired = !args.isL1FlushRequired;
+                    }
                 }
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
                 break;

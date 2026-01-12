@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -294,8 +294,8 @@ void MemorySynchronizationCommands<Family>::setStallingBarrier(void *commandsBuf
     resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
     resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
     resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
-    auto invalidateL1Cache = false;
-    auto flushL1Cache = false;
+    auto invalidateL1Cache = args.isL1InvalidateRequired;
+    auto flushL1Cache = args.isL1FlushRequired;
     auto l1FlushMode = debugManager.flags.ResourceBarrierL1FlushMode.get();
     if (l1FlushMode != -1) {
         invalidateL1Cache = (l1FlushMode & 0x1) == 0x1;

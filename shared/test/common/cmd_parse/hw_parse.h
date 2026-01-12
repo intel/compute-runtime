@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,9 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
 
     template <typename FamilyType>
     bool isStallingBarrier(GenCmdList::iterator &iter);
+
+    template <typename FamilyType>
+    void verifyL1FlushOnStallingBarrier(bool expectInvalidate, bool expectFlush);
 
     template <typename FamilyType>
     void findHardwareCommands();

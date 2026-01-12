@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,17 @@ bool HardwareParse::isStallingBarrier<GenGfxFamily>(GenCmdList::iterator &iter) 
     EXPECT_EQ(resourceBarrierCmd->getWaitStage(), RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
     EXPECT_EQ(resourceBarrierCmd->getSignalStage(), RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
     return resourceBarrierCmd != nullptr;
+}
+
+template <>
+void HardwareParse::verifyL1FlushOnStallingBarrier<GenGfxFamily>(bool expectInvalidate, bool expectFlush) {
+    if constexpr (std::is_same_v<GenGfxFamily::StallingBarrierType, GenGfxFamily::RESOURCE_BARRIER>) {
+        auto itorResourceBarrier = find<GenGfxFamily::RESOURCE_BARRIER *>(cmdList.begin(), cmdList.end());
+        auto resourceBarrierCmd = genCmdCast<GenGfxFamily::RESOURCE_BARRIER *>(*itorResourceBarrier);
+        ASSERT_NE(itorResourceBarrier, cmdList.end());
+        EXPECT_EQ(resourceBarrierCmd->getL1DataportUavFlush(), expectFlush);
+        EXPECT_EQ(resourceBarrierCmd->getL1DataportCacheInvalidate(), expectInvalidate);
+    }
 }
 
 } // namespace NEO

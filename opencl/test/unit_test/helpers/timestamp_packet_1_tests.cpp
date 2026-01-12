@@ -496,6 +496,44 @@ HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKe
     EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
 }
 
+HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKernelsWithoutEventThenProgramL1CacheFlushInBarrier) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
+    auto &cmdStream = *cmdQ->commandStream;
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    auto isL1FlushRequired = MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(device->getProductHelper().getL1CachePolicy(false));
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(!isL1FlushRequired, isL1FlushRequired);
+}
+
+HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKernelsWithEventThenDontProgramL1CacheFlushInBarrier) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
+    auto &cmdStream = *cmdQ->commandStream;
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(false, false);
+    clReleaseEvent(event);
+}
+
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBarrierThenObtainTimestampPacket) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);

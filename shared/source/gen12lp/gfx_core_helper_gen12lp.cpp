@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -295,6 +295,11 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
             allocationData.storageInfo.isLockable = true;
         }
     }
+}
+
+template <typename GfxFamily>
+bool MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(uint32_t l1CachePolicy) {
+    return false;
 }
 
 template class GfxCoreHelperHw<Family>;

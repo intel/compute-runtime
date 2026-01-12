@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,8 @@ struct PipeControlArgs {
     bool protectedMemoryDisable = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool commandCacheInvalidateEnable = false;
+    bool isL1InvalidateRequired = false;
+    bool isL1FlushRequired = false;
 };
 
 } // namespace NEO

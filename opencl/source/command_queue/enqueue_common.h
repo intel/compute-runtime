@@ -246,6 +246,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         DEBUG_BREAK_IF(relaxedOrderingForGpgpuAllowed(1)); // IOQ has >=1 dependencies
         PipeControlArgs args;
         args.csStallOnly = true;
+        if (timestampPacketDependencies.previousEnqueueNodes.peekNodes().empty()) {
+            auto l1CachePolicy = device->getProductHelper().getL1CachePolicy(this->device->getDebugger() != nullptr);
+            args.isL1FlushRequired = NEO::MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(l1CachePolicy);
+            args.isL1InvalidateRequired = !args.isL1FlushRequired;
+        }
         args.hdcPipelineFlush = false;
         args.unTypedDataPortCacheFlush = false;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);

@@ -1528,6 +1528,16 @@ HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGr
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 }
 
+HWTEST2_F(GfxCoreHelperTest, givenIsL1FlushRequiredForBarrierThenFalseReturned, IsGen12LP) {
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(2));
+}
+
+HWTEST2_F(GfxCoreHelperTest, givenIsL1FlushRequiredForBarrierThenCorrectValueReturned, IsAtLeastXeCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP));
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB));
+}
+
 HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSliceReturnsHighestEnabledSliceInfo) {
     auto hwInfo = *defaultHwInfo;
 

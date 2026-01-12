@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,3 +59,4 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);
 template bool NEO::HardwareParse::isStallingBarrier<GenGfxFamily>(GenCmdList::iterator &iter);
+template void HardwareParse::verifyL1FlushOnStallingBarrier<GenGfxFamily>(bool, bool);

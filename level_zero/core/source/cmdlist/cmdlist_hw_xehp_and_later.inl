@@ -506,7 +506,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.skipInOrderNonWalkerSignaling = false;
     }
     if (this->isWalkerPostSyncSkipEnabled && !event) {
-        this->latestOperationHasWalkerWithoutPostSync = true;
+        this->isPostSyncSkippedOnLatestInOrderOperation = true;
     }
 
     if (textureFlushRequired) {
