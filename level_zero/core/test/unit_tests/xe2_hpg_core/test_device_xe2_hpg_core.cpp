@@ -203,7 +203,6 @@ HWTEST2_F(DeviceCopyQueueGroupXe2HpgCoreTest,
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = false;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);

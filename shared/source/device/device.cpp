@@ -511,7 +511,7 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         return;
     }
 
-    if (EngineHelper::isCopyOnlyEngineType(engineGroupType) && debugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
+    if (EngineHelper::isCopyOnlyEngineType(engineGroupType) && !hardwareInfo.capabilityTable.blitterOperationsSupported) {
         return;
     }
 
