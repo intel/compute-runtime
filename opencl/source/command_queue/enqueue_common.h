@@ -202,7 +202,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::gpuKernel &&
                                                                    this->isBarrierForImplicitDependenciesAllowed &&
                                                                    !this->isOOQEnabled() &&
-                                                                   this->taskCount == computeCommandStreamReceiver.peekTaskCount();
+                                                                   (this->isWalkerPostSyncSkipEnabled || this->taskCount == computeCommandStreamReceiver.peekTaskCount());
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
                 eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::onCsr);
