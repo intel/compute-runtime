@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -80,6 +80,9 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   set(OUTPUT_FILE_SPV
       ${OUTPUTDIR}/${mode}_${BASENAME}_${platform_it_lower}.spv
   )
+  set(TEMP_OUTPUT_FILE_SPV
+      ${OUTPUTDIR}/__${mode}_${BASENAME}_${platform_it_lower}.spv
+  )
 
   set(heapless_mode "disable")
   if(${mode} STREQUAL "heapless")
@@ -96,7 +99,8 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -output __${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_SPV} ${OUTPUT_FILE_SPV}
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
@@ -117,6 +121,9 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
     set(OUTPUT_FILE_CPP
         ${OUTPUTDIR}/${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp
     )
+    set(TEMP_OUTPUT_FILE_CPP
+        ${OUTPUTDIR}/__${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp
+    )
     get_property(RELEASE_HANDLED SOURCE ${OUTPUT_FILE_CPP} PROPERTY GENERATED)
     if(RELEASE_HANDLED)
       continue()
@@ -126,20 +133,16 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
       set(OUTPUT_FILES_BINARIES ${BINARY_OUTPUT}.bin)
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
-                         OUTPUT ${OUTPUT_FILES_BINARIES}
+                         OUTPUT ${OUTPUT_FILE_CPP}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -stateful_address_mode ${stateful_address_mode} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${TEMP_OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --device ${RELEASE_FILENAME}
+                         COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_CPP} ${OUTPUT_FILE_CPP}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                         DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files ${OUTPUT_FILES_BINARIES_PREV}
+                         DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files ${OUTPUT_FILES_BINARIES_PREV} cpp_generate_tool
       )
       if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-        set(OUTPUT_FILES_BINARIES_PREV ${OUTPUT_FILES_BINARIES})
+        set(OUTPUT_FILES_BINARIES_PREV ${OUTPUT_FILE_CPP})
       endif()
-      add_custom_command(
-                         OUTPUT ${OUTPUT_FILE_CPP}
-                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --device ${RELEASE_FILENAME}
-                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                         DEPENDS ${OUTPUT_FILES_BINARIES} $<TARGET_FILE:cpp_generate_tool>
-      )
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     else()
       foreach(_file_name "bin")
@@ -182,6 +185,9 @@ function(generate_cpp_spirv builtin is_stateless)
   set(OUTPUT_FILE_CPP
       ${OUTPUTDIR}/${BASENAME}.cpp
   )
+  set(TEMP_OUTPUT_FILE_CPP
+      ${OUTPUTDIR}/__${BASENAME}.cpp
+  )
 
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     if(is_stateless)
@@ -192,20 +198,16 @@ function(generate_cpp_spirv builtin is_stateless)
     set(KERNEL_OPTIONS "${KERNEL_OPTIONS} -cl-kernel-arg-info")
 
     add_custom_command(
-                       OUTPUT ${GENERATED_SPV_INPUT}
+                       OUTPUT ${OUTPUT_FILE_CPP}
                        COMMAND ${ocloc_cmd_prefix} -q -spv_only -file "${absolute_filepath}" -out_dir "${OUTPUTDIR}" -output "${BASENAME}" ${KERNEL_INTERNAL_OPTIONS} -output_no_suffix -options "${KERNEL_OPTIONS}"
+                       COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${GENERATED_SPV_INPUT} --output ${TEMP_OUTPUT_FILE_CPP} --array ${BASENAME}
+                       COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_CPP} ${OUTPUT_FILE_CPP}
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV}
+                       DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV} cpp_generate_tool
     )
     if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-      set(OUTPUT_FILES_SPIRV_PREV ${GENERATED_SPV_INPUT})
+      set(OUTPUT_FILES_SPIRV_PREV ${OUTPUT_FILE_CPP})
     endif()
-    add_custom_command(
-                       OUTPUT ${OUTPUT_FILE_CPP}
-                       COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${GENERATED_SPV_INPUT} --output ${OUTPUT_FILE_CPP} --array ${BASENAME}
-                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       DEPENDS ${GENERATED_SPV_INPUT} $<TARGET_FILE:cpp_generate_tool>
-    )
     set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
   else()
     set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${BASENAME}.spv")
