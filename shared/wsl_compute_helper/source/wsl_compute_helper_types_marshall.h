@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1057,6 +1057,7 @@ struct Marshaller<TOK_S_GT_SYSTEM_INFO> {
 template <typename _SKU_FEATURE_TABLET>
 inline void marshall(TOKSTR__SKU_FEATURE_TABLE &dst, const _SKU_FEATURE_TABLET &src) {
     dst = {};
+    dst.FtrBlitterRing.setValue(src.FtrBlitterRing);
     dst.FtrULT.setValue(src.FtrULT);
     dst.FtrLCIA.setValue(src.FtrLCIA);
     dst.FtrCCSRing.setValue(src.FtrCCSRing);
@@ -1373,6 +1374,7 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.GfxPlatform.usDeviceID_PCH.setValue(src.GfxPlatform.usDeviceID_PCH);
     dst.GfxPlatform.usRevId_PCH.setValue(src.GfxPlatform.usRevId_PCH);
     dst.GfxPlatform.eGTType.setValue(src.GfxPlatform.eGTType);
+    dst.SkuTable.FtrBlitterRing.setValue(src.SkuTable.FtrBlitterRing);
     dst.SkuTable.FtrULT.setValue(src.SkuTable.FtrULT);
     dst.SkuTable.FtrLCIA.setValue(src.SkuTable.FtrLCIA);
     dst.SkuTable.FtrCCSRing.setValue(src.SkuTable.FtrCCSRing);

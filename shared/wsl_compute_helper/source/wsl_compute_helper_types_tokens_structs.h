@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -432,7 +432,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenVariableLength base;
 
     TOKSTR__SKU_FEATURE_TABLE(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrAssignedGpuTile) + sizeof(FtrAssignedGpuTile) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrULT), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrAssignedGpuTile) + sizeof(FtrAssignedGpuTile) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrBlitterRing), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR__SKU_FEATURE_TABLE()
         : base(TOK_S_SKU_FEATURE_TABLE, 0, sizeof(*this) - sizeof(base)) {}
@@ -441,11 +441,12 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS3245(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS3245, FtrCCSMultiInstance) + sizeof(FtrCCSMultiInstance) - offsetof(TOKSTR_ANONYMOUS3245, FtrULT), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS3245, FtrCCSMultiInstance) + sizeof(FtrCCSMultiInstance) - offsetof(TOKSTR_ANONYMOUS3245, FtrBlitterRing), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS3245()
             : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS3245, 0, sizeof(*this) - sizeof(base)) {}
 
+        TokenDword FtrBlitterRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_BLITTER_RING};
         TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};
         TokenDword FtrLCIA = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_LCIA};
         TokenDword FtrCCSRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSRING};
@@ -604,6 +605,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS91822>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS91822) % sizeof(uint32_t) == 0, "");
 
+    TokenDword FtrBlitterRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_BLITTER_RING};                                        // Indirect field from anonymous struct
     TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};                                                         // Indirect field from anonymous struct
     TokenDword FtrLCIA = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_LCIA};                                                       // Indirect field from anonymous struct
     TokenDword FtrCCSRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSRING};                                                 // Indirect field from anonymous struct

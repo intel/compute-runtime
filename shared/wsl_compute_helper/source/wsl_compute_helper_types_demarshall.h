@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1733,6 +1733,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                         return false;
                     }
                     break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_BLITTER_RING: {
+                    dst.FtrBlitterRing = readTokValue<decltype(dst.FtrBlitterRing)>(*tok);
+                } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT: {
                     dst.FtrULT = readTokValue<decltype(dst.FtrULT)>(*tok);
                 } break;
@@ -2948,6 +2951,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                                     return false;
                                 }
                                 break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_BLITTER_RING: {
+                                dst.SkuTable.FtrBlitterRing = readTokValue<decltype(dst.SkuTable.FtrBlitterRing)>(*tokSkuTable);
+                            } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT: {
                                 dst.SkuTable.FtrULT = readTokValue<decltype(dst.SkuTable.FtrULT)>(*tokSkuTable);
                             } break;

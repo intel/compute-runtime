@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,7 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM { // NOLINT(readability-ide
 
     bool FtrFbc : 1; // NOLINT(readability-identifier-naming)
 
+    bool FtrBlitterRing : 1;        // NOLINT(readability-identifier-naming)
     bool FtrULT : 1;                // NOLINT(readability-identifier-naming)
     bool FtrLCIA : 1;               // NOLINT(readability-identifier-naming)
     bool FtrTileMappedResource : 1; // NOLINT(readability-identifier-naming)
