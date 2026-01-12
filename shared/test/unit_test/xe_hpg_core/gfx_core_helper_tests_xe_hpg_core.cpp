@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,18 +24,6 @@
 
 using GfxCoreHelperTestXeHpgCore = GfxCoreHelperTest;
 using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
-    for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(size));
-    }
-}
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSuitableThenReturnCorrectValue) {
     DebugManagerStateRestore restore;

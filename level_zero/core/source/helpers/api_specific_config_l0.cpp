@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,6 @@
 namespace NEO {
 StackVec<const char *, 4> validL0Prefixes;
 StackVec<NEO::DebugVarPrefix, 4> validL0PrefixTypes;
-bool ApiSpecificConfig::isStatelessCompressionSupported() {
-    return false;
-}
 
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {

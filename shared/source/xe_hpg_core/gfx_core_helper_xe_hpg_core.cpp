@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,11 +100,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
         return !!debugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
 
-    if (CompressionSelector::allowStatelessCompression()) {
-        return true;
-    } else {
-        return false;
-    }
+    return false;
 }
 
 template <>
@@ -141,15 +137,6 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
                 properties.allocationType == AllocationType::semaphoreBuffer)) {
         allocationData.flags.useSystemMemory = false;
         allocationData.flags.requiresCpuAccess = true;
-    }
-
-    if (CompressionSelector::allowStatelessCompression()) {
-        if (properties.allocationType == AllocationType::globalSurface ||
-            properties.allocationType == AllocationType::constantSurface ||
-            properties.allocationType == AllocationType::printfSurface) {
-            allocationData.flags.requiresCpuAccess = false;
-            allocationData.storageInfo.isLockable = false;
-        }
     }
 
     if (productHelper.isStorageInfoAdjustmentRequired()) {

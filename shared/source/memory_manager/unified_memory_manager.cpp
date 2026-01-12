@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1118,7 +1118,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
             auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-            if (CompressionSelector::allowStatelessCompression() || gfxCoreHelper.usmCompressionSupported(hwInfo)) {
+            if (gfxCoreHelper.usmCompressionSupported(hwInfo)) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {

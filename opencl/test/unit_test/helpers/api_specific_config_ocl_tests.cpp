@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,10 +28,6 @@ TEST(ApiSpecificConfigOclTests, WhenGettingNameOCLIsReturned) {
     EXPECT_EQ(0, strcmp("ocl", ApiSpecificConfig::getName().c_str()));
 }
 
-TEST(ApiSpecificConfigOclTests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnTrue) {
-    EXPECT_TRUE(ApiSpecificConfig::isStatelessCompressionSupported());
-}
-
 TEST(ApiSpecificConfigOclTests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnHalfOfThat) {
     EXPECT_EQ(512u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
@@ -43,32 +39,6 @@ TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsRetu
 TEST(ApiSpecificConfigOclTests, WhenCheckingIfHostOrDeviceAllocationCacheIsEnabledThenReturnCorrectValue) {
     EXPECT_TRUE(ApiSpecificConfig::isHostAllocationCacheEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
-}
-
-TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    DeviceBitfield deviceBitfield{0x0};
-    AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::svmGpu,
-                                    deviceBitfield);
-
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
-}
-
-TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrintfSurfaceThenPreferCompressedBuffer) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    DeviceBitfield deviceBitfield{0x0};
-    AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::printfSurface,
-                                    deviceBitfield);
-
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(ApiSpecificConfigOclTests, WhenGettingCompilerCacheFileExtensionThenReturnProperFileExtensionString) {

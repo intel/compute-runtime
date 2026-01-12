@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 
 bool globalStatelessL0 = false;
 bool globalStatelessOcl = false;
-bool isStatelessCompressionSupportedForUlts = true;
 bool isDeviceUsmPoolingEnabledForUlts = true;
 
 const StackVec<DebugVarPrefix, 4> *validUltPrefixTypesOverride = nullptr;
@@ -27,9 +26,6 @@ StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::neoL0,
 StackVec<const char *, 4> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
 StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
 
-bool ApiSpecificConfig::isStatelessCompressionSupported() {
-    return isStatelessCompressionSupportedForUlts;
-}
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1772,32 +1772,6 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenG
 
     memoryManager->freeGraphicsMemory(buffer);
     memoryManager->freeGraphicsMemory(bufferCompressed);
-}
-
-HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenGraphicsAllocationCanBeAccessedStatelesslyThenPreferCompressed, IsAtMostXeHpgCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.rootDeviceIndex = rootDeviceIndex;
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-
-    for (auto allocationType : {AllocationType::globalSurface, AllocationType::constantSurface}) {
-        DeviceBitfield deviceBitfield{0x0};
-        AllocationProperties properties(0, MemoryConstants::pageSize, allocationType, deviceBitfield);
-
-        allocData.flags.preferCompressed = true;
-        auto buffer = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
-        ASSERT_NE(nullptr, buffer);
-        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(buffer->getDefaultGmm()->resourceParamsData.data());
-        EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
-
-        memoryManager->freeGraphicsMemory(buffer);
-    }
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicyWhenAllocatingInDevicePoolOnAllMemoryBanksThenDivideAllocationIntoEqualBufferObjectsWithGivenChunkSize) {

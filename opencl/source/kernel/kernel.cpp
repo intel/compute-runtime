@@ -1844,33 +1844,6 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         }
     }
 
-    if (CompressionSelector::allowStatelessCompression()) {
-        for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
-            if (gfxAllocation->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
-                auto &context = this->program->getContext();
-                if (context.isProvidingPerformanceHints()) {
-                    context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ALLOCATION_AUX_TRANSLATION,
-                                                   kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
-                                                   reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
-                }
-            }
-        }
-        if (getContext().getSVMAllocsManager()) {
-            for (auto &allocation : getContext().getSVMAllocsManager()->getSVMAllocs()->allocations) {
-                auto gfxAllocation = allocation.second->gpuAllocations.getDefaultGraphicsAllocation();
-                if (gfxAllocation->isCompressionEnabled()) {
-                    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
-                    auto &context = this->program->getContext();
-                    if (context.isProvidingPerformanceHints()) {
-                        context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ALLOCATION_AUX_TRANSLATION,
-                                                       kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
-                                                       reinterpret_cast<void *>(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
-                    }
-                }
-            }
-        }
-    }
     return kernelObjsForAuxTranslation;
 }
 

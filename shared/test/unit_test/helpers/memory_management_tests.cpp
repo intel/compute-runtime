@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,6 @@ using MemoryManagement::failingAllocation;
 using MemoryManagement::indexAllocation;
 using MemoryManagement::indexDeallocation;
 using MemoryManagement::numAllocations;
-
-namespace NEO {
-extern bool isStatelessCompressionSupportedForUlts;
-}
 
 TEST(allocation, GivenFailingAllocationNegativeOneWhenCreatingAllocationThenAllocationIsCreatedSuccessfully) {
     ASSERT_EQ(failingAllocation, static_cast<size_t>(-1));
@@ -50,27 +46,6 @@ TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllo
     EXPECT_EQ(nullptr, ptr2); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     EXPECT_EQ(previousAllocations, currentAllocations);
     MemoryManagement::detailedAllocationLoggingActive = false;
-}
-
-TEST(CompressionSelector, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
-    DebugManagerStateRestore restore;
-
-    VariableBackup<bool> backup(&NEO::isStatelessCompressionSupportedForUlts);
-
-    NEO::isStatelessCompressionSupportedForUlts = false;
-    EXPECT_FALSE(CompressionSelector::allowStatelessCompression());
-
-    NEO::isStatelessCompressionSupportedForUlts = true;
-
-    for (auto enable : {-1, 0, 1}) {
-        debugManager.flags.EnableStatelessCompression.set(enable);
-
-        if (enable > 0) {
-            EXPECT_TRUE(CompressionSelector::allowStatelessCompression());
-        } else {
-            EXPECT_FALSE(CompressionSelector::allowStatelessCompression());
-        }
-    }
 }
 
 struct MemoryManagementTest : public MemoryManagementFixture,

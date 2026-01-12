@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,6 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingAUBPrefixByApiTypeL0IsReturned) {
 
 TEST(ApiSpecificConfigL0Tests, WhenGettingNameL0IsReturned) {
     EXPECT_EQ(0, strcmp("l0", ApiSpecificConfig::getName().c_str()));
-}
-
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
-    EXPECT_FALSE(ApiSpecificConfig::isStatelessCompressionSupported());
 }
 
 TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnSameValue) {

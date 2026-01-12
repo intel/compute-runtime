@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,86 +113,6 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
     ASSERT_NE(nullptr, pImplicitArgs);
 
     EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->v0.printfBufferPtr);
-}
-
-HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    DebugManagerStateRestore restore;
-
-    for (auto enable : {-1, 0, 1}) {
-        debugManager.flags.EnableStatelessCompression.set(enable);
-
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-
-        REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
-
-        MockContext context(device.get());
-
-        auto kernelInfo = std::make_unique<MockKernelInfo>();
-        kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
-
-        auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
-
-        uint64_t crossThread[10];
-        auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
-        kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
-
-        MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-        std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
-        printfHandler->prepareDispatch(multiDispatchInfo);
-        EXPECT_NE(nullptr, printfHandler->getSurface());
-
-        EXPECT_TRUE(printfHandler->printEnqueueOutput());
-
-        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::regular);
-        auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
-
-        if (enable > 0) {
-            EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-            EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
-        } else {
-            EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
-        }
-    }
-}
-
-HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutputAndFalseIsReturned) {
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableStatelessCompression.set(1);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-
-    REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
-
-    MockContext context(device.get());
-
-    auto kernelInfo = std::make_unique<MockKernelInfo>();
-    kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
-
-    auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
-
-    uint64_t crossThread[10];
-    auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
-    kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
-
-    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
-    printfHandler->prepareDispatch(multiDispatchInfo);
-    EXPECT_NE(nullptr, printfHandler->getSurface());
-
-    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::regular);
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
-    bcsCsr->callBaseFlushBcsTask = false;
-    bcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
-
-    EXPECT_FALSE(printfHandler->printEnqueueOutput());
-    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-    EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
-    EXPECT_EQ(1u, bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment.load());
-    bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment--;
 }
 
 HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToCopyPrintfOutput) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ bool PrintfHandler::printEnqueueOutput() {
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
-    if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
+    if (productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
         printfOutputDecompressed = std::make_unique_for_overwrite<uint8_t[]>(printfOutputSize);
         memset(printfOutputDecompressed.get(), 0, sizeof(uint32_t));
         printfOutputBuffer = printfOutputDecompressed.get();

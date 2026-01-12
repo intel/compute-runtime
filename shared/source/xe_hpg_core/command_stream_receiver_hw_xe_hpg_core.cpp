@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,12 +37,7 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 
 template <>
 MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired) const {
-    auto memoryCompressionState = MemoryCompressionState::notApplicable;
-
-    if (CompressionSelector::allowStatelessCompression()) {
-        memoryCompressionState = auxTranslationRequired ? MemoryCompressionState::disabled : MemoryCompressionState::enabled;
-    }
-    return memoryCompressionState;
+    return MemoryCompressionState::notApplicable;
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1301,34 +1301,4 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCp
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
     clMemFreeINTEL(mockContext.get(), sharedMemory);
-}
-
-TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocationIsCreatedThenAllocationTypeIsBufferCompressed) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-
-    cl_int retVal = CL_SUCCESS;
-
-    for (auto enable : {-1, 0, 1}) {
-        UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
-        MockContext mockContext(deviceFactory.rootDevices[0]);
-
-        auto device = mockContext.getDevice(0u);
-        auto allocationsManager = mockContext.getSVMAllocsManager();
-
-        debugManager.flags.EnableStatelessCompression.set(enable);
-
-        auto deviceMemAllocPtr = clDeviceMemAllocINTEL(&mockContext, device, nullptr, 2048, 0, &retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, deviceMemAllocPtr);
-
-        auto deviceMemAlloc = allocationsManager->getSVMAllocs()->get(deviceMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        EXPECT_NE(nullptr, deviceMemAlloc);
-        auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto isCompressionEnabled = gfxCoreHelper.usmCompressionSupported(device->getHardwareInfo());
-        EXPECT_EQ(enable > 0 || isCompressionEnabled, deviceMemAlloc->isCompressionEnabled());
-
-        retVal = clMemFreeINTEL(&mockContext, deviceMemAllocPtr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
 }

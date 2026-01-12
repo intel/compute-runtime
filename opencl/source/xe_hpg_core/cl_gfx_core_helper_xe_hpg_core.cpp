@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,22 +25,12 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>
 bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
-
-    if (CompressionSelector::allowStatelessCompression()) {
-        return false;
-    } else {
-        return !argAsPtr.isPureStateful();
-    }
+    return !argAsPtr.isPureStateful();
 }
 
 template <>
 bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
-
-    if (CompressionSelector::allowStatelessCompression()) {
-        return false;
-    } else {
-        return hasStatelessAccessToBuffer(kernelInfo);
-    }
+    return hasStatelessAccessToBuffer(kernelInfo);
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,19 +33,6 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumen
     }
 }
 
-XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-
-    for (auto isPureStateful : ::testing::Bool()) {
-        ArgDescPointer argAsPtr{};
-        argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
-    }
-}
-
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTranslationThenAuxResolvesIsRequired) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
@@ -55,16 +42,6 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTrans
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
         EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo));
     }
-}
-
-XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    KernelInfo kernelInfo{};
-
-    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
 
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCallingAllowImageCompressionThenCorrectValueReturned) {

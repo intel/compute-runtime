@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,16 +10,7 @@
 
 namespace NEO {
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
-    switch (properties.allocationType) {
-    case AllocationType::globalSurface:
-    case AllocationType::constantSurface:
-    case AllocationType::svmGpu:
-    case AllocationType::printfSurface: {
-        return CompressionSelector::allowStatelessCompression();
-    }
-    default:
-        return false;
-    }
+    return false;
 }
 
 } // namespace NEO

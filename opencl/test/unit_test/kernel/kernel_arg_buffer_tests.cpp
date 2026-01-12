@@ -355,53 +355,6 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
 }
 
-TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhenFillWithKernelObjsForAuxTranslationIsCalledThenSetKernelObjectsForAuxTranslation) {
-    if (pContext->getSVMAllocsManager() == nullptr) {
-        return;
-    }
-
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.EnableStatelessCompression.set(1);
-
-    static constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
-                                                                             {AllocationType::buffer, true},
-                                                                             {AllocationType::bufferHostMemory, false},
-                                                                             {AllocationType::svmGpu, true}}};
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
-
-    MockGraphicsAllocation gfxAllocation;
-    gfxAllocation.setDefaultGmm(gmm.get());
-
-    SvmAllocationData allocData(0);
-    allocData.gpuAllocations.addAllocation(&gfxAllocation);
-    allocData.device = &pClDevice->getDevice();
-
-    for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type.allocationType);
-
-        gmm->setCompressionEnabled(type.compressed);
-
-        pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
-
-        auto kernelObjsForAuxTranslation = pKernel->fillWithKernelObjsForAuxTranslation();
-
-        if (type.compressed) {
-            EXPECT_EQ(1u, kernelObjsForAuxTranslation->size());
-            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::gfxAlloc, &gfxAllocation});
-            EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
-            kernelObjsForAuxTranslation->erase(kernelObj);
-        } else {
-            EXPECT_EQ(0u, kernelObjsForAuxTranslation->size());
-        }
-
-        pContext->getSVMAllocsManager()->removeSVMAlloc(allocData);
-    }
-}
-
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void setUp() {

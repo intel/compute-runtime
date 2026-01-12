@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ struct RootDeviceEnvironment;
 struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
-    static bool isStatelessCompressionSupported();
     static bool getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper);
     static bool getBindlessMode(const Device &device);
     static bool isDeviceAllocationCacheEnabled();
