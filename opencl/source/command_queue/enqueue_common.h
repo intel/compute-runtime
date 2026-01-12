@@ -66,7 +66,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
 
     auto auxTranslationMode = AuxTranslationMode::none;
 
-    kernel->updateAuxTranslationRequired();
     if (kernel->isAuxTranslationRequired()) {
         kernelObjsForAuxTranslation = kernel->fillWithKernelObjsForAuxTranslation();
 

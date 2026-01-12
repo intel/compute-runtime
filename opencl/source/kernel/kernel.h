@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,8 +111,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     }
 
     bool isAuxTranslationRequired() const { return auxTranslationRequired; }
-    void setAuxTranslationRequired(bool onOff) { auxTranslationRequired = onOff; }
-    void updateAuxTranslationRequired();
 
     ArrayRef<uint8_t> getCrossThreadDataRef() {
         return ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(crossThreadData), crossThreadDataSize);
@@ -410,7 +408,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void markArgPatchedAndResolveArgs(uint32_t argIndex);
 
     void reconfigureKernel();
-    bool hasDirectStatelessAccessToSharedBuffer() const;
     bool hasDirectStatelessAccessToHostMemory() const;
     bool hasIndirectStatelessAccessToHostMemory() const;
 

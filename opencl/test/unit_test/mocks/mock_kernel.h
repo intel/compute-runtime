@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,6 @@ class MockKernel : public Kernel {
     using Kernel::getHardwareInfo;
     using Kernel::graphicsAllocationTypeUseSystemMemory;
     using Kernel::hasDirectStatelessAccessToHostMemory;
-    using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::imageFromBufferArgsCount;
     using Kernel::implicitArgsVersion;

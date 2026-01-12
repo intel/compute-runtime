@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1874,19 +1874,6 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
     return kernelObjsForAuxTranslation;
 }
 
-bool Kernel::hasDirectStatelessAccessToSharedBuffer() const {
-    for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
-        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
-        if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
-            auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::sharedBuffer) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 bool Kernel::hasDirectStatelessAccessToHostMemory() const {
     for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
@@ -2187,16 +2174,6 @@ void Kernel::reconfigureKernel() {
 
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
     this->systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-}
-
-void Kernel::updateAuxTranslationRequired() {
-    if (CompressionSelector::allowStatelessCompression()) {
-        if (hasDirectStatelessAccessToHostMemory() ||
-            hasIndirectStatelessAccessToHostMemory() ||
-            hasDirectStatelessAccessToSharedBuffer()) {
-            setAuxTranslationRequired(true);
-        }
-    }
 }
 
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
