@@ -212,6 +212,11 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
         }
     }
 
+    if ((result == ZE_RESULT_SUCCESS) && (availableCount == 0)) {
+        METRICS_LOG_ERR("%s", "No metric groups available");
+        result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
     *pCount = availableCount;
     return result;
 }

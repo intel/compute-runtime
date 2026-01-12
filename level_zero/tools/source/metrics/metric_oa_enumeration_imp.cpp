@@ -304,7 +304,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         (pMetricsDeviceParams->Version.MinorNumber < requiredMetricsDiscoveryMinorVersion);
 
     if (unsupportedMajorVersion || unsupportedMinorVersion) {
-        // Metrics Discovery API version too low
+        METRICS_LOG_ERR("%s", "Metrics Discovery API version too low");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

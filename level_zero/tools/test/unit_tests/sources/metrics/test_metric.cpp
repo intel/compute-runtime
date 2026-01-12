@@ -735,5 +735,40 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenCalcOperationCreateIsCalledWithDuplic
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
+using MetricGroupTest = Test<DeviceFixture>;
+
+TEST_F(MetricGroupTest, GivenNoMetricSourceIsAvailableThenNoMetricGroupsAreReturnedAndErrorIsReturned) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+
+    device->metricContext.reset(mockDeviceContext);
+
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle));
+    EXPECT_EQ(metricGroupCount, 0U);
+    device->metricContext.reset();
+}
+
+TEST_F(MetricGroupTest, GivenMetricSourceInitFailsThenNoMetricGroupsAreReturnedAndErrorIsReturned) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+
+    device->metricContext.reset(mockDeviceContext);
+
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle));
+    EXPECT_EQ(metricGroupCount, 0U);
+    device->metricContext.reset();
+}
+
 } // namespace ult
 } // namespace L0

@@ -109,6 +109,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     uint32_t referenceValues = 100;
     const ze_result_t sampleCheckResult = getMetricOsInterface()->startMeasurement(referenceValues, referenceValues);
     if (sampleCheckResult != ZE_RESULT_SUCCESS) {
+        METRICS_LOG_ERR("%s", "Cannot start measurement for IP Sampling");
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
         getMetricOsInterface()->stopMeasurement();

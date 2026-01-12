@@ -40,15 +40,18 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
     auto engineInfo = drm->getEngineInfo();
     if (engineInfo == nullptr) {
+        METRICS_LOG_ERR("%s", "Engine info is not available");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     auto classInstance = engineInfo->getEngineInstance(device.getPhysicalSubDeviceId(), aub_stream::ENGINE_CCS);
     if (classInstance == nullptr) {
+        METRICS_LOG_ERR("%s", "Compute engine instance is not available");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     notifyEveryNReports = clampNReports(notifyEveryNReports);
     if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, samplingPeriodNs, classInstance->engineInstance, notifyEveryNReports, gpuTimeStampfrequency, &stream)) {
+        METRICS_LOG_ERR("%s", "Failed to open EU stall stream");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -75,10 +78,6 @@ ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
 
     ssize_t ret = NEO::SysCalls::read(stream, pRawData, *pRawDataSize);
-    if (ret < 0) {
-        METRICS_LOG_ERR("read() failed errno = %d | ret = %d", errno, ret);
-    }
-
     if (ret >= 0) {
         *pRawDataSize = ret;
         return ZE_RESULT_SUCCESS;
@@ -88,11 +87,15 @@ ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDa
 
     // If read needs to try again, do not return error
     if (errno == EINTR || errno == EAGAIN || errno == EBUSY) {
+        METRICS_LOG_INFO("read() needs to try again. errno = %d ", errno);
         return ZE_RESULT_SUCCESS;
     } else if (errno == EIO) {
         // on i915 EIO is not returned by KMD for any error conditions. Hence we can use this safely for both xe and i915.
+        METRICS_LOG_INFO("Some data was lost during read(). errno = %d ", errno);
         return ZE_RESULT_WARNING_DROPPED_DATA;
     }
+
+    METRICS_LOG_ERR("read() failed errno = %d | ret = %d", errno, ret);
 
     return ZE_RESULT_ERROR_UNKNOWN;
 }
