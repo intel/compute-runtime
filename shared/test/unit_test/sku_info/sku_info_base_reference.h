@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,7 @@ struct SkuInfoBaseReference {
 
         refFtrTable.flags.ftrFbc = true;
 
+        refFtrTable.flags.ftrBlitterRing = true;
         refFtrTable.flags.ftrULT = true;
         refFtrTable.flags.ftrLCIA = true;
         refFtrTable.flags.ftrTileMappedResource = true;

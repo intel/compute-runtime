@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ class SkuInfoReceiver {
 
         RECEIVE_FTR(Fbc);
 
+        RECEIVE_FTR(BlitterRing);
         RECEIVE_FTR(ULT);
         RECEIVE_FTR(LCIA);
         RECEIVE_FTR(TileMappedResource);
