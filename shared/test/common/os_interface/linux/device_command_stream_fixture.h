@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,7 @@ class Ioctls {
     std::atomic<int32_t> primeFdToHandle;
     std::atomic<int32_t> handleToPrimeFd;
     std::atomic<int32_t> syncObjFdToHandle;
+    std::atomic<int32_t> syncObjDestroy;
     std::atomic<int32_t> syncObjWait;
     std::atomic<int32_t> syncObjSignal;
     std::atomic<int32_t> syncObjTimelineWait;
@@ -282,6 +283,7 @@ struct DrmMockCustom : public Drm {
     bool failOnSecondPrimeFdToHandle = false;
     bool failOnPrimeHandleToFd = false;
     bool failOnSyncObjFdToHandle = false;
+    bool failOnSyncObjDestroy = false;
     bool failOnSyncObjWait = false;
     bool failOnSyncObjSignal = false;
     bool failOnSyncObjTimelineWait = false;

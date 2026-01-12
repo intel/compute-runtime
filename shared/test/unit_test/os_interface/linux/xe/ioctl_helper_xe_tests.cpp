@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -592,6 +592,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
     verifyIoctlString(DrmIoctl::syncObjFdToHandle, "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE");
+    verifyIoctlString(DrmIoctl::syncObjDestroy, "DRM_IOCTL_SYNCOBJ_DESTROY");
     verifyIoctlString(DrmIoctl::syncObjWait, "DRM_IOCTL_SYNCOBJ_WAIT");
     verifyIoctlString(DrmIoctl::syncObjSignal, "DRM_IOCTL_SYNCOBJ_SIGNAL");
     verifyIoctlString(DrmIoctl::syncObjTimelineWait, "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT");
@@ -659,6 +660,7 @@ TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::primeFdToHandle);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::primeHandleToFd);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, DrmIoctl::syncObjFdToHandle);
+    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_DESTROY, DrmIoctl::syncObjDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_WAIT, DrmIoctl::syncObjWait);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_SIGNAL, DrmIoctl::syncObjSignal);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT, DrmIoctl::syncObjTimelineWait);
@@ -880,6 +882,13 @@ TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         test.countHandles = 1u;
 
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjTimelineSignal, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
+        SyncObjDestroy test = {};
+        test.handle = 0x42;
+
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjDestroy, &test);
         EXPECT_EQ(0, ret);
     }
     {

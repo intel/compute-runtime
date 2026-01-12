@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -905,6 +905,8 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GET_RESET_STATS;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
+    case DrmIoctl::syncObjDestroy:
+        return DRM_IOCTL_SYNCOBJ_DESTROY;
     case DrmIoctl::syncObjWait:
         return DRM_IOCTL_SYNCOBJ_WAIT;
     case DrmIoctl::syncObjSignal:

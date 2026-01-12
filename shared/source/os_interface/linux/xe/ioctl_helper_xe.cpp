@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1468,6 +1468,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         ret = IoctlHelper::ioctl(request, arg);
         XELOG(" -> IoctlHelperXe::ioctl SyncObjFdToHandle r=%d\n", ret);
     } break;
+    case DrmIoctl::syncObjDestroy: {
+        ret = IoctlHelper::ioctl(request, arg);
+        XELOG(" -> IoctlHelperXe::ioctl SyncObjDestroy r=%d\n", ret);
+    } break;
     case DrmIoctl::syncObjTimelineWait: {
         ret = IoctlHelper::ioctl(request, arg);
         XELOG(" -> IoctlHelperXe::ioctl SyncObjTimelineWait r=%d\n", ret);
@@ -2012,6 +2016,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     case DrmIoctl::syncObjFdToHandle:
         RETURN_ME(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE);
+    case DrmIoctl::syncObjDestroy:
+        RETURN_ME(DRM_IOCTL_SYNCOBJ_DESTROY);
     case DrmIoctl::syncObjWait:
         RETURN_ME(DRM_IOCTL_SYNCOBJ_WAIT);
     case DrmIoctl::syncObjSignal:
@@ -2073,6 +2079,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     case DrmIoctl::syncObjFdToHandle:
         STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE);
+    case DrmIoctl::syncObjDestroy:
+        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_DESTROY);
     case DrmIoctl::syncObjWait:
         STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_WAIT);
     case DrmIoctl::syncObjSignal:

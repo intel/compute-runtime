@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class ExternalSemaphoreLinux : public ExternalSemaphore {
   public:
     static std::unique_ptr<ExternalSemaphoreLinux> create(OSInterface *osInterface);
 
-    ~ExternalSemaphoreLinux() override{};
+    ~ExternalSemaphoreLinux() override;
 
     bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 
@@ -30,7 +30,7 @@ class ExternalSemaphoreLinux : public ExternalSemaphore {
     bool enqueueSignal(uint64_t *fenceValue) override;
 
   protected:
-    uint32_t syncHandle;
+    uint32_t syncHandle = 0;
 };
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,12 @@ void Ioctls::reset() {
     gemVmDestroy = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
+    syncObjFdToHandle = 0;
+    syncObjDestroy = 0;
+    syncObjWait = 0;
+    syncObjSignal = 0;
+    syncObjTimelineWait = 0;
+    syncObjTimelineSignal = 0;
     gemMmapOffset = 0;
     gemSetDomain = 0;
     gemWait = 0;
@@ -40,6 +46,9 @@ void Ioctls::reset() {
     contextSetParam = 0;
     contextCreate = 0;
     contextDestroy = 0;
+    perfOpen = 0;
+    perfEnable = 0;
+    perfDisable = 0;
 }
 
 void DrmMockCustom::testIoctls() {
@@ -142,8 +151,16 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     } break;
     case DrmIoctl::syncObjFdToHandle: {
+        auto syncObjHandle = static_cast<NEO::SyncObjHandle *>(arg);
+        syncObjHandle->handle = 1u; // Return a valid non-zero handle
         ioctlCnt.syncObjFdToHandle++;
         if (failOnSyncObjFdToHandle == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjDestroy: {
+        ioctlCnt.syncObjDestroy++;
+        if (failOnSyncObjDestroy == true) {
             return -1;
         }
     } break;

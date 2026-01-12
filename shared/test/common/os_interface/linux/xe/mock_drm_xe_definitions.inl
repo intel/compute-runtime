@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,6 +116,9 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
         ret = 0;
     } break;
     case DrmIoctl::syncObjTimelineSignal: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjDestroy: {
         ret = 0;
     } break;
     case DrmIoctl::gemCreate: {

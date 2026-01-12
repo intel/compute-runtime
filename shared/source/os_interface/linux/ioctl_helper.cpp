@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,8 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_PRIME_HANDLE_TO_FD;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
+    case DrmIoctl::syncObjDestroy:
+        return DRM_IOCTL_SYNCOBJ_DESTROY;
     case DrmIoctl::syncObjWait:
         return DRM_IOCTL_SYNCOBJ_WAIT;
     case DrmIoctl::syncObjSignal:
@@ -123,6 +125,8 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
     case DrmIoctl::syncObjFdToHandle:
         return "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE";
+    case DrmIoctl::syncObjDestroy:
+        return "DRM_IOCTL_SYNCOBJ_DESTROY";
     case DrmIoctl::syncObjWait:
         return "DRM_IOCTL_SYNCOBJ_WAIT";
     case DrmIoctl::syncObjSignal:

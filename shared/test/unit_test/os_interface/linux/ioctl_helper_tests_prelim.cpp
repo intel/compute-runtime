@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,6 +79,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::primeFdToHandle), static_cast<unsigned int>(DRM_IOCTL_PRIME_FD_TO_HANDLE));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::primeHandleToFd), static_cast<unsigned int>(DRM_IOCTL_PRIME_HANDLE_TO_FD));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjFdToHandle), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjDestroy), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_DESTROY));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjWait), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_WAIT));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjSignal), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_SIGNAL));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::syncObjTimelineWait), static_cast<unsigned int>(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT));
@@ -136,6 +137,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::primeFdToHandle).c_str(), "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::primeHandleToFd).c_str(), "DRM_IOCTL_PRIME_HANDLE_TO_FD");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjFdToHandle).c_str(), "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjDestroy).c_str(), "DRM_IOCTL_SYNCOBJ_DESTROY");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjWait).c_str(), "DRM_IOCTL_SYNCOBJ_WAIT");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjSignal).c_str(), "DRM_IOCTL_SYNCOBJ_SIGNAL");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::syncObjTimelineWait).c_str(), "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT");

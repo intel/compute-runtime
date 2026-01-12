@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,6 +210,11 @@ struct SyncObjHandle {
     uint64_t point;
 };
 
+struct SyncObjDestroy {
+    uint32_t handle;
+    uint32_t pad;
+};
+
 struct SyncObjWait {
     uint64_t handles;
     int64_t timeoutNs;
@@ -314,6 +319,7 @@ enum class DrmIoctl {
     primeFdToHandle,
     primeHandleToFd,
     syncObjFdToHandle,
+    syncObjDestroy,
     syncObjWait,
     syncObjTimelineWait,
     syncObjSignal,

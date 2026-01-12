@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 namespace NEO {
 
@@ -58,6 +59,10 @@ bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t f
     int ret = ioctlHelper->ioctl(DrmIoctl::syncObjFdToHandle, &args);
     if (ret != 0) {
         return false;
+    }
+
+    if (fd > 0) {
+        SysCalls::close(fd);
     }
 
     this->syncHandle = args.handle;
@@ -126,6 +131,24 @@ bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
     }
 
     return true;
+}
+
+ExternalSemaphoreLinux::~ExternalSemaphoreLinux() {
+    // Safety check: only destroy if we have a valid handle and osInterface
+    if (syncHandle == 0 || osInterface == nullptr) {
+        return;
+    }
+
+    auto drm = osInterface->getDriverModel()->as<Drm>();
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    SyncObjDestroy args = {};
+    args.handle = syncHandle;
+
+    // Ignore return value - destructor should not throw
+    ioctlHelper->ioctl(DrmIoctl::syncObjDestroy, &args);
+
+    syncHandle = 0;
 }
 
 } // namespace NEO
