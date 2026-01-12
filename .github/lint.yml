@@ -44,6 +44,7 @@ lint:
     exclude:
       - third_party/
     master:
+      gpl:
       todo:
         exclude:
           - GUIDELINES.md
