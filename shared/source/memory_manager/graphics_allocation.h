@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -262,7 +262,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return type == AllocationType::timestampPacketTagBuffer ||
                type == AllocationType::gpuTimestampDeviceBuffer ||
                type == AllocationType::profilingTagBuffer ||
-               type == AllocationType::printfSurface;
+               type == AllocationType::printfSurface ||
+               type == AllocationType::scratchSurface;
     }
 
     static bool isAccessedFromCommandStreamer(AllocationType allocationType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,6 +224,7 @@ TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingIs2MBPageAllocationT
         case AllocationType::gpuTimestampDeviceBuffer:
         case AllocationType::profilingTagBuffer:
         case AllocationType::printfSurface:
+        case AllocationType::scratchSurface:
             EXPECT_TRUE(GraphicsAllocation::is2MBPageAllocationType(allocType));
             break;
         default:
