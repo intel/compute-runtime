@@ -30,8 +30,8 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
@@ -587,8 +587,8 @@ TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_LE(3u, IoFunctions::mockGetenvCalled);
 
@@ -614,8 +614,8 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(globalDriverHandles->empty());
 }
@@ -627,8 +627,8 @@ TEST_F(DriverImpTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironment
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
         ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        DriverImp driverImp;
-        driverImp.initialize(&result);
+        Driver driver;
+        driver.initialize(&result);
 
         ASSERT_FALSE(globalDriverHandles->empty());
         auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -642,8 +642,8 @@ TEST_F(DriverImpTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironment
         VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
         ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        DriverImp driverImp;
-        driverImp.initialize(&result);
+        Driver driver;
+        driver.initialize(&result);
 
         ASSERT_FALSE(globalDriverHandles->empty());
         auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -661,8 +661,8 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironme
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -679,8 +679,8 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecution
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -697,8 +697,8 @@ TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentT
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -717,8 +717,8 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -737,8 +737,8 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimenta
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
@@ -750,8 +750,8 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimenta
 
 TEST_F(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     ASSERT_FALSE(globalDriverHandles->empty());
 
@@ -894,11 +894,11 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
+    Driver driver;
     auto oldFclDllName = Os::frontEndDllName;
     Os::frontEndDllName = "_invalidFCL";
     auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
-    driverImp.initialize(&result);
+    driver.initialize(&result);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
     Os::frontEndDllName = oldFclDllName;
@@ -914,11 +914,11 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithVal
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
+    Driver driver;
     auto oldFclDllName = Os::frontEndDllName;
     Os::frontEndDllName = "_invalidFCL";
     auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
-    driverImp.initialize(&result);
+    driver.initialize(&result);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
     Os::frontEndDllName = oldFclDllName;
@@ -1896,8 +1896,8 @@ TEST(MultiDriverHandleTest, givenMultiplesDifferentDevicesWhenGetDriverHandleThe
     ultHwConfig.sourceExecutionEnvironment = &executionEnvironment;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

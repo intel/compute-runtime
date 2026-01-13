@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"

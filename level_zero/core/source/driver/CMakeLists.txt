@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/driver_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_function_address.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_function_address.h
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_injector.h

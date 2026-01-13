@@ -30,7 +30,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/core/source/driver/extension_injector.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"

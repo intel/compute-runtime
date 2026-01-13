@@ -16,7 +16,6 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <mutex>
@@ -26,7 +25,7 @@ namespace L0 {
 std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 bool levelZeroDriverInitialized = false;
 
-void DriverImp::initialize(ze_result_t *result) {
+void Driver::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
     pid = NEO::SysCalls::getCurrentProcessId();
 
@@ -108,9 +107,9 @@ void DriverImp::initialize(ze_result_t *result) {
     }
 }
 
-ze_result_t DriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
+ze_result_t Driver::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
 
-ze_result_t DriverImp::driverInit() {
+ze_result_t Driver::driverInit() {
     std::call_once(initDriverOnce, [this]() {
         ze_result_t result;
         this->initialize(&result);
@@ -119,7 +118,7 @@ ze_result_t DriverImp::driverInit() {
     return initStatus;
 }
 
-ze_result_t DriverImp::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
+ze_result_t Driver::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
     // Only attempt to Init GtPin when driverHandleGet is called requesting handles.
     if (phDriverHandles != nullptr && *pCount > 0) {
         Driver::get()->tryInitGtpin();
@@ -145,7 +144,7 @@ ze_result_t DriverImp::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phD
     return ZE_RESULT_SUCCESS;
 }
 
-void DriverImp::tryInitGtpin() {
+void Driver::tryInitGtpin() {
     if (!this->gtPinInitializationNeeded) {
         return;
     }
@@ -157,8 +156,8 @@ void DriverImp::tryInitGtpin() {
     }
 }
 
-static DriverImp driverImp;
-Driver *Driver::driver = &driverImp;
+static Driver driverInstance;
+Driver *Driver::driver = &driverInstance;
 std::mutex driverInitMutex;
 
 ze_result_t initDriver() {

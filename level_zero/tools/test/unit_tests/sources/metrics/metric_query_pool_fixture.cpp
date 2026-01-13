@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/driver.h"
 
 namespace L0 {
 namespace ult {

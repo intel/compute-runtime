@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/sys_calls_common.h"
 
-#include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -18,12 +18,12 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::DriverImp> : public ::L0::DriverImp {
-    using ::L0::DriverImp::gtPinInitializationNeeded;
-    using ::L0::DriverImp::pid;
+struct WhiteBox<::L0::Driver> : public ::L0::Driver {
+    using ::L0::Driver::gtPinInitializationNeeded;
+    using ::L0::Driver::pid;
 };
 
-using Driver = WhiteBox<::L0::DriverImp>;
+using Driver = WhiteBox<::L0::Driver>;
 
 template <>
 struct Mock<Driver> : public Driver {
@@ -36,7 +36,7 @@ struct Mock<Driver> : public Driver {
             pid = NEO::SysCalls::getCurrentProcessId();
         }
         if (driverInitCallBase) {
-            return DriverImp::driverInit();
+            return L0::Driver::driverInit();
         }
         if (failInitDriver) {
             return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -46,7 +46,7 @@ struct Mock<Driver> : public Driver {
 
     ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) override {
         if (driverGetCallBase) {
-            return DriverImp::driverHandleGet(pCount, phDriverHandles);
+            return L0::Driver::driverHandleGet(pCount, phDriverHandles);
         }
         if (*pCount == 0) {
             *pCount = 1;
@@ -62,7 +62,7 @@ struct Mock<Driver> : public Driver {
     void initialize(ze_result_t *result) override {
         initializeCalledCount++;
         if (initializeCallBase) {
-            DriverImp::initialize(result);
+            L0::Driver::initialize(result);
             return;
         }
         pid = NEO::SysCalls::getCurrentProcessId();

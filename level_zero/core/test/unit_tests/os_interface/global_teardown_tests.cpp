@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/global_teardown.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -174,8 +173,8 @@ TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledTh
     globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    DriverImp driverImp;
-    driverImp.initialize(&result);
+    Driver driver;
+    driver.initialize(&result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, globalDriverHandles->size());
 
