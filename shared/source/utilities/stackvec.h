@@ -499,10 +499,10 @@ using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, maxRootDev
 
 template <typename DataType, size_t onStackCapacity,
           typename StackSizeT = typename StackVecSize<onStackCapacity>::SizeT>
-class StaticStackVec : public StackVec<DataType, onStackCapacity, StackSizeT> {
+class ConstrainedStackVec : public StackVec<DataType, onStackCapacity, StackSizeT> {
   public:
     template <std::same_as<DataType>... Args>
-    StaticStackVec(Args &&...args) : StackVec<DataType, onStackCapacity, StackSizeT>({std::forward<Args>(args)...}) {
-        static_assert(sizeof...(Args) <= onStackCapacity, "Initializer size exceeds StaticStackVec capacity");
+    ConstrainedStackVec(Args &&...args) : StackVec<DataType, onStackCapacity, StackSizeT>({std::forward<Args>(args)...}) {
+        static_assert(sizeof...(Args) <= onStackCapacity, "Initializer size exceeds ConstrainedStackVec capacity");
     }
 };

@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-using SupportedNumGrfs = StaticStackVec<uint32_t, 8>;
+using SupportedNumGrfs = ConstrainedStackVec<uint32_t, 8>;
 
 } // namespace NEO
