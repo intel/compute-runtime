@@ -1729,7 +1729,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    AlignedAllocationData allocationData = {mockAllocation.gpuAddress, 0, &mockAllocation, false};
+    AlignedAllocationData allocationData = {nullptr, mockAllocation.gpuAddress, 0, &mockAllocation, false};
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
@@ -1909,7 +1909,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    AlignedAllocationData allocationData = {mockAllocation.gpuAddress, 0, &mockAllocation, false};
+    AlignedAllocationData allocationData = {nullptr, mockAllocation.gpuAddress, 0, &mockAllocation, false};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams));
 

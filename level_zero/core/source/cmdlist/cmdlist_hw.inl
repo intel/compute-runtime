@@ -838,6 +838,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
+    bool remoteCopy = isRemoteAlloc(allocationStruct.svmAllocData);
+
     memoryCopyParams.taskCountUpdateRequired |= CommandList::isExternalHostPtrAlloc(allocationStruct.alloc);
 
     emitMemAdviseForSystemCopy(allocationStruct, bufferSize);
@@ -851,9 +853,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
             return ret;
         }
         image = peerImage;
+        remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1055,6 +1058,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
 
     emitMemAdviseForSystemCopy(allocationStruct, bufferSize);
 
+    bool remoteCopy = isRemoteAlloc(allocationStruct.svmAllocData);
+
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
         L0::Image *peerImage = nullptr;
@@ -1064,9 +1069,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
             return ret;
         }
         image = peerImage;
+        remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1266,6 +1272,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     }
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+
+    bool remoteCopy = false;
+
     if (driverHandle->isRemoteImageNeeded(dstImage, device)) {
         L0::Image *peerImage = nullptr;
 
@@ -1274,6 +1283,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
             return ret;
         }
         dstImage = peerImage;
+        remoteCopy = true;
     }
 
     if (driverHandle->isRemoteImageNeeded(srcImage, device)) {
@@ -1284,9 +1294,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
             return ret;
         }
         srcImage = peerImage;
+        remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -1815,15 +1826,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy) const {
     bool preferred = device->getProductHelper().blitEnqueuePreferred(imageToBuffer);
     if (!NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
         return false;
     }
 
-    if (srcAllocation == nullptr || dstAllocation == nullptr) {
+    if (remoteCopy || srcAllocation == nullptr || dstAllocation == nullptr) {
         return isCopyOffloadEnabled();
     }
+
     return !(srcAllocation->isAllocatedInLocalMemoryPool() && dstAllocation->isAllocatedInLocalMemoryPool()) && isCopyOffloadEnabled();
 }
 
@@ -1966,6 +1978,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, false, isCopyOffloadEnabled());
     auto srcAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, true, isCopyOffloadEnabled());
 
+    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
+
     if (memoryCopyParams.bscSplitEnabled) {
         dstAllocationStruct.offset += ptrDiff(dstptr, memoryCopyParams.bcsSplitBaseDstPtr);
         srcAllocationStruct.offset += ptrDiff(srcptr, memoryCopyParams.bcsSplitBaseSrcPtr);
@@ -1983,7 +1997,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(dstAllocationStruct, size);
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
-    memoryCopyParams.copyOffloadAllowed |= isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false);
+    memoryCopyParams.copyOffloadAllowed |= isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
@@ -2209,6 +2223,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstPtr), dstAllocSize, false, isCopyOffloadEnabled());
     auto srcAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcPtr), srcAllocSize, true, isCopyOffloadEnabled());
 
+    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
+
     UNRECOVERABLE_IF(srcSlicePitch && srcPitch == 0);
     Vec3<size_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
                              srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
@@ -2235,7 +2251,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     emitMemAdviseForSystemCopy(dstAllocationStruct, dstSize);
     emitMemAdviseForSystemCopy(srcAllocationStruct, srcSize);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
@@ -2876,7 +2892,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
 
         DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
         auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-        if (driverHandle->isRemoteResourceNeeded(ptr, gpuAllocation, allocData, device)) {
+        if (driverHandle->isRemoteResourceNeeded(gpuAllocation, allocData, device)) {
             if (allocData) {
                 uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
                 gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr);
@@ -3018,11 +3034,11 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             offset += reinterpret_cast<size_t>(ptr) - reinterpret_cast<size_t>(alloc->getUnderlyingBuffer());
         } else {
             if (sharedSystemEnabled) {
-                return {reinterpret_cast<uintptr_t>(ptr), 0, nullptr, true};
+                return {allocData, reinterpret_cast<uintptr_t>(ptr), 0, nullptr, true};
             } else {
                 alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed, copyOffload);
                 if (alloc == nullptr) {
-                    return {0u, 0, nullptr, false};
+                    return {allocData, 0u, 0, nullptr, false};
                 }
                 alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
                 if (alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) {
@@ -3038,7 +3054,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
-        if (driverHandle->isRemoteResourceNeeded(const_cast<void *>(buffer), alloc, allocData, device)) {
+        if (driverHandle->isRemoteResourceNeeded(alloc, allocData, device)) {
             uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
             uint64_t offset = sourcePtr - pbase;
 
@@ -3066,7 +3082,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         }
     }
 
-    return {alignedPtr, offset, alloc, hostPointerNeedsFlush};
+    return {allocData, alignedPtr, offset, alloc, hostPointerNeedsFlush};
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -4119,12 +4135,12 @@ inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitRemote(NEO::SvmAllocationData *allocData, void *ptr) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isRemoteAlloc(NEO::SvmAllocationData *allocData) const {
     auto driver = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
 
     if (allocData) {
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        return driver->isRemoteResourceNeeded(ptr, alloc, allocData, this->device);
+        return (driver->isRemoteResourceNeeded(alloc, allocData, this->device) || allocData->isImportedAllocation);
     }
 
     return false;
@@ -4149,7 +4165,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
         }
     }
 
-    bool remoteCopy = isAppendSplitRemote(srcAllocData, const_cast<void *>(srcPtr)) || isAppendSplitRemote(dstAllocData, dstPtr);
+    bool remoteCopy = isRemoteAlloc(srcAllocData) || isRemoteAlloc(dstAllocData);
 
     return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut, remoteCopy);
 }

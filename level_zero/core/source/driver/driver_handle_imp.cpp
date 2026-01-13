@@ -691,7 +691,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *
     return allocation;
 }
 
-bool DriverHandleImp::isRemoteResourceNeeded(void *ptr, NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
+bool DriverHandleImp::isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
     return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
 }
 

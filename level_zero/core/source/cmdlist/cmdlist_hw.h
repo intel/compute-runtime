@@ -44,6 +44,7 @@ static_assert(sizeof(EventData) == (3 * sizeof(uint64_t)),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 struct AlignedAllocationData {
+    NEO::SvmAllocationData *svmAllocData = nullptr;
     uintptr_t alignedAllocationPtr = 0u;
     size_t offset = 0u;
     NEO::GraphicsAllocation *alloc = nullptr;
@@ -356,7 +357,7 @@ struct CommandListCoreFamily : public CommandListImp {
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
     bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut);
     bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy);
-    bool isAppendSplitRemote(NEO::SvmAllocationData *allocData, void *ptr) const;
+    bool isRemoteAlloc(NEO::SvmAllocationData *allocData) const;
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);
@@ -442,7 +443,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
     void programEventL3Flush(Event *event);
     virtual ze_result_t flushInOrderCounterSignal() { return ZE_RESULT_SUCCESS; };
-    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer) const;
+    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy) const;
     bool isSharedSystemEnabled() const;
     void emitMemAdviseForSystemCopy(const AlignedAllocationData &allocationStruct, size_t size);
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,12 +50,12 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         if (buffer && returnMockAllocationStruct) {
             auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(buffer, sizeof(uint32_t)));
             auto offset = reinterpret_cast<uintptr_t>(buffer) - alignedPtr;
-            return {alignedPtr, offset, &alignedAlloc, true};
+            return {nullptr, alignedPtr, offset, &alignedAlloc, true};
         }
         if (buffer && !failAlignedAlloc) {
-            return {0, 0, &alignedAlloc, true};
+            return {nullptr, 0, 0, &alignedAlloc, true};
         }
-        return {0, 0, nullptr, false};
+        return {nullptr, 0, 0, nullptr, false};
     }
 
     ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr,
@@ -1453,8 +1453,8 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionWithinMaxBli
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
-    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+    AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
@@ -1505,8 +1505,8 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionWithinMaxBli
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
-    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+    AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
@@ -1556,8 +1556,8 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionGreaterThanM
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
-    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+    AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
@@ -1578,7 +1578,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
     MockCommandListForRegionSize() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        return {0, 0, &mockAllocationPtr, true};
+        return {nullptr, 0, 0, &mockAllocationPtr, true};
     }
     ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                            AlignedAllocationData *dstAllocationData,

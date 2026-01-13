@@ -4624,22 +4624,47 @@ HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWit
     auto allocationData0 = svmManager->getSVMAlloc(ptr0);
     auto allocationData1 = svmManager->getSVMAlloc(ptr1);
 
-    bool isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, nullptr, allocationData1, device0);
+    bool isNeeded = driverHandle->isRemoteResourceNeeded(nullptr, allocationData1, device0);
     EXPECT_TRUE(isNeeded);
 
-    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0);
+    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0);
     EXPECT_FALSE(isNeeded);
 
-    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(1u), nullptr, device0);
+    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(1u), nullptr, device0);
     EXPECT_TRUE(isNeeded);
 
-    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device1);
+    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device1);
     EXPECT_TRUE(isNeeded);
 
     ret = context->freeMem(ptr0);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
     ret = context->freeMem(ptr1);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenAllocDataWhenCheckingIfRemoteCopyIsNeededThenReturnCorrectValue) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, 1024, 1, &ptr0));
+
+    auto allocationData0 = svmManager->getSVMAlloc(ptr0);
+
+    auto commandList0 = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList0->initialize(device0, NEO::EngineGroupType::compute, 0u);
+
+    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0));
+    EXPECT_FALSE(commandList0->isRemoteAlloc(allocationData0));
+
+    allocationData0->isImportedAllocation = true;
+    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0));
+    EXPECT_TRUE(commandList0->isRemoteAlloc(allocationData0));
+
+    context->freeMem(ptr0);
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {

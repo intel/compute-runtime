@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,9 +89,9 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
         getAlignedAllocationCalledTimes++;
         if (buffer) {
-            return {0, 0, &alignedAlloc, true};
+            return {nullptr, 0, 0, &alignedAlloc, true};
         }
-        return {0, 0, nullptr, false};
+        return {nullptr, 0, 0, nullptr, false};
     }
 
     ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr,

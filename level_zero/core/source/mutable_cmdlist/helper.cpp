@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
         bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         // buffer can be offset SVM value
         gpuAddress = reinterpret_cast<GpuAddress>(buffer);
-        if (driverHandle->isRemoteResourceNeeded(buffer, bufferAlloc, allocData, device)) {
+        if (driverHandle->isRemoteResourceNeeded(bufferAlloc, allocData, device)) {
             // get GPU base value
             gpuAddress = bufferAlloc->getGpuAddress();
             // calculate possible offset

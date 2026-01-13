@@ -41,7 +41,7 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
     using BaseClass::getAllocationOffsetForAppendBlitFill;
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        return {0, 0, nullptr, true};
+        return {nullptr, 0, 0, nullptr, true};
     }
     ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                      NEO::GraphicsAllocation *dstPtrAlloc,
@@ -345,8 +345,8 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
-    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+    AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
     commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams, false);
     GenCmdList cmdList;
 
@@ -1756,8 +1756,8 @@ HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoC
                                                   reinterpret_cast<void *>(0x5678), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    AlignedAllocationData srcAllocationData = {mockAllocationSrc.getGpuAddress(), 0, &mockAllocationSrc, false};
-    AlignedAllocationData dstAllocationData = {mockAllocationDst.getGpuAddress(), 0, &mockAllocationDst, false};
+    AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.getGpuAddress(), 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.getGpuAddress(), 0, &mockAllocationDst, false};
 
     commandList.appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
                                            {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams, false);

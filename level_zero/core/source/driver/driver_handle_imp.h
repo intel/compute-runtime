@@ -94,10 +94,7 @@ struct DriverHandleImp : public DriverHandle {
     void createHostPointerManager();
 
     bool isRemoteImageNeeded(Image *image, Device *device);
-    bool isRemoteResourceNeeded(void *ptr,
-                                NEO::GraphicsAllocation *alloc,
-                                NEO::SvmAllocationData *allocData,
-                                Device *device);
+    bool isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device);
     ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
     uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const override;

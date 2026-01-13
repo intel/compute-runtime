@@ -44,25 +44,27 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenR
         for (auto srcAlloc : allocations) {
             for (auto dstAlloc : allocations) {
                 for (bool imgToBuffer : {true, false}) {
-                    bool expected = false;
+                    for (bool remoteCopy : {true, false}) {
+                        bool expected = false;
 
-                    if (flag != 0) {
-                        bool preferred = productHelper.blitEnqueuePreferred(imgToBuffer);
+                        if (flag != 0) {
+                            bool preferred = productHelper.blitEnqueuePreferred(imgToBuffer);
 
-                        if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
-                            expected = false;
-                        } else {
-                            if (srcAlloc == nullptr || dstAlloc == nullptr) {
-                                expected = true;
+                            if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
+                                expected = false;
                             } else {
-                                expected = !(srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool());
+                                if (remoteCopy || srcAlloc == nullptr || dstAlloc == nullptr) {
+                                    expected = true;
+                                } else {
+                                    expected = !(srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool());
+                                }
                             }
+                        } else {
+                            expected = false;
                         }
-                    } else {
-                        expected = false;
-                    }
 
-                    EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imgToBuffer));
+                        EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imgToBuffer, remoteCopy));
+                    }
                 }
             }
         }
