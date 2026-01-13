@@ -310,6 +310,10 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      bool useQwordData,
                                                      bool indirect,
                                                      bool switchOnUnsuccessful) {
+    if (debugManager.flags.ForceSwitchQueueOnUnsuccessful.get() != -1) {
+        switchOnUnsuccessful = debugManager.flags.ForceSwitchQueueOnUnsuccessful.get() == 1;
+    }
+
     if (debugManager.flags.Enable64BitSemaphore.get()) {
         using MI_SEMAPHORE_WAIT_64 = typename Family::MI_SEMAPHORE_WAIT_64;
         using COMPARE_OPERATION_64 = typename MI_SEMAPHORE_WAIT_64::COMPARE_OPERATION;

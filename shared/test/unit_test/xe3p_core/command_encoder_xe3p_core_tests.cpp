@@ -298,6 +298,22 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenEnable64BitSemaphoreFlagWhenPro
         EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, nullptr);
         EXPECT_EQ(MI_SEMAPHORE_WAIT_64::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
     }
+    {
+        debugManager.flags.Enable64BitSemaphore.set(0);
+        uint8_t buffer[2 * sizeof(MI_SEMAPHORE_WAIT)] = {};
+        LinearStream linearStream(buffer, 2 * sizeof(MI_SEMAPHORE_WAIT));
+        auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(0);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+
+        semaphoreCmd++;
+
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(1);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+    }
 }
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenIndirectModeAndQwordDataWhenProgrammingSemaphoreThenEnable64bGprMode) {
