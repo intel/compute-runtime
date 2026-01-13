@@ -105,8 +105,6 @@ class MockKernel : public Kernel {
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
     using Kernel::graphicsAllocationTypeUseSystemMemory;
-    using Kernel::hasDirectStatelessAccessToHostMemory;
-    using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::imageFromBufferArgsCount;
     using Kernel::implicitArgsVersion;
     using Kernel::isBuiltIn;

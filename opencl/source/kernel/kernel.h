@@ -408,8 +408,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void markArgPatchedAndResolveArgs(uint32_t argIndex);
 
     void reconfigureKernel();
-    bool hasDirectStatelessAccessToHostMemory() const;
-    bool hasIndirectStatelessAccessToHostMemory() const;
 
     const ClDevice &getDevice() const {
         return clDevice;

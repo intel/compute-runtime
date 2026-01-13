@@ -1847,43 +1847,6 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
     return kernelObjsForAuxTranslation;
 }
 
-bool Kernel::hasDirectStatelessAccessToHostMemory() const {
-    for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
-        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
-        if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
-            auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::bufferHostMemory) {
-                return true;
-            }
-        }
-        if (SVM_ALLOC_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
-            auto svmAlloc = reinterpret_cast<const GraphicsAllocation *>(getKernelArg(i));
-            if (svmAlloc && svmAlloc->getAllocationType() == AllocationType::bufferHostMemory) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
-    if (!kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess) {
-        return false;
-    }
-
-    for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
-        if (gfxAllocation->getAllocationType() == AllocationType::bufferHostMemory) {
-            return true;
-        }
-    }
-
-    if (unifiedMemoryControls.indirectHostAllocationsAllowed) {
-        return getContext().getSVMAllocsManager()->hasHostAllocations();
-    }
-
-    return false;
-}
-
 uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
     uint64_t kernelStartOffset = 0;
 
