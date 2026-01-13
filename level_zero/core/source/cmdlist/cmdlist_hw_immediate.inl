@@ -48,8 +48,52 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-CommandListCoreFamilyImmediate<gfxCoreFamily>::CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock) : BaseClass(numIddsPerBlock) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::workerThreadRun() {
+
+    while (running.load(std::memory_order_acquire)) {
+        WorkItem *item = queue.dequeue();
+        if (!item) {
+            std::this_thread::yield();
+            continue;
+        }
+
+        switch (item->type) {
+        case WorkItemType::Barrier: {
+            BarrierPayload &b = item->barrier;
+
+            appendBarrier_inworker(
+                b.signalEvent,
+                b.waitEvents.count,
+                b.waitEvents.events,
+                b.relaxedOrderingDispatch);
+            break;
+        }
+
+        case WorkItemType::LaunchKernel: {
+            LaunchKernelPayload &k = item->launch;
+
+            appendLaunchKernel_inworker(
+                k.kernel,
+                k.groupCount,
+                k.signalEvent,
+                k.waitEvents.count,
+                k.waitEvents.events,
+                k.launchParams);
+            break;
+        }
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+CommandListCoreFamilyImmediate<gfxCoreFamily>::CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock) : BaseClass(numIddsPerBlock), workerThread(&CommandListCoreFamilyImmediate<gfxCoreFamily>::workerThreadRun, this) {
     computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+CommandListCoreFamilyImmediate<gfxCoreFamily>::~CommandListCoreFamilyImmediate() {
+    running.store(false, std::memory_order_release);
+    workerThread.join();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -568,7 +612,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryResetKernelWithAssertFlag
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel_inworker(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     CmdListKernelLaunchParams &launchParams) {
@@ -621,7 +665,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier_inworker(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     bool isStallingOperation = true;
