@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,9 +57,9 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     FreePolicyType freeSVMAllocImplLastFreePolicy = FreePolicyType::none;
 };
 
-template <bool enableLocalMemory>
+template <bool enableLocalMemory, uint32_t rootDevicesCount>
 struct SVMMemoryAllocatorFixture {
-    SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
+    SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get(), true, rootDevicesCount) {}
 
     void setUp() {
         executionEnvironment.initGmm();
@@ -68,6 +68,10 @@ struct SVMMemoryAllocatorFixture {
         if (enableLocalMemory) {
             memoryManager->pageFaultManager.reset(new MockPageFaultManager);
         }
+        for (uint32_t i = 0; i < rootDevicesCount; i++) {
+            rootDeviceIndices.pushUnique(i);
+            deviceBitfields.insert({i, mockDeviceBitfield});
+        }
     }
     void tearDown() {
     }
@@ -75,8 +79,8 @@ struct SVMMemoryAllocatorFixture {
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockMemoryManager> memoryManager;
     std::unique_ptr<MockSVMAllocsManager> svmManager;
-    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
-    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    RootDeviceIndicesContainer rootDeviceIndices;
+    std::map<uint32_t, DeviceBitfield> deviceBitfields;
 };
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ TEST(SvmDeviceAllocationTest, givenGivenSvmAllocsManagerWhenObtainOwnershipCalle
     th2.join();
 }
 
-using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
+using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSharedAllocWithOffsetPointerThenResourceIsRemovedProperly) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableLocalMemory.set(1);

@@ -32,8 +32,8 @@
 
 using namespace NEO;
 
-using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
-using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
+using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false, 1u>>;
+using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
     auto ptr = svmManager->createSVMAlloc(0, {}, rootDeviceIndices, deviceBitfields);

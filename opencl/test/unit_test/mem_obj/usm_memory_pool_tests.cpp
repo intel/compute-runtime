@@ -191,7 +191,7 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenUsmPoolsSupportedAndMultiDeviceContex
         EXPECT_EQ(CL_SUCCESS, retVal);
         clMemFreeINTEL(mockContext.get(), hostAlloc);
 
-        EXPECT_FALSE(platform->getHostMemAllocPool().isInitialized());
+        EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
         EXPECT_FALSE(mockContext->getDeviceMemAllocPoolsManager().isInitialized());
 
         mockContext->devices.pop_back();
@@ -302,7 +302,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsManagerAllocationsWhenFreeingIn
     EXPECT_NE(retVal, CL_SUCCESS);
 }
 
-TEST_F(UsmPoolTestWithMultipleDevice, givenMultipleDevicesWhenCreatingAllocationsThenPoolsAreDisabled) {
+TEST_F(UsmPoolTestWithMultipleDevice, givenMultipleDevicesWhenCreatingAllocationsThenDevicePoolIsDisabled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
     debugManager.flags.EnableHostUsmAllocationPool.set(3);
@@ -321,5 +321,5 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenMultipleDevicesWhenCreatingAllocation
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
     EXPECT_FALSE(mockContext->usmPoolInitialized);
-    EXPECT_FALSE(static_cast<MockPlatform *>(device->getPlatform())->usmPoolInitialized);
+    EXPECT_TRUE(static_cast<MockPlatform *>(device->getPlatform())->usmPoolInitialized);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -308,11 +308,6 @@ void Platform::initializeHostUsmAllocationPool() {
     if (this->usmPoolInitialized) {
         return;
     }
-
-    if (this->getNumDevices() != 1 || this->clDevices[0]->getNumGenericSubDevices() != 0) {
-        return;
-    }
-
     auto svmMemoryManager = this->getSVMAllocsManager();
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);

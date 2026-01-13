@@ -21,7 +21,13 @@
 namespace NEO {
 
 bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize) {
-    auto poolAllocation = svmMemoryManager->createUnifiedMemoryAllocation(poolSize, memoryProperties);
+    void *poolAllocation = nullptr;
+    if (memoryProperties.memoryType == InternalMemoryType::hostUnifiedMemory) {
+        poolAllocation = svmMemoryManager->createHostUnifiedMemoryAllocation(poolSize, memoryProperties);
+    } else {
+        poolAllocation = svmMemoryManager->createUnifiedMemoryAllocation(poolSize, memoryProperties);
+    }
+
     if (nullptr == poolAllocation) {
         return false;
     }

@@ -52,7 +52,7 @@ TEST_F(UnifiedMemoryPoolingStaticTest, givenUsmAllocPoolWhenCallingStaticMethods
     EXPECT_FALSE(UsmMemAllocPool::flagsAreAllowed(unifiedMemoryProperties));
 }
 
-using UnifiedMemoryPoolingTest = Test<SVMMemoryAllocatorFixture<true>>;
+using UnifiedMemoryPoolingTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 
 TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenReturnCorrectValue) {
     MockUsmMemAllocPool usmMemAllocPool;
@@ -433,6 +433,45 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(pastEndPointer));
 }
 
+class InitializedHostMultiDeviceUnifiedMemoryPoolingTest : public Test<SVMMemoryAllocatorFixture<true, 4u>> {
+  public:
+    void SetUp() override {
+        SVMMemoryAllocatorFixture::setUp();
+        EXPECT_FALSE(usmMemAllocPool.isInitialized());
+
+        deviceFactory = std::make_unique<UltDeviceFactory>(4u, 1, executionEnvironment);
+        executionEnvironment.incRefInternal();
+
+        poolMemoryProperties = std::make_unique<UnifiedMemoryProperties>(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
+        ASSERT_TRUE(usmMemAllocPool.initialize(svmManager.get(), *poolMemoryProperties.get(), poolSize, 0u, poolAllocationThreshold));
+    }
+    void TearDown() override {
+        usmMemAllocPool.cleanup();
+        SVMMemoryAllocatorFixture::tearDown();
+    }
+
+    const size_t poolSize = 2 * MemoryConstants::megaByte;
+    MockUsmMemAllocPool usmMemAllocPool;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    std::unique_ptr<UnifiedMemoryProperties> poolMemoryProperties;
+    constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
+};
+
+TEST_F(InitializedHostMultiDeviceUnifiedMemoryPoolingTest, givenInitializedPoolWhenUsingPoolThenGraphicsAllocationsAreSetForAllRootDevices) {
+    const auto devicesCount = deviceFactory->rootDevices.size();
+    const auto allocationSize = 4;
+    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+
+    auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    EXPECT_NE(nullptr, allocFromPool);
+    EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+
+    auto svmData = svmManager->getSVMAlloc(allocFromPool);
+    EXPECT_EQ(memoryProperties.rootDeviceIndices.size(), devicesCount);
+    EXPECT_EQ(devicesCount, svmData->gpuAllocations.getGraphicsAllocations().size());
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(allocFromPool, true));
+}
+
 using InitializationFailedUnifiedMemoryPoolingTest = InitializedUnifiedMemoryPoolingTest<InternalMemoryType::hostUnifiedMemory, true>;
 TEST_F(InitializationFailedUnifiedMemoryPoolingTest, givenNotInitializedPoolWhenUsingPoolThenMethodsSucceed) {
     UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
@@ -446,7 +485,7 @@ TEST_F(InitializationFailedUnifiedMemoryPoolingTest, givenNotInitializedPoolWhen
     EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(bogusPtr));
 }
 
-class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true>, public ::testing::TestWithParam<std::tuple<InternalMemoryType>> {
+class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true, 1u>, public ::testing::TestWithParam<std::tuple<InternalMemoryType>> {
   public:
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
@@ -725,7 +764,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     usmMemAllocPoolsManager->cleanup();
 }
 
-class UnifiedMemoryPoolingFacadeTest : public SVMMemoryAllocatorFixture<true>, public ::testing::TestWithParam<std::tuple<InternalMemoryType, bool>> {
+class UnifiedMemoryPoolingFacadeTest : public SVMMemoryAllocatorFixture<true, 1u>, public ::testing::TestWithParam<std::tuple<InternalMemoryType, bool>> {
   public:
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
