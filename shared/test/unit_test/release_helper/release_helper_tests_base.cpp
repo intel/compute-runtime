@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ ReleaseHelperTestsBase::ReleaseHelperTestsBase() = default;
 ReleaseHelperTestsBase ::~ReleaseHelperTestsBase() = default;
 
 void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValues128And256Returned() {
-    std::vector<uint32_t> expectedValues{128u, 256u};
+    SupportedNumGrfs expectedValues{128u, 256u};
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -107,7 +107,7 @@ void ReleaseHelperTestsBase::whenGettingPreferredSlmSizeThenAllEntriesEmpty() {
 }
 
 void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo256Returned() {
-    std::vector<uint32_t> expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u};
+    SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u};
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,10 +84,10 @@ XE3_CORETEST_F(Xe3CoreCommandEncoderTest, givenGrfSizeWhenProgrammingIddThenSetC
 
 XE3_CORETEST_F(Xe3CoreCommandEncoderTest, givenProductHelperWithInvalidGrfNumbersWhenProgrammingIddThenErrorIsThrown) {
     struct ProductHelperWithInvalidGrfNumbers : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
-        std::vector<uint32_t> getSupportedNumGrfs(const NEO::ReleaseHelper *releaseHelper) const override {
+        const SupportedNumGrfs getSupportedNumGrfs(const NEO::ReleaseHelper *releaseHelper) const override {
             return invalidGrfs;
         }
-        std::vector<uint32_t> invalidGrfs = {127, 255};
+        SupportedNumGrfs invalidGrfs = {127u, 255u};
     };
 
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;

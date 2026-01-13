@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "aubstream/engine_node.h"
 #include "neo_igfxfmid.h"
@@ -237,7 +238,7 @@ class ProductHelper {
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const = 0;
-    virtual std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
+    virtual const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
     virtual aub_stream::EngineType getDefaultCopyEngine() const = 0;
     virtual void adjustEngineGroupType(EngineGroupType &engineGroupType) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;

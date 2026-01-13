@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -374,7 +374,7 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getUncachedL1CachePolicy() {
 }
 
 template <>
-std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
+const SupportedNumGrfs ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->getSupportedNumGrfs();
     }

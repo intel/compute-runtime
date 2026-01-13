@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,13 +22,14 @@
 namespace L0::ult {
 
 struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
-    std::vector<uint32_t> getGrfSizes(ze_device_handle_t device) {
+    NEO::SupportedNumGrfs getGrfSizes(ze_device_handle_t device) {
         ze_device_module_properties_t deviceModuleProperties{};
         zex_device_module_register_file_exp_t deviceModuleRegisterFile{ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};
         deviceModuleProperties.pNext = &deviceModuleRegisterFile;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetModuleProperties(device, &deviceModuleProperties));
 
-        std::vector<uint32_t> result(deviceModuleRegisterFile.registerFileSizesCount);
+        NEO::SupportedNumGrfs result{};
+        result.resize(deviceModuleRegisterFile.registerFileSizesCount);
         deviceModuleRegisterFile.registerFileSizes = result.data();
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetModuleProperties(device, &deviceModuleProperties));
         return result;

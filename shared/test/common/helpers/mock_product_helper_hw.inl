@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ bool MockProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
 }
 
 template <>
-std::vector<uint32_t> MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
+const SupportedNumGrfs MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->getSupportedNumGrfs();
     }

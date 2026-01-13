@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isAuxSurfaceModeOverrideRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isResolvingSubDeviceIDNeeded, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isRcsExposureDisabled, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, std::vector<uint32_t>, {128}, ());
+    ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, const SupportedNumGrfs, {128u}, ());
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isGlobalBindlessAllocatorEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getTotalMemBankSize, uint64_t, 32ull * MemoryConstants::gigaByte, ());

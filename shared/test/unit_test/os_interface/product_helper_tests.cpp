@@ -1045,7 +1045,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCor
     if (releaseHelper) {
         EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(releaseHelper));
     } else {
-        const std::vector<uint32_t> expectedValues{128u};
+        const SupportedNumGrfs expectedValues{128u};
         EXPECT_EQ(expectedValues, productHelper->getSupportedNumGrfs(releaseHelper));
     }
 }

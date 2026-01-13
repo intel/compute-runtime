@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
 }
 
 template <>
-std::vector<uint32_t> ReleaseHelperHw<release>::getSupportedNumGrfs() const {
+const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
 }
 

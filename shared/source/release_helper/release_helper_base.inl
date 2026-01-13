@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ bool ReleaseHelperHw<releaseType>::isRcsExposureDisabled() const {
 }
 
 template <ReleaseType releaseType>
-std::vector<uint32_t> ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
+const SupportedNumGrfs ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
     return {128u, 256u};
 }
 

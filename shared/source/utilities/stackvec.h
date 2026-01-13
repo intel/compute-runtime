@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -496,3 +496,13 @@ class RootDeviceIndicesContainer : protected StackVec<uint32_t, maxRootDeviceInd
     StackVec<int8_t, maxRootDeviceIndices> indexPresent;
 };
 using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, maxRootDeviceIndices>;
+
+template <typename DataType, size_t onStackCapacity,
+          typename StackSizeT = typename StackVecSize<onStackCapacity>::SizeT>
+class StaticStackVec : public StackVec<DataType, onStackCapacity, StackSizeT> {
+  public:
+    template <std::same_as<DataType>... Args>
+    StaticStackVec(Args &&...args) : StackVec<DataType, onStackCapacity, StackSizeT>({std::forward<Args>(args)...}) {
+        static_assert(sizeof...(Args) <= onStackCapacity, "Initializer size exceeds StaticStackVec capacity");
+    }
+};

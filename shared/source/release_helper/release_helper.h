@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/command_container/definitions/encode_size_preferred_slm_value.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/stackvec.h"
+
+#include "supported_num_grfs.h"
 
 #include <array>
 #include <memory>
@@ -45,7 +47,7 @@ class ReleaseHelper {
     virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
-    virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
+    virtual const SupportedNumGrfs getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
     virtual bool isGlobalBindlessAllocatorEnabled() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
@@ -95,7 +97,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isAuxSurfaceModeOverrideRequired() const override;
     bool isResolvingSubDeviceIDNeeded() const override;
     bool isRcsExposureDisabled() const override;
-    std::vector<uint32_t> getSupportedNumGrfs() const override;
+    const SupportedNumGrfs getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
     bool isGlobalBindlessAllocatorEnabled() const override;
     uint64_t getTotalMemBankSize() const override;

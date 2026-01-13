@@ -174,7 +174,7 @@ class ProductHelperHw : public ProductHelper {
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
     bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const override;
-    std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
+    const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
