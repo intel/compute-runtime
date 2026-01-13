@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,5 +264,6 @@ class DirectSubmissionHw {
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
     bool notifyKmdDuringMonitorFence = false;
+    bool isSwitchOnUnsuccessful = false;
 };
 } // namespace NEO
