@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,12 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
+#include "cmdlist_launch_params.h"
+
 #include <atomic>
 #include <functional>
 #include <mutex>
+#include <type_traits>
 
 namespace NEO {
 struct SvmAllocationData;
@@ -43,6 +46,138 @@ struct CpuMemCopyInfo {
     CpuMemCopyInfo(void *dstPtr, void *srcPtr, size_t size) : dstPtr(dstPtr), srcPtr(srcPtr), size(size) {}
 };
 
+enum class WorkItemType : uint8_t {
+    Barrier,
+    LaunchKernel
+};
+
+static constexpr uint32_t MaxWaitEvents = 8;
+
+struct WaitEventList {
+    uint32_t count = 0;
+    ze_event_handle_t events[MaxWaitEvents];
+
+    void set(uint32_t num, const ze_event_handle_t *src) {
+        count = num;
+        for (uint32_t i = 0; i < num; ++i) {
+            events[i] = src[i];
+        }
+    }
+};
+
+struct BarrierPayload {
+    ze_event_handle_t signalEvent = nullptr;
+    WaitEventList waitEvents;
+    bool relaxedOrderingDispatch;
+};
+
+struct LaunchKernelPayload {
+    ze_kernel_handle_t kernel = nullptr;
+    ze_group_count_t groupCount{};
+    ze_event_handle_t signalEvent = nullptr;
+    WaitEventList waitEvents;
+    CmdListKernelLaunchParams launchParams;
+};
+
+struct alignas(64) WorkItem {
+    WorkItemType type;
+
+    union {
+        BarrierPayload barrier;
+        LaunchKernelPayload launch;
+    };
+
+    WorkItem() : type(WorkItemType::Barrier) {}
+};
+
+// ---- Factory helpers ----
+inline WorkItem makeBarrier(ze_event_handle_t signal,
+                            uint32_t waitCount,
+                            const ze_event_handle_t *waitList,
+                            bool relaxedOrderingDispatch) {
+    WorkItem item;
+    item.barrier.signalEvent = signal;
+    item.barrier.waitEvents.set(waitCount, waitList);
+    item.barrier.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    return item;
+}
+
+inline WorkItem makeLaunchKernel(ze_kernel_handle_t kernel,
+                                 const ze_group_count_t &groupCount,
+                                 ze_event_handle_t signal,
+                                 uint32_t waitCount,
+                                 const ze_event_handle_t *waitList,
+                                 CmdListKernelLaunchParams &launchParams) {
+    WorkItem item;
+    item.launch.kernel = kernel;
+    item.launch.groupCount = groupCount;
+    item.launch.signalEvent = signal;
+    item.launch.waitEvents.set(waitCount, waitList);
+    item.launch.launchParams = launchParams;
+    return item;
+};
+
+template <typename T, size_t Capacity>
+class SpscRing {
+  public:
+    static_assert((Capacity & (Capacity - 1)) == 0,
+                  "Capacity must be power of two");
+
+    SpscRing() = default;
+    ~SpscRing() {
+        // destroy any remaining elements
+        size_t t = tail.load(std::memory_order_relaxed);
+        size_t h = head.load(std::memory_order_relaxed);
+        while (t != h) {
+            T *ptr = ptr_at(t);
+            ptr->~T();
+            t = (t + 1) & (Capacity - 1);
+        }
+    }
+
+    // Enqueue by value; moved into place
+    bool enqueue(T item) {
+        const size_t h = head.load(std::memory_order_relaxed);
+        const size_t next = (h + 1) & (Capacity - 1);
+
+        if (next == tail.load(std::memory_order_acquire)) {
+            return false; // full
+        }
+
+        // Placement-new into pre-allocated aligned storage
+        new (ptr_at(h)) T(std::move(item));
+
+        head.store(next, std::memory_order_release);
+        return true;
+    }
+
+    // Dequeue: returns pointer to item in-place; advances tail
+    T *dequeue() {
+        const size_t t = tail.load(std::memory_order_relaxed);
+        if (t == head.load(std::memory_order_acquire)) {
+            return nullptr; // empty
+        }
+
+        T *item = ptr_at(t);
+        const size_t next = (t + 1) & (Capacity - 1);
+        tail.store(next, std::memory_order_release);
+
+        return item; // caller may use in-place
+    }
+
+  private:
+    // Helpers
+    T *ptr_at(size_t index) {
+        return reinterpret_cast<T *>(&buffer[index]);
+    }
+
+    alignas(64) std::atomic<size_t> head{0};
+    alignas(64) std::atomic<size_t> tail{0};
+
+    // Use aligned storage to avoid false positives
+    typename std::aligned_storage<sizeof(T), alignof(T)>::type buffer[Capacity];
+};
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -63,12 +198,37 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using ComputeFlushMethodType = NEO::CompletionStamp (CommandListCoreFamilyImmediate<gfxCoreFamily>::*)(NEO::LinearStream &, size_t, bool, bool, NEO::AppendOperations, bool);
 
     CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock);
+    ~CommandListCoreFamilyImmediate() override;
+
+    SpscRing<WorkItem, 8> queue;
+    std::atomic<bool> running{true};
+    std::thread workerThread;
+
+    void processWorkItem(WorkItem &item);
+    void workerThreadRun();
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
-                                   CmdListKernelLaunchParams &launchParams) override;
+                                   CmdListKernelLaunchParams &launchParams) override {
+
+        while (!queue.enqueue(makeLaunchKernel(kernelHandle,
+                                               threadGroupDimensions,
+                                               hEvent,
+                                               numWaitEvents,
+                                               phWaitEvents,
+                                               launchParams))) {
+            std::this_thread::yield();
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendLaunchKernel_inworker(ze_kernel_handle_t kernelHandle,
+                                            const ze_group_count_t &threadGroupDimensions,
+                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                            ze_event_handle_t *phWaitEvents,
+                                            CmdListKernelLaunchParams &launchParams);
 
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
                                            const ze_group_count_t &pDispatchArgumentsBuffer,
@@ -77,7 +237,18 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+        while (!queue.enqueue(makeBarrier(hSignalEvent,
+                                          numWaitEvents,
+                                          phWaitEvents, relaxedOrderingDispatch))) {
+            std::this_thread::yield();
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendBarrier_inworker(ze_event_handle_t hSignalEvent,
+                                       uint32_t numWaitEvents,
+                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch);
 
     ze_result_t appendMemoryCopy(void *dstptr,
                                  const void *srcptr,
