@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -508,4 +508,16 @@ TEST_F(IoctlHelperXeTest, givenDebuggingEnabledWhenCallinggetFlagsForVmCreateThe
     EXPECT_EQ(flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE, static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
     flags = xeIoctlHelper->getFlagsForVmCreate(false, true, false);
     EXPECT_EQ(flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE, static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
+}
+
+TEST_F(IoctlHelperXeTest, whenGettingEuDEbugInterfaceTypeThenCorrectValueReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
+    EXPECT_EQ(xeIoctlHelper->getEuDebugInterfaceType(), EuDebugInterfaceType::prelim);
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    EXPECT_EQ(xeIoctlHelper->getEuDebugInterfaceType(), EuDebugInterfaceType::upstream);
 }

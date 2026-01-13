@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2712,4 +2712,13 @@ TEST(DrmTest, whenGettingDeviceDescriptorThenCorrectValueIsReturned) {
     deviceDescriptor = drm.getDeviceDescriptor(deviceId);
     EXPECT_NE(deviceDescriptor, nullptr);
     EXPECT_EQ(deviceDescriptor->deviceId, deviceId);
+}
+
+TEST(DrmTest, whenGettingEuDebugInterfaceTypeThenCorrectValueIsReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    EXPECT_EQ(drm.getEuDebugInterfaceType(), EuDebugInterfaceType::prelim);
 }

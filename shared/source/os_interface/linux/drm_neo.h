@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "neo_igfxfmid.h"
@@ -273,6 +274,7 @@ class Drm : public DriverModel {
     uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
     MOCKABLE_VIRTUAL void setSharedSystemAllocAddressRange(uint64_t value) { this->sharedSystemAllocAddressRange = value; }
     MOCKABLE_VIRTUAL uint64_t getSharedSystemAllocAddressRange() const { return this->sharedSystemAllocAddressRange; }
+    EuDebugInterfaceType getEuDebugInterfaceType();
 
   protected:
     Drm() = delete;

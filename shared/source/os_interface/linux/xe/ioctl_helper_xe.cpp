@@ -2155,4 +2155,8 @@ bool IoctlHelperXe::is2MBSizeAlignmentRequired(AllocationType allocationType) co
     return false;
 }
 
+EuDebugInterfaceType IoctlHelperXe::getEuDebugInterfaceType() {
+    return euDebugInterface->getInterfaceType();
+}
+
 } // namespace NEO

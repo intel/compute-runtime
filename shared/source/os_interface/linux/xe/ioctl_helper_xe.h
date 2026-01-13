@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,6 +146,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
+    EuDebugInterfaceType getEuDebugInterfaceType() override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

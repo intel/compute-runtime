@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1321,6 +1321,10 @@ void Drm::configureGpuFaultCheckThreshold() {
     if (debugManager.flags.GpuFaultCheckThreshold.get() != -1) {
         gpuFaultCheckThreshold = debugManager.flags.GpuFaultCheckThreshold.get();
     }
+}
+
+EuDebugInterfaceType Drm::getEuDebugInterfaceType() {
+    return ioctlHelper->getEuDebugInterfaceType();
 }
 
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType) {

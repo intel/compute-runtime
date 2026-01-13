@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -907,4 +907,11 @@ TEST(IoctlHelperTestsUpstream, givenPrelimWhenQueryDeviceCapsIsCalledThenNullopt
     IoctlHelperUpstream ioctlHelper{*drm};
 
     EXPECT_EQ(ioctlHelper.queryDeviceCaps(), std::nullopt);
+}
+
+TEST(IoctlHelperTestsUpstream, whenGettingEuDebugInterfaceTypeThenCorrectValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_EQ(ioctlHelper.getEuDebugInterfaceType(), EuDebugInterfaceType::maxValue);
 }

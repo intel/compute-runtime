@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "neo_igfxfmid.h"
@@ -259,6 +260,7 @@ class IoctlHelper {
     virtual bool overrideMaxSlicesSupported() const { return false; }
     virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
     virtual uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) { return 0; }
+    virtual EuDebugInterfaceType getEuDebugInterfaceType() { return EuDebugInterfaceType::maxValue; }
 
   protected:
     Drm &drm;
@@ -468,6 +470,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
+    EuDebugInterfaceType getEuDebugInterfaceType() override { return EuDebugInterfaceType::prelim; }
 
   protected:
     StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
