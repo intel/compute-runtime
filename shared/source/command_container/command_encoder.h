@@ -60,15 +60,15 @@ struct EncodePostSyncArgs {
     uint64_t inOrderIncrementValue = 0;
     Device *device = nullptr;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
-    bool isCounterBasedEvent = false;
-    bool isTimestampEvent = false;
     NEO::TagNodeBase *tsNode = nullptr;
-    bool isHostScopeSignalEvent = false;
-    bool isUsingSystemAllocation = false;
     bool dcFlushEnable = false;
     bool interruptEvent = false;
+    bool isCounterBasedEvent = false;
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
+    bool isHostScopeSignalEvent = false;
+    bool isTimestampEvent = false;
+    bool isUsingSystemAllocation = false;
 
     bool requiresSystemMemoryFence() const;
 
