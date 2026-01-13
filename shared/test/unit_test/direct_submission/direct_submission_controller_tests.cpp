@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -534,6 +534,9 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenPeerContentionThenIsDirectSubmis
         ASSERT_TRUE(lock.owns_lock()); // lock should be re-acquired inside function
     };
 
+    controller->notifyNewSubmission(mainCsr.get());
+    controller->notifyNewSubmission(peerCsr.get());
+
     // 1. Both idle, no contention -> true
     callIsIdle(true);
 
@@ -867,6 +870,26 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSingleCsrIsBusyTh
     EXPECT_FALSE(controller->isDirectSubmissionIdle(csr.get(), lock));
 }
 
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInContextGroupIsNotActiveThenOnlyConsiderMainCsrInTheGroup) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(42, false);
+    auto csr2 = createAndRegisterCsr(42, false);
+
+    // Activate main csr1 only
+    controller->notifyNewSubmission(csr1.get());
+
+    // Verify that main csr1 is active and other csr2 is inactive
+    EXPECT_TRUE(controller->directSubmissions[csr1.get()].isActive);
+    EXPECT_FALSE(controller->directSubmissions[csr2.get()].isActive);
+
+    // Call isDirectSubmissionIdle for main csr1
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+
+    // Verify that csr2 was not considered (remains inactive)
+    EXPECT_FALSE(controller->directSubmissions[csr2.get()].isActive);
+}
+
 TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextGroupAreNotBusyThenIsDirectSubmissionIdleReturnsTrue) {
     // Simulate same context group
     auto csr1 = createAndRegisterCsr(42, false);
@@ -876,6 +899,9 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextG
     csr1->taskCount = 1;
     csr2->latestFlushedTaskCount = 1;
     csr2->taskCount = 1;
+
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
 
     std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
     EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
@@ -890,6 +916,9 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAnyCsrInContextGr
     csr1->taskCount = 1;
     csr2->latestFlushedTaskCount = 1;
     csr2->taskCount = 1;
+
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
 
     std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
     EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
@@ -984,6 +1013,9 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupIs
     csr2->latestFlushedTaskCount = 7;
     csr2->taskCount = 7;
 
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
+
     std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
     // csr2 is busy, so isDirectSubmissionIdle should return false and unlock should be called for csr2
     EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
@@ -1033,6 +1065,10 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupHa
     busyAfterPollingCsr->taskCount = 2;
     controller->registerDirectSubmission(busyAfterPollingCsr.get());
     registeredCsrs.push_back(busyAfterPollingCsr.get());
+
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
+    controller->notifyNewSubmission(busyAfterPollingCsr.get());
 
     std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
     // Should return false because busyAfterPollingCsr is still busy after polling
@@ -1116,6 +1152,9 @@ TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGr
     csr1->latestFlushedTaskCount = 1;
     csr1->taskCount = 1;
 
+    controller->notifyNewSubmission(csr0.get());
+    controller->notifyNewSubmission(csr1.get());
+
     // Only csr0 should be in its group, and only csr1 in its own group
     std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
     std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
@@ -1139,6 +1178,9 @@ TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGr
     csr0->taskCount = 1;
     csr1->latestFlushedTaskCount = 1;
     csr1->taskCount = 1;
+
+    controller->notifyNewSubmission(csr0.get());
+    controller->notifyNewSubmission(csr1.get());
 
     std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
     std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());

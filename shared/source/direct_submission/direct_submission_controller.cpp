@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -201,6 +201,9 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
 
         auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
         if (otherKey == myKey) {
+            if (!entry.second.isActive) {
+                continue; // Only consider active CSRs in the group
+            }
             auto otherLock = otherCsr->tryObtainUniqueOwnership();
             if (!otherLock.owns_lock()) {
                 allOthersIdle = false;
