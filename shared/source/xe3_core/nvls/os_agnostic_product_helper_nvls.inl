@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,6 @@ bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return GfxMemoryAllocationMethod::allocateByKmd;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
-    return true;
 }
 
 template <>

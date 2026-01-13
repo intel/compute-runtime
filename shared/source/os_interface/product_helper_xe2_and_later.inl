@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,11 @@ void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &tim
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
 }
 

@@ -53,10 +53,6 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCa
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
-NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
-}
-
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }

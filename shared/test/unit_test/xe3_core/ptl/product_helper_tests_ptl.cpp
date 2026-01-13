@@ -63,10 +63,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThe
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,11 +55,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
     if (debugManager.flags.EnableL1FlushUavCoherencyMode.get() != -1) {
         propertiesSupport.enableL1FlushUavCoherencyMode = !!debugManager.flags.EnableL1FlushUavCoherencyMode.get();
     }
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
-    return true;
 }
 
 template <>
