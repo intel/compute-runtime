@@ -25,18 +25,18 @@ class OsContextLinux : public OsContext {
 
     unsigned int getEngineFlag() const { return engineFlag; }
     void setEngineFlag(unsigned int engineFlag) { this->engineFlag = engineFlag; }
-    const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
-    const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
+    const std::vector<uint32_t> &getDrmContextIds() const override { return drmContextIds; }
+    const std::vector<uint32_t> &getDrmVmIds() const override { return drmVmIds; }
     bool isDirectSubmissionSupported() const override;
     Drm &getDrm() const;
     virtual std::pair<uint64_t, uint64_t> getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked);
     virtual void waitForPagingFence();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
-    void setHangDetected() {
+    void setHangDetected() override {
         contextHangDetected = true;
     }
-    bool isHangDetected() const {
+    bool isHangDetected() const override {
         return contextHangDetected;
     }
 

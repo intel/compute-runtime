@@ -108,6 +108,10 @@ bool OsContextWin::isDirectSubmissionSupported() const {
     return !isWSL && productHelper.isDirectSubmissionSupported();
 }
 
+bool OsContextWin::isHangDetected() const {
+    return monitoredFence.cpuAddress && *monitoredFence.cpuAddress == Wddm::gpuHangIndication;
+}
+
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
