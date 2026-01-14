@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,10 +49,6 @@ class OclocIgcFacade : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL std::string getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const;
     MOCKABLE_VIRTUAL bool isPatchtokenInterfaceSupported() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> createIgcDeviceContext() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::PlatformTag> getIgcPlatformHandle() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> getGTSystemInfoHandle() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkaroundsHandle() const;
-    void populateWithFeatures(NEO::IgcFeaturesAndWorkaroundsTag *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const;
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> igcLib;

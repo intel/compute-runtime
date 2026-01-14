@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,19 +88,10 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
-    const auto igcPlatform = getIgcPlatformHandle();
-    const auto igcGtSystemInfo = getGTSystemInfoHandle();
-    const auto igcFtrWa = getIgcFeaturesAndWorkaroundsHandle();
-
-    if (!igcPlatform || !igcGtSystemInfo || !igcFtrWa) {
+    if (!initializeIgcDeviceContext(igcDeviceCtx.get(), hwInfo, compilerProductHelper.get())) {
         argHelper->printf("Error! IGC device context has not been properly created!\n");
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
-
-    populateIgcPlatform(*igcPlatform, hwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
-
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper.get());
 
     initialized = true;
     return OCLOC_SUCCESS;
@@ -134,27 +125,6 @@ bool OclocIgcFacade::isPatchtokenInterfaceSupported() const {
 
 CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> OclocIgcFacade::createIgcDeviceContext() const {
     return igcMain->CreateInterface<NEO::IgcOclDeviceCtxTag>();
-}
-
-CIF::RAII::UPtr_t<NEO::PlatformTag> OclocIgcFacade::getIgcPlatformHandle() const {
-    return igcDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
-}
-
-CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> OclocIgcFacade::getGTSystemInfoHandle() const {
-    return igcDeviceCtx->GetGTSystemInfoHandle<NEO::GTSystemInfoTag>();
-}
-
-CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
-    return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
-}
-
-void OclocIgcFacade::populateWithFeatures(NEO::IgcFeaturesAndWorkaroundsTag *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
-    if (compilerProductHelper) {
-        handle->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    }
-
-    handle->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
-    handle->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
 }
 
 const char *OclocIgcFacade::getIgcRevision() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,29 +71,4 @@ CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> MockOclocIgcFacade::createIgcDeviceCo
         return OclocIgcFacade::createIgcDeviceContext();
     }
 }
-
-CIF::RAII::UPtr_t<NEO::PlatformTag> MockOclocIgcFacade::getIgcPlatformHandle() const {
-    if (shouldReturnInvalidIgcPlatformHandle) {
-        return nullptr;
-    } else {
-        return OclocIgcFacade::getIgcPlatformHandle();
-    }
-}
-
-CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> MockOclocIgcFacade::getGTSystemInfoHandle() const {
-    if (shouldReturnInvalidGTSystemInfoHandle) {
-        return nullptr;
-    } else {
-        return OclocIgcFacade::getGTSystemInfoHandle();
-    }
-}
-
-CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> MockOclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
-    if (shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle) {
-        return nullptr;
-    } else {
-        return OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle();
-    }
-}
-
 } // namespace NEO

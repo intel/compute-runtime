@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -502,26 +502,17 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getIgcDeviceCtx(const Device &device
     }
 
     newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
-    auto igcPlatform = newDeviceCtx->GetPlatformHandle();
-    auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
-    auto igcFtrWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFtrWa.get())) {
-        DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
-        return nullptr;
-    }
+
     const HardwareInfo *hwInfo = &device.getHardwareInfo();
     auto productFamily = debugManager.flags.ForceCompilerUsePlatform.get();
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    populateIgcPlatform(*igcPlatform, *hwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
-
-    auto &compilerProductHelper = device.getCompilerProductHelper();
-    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper.isMidThreadPreemptionSupported(*hwInfo));
-    igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
-    igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+        DEBUG_BREAK_IF(true); // could not initialize device context
+        return nullptr;
+    }
 
     igcDeviceContexts[&device] = std::move(newDeviceCtx);
     return igcDeviceContexts[&device].get();
@@ -547,26 +538,16 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getFinalizerDeviceCtx(const Device &
     }
 
     newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
-    auto igcPlatform = newDeviceCtx->GetPlatformHandle();
-    auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
-    auto igcFtrWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFtrWa.get())) {
-        DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
-        return nullptr;
-    }
     const HardwareInfo *hwInfo = &device.getHardwareInfo();
     auto productFamily = debugManager.flags.ForceCompilerUsePlatform.get();
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    populateIgcPlatform(*igcPlatform, *hwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
-
-    auto &compilerProductHelper = device.getCompilerProductHelper();
-    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper.isMidThreadPreemptionSupported(*hwInfo));
-    igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
-    igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+        DEBUG_BREAK_IF(true); // could not initialize device context
+        return nullptr;
+    }
 
     finalizerDeviceContexts[&device] = std::move(newDeviceCtx);
     return finalizerDeviceContexts[&device].get();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,6 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     bool shouldFailLoadingOfIgcCreateMainFunction{false};
     bool shouldFailCreationOfIgcMain{false};
     bool shouldFailCreationOfIgcDeviceContext{false};
-    bool shouldReturnInvalidIgcPlatformHandle{false};
-    bool shouldReturnInvalidGTSystemInfoHandle{false};
-    bool shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle{false};
     std::optional<bool> isIgcInterfaceCompatibleReturnValue{};
     std::optional<std::string> getIncompatibleInterfaceReturnValue{};
     std::optional<bool> isPatchtokenInterfaceSupportedReturnValue{};
@@ -47,12 +44,6 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     bool isPatchtokenInterfaceSupported() const override;
 
     CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> createIgcDeviceContext() const override;
-
-    CIF::RAII::UPtr_t<NEO::PlatformTag> getIgcPlatformHandle() const override;
-
-    CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> getGTSystemInfoHandle() const override;
-
-    CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkaroundsHandle() const override;
 };
 
 } // namespace NEO

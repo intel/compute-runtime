@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,20 +9,13 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/validators.h"
 
-#include "ocl_igc_interface/gt_system_info.h"
-#include "ocl_igc_interface/igc_features_and_workarounds.h"
 #include "ocl_igc_interface/platform_helper.h"
 
 namespace NEO {
 
-template <>
-void populateIgcPlatform<>(IGC::Platform<1> &igcPlatform, const HardwareInfo &hwInfo) {
-    IGC::PlatformHelper::PopulateInterfaceWith(igcPlatform, hwInfo.platform);
-}
-
-template <>
-void populateIgcPlatform<>(IGC::Platform<2> &igcPlatform, const HardwareInfo &inputHwInfo) {
+void populateIgcPlatform(PlatformTag &igcPlatform, const HardwareInfo &inputHwInfo) {
     auto hwInfo = inputHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     if (compilerProductHelper) {
@@ -39,6 +32,27 @@ void populateIgcPlatform<>(IGC::Platform<2> &igcPlatform, const HardwareInfo &in
     igcPlatform.SetRevId_PCH(hwInfo.platform.usRevId_PCH);
     igcPlatform.SetGTType(hwInfo.platform.eGTType);
     igcPlatform.SetRenderBlockID(hwInfo.ipVersion.value);
+}
+
+bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) {
+    auto igcPlatform = igcDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
+    auto igcGtSystemInfo = igcDeviceCtx->GetGTSystemInfoHandle<NEO::GTSystemInfoTag>();
+    auto igcFtrWa = igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
+
+    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFtrWa.get())) {
+        return false;
+    }
+    populateIgcPlatform(*igcPlatform, hwInfo);
+
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo.gtSystemInfo);
+
+    if (compilerProductHelper) {
+        igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+    }
+    igcFtrWa->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
+    igcFtrWa->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
+
+    return true;
 }
 
 } // namespace NEO

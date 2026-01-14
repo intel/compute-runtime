@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,29 +121,6 @@ TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcDeviceContextWhenPreparingIg
 
     const std::string expectedErrorMessage{"Error! Cannot create IGC device context!\n"};
     EXPECT_EQ(expectedErrorMessage, output);
-}
-
-TEST_F(OclocIgcFacadeTest, GivenInvalidIgcDeviceContextWhenPreparingIgcThenFailureIsReported) {
-    static constexpr std::array invalidReturnFlags = {
-        &MockOclocIgcFacade::shouldReturnInvalidIgcPlatformHandle,
-        &MockOclocIgcFacade::shouldReturnInvalidGTSystemInfoHandle,
-        &MockOclocIgcFacade::shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle};
-
-    for (const auto &invalidReturnFlag : invalidReturnFlags) {
-        MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
-        mockIgcFacade.*invalidReturnFlag = true;
-
-        StreamCapture capture;
-        capture.captureStdout();
-        const auto igcPreparationResult{mockIgcFacade.initialize(hwInfo)};
-        const auto output{capture.getCapturedStdout()};
-
-        EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, igcPreparationResult);
-        EXPECT_FALSE(mockIgcFacade.isInitialized());
-
-        const std::string expectedErrorMessage{"Error! IGC device context has not been properly created!\n"};
-        EXPECT_EQ(expectedErrorMessage, output);
-    }
 }
 
 TEST_F(OclocIgcFacadeTest, GivenNoneErrorsSetWhenPreparingIgcThenSuccessIsReported) {
