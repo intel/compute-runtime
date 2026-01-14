@@ -759,6 +759,7 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
     auto partitionOffset = this->immWritePostSyncWriteOffset;
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
     auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
+    auto dcFlushRequired = this->getDcFlushSupport();
 
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
                                                                         this->tagAllocation,
@@ -766,7 +767,8 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
                                                                         this->downloadAllocationImpl,
                                                                         nPartitions,
                                                                         partitionOffset,
-                                                                        isTbxMode());
+                                                                        isTbxMode(),
+                                                                        dcFlushRequired);
 }
 
 HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {

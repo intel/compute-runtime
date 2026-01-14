@@ -347,10 +347,14 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto eventPool = createEvents<FamilyType>(2, false);
+
+    auto csr = immCmdList->getCsr(false);
+    auto dcFlushRequired = csr->getDcFlushSupport();
 
     CmdListHostFunctionParameters parameters{};
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
@@ -390,10 +394,11 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedWaitCounter, inOrderExecInfo->getBaseDeviceAddress(), immCmdList->isQwordInOrderCounter(), false));
 
     // host function dispatched data
-    auto storeDataImmIt1 = find<MI_STORE_DATA_IMM *>(itor, cmdList2.end());
-    ASSERT_NE(cmdList2.end(), storeDataImmIt1);
+    auto it1 = dcFlushRequired ? find<PIPE_CONTROL *>(itor, cmdList2.end())
+                               : find<MI_STORE_DATA_IMM *>(itor, cmdList2.end());
+    ASSERT_NE(cmdList2.end(), it1);
 
-    auto semaphoreWait2 = find<MI_SEMAPHORE_WAIT *>(storeDataImmIt1, cmdList2.end());
+    auto semaphoreWait2 = find<MI_SEMAPHORE_WAIT *>(it1, cmdList2.end());
     ASSERT_NE(cmdList2.end(), semaphoreWait2);
 
     // verify signal event

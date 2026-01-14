@@ -22,7 +22,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
                                            uint32_t activePartitions,
                                            uint32_t partitionOffset,
-                                           bool isTbx)
+                                           bool isTbx,
+                                           bool dcFlushRequired)
     : hostFunctionIdAddress(reinterpret_cast<volatile uint64_t *>(hostFunctionIdAddress)),
       csr(csr),
       allocation(allocation),
@@ -30,7 +31,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
       nextHostFunctionId(1), // start from 1 to keep 0 bit for pending/completed status
       activePartitions(activePartitions),
       partitionOffset(partitionOffset),
-      isTbx(isTbx) {
+      isTbx(isTbx),
+      dcFlushRequired(dcFlushRequired) {
 }
 
 uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress(uint32_t partitionId) const {
@@ -66,6 +68,8 @@ void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction)
 uint32_t HostFunctionStreamer::getActivePartitions() const {
     return activePartitions;
 }
+
+bool HostFunctionStreamer::getDcFlushRequired() const { return dcFlushRequired; }
 
 void HostFunctionStreamer::updateTbxData() {
     constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();

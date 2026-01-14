@@ -138,6 +138,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
     uint32_t hostFunctionsCounter = 0;
 
+    bool isInOrder = static_cast<CommandListImp &>(commandList).isInOrderExecutionEnabled();
+    bool memorySynchronizationRequired = isInOrder;
+
     auto patchCommandsLambda = [&](auto &commandToPatch) {
         using CommandType = std::decay_t<decltype(commandToPatch)>;
         if constexpr (std::is_same_v<CommandType, PatchFrontEndState>) {
@@ -191,7 +194,8 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
                                                                       commandToPatch.cmdBufferSpace,
                                                                       csr->getHostFunctionStreamer(),
-                                                                      std::move(hostFunction));
+                                                                      std::move(hostFunction),
+                                                                      memorySynchronizationRequired);
 
             hostFunctionsCounter++;
         } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionWait>) {

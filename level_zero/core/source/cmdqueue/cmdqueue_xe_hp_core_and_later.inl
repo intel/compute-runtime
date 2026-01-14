@@ -170,8 +170,13 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     uint32_t hostFunctionsCounter = 0;
+    bool dcFlushRequired = csr->getDcFlushSupport();
+    bool isInOrder = static_cast<CommandListImp &>(commandList).isInOrderExecutionEnabled();
+    bool memorySynchronizationRequired = isInOrder;
+    bool usePipeControlForHostFunctionIdProgramming = dcFlushRequired && memorySynchronizationRequired;
 
     auto patchCommandsLambda = [&](auto &commandToPatch) {
         using CommandType = std::decay_t<decltype(commandToPatch)>;
@@ -277,20 +282,38 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             NEO::HostFunction hostFunction = {.hostFunctionAddress = commandToPatch.callbackAddress,
                                               .userDataAddress = commandToPatch.userDataAddress};
             csr->ensureHostFunctionWorkerStarted();
+            auto &hostFunctionStreamer = csr->getHostFunctionStreamer();
 
             if (this->patchingPreamble) {
-                MI_STORE_DATA_IMM miStore{};
-                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
-                                                                          &miStore,
-                                                                          csr->getHostFunctionStreamer(),
-                                                                          std::move(hostFunction));
 
-                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, &miStore, sizeof(MI_STORE_DATA_IMM));
+                size_t size = 0u;
+                void *cmdBuffer = nullptr;
+                std::unique_ptr<MI_STORE_DATA_IMM> miStore;
+                std::unique_ptr<PIPE_CONTROL> pc;
+
+                if (usePipeControlForHostFunctionIdProgramming) {
+                    pc = std::make_unique_for_overwrite<PIPE_CONTROL>();
+                    cmdBuffer = static_cast<void *>(pc.get());
+                    size = sizeof(PIPE_CONTROL);
+                } else {
+                    miStore = std::make_unique_for_overwrite<MI_STORE_DATA_IMM>();
+                    cmdBuffer = static_cast<void *>(miStore.get());
+                    size = sizeof(MI_STORE_DATA_IMM);
+                }
+
+                NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
+                                                                          cmdBuffer,
+                                                                          hostFunctionStreamer,
+                                                                          std::move(hostFunction),
+                                                                          memorySynchronizationRequired);
+
+                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, cmdBuffer, size);
             } else {
                 NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
                                                                           commandToPatch.cmdBufferSpace,
-                                                                          csr->getHostFunctionStreamer(),
-                                                                          std::move(hostFunction));
+                                                                          hostFunctionStreamer,
+                                                                          std::move(hostFunction),
+                                                                          memorySynchronizationRequired);
             }
 
             hostFunctionsCounter++;

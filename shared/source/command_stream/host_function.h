@@ -53,7 +53,8 @@ class HostFunctionStreamer {
                          const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
                          uint32_t activePartition,
                          uint32_t partitionOffset,
-                         bool isTbx);
+                         bool isTbx,
+                         bool dcFlushRequired);
     ~HostFunctionStreamer() = default;
 
     uint64_t getHostFunctionReadyToExecute() const;
@@ -69,6 +70,7 @@ class HostFunctionStreamer {
     void signalHostFunctionCompletion(const HostFunction &hostFunction);
     void prepareForExecution(const HostFunction &hostFunction);
     uint32_t getActivePartitions() const;
+    bool getDcFlushRequired() const;
 
   private:
     void updateTbxData();
@@ -89,6 +91,7 @@ class HostFunctionStreamer {
     uint32_t partitionOffset{0};
     std::atomic<bool> inOrderExecutionInProgress{false};
     const bool isTbx = false;
+    bool dcFlushRequired = false;
 };
 
 enum class HostFunctionWorkerMode : int32_t {
@@ -99,8 +102,8 @@ enum class HostFunctionWorkerMode : int32_t {
 
 template <typename GfxFamily>
 struct HostFunctionHelper {
-    static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction);
-    static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction);
+    static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
+    static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
     static void programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer, uint32_t partionId);
 };
 

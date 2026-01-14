@@ -1919,9 +1919,12 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
     if (isImmediateType()) {
         auto csr = getCsr(false);
         csr->ensureHostFunctionWorkerStarted();
+
+        bool isMemorySynchronizationRequired = isInOrderExecutionEnabled();
         NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
                                                                 csr->getHostFunctionStreamer(),
-                                                                std::move(hostFunction));
+                                                                std::move(hostFunction),
+                                                                isMemorySynchronizationRequired);
         csr->signalHostFunctionWorker(1u);
     } else {
         addHostFunctionToPatchCommands(hostFunction);

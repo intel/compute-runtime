@@ -1463,6 +1463,131 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     commandList->destroy();
 }
 
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequiredPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (!device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getDcFlushSupport()) {
+        GTEST_SKIP();
+    }
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    returnValue = mockCmdQHw->initialize(false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_command_list_handle_t commandListHandle = commandList->toHandle();
+
+    mockCmdQHw->setPatchingPreamble(true, false);
+
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    uint64_t hostFunctionAddress = 0xABCDEF00;
+    uint64_t hostFunctionUserData = 0x12345678;
+    CmdListHostFunctionParameters params{};
+    commandList->appendHostFunction(&hostFunctionAddress, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
+    commandList->close();
+
+    auto pcSize = sizeof(PIPE_CONTROL);
+    auto semaphoreSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    auto encodedPcSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(pcSize);
+    auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
+    size_t expectedSize = encodedPcSize + encodedMiSemaphoreSize;
+
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(mockCmdQHw->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, semWaitCmds.size()); // semaphore will be encoded using mi store cmds
+
+    auto miStoreCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    // PC size is 6 dwords,
+    // if 1st is not 8 bytes aligned, it will be encoded using:
+    // 4x miStore - 1st miStore with dword, 2 miStores with qword and the last one with dword
+    // if 1st is 8 bytes aligned, it will be encoded using:
+    // 3x miStore - all with qword data
+
+    // 3 or 4 for pipe control(if not 8bytes aligned),
+    // 3 for mi semaphore wait,
+    // 1 for noop cmd
+    // +1 for nooop cmd if commandListImp->getInOrderExecHostGpuAddress() != 0
+    // 2 for batch buffer start
+    // so min = 9, max = 11
+
+    ASSERT_TRUE(miStoreCmds.size() >= 9 && miStoreCmds.size() <= 11);
+
+    // 1st mi store for host function
+    auto firstMiStoreForHostFunctionIndex = 0u;
+    auto firstMiStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[firstMiStoreForHostFunctionIndex]);
+
+    bool isFirstStoreQwordAligned = firstMiStoreCmd->getStoreQword();
+    auto miStoresForPc = isFirstStoreQwordAligned ? 3u : 4u;
+
+    PIPE_CONTROL pc{};
+    MI_SEMAPHORE_WAIT semaphoreWait{};
+    void *pcAddress = &pc;
+    void *semaphoreWaitAddress = &semaphoreWait;
+
+    auto offset = 0u;
+    for (auto i = firstMiStoreForHostFunctionIndex; i < miStoresForPc + firstMiStoreForHostFunctionIndex; i++) {
+
+        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
+        auto dword0 = miStoreCmd->getDataDword0();
+        memcpy(ptrOffset(pcAddress, offset), &dword0, sizeof(uint32_t));
+        offset += 4u;
+        if (miStoreCmd->getStoreQword()) {
+            auto dword1 = miStoreCmd->getDataDword1();
+            memcpy(ptrOffset(pcAddress, offset), &dword1, sizeof(uint32_t));
+            offset += 4u;
+        }
+    }
+
+    offset = 0u;
+    auto miStoreForSemaphoreIndex = miStoresForPc + firstMiStoreForHostFunctionIndex;
+    for (auto i = miStoreForSemaphoreIndex; i < miStoreForSemaphoreIndex + 3; i++) {
+        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
+        auto dword0 = miStoreCmd->getDataDword0();
+        memcpy(ptrOffset(semaphoreWaitAddress, offset), &dword0, sizeof(uint32_t));
+        offset += 4u;
+        if (miStoreCmd->getStoreQword()) {
+            auto dword1 = miStoreCmd->getDataDword1();
+            memcpy(ptrOffset(semaphoreWaitAddress, offset), &dword1, sizeof(uint32_t));
+            offset += 4u;
+        }
+    }
+
+    auto expectedHostFunctionMappedMemory = mockCmdQHw->getCsr()->getHostFunctionStreamer().getHostFunctionIdGpuAddress(0);
+
+    uint64_t expectedHostFunctionIdProgrammed = 1u;
+    EXPECT_EQ(expectedHostFunctionIdProgrammed, pc.getImmediateData());
+    EXPECT_EQ(getLowPart(expectedHostFunctionMappedMemory), pc.getAddress());
+    EXPECT_EQ(getHighPart(expectedHostFunctionMappedMemory), pc.getAddressHigh());
+    EXPECT_TRUE(pc.getDcFlushEnable());
+
+    auto expectedSemaphoreWaitClearedId = 0u;
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
+    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
+
+    commandList->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingWaitDataWhenCmdListExecutedByQueueThenCmdListHaveCorrectData) {
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
