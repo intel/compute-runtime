@@ -75,11 +75,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
 
-PTLTEST_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass) {
-    EXPECT_EQ(2u, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(0u, productHelper->getL1CachePolicy(true));
-}
-
 PTLTEST_F(PtlProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenTheFlagDerivedValueIsReturned) {
     DebugManagerStateRestore restorer;
 

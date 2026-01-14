@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1344,7 +1344,7 @@ XE3P_CORETEST_F(Xe3pSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgr
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, sbaCmd.getL1CacheControlCachePolicy());
 }
 
 XE3P_CORETEST_F(Xe3pSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {

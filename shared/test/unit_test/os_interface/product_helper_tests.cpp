@@ -756,9 +756,15 @@ HWTEST2_F(ProductHelperTest, givenProductHelperAndDebugFlagWhenGetL1CachePolicyT
     EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(true));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsSbaRequiredAndAtLeastXeCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsWithinXeCoreAndXe2HpgCore) {
     using CacheControlType = typename CacheControlStructHelper<FamilyType>::type;
     EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
+}
+
+HWTEST2_F(ProductHelperTest, givenAtLeastXe3ProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsAtLeastXe3Core) {
+    using CacheControlType = typename CacheControlStructHelper<FamilyType>::type;
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
 }
 

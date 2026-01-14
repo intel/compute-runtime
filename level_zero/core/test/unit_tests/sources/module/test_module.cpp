@@ -56,8 +56,6 @@
 namespace L0 {
 namespace ult {
 
-HWTEST_EXCLUDE_PRODUCT(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_PTL);
-
 using ModuleTest = Test<ModuleFixture>;
 
 TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
@@ -4054,7 +4052,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedW
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=2"), std::string::npos);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
+HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe2HpgCore) {
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
@@ -4065,6 +4063,19 @@ HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptions
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=4"), std::string::npos);
+}
+
+HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXe3CoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3Core) {
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = false;
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingModuleThen4GbBuffersAreRequired) {

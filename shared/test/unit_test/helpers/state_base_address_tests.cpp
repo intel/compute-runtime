@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,7 +274,11 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
+        if (productHelper.getL1CachePolicy(false) == 0u) {
+            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
+        } else {
+            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
+        }
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);

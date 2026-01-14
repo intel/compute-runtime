@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenL3ToL1DebugFlagWhenStatelessM
 
     auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = 2;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
@@ -85,7 +85,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, whenAppendingRssThenProgramWtL1Cac
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, rssCmd.getL1CacheControlCachePolicy());
 }
 
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
@@ -112,7 +112,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenAlignedCacheableReadOnlyBuffe
 
     auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = 2;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);
