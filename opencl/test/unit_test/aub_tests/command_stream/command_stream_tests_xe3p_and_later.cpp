@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,11 +55,11 @@ HWTEST2_F(CommandStreamTestsXe3pAndLater, given64bDataToCompareWhenUsingIndirect
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     const uint64_t compareDataGpr0 = 0x1'0000'0002;
-    const uint32_t compareDataGpr0Low = static_cast<uint32_t>(compareDataGpr0 & std::numeric_limits<uint32_t>::max());
+    const uint32_t compareDataGpr0Low = static_cast<uint32_t>(compareDataGpr0);
     const uint32_t compareDataGpr0High = static_cast<uint32_t>(compareDataGpr0 >> 32);
 
     const uint64_t compareDataMem0 = 0x2'0000'0001;
-    const uint32_t compareDataMem0Low = static_cast<uint32_t>(compareDataMem0 & std::numeric_limits<uint32_t>::max());
+    const uint32_t compareDataMem0Low = static_cast<uint32_t>(compareDataMem0);
     const uint32_t compareDataMem0High = static_cast<uint32_t>(compareDataMem0 >> 32);
 
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0, compareDataGpr0Low, true, false);
@@ -71,7 +71,7 @@ HWTEST2_F(CommandStreamTestsXe3pAndLater, given64bDataToCompareWhenUsingIndirect
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(*taskStream, bufferAllocation->getGpuAddress(), 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, false, true, true, false, nullptr);
 
     const uint64_t storeValue = 0x456'0000'0123;
-    const uint32_t storeValueLow = static_cast<uint32_t>(storeValue & std::numeric_limits<uint32_t>::max());
+    const uint32_t storeValueLow = static_cast<uint32_t>(storeValue);
     const uint32_t storeValueHigh = static_cast<uint32_t>(storeValue >> 32);
 
     EncodeStoreMemory<FamilyType>::programStoreDataImm(*taskStream, bufferAllocation->getGpuAddress() + sizeof(uint64_t), storeValueLow, storeValueHigh, true, false,

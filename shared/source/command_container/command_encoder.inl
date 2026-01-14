@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -946,7 +946,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferSt
         LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR7 + 4, 0, true, isBcs);
     }
 
-    uint32_t compareDataLow = static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max());
+    uint32_t compareDataLow = static_cast<uint32_t>(compareData);
     uint32_t compareDataHigh = useQwordData ? static_cast<uint32_t>(compareData >> 32) : 0;
 
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8, compareDataLow, true, isBcs);
@@ -965,7 +965,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferSt
         LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR7 + 4, 0, true, isBcs);
     }
 
-    uint32_t compareDataLow = static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max());
+    uint32_t compareDataLow = static_cast<uint32_t>(compareData);
     uint32_t compareDataHigh = useQwordData ? static_cast<uint32_t>(compareData >> 32) : 0;
 
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8, compareDataLow, true, isBcs);

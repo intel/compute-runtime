@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1672,7 +1672,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bo
 
             uint64_t walkerScratchInlineGpuVa = cmdListGpuBase + walkerOffset + (inlineOffset + scratchInlineOffset);
 
-            uint32_t scratchLowerDword = static_cast<uint32_t>(fullScratchAddress & std::numeric_limits<uint32_t>::max());
+            uint32_t scratchLowerDword = static_cast<uint32_t>(fullScratchAddress);
             uint32_t scratchUpperDword = static_cast<uint32_t>(fullScratchAddress >> 32);
 
             size_t sdiMax = sdiCmds.size() - 2;

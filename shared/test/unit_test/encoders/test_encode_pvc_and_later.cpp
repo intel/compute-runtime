@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,7 +166,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
 
             auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
             EXPECT_EQ(RegisterOffsets::csGprR8, lriCmd->getRegisterOffset());
-            EXPECT_EQ(static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max()), lriCmd->getDataDword());
+            EXPECT_EQ(static_cast<uint32_t>(compareData), lriCmd->getDataDword());
 
             lriCmd++;
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
@@ -256,7 +256,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
 
             auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
             EXPECT_EQ(RegisterOffsets::csGprR8, lriCmd->getRegisterOffset());
-            EXPECT_EQ(static_cast<uint32_t>(compareData & std::numeric_limits<uint32_t>::max()), lriCmd->getDataDword());
+            EXPECT_EQ(static_cast<uint32_t>(compareData), lriCmd->getDataDword());
 
             lriCmd++;
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
