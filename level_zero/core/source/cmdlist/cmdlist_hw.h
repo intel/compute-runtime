@@ -475,7 +475,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
-    bool latestOperationHasOptimizedCbEvent = false;
+    bool latestOperationHasHeapfullCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool isPostSyncSkippedOnLatestInOrderOperation = false;
     bool duplicatedInOrderCounterStorageEnabled = false;

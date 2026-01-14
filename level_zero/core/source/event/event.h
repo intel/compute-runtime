@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -373,8 +373,8 @@ struct Event : _ze_event_handle_t {
         this->recordedSignalFrom = cmdlist;
     }
 
-    void setOptimizedCbEvent(bool value) {
-        this->optimizedCbEvent = value;
+    void setHeapfullCbEventWithProfiling(bool value) {
+        this->heapfullCbEventWithProfiling = value;
     }
 
     bool isExternalEvent() const {
@@ -464,7 +464,7 @@ struct Event : _ze_event_handle_t {
     bool interruptMode = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
-    bool optimizedCbEvent = false;
+    bool heapfullCbEventWithProfiling = false;
     bool externalEvent = false;
 };
 

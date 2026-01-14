@@ -3114,7 +3114,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 
     if (hasInOrderDependencies()) {
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
-            this->latestOperationHasOptimizedCbEvent = false;
+            this->latestOperationHasHeapfullCbEventWithProfiling = false;
             this->isPostSyncSkippedOnLatestInOrderOperation = false;
             return false;
         }
@@ -3125,12 +3125,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false, dualStreamCopyOffloadOperation);
 
-        this->latestOperationHasOptimizedCbEvent = false;
+        this->latestOperationHasHeapfullCbEventWithProfiling = false;
         this->isPostSyncSkippedOnLatestInOrderOperation = false;
         return true;
     }
 
-    this->latestOperationHasOptimizedCbEvent = false;
+    this->latestOperationHasHeapfullCbEventWithProfiling = false;
     this->isPostSyncSkippedOnLatestInOrderOperation = false;
     return false;
 }
@@ -3244,7 +3244,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
         } else {
             bool crossEngineDependency = (latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
-            auto resolveDependenciesViaPipeControls = !crossEngineDependency && !copyOnlyWait && implicitDependency && (this->dcFlushSupport || (!this->heaplessModeEnabled && this->latestOperationHasOptimizedCbEvent));
+            auto resolveDependenciesViaPipeControls = !crossEngineDependency && !copyOnlyWait && implicitDependency && (this->dcFlushSupport || (!this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling));
 
             if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
                 resolveDependenciesViaPipeControls = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
@@ -4798,7 +4798,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
     }
 
-    signalEvent->setOptimizedCbEvent(false);
+    signalEvent->setHeapfullCbEventWithProfiling(false);
 
     if (signalEvent->isCounterBased()) {
         if (!isInOrderExecutionEnabled() || signalEvent->isIpcImported()) {

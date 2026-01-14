@@ -487,8 +487,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
                 if (event->isCounterBased()) {
-                    this->latestOperationHasOptimizedCbEvent = true;
-                    event->setOptimizedCbEvent(true);
+                    this->latestOperationHasHeapfullCbEventWithProfiling = true;
+                    event->setHeapfullCbEventWithProfiling(true);
                 } else {
                     appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
                     appendSignalInOrderDependencyCounter(event, false, false, false, false);

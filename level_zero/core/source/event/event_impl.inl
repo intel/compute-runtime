@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -301,10 +301,10 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
     if (!inOrderExecInfo->isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
 
-        if (this->optimizedCbEvent) {
+        if (this->heapfullCbEventWithProfiling) {
             this->synchronizeTimestampCompletionWithTimeout();
             signaled = this->isTimestampPopulated();
-            this->optimizedCbEvent = !signaled;
+            this->heapfullCbEventWithProfiling = !signaled;
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
             for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
@@ -753,13 +753,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported();
 
     do {
-        if (this->optimizedCbEvent) {
+        if (this->heapfullCbEventWithProfiling) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
                 inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
-                this->optimizedCbEvent = false;
+                this->heapfullCbEventWithProfiling = false;
             }
         } else {
             if (fenceWait) {
