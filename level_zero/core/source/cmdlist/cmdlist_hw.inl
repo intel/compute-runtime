@@ -3366,30 +3366,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         handleInOrderImplicitDependencies(false, dualStreamCopyOffload);
     }
 
-    bool dcFlushRequired = false;
-
-    if (this->dcFlushSupport) {
-        for (uint32_t i = 0; i < numEvents; i++) {
-            auto event = Event::fromHandle(phEvent[i]);
-            if (!event) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            dcFlushRequired |= event->isWaitScope();
-        }
-    }
-    if (dcFlushRequired) {
-        UNRECOVERABLE_IF(isNonDualStreamCopyOffloadOperation(copyOffloadOperation));
-        if (isCopyOnly(copyOffloadOperation)) {
-            NEO::MiFlushArgs args{this->dummyBlitWa};
-            encodeMiFlush(0, 0, args);
-        } else if (!this->l3FlushAfterPostSyncEnabled) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = true;
-            args.textureCacheInvalidationEnable = this->consumeTextureCacheFlushPending();
-            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
-        }
-    }
-
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 

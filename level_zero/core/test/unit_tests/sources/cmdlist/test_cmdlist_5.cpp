@@ -636,97 +636,8 @@ HWTEST_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectR
     EXPECT_TRUE(cmdList->isTimestampEventForMultiTile(&mockEvent));
 }
 
-HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWithDcFlushThenMiFlushDWIsProgrammed) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
-    auto &commandContainer = commandList->getCmdContainer();
-    MockEvent event;
-    event.signalScope = 0;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
-        EXPECT_NE(cmdList.end(), itor);
-    } else {
-        EXPECT_EQ(cmdList.end(), itor);
-    }
-}
-
-HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThenPipeControlIsProgrammed) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(0);
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    auto &commandContainer = commandList->getCmdContainer();
-    MockEvent event;
-    event.signalScope = 0;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
-        itor--;
-        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
-    } else {
-        if (cmdList.begin() != itor) {
-            itor--;
-            EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
-        }
-    }
-}
-
-HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenPipeControlIsProgrammedOnlyOnce) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    auto &commandContainer = commandList->getCmdContainer();
-    MockEvent event, event2;
-    event.signalScope = 0;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    ze_event_handle_t events[] = {&event, &event2};
-
-    commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
-
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !whiteBoxCmdList->l3FlushAfterPostSyncEnabled) {
-        itor--;
-        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
-    } else {
-        if (cmdList.begin() != itor) {
-            itor--;
-            EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
-        }
-    }
-}
-
 HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithHostScopeThenPipeControlAndSemWaitAreAddedFromCommandList) {
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
@@ -745,9 +656,6 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     size_t expectedUsed = 2 * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() + sizeof(MI_BATCH_BUFFER_END);
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !whiteBoxCmdList->l3FlushAfterPostSyncEnabled) {
-        expectedUsed += sizeof(PIPE_CONTROL);
-    }
     expectedUsed = alignUp(expectedUsed, 64);
 
     auto &commandContainer = commandList->getCmdContainer();
