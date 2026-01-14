@@ -121,6 +121,9 @@ struct CommandQueueHw : public CommandQueueImp {
         bool cmdListScratchAddressPatchingEnabled = false;
         bool containsParentImmediateStream = false;
         bool patchPreambleWaitSyncNeeded = false;
+        bool regularHeapful = false;
+        bool stateCacheFlushRequired = false;
+        bool instructionCacheFlushRequired = false;
     };
 
     inline void processMemAdviseOperations(CommandList *commandList);
@@ -151,12 +154,10 @@ struct CommandQueueHw : public CommandQueueImp {
                                                      ze_fence_handle_t hFence,
                                                      NEO::LinearStream *parentImmediateCommandlistLinearStream);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const;
-    inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
+    inline size_t estimateLinearStreamSizeShared(CommandListExecutionContext &ctx);
     size_t estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,
                                                                    uint32_t numCommandLists,
-                                                                   ze_command_list_handle_t *commandListHandles,
-                                                                   bool instructionCacheFlushRequired,
-                                                                   bool stateCacheFlushRequired);
+                                                                   ze_command_list_handle_t *commandListHandles);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
@@ -270,6 +271,8 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                               NEO::LinearStream &commandStream,
                                                               CommandListRequiredStateChange &cmdListRequired);
+    inline void programRequiredCacheFlushes(CommandListExecutionContext &ctx,
+                                            NEO::LinearStream &commandStream);
     inline void updateBaseAddressState(CommandList *lastCommandList);
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
     inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
