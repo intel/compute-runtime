@@ -32,6 +32,11 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
     return true;
 }

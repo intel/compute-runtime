@@ -140,9 +140,3 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenXe2AndLaterWhenIsCompressionApplie
     // Even though NotCompressed = 0 (compression enabled), the deny compression should override it
     EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
 }
-
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsStagingBuffersEnabledThenTrueIsReturned, IsAtLeastXe2HpgCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isStagingBuffersEnabled());
-}

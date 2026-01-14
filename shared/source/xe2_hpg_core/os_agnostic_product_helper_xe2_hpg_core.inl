@@ -58,6 +58,11 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }
