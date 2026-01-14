@@ -24,14 +24,14 @@ using namespace NEO;
 using BarrierTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
-    MockCommandQueueHw<FamilyType> pCmdQ(context, pClDevice, nullptr);
+    auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    pCmdQ.updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
     commandStreamReceiver.taskLevel = originalCSRLevel;
-    pCmdQ.taskLevel = originalCSRLevel;
+    pCmdQ->taskLevel = originalCSRLevel;
 
     uint32_t originalTaskCount = 15;
     commandStreamReceiver.taskCount = originalTaskCount;
@@ -43,10 +43,10 @@ HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierI
     const cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    auto &commandStream = pCmdQ.getCS(0);
+    auto &commandStream = pCmdQ->getCS(0);
     auto used = commandStream.getUsed();
 
-    auto retVal = pCmdQ.enqueueBarrierWithWaitList(
+    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
         numEventsInWaitList,
         eventWaitList,
         event);
@@ -54,13 +54,11 @@ HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierI
 
     // csr is untouched as we do not submit anything, cmd queue task level goes up as this is barrier call
     EXPECT_EQ(2u, commandStreamReceiver.peekTaskLevel());
-    EXPECT_EQ(3u, pCmdQ.taskLevel);
+    EXPECT_EQ(3u, pCmdQ->taskLevel);
 
     // make sure nothing was added to CommandStream or CSR-CommandStream and command queue still uses this stream
-    if (!pCmdQ.isWalkerPostSyncSkipEnabled) {
-        EXPECT_EQ(used, commandStream.getUsed());
-    }
-    EXPECT_EQ(&commandStream, &pCmdQ.getCS(0));
+    EXPECT_EQ(used, commandStream.getUsed());
+    EXPECT_EQ(&commandStream, &pCmdQ->getCS(0));
 
     EXPECT_EQ(csrUsed, csrCommandStream.getUsed());
     EXPECT_EQ(&csrCommandStream, &commandStreamReceiver.commandStream);
