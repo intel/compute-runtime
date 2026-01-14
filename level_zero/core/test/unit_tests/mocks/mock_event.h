@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,8 @@ struct Mock<Event> : public Event {
     Mock();
     ~Mock() override;
 
+    using Event::recordedSignalFrom;
+
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, (bool allowCounterBased));
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
@@ -106,6 +108,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(hostEventSetValue, ze_result_t, ZE_RESULT_SUCCESS, (State eventState));
     ADDMETHOD_NOBASE(getPacketAddress, uint64_t, 0, (L0::Device * device));
     ADDMETHOD_NOBASE_VOIDRETURN(clearTimestampTagData, (uint32_t partitionCount, NEO::TagNodeBase *newNode));
+    ADDMETHOD_CONST(getRecordedSignalFrom, L0::CommandList *, true, nullptr, (), ());
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
@@ -14,6 +15,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <span>
 #include <unordered_map>
 #include <variant>
@@ -48,6 +50,8 @@ using ClosureVariants = std::variant<
 using CapturedCommand = ClosureVariants;
 
 using CapturedCommandId = uint32_t;
+using SubgraphCommandId = CapturedCommandId;
+using GraphCommandId = CapturedCommandId;
 
 struct Graph;
 
@@ -64,10 +68,71 @@ struct ForkJoinInfo {
     Graph *forkDestiny = nullptr;
 };
 
+// Contigous commands in the order of recording (i.e. in the order of host API invocations)
+struct OrderedCommandsSegment {
+    Graph *subgraph = nullptr;      // subgraph that recorded this segmnet
+    GraphCommandId begin = 0;       // id of the segment's first command within the whole graph
+    SubgraphCommandId subBegin = 0; // id of the segment within the subgraph
+    uint32_t numCommands = 0;       // number of commands in this segment
+
+    bool empty() const {
+        return 0 == numCommands;
+    }
+};
+
+// Thread-safe registry of all ordered segments of a graph
+struct OrderedCommandsRegistry final {
+    GraphCommandId acquireNextGraphCommandId() {
+        return commandsCounter.fetch_add(1);
+    }
+
+    void registerSegment(const OrderedCommandsSegment &segment) {
+        std::lock_guard lock{rangeLock};
+        UNRECOVERABLE_IF(0 == segment.numCommands);
+        UNRECOVERABLE_IF(segment.begin + segment.numCommands > commandsCounter.load());
+        auto pos = std::lower_bound(registeredSegments.begin(), registeredSegments.end(), segment,
+                                    [](const auto &a, const auto &b) { return a.begin < b.begin; });
+        registeredSegments.insert(pos, segment);
+    }
+
+    void close() {
+        this->closed = true;
+    }
+
+    auto begin() const {
+        UNRECOVERABLE_IF(false == this->closed);
+        return registeredSegments.begin();
+    }
+
+    auto end() const {
+        UNRECOVERABLE_IF(false == this->closed);
+        return registeredSegments.end();
+    }
+
+    bool empty() const {
+        return begin() == end();
+    }
+
+  protected:
+    std::atomic<GraphCommandId> commandsCounter;
+
+    std::mutex rangeLock;
+    std::vector<OrderedCommandsSegment> registeredSegments;
+    bool closed = false;
+};
+
 struct Graph : _ze_graph_handle_t {
-    Graph(L0::Context *ctx, bool preallocated) : ctx(ctx), preallocated(preallocated) {
+    Graph(L0::Context *ctx, bool preallocated, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
+        : ctx(ctx), preallocated(preallocated),
+          orderedCommands(std::move(orderedCommandsRegistry)) {
+        if (orderedCommands.empty()) {
+            orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
+        }
         commands.reserve(16);
         enabledGraphs();
+    }
+
+    Graph(L0::Context *ctx, bool preallocated) : Graph(ctx, preallocated, {}) {
     }
 
     ~Graph();
@@ -95,6 +160,12 @@ struct Graph : _ze_graph_handle_t {
 
         using ApiArgsT = typename Closure<api>::ApiArgs;
         auto capturedArgs = ApiArgsT{apiArgs...};
+        auto graphCommandId = orderedCommands->acquireNextGraphCommandId();
+        if (segments.empty() || (graphCommandId != segments.rbegin()->begin + segments.rbegin()->numCommands)) { // new segment
+            segments.push_back(OrderedCommandsSegment{.subgraph = this, .begin = graphCommandId, .subBegin = static_cast<uint32_t>(commands.size()), .numCommands = 1});
+        } else {
+            ++segments.rbegin()->numCommands;
+        }
         commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
         return ZE_RESULT_SUCCESS;
     }
@@ -108,7 +179,7 @@ struct Graph : _ze_graph_handle_t {
     }
 
     const std::unordered_map<CapturedCommandId, ForkJoinInfo> &getJoinedForks() const {
-        return joinedForks;
+        return potentialJoins;
     }
 
     const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
@@ -116,8 +187,8 @@ struct Graph : _ze_graph_handle_t {
     }
 
     Graph *getJoinedForkTarget(CapturedCommandId cmdId) {
-        auto it = joinedForks.find(cmdId);
-        if (joinedForks.end() == it) {
+        auto it = potentialJoins.find(cmdId);
+        if (potentialJoins.end() == it) {
             return nullptr;
         }
         return it->second.forkDestiny;
@@ -179,6 +250,14 @@ struct Graph : _ze_graph_handle_t {
         return externalStorage;
     }
 
+    bool isLastCommand(CapturedCommandId commandId) const {
+        return commandId + 1 == commands.size();
+    }
+
+    const OrderedCommandsRegistry &getOrderedCommands() const {
+        return *orderedCommands;
+    }
+
   protected:
     void unregisterSignallingEvents();
 
@@ -186,11 +265,12 @@ struct Graph : _ze_graph_handle_t {
     CaptureTargetDesc captureTargetDesc;
 
     std::vector<CapturedCommand> commands;
+    std::vector<OrderedCommandsSegment> segments;
     StackVec<Graph *, 16> subGraphs;
 
     std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
-    std::unordered_map<CapturedCommandId, ForkJoinInfo> joinedForks;
+    std::unordered_map<CapturedCommandId, ForkJoinInfo> potentialJoins;
 
     L0::CommandList *captureSrc = nullptr;
     L0::CommandList *executionTarget = nullptr;
@@ -198,10 +278,15 @@ struct Graph : _ze_graph_handle_t {
 
     bool preallocated = false;
     bool wasCapturingStopped = false;
+
+    WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 };
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
+
+bool isCapturingAllowed(const L0::CommandList &srcCmdList);
+bool usesForkEvents(std::span<ze_event_handle_t> events);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, TArgs... apiArgs) {
@@ -210,6 +295,10 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, T
     }
 
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
+    if (false == isCapturingAllowed(srcCmdList)) {
+        // it's an error to try and fork to a cmdlist that doesn't support capturing
+        return usesForkEvents(eventsWaitList) ? ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE : ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
     if ((false == eventsWaitList.empty()) && ((nullptr == captureTarget) || (captureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
         recordHandleWaitEventsFromNextCommand(srcCmdList, captureTarget, eventsWaitList);
     }
@@ -249,12 +338,44 @@ struct GraphInstatiateSettings {
     ForkPolicy forkPolicy = ForkPolicySplitLevels;
 };
 
-struct ExecutableGraph : _ze_executable_graph_handle_t {
-    ExecutableGraph();
+struct ExecutableGraph;
+struct ExecSubGraphBuilder final {
+    ExecutableGraph *dst = nullptr;
+    L0::CommandList *currCmdList = nullptr;
+};
 
-    ze_result_t instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings);
-    ze_result_t instantiateFrom(Graph &graph) {
-        return instantiateFrom(graph, {});
+// Contigous commands in the order of recording (i.e. in the order of host API invocations)
+struct OrderedCommandsExecutableSegment final {
+    ExecutableGraph *dst = nullptr;
+    GraphCommandId segmentStart = 0;
+};
+
+// List of all ordered segments of a graph
+using OrderedExecutableSegmentsList = std::vector<OrderedCommandsExecutableSegment>;
+
+struct ExecGraphBuilder final {
+    ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst);
+    void finalize();
+
+    ExecSubGraphBuilder &getSubGraphBuilder(const Graph *src) {
+        auto it = subgraphs.find(src);
+        UNRECOVERABLE_IF(it == subgraphs.end());
+        return it->second;
+    }
+
+  protected:
+    Graph &rootSrc;
+    ExecutableGraph &rootDst;
+    std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
+};
+
+struct ExecutableGraph : _ze_executable_graph_handle_t {
+    ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments);
+    ExecutableGraph() : ExecutableGraph(WeaklyShared(new OrderedExecutableSegmentsList)) {}
+
+    ze_result_t instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings);
+    ze_result_t instantiateFrom(Graph &rootSrc) {
+        return this->instantiateFrom(rootSrc, {});
     }
 
     ~ExecutableGraph();
@@ -264,7 +385,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
     inline ze_executable_graph_handle_t toHandle() { return this; }
 
-    bool empty() {
+    bool empty() const {
         return myCommandLists.empty();
     }
 
@@ -272,30 +393,40 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return (nullptr != executionTarget);
     }
 
+    void addSubgraph(std::unique_ptr<ExecutableGraph> subGraph) {
+        subGraphs.push_back(std::move(subGraph));
+    }
+
     const StackVec<std::unique_ptr<ExecutableGraph>, 16> &getSubgraphs() {
         return subGraphs;
     }
 
     ze_result_t execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ExternalCbEventInfoContainer &getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
     }
 
+    WeaklyShared<OrderedExecutableSegmentsList> getOrderedCommands() {
+        return orderedCommands;
+    }
+
   protected:
+    ze_result_t instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings);
+
     L0::CommandList *allocateAndAddCommandListSubmissionNode();
-    void addSubGraphSubmissionNode(ExecutableGraph *subGraph);
 
     Graph *src = nullptr;
     L0::CommandList *executionTarget = nullptr;
     std::vector<std::unique_ptr<L0::CommandList>> myCommandLists;
+    std::unordered_map<GraphCommandId, L0::CommandList *> myOrderedSegments;
     ExternalCbEventInfoContainer externalCbEventStorage;
 
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
-    GraphSubmissionChain submissionChain;
-
     bool multiEngineGraph = false;
     bool usePatchingPreamble = true;
+    WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

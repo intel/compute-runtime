@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::ExecutableGraph;
     using ExecutableGraph::multiEngineGraph;
     using ExecutableGraph::myCommandLists;
-    using ExecutableGraph::submissionChain;
+    using ExecutableGraph::myOrderedSegments;
     using ExecutableGraph::usePatchingPreamble;
 };
 

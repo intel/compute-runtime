@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,4 +115,75 @@ struct Clonable : Impl::UniquePtrWrapperOps<Clonable<T>> {
     Clonable &operator=(Clonable &&rhs) noexcept = default;
 
     std::unique_ptr<T> ptr;
+};
+
+template <typename T>
+struct WeaklyShared {
+    WeaklyShared() = default;
+    ~WeaklyShared() {
+        if (owned) {
+            delete ptr;
+        }
+    }
+
+    explicit WeaklyShared(T *ptr) : ptr(ptr), owned(true) {
+    }
+
+    WeaklyShared(const WeaklyShared &rhs) : ptr(rhs.get()) {
+    }
+
+    WeaklyShared(WeaklyShared &&rhs) : ptr(rhs.get()), owned(rhs.owned) {
+        rhs.ptr = nullptr;
+        rhs.owned = false;
+    }
+
+    WeaklyShared &operator=(const WeaklyShared &rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
+        if (this->owned) {
+            delete this->ptr;
+        }
+        this->ptr = rhs.ptr;
+        this->owned = false;
+        return *this;
+    }
+
+    WeaklyShared &operator=(WeaklyShared &&rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
+        this->ptr = rhs.ptr;
+        this->owned = rhs.owned;
+        rhs.ptr = nullptr;
+        rhs.owned = false;
+        return *this;
+    }
+
+    WeaklyShared share() const noexcept {
+        return WeaklyShared(ptr, false);
+    }
+
+    T *get() const noexcept {
+        return ptr;
+    }
+
+    bool empty() const noexcept {
+        return nullptr == ptr;
+    }
+
+    T &operator*() const noexcept {
+        return *ptr;
+    }
+
+    T *operator->() const noexcept {
+        return ptr;
+    }
+
+  protected:
+    WeaklyShared(T *ptr, bool owned) : ptr(ptr), owned(owned) {
+    }
+
+    T *ptr = nullptr;
+    bool owned = false;
 };

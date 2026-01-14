@@ -502,8 +502,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     template <CaptureApi api, typename... TArgs>
     ze_result_t capture(TArgs... apiArgs) {
-        return this->isImmediateType() ? L0::captureCommand<api>(*this, this->captureTarget, apiArgs...)
-                                       : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        return L0::captureCommand<api>(*this, this->captureTarget, apiArgs...);
     }
 
     inline bool getIsWalkerWithProfilingEnqueued() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,10 +42,6 @@ struct GraphFixture : public DeviceFixture {
 
     ze_command_list_handle_t immCmdListHandle;
     L0::CommandList *immCmdList = nullptr;
-};
-
-struct MockEventWithRecordedSignal : public Mock<Event> {
-    ADDMETHOD_CONST_NOBASE(getRecordedSignalFrom, CommandList *, nullptr, ());
 };
 
 using GraphTestApiSubmit = Test<GraphFixture>;
@@ -96,15 +92,15 @@ TEST(GraphTestApiCreate, GivenInvalidGraphThenGraphDestroyReturnsError) {
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenCapturingCmdlistThenItWorksForImmediateAndReturnsEarlyForRegular) {
+TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenForkingToRegularOrSynchronousCmdlistThenFail) {
     GraphsCleanupGuard graphCleanup;
 
-    MockEventWithRecordedSignal event;
+    Mock<CommandList> parentCmdList;
+    Mock<Event> event;
+    event.recordedSignalFrom = &parentCmdList;
     auto hEvent = event.toHandle();
 
-    L0::Graph *pGraph = nullptr;
     Mock<CommandList> mockCmdList;
-    mockCmdList.setCaptureTarget(pGraph);
     auto hCmdList = mockCmdList.toHandle();
     auto &cmdList = static_cast<Mock<CommandList>::BaseClass &>(mockCmdList);
 
@@ -112,13 +108,13 @@ TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenCapturingCmdlistThenItWo
     EXPECT_TRUE(areGraphsEnabled());
     EXPECT_FALSE(cmdList.isImmediateType());
     auto ret1 = cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 1U, &hEvent);
-    EXPECT_EQ(ret1, ZE_RESULT_ERROR_NOT_AVAILABLE);
-    EXPECT_FALSE(event.getRecordedSignalFromCalled);
+    EXPECT_EQ(ret1, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
+    EXPECT_TRUE(event.getRecordedSignalFromCalled);
 
     mockCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mockCmdList.isSyncModeQueue = true;
     auto ret2 = cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 1U, &hEvent);
-    EXPECT_EQ(ret2, ZE_RESULT_ERROR_NOT_AVAILABLE);
-    EXPECT_TRUE(event.getRecordedSignalFromCalled);
+    EXPECT_EQ(ret2, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
 }
 
 TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsError) {
@@ -683,58 +679,70 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     Mock<CommandList> subCmdlist;
     subCmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     Mock<Event> signalEvents[3];
+    ze_event_handle_t signalEventsHandles[3]{signalEvents[0].toHandle(), signalEvents[1].toHandle(), signalEvents[2].toHandle()};
     Mock<Event> waitEvents[3];
     ze_event_handle_t waitEventsList[3] = {waitEvents[0].toHandle(), waitEvents[1].toHandle(), waitEvents[2].toHandle()};
-    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
-    auto *graphCmdList = ctx.cmdListsToReturn[0];
     uint64_t memA[16] = {};
     uint64_t memB[16] = {};
 
-    MockGraph srcGraph(&ctx, true);
-    cmdlist.setCaptureTarget(&srcGraph);
-    srcGraph.startCapturingFrom(cmdlist, false);
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, signalEvents[0].toHandle(), 2U, waitEventsList);
-    cmdlist.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdListHandle, memA, memB, sizeof(memA), signalEvents[1].toHandle(), 3U, waitEventsList);
-    srcGraph.stopCapturing();
-    EXPECT_FALSE(srcGraph.isSubGraph());
-
-    ASSERT_EQ(2U, srcGraph.getCapturedCommands().size());
-    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[0].index()));
-    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[1].index()));
-
     GraphInstatiateSettings instantiateAsMonolithic;
     instantiateAsMonolithic.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
-    srcGraph.captureTargetDesc.hDevice = device->toHandle();
-    ExecutableGraph execGraph;
-    execGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
-    EXPECT_FALSE(execGraph.isSubGraph());
-    EXPECT_FALSE(execGraph.empty());
-    EXPECT_TRUE(execGraph.getSubgraphs().empty());
-    EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
-    EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
+    {
+        ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+        auto *graphCmdList = ctx.cmdListsToReturn[0];
+        MockGraph srcGraph(&ctx, true);
+        srcGraph.captureTargetDesc.hDevice = device->toHandle();
+        cmdlist.setCaptureTarget(&srcGraph);
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, signalEvents[0].toHandle(), 2U, waitEventsList);
+        cmdlist.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdListHandle, memA, memB, sizeof(memA), signalEvents[1].toHandle(), 3U, waitEventsList);
+        srcGraph.stopCapturing();
+        EXPECT_FALSE(srcGraph.isSubGraph());
 
-    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
-    graphCmdList = ctx.cmdListsToReturn[0];
+        ASSERT_EQ(2U, srcGraph.getCapturedCommands().size());
+        EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[0].index()));
+        EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[1].index()));
 
-    Graph *srcSubGraph = nullptr;
-    srcGraph.forkTo(subCmdlist, srcSubGraph, signalEvents[0]);
-    srcGraph.tryJoinOnNextCommand(subCmdlist, signalEvents[2]);
+        ExecutableGraph execGraph;
+        execGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
+        EXPECT_FALSE(execGraph.isSubGraph());
+        EXPECT_FALSE(execGraph.empty());
+        EXPECT_TRUE(execGraph.getSubgraphs().empty());
+        EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
+        EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
+    }
 
-    ASSERT_EQ(1U, srcGraph.getSubgraphs().size());
-    EXPECT_TRUE(srcGraph.getSubgraphs()[0]->isSubGraph());
-    EXPECT_TRUE(srcGraph.getSubgraphs()[0]->empty());
+    {
+        ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+        ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+        auto *graphCmdList = ctx.cmdListsToReturn[0];
+        MockGraph srcGraph(&ctx, true);
+        srcGraph.captureTargetDesc.hDevice = device->toHandle();
+        cmdlist.setCaptureTarget(&srcGraph);
+        srcGraph.startCapturingFrom(cmdlist, false);
+        Graph *srcSubGraph = nullptr;
+        cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, signalEvents[0].toHandle(), 0U, nullptr);
+        subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&subCmdlist, signalEvents[2].toHandle(), 1U, &signalEventsHandles[0]);
+        cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &signalEventsHandles[2]);
+        srcSubGraph = subCmdlist.getCaptureTarget();
+        srcGraph.stopCapturing();
 
-    static_cast<MockGraph *>(srcSubGraph)->captureTargetDesc.hDevice = device->toHandle();
+        ASSERT_EQ(1U, srcGraph.getSubgraphs().size());
+        EXPECT_TRUE(srcGraph.getSubgraphs()[0]->isSubGraph());
+        EXPECT_FALSE(srcGraph.getSubgraphs()[0]->empty());
 
-    ExecutableGraph execMultiGraph;
-    execMultiGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
+        static_cast<MockGraph *>(srcSubGraph)->captureTargetDesc.hDevice = device->toHandle();
 
-    EXPECT_FALSE(execMultiGraph.isSubGraph());
-    EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
-    EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
-    ASSERT_EQ(1U, execMultiGraph.getSubgraphs().size());
-    EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->isSubGraph());
-    EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->empty());
+        ExecutableGraph execMultiGraph;
+        execMultiGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
+
+        EXPECT_FALSE(execMultiGraph.isSubGraph());
+        EXPECT_EQ(2U, graphCmdList->appendBarrierCalled);
+        EXPECT_EQ(0U, graphCmdList->appendMemoryCopyCalled);
+        ASSERT_EQ(1U, execMultiGraph.getSubgraphs().size());
+        EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->isSubGraph());
+        EXPECT_FALSE(execMultiGraph.getSubgraphs()[0]->empty());
+    }
 }
 
 TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPreservedOrderOfForkAndJoinCommands) {
@@ -846,7 +854,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
 
         MockExecutableGraph execMultiGraph;
         execMultiGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
-        EXPECT_EQ(2U, execMultiGraph.submissionChain.size()); // parent -> child
+        EXPECT_EQ(1U, execMultiGraph.myOrderedSegments.size()); // parent0 -> child
     }
 
     {
@@ -855,7 +863,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
 
         MockExecutableGraph execMultiGraph;
         execMultiGraph.instantiateFrom(srcGraph, instantiateAsInterleaved);
-        EXPECT_EQ(3U, execMultiGraph.submissionChain.size()); // parent0 -> child -> parent1
+        EXPECT_EQ(2U, execMultiGraph.myOrderedSegments.size()); // parent0 -> child -> parent1
     }
 }
 
@@ -874,29 +882,67 @@ TEST(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForI
     MockGraphCmdListWithContext cmdlist{&ctx};
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext childCmdlist{&ctx};
+    MockGraphCmdListWithContext grandChildCmdlist{&ctx};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
-    { // missing join
+    auto joinEventHandle = joinEvent.toHandle();
+    { // correct graph (0->1->0->close)
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
-        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
-        Graph *childGraph = nullptr;
-        srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
-        srcGraph.stopCapturing();
-        EXPECT_FALSE(srcGraph.validForInstantiation());
-        childCmdlist.setCaptureTarget(nullptr);
-    }
 
-    { // correct graph
-        Graph srcGraph(&ctx, true);
-        Graph *srcGraphPtr = &srcGraph;
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
         L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
-        Graph *childGraph = nullptr;
-        srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
-        srcGraph.tryJoinOnNextCommand(childCmdlist, joinEvent);
+
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
+        }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+
         srcGraph.stopCapturing();
         EXPECT_TRUE(srcGraph.validForInstantiation());
+    }
+
+    { // missing join lvl (0->1 0->close)
+        Graph srcGraph(&ctx, true);
+        Graph *srcGraphPtr = &srcGraph;
+
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
+        }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 0U, nullptr);
+
+        srcGraph.stopCapturing();
+        EXPECT_FALSE(srcGraph.validForInstantiation());
+    }
+
+    { // unjoined work (false join on 1->0)   (0->1+! ->0->close)
+        Graph srcGraph(&ctx, true);
+        Graph *srcGraphPtr = &srcGraph;
+
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, childGraph, &childCmdlist, nullptr, 0U, nullptr);
+        }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+        srcGraph.stopCapturing();
+        EXPECT_FALSE(srcGraph.validForInstantiation());
     }
 }
 
@@ -913,44 +959,82 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
     auto forkEventHandleLvl2 = forkEventLvl2.toHandle();
     Mock<Event> joinEvent;
     Mock<Event> joinEventLvl2;
+    auto joinEventHandle = joinEvent.toHandle();
     auto joinEventHandleLvl2 = joinEventLvl2.toHandle();
-    { // missing join
+    { // correct graph (0->1->2->1->0->close)
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
+
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
         L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
-        Graph *childGraph = nullptr;
-        srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
 
-        {
-            Graph *grandChildGraph = nullptr;
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 0U, nullptr);
-            childGraph->forkTo(grandChildCmdlist, grandChildGraph, forkEventLvl2);
-            grandChildCmdlist.setCaptureTarget(nullptr);
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 1U, &forkEventHandle);
+            {
+                Graph *grandChildGraph = nullptr;
+                // lvl 2
+                L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &childCmdlist, joinEventHandleLvl2, 1U, &forkEventHandleLvl2);
+            }
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, joinEventHandle, 1U, &joinEventHandleLvl2);
         }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 1U, &joinEventHandle);
 
-        srcGraph.tryJoinOnNextCommand(childCmdlist, joinEvent);
+        srcGraph.stopCapturing();
+        EXPECT_TRUE(srcGraph.validForInstantiation());
+    }
+
+    { // missing join lvl 2->1 (0->1->2 1->0->close)
+        Graph srcGraph(&ctx, true);
+        Graph *srcGraphPtr = &srcGraph;
+
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 1U, &forkEventHandle);
+            {
+                Graph *grandChildGraph = nullptr;
+                // lvl 2
+                L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, nullptr, 1U, &forkEventHandleLvl2);
+            }
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &grandChildCmdlist, joinEventHandle, 0U, nullptr);
+        }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+
         srcGraph.stopCapturing();
         EXPECT_FALSE(srcGraph.validForInstantiation());
     }
 
-    { // correct graph
+    { // unjoined work (false join on 2->1)   (0->1->2->2+!->1->0->close)
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
+
+        // lvl 0
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.setCaptureTarget(&srcGraph);
         L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
-        Graph *childGraph = nullptr;
-        srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
 
-        {
-            Graph *grandChildGraph = nullptr;
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 0U, nullptr);
-            childGraph->forkTo(grandChildCmdlist, grandChildGraph, forkEventLvl2);
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, joinEventHandleLvl2, 0U, nullptr);
-            childGraph->tryJoinOnNextCommand(grandChildCmdlist, joinEventLvl2);
+        { // lvl 1
+            Graph *childGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 1U, &forkEventHandle);
+            {
+                Graph *grandChildGraph = nullptr;
+                // lvl 2
+                L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, joinEventHandleLvl2, 1U, &forkEventHandleLvl2);
+                L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, nullptr, 0U, nullptr);
+            }
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, joinEventHandle, 1U, &joinEventHandleLvl2);
         }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, nullptr, 1U, &joinEventHandle);
 
-        srcGraph.tryJoinOnNextCommand(childCmdlist, joinEvent);
         srcGraph.stopCapturing();
-        EXPECT_TRUE(srcGraph.validForInstantiation());
+        EXPECT_FALSE(srcGraph.validForInstantiation());
     }
 }
 
@@ -1460,8 +1544,11 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
     Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
     mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
     subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
     auto subCmdlistHandle = subCmdlist.toHandle();
 
     Mock<Event> signalEventParent; // fork
@@ -1476,8 +1563,6 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
     mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
 
-    Graph *srcSubGraph = nullptr;
-    srcGraph.forkTo(subCmdlist, srcSubGraph, signalEventParent);
     subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
 
     mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
@@ -1488,8 +1573,6 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     ExecutableGraph execMultiGraph;
     GraphInstatiateSettings settings;
     settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
-    srcGraph.captureTargetDesc.hDevice = device->toHandle();
-    static_cast<MockGraph *>(srcSubGraph)->captureTargetDesc.hDevice = device->toHandle();
     execMultiGraph.instantiateFrom(srcGraph, settings);
 
     EXPECT_EQ(0U, mainRecordCmdlist.appendCommandListsCalled);
@@ -1686,17 +1769,22 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     mainCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainCmdlistHandle, forkEventHandle, 0U, nullptr);
     Graph *srcSubGraph = nullptr;
     srcGraph.forkTo(subCmdlist, srcSubGraph, forkEvent);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&subCmdlist, nullptr, 1U, &forkEventHandle);
 
-    // try to end capture with unjoined fork
     ze_graph_handle_t retGraph = nullptr;
     auto err = zeCommandListEndGraphCaptureExp(mainCmdlistHandle, &retGraph, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
-    EXPECT_EQ(nullptr, retGraph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+    EXPECT_NE(nullptr, retGraph);
 
-    srcSubGraph->stopCapturing();
-    subCmdlist.setCaptureTarget(nullptr);
-    srcGraph.stopCapturing();
-    mainCmdlist.setCaptureTarget(nullptr);
+    // try to use graph with unjoined fork
+    ze_executable_graph_handle_t execGraph = nullptr;
+    err = zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, nullptr);
+    EXPECT_NE(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(nullptr, execGraph);
+
+    if (nullptr != execGraph) {
+        zeExecutableGraphDestroyExp(execGraph);
+    }
 }
 
 TEST_F(GraphTestCaptureRestrictions, GivenCommandListAlreadyCapturingWhenBeginGraphCaptureCalledThenErrorIsReturned) {

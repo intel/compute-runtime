@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,11 @@ struct MockGraphCmdListWithContext : Mock<CommandList> {
     }
     ze_result_t getContextHandle(ze_context_handle_t *phContext) override {
         *phContext = ctx;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) override {
+        *phDevice = getDevice();
         return ZE_RESULT_SUCCESS;
     }
 

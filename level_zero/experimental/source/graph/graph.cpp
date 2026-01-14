@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ Graph::~Graph() {
 
 void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     this->captureSrc = &captureSrc;
+    this->captureSrc->setCaptureTarget(this);
     captureSrc.getDeviceHandle(&this->captureTargetDesc.hDevice);
     this->captureTargetDesc.desc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     this->captureTargetDesc.desc.pNext = nullptr;
@@ -43,9 +44,37 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
 }
 
 void Graph::stopCapturing() {
-    this->unregisterSignallingEvents();
-    this->captureSrc = nullptr;
     this->wasCapturingStopped = true;
+    this->orderedCommands->close();
+    if (nullptr == this->captureSrc) {
+        return;
+    }
+    this->unregisterSignallingEvents();
+    this->captureSrc->releaseCaptureTarget();
+    this->captureSrc = nullptr;
+    StackVec<std::pair<L0::CommandList *, ForkInfo>, 1> neverJoinedForks; // should stay empty for valid graphs
+    for (auto &unjFork : this->unjoinedForks) {
+        auto forkCmdId = unjFork.second.forkCommandId;
+        auto potentialJoin = this->potentialJoins.find(forkCmdId);
+        if (this->potentialJoins.end() == potentialJoin) {
+            neverJoinedForks.push_back({unjFork.first, unjFork.second});
+            continue; // no join-like sequences found
+        }
+        auto potentialJoinEvent = static_cast<L0::Event *>(potentialJoin->second.joinEvent);
+        auto potentialJoinSignalId = potentialJoin->second.forkDestiny->recordedSignals.find(potentialJoinEvent)->second;
+        if (false == potentialJoin->second.forkDestiny->isLastCommand(potentialJoinSignalId)) {
+            neverJoinedForks.push_back({unjFork.first, unjFork.second});
+            continue; // join-like sequence found but is succeeded by unjoined commands
+        }
+    }
+    this->unjoinedForks.clear();
+    this->unjoinedForks.insert(neverJoinedForks.begin(), neverJoinedForks.end());
+    for (auto &segment : segments) {
+        orderedCommands->registerSegment(segment);
+    }
+    for (auto &subGraph : subGraphs) {
+        subGraph->stopCapturing();
+    }
 }
 
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {
@@ -59,18 +88,13 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
     forkJoinInfo.joinCommandId = static_cast<CapturedCommandId>(this->commands.size());
     forkJoinInfo.joinEvent = &joinEvent;
-    forkJoinInfo.forkDestiny = childCmdList.releaseCaptureTarget();
-    forkJoinInfo.forkDestiny->stopCapturing();
-    this->joinedForks[forkInfo->second.forkCommandId] = forkJoinInfo;
-
-    this->unjoinedForks.erase(forkInfo);
+    forkJoinInfo.forkDestiny = childCmdList.getCaptureTarget();
+    this->potentialJoins[forkInfo->second.forkCommandId] = forkJoinInfo;
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
     UNRECOVERABLE_IF(child || childCmdList.getCaptureTarget()); // should not be capturing already
-    ze_context_handle_t ctx = nullptr;
-    childCmdList.getContextHandle(&ctx);
-    child = new Graph(L0::Context::fromHandle(ctx), false);
+    child = new Graph(this->ctx, false, this->orderedCommands.share());
     child->startCapturingFrom(childCmdList, true);
     childCmdList.setCaptureTarget(child);
     this->subGraphs.push_back(child);
@@ -420,7 +444,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendHostFunction>::instantiateTo(
     return result;
 }
 
-ExecutableGraph::ExecutableGraph() {
+ExecutableGraph::ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedCommands) : orderedCommands(std::move(orderedCommands)) {
     int32_t overrideDisablePatchingPreamble = NEO::debugManager.flags.ForceDisableGraphPatchPreamble.get();
     if (overrideDisablePatchingPreamble != -1) {
         this->usePatchingPreamble = (overrideDisablePatchingPreamble == 0);
@@ -435,58 +459,76 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
     L0::CommandList *newCmdList = L0::CommandList::fromHandle(newCmdListHandle);
     UNRECOVERABLE_IF(nullptr == newCmdList);
     this->myCommandLists.emplace_back(newCmdList);
-    this->submissionChain.emplace_back(newCmdList);
     return newCmdList;
 }
 
-void ExecutableGraph::addSubGraphSubmissionNode(ExecutableGraph *subGraph) {
-    this->submissionChain.emplace_back(subGraph);
+void prepareExecSubGraphs(const Graph &currLevelSrc, ExecutableGraph &parent, std::unordered_map<const Graph *, ExecSubGraphBuilder> &subgraphs) {
+    std::unique_ptr<ExecutableGraph> currLevelDst = std::make_unique<ExecutableGraph>(parent.getOrderedCommands().share());
+    subgraphs[&currLevelSrc] = {currLevelDst.get()};
+    for (auto &child : currLevelSrc.getSubgraphs()) {
+        prepareExecSubGraphs(*child, *currLevelDst, subgraphs);
+    }
+    parent.addSubgraph(std::move(currLevelDst));
+};
+
+ExecGraphBuilder::ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst) : rootSrc(rootSrc), rootDst(rootDst) {
+    this->subgraphs[&rootSrc] = {&rootDst};
+
+    for (auto &child : rootSrc.getSubgraphs()) {
+        prepareExecSubGraphs(*child, rootDst, this->subgraphs);
+    }
 }
 
-ze_result_t ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings) {
+void ExecGraphBuilder::finalize() {
+    for (auto &subgraph : this->subgraphs) {
+        if (subgraph.second.currCmdList) {
+            subgraph.second.currCmdList->close();
+        }
+    }
+
+    auto orderedExecutableCommands = rootDst.getOrderedCommands();
+    for (const auto &segment : this->rootSrc.getOrderedCommands()) {
+        orderedExecutableCommands->push_back(OrderedCommandsExecutableSegment{.dst = this->subgraphs[segment.subgraph].dst,
+                                                                              .segmentStart = segment.begin});
+    }
+}
+
+ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings) {
+    ExecGraphBuilder builder{rootSrc, *this};
+    const auto &allCommands = rootSrc.getOrderedCommands();
+    for (const auto &segment : allCommands) {
+        auto err = builder.getSubGraphBuilder(segment.subgraph).dst->instantiateFrom(segment, builder, settings);
+        if (ZE_RESULT_SUCCESS != err) {
+            return err;
+        }
+    }
+    builder.finalize();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings) {
     ze_result_t err = ZE_RESULT_SUCCESS;
-    this->src = &graph;
-    this->executionTarget = graph.getExecutionTarget();
+    this->src = segment.subgraph;
+
+    this->executionTarget = this->src->getExecutionTarget();
     auto device = Device::fromHandle(src->getCaptureTargetDesc().hDevice);
     this->multiEngineGraph = device->getGfxCoreHelper().getContextGroupContextsCount() > 1;
+    auto &segmentBuilder = builder.getSubGraphBuilder(segment.subgraph);
 
-    std::unordered_map<Graph *, ExecutableGraph *> executableSubGraphMap;
-    executableSubGraphMap.reserve(graph.getSubgraphs().size());
-    this->subGraphs.reserve(graph.getSubgraphs().size());
-
-    auto getExecutableSubgraph = [&](Graph *srcSubgraph, ze_result_t &err) -> ExecutableGraph * {
-        err = ZE_RESULT_SUCCESS;
-        auto alreadyInstantiated = executableSubGraphMap.find(srcSubgraph);
-        if (alreadyInstantiated != executableSubGraphMap.end()) {
-            return alreadyInstantiated->second;
-        }
-
-        auto execSubGraph = std::make_unique<ExecutableGraph>();
-        auto ret = execSubGraph.get();
-        err = execSubGraph->instantiateFrom(*srcSubgraph, settings);
-        if (err != ZE_RESULT_SUCCESS) {
-            return nullptr;
-        }
-        executableSubGraphMap[srcSubgraph] = execSubGraph.get();
-        this->subGraphs.push_back(std::move(execSubGraph));
-        return ret;
-    };
-
-    if (graph.empty() == false) {
-        L0::CommandList *currCmdList = nullptr;
-
+    if (segment.empty() == false) {
         const auto &allCommands = src->getCapturedCommands();
-        for (CapturedCommandId cmdId = 0; cmdId < static_cast<uint32_t>(allCommands.size()); ++cmdId) {
-            auto &cmd = src->getCapturedCommands()[cmdId];
-            if (nullptr == currCmdList) {
-                currCmdList = this->allocateAndAddCommandListSubmissionNode();
+        for (CapturedCommandId cmdId = segment.subBegin; cmdId < segment.subBegin + segment.numCommands; ++cmdId) {
+            auto &cmd = allCommands[cmdId];
+            if (nullptr == segmentBuilder.currCmdList) {
+                segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
+                this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
             }
             switch (static_cast<CaptureApi>(cmd.index())) {
             default:
                 break;
-#define RR_CAPTURED_API(X)                                                                                                                                        \
-    case CaptureApi::X:                                                                                                                                           \
-        err = std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*currCmdList, graph.getExternalStorage(), this->getExternalCbEventInfoContainer()); \
+#define RR_CAPTURED_API(X)                                                                                                                                                            \
+    case CaptureApi::X:                                                                                                                                                               \
+        err = std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*segmentBuilder.currCmdList, this->src->getExternalStorage(), this->getExternalCbEventInfoContainer()); \
         break;
                 RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API
@@ -495,27 +537,22 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiate
                 return err;
             }
 
-            auto *forkTarget = graph.getJoinedForkTarget(cmdId);
+            auto *forkTarget = this->src->getJoinedForkTarget(cmdId);
             if (nullptr != forkTarget) {
-                auto execSubGraph = getExecutableSubgraph(forkTarget, err);
-                if (err != ZE_RESULT_SUCCESS) {
-                    return err;
-                }
-
                 if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels) {
                     // interleave
-                    currCmdList->close();
-                    currCmdList = nullptr;
-                    this->addSubGraphSubmissionNode(execSubGraph);
+                    segmentBuilder.currCmdList->close();
+                    segmentBuilder.currCmdList = nullptr;
                 } else {
                     // submit after current
                     UNRECOVERABLE_IF(settings.forkPolicy != GraphInstatiateSettings::ForkPolicyMonolythicLevels)
-                    this->addSubGraphSubmissionNode(execSubGraph);
                 }
             }
         }
-        UNRECOVERABLE_IF(nullptr == currCmdList);
-        currCmdList->close();
+    }
+    if ((settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels) && segmentBuilder.currCmdList) {
+        segmentBuilder.currCmdList->close();
+        segmentBuilder.currCmdList = nullptr;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -534,47 +571,43 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
         }
         executionTarget->appendSignalEvent(hSignalEvent, false);
     } else {
-        if (this->externalCbEventStorage.externalCbEventsPresent()) {
-            this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
-        }
-        L0::CommandList *const myLastCommandList = this->myCommandLists.rbegin()->get();
-        {
-            // first submission node
-            L0::CommandList **cmdList = std::get_if<L0::CommandList *>(&this->submissionChain[0]);
-            UNRECOVERABLE_IF(nullptr == cmdList);
-
-            auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
-
-            ze_command_list_handle_t hCmdList = *cmdList;
-            executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
-            auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, numWaitEvents, phWaitEvents);
-            executionTarget->setPatchingPreamble(false, false);
-            if (ZE_RESULT_SUCCESS != res) {
-                return res;
+        UNRECOVERABLE_IF(this->orderedCommands->empty())
+        auto segmentIt = this->getOrderedCommands()->begin();
+        if (this->orderedCommands->size() == 1) {
+            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents);
+        } else {
+            auto lastSegment = this->getOrderedCommands()->end() - 1;
+            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, numWaitEvents, phWaitEvents);
+            ++segmentIt;
+            while (segmentIt != lastSegment) {
+                segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr);
+                ++segmentIt;
             }
-        }
-
-        for (size_t submissioNodeId = 1; submissioNodeId < this->submissionChain.size(); ++submissioNodeId) {
-            if (L0::CommandList **cmdList = std::get_if<L0::CommandList *>(&this->submissionChain[submissioNodeId])) {
-                auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
-                ze_command_list_handle_t hCmdList = *cmdList;
-                executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
-                auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, 0, nullptr);
-                executionTarget->setPatchingPreamble(false, false);
-                if (ZE_RESULT_SUCCESS != res) {
-                    return res;
-                }
-            } else {
-                L0::ExecutableGraph **subGraph = std::get_if<L0::ExecutableGraph *>(&this->submissionChain[submissioNodeId]);
-                UNRECOVERABLE_IF(nullptr == subGraph);
-                auto res = (*subGraph)->execute(nullptr, pNext, nullptr, 0, nullptr);
-                if (ZE_RESULT_SUCCESS != res) {
-                    return res;
-                }
-            }
+            DEBUG_BREAK_IF(segmentIt != lastSegment);
+            this->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, 0, nullptr);
         }
     }
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (nullptr != this->executionTarget) {
+        executionTarget = this->executionTarget;
+    }
+
+    if (this->externalCbEventStorage.externalCbEventsPresent()) {
+        this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
+    }
+
+    auto segmentIt = this->myOrderedSegments.find(segmentStart);
+    if (segmentIt == this->myOrderedSegments.end()) {
+        return ZE_RESULT_SUCCESS; // part of preceeding segment
+    }
+    ze_command_list_handle_t hCmdList = segmentIt->second;
+    executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
+    auto res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents);
+    executionTarget->setPatchingPreamble(false, false);
+    return res;
 }
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events) {
@@ -608,6 +641,19 @@ void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Gra
     }
 
     captureTarget.registerSignallingEventFromPreviousCommand(*L0::Event::fromHandle(event));
+}
+
+bool isCapturingAllowed(const L0::CommandList &srcCmdList) {
+    return srcCmdList.isImmediateType() && (false == srcCmdList.isInSynchronousMode());
+}
+
+bool usesForkEvents(std::span<ze_event_handle_t> events) {
+    for (const auto &event : events) {
+        if (L0::Event::fromHandle(event)->getRecordedSignalFrom()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace L0
