@@ -131,9 +131,6 @@ zello_global_bindless_kernel:
   dg2:
   pvc.b0:
 
-zello_graph:
-  bmg:
-
 zello_host_pointer:
   dg2:
   pvc.b0:
