@@ -591,7 +591,6 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionAndStatelessFlagSetAn
 
     uint32_t newCompressionFormat = 2;
     debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(static_cast<int32_t>(newCompressionFormat));
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->setCompressionEnabled(true);

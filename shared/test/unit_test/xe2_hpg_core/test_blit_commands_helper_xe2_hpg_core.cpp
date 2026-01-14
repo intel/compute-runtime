@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,6 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
 HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsXe2HpgCore) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
     debugManager.flags.BcsCompressionFormatForXe2Plus.set(2);
 
     uint32_t pattern = 1;

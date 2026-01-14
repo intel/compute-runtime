@@ -65,7 +65,6 @@ DECLARE_DEBUG_VARIABLE(bool, ForcePipeControlPriorToWalker, false, "Force pipe c
 DECLARE_DEBUG_VARIABLE(bool, ZebinAppendElws, false, "Append cross-thread data with enqueue local work size")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessDebugSip, false, "Use bindless debug system routine")
 DECLARE_DEBUG_VARIABLE(bool, CleanStateInPreamble, false, "Ensures clean state in preamble")
-DECLARE_DEBUG_VARIABLE(bool, EnableStatelessCompressionWithUnifiedMemory, false, "Enable stateless compression with unified memory")
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForHeaps, false, "Do not cache heaps in L3/L1")
 DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "Add global sequencer flush for blitter")
 DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use IMM data write mode as post sync operation in Compute Walker")

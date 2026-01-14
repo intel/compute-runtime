@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,7 +10,6 @@ if(TESTS_XE_HPC_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_aub_tests_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_aub_tests_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/system_memfence_aub_tests_xe_hpc_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/um_stateless_compression_aub_tests_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_test_excludes_xe_hpc_core.cpp
   )
   add_subdirectories()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,60 +155,6 @@ PVCTEST_F(PVcBcsTests, givenCompressibleBuffersWhenStatefulCompressionIsEnabledT
     auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 
     EXPECT_EQ(compressionFormat, bltCmd->getCompressionFormat());
-}
-
-PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferUsesStatelessCompressedSettings) {
-    using MEM_COPY = typename FamilyType::MEM_COPY;
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    MockGraphicsAllocation clearColorAlloc;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), {}, MemoryConstants::pageSize64k, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-    auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
-    *bltCmd = FamilyType::cmdInitXyCopyBlt;
-
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-
-    BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
-
-    EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
-    EXPECT_EQ(bltCmd->getDestinationCompressible(), MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-    EXPECT_EQ(bltCmd->getSourceCompressible(), MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
-}
-
-PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferDoesntUseStatelessCompressedSettings) {
-    using MEM_COPY = typename FamilyType::MEM_COPY;
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    MockGraphicsAllocation clearColorAlloc;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, MemoryConstants::pageSize64k, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-    auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
-    *bltCmd = FamilyType::cmdInitXyCopyBlt;
-
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-
-    BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
-
-    EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    EXPECT_EQ(bltCmd->getDestinationCompressible(), MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE);
-    EXPECT_EQ(bltCmd->getSourceCompressible(), MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_NOT_COMPRESSIBLE);
-    EXPECT_EQ(0u, bltCmd->getCompressionFormat());
 }
 
 using PvcMultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;

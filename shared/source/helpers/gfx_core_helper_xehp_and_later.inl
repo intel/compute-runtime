@@ -113,22 +113,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
 
 template <typename GfxFamily>
 aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
-    aub_stream::MMIOList mmioList;
-
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        auto format = static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-
-        UNRECOVERABLE_IF(format > 0x1F);
-
-        uint32_t value = 1;     // [0] enable
-        value |= (format << 3); // [3:7] compression_format
-
-        mmioList.push_back({0x519C, value});
-        mmioList.push_back({0xB0F0, value});
-        mmioList.push_back({0xE4C0, value});
-    }
-
-    return mmioList;
+    return {};
 }
 
 template <typename GfxFamily>

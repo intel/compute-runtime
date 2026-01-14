@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,6 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenDstGraphicAlloctionAndStatelessFlagSetAndS
 
     uint32_t newCompressionFormat = 1;
     debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(static_cast<int32_t>(newCompressionFormat));
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->setCompressionEnabled(true);
@@ -147,7 +146,6 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndS
 
     uint32_t newCompressionFormat = 1;
     debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(static_cast<int32_t>(newCompressionFormat));
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->setCompressionEnabled(true);

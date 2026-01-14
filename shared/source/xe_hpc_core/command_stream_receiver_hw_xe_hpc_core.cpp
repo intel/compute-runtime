@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,21 +119,6 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         }
     }
 
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (srcAllocation) {
-            if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
-                blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-                blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-            }
-        }
-        if (dstAllocation) {
-            if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
-                blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-                blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-            }
-        }
-    }
-
     if (blitCmd.getDestinationCompressible() == MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE &&
         AuxTranslationDirection::auxToNonAux != blitProperties.auxTranslationDirection) {
         blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
@@ -154,13 +139,6 @@ void BlitCommandsHelper<Family>::appendBlitMemSetCompressionFormat(void *blitCmd
     if (dstAlloc->isCompressionEnabled()) {
         memSetCmd->setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
         memSetCmd->setCompressionFormat40(compressionFormat);
-    }
-
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
-            memSetCmd->setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-            memSetCmd->setCompressionFormat40(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-        }
     }
 
     if (memSetCmd->getDestinationCompressible() == MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE) {

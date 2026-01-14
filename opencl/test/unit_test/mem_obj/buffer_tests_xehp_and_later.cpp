@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,108 +56,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
         buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
         EXPECT_EQ(compressionFormat, surfaceState.getCompressionFormat());
     }
-}
-
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
-
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
-    MockContext context;
-    size_t size = 0x1000;
-    auto retVal = CL_SUCCESS;
-    auto buffer = std::unique_ptr<Buffer>(
-        Buffer::create(
-            &context,
-            CL_MEM_READ_WRITE,
-            size,
-            nullptr,
-            retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto &device = context.getDevice(0)->getDevice();
-    auto allocation = buffer->getGraphicsAllocation(device.getRootDeviceIndex());
-    auto gmm = new MockGmm(device.getGmmHelper());
-    gmm->setCompressionEnabled(true);
-    allocation->setDefaultGmm(gmm);
-
-    EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    buffer->setArgStateful(&surfaceState, false, false, false, false, device, false);
-
-    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
-    }
-    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
-}
-
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
-
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-
-    MockContext context;
-    size_t size = 0x1000;
-    auto retVal = CL_SUCCESS;
-    auto buffer = std::unique_ptr<Buffer>(
-        Buffer::create(
-            &context,
-            CL_MEM_READ_WRITE,
-            size,
-            nullptr,
-            retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getMemoryPool()));
-
-    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
-    }
-    EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
-    EXPECT_EQ(0u, surfaceState.getCompressionFormat());
-}
-
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
-
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-
-    MockContext context;
-    cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
-    std::unique_ptr<Buffer> buffer(Buffer::createBufferHw(
-        &context,
-        ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice()),
-        0,
-        0,
-        sizeof(srcMemory),
-        srcMemory,
-        srcMemory,
-        0,
-        false,
-        false,
-        false));
-    ASSERT_NE(nullptr, buffer);
-
-    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
-    }
-    EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
-    EXPECT_EQ(0u, surfaceState.getCompressionFormat());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL1CachingWhenBufferSurfaceStateIsSetThenItIsCachedInL1) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,64 +161,12 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
     }
 }
 
-HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMemWhenAppendBlitCommandsForVillBufferThenCompresionDisabled, IsPVC) {
-    using MEM_SET = typename FamilyType::MEM_SET;
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-
-    uint32_t pattern = 1;
-    uint32_t streamBuffer[100] = {};
-    LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
-                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
-
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
-    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    {
-        auto blitCmd = genCmdCast<MEM_SET *>(*itor);
-        EXPECT_EQ(blitCmd->getDestinationCompressible(), MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE);
-    }
-}
-
 HWTEST2_F(BlitTests, whenGetMaxBlitHeightOverrideThenReturnProperValue, IsPVC) {
     auto ret = BlitCommandsHelper<FamilyType>::getMaxBlitHeightOverride(pDevice->getRootDeviceEnvironment(), true);
     EXPECT_EQ(ret, 512u);
 
     ret = BlitCommandsHelper<FamilyType>::getMaxBlitHeightOverride(pDevice->getRootDeviceEnvironment(), false);
     EXPECT_EQ(ret, 0u);
-}
-
-HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsPVC) {
-    using MEM_SET = typename FamilyType::MEM_SET;
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-
-    uint32_t pattern = 1;
-    uint32_t streamBuffer[100] = {};
-    LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
-                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
-
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
-    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    {
-        auto blitCmd = genCmdCast<MEM_SET *>(*itor);
-        EXPECT_EQ(blitCmd->getDestinationCompressible(), MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-        EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), blitCmd->getCompressionFormat40());
-    }
 }
 
 HWTEST2_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhenFillPatternWithBlitThenHeightIsOne, IsPVC) {

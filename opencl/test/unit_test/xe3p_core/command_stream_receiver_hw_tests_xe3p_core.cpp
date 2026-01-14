@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -402,8 +402,6 @@ XE3P_CORETEST_F(Xe3pBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionI
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe3pCoreFamily::cmdInitXyCopyBlt;
 
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-
     BlitCommandsHelper<Xe3pCoreFamily>::appendBlitCommandsForBuffer<MEM_COPY>(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
     EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get()), bltCmd->getCompressionFormat());
@@ -433,8 +431,6 @@ XE3P_CORETEST_F(Xe3pBcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenStat
         0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe3pCoreFamily::cmdInitXyCopyBlt;
-
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
 
     BlitCommandsHelper<Xe3pCoreFamily>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
