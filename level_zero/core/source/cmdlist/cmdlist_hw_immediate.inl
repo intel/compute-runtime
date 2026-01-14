@@ -496,16 +496,16 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
             this->removeMemoryPrefetchAllocations();
         }
 
+        for (auto &operation : this->memAdviseOperations) {
+            this->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
+        }
+        this->memAdviseOperations.clear();
+
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false, nullptr);
     } else {
         lockForIndirect = std::move(*outerLockForIndirect);
         cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
-
-    for (auto &operation : this->memAdviseOperations) {
-        this->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
-    }
-    this->memAdviseOperations.clear();
 
     NEO::CompletionStamp completionStamp;
     if (cmdQ->peekIsCopyOnlyCommandQueue()) {

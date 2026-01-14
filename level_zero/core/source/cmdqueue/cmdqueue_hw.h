@@ -124,6 +124,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool regularHeapful = false;
         bool stateCacheFlushRequired = false;
         bool instructionCacheFlushRequired = false;
+        bool taskCountUpdateFenceRequired = false;
     };
 
     inline void processMemAdviseOperations(CommandList *commandList);
@@ -224,7 +225,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                            ze_command_list_handle_t *commandListHandles);
     ze_result_t waitForCommandQueueCompletion(CommandListExecutionContext &ctx);
     inline ze_result_t handleNonParentImmediateStream(ze_fence_handle_t hFence, CommandListExecutionContext &ctx, uint32_t numCommandLists,
-                                                      ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch, bool isFenceRequired);
+                                                      ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch);
     inline ze_result_t handleSubmission(NEO::SubmissionStatus submitRet);
     inline size_t estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,
                                                                        const NEO::StreamProperties &cmdListRequired,

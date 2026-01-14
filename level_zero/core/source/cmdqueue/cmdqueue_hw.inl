@@ -91,11 +91,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto neoDevice = device->getNEODevice();
 
-    for (auto i = 0u; i < numCommandLists; ++i) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        this->processMemAdviseOperations(commandList);
-    }
-
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
         svmAllocMgr->prefetchSVMAllocs(*neoDevice, *csr);
@@ -167,13 +162,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         handleIndirectAllocationResidency(ctx.unifiedMemoryControls, lockForIndirect, ctx.isMigrationRequested);
     }
 
-    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-
-    linearStreamSizeEstimate += this->estimateStreamSizeForExecuteCommandListsRegularHeapless(ctx, numCommandLists, commandListHandles);
-
     if (ctx.cmdListScratchAddressPatchingEnabled == true) {
         this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     }
+
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
+
+    linearStreamSizeEstimate += this->estimateStreamSizeForExecuteCommandListsRegularHeapless(ctx, numCommandLists, commandListHandles);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
@@ -222,7 +217,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     this->dispatchPatchPreambleEnding(ctx);
 
     if (!ctx.containsParentImmediateStream) {
-        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch, false);
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch);
         if (retVal != ZE_RESULT_SUCCESS) {
             return retVal;
         }
@@ -271,13 +266,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         handleIndirectAllocationResidency(ctx.unifiedMemoryControls, currentLock, ctx.isMigrationRequested);
     }
 
-    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-
     if (this->heaplessModeEnabled == false || ctx.cmdListScratchAddressPatchingEnabled == true) {
         this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     }
 
     this->setFrontEndStateProperties(ctx);
+
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
 
     auto neoDevice = this->device->getNEODevice();
 
@@ -392,7 +387,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->csr->setPreemptionMode(ctx.statePreemption);
 
     if (!ctx.containsParentImmediateStream) {
-        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch, false);
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch);
     }
 
     this->stateChanges.clear();
@@ -420,11 +415,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     }
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-    bool fenceRequired = false;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        fenceRequired |= commandList->isTaskCountUpdateFenceRequired();
 
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
@@ -433,9 +426,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     linearStreamSizeEstimate += this->estimateCommandListPatchPreamble(ctx, numCommandLists);
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
-    if (fenceRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
-    }
     linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
 
     NEO::LinearStream child(nullptr);
@@ -470,7 +460,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->makeCsrTagAllocationResident();
 
     if (!ctx.containsParentImmediateStream) {
-        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, phCommandLists, streamForDispatch, fenceRequired);
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, phCommandLists, streamForDispatch);
         if (retVal != ZE_RESULT_SUCCESS) {
             return retVal;
         }
@@ -730,6 +720,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         if (!commandList->isClosed()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+        this->processMemAdviseOperations(commandList);
+
         commandList->storeReferenceTsToMappedEvents(false);
 
         this->prepareInOrderCommandList(commandList, ctx);
@@ -778,6 +770,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
 
             ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
+        } else {
+            ctx.taskCountUpdateFenceRequired |= commandList->isTaskCountUpdateFenceRequired();
         }
 
         this->isWalkerWithProfilingEnqueued = commandList->getIsWalkerWithProfilingEnqueued();
@@ -836,6 +830,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeShared(
         if (this->isCopyOnlyCommandQueue) {
             NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
             linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+            if (ctx.taskCountUpdateFenceRequired) {
+                linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
+            }
         } else {
             linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
         }
@@ -1682,12 +1679,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletion(Command
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::handleNonParentImmediateStream(ze_fence_handle_t hFence, CommandListExecutionContext &ctx, uint32_t numCommandLists,
-                                                                          ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch, bool isFenceRequired) {
+                                                                          ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch) {
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
     if (!this->isCopyOnlyCommandQueue) {
         this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
     } else {
-        this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, isFenceRequired, *streamForDispatch);
+        this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, ctx.taskCountUpdateFenceRequired, *streamForDispatch);
     }
     auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
     this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, phCommandLists);
