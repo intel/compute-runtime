@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
     void setSensorType(zes_temp_sensors_t sensorType);
-    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;
 
@@ -35,9 +35,11 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getGlobalMaxTemperature(double *pTemperature);
     ze_result_t getGpuMaxTemperature(double *pTemperature);
     ze_result_t getMemoryMaxTemperature(double *pTemperature);
+    ze_result_t getVoltageRegulatorTemperature(double *pTemperature);
     uint32_t subdeviceId = 0;
     ze_bool_t isSubdevice = 0;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
+    uint32_t sensorIndex = 0;
 };
 
 } // namespace Sysman

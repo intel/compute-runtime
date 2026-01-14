@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ const std::string telem6TelemFileName("/sys/class/intel_pmt/telem6/telem");
 
 class PublicLinuxTemperatureImp : public L0::Sysman::LinuxTemperatureImp {
   public:
-    PublicLinuxTemperatureImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxTemperatureImp(pOsSysman, onSubdevice, subdeviceId) {}
+    PublicLinuxTemperatureImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex) : LinuxTemperatureImp(pOsSysman, onSubdevice, subdeviceId, sensorIndex) {}
 };
 
 } // namespace ult

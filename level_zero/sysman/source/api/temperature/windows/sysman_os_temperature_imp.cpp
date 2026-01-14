@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,12 +93,18 @@ void WddmTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
     type = sensorType;
 }
 
+void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {
+    auto pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    pSysmanProductHelper->getSupportedSensors(supportedSensorTypeMap);
+}
+
 WddmTemperatureImp::WddmTemperatureImp(OsSysman *pOsSysman) {
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType) {
+std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType, uint32_t sensorIndex) {
     std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman);
     pWddmTemperatureImp->setSensorType(sensorType);
     return std::move(pWddmTemperatureImp);

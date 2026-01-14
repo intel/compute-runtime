@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,6 +215,7 @@ using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;
 using IsAtMostPVC = IsAtMostProduct<IGFX_PVC>;
 using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
+using IsAtMostBMG = IsAtMostProduct<IGFX_BMG>;
 
 using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 

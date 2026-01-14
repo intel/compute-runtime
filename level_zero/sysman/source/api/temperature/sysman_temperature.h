@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -50,7 +51,7 @@ struct TemperatureHandleContext {
     }
 
   private:
-    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type, uint32_t sensorIndex);
     std::once_flag initTemperatureOnce;
     bool tempInitDone = false;
 };

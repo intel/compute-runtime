@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class TemperatureImp : public Temperature, NEO::NonCopyableAndNonMovableClass {
     ze_result_t temperatureGetState(double *pTemperature) override;
 
     TemperatureImp() = default;
-    TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type);
+    TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type, uint32_t sensorIndex);
     ~TemperatureImp() override;
 
     std::unique_ptr<OsTemperature> pOsTemperature = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTempHandleWhenGettingGlo
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned, IsAtMostDg2) {
-    auto pTemperatureImpMemory = std::make_unique<L0::Sysman::TemperatureImp>(pOsSysman, false, 0, ZES_TEMP_SENSORS_GLOBAL_MIN);
+    auto pTemperatureImpMemory = std::make_unique<L0::Sysman::TemperatureImp>(pOsSysman, false, 0, ZES_TEMP_SENSORS_GLOBAL_MIN, 0);
     auto pWddmTemperatureImp = static_cast<L0::Sysman::WddmTemperatureImp *>(pTemperatureImpMemory->pOsTemperature.get());
     double pTemperature = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmTemperatureImp->getSensorTemperature(&pTemperature));

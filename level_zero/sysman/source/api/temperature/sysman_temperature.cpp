@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,8 @@ void TemperatureHandleContext::releaseTemperatureHandles() {
     handleList.clear();
 }
 
-void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type) {
-    std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(pOsSysman, onSubdevice, subDeviceId, type);
+void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type, uint32_t sensorIndex) {
+    std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(pOsSysman, onSubdevice, subDeviceId, type, sensorIndex);
     if (pTemperature->initSuccess == true) {
         handleList.push_back(std::move(pTemperature));
     }
@@ -28,16 +28,24 @@ void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDevice
 
 ze_result_t TemperatureHandleContext::init(uint32_t subDeviceCount) {
 
+    std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap = {};
+    OsTemperature::getSupportedSensors(pOsSysman, supportedSensorTypeMap);
+
+    // Lambda to create temperature handles for a given device/sub-device
+    auto createTemperatureHandles = [this, &supportedSensorTypeMap](bool onSubdevice, uint32_t subDeviceId) {
+        for (const auto &[sensorType, sensorCount] : supportedSensorTypeMap) {
+            for (uint32_t sensorIndex = 0; sensorIndex < sensorCount; sensorIndex++) {
+                createHandle(onSubdevice, subDeviceId, sensorType, sensorIndex);
+            }
+        }
+    };
+
     if (subDeviceCount > 0) {
         for (uint32_t subDeviceId = 0; subDeviceId < subDeviceCount; subDeviceId++) {
-            createHandle(true, subDeviceId, ZES_TEMP_SENSORS_GLOBAL);
-            createHandle(true, subDeviceId, ZES_TEMP_SENSORS_GPU);
-            createHandle(true, subDeviceId, ZES_TEMP_SENSORS_MEMORY);
+            createTemperatureHandles(true, subDeviceId);
         }
     } else {
-        createHandle(false, 0, ZES_TEMP_SENSORS_GLOBAL);
-        createHandle(false, 0, ZES_TEMP_SENSORS_GPU);
-        createHandle(false, 0, ZES_TEMP_SENSORS_MEMORY);
+        createTemperatureHandles(false, 0);
     }
 
     return ZE_RESULT_SUCCESS;

@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
@@ -15,6 +17,12 @@ constexpr static auto gfxProduct = IGFX_CRI;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
+
+static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
+    {"0x5e2fa230",
+     {{"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[0]", 464},
+      {"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[1]", 470},
+      {"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[2]", 474}}}};
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
@@ -153,6 +161,49 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
         pCurrent = pExpThrottleReason->pNext;
     }
     return aggregatedReasons;
+}
+
+template <>
+void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 3;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    telemOffset = 0;
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
+    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
+    // Build the key name based on sensor index
+    std::string key = "PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[" + std::to_string(sensorIndex) + "]";
+
+    uint32_t vrTemperature = 0;
+    if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, vrTemperature)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    *pTemperature = static_cast<double>(vrTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
+    return &guidToKeyOffsetMap;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

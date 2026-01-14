@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,7 @@ class SysmanProductHelper {
     // Temperature
     virtual ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
     virtual bool isTempModuleSupported(zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
+    virtual void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) = 0;
 
     // Pci
     virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) = 0;
