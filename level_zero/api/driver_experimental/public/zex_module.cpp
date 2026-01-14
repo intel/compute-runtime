@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/driver_experimental/zex_module.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/ze_intel_gpu.h"
