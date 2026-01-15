@@ -1,1 +1,5 @@
-git_revision: e79c847a8c8c5be2ea335813e2c71952ffa07d52
+---
+components:
+  aot_config_headers:
+    type: git
+    revision: e79c847a8c8c5be2ea335813e2c71952ffa07d52
