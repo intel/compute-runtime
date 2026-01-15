@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -248,10 +248,6 @@ class HostFunctionMtFixture {
 class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, uint32_t, uint32_t>>, public HostFunctionMtFixture {
   public:
     void SetUp() override {
-
-#ifdef NEO_TSAN_ENABLED
-        GTEST_SKIP();
-#endif
 
         std::tie(testingMode, nPrimaryCsrs, nPartitions) = GetParam();
 
