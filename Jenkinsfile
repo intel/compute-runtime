@@ -1,10 +1,10 @@
 #!groovy
 
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-dependenciesRevision='e08928d698311f1199484e43e43a24773fdffbd9-3864'
+dependenciesRevision='6fe46196f7e06f6349ed69cd74322fa254fefc07-3922'
