@@ -4872,7 +4872,29 @@ HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenDispatchingThenProgramCo
     EXPECT_TRUE(semaphoreFound);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistThenInheritSignalSyncAllocation) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAfterKernelWithEventThenInheritSignalSyncAllocation) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    auto offset = cmdStream->getUsed();
+
+    auto eventHandle = events[1]->toHandle();
+
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    EXPECT_EQ(offset, cmdStream->getUsed());
+
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAfterKernelWithoutEventThenDontInheritSignalSyncAllocation) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -4890,25 +4912,28 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     immCmdList->appendBarrier(nullptr, 0, nullptr, false);
     immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
-    EXPECT_EQ(offset, cmdStream->getUsed());
-
-    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    if (immCmdList->isWalkerPostSyncSkipEnabled) {
+        EXPECT_LT(offset, cmdStream->getUsed());
+        EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
+    } else {
+        EXPECT_EQ(offset, cmdStream->getUsed());
+        EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    }
 }
 
 HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWithoutWaitlistThenInheritSignalSyncAllocation) {
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
 
     auto cmdStream = cmdList->getCmdContainer().getCommandStream();
+    auto eventPool = createEvents<FamilyType>(2, false);
 
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
 
     auto offset = cmdStream->getUsed();
 
-    auto eventPool = createEvents<FamilyType>(1, false);
-
-    auto eventHandle = events[0]->toHandle();
+    auto eventHandle = events[1]->toHandle();
 
     cmdList->appendBarrier(nullptr, 0, nullptr, false);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
@@ -4924,12 +4949,12 @@ HWTEST_F(InOrderCmdListTests, givenEventCounterReusedFromPreviousAppendWhenHostS
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(2, false);
 
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
 
-    auto eventPool = createEvents<FamilyType>(1, false);
-    auto eventHandle = events[0]->toHandle();
+    auto eventHandle = events[1]->toHandle();
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);

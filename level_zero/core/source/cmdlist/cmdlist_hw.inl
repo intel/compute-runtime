@@ -4216,7 +4216,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased()));
+    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
