@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -380,6 +380,14 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     CompilerCache cache(CompilerCacheConfig{});
     size_t size;
     auto ret = cache.loadCachedBinary("----do-not-exists----", size);
+    EXPECT_EQ(nullptr, ret);
+    EXPECT_EQ(0U, size);
+}
+
+TEST(CompilerCacheTests, GivenTooShortKernelFileHashWhenGetCachedBinaryIsCalledThenNullIsReturned) {
+    CompilerCache cache(CompilerCacheConfig{});
+    size_t size;
+    auto ret = cache.loadCachedBinary("a", size);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(0U, size);
 }

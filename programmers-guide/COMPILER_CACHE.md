@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2024 Intel Corporation
+Copyright (C) 2024-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -80,9 +80,10 @@ Such mechanism prevents the total cache size from being calculated at each compi
 Each write to disk has following steps:
 
 1. lock *config.file* (advisor lock)
-1. create temporary file
-1. write contents to file
-1. rename temporary file to proper hash name
+1. create temporary file in cache directory
+1. write contents to temporary file
+1. create subdirectories based on the first characters of hash name if they do not exist (for cache depth = 2: e.g., `file.cl_cache` -> create `f/i/`)
+1. rename temporary file to proper hash name in the target subdirectory (for cache depth = 2: e.g., `cache_dir/f/i/file.cl_cache`)
 1. store updated directory size in the *config.file*
 1. unlock *config.file*
 
@@ -129,6 +130,8 @@ Additionally, the `BinaryCacheTrace` flag can be used to provide deeper insights
 
 - If we encounter issues opening or reading data from the *config.file* (e.g., due to corruption), the cache mechanism will not be utilized, and we will fall back to the standard compilation path. In this situation, information about the error will be printed in debug messages.
 
-- cl_cache relies on the *last access time* of files to manage its eviction process effectively. If *last access time* updates are not enabled in the filesystem, cl_cache will be unable to accurately prioritize files for eviction based on their usage frequency. Consequently, files may not be evicted in the optimal order, potentially affecting cache performance. To address this limitation, future plans include implementing a backup sorting method for eviction, which may utilize file size or creation time as criteria to ensure efficient cache management even when *last access time* is unavailable.
+- cl_cache relies on the *last access time* of files to manage its eviction process effectively. If *last access time* updates are not enabled in the filesystem, cl_cache will assume that the *last access time* is set to *creation time*.
 
 - When generating a unique hash, Compiler Cache does not take into account the environment variables of external components. Changes in these variables may not trigger cache invalidation, which can lead to unexpected behavior and difficult to debug errors.
+
+- When files are evicted, any resulting empty directories are intentionally left in place. This is to support future features such as a *stats* mechanism, which relies on the consistent directory structure.

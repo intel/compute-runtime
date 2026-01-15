@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,7 @@ int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
 int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
 int (*sysCallsMkdir)(const std::string &dir) = nullptr;
+int (*sysCallsRmdir)(const std::string &dir) = nullptr;
 DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
@@ -114,6 +115,9 @@ int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr
 int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags) = nullptr;
 int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags) = nullptr;
 int (*sysCallsPrctl)(int option, unsigned long arg) = nullptr;
+FTS *(*sysCallsFtsOpen)(char *const *path, int options, int (*compar)(const FTSENT **, const FTSENT **)) = nullptr;
+FTSENT *(*sysCallsFtsRead)(FTS *ftsp) = nullptr;
+int (*sysCallsFtsClose)(FTS *ftsp) = nullptr;
 off_t (*sysCallsLseek)(int fd, off_t offset, int whence) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
@@ -125,6 +129,14 @@ std::string mkfifoPathNamePassed;
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
         return sysCallsMkdir(path);
+    }
+
+    return 0;
+}
+
+int rmdir(const std::string &path) {
+    if (sysCallsRmdir != nullptr) {
+        return sysCallsRmdir(path);
     }
 
     return 0;
@@ -562,6 +574,27 @@ int prctl(int option, unsigned long arg) {
 
 char **getEnviron() {
     return NEO::ULT::getCurrentEnviron();
+}
+
+FTS *ftsOpen(char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **)) {
+    if (sysCallsFtsOpen != nullptr) {
+        return sysCallsFtsOpen(pathArgv, options, compar);
+    }
+    return nullptr;
+}
+
+FTSENT *ftsRead(FTS *ftsp) {
+    if (sysCallsFtsRead != nullptr) {
+        return sysCallsFtsRead(ftsp);
+    }
+    return nullptr;
+}
+
+int ftsClose(FTS *ftsp) {
+    if (sysCallsFtsClose != nullptr) {
+        return sysCallsFtsClose(ftsp);
+    }
+    return 0;
 }
 
 } // namespace SysCalls

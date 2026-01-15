@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
@@ -22,6 +23,7 @@ namespace SysCalls {
 int fsync(int fd);
 int close(int fd);
 int mkdir(const std::string &path);
+int rmdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);
@@ -62,6 +64,9 @@ int pidfdopen(pid_t pid, unsigned int flags);
 int pidfdgetfd(int pidfd, int targetfd, unsigned int flags);
 int prctl(int option, unsigned long arg);
 char **getEnviron();
+FTS *ftsOpen(char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **));
+FTSENT *ftsRead(FTS *ftsp);
+int ftsClose(FTS *ftsp);
 
 } // namespace SysCalls
 } // namespace NEO

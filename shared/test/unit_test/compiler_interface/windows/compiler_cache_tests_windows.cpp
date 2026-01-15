@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "elements_struct.h"
+
 #include <cstring>
 #include <string>
 
@@ -26,8 +28,10 @@ namespace NEO {
 class CompilerCacheMockWindows : public CompilerCache {
   public:
     CompilerCacheMockWindows(const CompilerCacheConfig &config) : CompilerCache(config) {}
+    using CompilerCache::createCacheDirectories;
     using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
+    using CompilerCache::getCachedFiles;
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 
@@ -86,6 +90,18 @@ class CompilerCacheMockWindows : public CompilerCache {
     size_t lockConfigFileAndReadSizeCalled = 0u;
     void *lockConfigFileAndReadSizeHandle = INVALID_HANDLE_VALUE;
     size_t lockConfigFileAndReadSizeDirSize = 0u;
+
+    bool createCacheDirectories(const std::string &cacheFile) override {
+        createCacheDirectoriesCalled++;
+        if (callBaseCreateCacheDirectories) {
+            return CompilerCache::createCacheDirectories(cacheFile);
+        }
+        return createCacheDirectoriesResult;
+    }
+
+    bool callBaseCreateCacheDirectories = true;
+    size_t createCacheDirectoriesCalled = 0u;
+    bool createCacheDirectoriesResult = true;
 };
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
@@ -95,12 +111,17 @@ TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFol
 }
 
 namespace SysCalls {
-extern DWORD getLastErrorResult;
+extern size_t getLastErrorCalled;
+extern const size_t getLastErrorResultCount;
+extern DWORD getLastErrorResults[];
+extern BOOL getLastErrorConstantResult;
 
 extern size_t closeHandleCalled;
 
 extern size_t getTempFileNameACalled;
 extern UINT getTempFileNameAResult;
+
+extern BOOL moveFileExAResult;
 
 extern size_t lockFileExCalled;
 extern BOOL lockFileExResult;
@@ -126,9 +147,12 @@ extern const size_t writeFileBufferSize;
 extern char writeFileBuffer[];
 extern DWORD writeFileNumberOfBytesWritten;
 
-extern HANDLE findFirstFileAResult;
+extern size_t findFirstFileACalled;
+extern const size_t findFirstFileAResultsCount;
+extern HANDLE findFirstFileAResults[];
 
 extern size_t findNextFileACalled;
+extern BOOL findNextFileAResult;
 extern const size_t findNextFileAFileDataCount;
 extern WIN32_FIND_DATAA findNextFileAFileData[];
 
@@ -139,11 +163,20 @@ extern DWORD getFileAttributesResult;
 
 extern size_t setFilePointerCalled;
 extern DWORD setFilePointerResult;
+
+extern size_t createDirectoryACalled;
+extern BOOL createDirectoryAResult;
+extern std::unordered_map<std::string, DWORD> pathAttributes;
+
+extern size_t removeDirectoryACalled;
+extern BOOL removeDirectoryAResult;
+extern BOOL erasePathAttributes;
 } // namespace SysCalls
 
 struct CompilerCacheWindowsTest : public ::testing::Test {
     CompilerCacheWindowsTest()
-        : getLastErrorResultBackup(&SysCalls::getLastErrorResult),
+        : getLastErrorCalledBackup(&SysCalls::getLastErrorCalled),
+          getLastErrorConstantResult(&SysCalls::getLastErrorConstantResult),
           closeHandleCalledBackup(&SysCalls::closeHandleCalled),
           getTempFileNameACalled(&SysCalls::getTempFileNameACalled),
           getTempFileNameAResult(&SysCalls::getTempFileNameAResult),
@@ -160,12 +193,20 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
           writeFileCalledBackup(&SysCalls::writeFileCalled),
           writeFileResultBackup(&SysCalls::writeFileResult),
           writeFileNumberOfBytesWrittenBackup(&SysCalls::writeFileNumberOfBytesWritten),
-          findFirstFileAResultBackup(&SysCalls::findFirstFileAResult),
+          findFirstFileACalledBackup(&SysCalls::findFirstFileACalled),
           findNextFileACalledBackup(&SysCalls::findNextFileACalled),
           getFileAttributesCalledBackup(&SysCalls::getFileAttributesCalled),
           getFileAttributesResultBackup(&SysCalls::getFileAttributesResult),
           setFilePointerCalledBackup(&SysCalls::setFilePointerCalled),
-          setFilePointerResultBackup(&SysCalls::setFilePointerResult) {}
+          setFilePointerResultBackup(&SysCalls::setFilePointerResult),
+          createDirectoryACalledBackup(&SysCalls::createDirectoryACalled),
+          createDirectoryAResultBackup(&SysCalls::createDirectoryAResult),
+          removeDirectoryACalledBackup(&SysCalls::removeDirectoryACalled),
+          removeDirectoryAResultBackup(&SysCalls::removeDirectoryAResult),
+          erasePathAttributesBackup(&SysCalls::erasePathAttributes),
+          findCloseCalledBackup(&SysCalls::findCloseCalled),
+          findNextFileAResultBackup(&SysCalls::findNextFileAResult),
+          moveFileExAResultBackup(&SysCalls::moveFileExAResult) {}
 
     void SetUp() override {
         SysCalls::closeHandleCalled = 0u;
@@ -179,6 +220,12 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
         SysCalls::findNextFileACalled = 0u;
         SysCalls::getFileAttributesCalled = 0u;
         SysCalls::setFilePointerCalled = 0u;
+        SysCalls::createDirectoryACalled = 0u;
+        SysCalls::removeDirectoryACalled = 0u;
+        SysCalls::findCloseCalled = 0u;
+        SysCalls::findFirstFileACalled = 0u;
+        SysCalls::getLastErrorCalled = 0u;
+        SysCalls::getLastErrorConstantResult = FALSE;
     }
 
     void TearDown() override {
@@ -191,11 +238,19 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
         for (size_t i = 0; i < SysCalls::createFileAResultsCount; i++) {
             SysCalls::createFileAResults[i] = nullptr;
         }
+        for (size_t i = 0; i < SysCalls::getLastErrorResultCount; i++) {
+            SysCalls::getLastErrorResults[i] = 0;
+        }
+        for (size_t i = 0; i < SysCalls::findFirstFileAResultsCount; i++) {
+            SysCalls::findFirstFileAResults[i] = INVALID_HANDLE_VALUE;
+        }
         memset(SysCalls::writeFileBuffer, 0, SysCalls::writeFileBufferSize);
+        SysCalls::pathAttributes.clear();
     }
 
   protected:
-    VariableBackup<DWORD> getLastErrorResultBackup;
+    VariableBackup<size_t> getLastErrorCalledBackup;
+    VariableBackup<BOOL> getLastErrorConstantResult;
     VariableBackup<size_t> closeHandleCalledBackup;
     VariableBackup<size_t> getTempFileNameACalled;
     VariableBackup<UINT> getTempFileNameAResult;
@@ -212,13 +267,221 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
     VariableBackup<size_t> writeFileCalledBackup;
     VariableBackup<BOOL> writeFileResultBackup;
     VariableBackup<DWORD> writeFileNumberOfBytesWrittenBackup;
-    VariableBackup<HANDLE> findFirstFileAResultBackup;
+    VariableBackup<size_t> findFirstFileACalledBackup;
     VariableBackup<size_t> findNextFileACalledBackup;
     VariableBackup<size_t> getFileAttributesCalledBackup;
     VariableBackup<DWORD> getFileAttributesResultBackup;
     VariableBackup<size_t> setFilePointerCalledBackup;
     VariableBackup<DWORD> setFilePointerResultBackup;
+    VariableBackup<size_t> createDirectoryACalledBackup;
+    VariableBackup<BOOL> createDirectoryAResultBackup;
+    VariableBackup<size_t> removeDirectoryACalledBackup;
+    VariableBackup<BOOL> removeDirectoryAResultBackup;
+    VariableBackup<BOOL> erasePathAttributesBackup;
+    VariableBackup<size_t> findCloseCalledBackup;
+    VariableBackup<BOOL> findNextFileAResultBackup;
+    VariableBackup<BOOL> moveFileExAResultBackup;
 };
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenCreateDirectoryAWorksThenCreateCacheDirectoriesReturnsTrue) {
+    SysCalls::createDirectoryAResult = TRUE;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    EXPECT_TRUE(cache.createCacheDirectories("somePath\\cl_cache\\file.cl_cache"));
+    EXPECT_EQ(2u, SysCalls::createDirectoryACalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenCreateDirectoryAAlreadyExistsThenCreateCacheDirectoriesReturnsTrue) {
+    SysCalls::createDirectoryAResult = FALSE;
+    SysCalls::getLastErrorResults[0] = ERROR_ALREADY_EXISTS;
+    SysCalls::getLastErrorResults[1] = ERROR_ALREADY_EXISTS;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    EXPECT_TRUE(cache.createCacheDirectories("somePath\\cl_cache\\file.cl_cache"));
+    EXPECT_EQ(2u, SysCalls::createDirectoryACalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenCreateDirectoryAFailsThenCreateCacheDirectoriesReturnsFalse) {
+    SysCalls::createDirectoryAResult = FALSE;
+    SysCalls::getLastErrorResults[0] = ERROR_INVALID_FUNCTION;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    EXPECT_FALSE(cache.createCacheDirectories("somePath\\cl_cache\\file.cl_cache"));
+    EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClCacheThenGetCachedFilesReturnsTrue) {
+    WIN32_FIND_DATAA filesData[4];
+
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u;
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastAccessTime.dwLowDateTime = 2u;
+
+    for (int i = 0; i < 2; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "dir%d", i);
+        filesData[i].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = 100;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    for (int i = 2; i < 4; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "file_%d.cl_cache", i);
+        filesData[i].dwFileAttributes = 0;
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = 100;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
+    SysCalls::getLastErrorResults[1] = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[2] = ERROR_FILE_NOT_FOUND;
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+
+    EXPECT_TRUE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(5u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+    EXPECT_EQ(2u, cacheFiles.size());
+    EXPECT_EQ(0, strcmp(cacheFiles[0].path.c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(cacheFiles[1].path.c_str(), "somePath\\cl_cache\\file_2.cl_cache"));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenL0CacheThenGetCachedFilesReturnsTrue) {
+    WIN32_FIND_DATAA filesData[4];
+
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u;
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastAccessTime.dwLowDateTime = 2u;
+
+    for (int i = 0; i < 2; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "dir%d", i);
+        filesData[i].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = 100;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    for (int i = 2; i < 4; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "file_%d.l0_cache", i);
+        filesData[i].dwFileAttributes = 0;
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = 100;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
+    SysCalls::getLastErrorResults[1] = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[2] = ERROR_FILE_NOT_FOUND;
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    CompilerCacheMockWindows cache({true, ".l0_cache", "somePath\\l0_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+
+    EXPECT_TRUE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(5u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+    EXPECT_EQ(2u, cacheFiles.size());
+    EXPECT_EQ(0, strcmp(cacheFiles[0].path.c_str(), "somePath\\l0_cache\\file_3.l0_cache"));
+    EXPECT_EQ(0, strcmp(cacheFiles[1].path.c_str(), "somePath\\l0_cache\\file_2.l0_cache"));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindFirstFilaAFailsThenGetCachedFilesReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_INVALID_FUNCTION;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+    EXPECT_FALSE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(0u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(0u, SysCalls::findCloseCalled);
+    EXPECT_EQ(0u, cacheFiles.size());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindFirstFilaAErrorFileNotFoundThenGetCachedFilesReturnsTrue) {
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+    EXPECT_TRUE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(0u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(0u, SysCalls::findCloseCalled);
+    EXPECT_EQ(0u, cacheFiles.size());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindNextFileAErrorNoMoreFilesThenGetCachedFilesReturnsTrue) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::findNextFileAResult = FALSE;
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+    EXPECT_TRUE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(1u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+    EXPECT_EQ(0u, cacheFiles.size());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindNextFileAFailsThenGetCachedFilesReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::getLastErrorResults[0] = ERROR_INVALID_FUNCTION;
+    SysCalls::findNextFileAResult = FALSE;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+    EXPECT_FALSE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(1u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+    EXPECT_EQ(0u, cacheFiles.size());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFileNameNotValidThenGetCachedFilesSkipsThisFile) {
+    WIN32_FIND_DATAA filesData[4];
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u;
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastWriteTime.dwLowDateTime = 2u;
+
+    snprintf(filesData[0].cFileName, MAX_PATH, "file_0.cl_cache");
+    filesData[0].dwFileAttributes = 0;
+    filesData[0].nFileSizeHigh = 0;
+    filesData[0].nFileSizeLow = 100;
+    filesData[0].ftLastAccessTime.dwHighDateTime = 0;
+    SysCalls::findNextFileAFileData[0] = filesData[0];
+
+    snprintf(filesData[1].cFileName, MAX_PATH, "invalid_file_name.txt");
+    filesData[1].dwFileAttributes = 0;
+    filesData[1].nFileSizeHigh = 0;
+    filesData[1].nFileSizeLow = 100;
+    filesData[1].ftLastAccessTime.dwHighDateTime = 0;
+    SysCalls::findNextFileAFileData[1] = filesData[1];
+
+    snprintf(filesData[2].cFileName, MAX_PATH, ".");
+    filesData[2].dwFileAttributes = 0;
+    filesData[2].nFileSizeHigh = 0;
+    filesData[2].nFileSizeLow = 100;
+    filesData[2].ftLastAccessTime.dwHighDateTime = 0;
+    SysCalls::findNextFileAFileData[2] = filesData[2];
+
+    snprintf(filesData[3].cFileName, MAX_PATH, "..");
+    filesData[3].dwFileAttributes = 0;
+    filesData[3].nFileSizeHigh = 0;
+    filesData[3].nFileSizeLow = 100;
+    filesData[3].ftLastAccessTime.dwHighDateTime = 0;
+    SysCalls::findNextFileAFileData[3] = filesData[3];
+
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    std::vector<ElementsStruct> cacheFiles;
+
+    EXPECT_TRUE(cache.getCachedFiles(cacheFiles));
+    EXPECT_EQ(5u, SysCalls::findNextFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+    EXPECT_EQ(1u, cacheFiles.size());
+    EXPECT_EQ(0, strcmp(cacheFiles[0].path.c_str(), "somePath\\cl_cache\\file_0.cl_cache"));
+}
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalledThenDeleteTwoOldestFiles) {
     WIN32_FIND_DATAA filesData[4];
@@ -239,7 +502,8 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
         SysCalls::findNextFileAFileData[i] = filesData[i];
     }
 
-    SysCalls::findFirstFileAResult = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
     auto &deletedFiles = SysCalls::deleteFiles;
@@ -265,7 +529,11 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFiles
     StackVec<DWORD, 4> fileAttributes = {0, FILE_ATTRIBUTE_DIRECTORY, 0, 0};
 
     for (size_t i = 0; i < 4; i++) {
-        snprintf(filesData[i].cFileName, MAX_PATH, "file_%zu.cl_cache", i);
+        if (i != 1) {
+            snprintf(filesData[i].cFileName, MAX_PATH, "file_%zu.cl_cache", i);
+        } else {
+            snprintf(filesData[i].cFileName, MAX_PATH, "someDir");
+        }
         filesData[i].nFileSizeHigh = 0;
         filesData[i].nFileSizeLow = cacheFileSize;
         filesData[i].ftLastAccessTime.dwHighDateTime = 0;
@@ -274,7 +542,12 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFiles
         SysCalls::findNextFileAFileData[i] = filesData[i];
     }
 
-    SysCalls::findFirstFileAResult = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::findFirstFileAResults[1] = INVALID_HANDLE_VALUE;
+
+    SysCalls::getLastErrorResults[0] = ERROR_NO_MORE_FILES;
+    SysCalls::getLastErrorResults[1] = ERROR_FILE_NOT_FOUND;
+
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
     auto &deletedFiles = SysCalls::deleteFiles;
@@ -292,7 +565,7 @@ TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMes
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.PrintDebugMessages.set(1);
 
-    SysCalls::findFirstFileAResult = INVALID_HANDLE_VALUE;
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
@@ -446,7 +719,10 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::readFileResult = TRUE;
     SysCalls::readFileBufferData = readCacheDirSize;
 
-    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND;
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[1] = ERROR_NO_MORE_FILES;
 
     WIN32_FIND_DATAA filesData[4];
     DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
@@ -498,7 +774,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::readFileResult = TRUE;
     SysCalls::readFileBufferData = readCacheDirSize;
 
-    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
 
     WIN32_FIND_DATAA filesData[4];
     DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
@@ -555,7 +831,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     SysCalls::readFileResult = TRUE;
     SysCalls::readFileBufferData = readCacheDirSize;
 
-    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND + 1;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND + 1;
 
     WIN32_FIND_DATAA filesData[4];
     DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
@@ -595,6 +871,43 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     EXPECT_EQ(0u, SysCalls::readFileCalled);
     EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
     EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(0u, directorySize);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenGetCachedFilesFailsThenPrintErrorMessageAndEarlyReturn) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
+
+    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::createFileAResults[1] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::createFileAResults[2] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
+
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[1] = 0;
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    UnifiedHandle configFileHandle{nullptr};
+    size_t directorySize = 0u;
+    StreamCapture capture;
+    capture.captureStderr();
+    cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
+    auto capturedStderr = capture.getCapturedStderr();
+
+    std::string expectedStderrSubstr("[Cache failure]: Get cached files failed! error code:");
+
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
+
+    EXPECT_EQ(INVALID_HANDLE_VALUE, std::get<void *>(configFileHandle));
+    EXPECT_EQ(2u, SysCalls::createFileACalled);
+    EXPECT_EQ(1u, SysCalls::lockFileExCalled);
+    EXPECT_EQ(0u, SysCalls::readFileCalled);
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
     EXPECT_EQ(0u, directorySize);
 }
 
@@ -764,6 +1077,9 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenAllStepsSuccessThenReturnTr
     cache.callBaseRenameTempFileBinaryToProperName = false;
     cache.renameTempFileBinaryToProperNameResult = true;
 
+    cache.callBaseCreateCacheDirectories = false;
+    cache.callBaseCreateCacheDirectories = true;
+
     const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
@@ -775,14 +1091,15 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenAllStepsSuccessThenReturnTr
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, SysCalls::writeFileCalled);
     EXPECT_EQ(0, strcmp(cache.createUniqueTempFileAndWriteDataTmpFilePath.c_str(), "somePath\\cl_cache\\cl_cache.XXXXXX"));
-    EXPECT_EQ(0, strcmp(cache.renameTempFileBinaryToProperNameCacheFilePath.c_str(), "somePath\\cl_cache\\7e3291364d8df42.cl_cache"));
+    EXPECT_EQ(0, strcmp(cache.renameTempFileBinaryToProperNameCacheFilePath.c_str(), "somePath\\cl_cache\\7\\e\\7e3291364d8df42.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNotCreateCacheAndReturnTrue) {
     SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES - 1;
-    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND + 1;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND + 1;
 
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
@@ -802,6 +1119,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNot
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
@@ -827,6 +1145,9 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenE
     cache.callBaseRenameTempFileBinaryToProperName = false;
     cache.renameTempFileBinaryToProperNameResult = true;
 
+    cache.callBaseCreateCacheDirectories = false;
+    cache.createCacheDirectoriesResult = true;
+
     const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
@@ -845,6 +1166,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenE
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, SysCalls::writeFileCalled);
 }
 
@@ -869,6 +1191,9 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteFileBytesWrittenMismat
     cache.callBaseRenameTempFileBinaryToProperName = false;
     cache.renameTempFileBinaryToProperNameResult = true;
 
+    cache.callBaseCreateCacheDirectories = false;
+    cache.createCacheDirectoriesResult = true;
+
     const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
@@ -889,6 +1214,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteFileBytesWrittenMismat
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, SysCalls::writeFileCalled);
 }
 
@@ -927,6 +1253,9 @@ TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNewBinar
     cache.callBaseRenameTempFileBinaryToProperName = false;
     cache.renameTempFileBinaryToProperNameResult = true;
 
+    cache.callBaseCreateCacheDirectories = false;
+    cache.createCacheDirectoriesResult = true;
+
     const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
@@ -938,9 +1267,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNewBinar
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, SysCalls::writeFileCalled);
     EXPECT_EQ(0, strcmp(cache.createUniqueTempFileAndWriteDataTmpFilePath.c_str(), "somePath\\cl_cache\\cl_cache.XXXXXX"));
-    EXPECT_EQ(0, strcmp(cache.renameTempFileBinaryToProperNameCacheFilePath.c_str(), "somePath\\cl_cache\\7e3291364d8df42.cl_cache"));
+    EXPECT_EQ(0, strcmp(cache.renameTempFileBinaryToProperNameCacheFilePath.c_str(), "somePath\\cl_cache\\7\\e\\7e3291364d8df42.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
@@ -968,6 +1298,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFa
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
@@ -999,6 +1330,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenBinaryDoesntFitAfterEvictio
 
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNoBytesHaveBeenEvictedAndNewBinaryDoesntFitAfterEvictionThenDontWriteToConfigAndReturnFalse) {
@@ -1029,6 +1361,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNoBytesH
 
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
 }
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCreateUniqueTempFileAndWriteDataFailsThenReturnFalse) {
@@ -1058,6 +1391,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCreateUniqueTempFileAndWrit
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
@@ -1079,6 +1413,9 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     cache.callBaseRenameTempFileBinaryToProperName = false;
     cache.renameTempFileBinaryToProperNameResult = false;
 
+    cache.callBaseCreateCacheDirectories = false;
+    cache.createCacheDirectoriesResult = true;
+
     const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
@@ -1091,20 +1428,55 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, SysCalls::deleteFileACalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
 }
 
-TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileModificationTimeThenFindCloseIsCalled) {
-    VariableBackup<HANDLE> findFirstFileAResultBackup(&SysCalls::findFirstFileAResult, reinterpret_cast<HANDLE>(0x1234));
-    VariableBackup<size_t> findCloseCalledBackup(&SysCalls::findCloseCalled, 0u);
+TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCreateCacheDirectoriesFailsThenReturnFalse) {
+    SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    cache.callBaseLockConfigFileAndReadSize = false;
+    cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
+
+    cache.callBaseEvictCache = false;
+    cache.evictCacheResult = true;
+
+    cache.callBaseCreateUniqueTempFileAndWriteData = false;
+    cache.createUniqueTempFileAndWriteDataResult = true;
+
+    cache.callBaseRenameTempFileBinaryToProperName = false;
+    cache.renameTempFileBinaryToProperNameResult = true;
+
+    cache.callBaseCreateCacheDirectories = false;
+    cache.createCacheDirectoriesResult = false;
+
+    const std::string kernelFileHash = "7e3291364d8df42";
+    const char *binary = "123456";
+    const size_t binarySize = strlen(binary);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
+    EXPECT_EQ(1u, SysCalls::getFileAttributesCalled);
+    EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
+    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
+    EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenFindFirstFileASuccessWhenGetFileModificationTimeThenFindCloseIsCalled) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     [[maybe_unused]] auto modificationTime = NEO::getFileModificationTime("C:\\Users\\user1\\file1.txt");
     EXPECT_EQ(1u, SysCalls::findCloseCalled);
 }
 
-TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileSizeThenFindCloseIsCalled) {
-    VariableBackup<HANDLE> findFirstFileAResultBackup(&SysCalls::findFirstFileAResult, reinterpret_cast<HANDLE>(0x1234));
-    VariableBackup<size_t> findCloseCalledBackup(&SysCalls::findCloseCalled, 0u);
+TEST_F(CompilerCacheWindowsTest, givenFindFirstFileASuccessWhenGetFileSizeThenFindCloseIsCalled) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     [[maybe_unused]] auto fileSize = NEO::getFileSize("C:\\Users\\user1\\file1.txt");
     EXPECT_EQ(1u, SysCalls::findCloseCalled);
 }
