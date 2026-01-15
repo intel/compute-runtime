@@ -346,6 +346,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
 HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenWaitSucceedsAndQueueExecFailsThenSignalEventNotCalled, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
     queue.forceQueueExecuteError = true;
 
@@ -368,6 +369,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     MockGraphicsAllocation mockGraphicsAllocation(dummyCpuPtr, 0x1000);
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.setTagAllocation(&mockGraphicsAllocation);
+    mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
     ze_event_handle_t hEventHandle = event->toHandle();

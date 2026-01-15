@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1168,6 +1168,94 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppend
     EXPECT_EQ(indirectHeapOffset, indirectDataStartAddress);
 
     context->freeMem(alloc);
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto event = events[0]->toHandle();
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, consCmdList->getCmdContainer().getCommandStream()->getCpuBase(), consCmdList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
+    auto event = events[0]->toHandle();
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, consCmdList->getCmdContainer().getCommandStream()->getCpuBase(), consCmdList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+
+    prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto event = events[0]->toHandle();
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, consCmdList->getCmdContainer().getCommandStream()->getCpuBase(), consCmdList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+
+    prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
+    auto event = events[0]->toHandle();
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, consCmdList->getCmdContainer().getCommandStream()->getCpuBase(), consCmdList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
 }
 
 } // namespace ult

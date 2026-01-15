@@ -3318,8 +3318,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()));
 
                 if (!noopDispatch) {
+                    auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
                     NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                            false, true, isQwordInOrderCounter(), indirectMode, false);
+                                                                            false, true, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful);
                 } else {
                     memset(semaphoreCommand, 0, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
                 }
@@ -4706,7 +4707,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, outSemWaitCmdBuffer);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), outSemWaitCmdBuffer);
 
             if (outWaitCmds != nullptr) {
                 if constexpr (!std::is_same_v<PatchSemaphoreType, PatchInvalidPatchType>) {

@@ -2754,7 +2754,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWh
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::gpuHang;
     mockCommandStreamReceiver.waitForCompletionWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
-
+    mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;
     auto queue = static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate);
 
     const auto oldCsr = queue->csr;
