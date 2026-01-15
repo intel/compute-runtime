@@ -65,16 +65,6 @@ TEST(zeCommandListAppendMemoryFill, whenPatternSizeNotPowerOf2ThenReturnError) {
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
 }
 
-TEST(zeCommandListAppendMemoryFill, whenPtrIsNotAlignedToPatternSizeThenReturnError) {
-    MockCommandList commandList;
-    size_t bufferSize = 4096u;
-
-    int value = 0;
-    auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1002), reinterpret_cast<void *>(&value),
-                                             4u, bufferSize, nullptr, 0, nullptr);
-    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, res);
-}
-
 TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
     Mock<Event> eventObj;

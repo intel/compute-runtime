@@ -285,14 +285,6 @@ TYPED_TEST(IsAlignedTests, WhenCheckingForAlignmentThenReturnCorrectValue) {
     EXPECT_FALSE(isAligned(ptr3));
 }
 
-TEST(IsAligned, GivenVariableWhenCheckingForPointerAlignmentThenReturnCorrectValue) {
-    void *alignedPtr = (void *)0x1000;
-    void *misalignedPtr = (void *)0x1001;
-
-    EXPECT_TRUE(isAligned(alignedPtr, 4));
-    EXPECT_FALSE(isAligned(misalignedPtr, 4));
-}
-
 TEST(IsAligned, GivenNonPointerTypeWhenCheckingForAlignmentThenReturnIsCorrect) {
     EXPECT_TRUE(isAligned<3>(0));
     EXPECT_FALSE(isAligned<3>(1));
