@@ -945,3 +945,17 @@ XE3_CORETEST_P(GfxCoreHelperTestsXe3CoreResourceBarrier, givenXe3WhenSetStallOnl
 INSTANTIATE_TEST_SUITE_P(GfxCoreHelperTestsXe3CoreResourceBarrierValues,
                          GfxCoreHelperTestsXe3CoreResourceBarrier,
                          ::testing::Values(1, 2, 3));
+
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenIsWalkerPostSyncSkipEnabledCalledThenReturnTrue) {
+    DebugManagerStateRestore restorer{};
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(true));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}

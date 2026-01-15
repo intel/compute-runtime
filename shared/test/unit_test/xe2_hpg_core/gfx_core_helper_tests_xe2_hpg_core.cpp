@@ -914,3 +914,17 @@ XE2_HPG_CORETEST_P(GfxCoreHelperTestsXe2HpgCoreResourceBarrier, givenXe2HpgWhenS
 INSTANTIATE_TEST_SUITE_P(GfxCoreHelperTestsXe2HpgCoreResourceBarrierValues,
                          GfxCoreHelperTestsXe2HpgCoreResourceBarrier,
                          ::testing::Values(1, 2, 3));
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenIsWalkerPostSyncSkipEnabledCalledThenReturnTrue) {
+    DebugManagerStateRestore restorer{};
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(true));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}
