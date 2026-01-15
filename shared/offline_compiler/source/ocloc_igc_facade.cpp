@@ -61,7 +61,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    const std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
+    const std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId(), IGC::IgcFeaturesAndWorkaroundsBase::GetInterfaceId()};
     if (!isIgcInterfaceCompatible(interfacesToIgnore)) {
         const auto incompatibleInterface{getIncompatibleInterface(interfacesToIgnore)};
         argHelper->printf("Error! Incompatible interface in IGC: %s\n", incompatibleInterface.c_str());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,7 +107,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
         return false;
     }
 
-    std::vector<CIF::InterfaceId_t> interfacesToIgnore{IGC::OclGenBinaryBase::GetInterfaceId()};
+    std::vector<CIF::InterfaceId_t> interfacesToIgnore{IGC::OclGenBinaryBase::GetInterfaceId(), IGC::IgcFeaturesAndWorkaroundsBase::GetInterfaceId()};
     if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
