@@ -1972,7 +1972,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
 
     if (osContext.isPartOfContextGroup()) {
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
-        ext[extIndexInOut].base.name = getExecQueueSetPropertyValue();
+        ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = getExecQueueSetPropertyMultiGroupValue();
         if (extIndexInOut > 0) {
             ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
@@ -2003,7 +2003,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
 
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
         ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
-        ext[extIndexInOut].base.name = getExecQueueSetPropertyValue();
+        ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = getExecQueueSetPropertyMultiQueuePriorityValue();
         ext[extIndexInOut].value = priorityValue;
         xeLog(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);

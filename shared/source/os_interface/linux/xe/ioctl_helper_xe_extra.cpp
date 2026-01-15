@@ -12,9 +12,6 @@ namespace NEO {
 uint64_t IoctlHelperXe::getPrimaryContextProperties() const {
     return DRM_XE_MULTI_GROUP_CREATE;
 }
-uint32_t IoctlHelperXe::getExecQueueSetPropertyValue() const {
-    return DRM_XE_EXEC_QUEUE_SET_PROPERTY;
-}
 uint32_t IoctlHelperXe::getExecQueueSetPropertyMultiGroupValue() const {
     return DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP;
 }

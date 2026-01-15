@@ -176,7 +176,6 @@ class IoctlHelperXe : public IoctlHelper {
     virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);
     virtual uint64_t getPrimaryContextProperties() const;
 
-    virtual uint32_t getExecQueueSetPropertyValue() const;
     virtual uint32_t getExecQueueSetPropertyMultiGroupValue() const;
     virtual uint32_t getExecQueueSetPropertyMultiQueuePriorityValue() const;
 
