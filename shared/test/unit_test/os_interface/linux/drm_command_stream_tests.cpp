@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1404,8 +1404,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCall
 
 struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOperationsHandlerDefault {
     using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
-    MockMergeResidencyContainerMemoryOperationsHandler(uint32_t rootDeviceIndex)
-        : DrmMemoryOperationsHandlerDefault(rootDeviceIndex){};
+    MockMergeResidencyContainerMemoryOperationsHandler(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
+        : DrmMemoryOperationsHandlerDefault(rootDeviceEnvironment, rootDeviceIndex){};
 
     ADDMETHOD_NOBASE(mergeWithResidencyContainer, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
                      (OsContext * osContext, ResidencyContainer &residencyContainer));
@@ -1422,7 +1422,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
         }
     };
 
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(rootDeviceIndex));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(*executionEnvironment->rootDeviceEnvironments[0].get(), rootDeviceIndex));
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::failed;
 
@@ -1454,7 +1454,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
         }
     };
 
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(rootDeviceIndex));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(*executionEnvironment->rootDeviceEnvironments[0].get(), rootDeviceIndex));
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::outOfMemory;
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();

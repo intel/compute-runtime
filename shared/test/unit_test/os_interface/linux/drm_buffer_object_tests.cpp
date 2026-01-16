@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,21 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
     const auto result = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
 
     EXPECT_EQ(BufferObject::gpuHangDetected, result);
+}
+
+TEST_F(DrmBufferObjectTest, GivenDirectSubmissionLightWhenExecFailsThenDoNotRetryAtBoExecLevelAndReturnError) {
+    osContext->setDirectSubmissionActive();
+
+    mock->ioctlExpected.total = 1;
+    mock->ioctlRes = -1;
+    mock->errnoValue = EFAULT;
+
+    bo->callBaseEvictUnusedAllocations = false;
+
+    ExecObject execObjectsStorage = {};
+    const auto result = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+
+    EXPECT_NE(0, result);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {

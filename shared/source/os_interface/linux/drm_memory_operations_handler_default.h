@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,7 @@ class OsContextLinux;
 struct RootDeviceEnvironment;
 class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex);
-    DrmMemoryOperationsHandlerDefault(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : DrmMemoryOperationsHandlerDefault(rootDeviceIndex) {}
+    DrmMemoryOperationsHandlerDefault(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : DrmMemoryOperationsHandler(rootDeviceEnvironment, rootDeviceIndex) {}
     ~DrmMemoryOperationsHandlerDefault() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override;
@@ -35,6 +34,8 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     bool obtainAndResetNewResourcesSinceLastRingSubmit() override;
 
   protected:
+    int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) override;
+
     std::vector<GraphicsAllocation *> residency{};
     bool newResourcesSinceLastRingSubmit = false;
 };

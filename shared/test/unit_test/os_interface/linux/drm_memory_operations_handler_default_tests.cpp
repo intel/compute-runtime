@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
         mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[0]);
         mock->setBindAvailable();
 
-        drmMemoryOperationsHandler = std::make_unique<MockDrmMemoryOperationsHandlerDefault>(0);
+        drmMemoryOperationsHandler = std::make_unique<MockDrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[0].get(), 0);
     }
     void initializeAllocation(int numBos) {
         if (!drmAllocation) {

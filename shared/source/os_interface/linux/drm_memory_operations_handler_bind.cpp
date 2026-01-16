@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@
 namespace NEO {
 
 DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
-    : DrmMemoryOperationsHandler(rootDeviceIndex), rootDeviceEnvironment(rootDeviceEnvironment){};
+    : DrmMemoryOperationsHandler(rootDeviceEnvironment, rootDeviceIndex){};
 
 DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
@@ -177,62 +177,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
         if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
             return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
         }
-    }
-
-    return MemoryOperationsStatus::success;
-}
-
-MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
-    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(this->rootDeviceIndex);
-    std::vector<GraphicsAllocation *> evictCandidates;
-
-    for (auto subdeviceIndex = 0u; subdeviceIndex < GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
-        for (auto &allocation : allocationsForEviction) {
-            bool evict = true;
-
-            if (allocation->getRootDeviceIndex() != this->rootDeviceIndex) {
-                continue;
-            }
-
-            for (const auto &engine : engines) {
-                if (engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
-                    if (allocation->isAlwaysResident(engine.osContext->getContextId())) {
-                        evict = false;
-                        break;
-                    }
-                    if (allocation->isLockedMemory()) {
-                        evict = false;
-                        break;
-                    }
-                    if (waitForCompletion && engine.commandStreamReceiver->isInitialized()) {
-                        const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
-                        if (waitStatus == WaitStatus::gpuHang) {
-                            return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
-                        }
-                    }
-
-                    if (allocation->isUsedByOsContext(engine.osContext->getContextId()) &&
-                        allocation->getTaskCount(engine.osContext->getContextId()) > *engine.commandStreamReceiver->getTagAddress()) {
-                        evict = false;
-                        break;
-                    }
-                }
-            }
-            if (evict) {
-                evictCandidates.push_back(allocation);
-            }
-        }
-
-        for (auto &allocationToEvict : evictCandidates) {
-            for (const auto &engine : engines) {
-                if (engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
-                    DeviceBitfield deviceBitfield;
-                    deviceBitfield.set(subdeviceIndex);
-                    this->evictImpl(engine.osContext, *allocationToEvict, deviceBitfield);
-                }
-            }
-        }
-        evictCandidates.clear();
     }
 
     return MemoryOperationsStatus::success;

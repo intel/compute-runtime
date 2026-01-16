@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,6 +138,21 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         }
         bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
         if (ret == false) {
+            if (!this->vmBindAvailable) {
+                auto retrySequenceForUllsLight = [&](bool waitForCompletion) {
+                    memoryOperationsInterface->evictUnusedAllocations(waitForCompletion, false);
+                    allocationsForResidency.clear();
+                    memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
+                    batchBuffer.allocationsForResidency = &allocationsForResidency;
+                    return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+                };
+                for (bool waitForCompletion : {false, true}) {
+                    ret = retrySequenceForUllsLight(waitForCompletion);
+                    if (ret) {
+                        return SubmissionStatus::success;
+                    }
+                }
+            }
             return Drm::getSubmissionStatusFromReturnCode(this->directSubmission->getDispatchErrorCode());
         }
         return SubmissionStatus::success;

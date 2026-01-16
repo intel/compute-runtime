@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -19,9 +21,6 @@
 #include <iostream>
 
 namespace NEO {
-
-DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex)
-    : DrmMemoryOperationsHandler(rootDeviceIndex){};
 ;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
@@ -122,13 +121,19 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUse
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
-    return MemoryOperationsStatus::success;
+    return this->evictUnusedAllocationsImpl(this->residency, waitForCompletion);
 }
 
 bool DrmMemoryOperationsHandlerDefault::obtainAndResetNewResourcesSinceLastRingSubmit() {
     auto ret = this->newResourcesSinceLastRingSubmit;
     this->newResourcesSinceLastRingSubmit = false;
     return ret;
+}
+
+int DrmMemoryOperationsHandlerDefault::evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) {
+    std::erase(this->residency, &gfxAllocation);
+    this->newResourcesSinceLastRingSubmit = true;
+    return 0;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::flushDummyExec(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {

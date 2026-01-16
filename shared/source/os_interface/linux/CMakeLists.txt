@@ -32,6 +32,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind.h

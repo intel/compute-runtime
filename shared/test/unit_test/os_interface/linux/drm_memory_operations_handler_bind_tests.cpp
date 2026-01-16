@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
             if (i == 0) {
-                executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerDefault(i));
+                executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerDefault(*executionEnvironment->rootDeviceEnvironments[i].get(), i));
             } else {
                 executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[i].get(), i));
             }

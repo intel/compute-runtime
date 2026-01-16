@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,25 +205,27 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 
     int ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
 
-    if (ret != 0) {
-        int err = this->drm->getErrno();
-        if (err == EOPNOTSUPP) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-            return err;
+    if (!osContext->isDirectSubmissionLightActive()) {
+        if (ret != 0) {
+            int err = this->drm->getErrno();
+            if (err == EOPNOTSUPP) {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+                return err;
+            }
+
+            evictUnusedAllocations(false, true);
+            ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
         }
 
-        evictUnusedAllocations(false, true);
-        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
-    }
+        if (ret != 0) {
+            const auto status = evictUnusedAllocations(true, true);
+            if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
+                return gpuHangDetected;
+            }
 
-    if (ret != 0) {
-        const auto status = evictUnusedAllocations(true, true);
-        if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
-            return gpuHangDetected;
+            ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
         }
-
-        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret == 0) {

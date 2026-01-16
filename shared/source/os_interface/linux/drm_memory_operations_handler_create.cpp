@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ std::unique_ptr<DrmMemoryOperationsHandler> DrmMemoryOperationsHandler::create(D
     if (withAubDump) {
         return std::make_unique<DrmMemoryOperationsHandlerWithAubDump<DrmMemoryOperationsHandlerDefault>>(*rootDeviceEnv, rootDeviceIndex);
     } else {
-        return std::make_unique<DrmMemoryOperationsHandlerDefault>(rootDeviceIndex);
+        return std::make_unique<DrmMemoryOperationsHandlerDefault>(*rootDeviceEnv, rootDeviceIndex);
     }
 }
 

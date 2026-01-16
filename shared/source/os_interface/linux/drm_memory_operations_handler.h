@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/residency_container.h"
 
@@ -17,7 +18,7 @@ class Drm;
 class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandler(uint32_t rootDeviceIndex) : rootDeviceIndex(rootDeviceIndex){};
+    DrmMemoryOperationsHandler(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : rootDeviceIndex(rootDeviceIndex), rootDeviceEnvironment(rootDeviceEnvironment){};
     ~DrmMemoryOperationsHandler() override = default;
 
     virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
@@ -37,7 +38,11 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     virtual bool obtainAndResetNewResourcesSinceLastRingSubmit() { return false; }
 
   protected:
+    virtual int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) = 0;
+    MemoryOperationsStatus evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion);
+
     std::mutex mutex;
     uint32_t rootDeviceIndex = 0;
+    const RootDeviceEnvironment &rootDeviceEnvironment;
 };
 } // namespace NEO
