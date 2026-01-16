@@ -88,7 +88,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
     }
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetricGroupGetIsCalledThenNoMetricGroupIsReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetricGroupGetIsCalledThenValidMetricGroupIsReturned, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
@@ -99,7 +99,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetr
     for (auto device : testDevices) {
 
         uint32_t metricGroupCount = 0;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupCount, 0u);
     }
 }

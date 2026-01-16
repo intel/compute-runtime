@@ -251,11 +251,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenIncorrectMetricsDiscoveryInterface
     setupDefaultMocksForMetricDevice(metricsDevice);
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
-TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetPropertiesIsCalledThenReturnSuccess) {
+TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;

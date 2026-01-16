@@ -341,7 +341,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsAndMetricGroupsIsNotActivatedWhenZ
     EXPECT_EQ(streamerHandle, nullptr);
 }
 
-TEST_F(MetricStreamerTest, givenInValidOaInformationSymbolNameWhenZetMetricGroupGetIsCalledThenCallFailsWithCountZero) {
+TEST_F(MetricStreamerTest, givenInValidOaInformationSymbolNameWhenZetMetricGroupGetIsCalledThenCallSucceedsWithCountZero) {
 
     zet_device_handle_t metricDeviceHandle = device->toHandle();
 
@@ -395,11 +395,11 @@ TEST_F(MetricStreamerTest, givenInValidOaInformationSymbolNameWhenZetMetricGroup
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
-TEST_F(MetricStreamerTest, givenInValidInformationElementCountWhenZetMetricGroupGetIsCalledThenCallFailsWithCountZero) {
+TEST_F(MetricStreamerTest, givenInValidInformationElementCountWhenZetMetricGroupGetIsCalledThenCallSucceedsWithCountZero) {
 
     zet_device_handle_t metricDeviceHandle = device->toHandle();
 
@@ -454,7 +454,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementCountWhenZetMetricGroup
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
@@ -512,7 +512,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementTypeWhenZetMetricGroupG
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 

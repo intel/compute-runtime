@@ -75,7 +75,6 @@ ze_result_t MetricIpSamplingWindowsImp::readData(uint8_t *pRawData, size_t *pRaw
         size_t rawDataSizeTemp = 0u;
         result = wddm->perfReadEuStallStream(nullptr, &rawDataSizeTemp, &retCode);
         if (!result) {
-            METRICS_LOG_ERR("wddm perfReadEuStallStream() call failed.");
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
