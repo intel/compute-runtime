@@ -7,190 +7,100 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/utilities/io_functions.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_compiler_cache.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "elements_struct.h"
+#include "os_inc.h"
+
+#include <array>
+#include <list>
+#include <memory>
 
 using namespace NEO;
 
 class CompilerCacheMockLinux : public CompilerCache {
   public:
     CompilerCacheMockLinux(const CompilerCacheConfig &config) : CompilerCache(config) {}
-    using CompilerCache::createCacheDirectories;
     using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
-    using CompilerCache::getCachedFiles;
-    using CompilerCache::getFiles;
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::renameTempFileBinaryToProperName;
 };
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenCreateCacheDirectoriesIsCalledThenReturnsTrue) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, [](const std::string &dir) -> int {
-        return 0;
-    });
+namespace EvictCachePass {
+decltype(NEO::SysCalls::sysCallsScandir) mockScandir = [](const char *dirp,
+                                                          struct dirent ***namelist,
+                                                          int (*filter)(const struct dirent *),
+                                                          int (*compar)(const struct dirent **,
+                                                                        const struct dirent **)) -> int {
+    struct dirent **v = (struct dirent **)malloc(6 * (sizeof(struct dirent *)));
 
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    v[0] = (struct dirent *)malloc(sizeof(struct dirent));
 
-    EXPECT_TRUE(cache.createCacheDirectories("file.cl_cache"));
-}
+    memcpy_s(v[0]->d_name, sizeof(v[0]->d_name), "file1.cl_cache", sizeof("file1.cl_cache"));
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenDirectoryAlreadyExistsThenCreateCacheDirectoriesReturnsTrue) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, [](const std::string &dir) -> int {
-        errno = EEXIST;
-        return -1;
-    });
+    v[1] = (struct dirent *)malloc(sizeof(struct dirent));
 
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    memcpy_s(v[1]->d_name, sizeof(v[1]->d_name), "file2.cl_cache", sizeof("file2.cl_cache"));
 
-    EXPECT_TRUE(cache.createCacheDirectories("file.cl_cache"));
-}
+    v[2] = (struct dirent *)malloc(sizeof(struct dirent));
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenMkdirFailsThenCreateCacheDirectoriesReturnsFalse) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, [](const std::string &dir) -> int {
-        errno = EACCES;
-        return -1;
-    });
+    memcpy_s(v[2]->d_name, sizeof(v[2]->d_name), "file3.cl_cache", sizeof("file3.cl_cache"));
 
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    v[3] = (struct dirent *)malloc(sizeof(struct dirent));
 
-    EXPECT_FALSE(cache.createCacheDirectories("file.cl_cache"));
-}
+    memcpy_s(v[3]->d_name, sizeof(v[3]->d_name), "file4.cl_cache", sizeof("file4.cl_cache"));
 
-namespace GetFilesFailFtsErr {
-FTSENT *ftsEntry;
+    v[4] = (struct dirent *)malloc(sizeof(struct dirent));
 
-decltype(NEO::SysCalls::sysCallsFtsOpen) mockFtsOpen = [](char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **)) -> FTS * {
-    return reinterpret_cast<FTS *>(0x1234);
+    memcpy_s(v[4]->d_name, sizeof(v[4]->d_name), "file5.cl_cache", sizeof("file5.cl_cache"));
+
+    v[5] = (struct dirent *)malloc(sizeof(struct dirent));
+
+    memcpy_s(v[5]->d_name, sizeof(v[5]->d_name), "file6.cl_cache", sizeof("file6.cl_cache"));
+
+    *namelist = v;
+    return 6;
 };
 
-decltype(NEO::SysCalls::sysCallsFtsRead) mockFtsRead = [](FTS *ftsp) -> FTSENT * {
-    errno = EACCES;
-    return ftsEntry;
-};
+decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+    if (filePath.find("file1") != filePath.npos) {
+        statbuf->st_atime = 3;
+    }
+    if (filePath.find("file2") != filePath.npos) {
+        statbuf->st_atime = 6;
+    }
+    if (filePath.find("file3") != filePath.npos) {
+        statbuf->st_atime = 1;
+    }
+    if (filePath.find("file4") != filePath.npos) {
+        statbuf->st_atime = 2;
+    }
+    if (filePath.find("file5") != filePath.npos) {
+        statbuf->st_atime = 4;
+    }
+    if (filePath.find("file6") != filePath.npos) {
+        statbuf->st_atime = 5;
+    }
+    statbuf->st_size = (MemoryConstants::megaByte / 6) + 10;
 
-decltype(NEO::SysCalls::sysCallsFtsClose) mockFtsClose = [](FTS *ftsp) -> int {
     return 0;
 };
-} // namespace GetFilesFailFtsErr
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenFtsReadReturnsFtsErrThenGetFilesReturnsFalse) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsOpen)> ftsOpenBackup(&NEO::SysCalls::sysCallsFtsOpen, GetFilesFailFtsErr::mockFtsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsRead)> ftsReadBackup(&NEO::SysCalls::sysCallsFtsRead, GetFilesFailFtsErr::mockFtsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsClose)> ftsCloseBackup(&NEO::SysCalls::sysCallsFtsClose, GetFilesFailFtsErr::mockFtsClose);
-
-    GetFilesFailFtsErr::ftsEntry = new FTSENT;
-    GetFilesFailFtsErr::ftsEntry->fts_info = FTS_ERR;
-    GetFilesFailFtsErr::ftsEntry->fts_errno = EACCES;
-
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    std::vector<ElementsStruct> foundFiles;
-    EXPECT_FALSE(cache.getFiles(
-        "/home/cl_cache/", [](std::string_view path) { return true; }, foundFiles));
-
-    delete GetFilesFailFtsErr::ftsEntry;
-}
-
-TEST(CompilerCacheTests, CompilerCacheTests_GivenCompilerCacheWhenFtsReadFailsAndSetsErrnoThenGetFilesReturnsFalse) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsOpen)> ftsOpenBackup(&NEO::SysCalls::sysCallsFtsOpen, [](char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **)) -> FTS * {
-        return reinterpret_cast<FTS *>(0x1234);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsRead)> ftsReadBackup(&NEO::SysCalls::sysCallsFtsRead, [](FTS *ftsp) -> FTSENT * {
-        errno = EACCES;
-        return nullptr;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsClose)> ftsCloseBackup(&NEO::SysCalls::sysCallsFtsClose, [](FTS *ftsp) -> int {
-        return 0;
-    });
-
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-    std::vector<ElementsStruct> foundFiles;
-    EXPECT_FALSE(cache.getFiles(
-        "/home/cl_cache/", [](std::string_view path) { return true; }, foundFiles));
-}
-
-namespace GetCachedFilesPass {
-size_t cachedFileIdx;
-std::vector<ElementsStruct> *mockCachedFiles;
-std::vector<FTSENT> *ftsEntries;
-
-decltype(NEO::SysCalls::sysCallsFtsOpen) mockFtsOpen = [](char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **)) -> FTS * {
-    cachedFileIdx = 0;
-    if (strcmp(pathArgv[0], "/home/cl_cache/") == 0) {
-        return reinterpret_cast<FTS *>(0x1234);
-    }
-    return nullptr;
-};
-
-decltype(NEO::SysCalls::sysCallsFtsRead) mockFtsRead = [](FTS *ftsp) -> FTSENT * {
-    if (ftsp != reinterpret_cast<FTS *>(0x1234)) {
-        return nullptr;
-    }
-    if (cachedFileIdx >= mockCachedFiles->size()) {
-        errno = 0;
-        return nullptr;
-    }
-    FTSENT entry{};
-    entry.fts_path = strdup((*mockCachedFiles)[cachedFileIdx].path.c_str());
-    entry.fts_statp = new struct stat;
-    entry.fts_statp->st_size = (*mockCachedFiles)[cachedFileIdx].fileSize;
-    entry.fts_statp->st_atime = (*mockCachedFiles)[cachedFileIdx].lastAccessTime;
-    entry.fts_info = FTS_F;
-    if (cachedFileIdx == 0) {
-        entry.fts_info = FTS_D;
-    }
-    cachedFileIdx++;
-    ftsEntries->push_back(entry);
-    return &ftsEntries->back();
-};
-
-decltype(NEO::SysCalls::sysCallsFtsClose) mockFtsClose = [](FTS *ftsp) -> int {
-    if (ftsp == reinterpret_cast<FTS *>(0x1234)) {
-        for (auto &entry : *ftsEntries) {
-            free(entry.fts_path);
-            entry.fts_path = nullptr;
-            delete entry.fts_statp;
-            entry.fts_statp = nullptr;
-        }
-        ftsEntries->clear();
-        return 0;
-    }
-    return -1;
-};
-
-} // namespace GetCachedFilesPass
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenGetCachedFilesIsCalledThenProperFilesAreReturned) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsOpen)> ftsOpenBackup(&NEO::SysCalls::sysCallsFtsOpen, GetCachedFilesPass::mockFtsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsRead)> ftsReadBackup(&NEO::SysCalls::sysCallsFtsRead, GetCachedFilesPass::mockFtsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFtsClose)> ftsCloseBackup(&NEO::SysCalls::sysCallsFtsClose, GetCachedFilesPass::mockFtsClose);
-
-    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    std::vector<ElementsStruct> cachedFiles;
-    GetCachedFilesPass::ftsEntries = new std::vector<FTSENT>;
-    GetCachedFilesPass::mockCachedFiles = new std::vector<ElementsStruct>{
-        ElementsStruct{3, 100, "/home/cl_cache/f/i/file1.cl_cache"},
-        ElementsStruct{6, 200, "/home/cl_cache/f/i/file2.cl_cache"},
-        ElementsStruct{1, 300, "/home/cl_cache/f/i/file3.cl_cache"},
-        ElementsStruct{2, 150, "/home/cl_cache/f/i/file4.txt"}};
-
-    EXPECT_TRUE(cache.getCachedFiles(cachedFiles));
-    EXPECT_EQ(cachedFiles.size(), 2u);
-    EXPECT_EQ(cachedFiles[0].path, "/home/cl_cache/f/i/file3.cl_cache");
-    EXPECT_EQ(cachedFiles[1].path, "/home/cl_cache/f/i/file2.cl_cache");
-
-    delete GetCachedFilesPass::mockCachedFiles;
-    delete GetCachedFilesPass::ftsEntries;
-}
-
-namespace EvictCachePass {
 std::vector<std::string> *unlinkFiles;
 
 decltype(NEO::SysCalls::sysCallsUnlink) mockUnlink = [](const std::string &pathname) -> int {
@@ -200,33 +110,15 @@ decltype(NEO::SysCalls::sysCallsUnlink) mockUnlink = [](const std::string &pathn
 };
 } // namespace EvictCachePass
 
-class CompilerCacheMockGetCachedFilesLinux : public CompilerCacheMockLinux {
-  public:
-    using CompilerCache::getFiles;
-    using CompilerCacheMockLinux::compareByLastAccessTime;
-    using CompilerCacheMockLinux::CompilerCacheMockLinux;
-    using CompilerCacheMockLinux::getCachedFiles;
-
-    bool getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles) override {
-        foundFiles = {
-            ElementsStruct{3, (MemoryConstants::megaByte / 6) + 10, "file1.cl_cache"},
-            ElementsStruct{6, (MemoryConstants::megaByte / 6) + 10, "file2.cl_cache"},
-            ElementsStruct{1, (MemoryConstants::megaByte / 6) + 10, "file3.cl_cache"},
-            ElementsStruct{2, (MemoryConstants::megaByte / 6) + 10, "file4.cl_cache"},
-            ElementsStruct{4, (MemoryConstants::megaByte / 6) + 10, "file5.cl_cache"},
-            ElementsStruct{5, (MemoryConstants::megaByte / 6) + 10, "file6.cl_cache"}};
-
-        return true;
-    }
-};
-
 TEST(CompilerCacheTests, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalledThenUnlinkTwoOldestFiles) {
     std::vector<std::string> unlinkLocalFiles;
     EvictCachePass::unlinkFiles = &unlinkLocalFiles;
 
+    VariableBackup<decltype(NEO::SysCalls::sysCallsScandir)> scandirBackup(&NEO::SysCalls::sysCallsScandir, EvictCachePass::mockScandir);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, EvictCachePass::mockStat);
     VariableBackup<decltype(NEO::SysCalls::sysCallsUnlink)> unlinkBackup(&NEO::SysCalls::sysCallsUnlink, EvictCachePass::mockUnlink);
 
-    CompilerCacheMockGetCachedFilesLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte - 2u});
+    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte - 2u});
 
     uint64_t bytesEvicted{0u};
     EXPECT_TRUE(cache.evictCache(bytesEvicted));
@@ -237,6 +129,14 @@ TEST(CompilerCacheTests, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalled
     auto file1 = unlinkLocalFiles[1];
     EXPECT_NE(unlinkLocalFiles[0].find("file3"), file0.npos);
     EXPECT_NE(unlinkLocalFiles[1].find("file4"), file1.npos);
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWithWhenScandirFailThenEvictCacheFail) {
+    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    VariableBackup<decltype(NEO::SysCalls::sysCallsScandir)> scandirBackup(&NEO::SysCalls::sysCallsScandir, [](const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **)) -> int { return -1; });
+
+    uint64_t bytesEvicted{0u};
+    EXPECT_FALSE(cache.evictCache(bytesEvicted));
 }
 
 namespace CreateUniqueTempFilePass {
@@ -317,11 +217,14 @@ TEST(CompilerCacheTests, GivenCompilerCacheWithCreateUniqueTempFileAndWriteDataW
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenRenameFailThenFalseIsReturned) {
+    int unlinkTemp = 0;
+    VariableBackup<decltype(NEO::SysCalls::unlinkCalled)> unlinkBackup(&NEO::SysCalls::unlinkCalled, unlinkTemp);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRename)> renameBackup(&NEO::SysCalls::sysCallsRename, [](const char *currName, const char *dstName) -> int { return -1; });
 
     CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
 
     EXPECT_FALSE(cache.renameTempFileBinaryToProperName("src", "dst"));
+    EXPECT_EQ(NEO::SysCalls::unlinkCalled, 1);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenRenameThenTrueIsReturned) {
@@ -368,30 +271,20 @@ int openWithMode(const char *file, int flags, int mode) {
         return 1;
     }
 
-    errno = ENOENT;
+    errno = 2;
     return -1;
 }
 
 int open(const char *file, int flags) {
-    errno = ENOENT;
+    errno = 2;
     return -1;
 }
 } // namespace LockConfigFileAndReadSize
 
-class CompilerCacheMockGetCachedFilesFailsLinux : public CompilerCacheMockLinux {
-  public:
-    using CompilerCache::getFiles;
-    using CompilerCacheMockLinux::CompilerCacheMockLinux;
-    using CompilerCacheMockLinux::getCachedFiles;
+TEST(CompilerCacheTests, GivenCompilerCacheWhenScandirFailInLockConfigFileThenFdIsSetToNegativeNumber) {
+    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
 
-    bool getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles) override {
-        return false;
-    }
-};
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenGetCachedFilesFailsInLockConfigFileThenFdIsSetToNegativeNumber) {
-    CompilerCacheMockGetCachedFilesFailsLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
+    VariableBackup<decltype(NEO::SysCalls::sysCallsScandir)> scandirBackup(&NEO::SysCalls::sysCallsScandir, [](const char *dirp, struct dirent ***namelist, int (*filter)(const struct dirent *), int (*compar)(const struct dirent **, const struct dirent **)) -> int { return -1; });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpenWithMode)> openWithModeBackup(&NEO::SysCalls::sysCallsOpenWithMode, LockConfigFileAndReadSize::openWithMode);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, LockConfigFileAndReadSize::open);
 
@@ -403,46 +296,61 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenGetCachedFilesFailsInLockConfigFi
     EXPECT_EQ(std::get<int>(configFileDescriptor), -1);
 }
 
-class CompilerCacheMockGetCachedFilesWorksLinux : public CompilerCacheMockLinux {
-  public:
-    using CompilerCache::getFiles;
-    using CompilerCacheMockLinux::CompilerCacheMockLinux;
-    using CompilerCacheMockLinux::getCachedFiles;
+namespace lockConfigFileAndReadSizeMocks {
+decltype(NEO::SysCalls::sysCallsScandir) mockScandir = [](const char *dirp,
+                                                          struct dirent ***namelist,
+                                                          int (*filter)(const struct dirent *),
+                                                          int (*compar)(const struct dirent **,
+                                                                        const struct dirent **)) -> int {
+    struct dirent **v = (struct dirent **)malloc(4 * (sizeof(struct dirent *)));
 
-    bool getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles) override {
-        getFilesCalled++;
+    v[0] = (struct dirent *)malloc(sizeof(struct dirent));
 
-        foundFiles = {
-            ElementsStruct{3, MemoryConstants::megaByte / 4, "file1" + config.cacheFileExtension},
-            ElementsStruct{6, MemoryConstants::megaByte / 4, "file2" + config.cacheFileExtension},
-            ElementsStruct{1, MemoryConstants::megaByte / 4, "file3" + config.cacheFileExtension},
-            ElementsStruct{2, MemoryConstants::megaByte / 4, "file4" + config.cacheFileExtension}};
+    memcpy_s(v[0]->d_name, sizeof(v[0]->d_name), "file1.cl_cache", sizeof("file1.cl_cache"));
 
-        return true;
-    }
+    v[1] = (struct dirent *)malloc(sizeof(struct dirent));
 
-    int getFilesCalled = 0;
+    memcpy_s(v[1]->d_name, sizeof(v[1]->d_name), "file2.cl_cache", sizeof("file2.cl_cache"));
+
+    v[2] = (struct dirent *)malloc(sizeof(struct dirent));
+
+    memcpy_s(v[2]->d_name, sizeof(v[2]->d_name), "file3.cl_cache", sizeof("file3.cl_cache"));
+
+    v[3] = (struct dirent *)malloc(sizeof(struct dirent));
+
+    memcpy_s(v[3]->d_name, sizeof(v[3]->d_name), "file4.cl_cache", sizeof("file4.cl_cache"));
+
+    *namelist = v;
+    return 4;
 };
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenGetFilesWorksAndClCacheThenGetCachedFilesReturnsTrue) {
-    CompilerCacheMockGetCachedFilesWorksLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+decltype(NEO::SysCalls::sysCallsStat) mockStat = [](const std::string &filePath, struct stat *statbuf) -> int {
+    if (filePath.find("file1") != filePath.npos) {
+        statbuf->st_atime = 3;
+    }
+    if (filePath.find("file2") != filePath.npos) {
+        statbuf->st_atime = 6;
+    }
+    if (filePath.find("file3") != filePath.npos) {
+        statbuf->st_atime = 1;
+    }
+    if (filePath.find("file4") != filePath.npos) {
+        statbuf->st_atime = 2;
+    }
 
-    std::vector<ElementsStruct> cachedFiles;
-    EXPECT_TRUE(cache.getCachedFiles(cachedFiles));
-    EXPECT_EQ(cachedFiles.size(), 4u);
-}
+    statbuf->st_size = (MemoryConstants::megaByte / 4);
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenGetFilesWorksAndL0CacheThenGetCachedFilesReturnsTrue) {
-    CompilerCacheMockGetCachedFilesWorksLinux cache({true, ".l0_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    return 0;
+};
+} // namespace lockConfigFileAndReadSizeMocks
 
-    std::vector<ElementsStruct> cachedFiles;
-    EXPECT_TRUE(cache.getCachedFiles(cachedFiles));
-    EXPECT_EQ(cachedFiles.size(), 4u);
-}
+TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileWithFileCreationThenFdIsSetProperSizeIsSetAndScandirIsCalled) {
+    CompilerCacheMockLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+    int scandirCalledTemp = 0;
 
-TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileWithFileCreationThenFdIsSetAndProperSizeIsSet) {
-    CompilerCacheMockGetCachedFilesWorksLinux cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
+    VariableBackup<decltype(NEO::SysCalls::scandirCalled)> scandirCalledBackup(&NEO::SysCalls::scandirCalled, scandirCalledTemp);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsScandir)> scandirBackup(&NEO::SysCalls::sysCallsScandir, lockConfigFileAndReadSizeMocks::mockScandir);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, lockConfigFileAndReadSizeMocks::mockStat);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpenWithMode)> openWithModeBackup(&NEO::SysCalls::sysCallsOpenWithMode, LockConfigFileAndReadSize::openWithMode);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, LockConfigFileAndReadSize::open);
 
@@ -452,7 +360,7 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileWithFileCreationThe
     cache.lockConfigFileAndReadSize("config.file", configFileDescriptor, directory);
 
     EXPECT_EQ(std::get<int>(configFileDescriptor), 1);
-    EXPECT_EQ(cache.getFilesCalled, 1);
+    EXPECT_EQ(NEO::SysCalls::scandirCalled, 1);
     EXPECT_EQ(directory, MemoryConstants::megaByte);
 }
 
@@ -543,7 +451,6 @@ decltype(NEO::SysCalls::sysCallsPwrite) mockPwrite = [](int fd, const void *buf,
 class CompilerCacheEvictionTestsMockLinux : public CompilerCache {
   public:
     CompilerCacheEvictionTestsMockLinux(const CompilerCacheConfig &config) : CompilerCache(config) {}
-    using CompilerCache::createCacheDirectories;
     using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
@@ -555,13 +462,6 @@ class CompilerCacheEvictionTestsMockLinux : public CompilerCache {
     }
     size_t createUniqueTempFileAndWriteDataCalled = 0u;
     bool createUniqueTempFileAndWriteDataResult = true;
-
-    bool createCacheDirectories(const std::string &cacheFileName) override {
-        createCacheDirectoriesCalled++;
-        return createCacheDirectoriesResult;
-    }
-    size_t createCacheDirectoriesCalled = 0u;
-    bool createCacheDirectoriesResult = true;
 
     bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
         renameTempFileBinaryToProperNameCalled++;
@@ -600,6 +500,9 @@ TEST(CompilerCacheTests, GivenCacheDirectoryFilledToTheLimitWhenNewBinaryFitsAft
     cache.evictCacheResult = true;
     cache.evictCacheBytesEvicted = cacheSize / 3;
 
+    cache.createUniqueTempFileAndWriteDataResult = true;
+    cache.renameTempFileBinaryToProperNameResult = true;
+
     VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> pWriteBackup(&NEO::SysCalls::sysCallsPwrite, PWriteCallsCountedAndDirSizeWritten::mockPwrite);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::pWriteCalled)> pWriteCalledBackup(&PWriteCallsCountedAndDirSizeWritten::pWriteCalled, 0);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::dirSize)> dirSizeBackup(&PWriteCallsCountedAndDirSizeWritten::dirSize, 0);
@@ -615,7 +518,6 @@ TEST(CompilerCacheTests, GivenCacheDirectoryFilledToTheLimitWhenNewBinaryFitsAft
     EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
     EXPECT_EQ(1u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
-    EXPECT_EQ(1u, cache.createCacheDirectoriesCalled);
     EXPECT_EQ(1u, PWriteCallsCountedAndDirSizeWritten::pWriteCalled);
 
     EXPECT_EQ(expectedDirectorySize, PWriteCallsCountedAndDirSizeWritten::dirSize);
@@ -649,7 +551,6 @@ TEST(CompilerCacheTests, GivenCacheBinaryWhenBinaryDoesntFitAfterEvictionThenWri
 
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
-    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
 
     EXPECT_EQ(expectedDirectorySize, PWriteCallsCountedAndDirSizeWritten::dirSize);
 }
@@ -680,7 +581,6 @@ TEST(CompilerCacheTests, GivenCacheDirectoryFilledToTheLimitWhenNoBytesHaveBeenE
     EXPECT_EQ(0u, PWriteCallsCountedAndDirSizeWritten::pWriteCalled);
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
-    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
 }
 
 TEST(CompilerCacheTests, GivenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
@@ -708,13 +608,15 @@ TEST(CompilerCacheTests, GivenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
     EXPECT_EQ(0u, PWriteCallsCountedAndDirSizeWritten::pWriteCalled);
     EXPECT_EQ(0u, cache.createUniqueTempFileAndWriteDataCalled);
     EXPECT_EQ(0u, cache.renameTempFileBinaryToProperNameCalled);
-    EXPECT_EQ(0u, cache.createCacheDirectoriesCalled);
 }
 
 class CompilerCacheFailingLockConfigFileAndReadSizeLinux : public CompilerCache {
   public:
     CompilerCacheFailingLockConfigFileAndReadSizeLinux(const CompilerCacheConfig &config) : CompilerCache(config) {}
+    using CompilerCache::createUniqueTempFileAndWriteData;
+    using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
+    using CompilerCache::renameTempFileBinaryToProperName;
 
     void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         std::get<int>(fd) = -1;
@@ -731,7 +633,10 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenLockConfigFileFailThenCacheBinary
 class CompilerCacheLinuxReturnTrueIfAnotherProcessCreateCacheFile : public CompilerCache {
   public:
     CompilerCacheLinuxReturnTrueIfAnotherProcessCreateCacheFile(const CompilerCacheConfig &config) : CompilerCache(config) {}
+    using CompilerCache::createUniqueTempFileAndWriteData;
+    using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
+    using CompilerCache::renameTempFileBinaryToProperName;
 
     void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         std::get<int>(fd) = 1;
@@ -750,8 +655,10 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenFileAlreadyExistsThenCacheBinaryR
 class CompilerCacheLinuxReturnFalseOnCacheBinaryIfEvictFailed : public CompilerCache {
   public:
     CompilerCacheLinuxReturnFalseOnCacheBinaryIfEvictFailed(const CompilerCacheConfig &config) : CompilerCache(config) {}
+    using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
+    using CompilerCache::renameTempFileBinaryToProperName;
 
     void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
@@ -778,6 +685,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateUniqueFileFailed : publi
     using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
+    using CompilerCache::renameTempFileBinaryToProperName;
 
     void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
         directorySize = MemoryConstants::megaByte;
@@ -837,50 +745,9 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenRenameFileFailThenCacheBinaryRetu
     EXPECT_FALSE(cache.cacheBinary("config.file", "1", 1));
 }
 
-class CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateCacheDirectoriesFailed : public CompilerCache {
-  public:
-    CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateCacheDirectoriesFailed(const CompilerCacheConfig &config) : CompilerCache(config) {}
-    using CompilerCache::createCacheDirectories;
-    using CompilerCache::createUniqueTempFileAndWriteData;
-    using CompilerCache::evictCache;
-    using CompilerCache::lockConfigFileAndReadSize;
-    using CompilerCache::renameTempFileBinaryToProperName;
-
-    void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) override {
-        directorySize = MemoryConstants::megaByte;
-        std::get<int>(fd) = 1;
-        return;
-    }
-
-    bool evictCache(uint64_t &bytesEvicted) override {
-        return true;
-    }
-
-    bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize) override {
-        return true;
-    }
-
-    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
-        return true;
-    }
-
-    bool createCacheDirectories(const std::string &cacheFile) override {
-        return false;
-    }
-};
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenCreateCacheDirectoriesFailsThenCacheBinaryReturnsFalse) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, [](const std::string &filePath, struct stat *statbuf) -> int { return -1; });
-
-    CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateCacheDirectoriesFailed cache({true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    EXPECT_FALSE(cache.cacheBinary("config.file", "1", 1));
-}
-
 class CompilerCacheLinuxReturnTrueOnCacheBinary : public CompilerCache {
   public:
     CompilerCacheLinuxReturnTrueOnCacheBinary(const CompilerCacheConfig &config) : CompilerCache(config) {}
-    using CompilerCache::createCacheDirectories;
     using CompilerCache::createUniqueTempFileAndWriteData;
     using CompilerCache::evictCache;
     using CompilerCache::lockConfigFileAndReadSize;
@@ -901,10 +768,6 @@ class CompilerCacheLinuxReturnTrueOnCacheBinary : public CompilerCache {
     }
 
     bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
-        return true;
-    }
-
-    bool createCacheDirectories(const std::string &cacheFile) override {
         return true;
     }
 };

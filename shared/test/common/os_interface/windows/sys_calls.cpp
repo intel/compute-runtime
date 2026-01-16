@@ -30,10 +30,7 @@ unsigned long getNumThreads() {
     return 1;
 }
 
-size_t getLastErrorCalled = 0u;
-extern const size_t getLastErrorResultCount = 4;
-DWORD getLastErrorResults[getLastErrorResultCount] = {0, 0, 0, 0};
-BOOL getLastErrorConstantResult = TRUE;
+DWORD getLastErrorResult = 0u;
 bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
@@ -51,8 +48,6 @@ size_t closeHandleCalled = 0u;
 size_t getTempFileNameACalled = 0u;
 UINT getTempFileNameAResult = 0u;
 
-BOOL moveFileExAResult = TRUE;
-
 size_t lockFileExCalled = 0u;
 BOOL lockFileExResult = TRUE;
 
@@ -61,10 +56,6 @@ BOOL unlockFileExResult = TRUE;
 
 size_t createDirectoryACalled = 0u;
 BOOL createDirectoryAResult = TRUE;
-
-size_t removeDirectoryACalled = 0u;
-BOOL removeDirectoryAResult = TRUE;
-BOOL erasePathAttributes = FALSE;
 
 size_t createFileACalled = 0u;
 extern const size_t createFileAResultsCount = 4;
@@ -90,12 +81,9 @@ extern const size_t writeFileBufferSize = 10;
 char writeFileBuffer[writeFileBufferSize];
 DWORD writeFileNumberOfBytesWritten = 0u;
 
-size_t findFirstFileACalled = 0u;
-extern const size_t findFirstFileAResultsCount = 4;
-HANDLE findFirstFileAResults[findFirstFileAResultsCount] = {INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE};
+HANDLE findFirstFileAResult = nullptr;
 
 size_t findNextFileACalled = 0u;
-BOOL findNextFileAResult = TRUE;
 extern const size_t findNextFileAFileDataCount = 4;
 WIN32_FIND_DATAA findNextFileAFileData[findNextFileAFileDataCount];
 
@@ -176,13 +164,7 @@ void exit(int code) {
 }
 
 DWORD getLastError() {
-    if (getLastErrorConstantResult) {
-        return getLastErrorResults[0];
-    }
-    if (getLastErrorCalled >= getLastErrorResultCount) {
-        return 0;
-    }
-    return getLastErrorResults[getLastErrorCalled++];
+    return getLastErrorResult;
 }
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
@@ -232,7 +214,7 @@ UINT getTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LP
 }
 
 BOOL moveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags) {
-    return moveFileExAResult;
+    return TRUE;
 }
 
 BOOL lockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped) {
@@ -255,14 +237,6 @@ BOOL createDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
         pathAttributes[lpPathName] = FILE_ATTRIBUTE_DIRECTORY;
     }
     return createDirectoryAResult;
-}
-
-BOOL removeDirectoryA(LPCSTR lpPathName) {
-    removeDirectoryACalled++;
-    if (removeDirectoryAResult && erasePathAttributes) {
-        pathAttributes.erase(lpPathName);
-    }
-    return removeDirectoryAResult;
 }
 
 HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
@@ -310,22 +284,20 @@ BOOL writeFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDW
 }
 
 HANDLE findFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
-    if (findFirstFileACalled < findFirstFileAResultsCount) {
-        return findFirstFileAResults[findFirstFileACalled++];
-    }
-    findFirstFileACalled++;
-    return INVALID_HANDLE_VALUE;
+    return findFirstFileAResult;
 }
 
 BOOL findNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData) {
+    BOOL retVal = TRUE;
+
     if (findNextFileACalled < findNextFileAFileDataCount) {
         *lpFindFileData = findNextFileAFileData[findNextFileACalled];
     } else {
-        findNextFileAResult = FALSE;
+        retVal = FALSE;
     }
     findNextFileACalled++;
 
-    return findNextFileAResult;
+    return retVal;
 }
 
 BOOL findClose(HANDLE hFindFile) {

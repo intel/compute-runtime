@@ -87,10 +87,6 @@ BOOL createDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
     return CreateDirectoryA(lpPathName, lpSecurityAttributes);
 }
 
-BOOL removeDirectoryA(LPCSTR lpPathName) {
-    return RemoveDirectoryA(lpPathName);
-}
-
 HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }

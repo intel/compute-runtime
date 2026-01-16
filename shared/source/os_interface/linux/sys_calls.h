@@ -10,7 +10,6 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <fts.h>
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
@@ -25,7 +24,6 @@ namespace SysCalls {
 int fsync(int fd);
 int close(int fd);
 int mkdir(const std::string &path);
-int rmdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);
@@ -78,9 +76,6 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
 int dup(int oldfd);
 pid_t getpid();
 char **getEnviron();
-FTS *ftsOpen(char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **));
-FTSENT *ftsRead(FTS *ftsp);
-int ftsClose(FTS *ftsp);
 
 } // namespace SysCalls
 } // namespace NEO

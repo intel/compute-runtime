@@ -67,10 +67,6 @@ int mkdir(const std::string &path) {
     return ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
-int rmdir(const std::string &path) {
-    return ::rmdir(path.c_str());
-}
-
 int close(int fd) {
     return ::close(fd);
 }
@@ -226,18 +222,6 @@ long sysconf(int name) {
 }
 int mkfifo(const char *pathname, mode_t mode) {
     return ::mkfifo(pathname, mode);
-}
-
-FTS *ftsOpen(char *const *pathArgv, int options, int (*compar)(const FTSENT **, const FTSENT **)) {
-    return ::fts_open(pathArgv, options, compar);
-}
-
-FTSENT *ftsRead(FTS *ftsp) {
-    return ::fts_read(ftsp);
-}
-
-int ftsClose(FTS *ftsp) {
-    return ::fts_close(ftsp);
 }
 
 int socket(int domain, int type, int protocol) {

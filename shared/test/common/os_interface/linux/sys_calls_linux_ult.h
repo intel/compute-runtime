@@ -11,7 +11,6 @@
 #include <atomic>
 #include <cstdint>
 #include <dirent.h>
-#include <fts.h>
 #include <iostream>
 #include <poll.h>
 #include <sys/socket.h>
@@ -27,7 +26,6 @@ namespace NEO {
 namespace SysCalls {
 
 extern int (*sysCallsMkdir)(const std::string &dir);
-extern int (*sysCallsRmdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
@@ -61,9 +59,6 @@ extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags);
 extern int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags);
 extern int (*sysCallsPrctl)(int option, unsigned long arg);
-extern FTS *(*sysCallsFtsOpen)(char *const *path, int options, int (*compar)(const FTSENT **, const FTSENT **));
-extern FTSENT *(*sysCallsFtsRead)(FTS *ftsp);
-extern int (*sysCallsFtsClose)(FTS *ftsp);
 extern off_t (*sysCallsLseek)(int fd, off_t offset, int whence);
 extern int (*sysCallsSocket)(int domain, int type, int protocol);
 extern int (*sysCallsBind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
