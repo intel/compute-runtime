@@ -74,6 +74,15 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
                        size_t sizeIn, osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount, uint64_t canonizedGpuAddress);
 
+  protected:
+    GraphicsAllocation(GraphicsAllocation *parentAllocation, size_t offsetInParentAllocation, size_t viewSize);
+
+  public:
+    bool isView() const { return parentAllocation != nullptr; }
+    GraphicsAllocation *getParentAllocation() const { return parentAllocation; }
+    size_t getOffsetInParent() const { return offsetInParent; }
+    virtual GraphicsAllocation *createView(size_t offsetInParentAllocation, size_t viewSize);
+
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void *getDriverAllocatedCpuPtr() const { return driverAllocatedCpuPointer; }
@@ -111,10 +120,33 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return gpuAddress + allocationOffset - gpuBaseAddress;
     }
 
-    void lock(void *ptr) { lockedPtr = ptr; }
-    void unlock() { lockedPtr = nullptr; }
-    bool isLocked() const { return lockedPtr != nullptr; }
-    void *getLockedPtr() const { return lockedPtr; }
+    void lock(void *ptr) {
+        if (parentAllocation) {
+            parentAllocation->lock(ptr);
+            return;
+        }
+        lockedPtr = ptr;
+    }
+    void unlock() {
+        if (parentAllocation) {
+            parentAllocation->unlock();
+            return;
+        }
+        lockedPtr = nullptr;
+    }
+    bool isLocked() const {
+        if (parentAllocation) {
+            return parentAllocation->isLocked();
+        }
+        return lockedPtr != nullptr;
+    }
+    void *getLockedPtr() const {
+        if (parentAllocation) {
+            auto parentLockedPtr = parentAllocation->getLockedPtr();
+            return parentLockedPtr ? ptrOffset(parentLockedPtr, offsetInParent) : nullptr;
+        }
+        return lockedPtr;
+    }
 
     bool isCoherent() const { return allocationInfo.flags.coherent; }
     void setCoherent(bool coherentIn) { allocationInfo.flags.coherent = coherentIn; }
@@ -157,34 +189,46 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     MemoryPool getMemoryPool() const { return memoryPool; }
     virtual void setAsReadOnly(){};
 
-    bool isUsed() const { return registeredContextsNum > 0; }
-    bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
-    bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
-    uint32_t getNumRegisteredContexts() const { return registeredContextsNum.load(); }
-    MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
-    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const {
-        if (contextId >= usageInfos.size()) {
-            return objectNotUsed;
+    bool isUsed() const {
+        if (parentAllocation) {
+            return parentAllocation->isUsed();
         }
-
-        return usageInfos[contextId].taskCount;
+        return registeredContextsNum > 0;
     }
+    bool isUsedByManyOsContexts() const {
+        if (parentAllocation) {
+            return parentAllocation->isUsedByManyOsContexts();
+        }
+        return registeredContextsNum > 1u;
+    }
+    bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
+    uint32_t getNumRegisteredContexts() const {
+        if (parentAllocation) {
+            return parentAllocation->getNumRegisteredContexts();
+        }
+        return registeredContextsNum.load();
+    }
+    MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
+    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const;
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
-    uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
-    void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
+    uint32_t getInspectionId(uint32_t contextId) const {
+        if (parentAllocation) {
+            return parentAllocation->getInspectionId(contextId);
+        }
+        return usageInfos[contextId].inspectionId;
+    }
+    void setInspectionId(uint32_t newInspectionId, uint32_t contextId) {
+        if (parentAllocation) {
+            parentAllocation->setInspectionId(newInspectionId, contextId);
+            return;
+        }
+        usageInfos[contextId].inspectionId = newInspectionId;
+    }
 
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
-    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
-        if (contextId >= usageInfos.size()) {
-            DEBUG_BREAK_IF(true);
-            return;
-        }
-        if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
-            usageInfos[contextId].residencyTaskCount = newTaskCount;
-        }
-    }
-    TaskCountType getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
+    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId);
+    TaskCountType getResidencyTaskCount(uint32_t contextId) const;
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
     bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
@@ -320,6 +364,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool isCompressionEnabled() const;
 
     ResidencyData &getResidencyData() {
+        if (parentAllocation) {
+            return parentAllocation->getResidencyData();
+        }
         return residency;
     }
 
@@ -358,20 +405,60 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
     constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
 
-    std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
+    uint32_t getHostPtrTaskCountAssignment() const {
+        if (parentAllocation) {
+            return parentAllocation->getHostPtrTaskCountAssignment();
+        }
+        return hostPtrTaskCountAssignment.load();
+    }
+    void incrementHostPtrTaskCountAssignment() {
+        if (parentAllocation) {
+            parentAllocation->incrementHostPtrTaskCountAssignment();
+            return;
+        }
+        hostPtrTaskCountAssignment++;
+    }
+    void decrementHostPtrTaskCountAssignment() {
+        if (parentAllocation) {
+            parentAllocation->decrementHostPtrTaskCountAssignment();
+            return;
+        }
+        hostPtrTaskCountAssignment--;
+    }
+    void setHostPtrTaskCountAssignment(uint32_t value) {
+        if (parentAllocation) {
+            parentAllocation->setHostPtrTaskCountAssignment(value);
+            return;
+        }
+        hostPtrTaskCountAssignment = value;
+    }
 
     bool isExplicitlyMadeResident() const {
+        if (parentAllocation) {
+            return parentAllocation->isExplicitlyMadeResident();
+        }
         return this->explicitlyMadeResident;
     }
-    void setExplicitlyMadeResident(bool explicitlyMadeResident) {
-        this->explicitlyMadeResident = explicitlyMadeResident;
+    void setExplicitlyMadeResident(bool explicitlyMadeResidentValue) {
+        if (parentAllocation) {
+            parentAllocation->setExplicitlyMadeResident(explicitlyMadeResidentValue);
+            return;
+        }
+        this->explicitlyMadeResident = explicitlyMadeResidentValue;
     }
 
     void setIsImported() {
+        if (parentAllocation) {
+            parentAllocation->setIsImported();
+            return;
+        }
         isImported = true;
     }
 
     bool getIsImported() const {
+        if (parentAllocation) {
+            return parentAllocation->getIsImported();
+        }
         return isImported;
     }
 
@@ -438,6 +525,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
     ResidencyData residency;
     std::atomic<uint32_t> registeredContextsNum{0};
+    std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
+    GraphicsAllocation *parentAllocation = nullptr;
+    size_t offsetInParent = 0u;
     bool shareableHostMemory = false;
     bool cantBeReadOnly = false;
     bool explicitlyMadeResident = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -727,6 +727,10 @@ void WddmMemoryManager::closeInternalHandle(uint64_t &handle, uint32_t handleId,
 }
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    if (gfxAllocation->isView()) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
     DEBUG_BREAK_IF(!validateAllocation(input));
 

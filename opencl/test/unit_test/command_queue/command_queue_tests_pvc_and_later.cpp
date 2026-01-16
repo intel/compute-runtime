@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -407,8 +407,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSet
     HostPtrSurface hostPtrSurf(ptr, ptrSize);
     queue->getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
 
-    EXPECT_EQ(1u, hostPtrSurf.getAllocation()->hostPtrTaskCountAssignment.load());
-    hostPtrSurf.getAllocation()->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, hostPtrSurf.getAllocation()->getHostPtrTaskCountAssignment());
+    hostPtrSurf.getAllocation()->decrementHostPtrTaskCountAssignment();
 
     queue->prepareHostPtrSurfaceForSplit(false, *hostPtrSurf.getAllocation());
 

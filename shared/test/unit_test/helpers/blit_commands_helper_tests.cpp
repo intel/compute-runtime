@@ -74,8 +74,8 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForReadW
     EXPECT_EQ(blitProperties.srcRowPitch, srcRowPitch);
     EXPECT_EQ(blitProperties.srcSlicePitch, srcSlicePitch);
 
-    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, blitProperties.dstAllocation->getHostPtrTaskCountAssignment());
+    blitProperties.dstAllocation->decrementHostPtrTaskCountAssignment();
 }
 
 TEST(BlitCommandsHelperTest, GivenSourceGraphicAllocationAndDestinationIsSystemAllocatedConstructPropertiesForCopyCreatedCorrectly) {

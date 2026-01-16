@@ -1436,6 +1436,10 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
     if (debugManager.flags.DoNotFreeResources.get()) {
         return;
     }
+    if (gfxAllocation->isView()) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
     if (Sharing::nonSharedResource == gfxAllocation->peekSharedHandle()) {
         this->unregisterAllocation(gfxAllocation);

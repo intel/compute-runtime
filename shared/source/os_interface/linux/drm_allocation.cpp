@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,19 @@ DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, Allocatio
     handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
 }
 
+DrmAllocation::DrmAllocation(DrmAllocation *parent, size_t offsetInParentAllocation, size_t viewSize)
+    : GraphicsAllocation(parent, offsetInParentAllocation, viewSize),
+      bufferObjects(parent->bufferObjects),
+      numHandles(parent->numHandles),
+      enabledMemAdviseFlags(parent->enabledMemAdviseFlags),
+      usmHostAllocation(parent->usmHostAllocation) {
+    this->osContext = parent->osContext;
+}
+
+GraphicsAllocation *DrmAllocation::createView(size_t offsetInParentAllocation, size_t viewSize) {
+    return new DrmAllocation(this, offsetInParentAllocation, viewSize);
+}
+
 DrmAllocation::~DrmAllocation() {
     [[maybe_unused]] int retCode;
     for (auto &memory : this->memoryToUnmap) {
@@ -86,6 +99,10 @@ std::string DrmAllocation::getPatIndexInfoString(const ProductHelper &productHel
 }
 
 void DrmAllocation::clearInternalHandle(uint32_t handleId) {
+    if (parentAllocation) {
+        static_cast<DrmAllocation *>(parentAllocation)->clearInternalHandle(handleId);
+        return;
+    }
     handles[handleId] = std::numeric_limits<uint64_t>::max();
 }
 
@@ -98,6 +115,10 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint64_t &ha
 }
 
 int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+    if (parentAllocation) {
+        return static_cast<DrmAllocation *>(parentAllocation)->peekInternalHandle(memoryManager, handleId, handle);
+    }
+
     if (handles[handleId] != std::numeric_limits<uint64_t>::max()) {
         handle = handles[handleId];
         return 0;

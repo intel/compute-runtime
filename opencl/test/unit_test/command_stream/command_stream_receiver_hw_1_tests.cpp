@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1075,8 +1075,8 @@ struct RelaxedOrderingBcsTests : public BcsTests {
                                                                           csr, clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
                                                                           bufferGpuVa, 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
-        EXPECT_EQ(1u, properties.srcAllocation->hostPtrTaskCountAssignment.load());
-        properties.srcAllocation->hostPtrTaskCountAssignment--;
+        EXPECT_EQ(1u, properties.srcAllocation->getHostPtrTaskCountAssignment());
+        properties.srcAllocation->decrementHostPtrTaskCountAssignment();
 
         return properties;
     }

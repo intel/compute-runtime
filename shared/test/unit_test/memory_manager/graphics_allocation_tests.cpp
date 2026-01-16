@@ -371,7 +371,7 @@ uint32_t MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenAssignedTaskCountEqualZeroThenPrepareForResidencyDoeNotCallGetTaskCount) {
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
     MockGraphicsAllocationTaskCount graphicsAllocation;
-    graphicsAllocation.hostPtrTaskCountAssignment = 0;
+    graphicsAllocation.setHostPtrTaskCountAssignment(0);
     graphicsAllocation.prepareHostPtrForResidency(nullptr);
     EXPECT_EQ(MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes, 0u);
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
@@ -384,7 +384,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAssignedTaskCountAb
     csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
     MockGraphicsAllocationTaskCount graphicsAllocation;
-    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    graphicsAllocation.setHostPtrTaskCountAssignment(1);
     graphicsAllocation.prepareHostPtrForResidency(&csr);
     EXPECT_EQ(MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes, 1u);
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
@@ -398,7 +398,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountHigherTha
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(10u, 0u);
     *csr.getTagAddress() = 5;
-    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    graphicsAllocation.setHostPtrTaskCountAssignment(1);
     auto calledTimesBefore = graphicsAllocation.updateTaskCountCalleedTimes;
     graphicsAllocation.prepareHostPtrForResidency(&csr);
     EXPECT_EQ(graphicsAllocation.updateTaskCountCalleedTimes, calledTimesBefore);
@@ -412,7 +412,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;
-    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    graphicsAllocation.setHostPtrTaskCountAssignment(1);
     auto calledTimesBefore = graphicsAllocation.updateTaskCountCalleedTimes;
     graphicsAllocation.prepareHostPtrForResidency(&csr);
     EXPECT_EQ(graphicsAllocation.updateTaskCountCalleedTimes, calledTimesBefore + 1u);
@@ -426,7 +426,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountNotUsedLo
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(GraphicsAllocation::objectNotResident, 0u);
     csr.taskCount = 10;
-    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    graphicsAllocation.setHostPtrTaskCountAssignment(1);
     auto calledTimesBefore = graphicsAllocation.updateTaskCountCalleedTimes;
     graphicsAllocation.prepareHostPtrForResidency(&csr);
     EXPECT_EQ(graphicsAllocation.updateTaskCountCalleedTimes, calledTimesBefore + 1u);
@@ -440,9 +440,9 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;
-    graphicsAllocation.hostPtrTaskCountAssignment = 1;
+    graphicsAllocation.setHostPtrTaskCountAssignment(1);
     graphicsAllocation.prepareHostPtrForResidency(&csr);
-    EXPECT_EQ(graphicsAllocation.hostPtrTaskCountAssignment, 0u);
+    EXPECT_EQ(graphicsAllocation.getHostPtrTaskCountAssignment(), 0u);
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationsWithFragmentsWhenCallingForUpateFenceThenAllResidencyDataHasUpdatedValue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,22 @@ class WddmAllocation : public GraphicsAllocation {
         handles.resize(gmms.size());
     }
 
+  protected:
+    WddmAllocation(WddmAllocation *parent, size_t offsetInParentAllocation, size_t viewSize)
+        : GraphicsAllocation(parent, offsetInParentAllocation, viewSize),
+          handles(parent->handles),
+          resourceHandle(parent->resourceHandle),
+          shareable(parent->shareable),
+          allocInFrontWindowPool(parent->allocInFrontWindowPool),
+          physicalMemoryReservation(parent->physicalMemoryReservation),
+          mappedPhysicalMemoryReservation(parent->mappedPhysicalMemoryReservation),
+          makeResidentBeforeLockRequired(parent->makeResidentBeforeLockRequired),
+          shareableWithoutNTHandle(parent->shareableWithoutNTHandle) {
+    }
+
+  public:
+    GraphicsAllocation *createView(size_t offsetInParentAllocation, size_t viewSize) override;
+
     void *getAlignedCpuPtr() const {
         return alignDown(this->cpuPtr, MemoryConstants::pageSize);
     }
@@ -69,6 +85,9 @@ class WddmAllocation : public GraphicsAllocation {
     int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
 
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+        if (parentAllocation) {
+            return static_cast<WddmAllocation *>(parentAllocation)->peekInternalHandle(memoryManager, handle);
+        }
         handle = ntSecureHandle;
         return handle == 0;
     }

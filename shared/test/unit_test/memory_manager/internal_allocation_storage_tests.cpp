@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -414,7 +414,7 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsEx
     uint32_t expectedTaskCount = 10u;
     *csr->getTagAddress() = expectedTaskCount;
     allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
-    allocation->hostPtrTaskCountAssignment = 0;
+    allocation->setHostPtrTaskCountAssignment(0);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
@@ -425,9 +425,9 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsEx
     uint32_t expectedTaskCount = 10u;
     *csr->getTagAddress() = expectedTaskCount;
     allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
-    allocation->hostPtrTaskCountAssignment = 1;
+    allocation->setHostPtrTaskCountAssignment(1);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
-    allocation->hostPtrTaskCountAssignment = 0;
+    allocation->setHostPtrTaskCountAssignment(0);
 }

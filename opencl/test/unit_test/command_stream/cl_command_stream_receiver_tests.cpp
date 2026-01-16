@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,6 +133,6 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
     ASSERT_NE(nullptr, surface.getAllocation());
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
-    EXPECT_EQ(1u, surface.getAllocation()->hostPtrTaskCountAssignment.load());
-    surface.getAllocation()->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, surface.getAllocation()->getHostPtrTaskCountAssignment());
+    surface.getAllocation()->decrementHostPtrTaskCountAssignment();
 }

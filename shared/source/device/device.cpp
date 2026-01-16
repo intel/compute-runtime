@@ -49,7 +49,8 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
       isaPoolAllocator(this),
       deviceTimestampPoolAllocator(this),
       globalSurfacePoolAllocator(this),
-      constantSurfacePoolAllocator(this) {
+      constantSurfacePoolAllocator(this),
+      commandBufferPoolAllocator(this) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
     debugger = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.get();
@@ -83,6 +84,7 @@ Device::~Device() {
     deviceTimestampPoolAllocator.releasePools();
     globalSurfacePoolAllocator.releasePools();
     constantSurfacePoolAllocator.releasePools();
+    commandBufferPoolAllocator.releasePools();
     if (deviceUsmMemAllocPoolsManager) {
         deviceUsmMemAllocPoolsManager->cleanup();
     }

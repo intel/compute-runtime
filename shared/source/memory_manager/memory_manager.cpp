@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         auto *nextAlloc = currentAlloc->next;
         bool freeAllocation = false;
 
-        if (currentAlloc->hostPtrTaskCountAssignment == 0) {
+        if (currentAlloc->getHostPtrTaskCountAssignment() == 0) {
             if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
                 if (currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
                     if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
@@ -336,6 +336,12 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     if (!gfxAllocation) {
         return;
     }
+
+    if (gfxAllocation->isView()) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
     bool rootEnvAvailable = executionEnvironment.rootDeviceEnvironments.size() > 0;
     uint32_t rootDevIdx = gfxAllocation->getRootDeviceIndex();
 

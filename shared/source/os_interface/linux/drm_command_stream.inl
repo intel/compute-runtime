@@ -247,8 +247,10 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
         completionValue = this->latestSentTaskCount;
     }
 
+    const auto startOffset = batchBuffer.startOffset + alloc->getOffsetInParent();
+
     int ret = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                       batchBuffer.startOffset, execFlags,
+                       startOffset, execFlags,
                        false,
                        this->osContext,
                        vmHandleId,

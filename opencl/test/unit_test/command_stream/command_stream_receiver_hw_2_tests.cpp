@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2131,8 +2131,8 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
 
-    EXPECT_EQ(1u, blitProperties.srcAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.srcAllocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, blitProperties.srcAllocation->getHostPtrTaskCountAssignment());
+    blitProperties.srcAllocation->decrementHostPtrTaskCountAssignment();
 }
 
 HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -2172,8 +2172,8 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
 
-    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, blitProperties.dstAllocation->getHostPtrTaskCountAssignment());
+    blitProperties.dstAllocation->decrementHostPtrTaskCountAssignment();
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -2205,8 +2205,8 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     EXPECT_EQ(inputSlicePitch, blitProperties.srcSlicePitch);
     EXPECT_EQ(dstSlicePitchExpected, blitProperties.dstSlicePitch);
 
-    EXPECT_EQ(1u, blitProperties.srcAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.srcAllocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, blitProperties.srcAllocation->getHostPtrTaskCountAssignment());
+    blitProperties.srcAllocation->decrementHostPtrTaskCountAssignment();
 }
 
 HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
@@ -2239,8 +2239,8 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     EXPECT_EQ(srcSlicePitchExpected, blitProperties.srcSlicePitch);
     EXPECT_EQ(inputSlicePitch, blitProperties.dstSlicePitch);
 
-    EXPECT_EQ(1u, blitProperties.dstAllocation->hostPtrTaskCountAssignment.load());
-    blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, blitProperties.dstAllocation->getHostPtrTaskCountAssignment());
+    blitProperties.dstAllocation->decrementHostPtrTaskCountAssignment();
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) {

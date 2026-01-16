@@ -1072,7 +1072,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     if (allocation == nullptr) {
         return false;
     }
-    allocation->hostPtrTaskCountAssignment++;
+    allocation->incrementHostPtrTaskCountAssignment();
     allocation->updateTaskCount(0u, osContext->getContextId());
     surface.setAllocation(allocation.get());
     internalAllocationStorage->storeAllocation(std::move(allocation), TEMPORARY_ALLOCATION);

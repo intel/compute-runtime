@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/command_buffer_pool_allocator.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
@@ -216,6 +217,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ConstantSurfacePoolAllocator &getConstantSurfacePoolAllocator() {
         return constantSurfacePoolAllocator;
     }
+    CommandBufferPoolAllocator &getCommandBufferPoolAllocator() {
+        return commandBufferPoolAllocator;
+    }
     UsmMemAllocPoolsManager *getUsmMemAllocPoolsManager() {
         return deviceUsmMemAllocPoolsManager.get();
     }
@@ -374,6 +378,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;
+    CommandBufferPoolAllocator commandBufferPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
     std::unique_ptr<UsmMemAllocPool> usmMemAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;

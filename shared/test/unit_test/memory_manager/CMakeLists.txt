@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation_view_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage_tests.cpp

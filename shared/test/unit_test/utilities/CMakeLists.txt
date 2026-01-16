@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -32,6 +32,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/vec_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/wait_util_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/command_buffer_pool_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager_tests.cpp
 )
 

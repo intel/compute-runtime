@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,13 @@ class DrmAllocation : public GraphicsAllocation {
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool);
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool);
 
+  protected:
+    DrmAllocation(DrmAllocation *parentAllocation, size_t offsetInParentAllocation, size_t viewSize);
+
+  public:
     ~DrmAllocation() override;
+
+    GraphicsAllocation *createView(size_t offsetInParentAllocation, size_t viewSize) override;
 
     std::string getAllocationInfoString() const override;
     std::string getPatIndexInfoString(const ProductHelper &productHelper) const override;

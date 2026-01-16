@@ -21,6 +21,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/command_buffer_pool_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -280,24 +282,35 @@ void CommandQueueImp::registerCsrClient() {
 
 ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+
+    if (productHelper.is2MBLocalMemAlignmentEnabled()) {
+        auto &poolAllocator = device->getNEODevice()->getCommandBufferPoolAllocator();
+        buffers[BufferAllocation::first] = poolAllocator.allocateCommandBuffer(alignedSize);
+        buffers[BufferAllocation::second] = poolAllocator.allocateCommandBuffer(alignedSize);
+    }
+
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
                                          NEO::AllocationType::commandBuffer,
                                          (device->getNEODevice()->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                          false,
                                          device->getNEODevice()->getDeviceBitfield()};
 
-    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
-    if (!firstBuffer) {
-        firstBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (!buffers[BufferAllocation::first]) {
+        buffers[BufferAllocation::first] = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
+        if (!buffers[BufferAllocation::first]) {
+            buffers[BufferAllocation::first] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        }
     }
 
-    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
-    if (!secondBuffer) {
-        secondBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (!buffers[BufferAllocation::second]) {
+        buffers[BufferAllocation::second] = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
+        if (!buffers[BufferAllocation::second]) {
+            buffers[BufferAllocation::second] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        }
     }
-
-    buffers[BufferAllocation::first] = firstBuffer;
-    buffers[BufferAllocation::second] = secondBuffer;
 
     if (!buffers[BufferAllocation::first] || !buffers[BufferAllocation::second]) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -305,16 +318,32 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
 
     flushId[BufferAllocation::first] = std::make_pair(0u, 0u);
     flushId[BufferAllocation::second] = std::make_pair(0u, 0u);
+
     return ZE_RESULT_SUCCESS;
 }
 
 void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
-    if (buffers[BufferAllocation::first]) {
-        device->storeReusableAllocation(*buffers[BufferAllocation::first]);
+    auto &poolAllocator = device->getNEODevice()->getCommandBufferPoolAllocator();
+
+    if (auto firstBA = buffers[BufferAllocation::first]) {
+        if (firstBA->getParentAllocation() &&
+            poolAllocator.isPoolBuffer(firstBA->getParentAllocation())) {
+            DEBUG_BREAK_IF(!firstBA->isView());
+            poolAllocator.freeCommandBuffer(firstBA);
+        } else {
+            device->storeReusableAllocation(*firstBA);
+        }
         buffers[BufferAllocation::first] = nullptr;
     }
-    if (buffers[BufferAllocation::second]) {
-        device->storeReusableAllocation(*buffers[BufferAllocation::second]);
+
+    if (auto secondBA = buffers[BufferAllocation::second]) {
+        if (secondBA->getParentAllocation() &&
+            poolAllocator.isPoolBuffer(secondBA->getParentAllocation())) {
+            DEBUG_BREAK_IF(!secondBA->isView());
+            poolAllocator.freeCommandBuffer(secondBA);
+        } else {
+            device->storeReusableAllocation(*secondBA);
+        }
         buffers[BufferAllocation::second] = nullptr;
     }
 }

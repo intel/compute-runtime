@@ -1936,10 +1936,10 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     *mockCsr->getTagAddress() = 1u;
     HostPtrSurface hostSurface(hostPtr, size);
 
-    uint32_t valueBefore = allocationPtr->hostPtrTaskCountAssignment;
+    uint32_t valueBefore = allocationPtr->getHostPtrTaskCountAssignment();
     mockCsr->createAllocationForHostSurface(hostSurface, false);
-    EXPECT_EQ(valueBefore + 1, hostSurface.getAllocation()->hostPtrTaskCountAssignment);
-    allocationPtr->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(valueBefore + 1, hostSurface.getAllocation()->getHostPtrTaskCountAssignment());
+    allocationPtr->decrementHostPtrTaskCountAssignment();
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenAllocTaskCountEqualZero) {
@@ -1998,8 +1998,8 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     auto allocation = surface.getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(1u, allocation->hostPtrTaskCountAssignment.load());
-    allocation->hostPtrTaskCountAssignment--;
+    EXPECT_EQ(1u, allocation->getHostPtrTaskCountAssignment());
+    allocation->decrementHostPtrTaskCountAssignment();
 
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), memory, size));

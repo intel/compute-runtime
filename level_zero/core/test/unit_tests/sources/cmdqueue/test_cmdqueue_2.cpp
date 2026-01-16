@@ -10,6 +10,8 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -17,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -702,6 +705,9 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
 
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
 
+    auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+
     uint32_t cmdBufferAllocationsFound = 0;
     for (auto &allocationProperties : memoryManager->storedAllocationProperties) {
         if (allocationProperties.allocationType == NEO::AllocationType::commandBuffer) {
@@ -711,7 +717,12 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
         }
     }
 
-    EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
+    if (usePoolAllocator) {
+        // Pool allocator creates main large allocations, views are sub-allocated from it
+        EXPECT_GE(cmdBufferAllocationsFound, 1u);
+    } else {
+        EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
+    }
 
     commandQueue->destroy();
 }
@@ -727,9 +738,72 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     auto l0Device = static_cast<Device *>(device);
     EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
 
+    auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+
+    commandQueue->destroy();
+
+    if (usePoolAllocator) {
+        EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
+    } else {
+        EXPECT_FALSE(l0Device->allocationsForReuse->peekIsEmpty());
+    }
+}
+
+TEST_F(CommandQueueInitTests, givenPoolAllocatorDisabledWhenInitializingThenBuffersAreRegularAllocations) {
+    auto mockProductHelper = new MockProductHelper;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto firstBuffer = commandQueue->buffers.getCurrentBufferAllocation();
+    ASSERT_NE(nullptr, firstBuffer);
+    EXPECT_FALSE(firstBuffer->isView());
+
+    auto l0Device = static_cast<Device *>(device);
+    EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
+
     commandQueue->destroy();
 
     EXPECT_FALSE(l0Device->allocationsForReuse->peekIsEmpty());
+}
+
+TEST_F(CommandQueueInitTests, givenPoolAllocatorEnabledWhenInitializingThenBuffersAreViewsFromPool) {
+    auto mockProductHelper = new MockProductHelper;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto firstBuffer = commandQueue->buffers.getCurrentBufferAllocation();
+    ASSERT_NE(nullptr, firstBuffer);
+    EXPECT_TRUE(firstBuffer->isView());
+    EXPECT_NE(nullptr, firstBuffer->getParentAllocation());
+
+    auto &poolAllocator = neoDevice->getCommandBufferPoolAllocator();
+    EXPECT_TRUE(poolAllocator.isPoolBuffer(firstBuffer->getParentAllocation()));
+
+    auto l0Device = static_cast<Device *>(device);
+    EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
+
+    commandQueue->destroy();
+
+    EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
 }
 
 struct DeviceWithDualStorage : Test<DeviceFixture> {

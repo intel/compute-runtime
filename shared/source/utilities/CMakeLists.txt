@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
     ${CMAKE_CURRENT_SOURCE_DIR}/arrayref.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bitcontainers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_buffer_pool_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_buffer_pool_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics.h
     ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.h

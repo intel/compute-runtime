@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,14 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
+GraphicsAllocation *WddmAllocation::createView(size_t offsetInParentAllocation, size_t viewSize) {
+    return new WddmAllocation(this, offsetInParentAllocation, viewSize);
+}
+
 int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+    if (parentAllocation) {
+        return static_cast<WddmAllocation *>(parentAllocation)->createInternalHandle(memoryManager, handleId, handle);
+    }
     handle = ntSecureHandle;
     if (handle == 0) {
         HANDLE ntSharedHandle = NULL;
@@ -24,6 +31,10 @@ int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t 
     return handle == 0;
 }
 void WddmAllocation::clearInternalHandle(uint32_t handleId) {
+    if (parentAllocation) {
+        static_cast<WddmAllocation *>(parentAllocation)->clearInternalHandle(handleId);
+        return;
+    }
     ntSecureHandle = 0u;
 }
 } // namespace NEO
