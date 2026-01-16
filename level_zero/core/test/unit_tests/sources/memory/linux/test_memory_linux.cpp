@@ -809,13 +809,8 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
 
-    if (context->settings.useOpaqueHandle) {
-        IpcOpaqueMemoryData &ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
-        ipcData.memoryType = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
-    } else {
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-        ipcData.type = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
-    }
+    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    ipcData.type = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
 
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);

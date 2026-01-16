@@ -67,7 +67,7 @@ bool ProductHelperHw<gfxProduct>::isPidFdOrSocketForIpcSupported() const {
     if (debugManager.flags.EnablePidFdOrSocketsForIpc.get() != -1) {
         return debugManager.flags.EnablePidFdOrSocketsForIpc.get();
     }
-    return true;
+    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

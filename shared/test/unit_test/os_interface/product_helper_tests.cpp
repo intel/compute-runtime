@@ -1273,8 +1273,8 @@ HWTEST_F(ProductHelperTest, givenProductHelperWithDebugKeyWhenPidFdOrSocketForIp
     EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsSupportedThenTrueReturned, IsAtLeastXe2HpgCore) {
-    EXPECT_TRUE(productHelper->isPidFdOrSocketForIpcSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsAtMostXeCore) {
