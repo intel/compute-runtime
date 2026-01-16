@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -458,7 +459,7 @@ HWTEST_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferTh
     NEO::LinearStream linearStream(commandStream.getSpace(estimatedSize), estimatedSize);
     // fill with random data
     memset(commandStream.getCpuBase(), 0xD, estimatedSize);
-    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    CommandListExecutionContext ctx{};
 
     commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
 
@@ -478,8 +479,6 @@ HWTEST_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferTh
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
-    using CommandListExecutionContext = typename MockCommandQueueHwEstimateSizeTest<gfxCoreFamily>::CommandListExecutionContext;
-
     MockCommandQueueHwEstimateSizeTest(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
         : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
 

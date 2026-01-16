@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
@@ -117,7 +118,6 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
     using L0::CommandQueueImp::csr;
-    using typename BaseClass::CommandListExecutionContext;
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }

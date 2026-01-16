@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -1307,7 +1308,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     constexpr size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT);
-    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    CommandListExecutionContext ctx{};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
@@ -1374,7 +1375,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    CommandListExecutionContext ctx{};
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1478,7 +1479,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+    CommandListExecutionContext ctx{};
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

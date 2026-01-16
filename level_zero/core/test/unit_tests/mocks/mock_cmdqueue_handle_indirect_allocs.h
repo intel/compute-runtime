@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@ namespace ult {
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandQueueHandleIndirectAllocs : public MockCommandQueueHw<gfxCoreFamily> {
   public:
-    using typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext;
     using MockCommandQueueHw<gfxCoreFamily>::executeCommandListsRegular;
     using MockCommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless;
 

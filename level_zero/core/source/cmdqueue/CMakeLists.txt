@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_cmdlist_execution_context.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_cmdlist_execution_context.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_imp.h

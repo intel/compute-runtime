@@ -21,6 +21,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -1298,7 +1299,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCmdQueueWhenCallWaitForCommandQueueCo
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
 
     auto ownership = csr.obtainUniqueOwnership();
-    auto ctx = typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext();
+    auto ctx = CommandListExecutionContext();
     ctx.lockCSR = &ownership;
     commandQueue->waitForCommandQueueCompletion(ctx);
     EXPECT_FALSE(ownership.owns_lock());

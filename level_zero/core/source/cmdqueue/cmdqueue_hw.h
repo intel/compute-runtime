@@ -18,6 +18,7 @@ class ScratchSpaceController;
 } // namespace NEO
 
 namespace L0 {
+struct CommandListExecutionContext;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw : public CommandQueueImp {
@@ -58,75 +59,6 @@ struct CommandQueueHw : public CommandQueueImp {
                        void **patchPreambleBuffer);
 
   protected:
-    struct CommandListExecutionContext {
-
-        CommandListExecutionContext() {}
-
-        CommandListExecutionContext(ze_command_list_handle_t *commandListHandles,
-                                    uint32_t numCommandLists,
-                                    NEO::PreemptionMode contextPreemptionMode,
-                                    Device *device,
-                                    NEO::ScratchSpaceController *scratchSpaceController,
-                                    NEO::GraphicsAllocation *globalStatelessAllocation,
-                                    bool debugEnabled,
-                                    bool programActivePartitionConfig,
-                                    bool performMigration,
-                                    bool sipSent);
-
-        inline bool isNEODebuggerActive(Device *device);
-
-        NEO::StreamProperties cmdListBeginState{};
-        uint64_t scratchGsba = 0;
-        uint64_t childGpuAddressPositionBeforeDynamicPreamble = 0;
-        uint64_t currentGpuAddressForChainedBbStart = 0;
-
-        size_t spaceForResidency = 10;
-        size_t bufferSpaceForPatchPreamble = 0;
-        size_t totalNoopSpaceForPatchPreamble = 0;
-        CommandList *firstCommandList = nullptr;
-        CommandList *lastCommandList = nullptr;
-        void *currentPatchForChainedBbStart = nullptr;
-        void *currentPatchPreambleBuffer = nullptr;
-        uintptr_t basePatchPreambleAddress = 0;
-        NEO::ScratchSpaceController *scratchSpaceController = nullptr;
-        NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
-        std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
-        std::unique_lock<NEO::CommandStreamReceiver::MutexType> *lockCSR = nullptr;
-
-        NEO::PreemptionMode preemptionMode{};
-        NEO::PreemptionMode statePreemption{};
-        uint32_t perThreadScratchSpaceSlot0Size = 0;
-        uint32_t perThreadScratchSpaceSlot1Size = 0;
-        uint32_t totalActiveScratchPatchElements = 0;
-        UnifiedMemoryControls unifiedMemoryControls{};
-
-        bool anyCommandListWithCooperativeKernels = false;
-        bool anyCommandListRequiresDisabledEUFusion = false;
-        bool cachedMOCSAllowed = true;
-        bool containsAnyRegularCmdList = false;
-        bool gsbaStateDirty = false;
-        bool frontEndStateDirty = false;
-        const bool isPreemptionModeInitial{false};
-        bool isDevicePreemptionModeMidThread{};
-        bool isDebugEnabled{};
-        bool stateSipRequired{};
-        bool isProgramActivePartitionConfigRequired{};
-        bool isMigrationRequested{};
-        bool isDirectSubmissionEnabled{};
-        bool isDispatchTaskCountPostSyncRequired{};
-        bool hasIndirectAccess{};
-        bool rtDispatchRequired = false;
-        bool globalInit = false;
-        bool lockScratchController = false;
-        bool cmdListScratchAddressPatchingEnabled = false;
-        bool containsParentImmediateStream = false;
-        bool patchPreambleWaitSyncNeeded = false;
-        bool regularHeapful = false;
-        bool stateCacheFlushRequired = false;
-        bool instructionCacheFlushRequired = false;
-        bool taskCountUpdateFenceRequired = false;
-    };
-
     inline void processMemAdviseOperations(CommandList *commandList);
 
     ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,

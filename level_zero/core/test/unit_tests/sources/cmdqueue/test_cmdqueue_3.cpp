@@ -38,6 +38,7 @@
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -733,16 +734,16 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutin
     auto cmdListHandle = commandList->toHandle();
     commandList->close();
 
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
-                                                                                                                     1,
-                                                                                                                     csr->getPreemptionMode(),
-                                                                                                                     device,
-                                                                                                                     csr->getScratchSpaceController(),
-                                                                                                                     csr->getGlobalStatelessHeapAllocation(),
-                                                                                                                     false,
-                                                                                                                     csr->isProgramActivePartitionConfigRequired(),
-                                                                                                                     false,
-                                                                                                                     false};
+    auto ctx = CommandListExecutionContext{&cmdListHandle,
+                                           1,
+                                           csr->getPreemptionMode(),
+                                           device,
+                                           csr->getScratchSpaceController(),
+                                           csr->getGlobalStatelessHeapAllocation(),
+                                           false,
+                                           csr->isProgramActivePartitionConfigRequired(),
+                                           false,
+                                           false};
 
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
@@ -761,16 +762,16 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecut
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
-                                                                                                                     1,
-                                                                                                                     csr->getPreemptionMode(),
-                                                                                                                     device,
-                                                                                                                     csr->getScratchSpaceController(),
-                                                                                                                     csr->getGlobalStatelessHeapAllocation(),
-                                                                                                                     false,
-                                                                                                                     csr->isProgramActivePartitionConfigRequired(),
-                                                                                                                     false,
-                                                                                                                     false};
+    auto ctx = CommandListExecutionContext{&cmdListHandle,
+                                           1,
+                                           csr->getPreemptionMode(),
+                                           device,
+                                           csr->getScratchSpaceController(),
+                                           csr->getGlobalStatelessHeapAllocation(),
+                                           false,
+                                           csr->isProgramActivePartitionConfigRequired(),
+                                           false,
+                                           false};
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;

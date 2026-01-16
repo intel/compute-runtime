@@ -36,6 +36,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -607,57 +608,6 @@ bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandQueueHw<gfxCoreFamily>::getPreemptionCmdProgramming() {
     return NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(NEO::PreemptionMode::MidThread, NEO::PreemptionMode::Initial) > 0u;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecutionContext(
-    ze_command_list_handle_t *commandListHandles,
-    uint32_t numCommandLists,
-    NEO::PreemptionMode contextPreemptionMode,
-    Device *device,
-    NEO::ScratchSpaceController *scratchSpaceController,
-    NEO::GraphicsAllocation *globalStatelessAllocation,
-    bool debugEnabled,
-    bool programActivePartitionConfig,
-    bool performMigration,
-    bool sipSent) : scratchSpaceController(scratchSpaceController),
-                    globalStatelessAllocation(globalStatelessAllocation),
-                    preemptionMode{contextPreemptionMode},
-                    statePreemption{contextPreemptionMode},
-                    isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
-                    isDebugEnabled{debugEnabled},
-                    isProgramActivePartitionConfigRequired{programActivePartitionConfig},
-                    isMigrationRequested{performMigration} {
-
-    constexpr size_t residencyContainerSpaceForPreemption = 2;
-    constexpr size_t residencyContainerSpaceForTagWrite = 1;
-    constexpr size_t residencyContainerSpaceForBtdAllocation = 1;
-
-    this->firstCommandList = CommandList::fromHandle(commandListHandles[0]);
-    this->lastCommandList = CommandList::fromHandle(commandListHandles[numCommandLists - 1]);
-
-    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread && !this->isNEODebuggerActive(device);
-    this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
-                             (!sipSent && this->isNEODebuggerActive(device));
-
-    if (this->isDevicePreemptionModeMidThread) {
-        this->spaceForResidency += residencyContainerSpaceForPreemption;
-    }
-    this->spaceForResidency += residencyContainerSpaceForTagWrite;
-    if (device->getNEODevice()->getRTMemoryBackedBuffer()) {
-        this->spaceForResidency += residencyContainerSpaceForBtdAllocation;
-    }
-
-    if (this->isMigrationRequested && device->getDriverHandle()->getMemoryManager()->getPageFaultManager() == nullptr) {
-        this->isMigrationRequested = false;
-    }
-
-    this->globalInit |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::isNEODebuggerActive(Device *device) {
-    return device->getNEODevice()->getDebugger() && this->isDebugEnabled;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
