@@ -46,7 +46,6 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
@@ -224,7 +223,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
 
 ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
@@ -262,7 +261,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
 ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
                                                    std::vector<const ze_module_constants_t *> specConstants) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
@@ -291,7 +290,7 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inp
 ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions) {
     const auto &neoDevice = device->getNEODevice();
     auto compilerInterface = neoDevice->getCompilerInterface();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
@@ -312,7 +311,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
                                                          const ze_module_constants_t *pConstants) {
     const auto &neoDevice = device->getNEODevice();
     auto compilerInterface = neoDevice->getCompilerInterface();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
@@ -344,7 +343,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);
     auto singleDeviceBinary = unpackSingleDeviceBinary(archive, NEO::ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
                                                        decodeErrors, decodeWarnings);
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (decodeWarnings.empty() == false) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
@@ -403,7 +402,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
 }
 
 ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     if (0 == unpackedDeviceBinarySize) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -1070,7 +1069,7 @@ void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
 ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
                                     ze_kernel_handle_t *kernelHandle) {
     ze_result_t res;
-    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
+    const auto driverHandle = this->getDevice()->getDriverHandle();
     if (!isFullyLinked) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
@@ -1270,7 +1269,7 @@ bool ModuleImp::linkBinary() {
 }
 
 ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnFunction) {
-    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
+    const auto driverHandle = this->getDevice()->getDriverHandle();
     // Check if the function is in the exported symbol table
     auto symbolIt = symbols.find(pFunctionName);
     if ((symbolIt != symbols.end()) && (symbolIt->second.symbol.segment == NEO::SegmentType::instructions)) {
@@ -1307,7 +1306,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) {
     uint64_t address;
     size_t size;
-    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
+    const auto driverHandle = this->getDevice()->getDriverHandle();
 
     auto hostSymbolIt = hostGlobalSymbolsMap.find(pGlobalName);
     if (hostSymbolIt != hostGlobalSymbolsMap.end()) {
@@ -1488,7 +1487,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
     std::map<void *, std::map<void *, void *>> dependencies;
     ModuleBuildLog *moduleLinkLog = nullptr;
-    const auto driverHandle = static_cast<DriverHandleImp *>((this->getDevice())->getDriverHandle());
+    const auto driverHandle = this->getDevice()->getDriverHandle();
     if (phLinkLog) {
         moduleLinkLog = ModuleBuildLog::create();
         *phLinkLog = moduleLinkLog->toHandle();

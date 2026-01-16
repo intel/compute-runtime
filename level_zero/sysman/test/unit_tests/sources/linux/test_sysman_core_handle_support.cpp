@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
@@ -52,19 +52,19 @@ HWTEST2_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenSysmanHandleIsQue
         return static_cast<int>(str.size());
     });
 
-    class MockSysmanDriverHandleImp : public SysmanDriverHandleImp {
+    class MockSysmanDriverHandle : public SysmanDriverHandleImp {
       public:
-        MockSysmanDriverHandleImp() {
+        MockSysmanDriverHandle() {
             SysmanDriverHandleImp();
         }
         void clearUuidDeviceMap() {
             uuidDeviceMap.clear();
         }
     };
-    std::unique_ptr<MockSysmanDriverHandleImp> pSysmanDriverHandleImp = std::make_unique<MockSysmanDriverHandleImp>();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanDriverHandleImp->initialize(*(L0::Sysman::ult::SysmanDeviceFixture::execEnv)));
-    pSysmanDriverHandleImp->clearUuidDeviceMap();
-    auto pSysmanDevice = pSysmanDriverHandleImp->getSysmanDeviceFromCoreDeviceHandle(L0::Device::fromHandle(device->toHandle()));
+    std::unique_ptr<MockSysmanDriverHandle> pSysmanDriverHandle = std::make_unique<MockSysmanDriverHandle>();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanDriverHandle->initialize(*(L0::Sysman::ult::SysmanDeviceFixture::execEnv)));
+    pSysmanDriverHandle->clearUuidDeviceMap();
+    auto pSysmanDevice = pSysmanDriverHandle->getSysmanDeviceFromCoreDeviceHandle(L0::Device::fromHandle(device->toHandle()));
     EXPECT_EQ(pSysmanDevice, nullptr);
 }
 
@@ -74,8 +74,8 @@ HWTEST2_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenPopulatingDeviceU
     auto result = coreDeviceHandle->getProperties(&deviceProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle);
-    auto pSysmanDriverHandleImp = static_cast<SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
-    auto uuidMap = pSysmanDriverHandleImp->getUuidDeviceMap();
+    auto pSysmanDriverHandle = static_cast<SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    auto uuidMap = pSysmanDriverHandle->getUuidDeviceMap();
 
     // compare uuid from properties with uuid in map
     bool diffFound = false;
@@ -98,7 +98,7 @@ HWTEST2_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenRetrievingSysmanH
     EXPECT_NE(pSysmanDevice, nullptr);
 }
 
-class MockDriverHandleImpForFromHandle : public DriverHandleImp {
+class MockDriverHandleForFromHandle : public DriverHandle {
   public:
     enum Mode {
         successTwoCalls,
@@ -173,7 +173,7 @@ class SysmanDriverFromHandleFixture : public SysmanDeviceFixtureWithCore {
 
         originalGlobalDriver = L0::Sysman::globalSysmanDriver;
         mockSysmanDriver = std::make_unique<MockSysmanDriverHandleForFromHandle>();
-        mockDriverHandle = std::make_unique<MockDriverHandleImpForFromHandle>();
+        mockDriverHandle = std::make_unique<MockDriverHandleForFromHandle>();
         L0::Sysman::globalSysmanDriver = mockSysmanDriver.get();
         mockDriverHandle->realDevice = device;
         coreDriverHandle = device->getDriverHandle();
@@ -185,7 +185,7 @@ class SysmanDriverFromHandleFixture : public SysmanDeviceFixtureWithCore {
     }
 
     std::unique_ptr<MockSysmanDriverHandleForFromHandle> mockSysmanDriver;
-    std::unique_ptr<MockDriverHandleImpForFromHandle> mockDriverHandle;
+    std::unique_ptr<MockDriverHandleForFromHandle> mockDriverHandle;
     ze_driver_handle_t coreDriverHandle = nullptr;
     SysmanDriverHandleImp *originalGlobalDriver = nullptr;
 };
@@ -214,21 +214,21 @@ HWTEST2_F(SysmanDriverFromHandleFixture, GivenCoreDriverHandleWhenFromHandleCall
 }
 
 HWTEST2_F(SysmanDriverFromHandleFixture, GivenCoreDriverHandleWhenFromHandleCalledAndGetDeviceFailsThenNullPtrIsReturned, IsPVC) {
-    mockDriverHandle->mode = MockDriverHandleImpForFromHandle::failCountQuery;
+    mockDriverHandle->mode = MockDriverHandleForFromHandle::failCountQuery;
     auto coreHandle = static_cast<ze_driver_handle_t>(static_cast<DriverHandle *>(mockDriverHandle.get()));
     prepareGlobalSysman(mockSysmanDriver.get());
     auto result = SysmanDriverHandle::fromHandle(coreHandle);
-    mockDriverHandle->mode = MockDriverHandleImpForFromHandle::successTwoCalls;
+    mockDriverHandle->mode = MockDriverHandleForFromHandle::successTwoCalls;
     EXPECT_EQ(result, nullptr);
 }
 
 HWTEST2_F(SysmanDriverFromHandleFixture, GivenCoreDriverHandleWhenFromHandleCalledAndGetDeviceReturnsDeviceCountZeroThenNullPtrIsReturned, IsPVC) {
-    mockDriverHandle->mode = MockDriverHandleImpForFromHandle::zeroDevices;
+    mockDriverHandle->mode = MockDriverHandleForFromHandle::zeroDevices;
     auto coreHandle = static_cast<ze_driver_handle_t>(static_cast<DriverHandle *>(mockDriverHandle.get()));
     prepareGlobalSysman(mockSysmanDriver.get());
     mockSysmanDriver->clearCoreToSysmanDriverMapping();
     auto result = SysmanDriverHandle::fromHandle(coreHandle);
-    mockDriverHandle->mode = MockDriverHandleImpForFromHandle::successTwoCalls;
+    mockDriverHandle->mode = MockDriverHandleForFromHandle::successTwoCalls;
     EXPECT_EQ(result, nullptr);
 }
 
@@ -259,13 +259,13 @@ HWTEST2_F(SysmanDriverFromHandleFixture,
     VariableBackup<uint32_t> backupDriverCount(&L0::Sysman::driverCount, 1u);
     VariableBackup<_ze_driver_handle_t *> backupGlobal(
         &L0::Sysman::globalSysmanDriverHandle,
-        static_cast<_ze_driver_handle_t *>(static_cast<SysmanDriverHandle *>(mockSysmanDriver.get())->toHandle()));
+        static_cast<_ze_driver_handle_t *>(static_cast<SysmanDriverHandleImp *>(mockSysmanDriver.get())->toHandle()));
 
     mockSysmanDriver->mockDeviceByUuidSuccess = true;
 
     auto result = SysmanDriverHandle::fromHandle(coreDriverHandle);
 
-    EXPECT_EQ(result, static_cast<SysmanDriverHandle *>(mockSysmanDriver.get()));
+    EXPECT_EQ(result, static_cast<SysmanDriverHandleImp *>(mockSysmanDriver.get()));
 }
 
 HWTEST2_F(SysmanDriverFromHandleFixture,
@@ -273,15 +273,15 @@ HWTEST2_F(SysmanDriverFromHandleFixture,
     VariableBackup<uint32_t> backupDriverCount(&L0::Sysman::driverCount, 1u);
     VariableBackup<_ze_driver_handle_t *> backupGlobal(
         &L0::Sysman::globalSysmanDriverHandle,
-        static_cast<_ze_driver_handle_t *>(static_cast<SysmanDriverHandle *>(mockSysmanDriver.get())->toHandle()));
+        static_cast<_ze_driver_handle_t *>(static_cast<SysmanDriverHandleImp *>(mockSysmanDriver.get())->toHandle()));
 
     mockSysmanDriver->mockDeviceByUuidSuccess = true;
 
     auto result = SysmanDriverHandle::fromHandle(coreDriverHandle);
 
-    EXPECT_EQ(result, static_cast<SysmanDriverHandle *>(mockSysmanDriver.get()));
+    EXPECT_EQ(result, static_cast<SysmanDriverHandleImp *>(mockSysmanDriver.get()));
     auto result2 = SysmanDriverHandle::fromHandle(coreDriverHandle);
-    EXPECT_EQ(result2, static_cast<SysmanDriverHandle *>(mockSysmanDriver.get()));
+    EXPECT_EQ(result2, static_cast<SysmanDriverHandleImp *>(mockSysmanDriver.get()));
 }
 
 } // namespace ult

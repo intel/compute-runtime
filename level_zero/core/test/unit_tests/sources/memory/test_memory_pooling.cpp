@@ -18,7 +18,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/mock.h"
@@ -61,7 +61,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     }
 
     void initDriverImp() {
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
         std::copy(driverHandle->devices.begin(), driverHandle->devices.end(), l0Devices);
 
@@ -86,7 +86,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     constexpr static uint32_t numRootDevices = multiDevice ? 2u : 1u;
     L0::ContextImp *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;

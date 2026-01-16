@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ struct L0DebuggerLinuxFixture {
 
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
         driverHandle->initialize(std::move(devices));
@@ -69,7 +69,7 @@ struct L0DebuggerLinuxFixture {
         neoDevice = nullptr;
     };
     const uint32_t rootDeviceIndex = 0u;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     DrmMockResources *drmMock = nullptr;
@@ -427,7 +427,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenIn
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
     drmMock->allowDebugAttach = true;
@@ -555,7 +555,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
     driverHandle->initialize(std::move(devices));

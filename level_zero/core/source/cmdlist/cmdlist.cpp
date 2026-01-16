@@ -17,7 +17,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -189,10 +189,10 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
 }
 
 void CommandList::migrateSharedAllocations() {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-    std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
-    auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-    for (auto &alloc : driverHandleImp->sharedMakeResidentAllocations) {
+    auto driverHandle = device->getDriverHandle();
+    std::lock_guard<std::mutex> lock(driverHandle->sharedMakeResidentAllocationsLock);
+    auto pageFaultManager = driverHandle->getMemoryManager()->getPageFaultManager();
+    for (auto &alloc : driverHandle->sharedMakeResidentAllocations) {
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
     }
     if (this->unifiedMemoryControls.indirectSharedAllocationsAllowed) {

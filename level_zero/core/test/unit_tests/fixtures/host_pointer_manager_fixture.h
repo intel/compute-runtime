@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class MockMemoryOperationsHandlerTests;
 namespace L0 {
 struct Context;
 struct Device;
-struct DriverHandleImp;
+class DriverHandle;
 class HostPointerManager;
 
 namespace ult {
@@ -31,7 +31,7 @@ struct HostPointerManagerFixure {
     void tearDown();
 
     DebugManagerStateRestore debugRestore;
-    std::unique_ptr<WhiteBox<L0::DriverHandleImp>> hostDriverHandle;
+    std::unique_ptr<WhiteBox<L0::DriverHandle>> hostDriverHandle;
 
     WhiteBox<L0::HostPointerManager> *openHostPointerManager = nullptr;
     NEO::MockDevice *neoDevice = nullptr;

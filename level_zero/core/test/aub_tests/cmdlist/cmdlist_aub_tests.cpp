@@ -15,7 +15,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 #include "level_zero/core/test/aub_tests/fixtures/multicontext_l0_aub_fixture.h"

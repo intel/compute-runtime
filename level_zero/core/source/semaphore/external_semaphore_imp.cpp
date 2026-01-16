@@ -9,7 +9,7 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {
 
@@ -27,12 +27,11 @@ ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_e
     }
 
     auto driverHandle = Device::fromHandle(device)->getDriverHandle();
-    auto driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
 
-    std::lock_guard<std::mutex> lock(driverHandleImp->externalSemaphoreControllerMutex);
-    if (driverHandleImp->externalSemaphoreController == nullptr) {
-        driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-        driverHandleImp->externalSemaphoreController->startThread();
+    std::lock_guard<std::mutex> lock(driverHandle->externalSemaphoreControllerMutex);
+    if (driverHandle->externalSemaphoreController == nullptr) {
+        driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
+        driverHandle->externalSemaphoreController->startThread();
     }
 
     *phSemaphore = externalSemaphore;

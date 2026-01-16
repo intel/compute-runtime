@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 
 #include "gtest/gtest.h"
@@ -46,7 +46,7 @@ struct DeviceFixture {
     void tearDown();
     void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
 
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     L0::ContextImp *context = nullptr;
@@ -77,7 +77,7 @@ struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     T *memoryManager = nullptr;
 };
 
-struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
+struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
         if (failHandleLookup) {
             return nullptr;
@@ -116,7 +116,7 @@ struct PageFaultDeviceFixture {
     void setUp();
     void tearDown();
 
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     std::unique_ptr<MockMemoryManager> mockMemoryManager;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -131,7 +131,7 @@ struct MultiDeviceFixture {
     void tearDown();
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
@@ -182,7 +182,7 @@ struct MultipleDevicesWithCustomHwInfo {
     const uint32_t sliceCount = 2;
     const uint32_t subsliceCount = 8;
 
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::OsAgnosticMemoryManager *memoryManager = nullptr;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
 
@@ -195,7 +195,7 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
     SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(uint32_t copyEngineCount, uint32_t implicitScaling) : implicitScaling(implicitScaling), expectedCopyEngineCount(copyEngineCount){};
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     std::vector<NEO::Device *> devices;
     uint32_t numRootDevices = 1u;
     uint32_t numSubDevices = 2u;

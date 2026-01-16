@@ -1109,7 +1109,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
     for (auto &dev : deviceFactory.rootDevices) {
         devices.push_back(std::unique_ptr<NEO::Device>(dev));
     }
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
     auto device0 = driverHandle->devices[0];
     auto device1 = driverHandle->devices[1];

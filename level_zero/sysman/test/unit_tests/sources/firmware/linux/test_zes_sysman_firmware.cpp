@@ -145,8 +145,8 @@ TEST_F(SysmanSurvivabilityDeviceTest, GivenSurvivabilityDeviceWhenFirmwareEnumer
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(sysmanDriverHandle != nullptr);
 
-    SysmanDriverHandleImp *pSysmanDriverHandleImp = static_cast<SysmanDriverHandleImp *>(sysmanDriverHandle);
-    auto pSysmanDevice = pSysmanDriverHandleImp->sysmanDevices[0];
+    SysmanDriverHandleImp *pSysmanDriverHandle = static_cast<SysmanDriverHandleImp *>(sysmanDriverHandle);
+    auto pSysmanDevice = pSysmanDriverHandle->sysmanDevices[0];
     auto pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
     auto pOsSysman = pSysmanDeviceImp->pOsSysman;
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);

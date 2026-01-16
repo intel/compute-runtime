@@ -16,7 +16,7 @@
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
@@ -388,7 +388,7 @@ ze_result_t LinuxSysmanImp::initDevice() {
     if (neoDevice == nullptr) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
-    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
+    device->getDriverHandle()->updateRootDeviceBitFields(neoDevice);
     Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
     reInitSysmanDeviceResources();
 

@@ -19,7 +19,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 
@@ -81,7 +81,7 @@ ImageImp::~ImageImp() {
 ze_result_t ImageImp::destroy() {
     if (this->getAllocation() && this->device) {
         auto imageAllocPtr = reinterpret_cast<const void *>(this->getAllocation()->getGpuAddress());
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+        DriverHandle *driverHandle = this->device->getDriverHandle();
 
         for (auto peerDevice : driverHandle->devices) {
             this->destroyPeerImages(imageAllocPtr, peerDevice);

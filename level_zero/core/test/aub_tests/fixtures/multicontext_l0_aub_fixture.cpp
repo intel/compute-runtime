@@ -49,7 +49,7 @@ void MulticontextL0AubFixture::createDevices(const HardwareInfo &hwInfo, uint32_
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<L0::ult::Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<L0::ult::Mock<L0::DriverHandle>>();
 
     driverHandle->initialize(std::move(devices));
 

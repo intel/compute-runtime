@@ -48,8 +48,7 @@ struct MetricCollectorEventNotify;
 struct ContextImp;
 struct Context;
 struct CommandQueue;
-struct DriverHandle;
-struct DriverHandleImp;
+class DriverHandle;
 struct Device;
 struct Kernel;
 struct CommandList;
@@ -171,7 +170,7 @@ struct Event : _ze_event_handle_t {
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
 
     static ze_result_t openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
-                                                 DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+                                                 DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
 
     ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
@@ -471,7 +470,7 @@ struct Event : _ze_event_handle_t {
 struct EventPool : _ze_event_pool_handle_t {
     static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result);
     static ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
-                                              DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+                                              DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
     EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
         setupDescriptorFlags(desc);
     }
@@ -523,7 +522,7 @@ struct EventPool : _ze_event_pool_handle_t {
 
     ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
 
-    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
     Device *getDevice() const { return devices[0]; }
 

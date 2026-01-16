@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct WhiteBox;
 } // namespace ult
 
 struct ContextImp;
-struct DriverHandleImp;
+class DriverHandle;
 struct CommandQueue;
 struct CommandListImp;
 struct Device;
@@ -111,7 +111,7 @@ class AUBFixtureL0 {
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::MockDevice *neoDevice = nullptr;
 
-    std::unique_ptr<ult::Mock<DriverHandleImp>> driverHandle;
+    std::unique_ptr<ult::Mock<DriverHandle>> driverHandle;
     std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList;
 
     Device *device = nullptr;

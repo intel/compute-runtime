@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ struct L0DebuggerFixture {
         if (createDriver) {
             NEO::DeviceVector devices;
             devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-            driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+            driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
             driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
             driverHandle->initialize(std::move(devices));
@@ -70,7 +70,7 @@ struct L0DebuggerFixture {
     void tearDown() {
     }
 
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     NEO::HardwareInfo hwInfo = *defaultHwInfo;

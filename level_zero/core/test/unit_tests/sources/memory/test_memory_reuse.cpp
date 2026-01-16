@@ -14,7 +14,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 namespace L0 {
 namespace ult {
@@ -41,7 +41,7 @@ struct UsmReuseMemoryTest : public ::testing::Test {
             devices.push_back(std::move(device));
         }
 
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
 
         svmAllocsManager = reinterpret_cast<MockSVMAllocsManager *>(driverHandle->svmAllocsManager);
@@ -58,7 +58,7 @@ struct UsmReuseMemoryTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     L0::ContextImp *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;
     NEO::ExecutionEnvironment *executionEnvironment;

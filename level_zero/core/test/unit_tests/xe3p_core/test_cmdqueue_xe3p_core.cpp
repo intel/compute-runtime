@@ -361,7 +361,7 @@ XE3P_CORETEST_F(CommandQueueHeaplessXe3p, givenSecondaryContextQueueWhenExecutin
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory.rootDevices[0]));
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
     auto device = driverHandle->devices[0];
 

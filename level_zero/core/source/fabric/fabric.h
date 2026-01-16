@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_fabric_edge_handle_t>);
 
 namespace L0 {
 struct Device;
-struct DriverHandle;
+class DriverHandle;
 
 struct FabricVertex : _ze_fabric_vertex_handle_t {
 

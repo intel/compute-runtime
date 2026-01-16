@@ -81,7 +81,7 @@ bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **han
         return true;
     }
 
-    auto driverHandle = static_cast<DriverHandleImp *>(l0Device->getDriverHandle());
+    auto driverHandle = l0Device->getDriverHandle();
     auto context = static_cast<ContextImp *>(driverHandle->getDefaultContext());
 
     if (*handlePtr == nullptr) {

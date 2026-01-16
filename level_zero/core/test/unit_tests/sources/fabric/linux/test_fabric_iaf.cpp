@@ -43,14 +43,14 @@ struct TestFabricIaf : public ::testing::Test {
     OSInterface *osInterface = nullptr;
     NEO::MockDevice *neoDevice = nullptr;
     DrmMockResources *drmMock = nullptr;
-    L0::DriverHandleImp *driverHandle = nullptr;
+    L0::DriverHandle *driverHandle = nullptr;
 };
 
 TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenFabricVerticesAreCreatedThenEnumerationIsSuccessful) {
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
@@ -70,7 +70,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenPortStatusQueryIsUnsuccessfulTh
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
@@ -97,7 +97,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenPortPropertiesQueryIsUnsuccessf
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
@@ -115,7 +115,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenSubDevicePropertiesGetIsUnsucce
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
@@ -132,7 +132,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenNoPortsCanBeEnumeratedThenRetur
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
@@ -148,7 +148,7 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenNoPortsCanBeEnumeratedThenRetur
 TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenGetPortsReturnsErrorThenReturnError) {
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
     auto device = driverHandle->devices[0];
 

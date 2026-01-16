@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,18 +87,18 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalS
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-using MockDriverHandleImp = Mock<L0::DriverHandleImp>;
+using MockDriverHandle = Mock<L0::DriverHandle>;
 
 HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -123,12 +123,12 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendSignal
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -153,12 +153,12 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendWaitFo
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -182,12 +182,12 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExter
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -219,11 +219,11 @@ HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExterna
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
 
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
-    driverHandleImp->setMemoryManager(failMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    auto driverHandle = std::make_unique<MockDriverHandle>();
+    driverHandle->setMemoryManager(failMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -248,12 +248,12 @@ HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalS
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -277,12 +277,12 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExterna
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -307,12 +307,12 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExterna
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -342,12 +342,12 @@ HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternalS
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    auto driverHandle = std::make_unique<MockDriverHandle>();
 
-    driverHandleImp->setMemoryManager(failMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    driverHandle->setMemoryManager(failMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -374,24 +374,24 @@ HWTEST_F(ExternalSemaphoreTest, givenExternalSemaphoreControllerWhenAllocateProx
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    auto driverHandle = std::make_unique<MockDriverHandle>();
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
 
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
+    ze_result_t result = driverHandle->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
+    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
+    EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 1u);
 
-    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
+    result = driverHandle->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
+    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
+    EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 2u);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenMaxEventsInPoolCreatedWhenAllocateProxyEventCalledThenEventPoolSizeIncreases) {
@@ -400,28 +400,28 @@ HWTEST_F(ExternalSemaphoreTest, givenMaxEventsInPoolCreatedWhenAllocateProxyEven
 
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
-    driverHandleImp->setMemoryManager(mockMemoryManager.get());
-    l0Device->setDriverHandle(driverHandleImp.get());
+    auto driverHandle = std::make_unique<MockDriverHandle>();
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
 
-    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 0u);
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
+    EXPECT_EQ(driverHandle->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 0u);
 
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
+    ze_result_t result = driverHandle->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 1u);
+    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
+    EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 1u);
+    EXPECT_EQ(driverHandle->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 1u);
 
-    driverHandleImp->externalSemaphoreController->eventsCreatedFromLatestPoolMap[l0Device->toHandle()] = 20;
-    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
+    driverHandle->externalSemaphoreController->eventsCreatedFromLatestPoolMap[l0Device->toHandle()] = 20;
+    result = driverHandle->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
-    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 2u);
+    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
+    EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 2u);
+    EXPECT_EQ(driverHandle->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 2u);
 }
 
 } // namespace ult

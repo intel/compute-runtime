@@ -11,7 +11,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
@@ -22,7 +22,7 @@ bool sysmanInitFromCore = false;
 struct OsSysmanDriver *globalOsSysmanDriver = nullptr;
 
 void Device::createSysmanHandle(bool isSubDevice) {
-    if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
+    if (static_cast<DriverHandle *>(driverHandle)->enableSysman && !isSubDevice) {
         if (this->getSysmanHandle() == nullptr) {
             // Sysman handles are created only during zeInit time device creation. And destroyed during L0::device destroy.
             this->setSysmanHandle(L0::SysmanDeviceHandleContext::init(this->toHandle()));
@@ -66,7 +66,7 @@ SysmanDevice *Device::getSysmanHandle() {
     return pSysmanDevice;
 }
 
-ze_result_t DriverHandleImp::sysmanEventsListen(
+ze_result_t DriverHandle::sysmanEventsListen(
     uint32_t timeout,
     uint32_t count,
     zes_device_handle_t *phDevices,
@@ -82,7 +82,7 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     return globalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
-ze_result_t DriverHandleImp::sysmanEventsListenEx(
+ze_result_t DriverHandle::sysmanEventsListenEx(
     uint64_t timeout,
     uint32_t count,
     zes_device_handle_t *phDevices,

@@ -38,7 +38,7 @@
 #include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
@@ -601,7 +601,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
 
         if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
             const auto device = module->getDevice();
-            const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+            const auto driverHandle = device->getDriverHandle();
 
             CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             driverHandle->setErrorDescription(std::string(str.get()));
@@ -814,7 +814,7 @@ ze_result_t KernelImp::setArgUnknown(uint32_t argIndex, size_t argSize, const vo
 
 ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const void *argVal) {
     const auto device = this->module->getDevice();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
     const auto svmAllocsManager = driverHandle->getSvmAllocsManager();
     const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
     const auto &argInfo = this->privateState.kernelArgInfos[argIndex];

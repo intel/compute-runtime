@@ -54,7 +54,7 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
     }
     uint32_t appendMemoryCopyBlitCalledTimes = 0;
 };
-class MockDriverHandle : public L0::DriverHandleImp {
+class MockDriverHandle : public L0::DriverHandle {
   public:
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,

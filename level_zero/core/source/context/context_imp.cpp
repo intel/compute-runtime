@@ -22,7 +22,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
@@ -48,8 +48,7 @@ ze_result_t ContextImp::destroy() {
 }
 
 ze_result_t ContextImp::getStatus() {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-    for (auto device : driverHandleImp->devices) {
+    for (auto device : this->driverHandle->devices) {
         if (device->resourcesReleased) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
@@ -62,7 +61,7 @@ DriverHandle *ContextImp::getDriverHandle() {
 }
 
 ContextImp::ContextImp(DriverHandle *driverHandle) {
-    this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
+    this->driverHandle = driverHandle;
     this->contextExt = createContextExt(driverHandle);
 
     // Determine context settings based on device capabilities.
@@ -556,8 +555,7 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
                 if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
-                    auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-                    driverHandleImp->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
+                    this->driverHandle->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
                 }
                 delete ipcHandleIterator->second;
                 this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
@@ -633,11 +631,10 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
         nullptr);
     if (allocation == nullptr) {
         NEO::SvmAllocationData *allocData = nullptr;
-        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-        bool foundBuffer = driverHandleImp->findAllocationDataForRange(ptr, size, allocData);
+        bool foundBuffer = this->driverHandle->findAllocationDataForRange(ptr, size, allocData);
         if (foundBuffer) {
             uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
-            allocation = driverHandleImp->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr);
+            allocation = this->driverHandle->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr);
         }
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -654,9 +651,9 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
     if (ZE_RESULT_SUCCESS == res) {
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
         if (allocData && allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
-            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-            std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
-            driverHandleImp->sharedMakeResidentAllocations.insert({ptr, allocation});
+            auto driverHandle = device->getDriverHandle();
+            std::lock_guard<std::mutex> lock(driverHandle->sharedMakeResidentAllocationsLock);
+            driverHandle->sharedMakeResidentAllocations.insert({ptr, allocation});
         }
     }
 
@@ -680,9 +677,9 @@ ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_
     }
 
     {
-        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-        std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
-        driverHandleImp->sharedMakeResidentAllocations.erase(ptr);
+        auto driverHandle = device->getDriverHandle();
+        std::lock_guard<std::mutex> lock(driverHandle->sharedMakeResidentAllocationsLock);
+        driverHandle->sharedMakeResidentAllocations.erase(ptr);
     }
 
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
@@ -780,8 +777,7 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
         if (trackIPC->refcnt == 0) {
             driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
             if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
-                auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-                driverHandleImp->unregisterIpcHandleWithServer(handle);
+                this->driverHandle->unregisterIpcHandleWithServer(handle);
             }
             delete trackIPC;
             ipcMap.erase(handle);
@@ -991,7 +987,7 @@ ze_result_t ContextImp::openCounterBasedIpcHandle(const IpcCounterBasedEventData
     return Event::openCounterBasedIpcHandle(ipcData, phEvent, driverHandle, this, this->numDevices, this->deviceHandles.data());
 }
 
-ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type, void *pNext, struct DriverHandleImp *driverHandle) {
+ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type, void *pNext, DriverHandle *driverHandle) {
     if (pNext != nullptr) {
         ze_base_properties_t *extendedProperties =
             reinterpret_cast<ze_base_properties_t *>(pNext);

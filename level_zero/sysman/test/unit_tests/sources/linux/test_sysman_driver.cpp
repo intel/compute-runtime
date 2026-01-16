@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"

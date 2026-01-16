@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -300,8 +300,8 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenValidSurvivabilityModeDeviceWhe
     auto sysmanDriverHandle = pLinuxDriverImp->createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), &result);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(sysmanDriverHandle != nullptr);
-    SysmanDriverHandleImp *pSysmanDriverHandleImp = (SysmanDriverHandleImp *)sysmanDriverHandle;
-    auto pSysmanDevice = pSysmanDriverHandleImp->sysmanDevices[0];
+    SysmanDriverHandleImp *pSysmanDriverHandle = static_cast<SysmanDriverHandleImp *>(sysmanDriverHandle);
+    auto pSysmanDevice = pSysmanDriverHandle->sysmanDevices[0];
     auto pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
     auto pOsSysman = pSysmanDeviceImp->pOsSysman;
     auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);

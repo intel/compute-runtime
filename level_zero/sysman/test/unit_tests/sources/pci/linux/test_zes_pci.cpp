@@ -210,7 +210,7 @@ class ZesPciFixture : public SysmanDeviceFixture {
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
-    std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::ult::Mock<L0::DriverHandle>> driverHandle;
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
 
     void SetUp() override {

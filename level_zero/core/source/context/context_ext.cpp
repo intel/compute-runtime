@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 namespace L0 {
 
 class ContextExt;
-struct DriverHandle;
+class DriverHandle;
 
 ContextExt *createContextExt(DriverHandle *driverHandle) {
     return nullptr;

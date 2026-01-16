@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include <level_zero/zer_api.h>
 
 namespace L0 {
@@ -24,7 +23,7 @@ ze_result_t ZE_APICALL zerGetLastErrorDescription(const char **ppString) {
 
 uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
     if (!device) {
-        auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
+        auto driverHandle = static_cast<L0::DriverHandle *>(L0::globalDriverHandles->front());
         driverHandle->setErrorDescription("Invalid device handle");
         return std::numeric_limits<uint32_t>::max();
     }
@@ -32,7 +31,7 @@ uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t devi
 }
 
 ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
-    auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
+    auto driverHandle = static_cast<L0::DriverHandle *>(L0::globalDriverHandles->front());
     if (identifier >= driverHandle->devicesToExpose.size()) {
         driverHandle->setErrorDescription("Invalid device identifier");
         return nullptr;

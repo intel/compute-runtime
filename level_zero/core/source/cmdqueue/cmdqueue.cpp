@@ -25,7 +25,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -252,12 +252,12 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
 
     auto &osContext = csr->getOsContext();
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-    if (driverHandleImp->powerHint && driverHandleImp->powerHint != osContext.getUmdPowerHintValue()) {
+    auto driverHandle = device->getDriverHandle();
+    if (driverHandle->powerHint && driverHandle->powerHint != osContext.getUmdPowerHintValue()) {
         csr->unregisterDirectSubmissionFromController();
         auto lock = csr->obtainUniqueOwnership();
         csr->resetDirectSubmission();
-        osContext.setUmdPowerHintValue(driverHandleImp->powerHint);
+        osContext.setUmdPowerHintValue(driverHandle->powerHint);
         osContext.reInitializeContext();
     }
 

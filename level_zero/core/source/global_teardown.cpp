@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
@@ -53,7 +53,7 @@ void globalDriverTeardown() {
 
     if (globalDriverHandles) {
         for (auto &globalDriverHandle : *globalDriverHandles) {
-            auto globalDriver = static_cast<L0::DriverHandleImp *>(DriverHandle::fromHandle(globalDriverHandle));
+            auto globalDriver = DriverHandle::fromHandle(globalDriverHandle);
             if (globalDriver != nullptr) {
 
                 if (globalDriver->pid == NEO::SysCalls::getCurrentProcessId()) {

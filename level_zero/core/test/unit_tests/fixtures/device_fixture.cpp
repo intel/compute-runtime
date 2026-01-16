@@ -41,7 +41,7 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
 
@@ -83,7 +83,7 @@ void PageFaultDeviceFixture::setUp() {
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
 
@@ -113,7 +113,7 @@ void MultiDeviceFixture::setUp() {
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -205,7 +205,7 @@ void MultipleDevicesWithCustomHwInfo::setUp() {
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
     }
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
 }
 
@@ -243,7 +243,7 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(mockDevice));
 
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

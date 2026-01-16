@@ -43,7 +43,7 @@ TEST(DebugSessionTest, GivenValidArgsWhenReadSipMemoryCalledThenReturnsSizeAndRe
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -68,7 +68,7 @@ TEST(DebugSessionTest, GivenReadGpuMemoryFailsWhenReadSipMemoryCalledThenReturns
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -90,7 +90,7 @@ TEST(DebugSessionTest, GivenValidArgsWhenWriteSipMemoryCalledThenReturnsSizeAndW
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -115,7 +115,7 @@ TEST(DebugSessionTest, GivenWriteGpuMemoryFailsWhenWriteSipMemoryCalledThenRetur
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -159,7 +159,7 @@ TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThen
 
 TEST(DeviceWithDebugSessionTest, GivenDeviceWithDebugSessionWhenCallingReleaseResourcesThenCloseConnectionIsCalled) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto hwInfo = *NEO::defaultHwInfo;
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));

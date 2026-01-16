@@ -15,7 +15,7 @@
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <mutex>
@@ -78,7 +78,7 @@ void Driver::initialize(ze_result_t *result) {
         if (driverHandle) {
             globalDriverHandles->push_back(driverHandle);
 
-            auto &devicesToExpose = static_cast<DriverHandleImp *>(driverHandle)->devicesToExpose;
+            auto &devicesToExpose = driverHandle->devicesToExpose;
             std::vector<NEO::Device *> neoDeviceToExpose;
             neoDeviceToExpose.reserve(devicesToExpose.size());
             for (auto deviceToExpose : devicesToExpose) {

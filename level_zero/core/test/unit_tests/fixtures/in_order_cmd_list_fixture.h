@@ -406,7 +406,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
             devices.push_back(std::unique_ptr<NEO::Device>(neoRootDevice));
         }
 
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
 
         this->device = driverHandle->devices[0];
@@ -488,7 +488,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
     DebugManagerStateRestore restore;
     CmdListMemoryCopyParams copyParams = {};
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     L0::Device *device = nullptr;
     DestroyableZeUniquePtr<L0::CommandList> cmdList;
     BcsSplit *bcsSplit = nullptr;

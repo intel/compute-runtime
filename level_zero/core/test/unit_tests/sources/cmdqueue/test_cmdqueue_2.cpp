@@ -539,8 +539,8 @@ HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPo
     auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                             device->getNEODevice()->getDeviceBitfield()));
     csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-    driverHandleImp->powerHint = 1;
+    DriverHandle *driverHandle = device->getDriverHandle();
+    driverHandle->powerHint = 1;
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -561,8 +561,8 @@ HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPo
     auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                             device->getNEODevice()->getDeviceBitfield()));
     csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
-    driverHandleImp->powerHint = 1;
+    DriverHandle *driverHandle = device->getDriverHandle();
+    driverHandle->powerHint = 1;
     auto &osContext = csr->getOsContext();
     osContext.setUmdPowerHintValue(1);
 
@@ -610,7 +610,7 @@ struct CommandQueueCreateNegativeTest : public ::testing::Test {
             devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         }
 
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
 
         device = driverHandle->devices[0];
@@ -619,7 +619,7 @@ struct CommandQueueCreateNegativeTest : public ::testing::Test {
     }
 
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     MemoryManagerCommandQueueCreateNegativeTest *memoryManager = nullptr;
@@ -671,7 +671,7 @@ struct CommandQueueInitTests : public ::testing::Test {
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
 
         device = driverHandle->devices[0];
@@ -681,7 +681,7 @@ struct CommandQueueInitTests : public ::testing::Test {
     DebugManagerStateRestore restore;
 
     NEO::MockDevice *neoDevice = nullptr;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     L0::Device *device = nullptr;
     MyMemoryManager *memoryManager = nullptr;
     const uint32_t numRootDevices = 1;

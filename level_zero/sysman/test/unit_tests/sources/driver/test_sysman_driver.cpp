@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,14 +29,14 @@ TEST_F(SysmanDriverHandleOsAgnosticTest,
     std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
         {extensionNameLonger, 100}};
 
-    auto sysmanDriverHandleImp = static_cast<SysmanDriverHandleImp *>(driverHandle.get());
+    auto sysmanDriverHandle = static_cast<SysmanDriverHandleImp *>(driverHandle.get());
 
     uint32_t pCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, sysmanDriverHandleImp->getExtensionProperties(&pCount, nullptr, extensionsSupported));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, sysmanDriverHandle->getExtensionProperties(&pCount, nullptr, extensionsSupported));
     EXPECT_EQ(1u, pCount);
 
     std::vector<zes_driver_extension_properties_t> extensionsReturned(pCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, sysmanDriverHandleImp->getExtensionProperties(&pCount, extensionsReturned.data(), extensionsSupported));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, sysmanDriverHandle->getExtensionProperties(&pCount, extensionsReturned.data(), extensionsSupported));
 
     // Verify that the extension name is truncated properly
     EXPECT_EQ(static_cast<size_t>(ZES_MAX_EXTENSION_NAME - 1), strlen(extensionsReturned[0].name));

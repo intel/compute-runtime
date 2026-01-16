@@ -80,7 +80,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<ult::Mock<DriverHandleImp>>();
+    driverHandle = std::make_unique<ult::Mock<DriverHandle>>();
 
     driverHandle->enableProgramDebugging = debuggingEnabled ? NEO::DebuggingMode::online : NEO::DebuggingMode::disabled;
 

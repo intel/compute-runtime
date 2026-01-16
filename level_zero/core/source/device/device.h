@@ -59,7 +59,7 @@ class MetricDeviceContext;
 struct BuiltinFunctionsLib;
 struct CommandList;
 struct DebugSession;
-struct DriverHandle;
+class DriverHandle;
 struct ExecutionEnvironment;
 struct FabricVertex;
 struct Image;

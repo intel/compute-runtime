@@ -22,7 +22,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -544,8 +544,8 @@ TEST_F(ContextMakeMemoryResidentTests,
                                               &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    auto allocation = driverHandleImp->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex(), nullptr);
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    auto allocation = driverHandle->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex(), nullptr);
     allocation->setLockedMemory(true);
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
@@ -569,21 +569,21 @@ TEST_F(ContextMakeMemoryResidentTests,
                                               &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::success;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t finalSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t finalSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize, finalSize);
 
     context->freeMem(ptr);
@@ -601,14 +601,14 @@ TEST_F(ContextMakeMemoryResidentTests,
                                               &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize, currentSize);
 
     mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::success;
@@ -632,15 +632,15 @@ TEST_F(ContextMakeMemoryResidentTests,
                                               &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::failed;
 
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize, currentSize);
 
     context->freeMem(ptr);
@@ -653,9 +653,9 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
 
-    auto *driverHandleImp{static_cast<DriverHandleImp *>(hostDriverHandle.get())};
-    driverHandleImp->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
-    static_cast<MockMemoryManager *>(driverHandleImp->memoryManager)->returnFakeAllocation = true;
+    auto *driverHandle{hostDriverHandle.get()};
+    driverHandle->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
+    static_cast<MockMemoryManager *>(driverHandle->memoryManager)->returnFakeAllocation = true;
     hostDriverHandle->svmAllocsManager->cleanupUSMAllocCaches();
 
     EXPECT_EQ(0U, mockMemoryInterface->makeResidentCalled);
@@ -667,7 +667,7 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
                                                &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res1);
 
-    auto allocData{driverHandleImp->svmAllocsManager->getSVMAlloc(ptr)};
+    auto allocData{driverHandle->svmAllocsManager->getSVMAlloc(ptr)};
     EXPECT_NE(allocData, nullptr);
     const bool lmemAllocationModeSupported{allocData->gpuAllocations.getDefaultGraphicsAllocation()->storageInfo.localOnlyRequired};
     EXPECT_EQ(mockMemoryInterface->makeResidentCalled, (lmemAllocationModeSupported ? 1U : 0U));
@@ -691,11 +691,11 @@ TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDevic
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
 
-    auto *driverHandleImp{static_cast<DriverHandleImp *>(hostDriverHandle.get())};
-    driverHandleImp->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
-    static_cast<MockMemoryManager *>(driverHandleImp->memoryManager)->returnFakeAllocation = true;
+    auto *driverHandle{hostDriverHandle.get()};
+    driverHandle->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
+    static_cast<MockMemoryManager *>(driverHandle->memoryManager)->returnFakeAllocation = true;
 
-    auto *origSvmAllocsManager{driverHandleImp->svmAllocsManager};
+    auto *origSvmAllocsManager{driverHandle->svmAllocsManager};
     auto fakeAllocationAddr{reinterpret_cast<void *>(0x1234)};
 
     MockGraphicsAllocation mockUnifiedAllocation{};
@@ -703,11 +703,11 @@ TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDevic
     allocData.gpuAllocations.addAllocation(&mockUnifiedAllocation);
     allocData.memoryType = InternalMemoryType::notSpecified;
 
-    MockSVMAllocsManager mockSvmAllocsManager{driverHandleImp->memoryManager};
+    MockSVMAllocsManager mockSvmAllocsManager{driverHandle->memoryManager};
     mockSvmAllocsManager.createUnifiedMemoryAllocationCallBase = false;
     mockSvmAllocsManager.createUnifiedMemoryAllocationReturnValue = fakeAllocationAddr;
     mockSvmAllocsManager.insertSVMAlloc(fakeAllocationAddr, allocData);
-    driverHandleImp->svmAllocsManager = &mockSvmAllocsManager;
+    driverHandle->svmAllocsManager = &mockSvmAllocsManager;
 
     EXPECT_EQ(0U, mockMemoryInterface->makeResidentCalled);
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
@@ -718,7 +718,7 @@ TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDevic
                                                &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res1);
     EXPECT_EQ(mockMemoryInterface->makeResidentCalled, 0U);
-    driverHandleImp->svmAllocsManager = origSvmAllocsManager;
+    driverHandle->svmAllocsManager = origSvmAllocsManager;
 }
 
 struct ContextMakeMemoryResidentAndMigrationTests : public ContextMakeMemoryResidentTests {
@@ -772,15 +772,15 @@ struct ContextMakeMemoryResidentAndMigrationTests : public ContextMakeMemoryResi
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingCommandListsWithMigrationThenMemoryFromMakeResidentIsMovedToGpu) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};
@@ -823,15 +823,15 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 }
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests, whenExecutingKernelWithIndirectAccessThenSharedAllocationsAreMigrated) {
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};
@@ -872,15 +872,15 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests, whenExecutingKernelWithIndi
 }
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingCommandListsWithNoMigrationThenMemoryFromMakeResidentIsNotMovedToGpu) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};
@@ -925,15 +925,15 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingImmediateCommandListsHavingSharedAllocationWithMigrationThenMemoryFromMakeResidentIsMovedToGpu) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};
@@ -975,15 +975,15 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          GivenImmediateCommandListWhenExecutingRegularCommandListsHavingSharedAllocationWithMigrationOnImmediateThenMemoryFromMakeResidentIsMovedToGpuOnce) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};
@@ -1036,15 +1036,15 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingImmediateCommandListsHavingHostAllocationWithMigrationThenMemoryFromMakeResidentIsMovedToGpu) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    DriverHandle *driverHandle = hostDriverHandle.get();
+    size_t previousSize = driverHandle->sharedMakeResidentAllocations.size();
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
 
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    size_t currentSize = driverHandle->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
     const ze_command_queue_desc_t desc = {};

@@ -11,12 +11,12 @@
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {
 namespace ult {
 struct L0UltHelper {
-    static void cleanupUsmAllocPoolsAndReuse(DriverHandleImp *driverHandle) {
+    static void cleanupUsmAllocPoolsAndReuse(DriverHandle *driverHandle) {
         if (driverHandle->usmHostMemAllocPool) {
             driverHandle->usmHostMemAllocPool->cleanup();
             driverHandle->usmHostMemAllocPool.reset(nullptr);
@@ -32,7 +32,7 @@ struct L0UltHelper {
         driverHandle->svmAllocsManager->cleanupUSMAllocCaches();
     }
 
-    static void initUsmAllocPools(DriverHandleImp *driverHandle) {
+    static void initUsmAllocPools(DriverHandle *driverHandle) {
         driverHandle->initHostUsmAllocPool();
         for (auto device : driverHandle->devices) {
             driverHandle->initDeviceUsmAllocPool(*device->getNEODevice(), driverHandle->numDevices > 1);

@@ -168,7 +168,7 @@ struct MultiDeviceQueryPeerAccessDrmFixture {
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>{drm});
         }
 
-        driverHandle = std::make_unique<Mock<WhiteBox<L0::DriverHandleImp>>>();
+        driverHandle = std::make_unique<Mock<WhiteBox<L0::DriverHandle>>>();
         driverHandle->importFdHandleResult = reinterpret_cast<void *>(0x1234);
 
         for (auto &device : driverHandle->devices) {

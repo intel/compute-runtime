@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,7 +213,7 @@ class ZesPciFixture : public SysmanDeviceFixture {
     FsAccess *pOriginalFsAccess = nullptr;
     L0::PciImp *pPciImp;
     OsPci *pOsPciPrev;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     MemoryManager *pMemoryManagerOld;
 
     void SetUp() override {

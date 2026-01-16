@@ -11,7 +11,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace NEO {
 void CpuPageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -223,7 +223,7 @@ struct ImmediateCmdListSharedHeapsFlushTaskFixture : public ImmediateCmdListShar
 
 class AppendFillFixture : public DeviceFixture {
   public:
-    class MockDriverFillHandle : public L0::DriverHandleImp {
+    class MockDriverFillHandle : public L0::DriverHandle {
       public:
         bool findAllocationDataForRange(const void *buffer,
                                         size_t size,

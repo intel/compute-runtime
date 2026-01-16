@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -341,7 +341,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     debugManager.flags.ZE_AFFINITY_MASK.set("0.1,0.2,0.3");
 
     auto deviceFactory = createDevices(4);
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*rootDevice));
@@ -363,7 +363,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     debugManager.flags.ZE_AFFINITY_MASK.set("0.2,0.3");
 
     auto deviceFactory = createDevices(4);
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
 
@@ -407,7 +407,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInfoIsNullWhenStartMe
     debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     auto deviceFactory = createDevices(4);
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*rootDevice));
@@ -421,7 +421,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInstanceIsNullWhenSta
     debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     auto deviceFactory = createDevices(4);
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*rootDevice));

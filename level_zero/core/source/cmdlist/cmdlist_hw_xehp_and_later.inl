@@ -16,7 +16,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -61,7 +61,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     NEO::Device *neoDevice = device->getNEODevice();
-    const auto deviceHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto deviceHandle = device->getDriverHandle();
 
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto kernelImmutableData = kernel->getImmutableData();

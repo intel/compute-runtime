@@ -10,7 +10,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 
 namespace L0 {
@@ -102,8 +102,7 @@ ze_result_t FabricVertex::getDevice(ze_device_handle_t *phDevice) const {
 
 ze_result_t FabricVertex::edgeGet(ze_fabric_vertex_handle_t hVertexB,
                                   uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
-    DriverHandleImp *driverHandleImp = static_cast<L0::DriverHandleImp *>(device->getDriverHandle());
-    return driverHandleImp->fabricEdgeGetExp(this->toHandle(), hVertexB, pCount, phEdges);
+    return device->getDriverHandle()->fabricEdgeGetExp(this->toHandle(), hVertexB, pCount, phEdges);
 }
 
 FabricEdge *FabricEdge::create(FabricVertex *vertexA, FabricVertex *vertexB, ze_fabric_edge_exp_properties_t &properties) {

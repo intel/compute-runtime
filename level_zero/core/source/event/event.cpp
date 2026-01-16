@@ -28,7 +28,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
@@ -56,12 +56,11 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
     uint32_t maxRootDeviceIndex = 0u;
     uint32_t currentNumDevices = numDevices;
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driver);
     bool useDevicesFromApi = true;
     this->isDeviceEventPoolAllocation = isEventPoolDeviceAllocationFlagSet();
 
     if (numDevices == 0) {
-        currentNumDevices = static_cast<uint32_t>(driverHandleImp->devices.size());
+        currentNumDevices = static_cast<uint32_t>(driver->devices.size());
         useDevicesFromApi = false;
     }
 
@@ -71,7 +70,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         if (useDevicesFromApi) {
             eventDevice = Device::fromHandle(deviceHandles[i]);
         } else {
-            eventDevice = driverHandleImp->devices[i];
+            eventDevice = driver->devices[i];
         }
 
         if (!eventDevice) {
@@ -91,7 +90,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     this->isDeviceEventPoolAllocation |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
 
-    initializeSizeParameters(numDevices, deviceHandles, *driverHandleImp, rootDeviceEnvironment);
+    initializeSizeParameters(numDevices, deviceHandles, *driver, rootDeviceEnvironment);
 
     NEO::AllocationType allocationType = NEO::AllocationType::timestampPacketTagBuffer;
     if (this->devices.size() > 1) {
@@ -218,7 +217,7 @@ ze_result_t EventPool::getFlags(ze_event_pool_flags_t *pFlags) {
     return ZE_RESULT_SUCCESS;
 }
 
-void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
@@ -290,7 +289,7 @@ ze_result_t EventPool::closeIpcHandle() {
 }
 
 ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
-                                             DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+                                             DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
 
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
@@ -433,7 +432,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
 }
 
 ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
-                                              DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+                                              DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

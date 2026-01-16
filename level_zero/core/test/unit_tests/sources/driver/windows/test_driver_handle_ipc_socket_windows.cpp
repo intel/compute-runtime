@@ -11,7 +11,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
@@ -152,7 +152,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
     driverHandle->getIPCHandleMap().clear();
 }
 
-class MockDriverHandleImpForIpcSocket : public L0::DriverHandleImp {
+class MockDriverHandleForIpcSocket : public L0::DriverHandle {
   public:
     bool initializeIpcSocketServer() override {
         initializeIpcSocketServerCalled++;
@@ -186,7 +186,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
 
-    MockDriverHandleImpForIpcSocket mockDriverHandle;
+    MockDriverHandleForIpcSocket mockDriverHandle;
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = true;
 
@@ -219,7 +219,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
 
-    MockDriverHandleImpForIpcSocket mockDriverHandle;
+    MockDriverHandleForIpcSocket mockDriverHandle;
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = false;
 

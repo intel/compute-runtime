@@ -44,7 +44,7 @@ PVCTEST_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImpli
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);

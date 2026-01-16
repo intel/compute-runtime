@@ -24,7 +24,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include <sys/mman.h>
 #include <sys/prctl.h>

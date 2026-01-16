@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {
 
@@ -123,8 +123,8 @@ ze_result_t RTASBuilderExt::build(const ze_rtas_builder_build_op_ext_desc_t *arg
                                pRtasBufferSizeBytes);
 }
 
-ze_result_t DriverHandleImp::formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA,
-                                                          ze_rtas_format_exp_t rtasFormatB) {
+ze_result_t DriverHandle::formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA,
+                                                       ze_rtas_format_exp_t rtasFormatB) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -133,8 +133,8 @@ ze_result_t DriverHandleImp::formatRTASCompatibilityCheck(ze_rtas_format_exp_t r
     return formatCompatibilityCheckExpImpl(this->toHandle(), rtasFormatA, rtasFormatB);
 }
 
-ze_result_t DriverHandleImp::formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA,
-                                                             ze_rtas_format_ext_t rtasFormatB) {
+ze_result_t DriverHandle::formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA,
+                                                          ze_rtas_format_ext_t rtasFormatB) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -143,8 +143,8 @@ ze_result_t DriverHandleImp::formatRTASCompatibilityCheckExt(ze_rtas_format_ext_
     return formatCompatibilityCheckExtImpl(this->toHandle(), rtasFormatA, rtasFormatB);
 }
 
-ze_result_t DriverHandleImp::createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc,
-                                               ze_rtas_builder_exp_handle_t *phBuilder) {
+ze_result_t DriverHandle::createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc,
+                                            ze_rtas_builder_exp_handle_t *phBuilder) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -161,8 +161,8 @@ ze_result_t DriverHandleImp::createRTASBuilder(const ze_rtas_builder_exp_desc_t 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc,
-                                                  ze_rtas_builder_ext_handle_t *phBuilder) {
+ze_result_t DriverHandle::createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc,
+                                               ze_rtas_builder_ext_handle_t *phBuilder) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -199,7 +199,7 @@ ze_result_t RTASBuilderExt::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::loadRTASLibrary() {
+ze_result_t DriverHandle::loadRTASLibrary() {
     std::lock_guard<std::mutex> lock(this->rtasLock);
 
     if (this->rtasLibraryUnavailable == true) {
@@ -225,7 +225,7 @@ ze_result_t DriverHandleImp::loadRTASLibrary() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) {
+ze_result_t DriverHandle::createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -242,7 +242,7 @@ ze_result_t DriverHandleImp::createRTASParallelOperation(ze_rtas_parallel_operat
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) {
+ze_result_t DriverHandle::createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) {
     ze_result_t result = this->loadRTASLibrary();
     if (result != ZE_RESULT_SUCCESS) {
         return result;

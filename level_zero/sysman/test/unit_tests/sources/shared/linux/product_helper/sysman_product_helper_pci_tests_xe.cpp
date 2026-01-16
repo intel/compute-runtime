@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class ZesPcieDowngradeFixture : public SysmanDeviceFixture {
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
-    std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::ult::Mock<L0::DriverHandle>> driverHandle;
     std::unique_ptr<MockPcieDowngradeFwInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
 

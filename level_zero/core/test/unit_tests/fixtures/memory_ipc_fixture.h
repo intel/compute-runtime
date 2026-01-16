@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include "gtest/gtest.h"
 
@@ -29,11 +29,11 @@ class SVMAllocsManager;
 
 namespace L0 {
 struct Device;
-struct DriverHandle;
+class DriverHandle;
 
 namespace ult {
 
-struct DriverHandleGetFdMock : public L0::DriverHandleImp {
+struct DriverHandleGetFdMock : public L0::DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
 
@@ -81,7 +81,7 @@ struct MemoryExportImportTest : public ::testing::Test {
     std::unique_ptr<ContextFdMock> context;
 };
 
-struct DriverHandleGetMemHandleMock : public L0::DriverHandleImp {
+struct DriverHandleGetMemHandleMock : public L0::DriverHandle {
     void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer,
@@ -130,7 +130,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
     MemoryManagerMemHandleMock *currMemoryManager = nullptr;
 };
 
-struct DriverHandleGetWinHandleMock : public L0::DriverHandleImp {
+struct DriverHandleGetWinHandleMock : public L0::DriverHandle {
     void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
 
     uint64_t mockHandle = 57;
@@ -175,7 +175,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
     std::unique_ptr<ContextHandleMock> context;
 };
 
-struct DriverHandleGetIpcHandleMock : public DriverHandleImp {
+struct DriverHandleGetIpcHandleMock : public DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
 
@@ -323,7 +323,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
 };
 
 struct ContextIpcMock : public L0::ContextImp {
-    ContextIpcMock(DriverHandleImp *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+    ContextIpcMock(DriverHandle *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
 
@@ -338,7 +338,7 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
 
     NEO::MemoryManager *prevMemoryManager = nullptr;
     NEO::MemoryManager *currMemoryManager = nullptr;
-    std::unique_ptr<DriverHandleImp> driverHandle;
+    std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextIpcMock> context;
@@ -435,7 +435,7 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
 
     NEO::MemoryManager *prevMemoryManager = nullptr;
     MemoryManagerIpcImplicitScalingMock *currMemoryManager = nullptr;
-    std::unique_ptr<DriverHandleImp> driverHandle;
+    std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextIpcMock> context;
@@ -448,7 +448,7 @@ struct MemoryGetIpcHandlePidfdTest : public ::testing::Test {
 
     NEO::MemoryManager *prevMemoryManager = nullptr;
     NEO::MemoryManager *currMemoryManager = nullptr;
-    std::unique_ptr<DriverHandleImp> driverHandle;
+    std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextImp> context;

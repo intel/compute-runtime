@@ -12,13 +12,13 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0::MCL {
 ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress) {
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     GpuAddress gpuAddress = 0u;
-    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    DriverHandle *driverHandle = device->getDriverHandle();
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(buffer);
     if (allocData != nullptr) {
         bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

@@ -84,7 +84,7 @@ class DriverQueryPeerTest : public ::testing::Test {
 };
 
 TEST_F(DriverQueryPeerTest, whenQueryingPeerStatsWithNoFileEntriesThenFallBackCopyIsUsedAndSuccessIsReturned) {
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -112,7 +112,7 @@ TEST_F(DriverQueryPeerTest, whenQueryingPeerStatsWithNoFabricTThenFallBackCopyIs
     NEO::directoryFilesMap.insert({"/sys/class/drm/card0/device", {"unknown"}});
     NEO::directoryFilesMap.insert({"/sys/class/drm/card1/device", {"unknown"}});
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -148,7 +148,7 @@ TEST_F(DriverQueryPeerTest, whenQueryingPeerStatsWithFabricAndFdIsNotReturnedThe
         return -1;
     });
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -200,7 +200,7 @@ TEST_F(DriverQueryPeerTest, whenQueryingPeerStatsWithFabricThenSuccessIsReturned
         return -1;
     });
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -253,7 +253,7 @@ TEST_F(DriverQueryPeerTest, whenQueryingPeerStatsWithLegacyFabricThenSuccessIsRe
         return -1;
     });
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -321,7 +321,7 @@ TEST_F(DriverQueryPeerTestOsInterfaceFail, whenQueryingPeerStatsWithNoOsInterfac
     NEO::directoryFilesMap.insert({"/sys/class/drm/card0/device", {"unknown"}});
     NEO::directoryFilesMap.insert({"/sys/class/drm/card1/device", {"unknown"}});
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
@@ -423,7 +423,7 @@ TEST_F(DriverQueryPeerTestFail, whenQueryingPeerStatsWithFabricAndIoctlFailsThen
         return -1;
     });
 
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 

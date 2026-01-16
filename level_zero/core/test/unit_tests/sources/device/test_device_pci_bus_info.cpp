@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fabric/fabric.h"
 
 namespace L0 {
@@ -35,7 +35,7 @@ TEST_F(PciBusInfoTest, givenSuccessfulReadingOfBusValuesThenCorrectValuesAreRetu
     setPciBusInfo(executionEnvironment, expectedBusInfo, 0);
     auto deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
 
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -96,7 +96,7 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesWithCompositeHierarchyAndZePcieId
     auto deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
     EXPECT_EQ(numRootDevices, deviceFactory->rootDevices.size());
 
-    auto driverHandle = std::make_unique<DriverHandleImp>();
+    auto driverHandle = std::make_unique<DriverHandle>();
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(neoDevices)));
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::vector<std::unique_ptr<L0::Device>> devices;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class LinuxDriverImp : public OsDriver, NEO::NonCopyableAndNonMovableClass {
     ~LinuxDriverImp() override = default;
 
   protected:
-    ze_result_t initializeInSurvivabilityMode(std::vector<std::unique_ptr<NEO::HwDeviceId>> &&hwDeviceIds, SysmanDriverHandleImp *pSysmanDriverHandleImp);
+    ze_result_t initializeInSurvivabilityMode(std::vector<std::unique_ptr<NEO::HwDeviceId>> &&hwDeviceIds, SysmanDriverHandleImp *pSysmanDriverHandle);
 };
 
 } // namespace Sysman

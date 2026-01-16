@@ -16,7 +16,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include <map>
 
@@ -29,11 +29,10 @@ struct VirtualMemoryReservation;
 
 namespace L0 {
 struct StructuresLookupTable;
-struct DriverHandleImp;
 struct Device;
 struct IpcCounterBasedEventData;
 class ContextExt;
-struct DriverHandle;
+class DriverHandle;
 
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
@@ -188,7 +187,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
     ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,
-                                           void *pNext, struct DriverHandleImp *driverHandle);
+                                           void *pNext, DriverHandle *driverHandle);
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
@@ -276,9 +275,8 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
             if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
                 if (handleType == IpcHandleType::fdHandle && NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
-                    auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
-                    if (driverHandleImp->initializeIpcSocketServer()) {
-                        if (!driverHandleImp->registerIpcHandleWithServer(handle, static_cast<int>(handle))) {
+                    if (this->driverHandle->initializeIpcSocketServer()) {
+                        if (!this->driverHandle->registerIpcHandleWithServer(handle, static_cast<int>(handle))) {
                             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                          "Failed to register handle %lu with IPC socket server\n", handle);
                         }
@@ -300,7 +298,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;
-    DriverHandleImp *driverHandle = nullptr;
+    DriverHandle *driverHandle = nullptr;
     uint32_t numDevices = 0;
     ContextExt *contextExt = nullptr;
 };

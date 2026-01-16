@@ -47,7 +47,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
@@ -502,24 +502,24 @@ NEO::EngineGroupType Device::getInternalEngineGroupType() {
 void Device::getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                     ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc) {
 
-    auto driverHandleImp = static_cast<DriverHandleImp *>(getDriverHandle());
-    if (driverHandleImp->fabricVertices.empty()) {
-        driverHandleImp->initializeVertexes();
+    auto driverHandle = getDriverHandle();
+    if (driverHandle->fabricVertices.empty()) {
+        driverHandle->initializeVertexes();
     }
 
     if (this->fabricVertex != nullptr && peerDevice->fabricVertex != nullptr) {
         uint32_t directEdgeCount = 0;
 
-        driverHandleImp->fabricEdgeGetExp(this->fabricVertex,
-                                          peerDevice->fabricVertex,
-                                          &directEdgeCount,
-                                          nullptr);
+        driverHandle->fabricEdgeGetExp(this->fabricVertex,
+                                       peerDevice->fabricVertex,
+                                       &directEdgeCount,
+                                       nullptr);
         if (directEdgeCount > 0) {
             std::vector<ze_fabric_edge_handle_t> edges(directEdgeCount);
-            driverHandleImp->fabricEdgeGetExp(this->fabricVertex,
-                                              peerDevice->fabricVertex,
-                                              &directEdgeCount,
-                                              edges.data());
+            driverHandle->fabricEdgeGetExp(this->fabricVertex,
+                                           peerDevice->fabricVertex,
+                                           &directEdgeCount,
+                                           edges.data());
 
             for (const auto &edge : edges) {
                 auto fabricEdge = FabricEdge::fromHandle(edge);
@@ -1035,10 +1035,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasBufferAlignment = 128;
 
                 if (releaseHelper && releaseHelper->isRayTracingSupported()) {
-                    auto driverHandle = this->getDriverHandle();
-                    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-
-                    ze_result_t result = driverHandleImp->loadRTASLibrary();
+                    ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
                     }
@@ -1050,10 +1047,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasBufferAlignment = 128;
 
                 if (releaseHelper && releaseHelper->isRayTracingSupported()) {
-                    auto driverHandle = this->getDriverHandle();
-                    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-
-                    ze_result_t result = driverHandleImp->loadRTASLibrary();
+                    ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;
                     }
@@ -2107,9 +2101,8 @@ NEO::EngineGroupType Device::getEngineGroupTypeForOrdinal(uint32_t ordinal) cons
 
 ze_result_t Device::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) {
     auto driverHandle = this->getDriverHandle();
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-    if (driverHandleImp->fabricVertices.empty()) {
-        driverHandleImp->initializeVertexes();
+    if (driverHandle->fabricVertices.empty()) {
+        driverHandle->initializeVertexes();
     }
 
     if (fabricVertex == nullptr) {

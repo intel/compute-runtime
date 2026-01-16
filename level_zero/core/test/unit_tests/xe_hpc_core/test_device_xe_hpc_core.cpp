@@ -52,7 +52,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMulti
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto hwInfo = *NEO::defaultHwInfo;
     NEO::MockExecutionEnvironment mockExecutionEnvironment;
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
@@ -75,7 +75,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
     auto hwInfo = *NEO::defaultHwInfo;
     NEO::MockExecutionEnvironment mockExecutionEnvironment;
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();

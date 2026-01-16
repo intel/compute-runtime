@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,23 +76,23 @@ std::vector<std::unique_ptr<NEO::HwDeviceId>> LinuxDriverImp::discoverDevicesWit
     return hwSurvivabilityDeviceIds;
 }
 
-ze_result_t LinuxDriverImp::initializeInSurvivabilityMode(std::vector<std::unique_ptr<NEO::HwDeviceId>> &&hwDeviceIds, SysmanDriverHandleImp *pSysmanDriverHandleImp) {
+ze_result_t LinuxDriverImp::initializeInSurvivabilityMode(std::vector<std::unique_ptr<NEO::HwDeviceId>> &&hwDeviceIds, SysmanDriverHandleImp *pSysmanDriverHandle) {
     for (auto &hwDeviceId : hwDeviceIds) {
         auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
         auto pSysmanDevice = OsSysmanSurvivabilityDevice::createSurvivabilityDevice(std::move(sysmanHwDeviceId));
         if (pSysmanDevice != nullptr) {
-            pSysmanDriverHandleImp->sysmanDevices.push_back(pSysmanDevice);
+            pSysmanDriverHandle->sysmanDevices.push_back(pSysmanDevice);
         }
     }
 
-    if (pSysmanDriverHandleImp->sysmanDevices.size() == 0) {
+    if (pSysmanDriverHandle->sysmanDevices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    if (pSysmanDriverHandleImp->pOsSysmanDriver == nullptr) {
-        pSysmanDriverHandleImp->pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
+    if (pSysmanDriverHandle->pOsSysmanDriver == nullptr) {
+        pSysmanDriverHandle->pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
     }
-    pSysmanDriverHandleImp->numDevices = static_cast<uint32_t>(pSysmanDriverHandleImp->sysmanDevices.size());
+    pSysmanDriverHandle->numDevices = static_cast<uint32_t>(pSysmanDriverHandle->sysmanDevices.size());
     return ZE_RESULT_SUCCESS;
 }
 
@@ -114,8 +114,8 @@ SysmanDriverHandle *LinuxDriverImp::createInSurvivabilityMode(std::vector<std::u
 void LinuxDriverImp::initSurvivabilityDevices(_ze_driver_handle_t *sysmanDriverHandle, ze_result_t *result) {
     std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds = discoverDevicesWithSurvivabilityMode();
     if (!hwSurvivabilityDeviceIds.empty()) {
-        SysmanDriverHandleImp *pSysmanDriverHandleImp = static_cast<SysmanDriverHandleImp *>(sysmanDriverHandle);
-        *result = initializeInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), pSysmanDriverHandleImp);
+        SysmanDriverHandleImp *pSysmanDriverHandle = static_cast<SysmanDriverHandleImp *>(sysmanDriverHandle);
+        *result = initializeInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), pSysmanDriverHandle);
     }
 }
 

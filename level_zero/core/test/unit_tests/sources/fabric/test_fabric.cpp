@@ -162,8 +162,8 @@ TEST(FabricEngineInstanceTest, givenSubDeviceWhenFabricVerticesAreCreatedThenSki
     std::vector<std::unique_ptr<NEO::Device>> devices(1);
     devices[0].reset(static_cast<NEO::Device *>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u)));
 
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

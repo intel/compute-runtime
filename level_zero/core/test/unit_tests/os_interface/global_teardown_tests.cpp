@@ -13,7 +13,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/global_teardown.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -178,7 +178,7 @@ TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, globalDriverHandles->size());
 
-    auto tempDriver = static_cast<L0::DriverHandleImp *>(DriverHandle::fromHandle((*globalDriverHandles)[0]));
+    auto tempDriver = static_cast<L0::DriverHandle *>(DriverHandle::fromHandle((*globalDriverHandles)[0]));
     EXPECT_NE(tempDriver, nullptr);
 
     // change pid in driver

@@ -10,9 +10,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}additional_extension_function_address.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}extension_injector.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_imp.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_imp_helper.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.h
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_function_address.cpp
@@ -25,11 +24,11 @@ target_sources(${L0_STATIC_LIB_NAME}
 if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/linux/driver_handle_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/linux/driver_handle.cpp
   )
 else()
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/driver_handle_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/driver_handle.cpp
   )
 endif()

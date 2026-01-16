@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/driver_experimental/zex_memory.h"
@@ -15,7 +15,7 @@
 #include "additional_extensions_support.h"
 
 namespace L0 {
-const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsSupported = {
+const std::vector<std::pair<std::string, uint32_t>> DriverHandle::extensionsSupported = {
 
     // Standard Core Extensions
     {ZE_CACHELINE_SIZE_EXT_NAME, ZE_DEVICE_CACHE_LINE_SIZE_EXT_VERSION_1_0},

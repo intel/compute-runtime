@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
@@ -449,7 +449,7 @@ void MemoryOpenIpcHandleTest::SetUp() {
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<DriverHandleImp>();
+    driverHandle = std::make_unique<DriverHandle>();
     driverHandle->initialize(std::move(devices));
     prevMemoryManager = driverHandle->getMemoryManager();
     currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);
@@ -561,7 +561,7 @@ void MemoryExportImportImplicitScalingTest::SetUp() {
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<DriverHandleImp>();
+    driverHandle = std::make_unique<DriverHandle>();
     driverHandle->initialize(std::move(devices));
     prevMemoryManager = driverHandle->getMemoryManager();
     currMemoryManager = new MemoryManagerIpcImplicitScalingMock(*neoDevice->executionEnvironment);
@@ -595,7 +595,7 @@ void MemoryGetIpcHandlePidfdTest::SetUp() {
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    driverHandle = std::make_unique<DriverHandleImp>();
+    driverHandle = std::make_unique<DriverHandle>();
     driverHandle->initialize(std::move(devices));
     prevMemoryManager = driverHandle->getMemoryManager();
     currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);

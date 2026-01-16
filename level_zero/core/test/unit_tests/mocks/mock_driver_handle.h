@@ -9,7 +9,7 @@
 
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -23,15 +23,15 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::DriverHandleImp> : public ::L0::DriverHandleImp {
-    using ::L0::DriverHandleImp::devices;
-    using ::L0::DriverHandleImp::enableProgramDebugging;
-    using ::L0::DriverHandleImp::ipcSocketServer;
-    using ::L0::DriverHandleImp::stagingBufferManager;
-    using ::L0::DriverHandleImp::svmAllocsManager;
+struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandle {
+    using ::L0::DriverHandle::devices;
+    using ::L0::DriverHandle::enableProgramDebugging;
+    using ::L0::DriverHandle::ipcSocketServer;
+    using ::L0::DriverHandle::stagingBufferManager;
+    using ::L0::DriverHandle::svmAllocsManager;
 };
 
-using DriverHandle = WhiteBox<::L0::DriverHandleImp>;
+using DriverHandle = WhiteBox<::L0::DriverHandle>;
 template <>
 struct Mock<DriverHandle> : public DriverHandle {
     Mock();
@@ -46,7 +46,7 @@ struct Mock<DriverHandle> : public DriverHandle {
     ze_result_t getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) override {
         getIPCPropertiesCalled++;
         if (callRealGetIPCProperties && getIPCPropertiesResult == ZE_RESULT_SUCCESS) {
-            return DriverHandleImp::getIPCProperties(pIPCProperties);
+            return L0::DriverHandle::getIPCProperties(pIPCProperties);
         }
         return getIPCPropertiesResult;
     }

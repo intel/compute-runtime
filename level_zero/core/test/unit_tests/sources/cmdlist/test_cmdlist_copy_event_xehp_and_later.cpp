@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 
 namespace L0 {
 struct Context;
-struct DriverHandle;
+class DriverHandle;
 
 namespace ult {
 

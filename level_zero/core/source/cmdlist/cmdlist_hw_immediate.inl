@@ -1105,13 +1105,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
         }
     }
 
-    auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+    auto driverHandle = this->device->getDriverHandle();
 
     for (uint32_t i = 0; i < numExternalSemaphores; i++) {
-        std::lock_guard<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+        std::lock_guard<std::mutex> lock(driverHandle->externalSemaphoreController->semControllerMutex);
 
         ze_event_handle_t proxyWaitEvent = nullptr;
-        ret = driverHandleImp->externalSemaphoreController->allocateProxyEvent(this->device->toHandle(), this->hContext, &proxyWaitEvent);
+        ret = driverHandle->externalSemaphoreController->allocateProxyEvent(this->device->toHandle(), this->hContext, &proxyWaitEvent);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1123,10 +1123,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
             return ret;
         }
 
-        driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyWaitEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphores[i])), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Wait));
+        driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyWaitEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphores[i])), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Wait));
     }
 
-    driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
+    driverHandle->externalSemaphoreController->semControllerCv.notify_one();
 
     this->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, CommandListCoreFamily<gfxCoreFamily>::isCopyOnly(false));
 
@@ -1159,13 +1159,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
         }
     }
 
-    auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+    auto driverHandle = this->device->getDriverHandle();
 
     for (size_t i = 0; i < numExternalSemaphores; i++) {
-        std::lock_guard<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+        std::lock_guard<std::mutex> lock(driverHandle->externalSemaphoreController->semControllerMutex);
 
         ze_event_handle_t proxySignalEvent = nullptr;
-        ret = driverHandleImp->externalSemaphoreController->allocateProxyEvent(this->device->toHandle(), this->hContext, &proxySignalEvent);
+        ret = driverHandle->externalSemaphoreController->allocateProxyEvent(this->device->toHandle(), this->hContext, &proxySignalEvent);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1177,10 +1177,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
             return ret;
         }
 
-        driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxySignalEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphores[i])), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Signal));
+        driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxySignalEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphores[i])), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Signal));
     }
 
-    driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
+    driverHandle->externalSemaphoreController->semControllerCv.notify_one();
 
     this->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, CommandListCoreFamily<gfxCoreFamily>::isCopyOnly(false));
 

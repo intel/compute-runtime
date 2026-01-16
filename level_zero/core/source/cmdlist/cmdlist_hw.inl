@@ -52,7 +52,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/sw_tag_scope.h"
@@ -844,7 +843,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
 
     emitMemAdviseForSystemCopy(allocationStruct, bufferSize);
 
-    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    DriverHandle *driverHandle = device->getDriverHandle();
     if (driverHandle->isRemoteImageNeeded(image, device)) {
         L0::Image *peerImage = nullptr;
 
@@ -1060,7 +1059,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
 
     bool remoteCopy = isRemoteAlloc(allocationStruct.svmAllocData);
 
-    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    DriverHandle *driverHandle = device->getDriverHandle();
     if (driverHandle->isRemoteImageNeeded(image, device)) {
         L0::Image *peerImage = nullptr;
 
@@ -1271,7 +1270,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         event = Event::fromHandle(hEvent);
     }
 
-    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    DriverHandle *driverHandle = device->getDriverHandle();
 
     bool remoteCopy = false;
 
@@ -2325,7 +2324,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
                                                                            bool isStateless, bool isHeapless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
 
     auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -2419,7 +2418,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
                                                                            bool isStateless, bool isHeapless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto driverHandle = device->getDriverHandle();
 
     auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -2893,7 +2892,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
                                                                                                             neoDevice->getRootDeviceIndex(),
                                                                                                             nullptr);
 
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        DriverHandle *driverHandle = device->getDriverHandle();
         auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
         if (driverHandle->isRemoteResourceNeeded(gpuAllocation, allocData, device)) {
             if (allocData) {
@@ -3006,7 +3005,7 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         return (region->depth - 1) * bufferSlicePitch + (region->height - 1) * bufferRowPitch + region->width * pixelSize;
     default:
         CREATE_DEBUG_STRING(str, "invalid imageType: %d\n", static_cast<int>(imageType));
-        static_cast<DriverHandleImp *>(device->getDriverHandle())->setErrorDescription(std::string(str.get()));
+        device->getDriverHandle()->setErrorDescription(std::string(str.get()));
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
         return 0;
@@ -3056,7 +3055,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        DriverHandle *driverHandle = device->getDriverHandle();
         if (driverHandle->isRemoteResourceNeeded(alloc, allocData, device)) {
             uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
             uint64_t offset = sourcePtr - pbase;
@@ -3213,7 +3212,7 @@ NEO::GraphicsAllocation *CommandListCoreFamily<gfxCoreFamily>::getDeviceCounterA
     NEO::GraphicsAllocation *counterDeviceAllocForResidency = counterDeviceAlloc;
 
     if (counterDeviceAllocForResidency && (counterDeviceAllocForResidency->getRootDeviceIndex() != device->getRootDeviceIndex())) {
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        DriverHandle *driverHandle = device->getDriverHandle();
 
         counterDeviceAllocForResidency = driverHandle->getCounterPeerAllocation(device, *counterDeviceAllocForResidency);
         UNRECOVERABLE_IF(!counterDeviceAllocForResidency);
@@ -4116,7 +4115,7 @@ inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isRemoteAlloc(NEO::SvmAllocationData *allocData) const {
-    auto driver = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+    auto driver = this->device->getDriverHandle();
 
     if (allocData) {
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

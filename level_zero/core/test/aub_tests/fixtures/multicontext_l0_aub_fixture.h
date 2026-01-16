@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 
 namespace L0 {
 struct Device;
-struct DriverHandleImp;
+class DriverHandle;
 ;
 
 namespace ult {
@@ -35,7 +35,7 @@ struct MulticontextL0AubFixture : public NEO::MulticontextAubFixture {
     CommandStreamReceiver *getRootCsr() override;
     void createDevices(const NEO::HardwareInfo &hwInfo, uint32_t numTiles) override;
 
-    std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::ult::Mock<L0::DriverHandle>> driverHandle;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     std::vector<L0::Device *> subDevices;
     L0::Device *rootDevice = nullptr;

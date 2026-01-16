@@ -36,7 +36,7 @@ struct DeviceWddmExtensionTest : public ::testing::Test {
         neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment.get(), rootDeviceIndex);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
     }
@@ -46,7 +46,7 @@ struct DeviceWddmExtensionTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -77,7 +77,7 @@ struct DeviceDrmExtensionTest : public ::testing::Test {
         neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment.get(), rootDeviceIndex);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
     }
@@ -87,7 +87,7 @@ struct DeviceDrmExtensionTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -116,7 +116,7 @@ struct DeviceExtensionTest : public ::testing::Test {
         execEnv->incRefInternal();
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
     }
@@ -127,7 +127,7 @@ struct DeviceExtensionTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::ExecutionEnvironment *execEnv;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -196,7 +196,7 @@ struct ZeDeviceCacheReservationTest : public ::testing::Test {
         execEnv->incRefInternal();
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
 
@@ -212,7 +212,7 @@ struct ZeDeviceCacheReservationTest : public ::testing::Test {
     }
 
     DrmMockExtended *mockDriverModel = nullptr;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::ExecutionEnvironment *execEnv;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;

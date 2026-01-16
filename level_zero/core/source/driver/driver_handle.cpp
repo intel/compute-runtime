@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -47,12 +47,12 @@
 
 namespace L0 {
 
-DriverHandleImp::DriverHandleImp() = default;
+DriverHandle::DriverHandle() = default;
 
-ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
-                                           uint32_t numDevices,
-                                           ze_device_handle_t *phDevices,
-                                           ze_context_handle_t *phContext) {
+ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
+                                        uint32_t numDevices,
+                                        ze_device_handle_t *phDevices,
+                                        ze_context_handle_t *phContext) {
     ContextImp *context = new ContextImp(this);
     if (nullptr == context) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -96,31 +96,31 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
     return ZE_RESULT_SUCCESS;
 }
 
-NEO::MemoryManager *DriverHandleImp::getMemoryManager() {
+NEO::MemoryManager *DriverHandle::getMemoryManager() {
     return this->memoryManager;
 }
 
-void DriverHandleImp::setMemoryManager(NEO::MemoryManager *memoryManager) {
+void DriverHandle::setMemoryManager(NEO::MemoryManager *memoryManager) {
     this->memoryManager = memoryManager;
 }
 
-NEO::SVMAllocsManager *DriverHandleImp::getSvmAllocsManager() {
+NEO::SVMAllocsManager *DriverHandle::getSvmAllocsManager() {
     return this->svmAllocsManager;
 }
 
-NEO::StagingBufferManager *DriverHandleImp::getStagingBufferManager() {
+NEO::StagingBufferManager *DriverHandle::getStagingBufferManager() {
     return this->stagingBufferManager.get();
 }
 
-ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
+ze_result_t DriverHandle::getApiVersion(ze_api_version_t *version) {
     *version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(NEO_L0_VERSION_MAJOR, NEO_L0_VERSION_MINOR));
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
+ze_result_t DriverHandle::getProperties(ze_driver_properties_t *properties) {
     uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
 
-    properties->driverVersion = DriverHandleImp::initialDriverVersionValue + versionBuild;
+    properties->driverVersion = DriverHandle::initialDriverVersionValue + versionBuild;
     if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
         properties->driverVersion = static_cast<uint32_t>(NEO::debugManager.flags.OverrideDriverVersion.get());
     }
@@ -143,13 +143,13 @@ ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) {
+ze_result_t DriverHandle::getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) {
     pIPCProperties->flags = ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL;
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
+ze_result_t DriverHandle::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
     *pfunc = ExtensionFunctionAddressHelper::getExtensionFunctionAddress(pFuncName);
     if (*pfunc) {
         return ZE_RESULT_SUCCESS;
@@ -157,8 +157,8 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
-                                                    ze_driver_extension_properties_t *pExtensionProperties) {
+ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
+                                                 ze_driver_extension_properties_t *pExtensionProperties) {
 
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
 
@@ -222,7 +222,7 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     return ZE_RESULT_SUCCESS;
 }
 
-DriverHandleImp::~DriverHandleImp() {
+DriverHandle::~DriverHandle() {
     if (memoryManager != nullptr) {
         if (this->svmAllocsManager) {
             this->svmAllocsManager->cleanupUSMAllocCaches();
@@ -286,14 +286,14 @@ DriverHandleImp::~DriverHandleImp() {
     }
 }
 
-void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
+void DriverHandle::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
     const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
     auto entry = this->deviceBitfields.find(rootDeviceIndex);
     UNRECOVERABLE_IF(entry == this->deviceBitfields.end());
     entry->second = neoDevice->getDeviceBitfield();
 }
 
-ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
+ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     this->pid = NEO::SysCalls::getCurrentProcessId();
 
     for (auto &neoDevice : neoDevices) {
@@ -366,7 +366,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 }
 
 DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue) {
-    DriverHandleImp *driverHandle = new DriverHandleImp;
+    DriverHandle *driverHandle = new DriverHandle;
     UNRECOVERABLE_IF(nullptr == driverHandle);
 
     driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
@@ -385,17 +385,17 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     return driverHandle;
 }
 
-void DriverHandleImp::initHostUsmAllocPoolOnce() {
+void DriverHandle::initHostUsmAllocPoolOnce() {
     std::call_once(this->hostUsmPoolOnceFlag, [this]() {
         this->initHostUsmAllocPool();
     });
 }
 
-NEO::UsmMemAllocPool::CustomCleanupFn DriverHandleImp::getPoolCleanupFn() {
+NEO::UsmMemAllocPool::CustomCleanupFn DriverHandle::getPoolCleanupFn() {
     return [this](const void *ptr) { static_cast<ContextImp *>(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
 }
 
-void DriverHandleImp::initDeviceUsmAllocPoolOnce() {
+void DriverHandle::initDeviceUsmAllocPoolOnce() {
     std::call_once(this->deviceUsmPoolOnceFlag, [this]() {
         for (auto &device : this->devices) {
             this->initDeviceUsmAllocPool(*device->getNEODevice(), this->numDevices > 1);
@@ -403,7 +403,7 @@ void DriverHandleImp::initDeviceUsmAllocPoolOnce() {
     });
 }
 
-void DriverHandleImp::initHostUsmAllocPool() {
+void DriverHandle::initHostUsmAllocPool() {
     bool useUsmPoolManager = true;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
@@ -434,7 +434,7 @@ void DriverHandleImp::initHostUsmAllocPool() {
     }
 }
 
-void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
+void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
     bool useUsmPoolManager = true;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
@@ -484,7 +484,7 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
     }
 }
 
-NEO::UsmMemAllocPool *DriverHandleImp::getHostUsmPoolOwningPtr(const void *ptr) {
+NEO::UsmMemAllocPool *DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
     if (usmHostMemAllocPoolManager) {
         return usmHostMemAllocPoolManager->getPoolContainingAlloc(ptr);
     } else if (usmHostMemAllocPool && usmHostMemAllocPool->isInPool(ptr)) {
@@ -493,7 +493,7 @@ NEO::UsmMemAllocPool *DriverHandleImp::getHostUsmPoolOwningPtr(const void *ptr) 
     return nullptr;
 }
 
-void DriverHandleImp::setupDevicesToExpose() {
+void DriverHandle::setupDevicesToExpose() {
 
     // If the user has requested FLAT or COMBINED device hierarchy model, then report all the sub devices as devices.
     bool exposeSubDevices = (this->devices.size() && this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::composite);
@@ -532,7 +532,7 @@ void DriverHandleImp::setupDevicesToExpose() {
     }
 }
 
-ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
+ze_result_t DriverHandle::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
     uint32_t numDevices = static_cast<uint32_t>(this->devicesToExpose.size());
     if (*pCount == 0) {
         *pCount = numDevices;
@@ -551,9 +551,9 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
     return ZE_RESULT_SUCCESS;
 }
 
-bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
-                                                 size_t size,
-                                                 NEO::SvmAllocationData *&allocData) {
+bool DriverHandle::findAllocationDataForRange(const void *buffer,
+                                              size_t size,
+                                              NEO::SvmAllocationData *&allocData) {
     uint64_t baseAddress = castToUint64(buffer);
     NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(buffer);
     if (!beginAllocData) {
@@ -580,9 +580,9 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
     return false;
 }
 
-std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRange(const void *buffer,
-                                                                                  size_t size,
-                                                                                  bool *allocationRangeCovered) {
+std::vector<NEO::SvmAllocationData *> DriverHandle::findAllocationsWithinRange(const void *buffer,
+                                                                               size_t size,
+                                                                               bool *allocationRangeCovered) {
     std::vector<NEO::SvmAllocationData *> allocDataArray;
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
     // Check if the host buffer overlaps any existing allocation
@@ -612,11 +612,11 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     return allocDataArray;
 }
 
-void DriverHandleImp::createHostPointerManager() {
+void DriverHandle::createHostPointerManager() {
     hostPointerManager = std::make_unique<HostPointerManager>(getMemoryManager());
 }
 
-ze_result_t DriverHandleImp::importExternalPointer(void *ptr, size_t size) {
+ze_result_t DriverHandle::importExternalPointer(void *ptr, size_t size) {
     if (hostPointerManager.get() != nullptr) {
         auto ret = hostPointerManager->createHostPointerMultiAllocation(this->devices,
                                                                         ptr,
@@ -627,7 +627,7 @@ ze_result_t DriverHandleImp::importExternalPointer(void *ptr, size_t size) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t DriverHandleImp::releaseImportedPointer(void *ptr) {
+ze_result_t DriverHandle::releaseImportedPointer(void *ptr) {
     if (hostPointerManager.get() != nullptr) {
         bool ret = hostPointerManager->freeHostPointerAllocation(ptr);
         return ret ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -635,7 +635,7 @@ ze_result_t DriverHandleImp::releaseImportedPointer(void *ptr) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t DriverHandleImp::getHostPointerBaseAddress(void *ptr, void **baseAddress) {
+ze_result_t DriverHandle::getHostPointerBaseAddress(void *ptr, void **baseAddress) {
     if (hostPointerManager.get() != nullptr) {
         auto hostPointerData = hostPointerManager->getHostPointerAllocation(ptr);
         if (hostPointerData != nullptr) {
@@ -649,7 +649,7 @@ ze_result_t DriverHandleImp::getHostPointerBaseAddress(void *ptr, void **baseAdd
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) {
+NEO::GraphicsAllocation *DriverHandle::findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) {
     if (hostPointerManager.get() != nullptr) {
         HostPointerData *hostData = hostPointerManager->getHostPointerAllocation(ptr);
         if (hostData != nullptr) {
@@ -671,10 +671,10 @@ NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, s
     return nullptr;
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *ptr,
-                                                                          size_t size,
-                                                                          uint32_t rootDeviceIndex,
-                                                                          uintptr_t *gpuAddress) {
+NEO::GraphicsAllocation *DriverHandle::getDriverSystemMemoryAllocation(void *ptr,
+                                                                       size_t size,
+                                                                       uint32_t rootDeviceIndex,
+                                                                       uintptr_t *gpuAddress) {
     NEO::SvmAllocationData *allocData = nullptr;
     bool allocFound = findAllocationDataForRange(ptr, size, allocData);
     if (allocFound) {
@@ -694,17 +694,17 @@ NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *
     return allocation;
 }
 
-bool DriverHandleImp::isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
+bool DriverHandle::isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
     return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
 }
 
-void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
-                                      ze_ipc_memory_flags_t flags,
-                                      uint64_t handle,
-                                      NEO::AllocationType allocationType,
-                                      void *basePointer,
-                                      NEO::GraphicsAllocation **pAlloc,
-                                      NEO::SvmAllocationData &mappedPeerAllocData) {
+void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
+                                   ze_ipc_memory_flags_t flags,
+                                   uint64_t handle,
+                                   NEO::AllocationType allocationType,
+                                   void *basePointer,
+                                   NEO::GraphicsAllocation **pAlloc,
+                                   NEO::SvmAllocationData &mappedPeerAllocData) {
     NEO::MemoryManager::OsHandleData osHandleData{handle};
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
@@ -759,7 +759,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) {
+void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::AllocationType::buffer,
@@ -817,11 +817,11 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-bool DriverHandleImp::isRemoteImageNeeded(Image *image, Device *device) {
+bool DriverHandle::isRemoteImageNeeded(Image *image, Device *device) {
     return (image->getAllocation()->getRootDeviceIndex() != device->getRootDeviceIndex());
 }
 
-ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **peerImage) {
+ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **peerImage) {
     auto imageAllocPtr = reinterpret_cast<const void *>(image->getAllocation()->getGpuAddress());
 
     std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
@@ -857,27 +857,27 @@ ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **
     return ZE_RESULT_SUCCESS;
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
-                                                            NEO::SvmAllocationData *allocData,
-                                                            void *basePtr,
-                                                            uintptr_t *peerGpuAddress,
-                                                            NEO::SvmAllocationData **peerAllocData) {
+NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
+                                                         NEO::SvmAllocationData *allocData,
+                                                         void *basePtr,
+                                                         uintptr_t *peerGpuAddress,
+                                                         NEO::SvmAllocationData **peerAllocData) {
     return getPeerAllocation(device, device->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData);
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation) {
+NEO::GraphicsAllocation *DriverHandle::getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation) {
     NEO::SvmAllocationData allocData(graphicsAllocation.getRootDeviceIndex());
     allocData.gpuAllocations.addAllocation(&graphicsAllocation);
 
     return getPeerAllocation(device, device->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr);
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
-                                                            NEO::SVMAllocsManager::MapBasedAllocationTracker &storage,
-                                                            NEO::SvmAllocationData *allocData,
-                                                            void *basePtr,
-                                                            uintptr_t *peerGpuAddress,
-                                                            NEO::SvmAllocationData **peerAllocData) {
+NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
+                                                         NEO::SVMAllocsManager::MapBasedAllocationTracker &storage,
+                                                         NEO::SvmAllocationData *allocData,
+                                                         void *basePtr,
+                                                         uintptr_t *peerGpuAddress,
+                                                         NEO::SvmAllocationData **peerAllocData) {
     NEO::GraphicsAllocation *alloc = nullptr;
     void *peerMapAddress = basePtr;
     void *peerPtr = nullptr;
@@ -963,7 +963,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     return alloc;
 }
 
-void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
+void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
@@ -997,7 +997,7 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void DriverHandleImp::initializeVertexes() {
+void DriverHandle::initializeVertexes() {
     for (auto &device : this->devices) {
         auto fabricVertex = FabricVertex::createFromDevice(device);
         if (fabricVertex == nullptr) {
@@ -1010,7 +1010,7 @@ void DriverHandleImp::initializeVertexes() {
     FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges, this->fabricIndirectEdges);
 }
 
-ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
+ze_result_t DriverHandle::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
 
     if (fabricVertices.empty()) {
         this->initializeVertexes();
@@ -1049,8 +1049,8 @@ ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vert
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
-                                              uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
+ze_result_t DriverHandle::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
+                                           uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
 
     FabricVertex *queryVertexA = FabricVertex::fromHandle(hVertexA);
     FabricVertex *queryVertexB = FabricVertex::fromHandle(hVertexB);
@@ -1099,7 +1099,7 @@ ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t DriverHandleImp::getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
+uint32_t DriverHandle::getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
     uint32_t maxCount = 0;
 
     if (numDevices == 0) {
@@ -1117,7 +1117,7 @@ uint32_t DriverHandleImp::getEventMaxPacketCount(uint32_t numDevices, ze_device_
     return maxCount;
 }
 
-uint32_t DriverHandleImp::getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
+uint32_t DriverHandle::getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
     uint32_t maxCount = 0;
 
     if (numDevices == 0) {
@@ -1135,16 +1135,16 @@ uint32_t DriverHandleImp::getEventMaxKernelCount(uint32_t numDevices, ze_device_
     return maxCount;
 }
 
-int DriverHandleImp::setErrorDescription(const std::string &str) {
+int DriverHandle::setErrorDescription(const std::string &str) {
     return this->devices[0]->getNEODevice()->getExecutionEnvironment()->setErrorDescription(str);
 }
 
-ze_result_t DriverHandleImp::getErrorDescription(const char **ppString) {
+ze_result_t DriverHandle::getErrorDescription(const char **ppString) {
     this->devices[0]->getNEODevice()->getExecutionEnvironment()->getErrorDescription(ppString);
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::clearErrorDescription() {
+ze_result_t DriverHandle::clearErrorDescription() {
     return static_cast<ze_result_t>(this->devices[0]->getNEODevice()->getExecutionEnvironment()->clearErrorDescription());
 }
 

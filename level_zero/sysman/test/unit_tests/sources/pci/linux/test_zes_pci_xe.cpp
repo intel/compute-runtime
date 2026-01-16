@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class ZesPciFixtureXe : public SysmanDeviceFixture {
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
-    std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::ult::Mock<L0::DriverHandle>> driverHandle;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
