@@ -51,6 +51,7 @@ bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const Har
     }
     igcFtrWa->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
     igcFtrWa->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
+    igcFtrWa->SetFtrEfficient64BitAddressing(hwInfo.featureTable.flags.ftrHeaplessMode);
 
     return true;
 }

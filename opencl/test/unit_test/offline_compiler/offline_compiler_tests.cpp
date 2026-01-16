@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5124,6 +5124,25 @@ TEST_F(OfflineCompilerTests, GivenStatefulAddressModeSetToBindlessWhenBuildThenB
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
     EXPECT_NE(std::string::npos, ocloc.internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
+}
+
+TEST_F(OfflineCompilerTests, GivenHeaplessModeDisabledWhenInitializeOclocThenFtrHeaplessModeIsAlsoDisabled) {
+    MockOfflineCompiler ocloc;
+    ocloc.uniqueHelper->filesMap = filesMap;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-heapless_mode",
+        "disable"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    EXPECT_EQ(0, retVal);
+
+    EXPECT_FALSE(ocloc.hwInfo.featureTable.flags.ftrHeaplessMode);
 }
 
 struct WhiteBoxOclocArgHelper : public OclocArgHelper {

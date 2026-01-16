@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -200,6 +200,7 @@ All supported acronyms: %s.
         auto ext = getFileExtension(intermediateRepresentation);
         return generateFilePath(outputDirectory, fileNameBase, ext.c_str());
     }
+    void adjustHeaplessMode();
 
     std::string generateOptsSuffix() {
         std::string suffix{useOptionsSuffix ? options : ""};

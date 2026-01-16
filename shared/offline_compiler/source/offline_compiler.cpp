@@ -1000,6 +1000,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
+    adjustHeaplessMode();
+
     if (formatToEnforce.empty() &&
         compilerProductHelper &&
         compilerProductHelper->oclocEnforceZebinFormat()) {
@@ -1334,6 +1336,12 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
 
     return retVal;
+}
+
+void OfflineCompiler::adjustHeaplessMode() {
+    if (this->heaplessMode == CompilerOptions::HeaplessMode::disabled) {
+        hwInfo.featureTable.flags.ftrHeaplessMode = 0;
+    }
 }
 
 void OfflineCompiler::unifyExcludeIrFlags() {
