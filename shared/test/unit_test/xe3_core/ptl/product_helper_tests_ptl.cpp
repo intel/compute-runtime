@@ -75,32 +75,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
 
-PTLTEST_F(PtlProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenTheFlagDerivedValueIsReturned) {
-    DebugManagerStateRestore restorer;
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<true> csrRelaxed(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    csrRelaxed.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
-PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsSupportedWhenCheckedThenReturnsTrue) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);

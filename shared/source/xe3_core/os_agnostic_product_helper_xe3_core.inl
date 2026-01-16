@@ -65,14 +65,6 @@ bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwIn
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
-    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
-        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
-    }
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }

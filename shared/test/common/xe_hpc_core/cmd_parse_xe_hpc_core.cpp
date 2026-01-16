@@ -71,5 +71,4 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 #include "shared/test/common/cmd_parse/hw_parse_xe_hpg_and_later.inl"
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);
-template bool NEO::HardwareParse::isStallingBarrier<GenGfxFamily>(GenCmdList::iterator &iter);
 template void HardwareParse::verifyL1FlushOnStallingBarrier<GenGfxFamily>(bool, bool);

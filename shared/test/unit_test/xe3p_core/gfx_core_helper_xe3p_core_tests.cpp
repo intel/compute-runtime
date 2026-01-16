@@ -1029,24 +1029,6 @@ XE3P_CORETEST_F(ProductHelperTestXe3p, when64bAddressingIsEnabledForRTThenResour
     EXPECT_FALSE(productHelper->is48bResourceNeededForRayTracing());
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restorer;
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenIsTranslationExceptionSupportedThenTrueIsReturned) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isTranslationExceptionSupported());

@@ -61,32 +61,6 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocato
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-NVLSTEST_F(NvlsProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenTheFlagDerivedValueIsReturned) {
-    DebugManagerStateRestore restorer;
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<true> csrRelaxed(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    csrRelaxed.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
-NVLSTEST_F(NvlsProductHelper, givenResolveDependenciesByPipeControllsSupportedWhenCheckedThenReturnsTrue) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }

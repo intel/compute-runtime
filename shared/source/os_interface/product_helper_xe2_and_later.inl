@@ -87,4 +87,12 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
+    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return this->isDcFlushAllowed();
+}
+
 } // namespace NEO

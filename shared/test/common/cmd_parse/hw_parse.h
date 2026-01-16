@@ -64,7 +64,37 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     }
 
     template <typename FamilyType>
-    bool isStallingBarrier(GenCmdList::iterator &iter);
+        requires std::is_same_v<typename FamilyType::StallingBarrierType, typename FamilyType::RESOURCE_BARRIER> bool
+    isStallingBarrier(GenCmdList::iterator &iter) {
+        using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+        auto resourceBarrierCmd = genCmdCast<RESOURCE_BARRIER *>(*iter);
+        if (resourceBarrierCmd == nullptr) {
+            return false;
+        }
+        EXPECT_EQ(resourceBarrierCmd->getBarrierType(), RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
+        EXPECT_EQ(resourceBarrierCmd->getWaitStage(), RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
+        EXPECT_EQ(resourceBarrierCmd->getSignalStage(), RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+        return true;
+    }
+
+    template <typename FamilyType>
+    bool isStallingBarrier(GenCmdList::iterator &iter) {
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*iter);
+        if (pipeControlCmd == nullptr) {
+            return false;
+        }
+        EXPECT_EQ(pipeControlCmd->getCommandStreamerStallEnable(), true);
+        EXPECT_EQ(pipeControlCmd->getDcFlushEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getRenderTargetCacheFlushEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getInstructionCacheInvalidateEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getTextureCacheInvalidationEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getPipeControlFlushEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getVfCacheInvalidationEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getConstantCacheInvalidationEnable(), false);
+        EXPECT_EQ(pipeControlCmd->getStateCacheInvalidationEnable(), false);
+        return true;
+    }
 
     template <typename FamilyType>
     void verifyL1FlushOnStallingBarrier(bool expectInvalidate, bool expectFlush);

@@ -156,24 +156,6 @@ const typename FamilyType::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState(
 }
 
 template <typename FamilyType>
-bool HardwareParse::isStallingBarrier(GenCmdList::iterator &iter) {
-    PIPE_CONTROL *pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*iter);
-    if (pipeControlCmd == nullptr) {
-        return false;
-    }
-    EXPECT_EQ(pipeControlCmd->getCommandStreamerStallEnable(), true);
-    EXPECT_EQ(pipeControlCmd->getDcFlushEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getRenderTargetCacheFlushEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getInstructionCacheInvalidateEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getTextureCacheInvalidationEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getPipeControlFlushEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getVfCacheInvalidationEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getConstantCacheInvalidationEnable(), false);
-    EXPECT_EQ(pipeControlCmd->getStateCacheInvalidationEnable(), false);
-    return true;
-}
-
-template <typename FamilyType>
 void HardwareParse::verifyL1FlushOnStallingBarrier(bool expectInvalidate, bool expectFlush) {
 }
 

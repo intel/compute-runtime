@@ -38,34 +38,15 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherent
     EXPECT_TRUE(productHelper.isNonCoherentTimestampsModeEnabled());
 }
 
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsAtLeastXe2HpgCore) {
     DebugManagerStateRestore restorer;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
-
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
-}
-
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsBMG) {
-    DebugManagerStateRestore restorer;
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiver csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    csr.taskCount = 2;
-    auto productHelper = &mockDevice->getProductHelper();
-
-    // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());
+    EXPECT_EQ(productHelper->isDcFlushAllowed(), productHelper->isResolveDependenciesByPipeControlsSupported());
 
     debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported());

@@ -20,14 +20,6 @@ bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const Allocatio
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
-    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
-        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
-    }
-    return true;
-}
-
-template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Lnl;
 }
