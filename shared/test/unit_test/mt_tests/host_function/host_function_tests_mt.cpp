@@ -249,6 +249,10 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, 
   public:
     void SetUp() override {
 
+#ifdef NEO_TSAN_ENABLED
+        GTEST_SKIP();
+#endif
+
         std::tie(testingMode, nPrimaryCsrs, nPartitions) = GetParam();
 
         debugManager.flags.HostFunctionWorkMode.set(testingMode);
