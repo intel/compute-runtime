@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2966,13 +2966,14 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     }
 
     if (mappedPtr) {
+        SysCalls::close(handle);
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
         auto allocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                            handle, memoryPool, canonizedGpuAddress);
+                                            Sharing::nonSharedResource, memoryPool, canonizedGpuAddress);
         allocation->setImportedMmapPtr(mappedPtr);
         return allocation;
     }
@@ -2982,6 +2983,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
     if (!useBooMmap) {
+        SysCalls::close(handle);
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
@@ -2993,7 +2995,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
                                                              bo,
                                                              reinterpret_cast<void *>(bo->peekAddress()),
                                                              bo->peekSize(),
-                                                             handle,
+                                                             Sharing::nonSharedResource,
                                                              memoryPool,
                                                              canonizedGpuAddress);
         if (!reuseSharedAllocation) {
@@ -3010,6 +3012,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
+        SysCalls::close(handle);
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         memoryPool = MemoryPool::system4KBPages;
@@ -3086,10 +3089,11 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         return drmAllocation.release();
     }
 
+    SysCalls::close(handle);
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     return new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                             handle, memoryPool, canonizedGpuAddress);
+                             Sharing::nonSharedResource, memoryPool, canonizedGpuAddress);
 }
 bool DrmMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) {
     return this->getDrm(rootDeviceIndex).isVmBindAvailable();
