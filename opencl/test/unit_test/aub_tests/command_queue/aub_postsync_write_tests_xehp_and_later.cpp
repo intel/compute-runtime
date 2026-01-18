@@ -52,14 +52,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledW
     buffer->forceDisallowCPUCopy = true;
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
-    cl_event event{};
-    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, &event);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
     expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
     typename FamilyType::TimestampPacketType expectedTimestampValues[4] = {1, 1, 1, 1};
     auto tagGpuAddress = reinterpret_cast<void *>(pCmdQ->getTimestampPacketContainer()->peekNodes().at(0)->getGpuAddress());
     expectNotEqualMemory<FamilyType>(tagGpuAddress, expectedTimestampValues, 4 * sizeof(typename FamilyType::TimestampPacketType));
-    clReleaseEvent(event);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
@@ -72,8 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWh
     buffer->forceDisallowCPUCopy = true;
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
-    cl_event event{};
-    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, &event);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
     expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
     auto tagGpuAddress = reinterpret_cast<void *>(pCmdQ->getTimestampPacketContainer()->peekNodes().at(0)->getGpuAddress());
@@ -86,7 +83,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWh
         typename FamilyType::TimestampPacketType expectedTimestampValues[4] = {1, 1, 0x2'0000'0002u, 1};
         expectMemory<FamilyType>(tagGpuAddress, expectedTimestampValues, 4 * timestampPacketTypeSize);
     }
-    clReleaseEvent(event);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhenDependencyIsResolvedThenDecrementCounterOnGpu) {

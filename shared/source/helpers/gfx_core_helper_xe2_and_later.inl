@@ -119,15 +119,4 @@ bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
     return false;
 };
 
-template <>
-bool GfxCoreHelperHw<Family>::isWalkerPostSyncSkipEnabled(bool isBarrierUsedForImplicitDependency) const {
-    if (debugManager.flags.EnableWalkerPostSyncSkip.get() != -1) {
-        return debugManager.flags.EnableWalkerPostSyncSkip.get() == 1;
-    }
-    if constexpr (std::is_same_v<Family::StallingBarrierType, Family::RESOURCE_BARRIER>) {
-        return isBarrierUsedForImplicitDependency;
-    }
-    return false;
-}
-
 } // namespace NEO
