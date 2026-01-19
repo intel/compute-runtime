@@ -97,7 +97,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                                    uint32_t index,
                                                                    EstimateRegularHeapfulPerCmdlistData &sharedData,
                                                                    NEO::StreamProperties &csrStreamProperties);
-    inline size_t estimateLinearStreamSizeRegularHeapfulPostCmdList(CommandListExecutionContext &ctx, EstimateRegularHeapfulPerCmdlistData &sharedData);
+    inline size_t estimateLinearStreamSizeRegularHeapfulPostCmdList(CommandListExecutionContext &ctx);
     inline size_t estimateLinearStreamSizeSharedPostCmdList(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline size_t estimateLinearStreamSizeSharedInitial(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);

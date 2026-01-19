@@ -110,7 +110,7 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessA
 
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 1u);
     commandQueue->destroy();
@@ -145,7 +145,7 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithNoIndirectAcces
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
     commandQueue->destroy();
 }
@@ -183,7 +183,7 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenInstructionCacheWhenExecut
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
     csr->registerInstructionCacheFlush();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
@@ -247,7 +247,7 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
 
@@ -311,7 +311,7 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenBindlessHelperAndStateNotD
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
 
@@ -480,7 +480,7 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhen
                                            false};
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    ctx.globalInit = false;
+    ctx.pipelineCmdsDispatch = false;
     EXPECT_FALSE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessStateInitialized);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));

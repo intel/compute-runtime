@@ -47,9 +47,11 @@ CommandListExecutionContext::CommandListExecutionContext(
     this->firstCommandList = CommandList::fromHandle(commandListHandles[0]);
     this->lastCommandList = CommandList::fromHandle(commandListHandles[numCommandLists - 1]);
 
-    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread && !this->isNEODebuggerActive(device);
+    this->isNEODebuggerActive = device->getNEODevice()->getDebugger() && this->isDebugEnabled;
+
+    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread && !this->isNEODebuggerActive;
     this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
-                             (!sipSent && this->isNEODebuggerActive(device));
+                             (!sipSent && this->isNEODebuggerActive);
 
     if (this->isDevicePreemptionModeMidThread) {
         this->spaceForResidency += residencyContainerSpaceForPreemption;
@@ -63,11 +65,7 @@ CommandListExecutionContext::CommandListExecutionContext(
         this->isMigrationRequested = false;
     }
 
-    this->globalInit |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
-}
-
-bool CommandListExecutionContext::isNEODebuggerActive(Device *device) {
-    return device->getNEODevice()->getDebugger() && this->isDebugEnabled;
+    this->pipelineCmdsDispatch |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
 }
 
 } // namespace L0

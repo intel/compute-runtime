@@ -378,6 +378,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
+    using CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext;
     using CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
@@ -461,6 +462,9 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     void programHardwareContext(LinearStream &cmdStream) override {
         programHardwareContextCalled = true;
+        if (programHardwareContextParentCall) {
+            CommandStreamReceiverHw<GfxFamily>::programHardwareContext(cmdStream);
+        }
     }
 
   private:
@@ -487,4 +491,5 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     ResidencyContainer copyOfAllocations;
     DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     bool programHardwareContextCalled = false;
+    bool programHardwareContextParentCall = false;
 };

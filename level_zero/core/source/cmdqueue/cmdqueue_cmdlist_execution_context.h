@@ -41,8 +41,6 @@ struct CommandListExecutionContext {
                                 bool performMigration,
                                 bool sipSent);
 
-    bool isNEODebuggerActive(Device *device);
-
     NEO::StreamProperties cmdListBeginState{};
     uint64_t scratchGsba = 0;
     uint64_t childGpuAddressPositionBeforeDynamicPreamble = 0;
@@ -77,6 +75,7 @@ struct CommandListExecutionContext {
     const bool isPreemptionModeInitial{false};
     bool isDevicePreemptionModeMidThread{};
     bool isDebugEnabled{};
+    bool isNEODebuggerActive = false;
     bool stateSipRequired{};
     bool isProgramActivePartitionConfigRequired{};
     bool isMigrationRequested{};
@@ -84,7 +83,7 @@ struct CommandListExecutionContext {
     bool isDispatchTaskCountPostSyncRequired{};
     bool hasIndirectAccess{};
     bool rtDispatchRequired = false;
-    bool globalInit = false;
+    bool pipelineCmdsDispatch = false;
     bool lockScratchController = false;
     bool cmdListScratchAddressPatchingEnabled = false;
     bool containsParentImmediateStream = false;

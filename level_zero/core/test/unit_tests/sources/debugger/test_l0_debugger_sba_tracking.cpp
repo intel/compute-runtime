@@ -495,6 +495,7 @@ HWTEST2_F(L0DebuggerTest, givenDebugerEnabledWhenPrepareAndSubmitBatchBufferThen
 
     CommandListExecutionContext ctx{};
     ctx.isDebugEnabled = true;
+    ctx.isNEODebuggerActive = device->getNEODevice()->getDebugger() && ctx.isDebugEnabled;
 
     commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
 

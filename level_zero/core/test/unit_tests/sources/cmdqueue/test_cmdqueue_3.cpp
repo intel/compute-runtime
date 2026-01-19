@@ -323,9 +323,20 @@ using CommandQueueCommandsSingleTile = CommandQueueCommands<false>;
 using CommandQueueCommandsMultiTile = CommandQueueCommands<true>;
 
 HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandListsThenHardwareContextIsProgrammedAndGlobalAllocationResident) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
+
+    const auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    const auto &productHelper = neoDevice->getProductHelper();
+
+    bool hwContextRequired = gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper);
+
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    csr.createGlobalFenceAllocation();
+    csr.programHardwareContextParentCall = true;
 
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
@@ -344,12 +355,16 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
 
-    auto globalFence = csr.getGlobalFenceAllocation();
-    if (globalFence) {
+    if (hwContextRequired) {
+        auto globalFence = csr.getGlobalFenceAllocation();
+        ASSERT_NE(nullptr, globalFence);
         EXPECT_TRUE(isAllocationInResidencyContainer(csr, globalFence));
+        EXPECT_TRUE(csr.programHardwareContextCalled);
+    } else {
+        EXPECT_FALSE(csr.programHardwareContextCalled);
     }
+
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
-    EXPECT_TRUE(csr.programHardwareContextCalled);
     commandQueue->destroy();
 }
 
