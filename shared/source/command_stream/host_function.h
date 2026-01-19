@@ -62,7 +62,7 @@ class HostFunctionStreamer {
     HostFunction getHostFunction(uint64_t hostFunctionId);
     uint64_t getHostFunctionId(uint32_t partitionId) const;
     uint64_t getHostFunctionIdGpuAddress(uint32_t partitionId) const;
-    volatile uint64_t *getHostFunctionIdPtr(uint32_t partitionId) const;
+    uint64_t *getHostFunctionIdPtr(uint32_t partitionId) const;
     uint64_t getNextHostFunctionIdAndIncrement();
 
     void addHostFunction(uint64_t hostFunctionId, HostFunction &&hostFunction);
@@ -81,7 +81,7 @@ class HostFunctionStreamer {
 
     std::mutex hostFunctionsMutex;
     std::unordered_map<uint64_t, HostFunction> hostFunctions;
-    volatile uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
+    uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
     CommandStreamReceiver *csr = nullptr;
     GraphicsAllocation *allocation = nullptr;
     std::function<void(GraphicsAllocation &)> downloadAllocationImpl;

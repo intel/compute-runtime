@@ -15,28 +15,6 @@
 #include <tuple>
 #include <vector>
 
-#if defined(__clang__)
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define NEO_TSAN_ENABLED 1
-#endif
-#endif
-#elif defined(__GNUC__)
-#if defined(__SANITIZE_THREAD__)
-#define NEO_TSAN_ENABLED 1
-#endif
-#endif
-
-#ifdef NEO_TSAN_ENABLED
-extern "C" void __tsan_ignore_thread_begin();
-extern "C" void __tsan_ignore_thread_end();
-#define TSAN_ANNOTATE_IGNORE_BEGIN() __tsan_ignore_thread_begin()
-#define TSAN_ANNOTATE_IGNORE_END() __tsan_ignore_thread_end()
-#else
-#define TSAN_ANNOTATE_IGNORE_BEGIN() ((void)0)
-#define TSAN_ANNOTATE_IGNORE_END() ((void)0)
-#endif
-
 namespace {
 
 inline constexpr int32_t countingSemaphoreTestingMode = static_cast<int32_t>(HostFunctionWorkerMode::countingSemaphore);
@@ -58,13 +36,13 @@ class MockCommandStreamReceiverHostFunction : public MockCommandStreamReceiver {
 
 struct Arg {
     uint32_t expected = 0;
-    uint32_t result = 0;
+    std::atomic<uint32_t> result{0};
     std::atomic<uint32_t> counter{0};
 };
 
 extern "C" void hostFunctionExample(void *data) {
     Arg *arg = static_cast<Arg *>(data);
-    arg->result = arg->expected;
+    arg->result.store(arg->expected, std::memory_order_release);
     arg->counter.fetch_add(1, std::memory_order_acq_rel);
 }
 
@@ -72,7 +50,9 @@ void createArgs(std::vector<std::unique_ptr<Arg>> &hostFunctionArgs, uint32_t n)
     hostFunctionArgs.reserve(n);
 
     for (auto i = 0u; i < n; i++) {
-        hostFunctionArgs.emplace_back(std::make_unique<Arg>(i + 1, 0, 0));
+        auto arg = std::make_unique<Arg>();
+        arg->expected = i + 1;
+        hostFunctionArgs.emplace_back(std::move(arg));
     }
 }
 
@@ -144,7 +124,8 @@ class HostFunctionMtFixture {
 
         auto allTilesCompleted = true;
         for (auto partition = 0u; partition < nPartitions; partition++) {
-            auto id = csrs[i]->getHostFunctionStreamer().getHostFunctionId(partition);
+            auto idPtr = csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr(partition);
+            auto id = std::atomic_ref<uint64_t>(*idPtr).load(std::memory_order_acquire);
             if (id != HostFunctionStatus::completed) {
                 allTilesCompleted = false;
                 break;
@@ -157,15 +138,14 @@ class HostFunctionMtFixture {
     void programNextHostFunctionOnCsr(uint32_t i, uint32_t callbacksPerCsrCounter) {
         auto hostFunctionId = (callbacksPerCsrCounter * 2) + 1;
         for (auto partition = 0u; partition < nPartitions; partition++) {
-            *csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr(partition) = hostFunctionId;
+            auto ptr = csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr(partition);
+            std::atomic_ref<uint64_t>(*ptr).store(hostFunctionId, std::memory_order_release);
         }
     }
     void simulateGpuContexts() {
         auto expectedAllCallbacks = csrs.size() * callbacksPerCsr;
         auto callbacksCounter = 0u;
         std::vector<uint32_t> callbacksPerCsrCounter(csrs.size(), 0);
-
-        TSAN_ANNOTATE_IGNORE_BEGIN();
 
         while (true) {
             for (auto i = 0u; i < csrs.size(); i++) {
@@ -185,12 +165,9 @@ class HostFunctionMtFixture {
 
             std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
-
-        TSAN_ANNOTATE_IGNORE_END();
     }
 
     void waitForCallbacksCompletion() {
-        TSAN_ANNOTATE_IGNORE_BEGIN();
 
         while (true) {
             uint32_t csrsCompleted = 0u;
@@ -210,26 +187,22 @@ class HostFunctionMtFixture {
         for (auto i = 0u; i < csrs.size(); i++) {
             csrs[i]->hostFunctionWorker->finish();
         }
-
-        TSAN_ANNOTATE_IGNORE_END();
     }
 
     void checkResults() {
         uint32_t expectedCounter = callbacksPerCsr;
-        TSAN_ANNOTATE_IGNORE_BEGIN();
 
         for (auto i = 0u; i < csrs.size(); i++) {
             Arg &arg = *(this->hostFunctionArgs[i].get());
-            EXPECT_EQ(arg.expected, arg.result);
-            EXPECT_EQ(uint32_t{i + 1u}, arg.result);
-            EXPECT_EQ(expectedCounter, arg.counter.load());
+            EXPECT_EQ(arg.expected, arg.result.load(std::memory_order_acquire));
+            EXPECT_EQ(uint32_t{i + 1u}, arg.result.load(std::memory_order_acquire));
+            EXPECT_EQ(expectedCounter, arg.counter.load(std::memory_order_acquire));
 
             auto &streamer = csrs[i]->getHostFunctionStreamer();
             for (auto partition = 0u; partition < nPartitions; partition++) {
                 EXPECT_EQ(HostFunctionStatus::completed, streamer.getHostFunctionId(partition));
             }
         }
-        TSAN_ANNOTATE_IGNORE_END();
     }
 
     void clearResources() {
@@ -248,10 +221,6 @@ class HostFunctionMtFixture {
 class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, uint32_t, uint32_t>>, public HostFunctionMtFixture {
   public:
     void SetUp() override {
-
-#ifdef NEO_TSAN_ENABLED
-        GTEST_SKIP();
-#endif
 
         std::tie(testingMode, nPrimaryCsrs, nPartitions) = GetParam();
 

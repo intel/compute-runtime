@@ -24,7 +24,7 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            uint32_t partitionOffset,
                                            bool isTbx,
                                            bool dcFlushRequired)
-    : hostFunctionIdAddress(reinterpret_cast<volatile uint64_t *>(hostFunctionIdAddress)),
+    : hostFunctionIdAddress(reinterpret_cast<uint64_t *>(hostFunctionIdAddress)),
       csr(csr),
       allocation(allocation),
       downloadAllocationImpl(downloadAllocationImpl),
@@ -40,7 +40,7 @@ uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress(uint32_t partitionId)
     return reinterpret_cast<uint64_t>(ptrOffset(hostFunctionIdAddress, offset));
 }
 
-volatile uint64_t *HostFunctionStreamer::getHostFunctionIdPtr(uint32_t partitionId) const {
+uint64_t *HostFunctionStreamer::getHostFunctionIdPtr(uint32_t partitionId) const {
     return ptrOffset(hostFunctionIdAddress, partitionId * partitionOffset);
 }
 
@@ -50,9 +50,8 @@ uint64_t HostFunctionStreamer::getNextHostFunctionIdAndIncrement() {
 }
 
 uint64_t HostFunctionStreamer::getHostFunctionId(uint32_t partitionId) const {
-    auto offset = partitionId * partitionOffset;
-    auto hostFuncitonIdAddress = ptrOffset(this->hostFunctionIdAddress, offset);
-    return *hostFuncitonIdAddress;
+    auto ptr = ptrOffset(this->hostFunctionIdAddress, partitionId * partitionOffset);
+    return std::atomic_ref<uint64_t>(*ptr).load(std::memory_order_acquire);
 }
 
 void HostFunctionStreamer::signalHostFunctionCompletion(const HostFunction &hostFunction) {
@@ -86,7 +85,8 @@ void HostFunctionStreamer::updateTbxData() {
 void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
     auto setAsCompleted = [this]() {
         for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
-            *getHostFunctionIdPtr(partitionId) = HostFunctionStatus::completed;
+            auto ptr = getHostFunctionIdPtr(partitionId);
+            std::atomic_ref<uint64_t>(*ptr).store(HostFunctionStatus::completed, std::memory_order_release);
         }
     };
 
@@ -119,7 +119,6 @@ HostFunction HostFunctionStreamer::getHostFunction(uint64_t hostFunctionId) {
         UNRECOVERABLE_IF(true);
         return HostFunction{};
     }
-
     return std::move(node.mapped());
 }
 
@@ -143,11 +142,11 @@ void HostFunctionStreamer::downloadHostFunctionAllocation() const {
 
 uint64_t HostFunctionStreamer::getHostFunctionReadyToExecute() const {
     if (pendingHostFunctions.load(std::memory_order_acquire) == 0) {
-        return false;
+        return HostFunctionStatus::completed;
     }
 
     if (isInOrderExecutionInProgress()) {
-        return false;
+        return HostFunctionStatus::completed;
     }
 
     downloadHostFunctionAllocation();
