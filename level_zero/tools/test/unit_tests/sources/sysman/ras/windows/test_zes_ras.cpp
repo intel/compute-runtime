@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,27 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenFailure
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasClearStateExpThenFailureIsReturned) {
     auto pRasImp = std::make_unique<L0::RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_RESET));
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<L0::RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    uint32_t count = 0u;
+    zes_ras_error_category_exp_t categories = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetSupportedCategoriesExp(&count, &categories));
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<L0::RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetConfigExp(count, &config));
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasSetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<L0::RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
 }
 
 } // namespace ult

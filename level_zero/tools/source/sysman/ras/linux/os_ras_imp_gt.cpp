@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -252,6 +252,16 @@ uint32_t LinuxRasSourceGt::osRasGetCategoryCount() {
         return static_cast<uint32_t>(categoryToListOfEventsUncorrectable.size());
     }
     return static_cast<uint32_t>(categoryToListOfEventsCorrectable.size());
+}
+
+std::vector<zes_ras_error_category_exp_t> LinuxRasSourceGt::getSupportedErrorCategories(zes_ras_error_type_t errorType) {
+    std::vector<zes_ras_error_category_exp_t> categories;
+    const auto &categoryMap = errorType == ZES_RAS_ERROR_TYPE_UNCORRECTABLE ? categoryToListOfEventsUncorrectable : categoryToListOfEventsCorrectable;
+
+    for (const auto &entry : categoryMap) {
+        categories.push_back(entry.first);
+    }
+    return categories;
 }
 
 ze_result_t LinuxRasSourceGt::getPmuConfig(

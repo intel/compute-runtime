@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,18 @@ ze_result_t RasImp::rasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState
 
 ze_result_t RasImp::rasClearStateExp(zes_ras_error_category_exp_t category) {
     return pOsRas->osRasClearStateExp(category);
+}
+
+ze_result_t RasImp::rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
+    return pOsRas->osRasGetSupportedCategoriesExp(pCount, pCategories);
+}
+
+ze_result_t RasImp::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    return pOsRas->osRasGetConfigExp(count, pConfig);
+}
+
+ze_result_t RasImp::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    return pOsRas->osRasSetConfigExp(count, pConfig);
 }
 
 void RasImp::init() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
@@ -24,7 +25,7 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(zes_device_handle_t h
 
 ze_result_t ZE_APICALL zesIntelRasGetSupportedCategoriesExp(zes_ras_handle_t hRas, uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
     if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return L0::Ras::fromHandle(hRas)->rasGetSupportedCategoriesExp(pCount, pCategories);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetSupportedCategoriesExp(pCount, pCategories);
     } else {
@@ -34,7 +35,7 @@ ze_result_t ZE_APICALL zesIntelRasGetSupportedCategoriesExp(zes_ras_handle_t hRa
 
 ze_result_t ZE_APICALL zesIntelRasGetConfigExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
     if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return L0::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig);
     } else {
@@ -44,7 +45,7 @@ ze_result_t ZE_APICALL zesIntelRasGetConfigExp(zes_ras_handle_t hRas, const uint
 
 ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
     if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return L0::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig);
     } else {

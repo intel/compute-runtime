@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ namespace ult {
 
 constexpr uint32_t mockHandleCount = 2u;
 constexpr uint32_t mockHandleCountForSubDevice = 4u;
+constexpr uint32_t mockSupportedCorrectableErrors = 4u;
+constexpr uint32_t mockSupportedUncorrectableErrors = 8u;
 struct SysmanRasExpFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockRasFsAccess> pFsAccess;
@@ -595,7 +597,7 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpAnd
 }
 
 TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpWithoutWritePermissionsThenCallFails) {
-    pFsAccess->mockRootUser = true;
+    pFsAccess->mockIsNonRootUser = true;
     VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
 
@@ -691,6 +693,102 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAnd
                 }
             }
         }
+    }
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetSupportedCategoriesExpWithZeroCountThenValidCountAndCategoriesAreReturned) {
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    auto handles = getRasHandles(mockHandleCount);
+
+    for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_ras_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetSupportedCategoriesExp(handle, &count, nullptr));
+        if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
+            EXPECT_EQ(count, mockSupportedCorrectableErrors);
+        } else if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+            EXPECT_EQ(count, mockSupportedUncorrectableErrors);
+        }
+
+        std::vector<zes_ras_error_category_exp_t> categories(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetSupportedCategoriesExp(handle, &count, categories.data()));
+    }
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasSetConfigExpAndZesIntelRasGetConfigExpThenSuccessIsReturnedAndCorrectValuesAreSet) {
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+    uint32_t mockCategoryCount = 2u;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+        config[0].threshold = 100;
+        config[1].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
+        config[1].threshold = 200;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasSetConfigExp(handle, static_cast<uint32_t>(config.size()), config.data()));
+
+        std::vector<zes_intel_ras_config_exp_t> readConfig(mockCategoryCount);
+        readConfig[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+        readConfig[1].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetConfigExp(handle, static_cast<uint32_t>(readConfig.size()), readConfig.data()));
+        EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, readConfig[0].category);
+        EXPECT_EQ(config[0].threshold, readConfig[0].threshold);
+        EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS, readConfig[1].category);
+        EXPECT_EQ(config[1].threshold, readConfig[1].threshold);
+    }
+}
+
+TEST_F(SysmanRasExpFixture, GivenNonRootUserWhenCallingZesIntelRasSetConfigExpThenErrorIsReturned) {
+    pFsAccess->mockIsNonRootUser = true;
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+    uint32_t mockCategoryCount = 1u;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+        config[0].threshold = 100;
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelRasSetConfigExp(handle, 1, config.data()));
+    }
+}
+
+TEST_F(SysmanRasExpFixture, GivenUnconfiguredCategoryWhenCallingZesIntelRasGetConfigExpThenZeroThresholdIsReturned) {
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+    uint32_t mockCategoryCount = 1u;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+        config[0].threshold = 100;
+
+        std::vector<zes_intel_ras_config_exp_t> readConfig(mockCategoryCount);
+        readConfig[0].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetConfigExp(handle, 1, readConfig.data()));
+        EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS, readConfig[0].category);
+        EXPECT_EQ(0u, readConfig[0].threshold);
     }
 }
 

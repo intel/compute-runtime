@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,10 @@ ze_result_t LinuxRasSourceHbm::osRasClearStateExp(zes_ras_error_category_exp_t c
 uint32_t LinuxRasSourceHbm::osRasGetCategoryCount() {
     // Return one for "MEMORY" category
     return 1u;
+}
+
+std::vector<zes_ras_error_category_exp_t> LinuxRasSourceHbm::getSupportedErrorCategories(zes_ras_error_type_t errorType) {
+    return {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS};
 }
 
 LinuxRasSourceHbm::LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), osRasErrorType(type), subdeviceId(subdeviceId) {

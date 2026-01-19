@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -803,10 +803,58 @@ void testSysmanFrequency(ze_device_handle_t &device) {
     }
 }
 
+std::string getRasErrorCategoryExp(zes_ras_error_category_exp_t category) {
+    static const std::map<zes_ras_error_category_exp_t, std::string> rasErrorCategoryMap{
+        {ZES_RAS_ERROR_CATEGORY_EXP_RESET, "ZES_RAS_ERROR_CATEGORY_EXP_RESET"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_DISPLAY_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_DISPLAY_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS"},
+        {ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS"}};
+    auto i = rasErrorCategoryMap.find(category);
+    if (i == rasErrorCategoryMap.end()) {
+        return "Unknown RAS error category";
+    } else {
+        return rasErrorCategoryMap.at(category);
+    }
+}
+
+// Function pointers for RAS experimental APIs
+typedef ze_result_t(ZE_APICALL *zesIntelRasGetSupportedCategoriesExp_pfn)(
+    zes_ras_handle_t hRas,
+    uint32_t *pCount,
+    zes_ras_error_category_exp_t *pCategories);
+
+typedef ze_result_t(ZE_APICALL *zesIntelRasGetConfigExp_pfn)(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    zes_intel_ras_config_exp_t *pConfig);
+
+typedef ze_result_t(ZE_APICALL *zesIntelRasSetConfigExp_pfn)(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    const zes_intel_ras_config_exp_t *pConfig);
+
+// Global function pointers for RAS experimental APIs
+zesIntelRasGetSupportedCategoriesExp_pfn zesIntelRasGetSupportedCategoriesExpPtr = nullptr;
+zesIntelRasGetConfigExp_pfn zesIntelRasGetConfigExpPtr = nullptr;
+zesIntelRasSetConfigExp_pfn zesIntelRasSetConfigExpPtr = nullptr;
+
+void getRasExpFunctionPointers(ze_driver_handle_t driverHandle) {
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetSupportedCategoriesExp", reinterpret_cast<void **>(&zesIntelRasGetSupportedCategoriesExpPtr)));
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetConfigExp", reinterpret_cast<void **>(&zesIntelRasGetConfigExpPtr)));
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasSetConfigExp", reinterpret_cast<void **>(&zesIntelRasSetConfigExpPtr)));
+}
+
 void testSysmanRasExp(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Ras Exp tests ---- " << std::endl;
     uint32_t count = 0;
+    bool iamroot = (geteuid() == 0);
     VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, nullptr));
     if (count == 0) {
         std::cout << "Could not retrieve Ras Error Sets" << std::endl;
@@ -842,6 +890,49 @@ void testSysmanRasExp(ze_device_handle_t &device) {
             }
             for (uint32_t i = 0; i < rasCategoryCount; i++) {
                 std::cout << " Error category: " << rasStates[i].category << "Count: " << rasStates[i].errorCounter << std::endl;
+            }
+        }
+
+        uint32_t supportedCategoryCount = 0;
+        VALIDATECALL(zesIntelRasGetSupportedCategoriesExpPtr(handle, &supportedCategoryCount, nullptr));
+        if (verbose) {
+            std::cout << "Number of supported RAS error categories: " << supportedCategoryCount << std::endl;
+        }
+
+        std::vector<zes_ras_error_category_exp_t> supportedCategories(supportedCategoryCount);
+        VALIDATECALL(zesIntelRasGetSupportedCategoriesExpPtr(handle, &supportedCategoryCount, supportedCategories.data()));
+        if (verbose) {
+            std::cout << "Supported error categories:" << std::endl;
+            for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                std::cout << " Supported category: " << getRasErrorCategoryExp(supportedCategories[i]) << std::endl;
+            }
+        }
+
+        if (iamroot) {
+            std::vector<zes_intel_ras_config_exp_t> setConfig(supportedCategoryCount);
+            std::vector<zes_intel_ras_config_exp_t> getConfig(supportedCategoryCount);
+
+            for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                setConfig[i].stype = ZES_INTEL_STRUCTURE_TYPE_RAS_CONFIG_EXP;
+                setConfig[i].pNext = nullptr;
+                setConfig[i].category = supportedCategories[i];
+                setConfig[i].threshold = 10;
+            }
+
+            VALIDATECALL(zesIntelRasSetConfigExpPtr(handle, supportedCategoryCount, setConfig.data()));
+            if (verbose) {
+                std::cout << "Set Thresholds for all supported categories." << std::endl;
+                for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                    std::cout << " Setting threshold " << setConfig[i].threshold << " for category " << getRasErrorCategoryExp(setConfig[i].category) << std::endl;
+                }
+            }
+
+            VALIDATECALL(zesIntelRasGetConfigExpPtr(handle, supportedCategoryCount, getConfig.data()));
+            if (verbose) {
+                std::cout << "Get Thresholds for all supported categories." << std::endl;
+                for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                    std::cout << " Getting threshold " << getConfig[i].threshold << " for category " << getRasErrorCategoryExp(getConfig[i].category) << std::endl;
+                }
             }
         }
     }
@@ -1961,6 +2052,7 @@ int main(int argc, char *argv[]) {
         });
     }
     if (isParamEnabled(argc, argv, "-re", "--rasexp", &optind)) {
+        getRasExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanRasExp(device);
         });

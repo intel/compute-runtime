@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,9 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableAndNonMovableClass {
     ze_result_t osRasSetConfig(const zes_ras_config_t *config) override;
     ze_result_t osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) override;
     ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override;
+    ze_result_t osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) override;
+    ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override;
+    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override;
     LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;
@@ -50,6 +53,8 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableAndNonMovableClass {
     uint32_t subdeviceId = 0;
     uint64_t totalThreshold = 0;
     uint64_t categoryThreshold[maxRasErrorCategoryCount] = {0};
+    std::vector<std::pair<zes_ras_error_category_exp_t, uint64_t>> categoryExpThresholds = {};
+    std::vector<zes_ras_error_category_exp_t> supportedErrorCategoriesExp = {};
 };
 
 class LinuxRasSources : NEO::NonCopyableAndNonMovableClass {
@@ -58,6 +63,7 @@ class LinuxRasSources : NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) = 0;
     virtual uint32_t osRasGetCategoryCount() = 0;
     virtual ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) = 0;
+    virtual std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategories(zes_ras_error_type_t errorType) = 0;
     virtual ~LinuxRasSources() = default;
 };
 
@@ -68,6 +74,7 @@ class LinuxRasSourceGt : public LinuxRasSources {
     ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
     uint32_t osRasGetCategoryCount() override;
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategories(zes_ras_error_type_t errorType) override;
     LinuxRasSourceGt(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasSourceGt() = default;
     ~LinuxRasSourceGt() override;
@@ -110,6 +117,7 @@ class LinuxRasSourceHbm : public LinuxRasSources {
     ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
     uint32_t osRasGetCategoryCount() override;
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategories(zes_ras_error_type_t errorType) override;
     LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId);
     LinuxRasSourceHbm() = default;
     ~LinuxRasSourceHbm() override{};

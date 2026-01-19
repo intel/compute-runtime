@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,10 +141,63 @@ ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t categor
     return result;
 }
 
+ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
+
+    if (*pCount == 0) {
+        *pCount = static_cast<uint32_t>(supportedErrorCategoriesExp.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t numCategoriesToCopy = std::min(*pCount, static_cast<uint32_t>(supportedErrorCategoriesExp.size()));
+    for (uint32_t i = 0; i < numCategoriesToCopy; i++) {
+        pCategories[i] = supportedErrorCategoriesExp[i];
+    }
+    *pCount = numCategoriesToCopy;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+
+    for (uint32_t i = 0; i < count; i++) {
+        auto it = std::find_if(categoryExpThresholds.begin(), categoryExpThresholds.end(),
+                               [&pConfig, i](const std::pair<zes_ras_error_category_exp_t, uint64_t> &element) {
+                                   return element.first == pConfig[i].category;
+                               });
+        if (it != categoryExpThresholds.end()) {
+            pConfig[i].threshold = it->second;
+        } else {
+            pConfig[i].threshold = 0;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+
+    if (pFsAccess->isRootUser() == true) {
+        categoryExpThresholds.clear();
+        for (uint32_t i = 0; i < count; i++) {
+            categoryExpThresholds.push_back(std::make_pair(pConfig[i].category, pConfig[i].threshold));
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+    return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+}
+
 void LinuxRasImp::initSources() {
     rasSources.push_back(std::make_unique<L0::LinuxRasSourceGt>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
         rasSources.push_back(std::make_unique<L0::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
+    }
+
+    for (const auto &rasSource : rasSources) {
+        auto categories = rasSource->getSupportedErrorCategories(osRasErrorType);
+        for ([[maybe_unused]] const auto &category : categories) {
+            DEBUG_BREAK_IF(std::find(supportedErrorCategoriesExp.begin(), supportedErrorCategoriesExp.end(), category) != supportedErrorCategoriesExp.end());
+        }
+        supportedErrorCategoriesExp.insert(supportedErrorCategoriesExp.end(), categories.begin(), categories.end());
     }
 }
 

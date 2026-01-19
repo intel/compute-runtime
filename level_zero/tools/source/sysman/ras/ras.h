@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <mutex>
 #include <vector>
@@ -25,6 +26,9 @@ class Ras : _zes_ras_handle_t {
     virtual ze_result_t rasGetState(zes_ras_state_t *pState, ze_bool_t clear) = 0;
     virtual ze_result_t rasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) = 0;
     virtual ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) = 0;
+    virtual ze_result_t rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) = 0;
+    virtual ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) = 0;
+    virtual ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) = 0;
 
     static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);

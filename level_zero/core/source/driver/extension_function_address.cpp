@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_context.h"
 #include "level_zero/ze_intel_gpu.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 
 #include <cstring>
@@ -131,6 +132,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
     RETURN_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
     RETURN_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
+
+    // Sysman
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetSupportedCategoriesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetConfigExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasSetConfigExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

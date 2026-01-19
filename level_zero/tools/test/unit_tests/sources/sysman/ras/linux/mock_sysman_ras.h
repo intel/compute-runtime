@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -483,9 +483,9 @@ struct MockRasFsAccess : public FsAccess {
     bool mockReadDirectoryFailure = false;
     bool mockReadFileFailure = false;
     bool mockReadDirectoryWithoutRasEvents = false;
-    bool mockRootUser = false;
     bool mockReadVal = false;
     bool mockReadDirectoryForMultiDevice = false;
+    bool mockIsNonRootUser = false;
 
     bool directoryExists(const std::string path) override {
         // disables fabric errors
@@ -615,7 +615,7 @@ struct MockRasFsAccess : public FsAccess {
 
     bool isRootUser() override {
 
-        if (mockRootUser == true) {
+        if (mockIsNonRootUser == true) {
             return userIsNotRoot();
         }
 

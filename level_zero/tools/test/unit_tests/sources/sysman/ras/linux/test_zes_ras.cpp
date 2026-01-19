@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -378,7 +378,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmWithCl
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOptionWithoutPermissionsThenFailureIsReturned) {
 
-    pFsAccess->mockRootUser = true;
+    pFsAccess->mockIsNonRootUser = true;
 
     auto handles = getRasHandles(mockHandleCount);
     ze_bool_t clear = 1;
@@ -497,7 +497,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRa
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
 
-    pFsAccess->mockRootUser = true;
+    pFsAccess->mockIsNonRootUser = true;
 
     auto handles = getRasHandles(mockHandleCount);
 
