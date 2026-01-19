@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidLateBindingFirmware
         zes_firmware_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
         if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), properties.name) != lateBindingFirmwareTypes.end()) {
-            EXPECT_STREQ(mocklateBindingVersion.c_str(), properties.version);
+            EXPECT_STREQ(mockLateBindingVersion.c_str(), properties.version);
         }
     }
 }

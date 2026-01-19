@@ -512,7 +512,7 @@ class SysmanKmdInterfaceFdoFixtureXe : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileNotAvailableThenIsDeviceInFdoModeReturnsFalse) {
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityFdoModeFileNotAvailableThenIsDeviceInFdoModeReturnsFalse) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     // Mock file not available
@@ -521,29 +521,20 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityM
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
 
-TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileExistsWithoutFdoModeThenIsDeviceInFdoModeReturnsFalse) {
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityFdoModeFileExistsWithDisabledValueThenIsDeviceInFdoModeReturnsFalse) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
-    // Mock file exists but without "FDO Mode: enabled"
     pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
-    pMockSysFsAccess->mockFileContent = {
-        "Some other content",
-        "Other system info",
-        "FDO Mode: disabled",
-    };
+    pMockSysFsAccess->mockFdoValue = "disabled";
 
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
 
-TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileContainsFdoModeEnabledInDifferentLineThenIsDeviceInFdoModeReturnsTrue) {
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityFdoModeFileExistsWithEnabledValueThenIsDeviceInFdoModeReturnsTrue) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
-    // Mock file with FDO Mode enabled in last line
     pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
-    pMockSysFsAccess->mockFileContent = {
-        "First line",
-        "Second line",
-        "FDO Mode: enabled"};
+    pMockSysFsAccess->mockFdoValue = "enabled";
 
     EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
 }

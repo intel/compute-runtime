@@ -18,7 +18,8 @@ constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
-const std::string mocklateBindingVersion("1.2.3.4");
+const std::string mockFdoValue("enabled");
+const std::string mockLateBindingVersion("1.2.3.4");
 const std::string mockUnknownVersion("unknown");
 const std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
 const std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
@@ -52,17 +53,11 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = mockPscVersion;
         }
         if (!file.compare("device/lb_voltage_regulator_version") || !file.compare("device/lb_fan_control_version")) {
-            val = mocklateBindingVersion;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
-        if (readResult != ZE_RESULT_SUCCESS) {
-            return readResult;
+            val = mockLateBindingVersion;
         }
 
-        if (!file.compare("/survivability_mode")) {
-            val.push_back("FDO Mode: enabled");
+        if (!file.compare("device/survivability_info/fdo_mode")) {
+            val = mockFdoValue;
         }
         return ZE_RESULT_SUCCESS;
     }
