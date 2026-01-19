@@ -1035,6 +1035,23 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
 }
 
+TEST(DrmQueryTest, GivenForceDeviceIdSetWhenSetupHardwareInfoCalledThenProperlyConfigureDeviceId) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceDeviceId.set("4321");
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
+
+    EXPECT_NE(0x4321u, hwInfo->platform.usDeviceID);
+    EXPECT_NE(0, drm.setupHardwareInfo(0, false));
+    EXPECT_EQ(0x4321u, hwInfo->platform.usDeviceID);
+}
+
 TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopologyInfoThenCorrectMaxSubSliceCountIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 

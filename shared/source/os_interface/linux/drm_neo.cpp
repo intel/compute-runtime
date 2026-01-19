@@ -509,9 +509,14 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "WARNING: Using default deviceId: %i for ip version: %i.%i.%i for setup\n", deviceIdFromIpVersion, rootDeviceEnvironment.getHardwareInfo()->ipVersion.architecture, rootDeviceEnvironment.getHardwareInfo()->ipVersion.release, rootDeviceEnvironment.getHardwareInfo()->ipVersion.revision);
     }
 
-    const auto usDeviceIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
+    auto usDeviceIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
     const auto usRevIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
     const auto ipVersionOverride = rootDeviceEnvironment.getHardwareInfo()->ipVersion;
+
+    if (debugManager.flags.ForceDeviceId.get() != "unk") {
+        usDeviceIdOverride = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "WARNING: Using forced deviceId: %i\n", usDeviceIdOverride);
+    }
 
     // reset hwInfo and apply overrides
     rootDeviceEnvironment.setHwInfo(deviceDescriptor->pHwInfo);
