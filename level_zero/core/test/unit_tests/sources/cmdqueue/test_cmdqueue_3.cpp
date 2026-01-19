@@ -744,7 +744,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutin
                                            csr->isProgramActivePartitionConfigRequired(),
                                            false,
                                            false};
-
+    ctx.regularHeapful = true;
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr, nullptr);
@@ -772,7 +772,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecut
                                            csr->isProgramActivePartitionConfigRequired(),
                                            false,
                                            false};
-
+    ctx.regularHeapful = true;
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr, nullptr);

@@ -167,9 +167,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     }
 
-    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-
-    linearStreamSizeEstimate += this->estimateStreamSizeForExecuteCommandListsRegularHeapless(ctx, numCommandLists, commandListHandles);
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, commandListHandles, numCommandLists);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
@@ -229,26 +227,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,
-                                                                                              uint32_t numCommandLists,
-                                                                                              ze_command_list_handle_t *commandListHandles) {
-    size_t linearStreamSizeEstimate = this->estimateCommandListPatchPreamble(ctx, numCommandLists);
-    linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
-    for (uint32_t i = 0; i < numCommandLists; i++) {
-        auto cmdList = CommandList::fromHandle(commandListHandles[i]);
-        getCommandListPatchPreambleData(ctx, cmdList);
-
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
-    }
-    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
-
-    return linearStreamSizeEstimate;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     CommandListExecutionContext &ctx,
     uint32_t numCommandLists,
@@ -270,15 +248,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     if (this->heaplessModeEnabled == false || ctx.cmdListScratchAddressPatchingEnabled == true) {
         this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     }
-
     this->setFrontEndStateProperties(ctx);
 
-    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-
-    auto neoDevice = this->device->getNEODevice();
-
-    linearStreamSizeEstimate += this->estimateLinearStreamSizeComplementary(ctx, commandListHandles, numCommandLists);
-    linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, commandListHandles, numCommandLists);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
@@ -287,8 +259,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     NEO::LinearStream *streamForDispatch = parentImmediateCommandlistLinearStream ? parentImmediateCommandlistLinearStream : &child;
 
-    this->updateDebugSurfaceState(ctx);
+    auto neoDevice = this->device->getNEODevice();
 
+    this->updateDebugSurfaceState(ctx);
     this->getGlobalFenceAndMakeItResident();
     this->getWorkPartitionAndMakeItResident();
     this->getGlobalStatelessHeapAndMakeItResident(ctx);
@@ -322,7 +295,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         if (!this->stateBaseAddressTracking) {
             this->programStateBaseAddressWithGsbaIfDirty(ctx, ctx.firstCommandList, *streamForDispatch);
         }
-        NEO::Device *neoDevice = this->device->getNEODevice();
         if (neoDevice->getDebugger() != nullptr) {
             if (!this->csr->csrSurfaceProgrammed()) {
                 NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(*streamForDispatch,
@@ -415,19 +387,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         return retVal;
     }
 
-    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeShared(ctx);
-
-    for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-
-        linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
-    }
-
-    linearStreamSizeEstimate += this->estimateCommandListPatchPreamble(ctx, numCommandLists);
-    linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
-    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, phCommandLists, numCommandLists);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
@@ -744,7 +704,60 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeShared(
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeTotal(CommandListExecutionContext &ctx,
+                                                                    ze_command_list_handle_t *commandListHandles,
+                                                                    uint32_t numCommandLists) {
+    size_t linearStreamSizeEstimate = 0u;
+
+    linearStreamSizeEstimate = estimateLinearStreamSizeSharedInitial(ctx);
+
+    EstimateRegularHeapfulPerCmdlistData regularPerCmdlistData;
+    if (ctx.regularHeapful) {
+        regularPerCmdlistData.frontEndStateDirty = ctx.frontEndStateDirty;
+        regularPerCmdlistData.gpgpuEnabled = this->csr->getPreambleSetFlag();
+        regularPerCmdlistData.baseAddressStateDirty = ctx.gsbaStateDirty;
+        regularPerCmdlistData.scmStateDirty = this->csr->getStateComputeModeDirty();
+
+        ctx.globalInit |= !regularPerCmdlistData.gpgpuEnabled;
+        ctx.globalInit |= regularPerCmdlistData.scmStateDirty;
+    }
+    auto &csrStreamProperties = this->csr->getStreamProperties();
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = CommandList::fromHandle(commandListHandles[i]);
+
+        linearStreamSizeEstimate += estimateLinearStreamSizeSharedPerCmdList(ctx, commandList);
+        if (ctx.regularHeapful) {
+            linearStreamSizeEstimate += estimateLinearStreamSizeRegularHeapfulPerCmdList(ctx, commandList, i, regularPerCmdlistData, csrStreamProperties);
+        }
+    }
+
+    if (ctx.regularHeapful) {
+        linearStreamSizeEstimate += estimateLinearStreamSizeRegularHeapfulPostCmdList(ctx, regularPerCmdlistData);
+    }
+
+    linearStreamSizeEstimate += estimateLinearStreamSizeSharedPostCmdList(ctx, numCommandLists);
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPerCmdList(CommandListExecutionContext &ctx,
+                                                                               CommandList *commandList) {
+    size_t linearStreamSizeEstimate = 0u;
+    linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
+
+    // per command list patch preamble
+    getCommandListPatchPreambleData(ctx, commandList);
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, commandList);
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedInitial(
     CommandListExecutionContext &ctx) {
 
     size_t linearStreamSizeEstimate = 0u;
@@ -877,34 +890,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleData(CommandListExecutionContext &ctx) {
-    size_t encodeSize = 0;
-    if (this->patchingPreamble) {
-        if (ctx.totalNoopSpaceForPatchPreamble > 0) {
-            encodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
-        }
-
-        if (ctx.totalActiveScratchPatchElements > 0) {
-            const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
-            size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
-
-            encodeSize += patchScratchElemsEncodeSize;
-        }
-        ctx.bufferSpaceForPatchPreamble += encodeSize;
-    }
-    return encodeSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
-    if (this->patchingPreamble) {
-        ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
-        ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreambleData(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
         constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
@@ -915,12 +901,30 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreamble(CommandLi
         encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         encodeSize += 2 * NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize();
 
+        if (ctx.totalNoopSpaceForPatchPreamble > 0) {
+            encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
+        }
+
+        if (ctx.totalActiveScratchPatchElements > 0) {
+            const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
+            size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
+
+            encodeSize += patchScratchElemsEncodeSize;
+        }
         ctx.bufferSpaceForPatchPreamble += encodeSize;
 
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
         this->forceBbStartJump = true;
     }
     return encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
+    if (this->patchingPreamble) {
+        ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
+        ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1055,70 +1059,58 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFla
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeRegularHeapfulPerCmdList(
     CommandListExecutionContext &ctx,
-    ze_command_list_handle_t *phCommandLists,
-    uint32_t numCommandLists) {
+    CommandList *commandList,
+    uint32_t index,
+    EstimateRegularHeapfulPerCmdlistData &sharedData,
+    NEO::StreamProperties &csrStreamProperties) {
 
+    size_t linearStreamSizeEstimate = 0u;
+
+    const NEO::StreamProperties &requiredStreamState = commandList->getRequiredStreamState();
+    const NEO::StreamProperties &finalStreamState = commandList->getFinalStreamState();
+
+    linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(sharedData.frontEndStateDirty, commandList,
+                                                                               csrStreamProperties, requiredStreamState, finalStreamState,
+                                                                               sharedData.cmdListState.requiredState,
+                                                                               sharedData.cmdListState.flags.propertyFeDirty, sharedData.cmdListState.flags.frontEndReturnPoint);
+    linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(csrStreamProperties, requiredStreamState, finalStreamState, sharedData.gpgpuEnabled,
+                                                                                     sharedData.cmdListState.requiredState, sharedData.cmdListState.flags.propertyPsDirty);
+    linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(csrStreamProperties, sharedData.scmStateDirty, requiredStreamState, finalStreamState,
+                                                                          sharedData.cmdListState.requiredState, sharedData.cmdListState.flags.propertyScmDirty);
+    linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(sharedData.baseAddressStateDirty, commandList->getCmdListHeapAddressModel(), csrStreamProperties, requiredStreamState, finalStreamState,
+                                                                                       sharedData.cmdListState.requiredState, sharedData.cmdListState.flags.propertySbaDirty);
+    linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, commandList, sharedData.cmdListState.flags.preemptionDirty);
+
+    if (sharedData.cmdListState.flags.isAnyDirty()) {
+        sharedData.cmdListState.commandList = commandList;
+        sharedData.cmdListState.cmdListIndex = index;
+        sharedData.cmdListState.newPreemptionMode = ctx.statePreemption;
+        this->stateChanges.push_back(sharedData.cmdListState);
+
+        linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(true);
+
+        sharedData.cmdListState.requiredState.resetState();
+        sharedData.cmdListState.flags.cleanDirty();
+    }
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeRegularHeapfulPostCmdList(CommandListExecutionContext &ctx, EstimateRegularHeapfulPerCmdlistData &sharedData) {
     size_t linearStreamSizeEstimate = 0u;
 
     linearStreamSizeEstimate += estimateFrontEndCmdSize(ctx.frontEndStateDirty);
     linearStreamSizeEstimate += estimatePipelineSelectCmdSize();
-
-    auto &streamProperties = this->csr->getStreamProperties();
-    bool frontEndStateDirty = ctx.frontEndStateDirty;
-    bool gpgpuEnabled = this->csr->getPreambleSetFlag();
-    bool baseAddressStateDirty = ctx.gsbaStateDirty;
-    bool scmStateDirty = this->csr->getStateComputeModeDirty();
-
-    ctx.globalInit |= !gpgpuEnabled;
-    ctx.globalInit |= scmStateDirty;
-
-    CommandListRequiredStateChange cmdListState;
-
-    for (uint32_t i = 0; i < numCommandLists; i++) {
-        auto cmdList = CommandList::fromHandle(phCommandLists[i]);
-        const NEO::StreamProperties &requiredStreamState = cmdList->getRequiredStreamState();
-        const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
-
-        getCommandListPatchPreambleData(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, cmdList);
-        linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, cmdList);
-
-        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
-                                                                                   streamProperties, requiredStreamState, finalStreamState,
-                                                                                   cmdListState.requiredState,
-                                                                                   cmdListState.flags.propertyFeDirty, cmdListState.flags.frontEndReturnPoint);
-        linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamProperties, requiredStreamState, finalStreamState, gpgpuEnabled,
-                                                                                         cmdListState.requiredState, cmdListState.flags.propertyPsDirty);
-        linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamProperties, scmStateDirty, requiredStreamState, finalStreamState,
-                                                                              cmdListState.requiredState, cmdListState.flags.propertyScmDirty);
-        linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAddressStateDirty, cmdList->getCmdListHeapAddressModel(), streamProperties, requiredStreamState, finalStreamState,
-                                                                                           cmdListState.requiredState, cmdListState.flags.propertySbaDirty);
-        linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList, cmdListState.flags.preemptionDirty);
-
-        linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
-
-        if (cmdListState.flags.isAnyDirty()) {
-            cmdListState.commandList = cmdList;
-            cmdListState.cmdListIndex = i;
-            cmdListState.newPreemptionMode = ctx.statePreemption;
-            this->stateChanges.push_back(cmdListState);
-
-            linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(true);
-
-            cmdListState.requiredState.resetState();
-            cmdListState.flags.cleanDirty();
-        }
-    }
-    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
-
     if (ctx.gsbaStateDirty && !this->stateBaseAddressTracking) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
     }
 
-    if (csr->isRayTracingStateProgramingNeeded(*device->getNEODevice())) {
+    NEO::Device *neoDevice = this->device->getNEODevice();
+
+    if (csr->isRayTracingStateProgramingNeeded(*neoDevice)) {
         ctx.rtDispatchRequired = true;
         auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
         linearStreamSizeEstimate += csrHw->getCmdSizeForPerDssBackedBuffer(this->device->getHwInfo());
@@ -1126,7 +1118,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         ctx.globalInit = true;
     }
 
-    NEO::Device *neoDevice = this->device->getNEODevice();
     if (neoDevice->getDebugger() != nullptr) {
         if (!this->csr->csrSurfaceProgrammed()) {
             linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
@@ -1138,10 +1129,24 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice, this->csr->isRcs());
     }
 
-    linearStreamSizeEstimate += this->estimateCommandListPatchPreamble(ctx, numCommandLists);
-    bool firstCmdlistDynamicPreamble = (this->stateChanges.size() > 0 && this->stateChanges[0].cmdListIndex == 0);
-    bool estimateBbStartForGlobalInitOnly = !firstCmdlistDynamicPreamble && (ctx.globalInit || this->forceBbStartJump);
-    linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(estimateBbStartForGlobalInitOnly);
+    linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPostCmdList(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
+    size_t linearStreamSizeEstimate = 0u;
+
+    linearStreamSizeEstimate += this->estimateTotalCommandListPatchPreambleData(ctx, numCommandLists);
+
+    bool additionalCondition = true;
+    if (ctx.regularHeapful) {
+        bool firstCmdlistDynamicPreamble = (this->stateChanges.size() > 0 && this->stateChanges[0].cmdListIndex == 0);
+        additionalCondition = !firstCmdlistDynamicPreamble;
+    }
+    bool bbStartNeeded = additionalCondition && (ctx.globalInit || this->forceBbStartJump);
+    linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(bbStartNeeded);
 
     return linearStreamSizeEstimate;
 }
