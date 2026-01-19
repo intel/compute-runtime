@@ -2602,14 +2602,13 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndDebugFlagSetWhenCreatingSecondaryEngin
         GTEST_SKIP();
     }
 
-    uint32_t computeEngineBit = 1 << static_cast<uint32_t>(hpEngine);
-    debugManager.flags.SecondaryContextEngineTypeMask.set(~computeEngineBit);
-
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment.release(), 0));
 
     EXPECT_NE(nullptr, device->getHpCopyEngine());
-
-    EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
+    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
+    for (auto &enginePair : device->secondaryEngines.find(hpEngine)->second.engines) {
+        EXPECT_TRUE(enginePair.osContext->isExclusivelyHpContext());
+    }
 }
 
 HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSecondaryEnginesThenContextCountIsDividedByProcessCount) {

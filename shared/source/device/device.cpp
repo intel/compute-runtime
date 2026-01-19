@@ -429,7 +429,7 @@ bool Device::createEngines() {
 
                 auto primaryEngine = engineGroup->engines[engineIndex];
 
-                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount - highPriorityContextCount, highPriorityContextCount);
+                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, highPriorityContextCount);
             }
         }
 
@@ -450,7 +450,7 @@ bool Device::createEngines() {
                     contextCount = std::max(contextCount / numProcesses, 2u);
                 }
 
-                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, 0, contextCount);
+                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount);
             }
         }
     }
@@ -458,8 +458,9 @@ bool Device::createEngines() {
     return true;
 }
 
-void Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount) {
-    secondaryEnginesForType.regularEnginesTotal = contextCount - highPriorityContextCount;
+void Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount) {
+    auto regularContextCount = contextCount - highPriorityContextCount;
+    secondaryEnginesForType.regularEnginesTotal = regularContextCount;
     secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
     secondaryEnginesForType.regularCounter = 0;
     secondaryEnginesForType.highPriorityCounter = 0;
@@ -472,16 +473,21 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     UNRECOVERABLE_IF(engineTypeUsage.second != EngineUsage::regular && engineTypeUsage.second != EngineUsage::highPriority);
 
     secondaryEnginesForType.engines.push_back(primaryEngine);
-
     for (uint32_t i = 1; i < contextCount; i++) {
 
-        if (i >= contextCount - highPriorityContextCount) {
+        if (i >= regularContextCount) {
             engineTypeUsage.second = EngineUsage::highPriority;
         }
         this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
+        if (regularContextCount == 0) {
+            this->secondaryCsrs.back()->getOsContext().setExclusivelyHpContext();
+        }
     }
 
     UNRECOVERABLE_IF(primaryEngine.osContext->isPartOfContextGroup() == false);
+    if (regularContextCount == 0) {
+        primaryEngine.osContext->setExclusivelyHpContext();
+    }
 }
 
 void Device::allocateDebugSurface(size_t debugSurfaceSize) {

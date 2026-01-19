@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,7 +145,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
         UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
         auto &secondaryEnginesForType = secondaryEngines[engineType];
 
-        createSecondaryContexts(engine, secondaryEnginesForType, contextCount, contextCount - highPriorityContextCount, highPriorityContextCount);
+        createSecondaryContexts(engine, secondaryEnginesForType, contextCount, highPriorityContextCount);
     }
     return true;
 }
