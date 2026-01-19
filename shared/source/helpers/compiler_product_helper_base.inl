@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_global_int32_base_atomics "
                              "cl_khr_global_int32_extended_atomics "
                              "cl_khr_icd "
+                             "cl_khr_icd_unloadable "
                              "cl_khr_local_int32_base_atomics "
                              "cl_khr_local_int32_extended_atomics "
                              "cl_intel_command_queue_families "
