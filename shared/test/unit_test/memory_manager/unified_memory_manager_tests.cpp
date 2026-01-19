@@ -384,7 +384,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemM
     auto ptr = malloc(4096);
     EXPECT_NE(nullptr, ptr);
 
-    svmManager->sharedSystemMemAdvise(*device, memAdviseOp, ptr, 4096);
+    svmManager->sharedSystemMemAdvise(*device, *device, memAdviseOp, ptr, 4096);
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setSharedSystemMemAdviseCalled);

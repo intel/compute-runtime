@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
@@ -373,34 +374,70 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeisVmBindPatIndexExtSupportedReturnsF
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetPreferredLocationArgsCorrectParametersReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    // auto drm = new DrmQueryMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    xeQueryMemUsage->num_mem_regions = 3;
+    xeQueryMemUsage->mem_regions[0] = {
+        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
+        1,                             // instance
+        MemoryConstants::pageSize,     // min page size
+        2 * MemoryConstants::gigaByte, // total size
+        MemoryConstants::megaByte      // used size
+    };
+    xeQueryMemUsage->mem_regions[1] = {
+        DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
+        0,                              // instance
+        MemoryConstants::pageSize,      // min page size
+        MemoryConstants::gigaByte,      // total size
+        MemoryConstants::kiloByte       // used size
+    };
+    xeQueryMemUsage->mem_regions[2] = {
+        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
+        2,                             // instance
+        MemoryConstants::pageSize,     // min page size
+        4 * MemoryConstants::gigaByte, // total size
+        MemoryConstants::gigaByte      // used size
+    };
+
+    auto memoryInfo = xeIoctlHelper->createMemoryInfo();
+    auto deviceFd = drm->getFileDescriptor();
 
     uint64_t expectedParam = 0;
     auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
     auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
-    expectedParam = (preferredLocation << 32) | policy;
-
-    auto memAdviseOp = MemAdvise::setPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
-
-    memAdviseOp = MemAdvise::clearPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    auto regionInstance = static_cast<uint64_t>(0);
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    auto memAdviseOp = MemAdvise::clearPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp, memoryInfo->getDrmRegionInfos()));
 
     memAdviseOp = MemAdvise::clearSystemMemoryPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp, memoryInfo->getDrmRegionInfos()));
+
+    preferredLocation = static_cast<uint64_t>(deviceFd);
+    policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+    regionInstance = static_cast<uint64_t>(1);
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp, memoryInfo->getDrmRegionInfos()));
 
     preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
     policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
-    expectedParam = (preferredLocation << 32) | policy;
+    regionInstance = static_cast<uint64_t>(0);
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
 
     memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp, memoryInfo->getDrmRegionInfos()));
 
     memAdviseOp = MemAdvise::invalidAdvise;
     expectedParam = 0;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp, memoryInfo->getDrmRegionInfos()));
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetAtomicAccessThenCorrectValueIsReturned) {
@@ -3019,9 +3056,9 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdvis
     const size_t size = 0;
     uint32_t attribute = std::numeric_limits<uint32_t>::max();
     uint64_t param = 0;
-    std::vector<uint32_t> vmIds = {10, 20};
+    StackVec<uint32_t, 2> vmIds = {10, 20};
 
-    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds, 2));
     EXPECT_EQ(0u, drm->vmAdviseInputs.size());
 
     attribute = xeIoctlHelper->getPreferredLocationAdvise();
@@ -3032,7 +3069,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdvis
     int errorValue = -1;
     drm->gemVmAdviseReturn = errorValue;
 
-    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds, 2));
     EXPECT_EQ(1u, drm->vmAdviseInputs.size());
 
     EXPECT_EQ(drm->vmAdviseInputs[0].start, handle);
@@ -3054,14 +3091,14 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdvis
 
     uint64_t handle = 0;
     const size_t size = 0;
-    std::vector<uint32_t> vmIds = {10, 20};
+    StackVec<uint32_t, 2> vmIds = {10, 20};
 
     uint32_t attribute = xeIoctlHelper->getPreferredLocationAdvise();
     const auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
     const auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
     uint64_t param = (preferredLocation << 32) | policy;
 
-    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds, 2));
     EXPECT_EQ(2u, drm->vmAdviseInputs.size());
 
     EXPECT_EQ(drm->vmAdviseInputs[0].start, handle);
@@ -3081,7 +3118,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdvis
     attribute = xeIoctlHelper->getAtomicAdvise(false);
     param = static_cast<uint64_t>(xeIoctlHelper->getAtomicAccess(AtomicAccessMode::device));
 
-    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds, 2));
     EXPECT_EQ(4u, drm->vmAdviseInputs.size());
 
     EXPECT_EQ(drm->vmAdviseInputs[2].start, handle);

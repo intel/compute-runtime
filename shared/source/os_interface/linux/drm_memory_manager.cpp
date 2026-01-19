@@ -308,42 +308,49 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) {
 
-    auto &drm = this->getDrm(rootDeviceIndex);
-    auto ioctlHelper = drm.getIoctlHelper();
+    bool result = false;
+    auto &targetDeviceDrm = this->getDrm(targetDevice.getRootDeviceIndex());
+    auto targetDeviceIoctlHelper = targetDeviceDrm.getIoctlHelper();
+    auto targetDeviceFd = targetDeviceDrm.getFileDescriptor();
 
-    uint32_t attribute = ioctlHelper->getPreferredLocationAdvise();
-    uint64_t param = ioctlHelper->getPreferredLocationArgs(memAdviseOp);
+    uint32_t attribute = targetDeviceIoctlHelper->getPreferredLocationAdvise();
+    uint64_t param = targetDeviceIoctlHelper->getPreferredLocationArgs(targetDeviceFd, memAdviseOp, targetDeviceDrm.getMemoryInfo()->getDrmRegionInfos());
 
-    // Apply the shared system USM IOCTL to all the VMs of the device
-    std::vector<uint32_t> vmIds;
-    vmIds.reserve(subDeviceIds.size());
-    for (auto subDeviceId : subDeviceIds) {
-        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+    auto &callingDeviceDrm = this->getDrm(callingDevice.getRootDeviceIndex());
+    auto callingDeviceIoctlHelper = callingDeviceDrm.getIoctlHelper();
+    StackVec<uint32_t, 2> vmIds;
+    if (targetDevice.getNumSubDevices() == 0) {
+        vmIds[0] = targetDeviceDrm.getVirtualMemoryAddressSpace(NEO::SubDevice::getSubDeviceId(targetDevice));
+        result = callingDeviceIoctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds, 1u);
+    } else if (targetDevice.getNumSubDevices() == 2) {
+        uint32_t i = 0;
+        for (auto &subDevice : targetDevice.getSubDevices()) {
+            vmIds[i] = targetDeviceDrm.getVirtualMemoryAddressSpace(NEO::SubDevice::getSubDeviceId(*subDevice));
+            i++;
+        }
+        result = callingDeviceIoctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds, 2u);
     }
-
-    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
-
     return result;
 }
 
 bool DrmMemoryManager::setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-
+    bool result = false;
     uint32_t attribute = ioctlHelper->getAtomicAdvise(false);
     uint64_t param = static_cast<uint64_t>(ioctlHelper->getAtomicAccess(mode));
-
-    // Apply the shared system USM IOCTL to all the VMs of the device
-    std::vector<uint32_t> vmIds;
-    vmIds.reserve(subDeviceIds.size());
-    for (auto subDeviceId : subDeviceIds) {
-        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+    StackVec<uint32_t, 2> vmIds;
+    if (subDeviceIds.size() == 1) {
+        vmIds[0] = drm.getVirtualMemoryAddressSpace(subDeviceIds[0]);
+        result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds, 1u);
+    } else if (subDeviceIds.size() == 2) {
+        for (uint32_t i = 0; i < 2; i++) {
+            vmIds[i] = drm.getVirtualMemoryAddressSpace(subDeviceIds[i]);
+        }
+        result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds, 2u);
     }
-
-    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
-
     return result;
 }
 

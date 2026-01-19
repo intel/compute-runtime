@@ -393,7 +393,7 @@ using ::testing::ValuesIn;
 
 class SupportedMemAdviceSystemAllocatorTests : public CommandListCreateTests, public ::testing::WithParamInterface<ze_memory_advice_t> {};
 
-TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenExecuteMemAdviseWithSupportedAdviceFailsThenReturnSuccess) {
+TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenExecuteMemAdviseWithSupportedAdviceFailsThenReturnUnsupportedFeature) {
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
@@ -419,7 +419,7 @@ TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenEx
 
     auto res = commandList->executeMemAdvise(device, ptr, size, GetParam());
     EXPECT_EQ(1u, memoryManager->setSharedSystemMemAdviseCalledCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 
     free(ptr);
 }

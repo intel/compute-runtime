@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,11 @@
 
 #pragma once
 #include "shared/source/device/device.h"
-#include "shared/source/device/sub_device_ids_vec.h"
 
 namespace NEO {
+
+using SubDeviceIdsVec = StackVec<uint32_t, 2>;
+
 class RootDevice;
 
 class SubDevice : public Device {

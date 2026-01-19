@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,7 @@ uint32_t IoctlHelperUpstream::getAtomicAccess(AtomicAccessMode mode) {
     return 0;
 }
 
-uint64_t IoctlHelperUpstream::getPreferredLocationArgs(MemAdvise memAdviseOp) {
+uint64_t IoctlHelperUpstream::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) {
     return 0;
 }
 

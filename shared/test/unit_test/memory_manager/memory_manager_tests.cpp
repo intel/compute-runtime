@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,13 +54,6 @@ enum class AtomicAccessMode : uint32_t;
 }
 
 using namespace NEO;
-
-TEST(MemoryManagerTest, WhenCallingSetSharedSystemMemAdviseThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto subDeviceId = SubDeviceIdsVec{0};
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, MemAdvise::invalidAdvise, subDeviceId, 0u));
-}
 
 TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());

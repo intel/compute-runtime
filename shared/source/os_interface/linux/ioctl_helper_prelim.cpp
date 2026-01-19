@@ -331,7 +331,7 @@ uint32_t IoctlHelperPrelim20::getAtomicAdvise(bool isNonAtomic) {
     return isNonAtomic ? PRELIM_I915_VM_ADVISE_ATOMIC_NONE : PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
 }
 
-uint64_t IoctlHelperPrelim20::getPreferredLocationArgs(MemAdvise memAdviseOp) {
+uint64_t IoctlHelperPrelim20::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) {
     return 0;
 }
 

@@ -56,11 +56,11 @@ class IoctlHelperXe : public IoctlHelper {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
-    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
+    uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
-    bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) override;
+    bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override;
     AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) override;
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
@@ -178,6 +178,7 @@ class IoctlHelperXe : public IoctlHelper {
 
     virtual uint32_t getExecQueueSetPropertyMultiGroupValue() const;
     virtual uint32_t getExecQueueSetPropertyMultiQueuePriorityValue() const;
+    virtual void setRegionInstance(void *vmAdvise, uint16_t regionInstance);
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;

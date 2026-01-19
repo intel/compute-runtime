@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,13 +219,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
-    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
+    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) override {
         setSharedSystemMemAdviseCalledCount++;
         setSharedSystemMemAdviseCalled = true;
         if (failSetSharedSystemMemAdvise) {
             return false;
         }
-        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, subDeviceIds, rootDeviceIndex);
+        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, callingDevice, targetDevice);
     }
 
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@
 
 namespace NEO {
 
-using SubDeviceIdsVec = StackVec<uint32_t, 4>;
-
+using SubDeviceIdsVec = StackVec<uint32_t, 2>;
 } // namespace NEO

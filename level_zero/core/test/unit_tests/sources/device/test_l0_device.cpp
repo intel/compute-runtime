@@ -6511,5 +6511,36 @@ TEST_F(MultipleDeviceQueryPeerAccessTests, givenDeviceQueryPeerAccessAndNoOsInte
     EXPECT_FALSE(canAccess);
 }
 
+using MultipleDeviceMemAdviseTests = Test<MultiDeviceFixture>;
+
+TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmThenExecuteMemAdviseReturnsError) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    auto &hwInfo = *device1->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+
+    sharedSystemMemCapabilities = 0; // enables return false for Device::areSharedSystemAllocationsAllowed()
+
+    size_t size = 10;
+    void *ptr = nullptr;
+
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    auto res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    free(ptr);
+}
+
 } // namespace ult
 } // namespace L0

@@ -18,4 +18,7 @@ uint32_t IoctlHelperXe::getExecQueueSetPropertyMultiGroupValue() const {
 uint32_t IoctlHelperXe::getExecQueueSetPropertyMultiQueuePriorityValue() const {
     return DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
 }
+void IoctlHelperXe::setRegionInstance(void *vmAdvise, uint16_t regionInstance) {
+    reinterpret_cast<drm_xe_madvise *>(vmAdvise)->preferred_mem_loc.region_instance = regionInstance;
+}
 } // namespace NEO

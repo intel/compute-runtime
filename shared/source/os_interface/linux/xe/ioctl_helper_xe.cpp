@@ -781,24 +781,40 @@ uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
     return retVal;
 }
 
-uint64_t IoctlHelperXe::getPreferredLocationArgs(MemAdvise memAdviseOp) {
+uint64_t IoctlHelperXe::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) {
     XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     uint64_t param = 0;
+    uint64_t regionInstance = 0;
 
     switch (memAdviseOp) {
-    case MemAdvise::setPreferredLocation:
     case MemAdvise::clearPreferredLocation:
-
     case MemAdvise::clearSystemMemoryPreferredLocation: {
         // Assumes that the default location is Device VRAM.
         const auto preferredLocation = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
         const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
-        param = (preferredLocation << 32) | policy;
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    } break;
+    case MemAdvise::setPreferredLocation: {
+        const auto preferredLocation = static_cast<uint64_t>(deviceFd);
+        const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+        for (auto &region : memoryInfo) {
+            if (region.region.memoryClass == getDrmParamValue(DrmParam::memoryClassDevice)) {
+                regionInstance = region.region.memoryInstance;
+                break;
+            }
+        }
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
     } break;
     case MemAdvise::setSystemMemoryPreferredLocation: {
         const auto preferredLocation = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
         const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
-        param = (preferredLocation << 32) | policy;
+        for (auto &region : memoryInfo) {
+            if (region.region.memoryClass == getDrmParamValue(DrmParam::memoryClassSystem)) {
+                regionInstance = region.region.memoryInstance;
+                break;
+            }
+        }
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
     } break;
     default:
         XELOG(" Invalid advise operation %s\n", __FUNCTION__);
@@ -821,23 +837,8 @@ bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *regi
     return true;
 }
 
-inline void setMemoryAdvisePreferredLocationParam(drm_xe_madvise &vmAdvise, const uint64_t param) {
-
-    uint32_t devmemFd = static_cast<uint32_t>(param >> 32);
-    uint16_t migrationPolicy = static_cast<uint16_t>(param & 0xFFFF);
-
-    vmAdvise.preferred_mem_loc.devmem_fd = devmemFd;
-    vmAdvise.preferred_mem_loc.migration_policy = migrationPolicy;
-}
-
-inline void setMemoryAdviseAtomicParam(drm_xe_madvise &vmAdvise, const uint64_t param) {
-
-    uint32_t val = static_cast<uint32_t>(param);
-    vmAdvise.atomic.val = val;
-}
-
-bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) {
-    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx\n", __FUNCTION__, handle, size);
+bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) {
+    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx numSub=%d\n", __FUNCTION__, handle, size, numSubDevices);
 
     drm_xe_madvise vmAdvise{};
     vmAdvise.start = alignDown(handle, MemoryConstants::pageSize);
@@ -847,19 +848,26 @@ bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t siz
 
     if (vmAdvise.type == this->getPreferredLocationAdvise()) {
         // Set preferred location param.
-        setMemoryAdvisePreferredLocationParam(vmAdvise, param);
+        uint32_t devmemFd = static_cast<uint32_t>(param >> 32);
+        uint16_t migrationPolicy = static_cast<uint16_t>((param >> 16) & 0xFFFF);
+        uint16_t regionInstance = static_cast<uint16_t>(param & 0xFFFF);
+        vmAdvise.preferred_mem_loc.devmem_fd = devmemFd;
+        vmAdvise.preferred_mem_loc.migration_policy = migrationPolicy;
+        drm_xe_madvise *ptr = &vmAdvise;
+        setRegionInstance(reinterpret_cast<void *>(ptr), regionInstance);
     } else if (vmAdvise.type == this->getAtomicAdvise(false)) {
         // Set atomic access param.
-        setMemoryAdviseAtomicParam(vmAdvise, param);
+        uint32_t val = static_cast<uint32_t>(param);
+        vmAdvise.atomic.val = val;
     } else {
         XELOG(" Invalid advise operation %s\n", __FUNCTION__);
         return false;
     }
 
-    for (auto vmId : vmIds) {
+    for (uint32_t i = 0; i < numSubDevices; i++) {
 
         // Call madvise on all VM Ids.
-        vmAdvise.vm_id = vmId;
+        vmAdvise.vm_id = vmIds[i];
         auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
 
         XELOG(" vm=%d start=0x%lx size=0x%lx param=0x%lx operation=%d(%s) ret=%d\n",

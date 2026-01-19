@@ -1177,7 +1177,9 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
 
     if (isSharedSystemAlloc) {
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
-        unifiedMemoryManager->sharedSystemAtomicAccess(*device->getNEODevice(), mode, ptr, size);
+        if (!unifiedMemoryManager->sharedSystemAtomicAccess(*device->getNEODevice(), mode, ptr, size)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
     } else {
         auto memoryManager = device->getDriverHandle()->getMemoryManager();
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

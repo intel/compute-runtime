@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -291,10 +291,10 @@ class SVMAllocsManager {
     std::atomic<uint32_t> allocationsCounter = 0;
     MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isNonBlockingFree);
-    void sharedSystemMemAdvise(Device &device, MemAdvise memAdviseOp, const void *ptr, const size_t size);
+    bool sharedSystemMemAdvise(Device &callingDevice, Device &targetDevice, MemAdvise memAdviseOp, const void *ptr, const size_t size);
     MOCKABLE_VIRTUAL void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size);
     void prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver);
-    void sharedSystemAtomicAccess(Device &device, AtomicAccessMode mode, const void *ptr, const size_t size);
+    bool sharedSystemAtomicAccess(Device &device, AtomicAccessMode mode, const void *ptr, const size_t size);
     MOCKABLE_VIRTUAL AtomicAccessMode getSharedSystemAtomicAccess(Device &device, const void *ptr, const size_t size);
     std::unique_lock<std::mutex> obtainOwnership();
     ContainerReadLockTypeRAIIHelper obtainReadContainerLock();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -6084,43 +6084,154 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIs
     }
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemMemAdviseIsCalledThenAdviceSentToIoctlHelper) {
-    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemMemAdviseIsCalledThenAdviceSentToIoctlHelper, IsBMG) {
+
+    TestedDrmMemoryManager memoryManager(*executionEnvironment);
+
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     class MyMockIoctlHelper : public MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
       public:
-        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) override {
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
             setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
             return true;
         }
         uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
     };
 
     auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
 
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager.getDrm(mockRootDeviceIndex));
-    drm.ioctlHelper.reset(mockIoctlHelper);
+    std::vector<MemoryRegion> regionInfo{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
 
-    auto subDeviceIds = NEO::SubDeviceIdsVec{0};
+    auto &drm0 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device0->getRootDeviceIndex()));
+    auto &drm1 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device1->getRootDeviceIndex()));
+
+    drm0.memoryInfo.reset(new MemoryInfo(regionInfo, drm0));
+    drm1.memoryInfo.reset(new MemoryInfo(regionInfo, drm1));
+    drm0.ioctlHelper.reset(mockIoctlHelper);
+    drm0.ioctlExpected.total = -1;
+    drm1.ioctlExpected.total = -1;
+
     MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, *device0.get(), *device1.get()));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemAtomicAccessIsCalledThenAdviceSentToIoctlHelper) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemMemAdviseIsCalledThenAdviceSentToIoctlHelper, IsPVC) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    TestedDrmMemoryManager memoryManager(*executionEnvironment);
+
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
+            setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
+            return true;
+        }
+        uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    std::vector<MemoryRegion> regionInfo{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+
+    auto &drm0 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device0->getRootDeviceIndex()));
+    auto &drm1 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device1->getRootDeviceIndex()));
+
+    drm0.memoryInfo.reset(new MemoryInfo(regionInfo, drm0));
+    drm1.memoryInfo.reset(new MemoryInfo(regionInfo, drm1));
+    drm0.ioctlHelper.reset(mockIoctlHelper);
+    drm0.ioctlExpected.total = -1;
+    drm1.ioctlExpected.total = -1;
+
+    MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, *device0.get(), *device1.get()));
+    EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+}
+
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemMemAdviseIsCalledWithIncorrectNumberSubdevicesThenAdviceNotSentToIoctlHelper, IsPVC) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(4);
+
+    TestedDrmMemoryManager memoryManager(*executionEnvironment);
+
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
+            setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
+            return true;
+        }
+        uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    std::vector<MemoryRegion> regionInfo{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+
+    auto &drm0 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device0->getRootDeviceIndex()));
+    auto &drm1 = static_cast<DrmMockCustom &>(memoryManager.getDrm(device1->getRootDeviceIndex()));
+
+    drm0.memoryInfo.reset(new MemoryInfo(regionInfo, drm0));
+    drm1.memoryInfo.reset(new MemoryInfo(regionInfo, drm1));
+    drm0.ioctlHelper.reset(mockIoctlHelper);
+    drm0.ioctlExpected.total = -1;
+    drm1.ioctlExpected.total = -1;
+
+    MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_FALSE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, *device0.get(), *device1.get()));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemAtomicAccessIsCalledForSingleDeviceThenAdviceSentToIoctlHelper) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
 
     class MyMockIoctlHelper : public MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
       public:
-        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) override {
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
             setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
             return true;
         }
         uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
     };
 
     auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
@@ -6132,22 +6243,123 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSyste
     AtomicAccessMode mode = AtomicAccessMode::device;
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
 
     mode = AtomicAccessMode::system;
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
     EXPECT_EQ(2u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
 
     mode = AtomicAccessMode::host;
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
     EXPECT_EQ(3u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
 
     mode = AtomicAccessMode::none;
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
     EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
 
     mode = AtomicAccessMode::invalid;
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
     EXPECT_EQ(5u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->numSubDevicesCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemAtomicAccessIsCalledForTwoSubdevicesThenAdviceSentToIoctlHelper) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
+            setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
+            return true;
+        }
+        uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager.getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto subDeviceIds = NEO::SubDeviceIdsVec{0, 1};
+    AtomicAccessMode mode = AtomicAccessMode::device;
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::system;
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(2u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::host;
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(3u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::none;
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::invalid;
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(5u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(2u, mockIoctlHelper->numSubDevicesCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemAtomicAccessIsCalledForIncorrectNumberSubdevicesThenAdviceNotSentToIoctlHelper) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
+            setVmSharedSystemMemAdviseCalled++;
+            numSubDevicesCalled = numSubDevices;
+            return true;
+        }
+        uint32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t numSubDevicesCalled = 0;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager.getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto subDeviceIds = NEO::SubDeviceIdsVec{0, 1, 2, 3};
+    AtomicAccessMode mode = AtomicAccessMode::device;
+    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::system;
+    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::host;
+    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::none;
+    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->numSubDevicesCalled);
+
+    mode = AtomicAccessMode::invalid;
+    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(0u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->numSubDevicesCalled);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetSharedSystemAtomicAccessIsCalledThenAdviceReturnedToIoctlHelper) {
