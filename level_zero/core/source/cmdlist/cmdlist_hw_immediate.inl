@@ -1420,7 +1420,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal() {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    if (!this->isHeaplessModeEnabled() && (this->latestOperationHasHeapfullCbEventWithProfiling || this->isPostSyncSkippedOnLatestInOrderOperation)) {
+    if ((!this->isHeaplessModeEnabled() && this->latestOperationHasHeapfullCbEventWithProfiling) || this->isPostSyncSkippedOnLatestInOrderOperation) {
         this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);
@@ -1950,8 +1950,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ret;
     }
 
-    if (event && event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
+    if (event && this->isInOrderExecutionEnabled()) {
         this->flushInOrderCounterSignal();
+        this->isPostSyncSkippedOnLatestInOrderOperation = false;
+    }
+    if (event && event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
         this->assignInOrderExecInfoToEvent(event);
     } else if (event && !event->isCounterBased() && !event->isEventTimestampFlagSet()) {
         ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);

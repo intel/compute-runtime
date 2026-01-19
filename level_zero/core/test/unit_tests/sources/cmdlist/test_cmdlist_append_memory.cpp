@@ -1741,5 +1741,66 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithCounterBasedEventThenCo
     EXPECT_EQ(cmdList.inOrderExecInfo->getCounterValue(), event->getInOrderExecBaseSignalValue());
 }
 
+HWTEST2_F(StagingBuffersFixture, givenAppendMemoryCopyAndRegularEventWithProfilingThenCounterSetCorrectly, IsAtLeastXeCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto cmdQueue = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = cmdQueue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.enableInOrderExecution();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+
+    size_t src[size] = {};
+    auto commandStreamOffset = commandList.getCmdContainer().getCommandStream()->getUsed();
+    auto res = commandList.appendMemoryCopy(usmDevice, &src, size, event->toHandle(), 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandList.getCmdContainer().getCommandStream()->getUsed() - commandStreamOffset));
+    {
+        auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(RegisterOffsets::globalTimestampLdw, cmd->getSourceRegisterAddress());
+    }
+
+    {
+        auto signalCounterFound = false;
+        auto itor = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(0u, itor.size());
+        for (auto it : itor) {
+            auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+            if (cmd->getPostSyncOperation() != PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                continue;
+            }
+            EXPECT_EQ(commandList.inOrderExecInfo->getBaseDeviceAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            signalCounterFound = true;
+        }
+        EXPECT_TRUE(signalCounterFound);
+    }
+}
+
 } // namespace ult
 } // namespace L0
