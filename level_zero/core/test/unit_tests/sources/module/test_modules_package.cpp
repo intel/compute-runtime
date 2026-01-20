@@ -477,15 +477,6 @@ TEST_F(ModulesPackageForwarding, WhenGetKernelImmutableDataIsCalledThenForwardTo
     EXPECT_EQ(&kernImmDataMock, mp.getKernelImmutableData("myKern"));
 }
 
-TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturnAppropriateErrorCode) {
-    MockDevice device;
-    ModulesPackage mp{&device};
-
-    size_t paramSizeT = 0;
-    uint8_t paramUint8t = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
-}
-
 TEST(ModulesPackageUnrechableInternalApis, WhenUnreachableApiIsCalledThenRaiseUnreachableError) {
     MockDevice device;
     ModulesPackage mp{&device};
@@ -983,7 +974,7 @@ TEST_F(ModulesPackageGetNativeBinary, WhenSizeIsTooSmallThenFails) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mp.getNativeBinary(&size, &outBinary));
 }
 
-TEST_F(ModulesPackageGetNativeBinary, GivenValidArgumentsThenReturnsNatieBinary) {
+TEST_F(ModulesPackageGetNativeBinary, GivenValidArgumentsThenReturnsNativeBinary) {
     MockModulesPackage<> mp{this->device};
     mp.nativeBinary.resize(4);
     mp.nativeBinary[0] = 2;
@@ -1122,6 +1113,164 @@ TEST_F(ModulesPackageInspectLinkage, GivenModulePackagesThenUsesAllUnitModules) 
     for (auto mod : expectedModulesToInspect) {
         EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
     }
+}
+
+using ModulesPackagePrepareDebugInfo = Test<L0::ult::DeviceFixture>;
+
+TEST_F(ModulesPackagePrepareDebugInfo, WhenDebugInfoIsAlreadyPreparedThenUsesIt) {
+    MockModulesPackage<> mp{this->device};
+    mp.debugInfo = std::vector<uint8_t>{2, 3, 5, 7};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.prepareDebugInfo());
+    ASSERT_EQ(4U, mp.debugInfo.size());
+    EXPECT_EQ(2U, mp.debugInfo[0]);
+    EXPECT_EQ(3U, mp.debugInfo[1]);
+    EXPECT_EQ(5U, mp.debugInfo[2]);
+    EXPECT_EQ(7U, mp.debugInfo[3]);
+}
+
+namespace {
+struct ModuleWithDebugInfo : MockModule {
+    using MockModule::MockModule;
+    ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override {
+        if (0 == sizeToReturn) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
+        }
+        if (nullptr == pDebugData) {
+            *pDebugDataSize = sizeToReturn;
+            return ZE_RESULT_SUCCESS;
+        }
+        if (*pDebugDataSize == 0) {
+            *pDebugDataSize = sizeToReturn;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        if (debugInfoToReturn.size() != sizeToReturn) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
+        }
+
+        memcpy_s(pDebugData, *pDebugDataSize, debugInfoToReturn.data(), debugInfoToReturn.size());
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<uint8_t> debugInfoToReturn;
+    size_t sizeToReturn = 0;
+};
+} // namespace
+
+TEST_F(ModulesPackagePrepareDebugInfo, WhenFailedToGetAnyUnitsDebugInfoSizesThenFailsToPrepareDebugInfo) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithDebugInfo> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+
+    moduleUnits[0]->sizeToReturn = 8;
+    moduleUnits[1]->sizeToReturn = 0;
+    moduleUnits[2]->sizeToReturn = 16;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_NE(ZE_RESULT_SUCCESS, mp.prepareDebugInfo());
+}
+
+TEST_F(ModulesPackagePrepareDebugInfo, WhenFailedToGetAnyUnitsDebugInfoThenFailsToPrepareDebugInfo) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithDebugInfo> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+
+    std::vector<uint8_t> unit0(8, 0);
+    std::vector<uint8_t> unit2(16, 0);
+
+    moduleUnits[0]->sizeToReturn = unit0.size();
+    moduleUnits[0]->debugInfoToReturn = unit0;
+    moduleUnits[1]->sizeToReturn = 24;
+    moduleUnits[2]->sizeToReturn = unit2.size();
+    moduleUnits[2]->debugInfoToReturn = unit2;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_NE(ZE_RESULT_SUCCESS, mp.prepareDebugInfo());
+}
+
+TEST_F(ModulesPackagePrepareDebugInfo, WhenAllUnitsReturnValidDebugInfoThenCreatesModulesPackageDebugInfo) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithDebugInfo> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithDebugInfo>(this->device, nullptr, L0::ModuleType::user);
+
+    std::vector<uint8_t> unit0(8, 2);
+    std::vector<uint8_t> unit1(14, 3);
+    std::vector<uint8_t> unit2(16, 5);
+
+    moduleUnits[0]->sizeToReturn = unit0.size();
+    moduleUnits[0]->debugInfoToReturn = unit0;
+    moduleUnits[1]->sizeToReturn = unit1.size();
+    moduleUnits[1]->debugInfoToReturn = unit1;
+    moduleUnits[2]->sizeToReturn = unit2.size();
+    moduleUnits[2]->debugInfoToReturn = unit2;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.prepareDebugInfo());
+}
+
+using ModulesPackageGetDebugInfo = Test<L0::ult::DeviceFixture>;
+TEST_F(ModulesPackageGetDebugInfo, WhenPrepareDebugInfoFailsThenReturnsError) {
+    struct MockModulePackageFailPrepareDebugInfo : MockModulesPackage<> {
+        using MockModulesPackage::MockModulesPackage;
+        ze_result_t prepareDebugInfo() override {
+            return ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET;
+        }
+    };
+    MockModulePackageFailPrepareDebugInfo mp{this->device};
+    size_t size = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET, mp.getDebugInfo(&size, nullptr));
+}
+
+TEST_F(ModulesPackageGetDebugInfo, WhenSizeIs0OrDebugInfoOutPointerIsNullThenReturnsSize) {
+    MockModulesPackage<> mp{this->device};
+    mp.debugInfo.resize(256);
+    size_t size = 0;
+    uint8_t outBinary = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getDebugInfo(&size, &outBinary));
+    EXPECT_EQ(256U, size);
+    size = 8U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getDebugInfo(&size, nullptr));
+    EXPECT_EQ(256U, size);
+}
+
+TEST_F(ModulesPackageGetDebugInfo, WhenSizeIsTooSmallThenFails) {
+    MockModulesPackage<> mp{this->device};
+    mp.debugInfo.resize(256);
+    uint8_t outBinary = 0;
+    size_t size = sizeof(outBinary);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mp.getDebugInfo(&size, &outBinary));
+}
+
+TEST_F(ModulesPackageGetDebugInfo, GivenValidArgumentsThenReturnsDebugInfo) {
+    MockModulesPackage<> mp{this->device};
+    mp.debugInfo.resize(4);
+    mp.debugInfo[0] = 2;
+    mp.debugInfo[1] = 3;
+    mp.debugInfo[2] = 5;
+    mp.debugInfo[3] = 7;
+    uint8_t outBinary[4] = {11, 13, 17, 19};
+    size_t size = sizeof(outBinary);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getDebugInfo(&size, outBinary));
+    EXPECT_EQ(2, outBinary[0]);
+    EXPECT_EQ(3, outBinary[1]);
+    EXPECT_EQ(5, outBinary[2]);
+    EXPECT_EQ(7, outBinary[3]);
 }
 
 } // namespace ult

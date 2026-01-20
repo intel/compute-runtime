@@ -2052,4 +2052,58 @@ ze_result_t ModulesPackage::inspectLinkage(ze_linkage_inspection_ext_desc_t *pIn
     return static_cast<ModuleImp *>(allModules[0])->inspectLinkage(pInspectDesc, static_cast<uint32_t>(allModules.size()), allModules.data(), phLog);
 }
 
+ze_result_t ModulesPackage::prepareDebugInfo() {
+    auto lock = std::lock_guard(nativeBinaryPrepareLock);
+    if (false == this->debugInfo.empty()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<std::vector<uint8_t>> binaries;
+    binaries.reserve(modules.size());
+    ModulesPackageBinary modulesPackage;
+    modulesPackage.units.reserve(modules.size());
+    auto unitsErr = allModulesUnless<ReturnsFailure>([&](Module &mod) {
+        size_t unitSize = 0;
+        auto ret = mod.getDebugInfo(&unitSize, nullptr);
+        if (ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
+        std::vector<uint8_t> binary;
+        binary.resize(unitSize);
+        ret = mod.getDebugInfo(&unitSize, binary.data());
+        if (ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
+        binaries.push_back(std::move(binary));
+        ModulesPackageBinary::Unit unit;
+        unit.data = *binaries.rbegin();
+        modulesPackage.units.push_back(std::move(unit));
+        return ret;
+    });
+    if (ZE_RESULT_SUCCESS != unitsErr) {
+        return unitsErr;
+    }
+
+    this->debugInfo = modulesPackage.encode();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ModulesPackage::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) {
+    auto binariesStatus = prepareDebugInfo();
+    if (ZE_RESULT_SUCCESS != binariesStatus) {
+        return binariesStatus;
+    }
+    if ((0 == *pDebugDataSize) || (nullptr == pDebugData)) {
+        *pDebugDataSize = debugInfo.size();
+        return ZE_RESULT_SUCCESS;
+    } else {
+        if (*pDebugDataSize < debugInfo.size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        memcpy_s(pDebugData, *pDebugDataSize, debugInfo.data(), debugInfo.size());
+        return ZE_RESULT_SUCCESS;
+    }
+}
+
 } // namespace L0

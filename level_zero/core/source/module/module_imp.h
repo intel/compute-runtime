@@ -314,9 +314,7 @@ struct ModulesPackage : public Module {
 
     ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override;
 
-    ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override;
 
     ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override {
         if (0 == *pCount) { // accumulate sizes
@@ -434,6 +432,7 @@ struct ModulesPackage : public Module {
 
     void setNativeBinary(std::span<const uint8_t> binary);
     MOCKABLE_VIRTUAL ze_result_t prepareNativeBinary();
+    MOCKABLE_VIRTUAL ze_result_t prepareDebugInfo();
 
     Device *device = nullptr;
     ModuleBuildLog *packageBuildLog = nullptr;
@@ -441,6 +440,7 @@ struct ModulesPackage : public Module {
     std::vector<std::unique_ptr<Module>> modules;
     std::mutex nativeBinaryPrepareLock;
     std::vector<uint8_t> nativeBinary;
+    std::vector<uint8_t> debugInfo;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

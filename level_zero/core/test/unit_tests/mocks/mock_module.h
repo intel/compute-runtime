@@ -243,10 +243,12 @@ struct WhiteBox<::L0::ModulesPackage> : public ::L0::ModulesPackage {
         : ModulesPackage(device, moduleBuildLog, type) {
     }
 
+    using BaseClass::debugInfo;
     using BaseClass::device;
     using BaseClass::modules;
     using BaseClass::nativeBinary;
     using BaseClass::packageBuildLog;
+    using BaseClass::prepareDebugInfo;
     using BaseClass::prepareNativeBinary;
     using BaseClass::setNativeBinary;
     using BaseClass::type;
