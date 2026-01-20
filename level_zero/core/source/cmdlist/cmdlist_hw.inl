@@ -1929,11 +1929,15 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
         auto csr = getCsr(false);
         csr->ensureHostFunctionWorkerStarted();
 
-        bool isMemorySynchronizationRequired = isInOrderExecutionEnabled();
+        bool memorySynchronizationRequired = true;
+        if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
+            memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
+        }
+
         NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
                                                                 csr->getHostFunctionStreamer(),
                                                                 std::move(hostFunction),
-                                                                isMemorySynchronizationRequired);
+                                                                memorySynchronizationRequired);
         csr->signalHostFunctionWorker(1u);
     } else {
         addHostFunctionToPatchCommands(hostFunction);

@@ -325,6 +325,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxMemAllocSizeMb, -1, "-1: default, >=0
 DECLARE_DEBUG_VARIABLE(int32_t, DetectIncorrectPointersOnSetArgCalls, -1, "-1: default do not detect, 0: do not detect, 1: detect incorrect pointers and return error")
 DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionWorkMode, -1, "-1: default - counting semaphore based, 0: counting semaphore based, 1: scheduler with thread pool")
 DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionThreadPoolSize, -1, "-1: default - one thread per CSR that uses host functions, >0: number of threads per host function worker thread pool. Usable only if HostFunctionWorkMode=1 is set ")
+DECLARE_DEBUG_VARIABLE(int32_t, UseMemorySynchronizationForHostFunction, -1, "-1: default, 0: disable, 1: enable if applicable on platform, When enabled program host function id with a DC flush using pipeControl")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, -1, "-1: default, 0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")
 DECLARE_DEBUG_VARIABLE(int32_t, SerializeWalkerPostSyncOps, -1, "-1 : default. 0: disabled. 1: Enable serialization for all PostSync operations in ComputeWalker")

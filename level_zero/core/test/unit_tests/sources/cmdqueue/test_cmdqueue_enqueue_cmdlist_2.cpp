@@ -1369,6 +1369,9 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;

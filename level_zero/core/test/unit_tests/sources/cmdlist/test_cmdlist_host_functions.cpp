@@ -192,6 +192,9 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+
     auto queueMode = GetParam();
 
     ze_result_t returnValue;
@@ -264,6 +267,9 @@ class HostFunctionTestsImmediateCmdListImplicitScalingTest : public MultiTileHos
 HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmdListWhenDispatchHostFunctionIscalledThenCorrectCommandsAreProgrammedAndHostFunctionWasInitializedInCsr) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
 
     auto queueMode = GetParam();
 

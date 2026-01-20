@@ -174,8 +174,12 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
     uint32_t hostFunctionsCounter = 0;
     bool dcFlushRequired = csr->getDcFlushSupport();
-    bool isInOrder = static_cast<CommandListImp &>(commandList).isInOrderExecutionEnabled();
-    bool memorySynchronizationRequired = isInOrder;
+    bool memorySynchronizationRequired = true;
+
+    if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
+        memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
+    }
+
     bool usePipeControlForHostFunctionIdProgramming = dcFlushRequired && memorySynchronizationRequired;
 
     auto patchCommandsLambda = [&](auto &commandToPatch) {

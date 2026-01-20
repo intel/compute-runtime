@@ -425,3 +425,128 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceive
     EXPECT_NE(nullptr, csr->getHostFunctionStreamer().getHostFunctionIdAllocation());
     EXPECT_EQ(1u, csr->createHostFunctionWorkerCounter);
 }
+
+HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetToDisableThenStoreDataImmIsProgrammed) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+
+    auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
+
+    constexpr auto size = 1024u;
+    std::byte buff[size] = {};
+    LinearStream stream(buff, size);
+
+    uint64_t callbackAddress = 1024;
+    uint64_t userDataAddress = 2048;
+
+    HostFunction hostFunction{
+        .hostFunctionAddress = callbackAddress,
+        .userDataAddress = userDataAddress};
+
+    MockGraphicsAllocation allocation;
+    std::vector<uint64_t> hostFunctionId(1u, 0u);
+    auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
+
+    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+    bool isTbx = false;
+
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
+                                                                       &allocation,
+                                                                       hostFunctionId.data(),
+                                                                       downloadAllocationImpl,
+                                                                       1u,
+                                                                       partitionOffset,
+                                                                       isTbx,
+                                                                       dcFlushRequired);
+
+    bool memorySynchronizationRequired = true;
+    if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
+        memorySynchronizationRequired = debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
+    }
+
+    HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction), memorySynchronizationRequired);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+
+    bool expectPipeControl = dcFlushRequired && memorySynchronizationRequired;
+    EXPECT_FALSE(expectPipeControl);
+
+    auto hostFunctionProgrammingHwCmd = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_EQ(1u, hostFunctionProgrammingHwCmd.size());
+
+    auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*hostFunctionProgrammingHwCmd[0]);
+    EXPECT_EQ(hostFunctionIdBaseAddress, miStoreUserHostFunction->getAddress());
+    EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
+
+    auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
+    EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+}
+
+HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetToEnableThenPipeControlIsProgrammedIfDcFlushRequired) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseMemorySynchronizationForHostFunction.set(1);
+
+    auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
+
+    constexpr auto size = 1024u;
+    std::byte buff[size] = {};
+    LinearStream stream(buff, size);
+
+    uint64_t callbackAddress = 1024;
+    uint64_t userDataAddress = 2048;
+
+    HostFunction hostFunction{
+        .hostFunctionAddress = callbackAddress,
+        .userDataAddress = userDataAddress};
+
+    MockGraphicsAllocation allocation;
+    std::vector<uint64_t> hostFunctionId(1u, 0u);
+    auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
+
+    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+    bool isTbx = false;
+
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
+                                                                       &allocation,
+                                                                       hostFunctionId.data(),
+                                                                       downloadAllocationImpl,
+                                                                       1u,
+                                                                       partitionOffset,
+                                                                       isTbx,
+                                                                       dcFlushRequired);
+
+    bool memorySynchronizationRequired = true;
+    if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
+        memorySynchronizationRequired = debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
+    }
+
+    HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction), memorySynchronizationRequired);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+
+    bool expectPipeControl = dcFlushRequired && memorySynchronizationRequired;
+    if (expectPipeControl) {
+        auto hostFunctionProgrammingHwCmd = findAll<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(1u, hostFunctionProgrammingHwCmd.size());
+
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*hostFunctionProgrammingHwCmd[0]);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        EXPECT_EQ(getLowPart(hostFunctionIdBaseAddress), pipeControl->getAddress());
+        EXPECT_EQ(getHighPart(hostFunctionIdBaseAddress), pipeControl->getAddressHigh());
+        EXPECT_EQ(1u, pipeControl->getImmediateData());
+        EXPECT_TRUE(pipeControl->getDcFlushEnable());
+    } else {
+        auto hostFunctionProgrammingHwCmd = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(1u, hostFunctionProgrammingHwCmd.size());
+    }
+}
