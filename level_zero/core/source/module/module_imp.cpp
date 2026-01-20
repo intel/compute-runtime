@@ -43,9 +43,11 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/metadata_generation.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
@@ -739,18 +741,17 @@ std::pair<const void *, size_t> ModuleImp::getKernelHeapPointerAndSize(const std
 inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     std::string buildOptions;
     std::string internalBuildOptions;
+    auto extensions = L0::PNextRange(desc->pNext);
+    auto moduleProgExt = extensions.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
 
-    if (desc->pNext) {
-        const ze_base_desc_t *expDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-        if (expDesc->stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
+    for (auto &ext : extensions) {
+        if (ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    }
+
+    if (moduleProgExt && (desc->format == ZE_MODULE_FORMAT_IL_SPIRV)) {
         this->builtFromSpirv = true;
-        const ze_module_program_exp_desc_t *programExpDesc =
-            reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
         std::vector<const char *> inputSpirVs;
         std::vector<uint32_t> inputModuleSizes;
         std::vector<const ze_module_constants_t *> specConstants;
@@ -758,23 +759,23 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
 
         this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
 
-        inputSpirVs.reserve(programExpDesc->count);
-        inputModuleSizes.reserve(programExpDesc->count);
-        for (uint32_t i = 0; i < static_cast<uint32_t>(programExpDesc->count); i++) {
+        inputSpirVs.reserve(moduleProgExt->count);
+        inputModuleSizes.reserve(moduleProgExt->count);
+        for (uint32_t i = 0; i < static_cast<uint32_t>(moduleProgExt->count); i++) {
             std::string tmpBuildOptions;
             std::string tmpInternalBuildOptions;
-            inputSpirVs.push_back(reinterpret_cast<const char *>(programExpDesc->pInputModules[i]));
-            auto inputSizesInfo = const_cast<size_t *>(programExpDesc->inputSizes);
+            inputSpirVs.push_back(reinterpret_cast<const char *>(moduleProgExt->pInputModules[i]));
+            auto inputSizesInfo = const_cast<size_t *>(moduleProgExt->inputSizes);
             uint32_t inputSize = static_cast<uint32_t>(inputSizesInfo[i]);
             inputModuleSizes.push_back(inputSize);
-            if (programExpDesc->pConstants) {
-                specConstants.push_back(programExpDesc->pConstants[i]);
+            if (moduleProgExt->pConstants) {
+                specConstants.push_back(moduleProgExt->pConstants[i]);
                 if (i == 0) {
                     firstSpecConstants = specConstants[0];
                 }
             }
-            if (programExpDesc->pBuildFlags) {
-                this->createBuildOptions(programExpDesc->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
+            if (moduleProgExt->pBuildFlags) {
+                this->createBuildOptions(moduleProgExt->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
                 buildOptions = buildOptions + tmpBuildOptions;
                 internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
             }
@@ -789,7 +790,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                           std::move(specConstants));
         } else {
             this->precompiled = false;
-            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),
+            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(moduleProgExt->pInputModules[0]),
                                                          inputModuleSizes[0],
                                                          buildOptions.c_str(),
                                                          internalBuildOptions.c_str(),
@@ -1343,7 +1344,15 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
 
 Module *Module::create(Device *device, const ze_module_desc_t *desc,
                        ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
-    auto module = new ModuleImp(device, moduleBuildLog, type);
+    auto usesModuleProgExt = L0::PNextRange(desc->pNext).contains(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
+    bool modulesPackage = usesModuleProgExt && (desc->format == ZE_MODULE_FORMAT_NATIVE);
+
+    Module *module = nullptr;
+    if (modulesPackage) {
+        module = new ModulesPackage(device, moduleBuildLog, type);
+    } else {
+        module = new ModuleImp(device, moduleBuildLog, type);
+    }
 
     *result = module->initialize(desc, device->getNEODevice());
     if (*result != ZE_RESULT_SUCCESS) {
@@ -1844,6 +1853,60 @@ size_t ModuleImp::getIsaAllocationPageSize() const {
     } else {
         return MemoryConstants::pageSize64k;
     }
+}
+
+ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
+    L0::PNextRange exts{desc->pNext};
+    auto moduleProgamExt = exts.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
+    UNRECOVERABLE_IF(nullptr == moduleProgamExt);
+    UNRECOVERABLE_IF(ZE_MODULE_FORMAT_NATIVE != desc->format);
+    if (desc->pConstants || moduleProgamExt->pConstants) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto baseDesc = *desc;
+    StackVec<ze_module_desc_t, 32> unitsInPackage;
+    if (baseDesc.pInputModule) {
+        unitsInPackage.push_back(baseDesc);
+    }
+    for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
+        baseDesc = *desc;
+        baseDesc.pInputModule = moduleProgamExt->pInputModules[i];
+        baseDesc.inputSize = moduleProgamExt->inputSizes[i];
+        if (moduleProgamExt->pBuildFlags && moduleProgamExt->pBuildFlags[i]) {
+            baseDesc.pBuildFlags = moduleProgamExt->pBuildFlags[i];
+        }
+        unitsInPackage.push_back(baseDesc);
+    }
+
+    for (auto &moduleDesc : unitsInPackage) {
+        auto module = createModuleUnit(this->device, this->packageBuildLog, this->type);
+        auto res = module->initialize(&moduleDesc, neoDevice);
+        if (ZE_RESULT_SUCCESS != res) {
+            return res;
+        }
+        this->modules.push_back(std::move(module));
+    }
+
+    if (this->modules.size() < 2) {
+        this->linkStatus = ZE_RESULT_SUCCESS;
+    } else {
+        StackVec<ze_module_handle_t, 32> modulesToLink;
+        std::transform(modules.begin(), modules.end(), std::back_inserter(modulesToLink),
+                       [](const auto &module) -> ze_module_handle_t { return module.get(); });
+        ze_module_build_log_handle_t linkLog = {};
+        this->linkStatus = this->modules[0]->performDynamicLink(static_cast<uint32_t>(modulesToLink.size()),
+                                                                modulesToLink.data(),
+                                                                this->packageBuildLog ? &linkLog : nullptr);
+        if (linkLog) {
+            UNRECOVERABLE_IF(nullptr == this->packageBuildLog);
+            auto linkLogInternal = ModuleBuildLog::fromHandle(linkLog);
+            append(*this->packageBuildLog, *linkLogInternal);
+            linkLogInternal->destroy();
+        }
+    }
+
+    return this->linkStatus;
 }
 
 } // namespace L0

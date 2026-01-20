@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "ocl_igc_interface/code_type.h"
 
 #include <memory>
+#include <ranges>
 #include <set>
 #include <string>
 
@@ -159,7 +160,7 @@ struct ModuleImp : public Module {
 
     MOCKABLE_VIRTUAL bool linkBinary();
 
-    ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
+    ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
 
     bool isSPIRv() { return builtFromSpirv; }
 
@@ -183,6 +184,10 @@ struct ModuleImp : public Module {
     ze_result_t destroyPrintfKernel(ze_kernel_handle_t kernelHandle);
     ModuleType getModuleType() const {
         return this->type;
+    }
+
+    bool isModulesPackage() const override {
+        return false;
     }
 
   protected:
@@ -243,6 +248,143 @@ struct ModuleImp : public Module {
     std::vector<std::vector<char>> patchedIsaTempStorage;
 
     std::unique_ptr<NEO::MetadataGeneration> metadataGeneration;
+};
+
+struct ModulesPackage : public Module {
+    struct ReturnsSuccess {
+        static bool isTrue(ze_result_t returnValue) {
+            return ZE_RESULT_SUCCESS == returnValue;
+        }
+
+        template <typename T>
+        constexpr static T defaultResult() {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    };
+
+    struct ReturnsNotNull {
+        static bool isTrue(const void *returnValue) {
+            return nullptr != returnValue;
+        }
+
+        template <typename T>
+        constexpr static T defaultResult() {
+            return static_cast<T>(nullptr);
+        }
+    };
+
+    ModulesPackage(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type) : device(device), packageBuildLog(moduleBuildLog), type(type) {
+    }
+
+    ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
+
+    Device *getDevice() const override { return device; }
+    ze_result_t destroy() override {
+        delete this;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t createKernel(const ze_kernel_desc_t *desc,
+                             ze_kernel_handle_t *kernelHandle) override {
+        return anyModuleThat<ReturnsSuccess>([&](Module &mod) { return mod.createKernel(desc, kernelHandle); });
+    }
+
+    ze_result_t getFunctionPointer(const char *pKernelName, void **pfnFunction) override {
+        return anyModuleThat<ReturnsSuccess>([&](Module &mod) { return mod.getFunctionPointer(pKernelName, pfnFunction); });
+    }
+
+    ze_result_t getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) override {
+        return anyModuleThat<ReturnsSuccess>([&](Module &mod) { return mod.getGlobalPointer(pGlobalName, pSize, pPtr); });
+    }
+
+    const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
+        return anyModuleThat<ReturnsNotNull>([&](Module &mod) { return mod.getKernelImmutableData(kernelName); });
+    }
+
+    ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t performDynamicLink(uint32_t numModules,
+                                   ze_module_handle_t *phModules,
+                                   ze_module_build_log_handle_t *phLinkLog) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
+                               uint32_t numModules,
+                               ze_module_handle_t *phModules,
+                               ze_module_build_log_handle_t *phLog) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    bool shouldAllocatePrivateMemoryPerDispatch() const override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    uint32_t getProfileFlags() const override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    void checkIfPrivateMemoryPerDispatchIsNeeded() override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    void populateZebinExtendedArgsMetadata() override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    void generateDefaultExtendedArgsMetadata() override {
+        UNRECOVERABLE_IF(true);
+    }
+
+    bool isModulesPackage() const override {
+        return true;
+    }
+
+  protected:
+    // Sequentially invokes callabale on modules, stops at first module which return value passes ValidatorT::isTrue
+    template <typename ValidatorT, typename CallableT, typename ReturnT = std::invoke_result_t<CallableT, ModuleImp &>>
+    auto anyModuleThat(const CallableT &callable) const -> ReturnT {
+        ReturnT res = ValidatorT::template defaultResult<ReturnT>();
+        for (auto &mod : modules) {
+            res = callable(*mod);
+            if (ValidatorT::isTrue(res)) {
+                return res;
+            }
+        }
+        return res;
+    }
+
+    MOCKABLE_VIRTUAL std::unique_ptr<Module> createModuleUnit(Device *device, ModuleBuildLog *buildLog, ModuleType type) {
+        return std::make_unique<ModuleImp>(this->device, this->packageBuildLog, this->type);
+    }
+
+    Device *device = nullptr;
+    ModuleBuildLog *packageBuildLog = nullptr;
+    ModuleType type = ModuleType::builtin;
+    std::vector<std::unique_ptr<Module>> modules;
+    ze_result_t linkStatus = {};
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

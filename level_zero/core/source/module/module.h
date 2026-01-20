@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,9 @@ struct _ze_module_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_MODULE> 
 static_assert(IsCompliantWithDdiHandlesExt<_ze_module_handle_t>);
 
 namespace NEO {
+class Device;
 struct KernelDescriptor;
-}
+} // namespace NEO
 
 namespace L0 {
 struct Device;
@@ -36,6 +37,8 @@ struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
     static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
 
     virtual ~Module() = default;
+
+    virtual ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) = 0;
 
     virtual Device *getDevice() const = 0;
 
@@ -64,6 +67,7 @@ struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
     virtual void checkIfPrivateMemoryPerDispatchIsNeeded() = 0;
     virtual void populateZebinExtendedArgsMetadata() = 0;
     virtual void generateDefaultExtendedArgsMetadata() = 0;
+    virtual bool isModulesPackage() const = 0;
 
     static Module *fromHandle(ze_module_handle_t handle) { return static_cast<Module *>(handle); }
 

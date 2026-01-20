@@ -103,6 +103,9 @@ zello_dynamic_link:
   dg2:
   pvc.b0:
 
+zello_modules_package:
+  dg2:
+
 zello_dyn_local_arg:
   dg2:
   pvc.b0:

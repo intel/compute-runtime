@@ -826,7 +826,7 @@ TEST_F(ModuleTest, GivenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisa
     device->getNEODevice()->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
 
     MockModule mockModule{device, nullptr, ModuleType::user};
-    EXPECT_EQ(mockModule.getIsaAllocationPageSize(), mockModule.isaAllocationPageSize);
+    mockModule.isaAllocationPageSize = mockModule.getIsaAllocationPageSize();
 
     {
         debugManager.flags.EnableLocalMemory.set(0);
@@ -1201,24 +1201,6 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
         module->destroy();
     }
-    void runSpirvFailureTest() {
-        MockCompilerInterface *mockCompiler;
-        mockCompiler = new MockCompilerInterface();
-        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
-        rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
-        mockTranslationUnit = new MockModuleTranslationUnit(device);
-
-        loadModules(testMultiple);
-
-        setupExpProgramDesc(ZE_MODULE_FORMAT_NATIVE, testMultiple);
-
-        auto module = new Module(device, nullptr, ModuleType::user);
-        module->translationUnit.reset(mockTranslationUnit);
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        result = module->initialize(&combinedModuleDesc, neoDevice);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-        module->destroy();
-    }
     void runExpDescFailureTest() {
         MockCompilerInterface *mockCompiler;
         mockCompiler = new MockCompilerInterface();
@@ -1309,10 +1291,6 @@ using ModuleStaticLinkTests = Test<ModuleStaticLinkFixture>;
 
 TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndCompilerFailsThenFailureIsReturned) {
     runLinkFailureTest();
-}
-
-TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndFormatIsNotSpirvThenFailureisReturned) {
-    runSpirvFailureTest();
 }
 
 TEST_F(ModuleStaticLinkTests, givenInvalidExpDescForModuleCreateThenFailureisReturned) {

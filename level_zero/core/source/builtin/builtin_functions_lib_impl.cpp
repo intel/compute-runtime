@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -486,7 +486,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 
     if (this->modules[builtin].get() == nullptr) {
         std::unique_ptr<Module> module;
-        ze_module_handle_t moduleHandle;
+        ze_module_handle_t moduleHandle = {};
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = builtinCode.type == BuiltInCodeType::binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
         moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -58,6 +58,7 @@ set(TEST_TARGETS
     zello_copy_only
     zello_debug_info
     zello_dynamic_link
+    zello_modules_package
     zello_dyn_local_arg
     zello_events
     zello_fence

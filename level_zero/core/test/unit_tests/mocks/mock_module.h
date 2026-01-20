@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,6 +231,26 @@ struct MockCompilerInterfaceLinkFailure : public NEO::CompilerInterface {
         return NEO::TranslationErrorCode::buildFailure;
     }
 };
+
+template <>
+struct WhiteBox<::L0::ModulesPackage> : public ::L0::ModulesPackage {
+    using BaseClass = ::L0::ModulesPackage;
+
+    WhiteBox(L0::Device *device) : ModulesPackage(device, nullptr, ModuleType::user) {
+    }
+
+    WhiteBox(L0::Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
+        : ModulesPackage(device, moduleBuildLog, type) {
+    }
+
+    using BaseClass::device;
+    using BaseClass::linkStatus;
+    using BaseClass::modules;
+    using BaseClass::packageBuildLog;
+    using BaseClass::type;
+};
+
+using ModulesPackage = WhiteBox<::L0::ModulesPackage>;
 
 } // namespace ult
 } // namespace L0
