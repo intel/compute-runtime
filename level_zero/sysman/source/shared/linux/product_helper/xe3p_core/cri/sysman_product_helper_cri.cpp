@@ -51,6 +51,11 @@ bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
 }
 
 template <>
+int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defaultLimit) {
+    return static_cast<int32_t>(defaultLimit * minPowerLimitFactor);
+}
+
+template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::netlink;
 }

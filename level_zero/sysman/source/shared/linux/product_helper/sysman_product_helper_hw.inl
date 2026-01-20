@@ -332,6 +332,11 @@ int32_t SysmanProductHelperHw<gfxProduct>::getPowerLimitValue(uint64_t value) {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defaultLimit) {
+    return -1;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint64_t SysmanProductHelperHw<gfxProduct>::setPowerLimitValue(int32_t value) {
     uint64_t val = static_cast<uint64_t>(value) * milliFactor;
     return val;

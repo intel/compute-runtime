@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     [[maybe_unused]] auto result = getDefaultLimit(pProperties->defaultLimit);
 
     pProperties->maxLimit = pProperties->defaultLimit;
+    pProperties->minLimit = pSysmanProductHelper->getPowerMinLimit(pProperties->defaultLimit);
 
     return ZE_RESULT_SUCCESS;
 }

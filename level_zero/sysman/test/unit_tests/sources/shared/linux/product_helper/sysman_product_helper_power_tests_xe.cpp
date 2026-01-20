@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -870,6 +870,24 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
         EXPECT_EQ(requestedCount, 2u);
         EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
         EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsNotSupported, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isPowerSetLimitSupported());
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPropertiesThenVerifyCorrectValuesAreReturned, IsCRI) {
+    auto handles = getPowerHandles();
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(static_cast<int32_t>(xeMockDefaultPowerLimitVal / milliFactor), properties.defaultLimit);
+        EXPECT_EQ(static_cast<int32_t>(xeMockDefaultPowerLimitVal / milliFactor), properties.maxLimit);
+        EXPECT_EQ(static_cast<int32_t>((xeMockDefaultPowerLimitVal / milliFactor) * minPowerLimitFactor), properties.minLimit);
     }
 }
 

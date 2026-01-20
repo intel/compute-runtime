@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ inline constexpr uint32_t maxRasErrorCategoryExpCount = 10;
 inline constexpr double maxPerformanceFactor = 100;
 inline constexpr double halfOfMaxPerformanceFactor = 50;
 inline constexpr double minPerformanceFactor = 0;
+inline constexpr double minPowerLimitFactor = 0.5;
 
 inline constexpr uint32_t numSocTemperatureEntries = 7;     // entries would be PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC
 inline constexpr uint32_t numCoreTemperatureEntries = 4;    // entries would be CORE0, CORE1, CORE2, CORE3
