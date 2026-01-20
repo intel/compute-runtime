@@ -1869,10 +1869,6 @@ size_t ModuleImp::getIsaAllocationPageSize() const {
 
 ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     UNRECOVERABLE_IF(ZE_MODULE_FORMAT_NATIVE != desc->format);
-    if (desc->pConstants) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     StackVec<ze_module_desc_t, 32> unitsInPackage;
 
     L0::PNextRange exts{desc->pNext};
@@ -1901,13 +1897,10 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        auto baseDesc = *desc;
-
-        if (baseDesc.pInputModule) {
-            unitsInPackage.push_back(baseDesc);
-        }
         for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
-            baseDesc = *desc;
+            auto baseDesc = *desc;
+            baseDesc.pBuildFlags = nullptr;
+            baseDesc.pConstants = nullptr;
             baseDesc.pInputModule = moduleProgamExt->pInputModules[i];
             baseDesc.inputSize = moduleProgamExt->inputSizes[i];
             if (moduleProgamExt->pBuildFlags && moduleProgamExt->pBuildFlags[i]) {
@@ -1918,10 +1911,24 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
     }
 
     for (auto &moduleDesc : unitsInPackage) {
-        auto module = createModuleUnit(this->device, this->packageBuildLog, this->type);
+        ModuleBuildLog *unitBuildLog = nullptr;
+        if (this->packageBuildLog) {
+            unitBuildLog = ModuleBuildLog::create();
+        }
+        auto module = createModuleUnit(this->device, unitBuildLog, this->type);
         auto res = module->initialize(&moduleDesc, neoDevice);
         if (ZE_RESULT_SUCCESS != res) {
+            if (this->packageBuildLog) {
+                append(this->packageBuildLog, std::string_view("Failed to load binary unit"));
+                if (unitBuildLog) {
+                    append(*this->packageBuildLog, *unitBuildLog);
+                    unitBuildLog->destroy();
+                }
+            }
             return res;
+        }
+        if (unitBuildLog) {
+            unitBuildLog->destroy();
         }
         this->modules.push_back(std::move(module));
     }

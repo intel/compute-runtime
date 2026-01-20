@@ -160,14 +160,16 @@ ze_module_handle_t createModuleFromNativeBinaries(const Target &target, std::spa
 
     ze_module_desc_t packageModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     packageModuleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    packageModuleDesc.inputSize = binaries[0].size();
-    packageModuleDesc.pInputModule = binaries[0].data();
+    if (binaries.size() == 1) {
+        packageModuleDesc.inputSize = binaries[0].size();
+        packageModuleDesc.pInputModule = binaries[0].data();
+    }
 
     ze_module_program_exp_desc_t moduleProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
     std::vector<const uint8_t *> additionalModulesInputs;
     std::vector<size_t> additionalModulesSizes;
     if (binaries.size() > 1) {
-        auto additionalModules = binaries.subspan(1);
+        auto additionalModules = binaries;
 
         additionalModulesInputs.reserve(additionalModules.size());
         std::ranges::transform(additionalModules, std::back_inserter(additionalModulesInputs),
@@ -308,8 +310,8 @@ int main(int argc, char *argv[]) {
     library.binaryWithDummyKernels = oclcToNativeBinary(target, progWithDummyKernel,
                                                         "", "-library-compilation");
 
-    // outputValidationSuccessful &= testModulesPackageFromExt(target, library);
-    // outputValidationSuccessful &= testModulesPackageFromBinary(target, library);
+    outputValidationSuccessful &= testModulesPackageFromExt(target, library);
+    outputValidationSuccessful &= testModulesPackageFromBinary(target, library);
     outputValidationSuccessful &= testModulesPackageLinking(target, library);
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);

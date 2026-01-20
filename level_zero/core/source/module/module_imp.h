@@ -427,7 +427,7 @@ struct ModulesPackage : public Module {
     }
 
     MOCKABLE_VIRTUAL std::unique_ptr<Module> createModuleUnit(Device *device, ModuleBuildLog *buildLog, ModuleType type) {
-        return std::make_unique<ModuleImp>(this->device, this->packageBuildLog, this->type);
+        return std::make_unique<ModuleImp>(this->device, buildLog, this->type);
     }
 
     void setNativeBinary(std::span<const uint8_t> binary);

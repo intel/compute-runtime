@@ -69,13 +69,15 @@ TEST(ModulesPackageInit, WhenSpecConstantsArePresentThenDetectAsIncompatibleAndF
     ModulesPackage mp{&device};
     ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     desc.format = ZE_MODULE_FORMAT_NATIVE;
+
+    // base desc pConstants will be ignored - as per spec
     desc.pConstants = &specConstants;
 
     ze_module_program_exp_desc_t moduleProgramDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
     desc.pNext = &moduleProgramDesc;
 
     auto res = mp.initialize(&desc, device.getNEODevice());
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     desc.pConstants = nullptr;
     const ze_module_constants_t *modulesPackageConstants[1] = {&specConstants};
@@ -168,7 +170,7 @@ TEST_F(ModulesPackageInitWithDevice, GivenAListOfBinaryModulesThenCreatesAPackag
     EXPECT_EQ(2U, mp.modules.size());
 }
 
-TEST_F(ModulesPackageInitWithDevice, GivenBaseModuleAndAListOfBinaryModulesThenCreatesAPackageModuleThanEncompasesAllInputModules) {
+TEST_F(ModulesPackageInitWithDevice, GivenBaseModuleAndAListOfBinaryModulesThenCreatesAPackageModuleThanEncompasesAllInputModulesExceptBaseDesc) {
     ZebinTestData::ValidEmptyProgram<> emptyZebin;
 
     MockModulesPackage<> mp{this->device};
@@ -184,34 +186,39 @@ TEST_F(ModulesPackageInitWithDevice, GivenBaseModuleAndAListOfBinaryModulesThenC
     const uint8_t *inputModules[2] = {emptyZebin.storage.data(), emptyZebin.storage.data()};
     moduleProgramDesc.pInputModules = inputModules;
 
+    // will be ignored, as per spec
     desc.inputSize = emptyZebin.storage.size();
     desc.pInputModule = emptyZebin.storage.data();
 
     auto res = mp.initialize(&desc, device->getNEODevice());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(3U, mp.modules.size());
+    EXPECT_EQ(2U, mp.modules.size());
 }
 
-TEST_F(ModulesPackageInitWithDevice, GivenBuildLogThenAccumulatesLogsFromAllModulesAndLinkingStage) {
+namespace {
+struct LoggingModule : MockModule {
+    using MockModule::MockModule;
+    ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
+        this->moduleBuildLog->appendString(dataToLog.c_str(), dataToLog.size());
+        return initErrCode;
+    }
+
+    ze_result_t performDynamicLink(uint32_t numModules,
+                                   ze_module_handle_t *phModules,
+                                   ze_module_build_log_handle_t *phLinkLog) override {
+        *phLinkLog = ModuleBuildLog::create();
+        ModuleBuildLog::fromHandle(*phLinkLog)->appendString(dataToLog.c_str(), dataToLog.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::string dataToLog;
+    ze_result_t initErrCode = ZE_RESULT_SUCCESS;
+};
+} // namespace
+
+TEST_F(ModulesPackageInitWithDevice, GivenBuildLogAndAllUnitsLoadedSuccesfullyThenUsesLogFromLinkingStage) {
     ZebinTestData::ValidEmptyProgram<> emptyZebin;
     std::unique_ptr<ModuleBuildLog> buildLog{ModuleBuildLog::create()};
-
-    struct LoggingModule : MockModule {
-        using MockModule::MockModule;
-        ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
-            this->moduleBuildLog->appendString(dataToLog.c_str(), dataToLog.size());
-            return ZE_RESULT_SUCCESS;
-        }
-
-        ze_result_t performDynamicLink(uint32_t numModules,
-                                       ze_module_handle_t *phModules,
-                                       ze_module_build_log_handle_t *phLinkLog) override {
-            this->moduleBuildLog->appendString(dataToLog.c_str(), dataToLog.size());
-            return ZE_RESULT_SUCCESS;
-        }
-
-        std::string dataToLog;
-    };
 
     MockModulesPackage<LoggingModule> mp{this->device};
     int moduleId = 0;
@@ -234,13 +241,50 @@ TEST_F(ModulesPackageInitWithDevice, GivenBuildLogThenAccumulatesLogsFromAllModu
     const uint8_t *inputModules[2] = {emptyZebin.storage.data(), emptyZebin.storage.data()};
     moduleProgramDesc.pInputModules = inputModules;
 
+    // will be ignored, as per spec
     desc.inputSize = emptyZebin.storage.size();
     desc.pInputModule = emptyZebin.storage.data();
 
     auto res = mp.initialize(&desc, device->getNEODevice());
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_STREQ("1\n2\n3\n1", read(*buildLog).c_str()) << read(*buildLog);
+    EXPECT_STREQ("1", read(*buildLog).c_str()) << read(*buildLog);
+}
+
+TEST_F(ModulesPackageInitWithDevice, GivenBuildLogAndSecondUnitFailedToLoadSuccesfullyThenUsesLogFromFailedModule) {
+    ZebinTestData::ValidEmptyProgram<> emptyZebin;
+    std::unique_ptr<ModuleBuildLog> buildLog{ModuleBuildLog::create()};
+
+    MockModulesPackage<LoggingModule> mp{this->device};
+    int moduleId = 0;
+    mp.moduleUnitFactory = [&](L0::Device *device, ModuleBuildLog *buildLog, ModuleType type) {
+        auto ret = std::make_unique<LoggingModule>(device, buildLog, type);
+        ret->dataToLog = std::to_string(++moduleId);
+        ret->initErrCode = (moduleId == 2) ? ZE_RESULT_ERROR_INVALID_NATIVE_BINARY : ZE_RESULT_SUCCESS;
+        return ret;
+    };
+
+    mp.packageBuildLog = buildLog.get();
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_NATIVE;
+
+    ze_module_program_exp_desc_t moduleProgramDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    desc.pNext = &moduleProgramDesc;
+
+    moduleProgramDesc.count = 2;
+    size_t inputSizes[2] = {emptyZebin.storage.size(), emptyZebin.storage.size()};
+    moduleProgramDesc.inputSizes = inputSizes;
+    const uint8_t *inputModules[2] = {emptyZebin.storage.data(), emptyZebin.storage.data()};
+    moduleProgramDesc.pInputModules = inputModules;
+
+    // will be ignored, as per spec
+    desc.inputSize = emptyZebin.storage.size();
+    desc.pInputModule = emptyZebin.storage.data();
+
+    auto res = mp.initialize(&desc, device->getNEODevice());
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, res);
+
+    EXPECT_STREQ("Failed to load binary unit\n2", read(*buildLog).c_str()) << read(*buildLog);
 }
 
 TEST_F(ModulesPackageInitWithDevice, GivenAListOfBinaryModulesWhenOneOfTheUnitsFailsToInitializeThenPackageCreationFails) {
@@ -284,7 +328,7 @@ namespace {
 struct BuildOptionsLoggingModule : MockModule {
     using MockModule::MockModule;
     ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
-        *log += desc->pBuildFlags;
+        *log += desc->pBuildFlags ? desc->pBuildFlags : "";
         return ZE_RESULT_SUCCESS;
     }
 
@@ -315,20 +359,21 @@ TEST_F(ModulesPackageInitWithDevice, GivenBuildOptionsThenPassThemToModuleUnits)
     const uint8_t *inputModules[2] = {emptyZebin.storage.data(), emptyZebin.storage.data()};
     moduleProgramDesc.pInputModules = inputModules;
 
+    // will be ignored, as per spec
     desc.inputSize = emptyZebin.storage.size();
     desc.pInputModule = emptyZebin.storage.data();
-
     desc.pBuildFlags = "0";
+
     const char *unitsBuildFlags[] = {"1", nullptr};
     moduleProgramDesc.pBuildFlags = unitsBuildFlags;
 
     auto res = mp.initialize(&desc, device->getNEODevice());
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_STREQ("010", log.c_str()) << log;
+    EXPECT_STREQ("1", log.c_str()) << log;
 }
 
-TEST_F(ModulesPackageInitWithDevice, GivenNoBuildOptionsForSpecificUnitsThenUseParentDescriptorsBuildOptions) {
+TEST_F(ModulesPackageInitWithDevice, GivenNoBuildOptionsForSpecificUnitsThenDontUseParentDescriptorsBuildOptions) {
     ZebinTestData::ValidEmptyProgram<> emptyZebin;
 
     std::string log;
@@ -351,15 +396,15 @@ TEST_F(ModulesPackageInitWithDevice, GivenNoBuildOptionsForSpecificUnitsThenUseP
     const uint8_t *inputModules[2] = {emptyZebin.storage.data(), emptyZebin.storage.data()};
     moduleProgramDesc.pInputModules = inputModules;
 
+    // will be ignored, as per spec
     desc.inputSize = emptyZebin.storage.size();
     desc.pInputModule = emptyZebin.storage.data();
-
     desc.pBuildFlags = "0";
 
     auto res = mp.initialize(&desc, device->getNEODevice());
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_STREQ("000", log.c_str()) << log;
+    EXPECT_TRUE(log.empty()) << log;
 }
 
 using ModulesPackageForwarding = Test<L0::ult::DeviceFixture>;
