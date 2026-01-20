@@ -359,9 +359,7 @@ struct ModulesPackage : public Module {
     ze_result_t inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
                                uint32_t numModules,
                                ze_module_handle_t *phModules,
-                               ze_module_build_log_handle_t *phLog) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+                               ze_module_build_log_handle_t *phLog) override;
 
     const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override {
         UNRECOVERABLE_IF(true);
@@ -396,6 +394,20 @@ struct ModulesPackage : public Module {
     }
 
     static bool isModulesPackageInput(const ze_module_desc_t *desc);
+
+    template <typename T>
+    static void gatherAllUnderlyingModuleHandles(std::span<T> in, std::vector<ze_module_handle_t> &out) {
+        out.reserve(out.size() + in.size());
+        for (auto &modHandle : in) {
+            auto *mod = Module::fromHandle(&*modHandle);
+            if (mod->isModulesPackage()) {
+                auto childPackage = static_cast<ModulesPackage *>(mod);
+                gatherAllUnderlyingModuleHandles(std::span(childPackage->modules), out);
+            } else {
+                out.push_back(mod->toHandle());
+            }
+        }
+    }
 
   protected:
     // Sequentially invokes callabale on modules, stops at first module which return value passes ValidatorT::isTrue

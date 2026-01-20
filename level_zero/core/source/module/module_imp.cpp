@@ -1422,6 +1422,12 @@ ze_result_t ModuleImp::inspectLinkage(
     uint32_t numModules,
     ze_module_handle_t *phModules,
     ze_module_build_log_handle_t *phLog) {
+    for (uint32_t i = 0; i < numModules; ++i) {
+        if (L0::Module::fromHandle(phModules[i])->isModulesPackage()) {
+            return static_cast<L0::ModulesPackage *>(phModules[i])->inspectLinkage(pInspectDesc, numModules, phModules, phLog);
+        }
+    }
+
     ModuleBuildLog *moduleLinkageLog = nullptr;
     moduleLinkageLog = ModuleBuildLog::create();
     *phLog = moduleLinkageLog->toHandle();
@@ -2034,6 +2040,16 @@ ze_result_t ModulesPackage::performDynamicLink(uint32_t numModules,
 
     auto mod0 = Module::fromHandle(allUnits[0]);
     return mod0->performDynamicLink(static_cast<uint32_t>(allUnits.size()), allUnits.data(), phLinkLog);
+}
+
+ze_result_t ModulesPackage::inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
+                                           uint32_t numModules,
+                                           ze_module_handle_t *phModules,
+                                           ze_module_build_log_handle_t *phLog) {
+    std::vector<ze_module_handle_t> allModules;
+    allModules.reserve(numModules);
+    gatherAllUnderlyingModuleHandles(std::span(phModules, numModules), allModules);
+    return static_cast<ModuleImp *>(allModules[0])->inspectLinkage(pInspectDesc, static_cast<uint32_t>(allModules.size()), allModules.data(), phLog);
 }
 
 } // namespace L0

@@ -483,11 +483,7 @@ TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturn
 
     size_t paramSizeT = 0;
     uint8_t paramUint8t = 0;
-    ze_module_handle_t paramModuleHandleT = {};
-    ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.inspectLinkage(&paramLinkeExtDesc, 1, &paramModuleHandleT, nullptr));
 }
 
 TEST(ModulesPackageUnrechableInternalApis, WhenUnreachableApiIsCalledThenRaiseUnreachableError) {
@@ -1019,7 +1015,6 @@ TEST_F(ModulesPackageDynamicLink, GivenNestedModulePackagesThenProcessUnitsRecur
 
 namespace {
 struct ModuleWithLinking : MockModule {
-    using MockModule::MockModule;
     using ClbT = std::function<ze_result_t(uint32_t, ze_module_handle_t *, ze_module_build_log_handle_t *)>;
 
     ModuleWithLinking(L0::Device *device, const ClbT &callback) : MockModule(device, nullptr, ModuleType::user), callback(callback) {}
@@ -1067,6 +1062,64 @@ TEST_F(ModulesPackageDynamicLink, GivenModulePackagesThenUsesAllUnitModules) {
     EXPECT_EQ(6U, inputModules.size());
 
     for (auto mod : expectedModulesToLink) {
+        EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
+    }
+}
+
+namespace {
+struct ModuleWithLinkageInformation : MockModule {
+    using ClbT = std::function<ze_result_t(ze_linkage_inspection_ext_desc_t *, uint32_t, ze_module_handle_t *, ze_module_build_log_handle_t *)>;
+
+    ModuleWithLinkageInformation(L0::Device *device, const ClbT &callback) : MockModule(device, nullptr, ModuleType::user), callback(callback) {}
+
+    ze_result_t inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
+                               uint32_t numModules,
+                               ze_module_handle_t *phModules,
+                               ze_module_build_log_handle_t *phLog) override {
+        return callback(pInspectDesc, numModules, phModules, phLog);
+    }
+    ClbT callback;
+};
+} // namespace
+
+using ModulesPackageInspectLinkage = Test<L0::ult::DeviceFixture>;
+TEST_F(ModulesPackageInspectLinkage, GivenModulePackagesThenUsesAllUnitModules) {
+    std::vector<ze_module_handle_t> inputModules;
+    auto clb = [&](ze_linkage_inspection_ext_desc_t *, uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *) {
+        inputModules.insert(inputModules.end(), phModules, phModules + numModules);
+        return ZE_RESULT_SUCCESS;
+    };
+
+    MockModulesPackage<> mp0{this->device};
+    mp0.modules.push_back(std::make_unique<ModuleWithLinkageInformation>(this->device, clb));
+    mp0.modules.push_back(std::make_unique<ModuleWithLinkageInformation>(this->device, clb));
+    mp0.modules.push_back(std::make_unique<ModuleWithLinkageInformation>(this->device, clb));
+    MockModulesPackage<> mp1{this->device};
+    mp1.modules.push_back(std::make_unique<ModuleWithLinkageInformation>(this->device, clb));
+    mp1.modules.push_back(std::make_unique<ModuleWithLinkageInformation>(this->device, clb));
+    mp1.modules.push_back(std::make_unique<MockModulesPackage<>>(this->device));
+
+    MockModule mp2{this->device, nullptr, L0::ModuleType::user};
+
+    ze_module_handle_t mods[3] = {&mp0, &mp1, &mp2};
+    ze_module_build_log_handle_t linkageLog = {};
+    ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp0.inspectLinkage(&paramLinkeExtDesc, 3, mods, &linkageLog));
+
+    EXPECT_EQ(6U, inputModules.size());
+
+    ze_module_handle_t expectedModulesToInspect[] = {mp0.modules[0]->toHandle(), mp0.modules[1]->toHandle(), mp0.modules[2]->toHandle(),
+                                                     mp1.modules[0]->toHandle(), mp1.modules[1]->toHandle(), mp2.toHandle()};
+    for (auto mod : expectedModulesToInspect) {
+        EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
+    }
+
+    // also check that single module uses package's inspection routine
+    inputModules.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp2.inspectLinkage(&paramLinkeExtDesc, 3, mods, &linkageLog));
+    EXPECT_EQ(6U, inputModules.size());
+
+    for (auto mod : expectedModulesToInspect) {
         EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
     }
 }
