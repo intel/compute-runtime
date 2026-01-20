@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsag
     if (debugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
     }
-    if (rootDeviceEnvironment.isWddmOnLinux()) {
+    if (rootDeviceEnvironment.isWddmOnLinux() && debugManager.flags.WddmOnLinuxForceNoCpuAccessCachingFlagCleared.get()) {
         return false;
     }
     if (isCpuCachingOfDeviceBuffersAllowed(rootDeviceEnvironment)) {

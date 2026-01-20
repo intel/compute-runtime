@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_cache_settings_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -68,28 +69,41 @@ TEST_F(GmmTests, givenResourceUsageTypesUnCachedWhenGreateGmmThenFlagCachcableIs
     }
 }
 
-HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue) {
+HWTEST_F(GmmTests, givenPreferNoCpuAccessSettingWhenDebugKeyUsedThenProperOverrideWorksForWsl) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCpuCacheForResources.set(false);
+    debugManager.flags.WddmOnLinuxForceNoCpuAccessCachingFlagCleared.set(false);
     StorageInfo storageInfo{};
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get());
     rootDeviceEnvironment->isWddmOnLinuxEnable = true;
 
-    GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    auto *origProductHelper = rootDeviceEnvironment->productHelper.release();
+    rootDeviceEnvironment->productHelper.reset(new MockProductHelper);
+
+    // force isCpuCachingOfDeviceBuffersAllowed() to always return false
+    auto *mockProductHelper = static_cast<MockProductHelper *>(rootDeviceEnvironment->productHelper.get());
+    mockProductHelper->isNewCoherencyModelSupportedResult = true;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    EXPECT_FALSE(MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*rootDeviceEnvironment));
+
+    // case of preferNoCpuAccess == true
+    GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
+    EXPECT_TRUE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
-    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
-
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
-    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
 
-    gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    // case of preferNoCpuAccess == false
+    debugManager.flags.WddmOnLinuxForceNoCpuAccessCachingFlagCleared.set(true);
+    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
     gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
-    EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
-    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
+    EXPECT_EQ(gmmResourceParams->Flags.Info.Cacheable, (not CacheSettingsHelper::isUncachedType(gmmResourceUsageType)));
+
+    rootDeviceEnvironment->productHelper.reset(origProductHelper);
 }
 
 HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIsSetProperly) {

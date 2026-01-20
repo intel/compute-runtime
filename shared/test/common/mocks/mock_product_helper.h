@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,5 +37,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(sipUsesSubslicePools, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isScratchSpaceBasePointerInGrf, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isFlushBetweenBlitsRequired, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(isNewCoherencyModelSupported, bool, true, ());
 };
 } // namespace NEO
