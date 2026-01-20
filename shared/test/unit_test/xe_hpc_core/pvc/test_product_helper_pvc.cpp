@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,11 +83,6 @@ PVCTEST_F(PvcProductHelper, givenPvcHwInfoWhenIsIpSamplingSupportedThenCorrectRe
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
     }
-}
-
-PVCTEST_F(PvcProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenFalseIsReturned) {

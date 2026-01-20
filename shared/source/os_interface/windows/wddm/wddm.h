@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -262,7 +262,7 @@ class Wddm : public DriverModel {
         }
         return evictNeeded;
     }
-    void setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper);
+    void setPlatformSupportEvictIfNecessaryFlag();
     void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
     void populateIpVersion(HardwareInfo &hwInfo);
     void setNewResourceBoundToPageTable();

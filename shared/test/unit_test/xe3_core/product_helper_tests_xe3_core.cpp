@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,10 +28,6 @@ using Xe3CoreProductHelper = ProductHelperTest;
 
 XE3_CORETEST_F(Xe3CoreProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Ptl, productHelper->getAubStreamProductFamily());
-}
-
-XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

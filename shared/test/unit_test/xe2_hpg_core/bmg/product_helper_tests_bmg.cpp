@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,6 @@ using BmgProductHelper = ProductHelperTest;
 
 BMGTEST_F(BmgProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Bmg, productHelper->getAubStreamProductFamily());
-}
-
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 BMGTEST_F(BmgProductHelper, givenBmgProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {

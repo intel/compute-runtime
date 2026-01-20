@@ -111,7 +111,6 @@ class ProductHelperHw : public ProductHelper {
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
-    bool isEvictionIfNecessaryFlagSupported() const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
     bool isStatefulAddressingModeSupported() const override;

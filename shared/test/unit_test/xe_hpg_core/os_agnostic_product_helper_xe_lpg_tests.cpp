@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,10 +186,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenIsInitBuiltinAsyncSuppo
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse, IsXeLpg) {
     EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
-}
-
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnFalse, IsXeLpg) {

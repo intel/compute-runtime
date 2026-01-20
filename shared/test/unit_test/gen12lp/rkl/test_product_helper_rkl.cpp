@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,10 +72,6 @@ RKLTEST_F(RklProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCo
 
 RKLTEST_F(RklProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
     EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
-}
-
-RKLTEST_F(RklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 RKLTEST_F(RklProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

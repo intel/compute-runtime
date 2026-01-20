@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,10 +129,6 @@ DG1TEST_F(Dg1ProductHelper, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) 
 
 DG1TEST_F(Dg1ProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(*defaultHwInfo), AOT::DG1);
-}
-
-DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

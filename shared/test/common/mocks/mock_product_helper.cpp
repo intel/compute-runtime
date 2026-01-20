@@ -334,11 +334,6 @@ uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isEvictionIfNecessaryFlagSupported() const {
-    return true;
-}
-
-template <>
 const char *L1CachePolicyHelper<IGFX_UNKNOWN>::getCachingPolicyOptions(bool isDebuggerActive) {
     return nullptr;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,10 +72,6 @@ ADLNTEST_F(AdlnProductHelper, givenCompilerProductHelperWhenGetProductConfigThen
 
 ADLNTEST_F(AdlnProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
     EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
-}
-
-ADLNTEST_F(AdlnProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 ADLNTEST_F(AdlnProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

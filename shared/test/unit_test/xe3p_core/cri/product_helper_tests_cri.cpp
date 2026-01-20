@@ -34,10 +34,6 @@ CRITEST_F(CriProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Cri, productHelper->getAubStreamProductFamily());
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
     EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
     EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ bool Wddm::init() {
         return false;
     }
     rootDeviceEnvironment.initWaitUtils();
-    setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    setPlatformSupportEvictIfNecessaryFlag();
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
 
@@ -171,8 +171,8 @@ bool Wddm::init() {
     return configureDeviceAddressSpace();
 }
 
-void Wddm::setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper) {
-    platformSupportsEvictIfNecessary = productHelper.isEvictionIfNecessaryFlagSupported();
+void Wddm::setPlatformSupportEvictIfNecessaryFlag() {
+    platformSupportsEvictIfNecessary = true;
     int32_t overridePlatformSupportsEvictIfNecessary =
         debugManager.flags.PlaformSupportEvictIfNecessaryFlag.get();
     if (overridePlatformSupportsEvictIfNecessary != -1) {

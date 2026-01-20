@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -821,10 +821,6 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIfStorageInfoAdjustme
     } else {
         EXPECT_FALSE(productHelper->isStorageInfoAdjustmentRequired());
     }
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredForCacheableBuffersThenExpectTrue) {

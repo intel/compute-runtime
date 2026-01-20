@@ -959,11 +959,6 @@ uint32_t ProductHelperHw<gfxProduct>::getGmmResourceUsageOverride(uint32_t usage
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const {
     return false;
 }

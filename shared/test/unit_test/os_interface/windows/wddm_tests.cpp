@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -209,9 +209,8 @@ TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
 TEST_F(WddmTests, GivenDebugFlagDisablesEvictIfNecessarySupportThenFlagIsFalse) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(0);
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
     EXPECT_FALSE(wddm->platformSupportsEvictIfNecessary);
 }
 
@@ -219,25 +218,22 @@ TEST_F(WddmTests, GivenDebugFlagEnablesEvictIfNecessarySupportThenFlagIsTrue) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
     EXPECT_TRUE(wddm->platformSupportsEvictIfNecessary);
 }
 
 TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSettingIsSetCorrectly) {
     DebugManagerStateRestore restorer{};
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
     EXPECT_EQ(-1, wddm->forceEvictOnlyIfNecessary);
 
     debugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
     EXPECT_EQ(0, wddm->forceEvictOnlyIfNecessary);
 
     debugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
     EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
 }
 

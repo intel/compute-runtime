@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -954,8 +954,7 @@ TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNotNeededThenEvictIsCalledWithP
     DebugManagerStateRestore restorer{};
     debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
-    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+    wddm->setPlatformSupportEvictIfNecessaryFlag();
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
