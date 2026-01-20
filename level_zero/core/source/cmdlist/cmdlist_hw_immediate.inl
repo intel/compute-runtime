@@ -2013,11 +2013,21 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyIn
     this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocData);
     if (cpuMemCopyInfo.srcAllocData == nullptr) {
         auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.srcIsImportedHostPtr = hostAlloc != nullptr;
+        if (hostAlloc == nullptr) {
+            auto tempAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, false);
+            cpuMemCopyInfo.srcIsImportedHostPtr = tempAlloc != nullptr;
+        } else {
+            cpuMemCopyInfo.srcIsImportedHostPtr = true;
+        }
     }
     if (cpuMemCopyInfo.dstAllocData == nullptr) {
         auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.dstIsImportedHostPtr = hostAlloc != nullptr;
+        if (hostAlloc == nullptr) {
+            auto tempAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, false);
+            cpuMemCopyInfo.dstIsImportedHostPtr = tempAlloc != nullptr;
+        } else {
+            cpuMemCopyInfo.dstIsImportedHostPtr = true;
+        }
     }
 }
 
