@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -15,16 +17,21 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/source/module/modules_package_binary.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include <string>
+#include <string_view>
+
+using namespace std::literals;
 
 namespace L0 {
 namespace ult {
 
+namespace {
 template <typename ModuleUnitT = MockModule>
 struct MockModulesPackage : L0::ult::ModulesPackage {
     MockModulesPackage(L0::Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type) : L0::ult::ModulesPackage(device, moduleBuildLog, type) {
@@ -42,6 +49,7 @@ struct MockModulesPackage : L0::ult::ModulesPackage {
 
     std::function<std::unique_ptr<Module>(L0::Device *device, ModuleBuildLog *buildLog, ModuleType type)> moduleUnitFactory;
 };
+} // namespace
 
 TEST(ModulesPackageInit, WhenDestroyIsCalledThenDeletesThePackageAndReturnsSuccess) {
     MockDevice device;
@@ -88,6 +96,38 @@ TEST(ModulesPackageInit, GivenEmptyInputThenCreatesEmptyModulesPackage) {
 
     auto res = mp.initialize(&desc, device.getNEODevice());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST(IsModulesPackageInput, WhenFormatNotNativeThenReturnsFalse) {
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    EXPECT_FALSE(ModulesPackage::isModulesPackageInput(&desc));
+}
+
+TEST(IsModulesPackageInput, WhenFormatIsNativeAndModuleProgramDescriptorPresentThenReturnsTrue) {
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_NATIVE;
+
+    ze_module_program_exp_desc_t modProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    desc.pNext = &modProgDesc;
+
+    EXPECT_TRUE(ModulesPackage::isModulesPackageInput(&desc));
+}
+
+TEST(IsModulesPackageInput, WhenFormatIsNativeButModuleProgramDescriptorIsNotPresentThenChecksForNativeBinaryType) {
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_NATIVE;
+
+    uint8_t notPackage[64] = {2, 3, 5, 7};
+    desc.pInputModule = notPackage;
+    desc.inputSize = sizeof(notPackage);
+    EXPECT_FALSE(ModulesPackage::isModulesPackageInput(&desc));
+
+    ModulesPackageBinary package;
+    auto packageBinary = package.encode();
+    desc.pInputModule = packageBinary.data();
+    desc.inputSize = packageBinary.size();
+    EXPECT_TRUE(ModulesPackage::isModulesPackageInput(&desc));
 }
 
 TEST(ModuleCreateModulesPackage, GivenNativeBinariesInModuleProgramDescThenCreatesAModulesPackage) {
@@ -240,6 +280,7 @@ TEST_F(ModulesPackageInitWithDevice, GivenAListOfBinaryModulesWhenOneOfTheUnitsF
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, res);
 }
 
+namespace {
 struct BuildOptionsLoggingModule : MockModule {
     using MockModule::MockModule;
     ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
@@ -249,6 +290,7 @@ struct BuildOptionsLoggingModule : MockModule {
 
     std::string *log = nullptr;
 };
+} // namespace
 
 TEST_F(ModulesPackageInitWithDevice, GivenBuildOptionsThenPassThemToModuleUnits) {
     ZebinTestData::ValidEmptyProgram<> emptyZebin;
@@ -443,7 +485,6 @@ TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturn
     uint8_t paramUint8t = 0;
     ze_module_handle_t paramModuleHandleT = {};
     ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getNativeBinary(&paramSizeT, &paramUint8t));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.performDynamicLink(1, &paramModuleHandleT, nullptr));
@@ -581,6 +622,386 @@ TEST_F(ModulesPackageForwarding, WhenGetPropertiesIsCalledThenAccumulatesFromEac
     mp.modules.push_back(std::move(moduleUnits[2]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getProperties(&moduleProperties));
     EXPECT_EQ(1U, moduleProperties.flags);
+}
+
+TEST(ModulesPackageManifestLoad, GivenInvalidManifestThenFailsToLoad) {
+    std::pair<std::string_view, std::string_view> invalidManifests[] = {
+        {R"YML(
+- : - ;
+)YML"sv,
+         "NEO::Yaml : Could not parse line : [1] : [- : - ;] <-- parser position on error. Reason : Invalid numeric literal\n"sv},
+        {R"YML(
+version:
+    major : a
+    minor : 0
+)YML"sv,
+         "NEO::ModulesPackage : Failed to read major version in manifest\n"sv},
+        {R"YML(
+version:
+    major : 1
+    minor : a
+)YML"sv,
+         "NEO::ModulesPackage : Failed to read minor version in manifest\n"sv},
+        {R"YML(
+version:
+    major : 1
+    minor : 0
+units:
+    - filename : ""
+)YML"sv,
+         "NEO::ModulesPackage : Failed to read unit's filename in manifest\n"sv},
+        {R"YML(
+units:
+    - filename : "abc"
+)YML"sv,
+         "NEO::ModulesPackage : Missing version information\n"sv}};
+
+    for (auto &[manifest, expectedError] : invalidManifests) {
+        std::string error;
+        std::string warning;
+        auto loadedManifest = L0::ModulesPackageManifest::load(manifest, error, warning);
+        EXPECT_FALSE(loadedManifest.has_value());
+        EXPECT_TRUE(warning.empty()) << warning;
+        if (error.empty()) {
+            EXPECT_FALSE(error.empty()) << manifest;
+        } else {
+            EXPECT_STREQ(expectedError.data(), error.c_str());
+        }
+    }
+}
+
+TEST(ModulesPackageManifestLoad, GivenUnhandledManifestMajorVersionThenFailsToLoad) {
+    std::string manifest = R"YML(
+version:
+    major : )YML" + std::to_string(L0::ModulesPackageManifest::compiledVersion.major + 1) +
+                           R"YML(
+    minor : 0
+)YML";
+
+    std::string error;
+    std::string warning;
+    auto loadedManifest = L0::ModulesPackageManifest::load(manifest, error, warning);
+    EXPECT_FALSE(loadedManifest.has_value());
+    EXPECT_TRUE(warning.empty()) << warning;
+    ASSERT_FALSE(error.empty()) << manifest;
+    EXPECT_STREQ("NEO::ModulesPackage : Unhandled package manifest major version\n", error.c_str());
+}
+
+TEST(ModulesPackageManifestLoad, GivenValidManifestThenLoadsItCorrectly) {
+    std::string manifest = R"YML(
+version:
+    major : )YML" + std::to_string(L0::ModulesPackageManifest::compiledVersion.major) +
+                           R"YML(
+    minor : 13
+units:
+    - filename : unit.0
+    - filename : unit.13
+)YML";
+
+    std::string error;
+    std::string warning;
+    auto loadedManifest = L0::ModulesPackageManifest::load(manifest, error, warning);
+    ASSERT_TRUE(loadedManifest.has_value());
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_TRUE(error.empty()) << error;
+    EXPECT_EQ(L0::ModulesPackageManifest::compiledVersion.major, loadedManifest->version.major);
+    EXPECT_EQ(13, loadedManifest->version.minor);
+    ASSERT_EQ(2U, loadedManifest->units.size());
+    EXPECT_STREQ("unit.0", loadedManifest->units[0].fileName.c_str());
+    EXPECT_STREQ("unit.13", loadedManifest->units[1].fileName.c_str());
+}
+
+TEST(ModulesPackageManifestDump, GivenNoUnitsThenSkipWholeSection) {
+    L0::ModulesPackageManifest manifest;
+    manifest.version.major = 7;
+    manifest.version.major = 3;
+
+    auto manifestStr = manifest.dump();
+    EXPECT_STREQ("version : \n  major : 3\n  minor : 0\n", manifestStr.c_str());
+}
+
+TEST(ModulesPackageBinaryIsModulesPackageBinary, GivenNonArFileFormatThenReturnFalse) {
+    std::string data = "deffinitely not ar";
+    auto isModulesPackage = ModulesPackageBinary::isModulesPackageBinary(std::span(reinterpret_cast<const uint8_t *>(data.data()), data.size()));
+    EXPECT_FALSE(isModulesPackage);
+}
+
+TEST(ModulesPackageBinaryIsModulesPackageBinary, GivenArThenChecksForPackageManifestFile) {
+    NEO::Ar::ArEncoder arEncoder;
+    auto ar = arEncoder.encode();
+    auto isModulesPackage = ModulesPackageBinary::isModulesPackageBinary(std::span(ar));
+    EXPECT_FALSE(isModulesPackage);
+
+    L0::ModulesPackageManifest manifest;
+    auto manifestStr = manifest.dump();
+    arEncoder.appendFileEntry(ConstStringRef(L0::ModulesPackageManifest::packageManifestFileName), ArrayRef<const uint8_t>::fromAny(manifestStr.c_str(), manifestStr.size()));
+    ar = arEncoder.encode();
+    isModulesPackage = ModulesPackageBinary::isModulesPackageBinary(std::span(ar));
+    EXPECT_TRUE(isModulesPackage);
+}
+
+TEST(ModulesPackageBinaryDecode, GivenArWithMissingManifestFileThenDecodeFails) {
+    NEO::Ar::ArEncoder arEncoder;
+    auto ar = arEncoder.encode();
+    std::string error;
+    std::string warning;
+    auto package = ModulesPackageBinary::decode(ar, error, warning);
+    EXPECT_FALSE(package.has_value());
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_STREQ(error.c_str(), "NEO::ModulesPackage : Could not find manifest file modules.pkg.yml in packge\n");
+}
+
+TEST(ModulesPackageBinaryDecode, GivenArWithBrokenManifestFileThenDecodeFails) {
+    NEO::Ar::ArEncoder arEncoder;
+    uint8_t brokenManifest[] = "AA:BB\n";
+    arEncoder.appendFileEntry(ConstStringRef(L0::ModulesPackageManifest::packageManifestFileName), ArrayRef<const uint8_t>{brokenManifest, sizeof(brokenManifest)});
+    auto ar = arEncoder.encode();
+    std::string error;
+    std::string warning;
+    auto package = ModulesPackageBinary::decode(ar, error, warning);
+    EXPECT_FALSE(package.has_value());
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_STREQ(error.c_str(), "NEO::ModulesPackage : Missing version information\nNEO::ModulesPackage : Could not load manifest file\n");
+}
+
+TEST(ModulesPackageBinaryDecode, WhenManifestContainsAMissingFileThenDecodeFails) {
+    NEO::Ar::ArEncoder arEncoder;
+    L0::ModulesPackageManifest manifest;
+    manifest.units.push_back({"doesnt_exist.0"});
+    auto manifestStr = manifest.dump();
+    arEncoder.appendFileEntry(ConstStringRef(L0::ModulesPackageManifest::packageManifestFileName), ArrayRef<const uint8_t>{reinterpret_cast<const uint8_t *>(manifestStr.data()), manifestStr.size()});
+    auto ar = arEncoder.encode();
+    std::string error;
+    std::string warning;
+    auto package = ModulesPackageBinary::decode(ar, error, warning);
+    EXPECT_FALSE(package.has_value());
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_STREQ(error.c_str(), "NEO::ModulesPackage : Missing file doesnt_exist.0 in provided package\n");
+}
+
+TEST(ModulesPackageBinaryDecode, GivenValidBinaryThenDecodeSucceeds) {
+    NEO::Ar::ArEncoder arEncoder;
+    L0::ModulesPackageManifest manifest;
+    manifest.units.push_back({"unit.0"});
+    auto manifestStr = manifest.dump();
+    uint8_t data[32] = {2, 3, 5, 7};
+    arEncoder.appendFileEntry(ConstStringRef(L0::ModulesPackageManifest::packageManifestFileName), ArrayRef<const uint8_t>{reinterpret_cast<const uint8_t *>(manifestStr.data()), manifestStr.size()});
+    arEncoder.appendFileEntry(ConstStringRef("unit.0"), ArrayRef<const uint8_t>{data, sizeof(data)});
+    auto ar = arEncoder.encode();
+    std::string error;
+    std::string warning;
+    auto package = ModulesPackageBinary::decode(ar, error, warning);
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_TRUE(error.empty()) << error;
+    ASSERT_TRUE(package.has_value());
+
+    ASSERT_EQ(1U, package->units.size());
+    ASSERT_EQ(sizeof(data), package->units[0].data.size());
+    ASSERT_EQ(data[0], package->units[0].data[0]);
+    ASSERT_EQ(data[1], package->units[0].data[1]);
+    ASSERT_EQ(data[2], package->units[0].data[2]);
+    ASSERT_EQ(data[3], package->units[0].data[3]);
+}
+
+TEST(ModulesPackageBinaryEncode, GivenValidBinaryThenEncodesItProperly) {
+    L0::ModulesPackageBinary binary;
+    uint8_t unit0[4] = {2, 3, 5, 7};
+    uint8_t unit1[4] = {11, 13, 17, 19};
+    binary.units.push_back(L0::ModulesPackageBinary::Unit(std::span(unit0)));
+    binary.units.push_back(L0::ModulesPackageBinary::Unit(std::span(unit1)));
+    auto encodedPackage = binary.encode();
+
+    std::string error;
+    std::string warning;
+    auto decodedPackage = ModulesPackageBinary::decode(encodedPackage, error, warning);
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_TRUE(error.empty()) << error;
+    ASSERT_TRUE(decodedPackage.has_value());
+
+    ASSERT_EQ(2U, decodedPackage->units.size());
+
+    ASSERT_EQ(unit0[0], decodedPackage->units[0].data[0]);
+    ASSERT_EQ(unit0[1], decodedPackage->units[0].data[1]);
+    ASSERT_EQ(unit0[2], decodedPackage->units[0].data[2]);
+    ASSERT_EQ(unit0[3], decodedPackage->units[0].data[3]);
+
+    ASSERT_EQ(unit1[0], decodedPackage->units[1].data[0]);
+    ASSERT_EQ(unit1[1], decodedPackage->units[1].data[1]);
+    ASSERT_EQ(unit1[2], decodedPackage->units[1].data[2]);
+    ASSERT_EQ(unit1[3], decodedPackage->units[1].data[3]);
+}
+
+using ModulesPackagePrepareNativeBinary = Test<L0::ult::DeviceFixture>;
+
+TEST_F(ModulesPackagePrepareNativeBinary, WhenNativeBinaryIsAlreadyPreparedThenUsesIt) {
+    MockModulesPackage<> mp{this->device};
+    mp.setNativeBinary(std::vector<uint8_t>{2, 3, 5, 7});
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.prepareNativeBinary());
+    ASSERT_EQ(4U, mp.nativeBinary.size());
+    EXPECT_EQ(2U, mp.nativeBinary[0]);
+    EXPECT_EQ(3U, mp.nativeBinary[1]);
+    EXPECT_EQ(5U, mp.nativeBinary[2]);
+    EXPECT_EQ(7U, mp.nativeBinary[3]);
+}
+
+namespace {
+struct ModuleWithNativeBinary : MockModule {
+    using MockModule::MockModule;
+    ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override {
+        if (0 == sizeToReturn) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
+        }
+        if (nullptr == pModuleNativeBinary) {
+            *pSize = sizeToReturn;
+            return ZE_RESULT_SUCCESS;
+        }
+        if (*pSize == 0) {
+            *pSize = sizeToReturn;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        if (nativeBinaryToReturn.size() != sizeToReturn) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
+        }
+
+        memcpy_s(pModuleNativeBinary, *pSize, nativeBinaryToReturn.data(), nativeBinaryToReturn.size());
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<uint8_t> nativeBinaryToReturn;
+    size_t sizeToReturn = 0;
+};
+} // namespace
+
+TEST_F(ModulesPackagePrepareNativeBinary, WhenFailedToGetAnyUnitsBinarySizeThenFailsToPrepareBinary) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithNativeBinary> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+
+    moduleUnits[0]->sizeToReturn = 8;
+    moduleUnits[1]->sizeToReturn = 0;
+    moduleUnits[2]->sizeToReturn = 16;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_NE(ZE_RESULT_SUCCESS, mp.prepareNativeBinary());
+}
+
+TEST_F(ModulesPackagePrepareNativeBinary, WhenFailedToGetAnyUnitsBinaryThenFailsToPrepareBinary) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithNativeBinary> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+
+    std::vector<uint8_t> unit0(8, 0);
+    std::vector<uint8_t> unit2(16, 0);
+
+    moduleUnits[0]->sizeToReturn = unit0.size();
+    moduleUnits[0]->nativeBinaryToReturn = unit0;
+    moduleUnits[1]->sizeToReturn = 24;
+    moduleUnits[2]->sizeToReturn = unit2.size();
+    moduleUnits[2]->nativeBinaryToReturn = unit2;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_NE(ZE_RESULT_SUCCESS, mp.prepareNativeBinary());
+}
+
+TEST_F(ModulesPackagePrepareNativeBinary, WhenAllUnitsReturnValidBinariesThenCreatesModulesPackageBinary) {
+    MockModulesPackage<> mp{this->device};
+    std::unique_ptr<ModuleWithNativeBinary> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithNativeBinary>(this->device, nullptr, L0::ModuleType::user);
+
+    std::vector<uint8_t> unit0(8, 2);
+    std::vector<uint8_t> unit1(14, 3);
+    std::vector<uint8_t> unit2(16, 5);
+
+    moduleUnits[0]->sizeToReturn = unit0.size();
+    moduleUnits[0]->nativeBinaryToReturn = unit0;
+    moduleUnits[1]->sizeToReturn = unit1.size();
+    moduleUnits[1]->nativeBinaryToReturn = unit1;
+    moduleUnits[2]->sizeToReturn = unit2.size();
+    moduleUnits[2]->nativeBinaryToReturn = unit2;
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.prepareNativeBinary());
+    auto nativeBinary = mp.nativeBinary;
+    ASSERT_TRUE(L0::ModulesPackageBinary::isModulesPackageBinary(nativeBinary));
+    std::string warning;
+    std::string error;
+    auto package = ModulesPackageBinary::decode(nativeBinary, error, warning);
+    EXPECT_TRUE(warning.empty()) << warning;
+    EXPECT_TRUE(error.empty()) << error;
+    ASSERT_TRUE(package.has_value());
+    ASSERT_EQ(3U, package->units.size());
+    ASSERT_EQ(unit0.size(), package->units[0].data.size());
+    ASSERT_EQ(unit1.size(), package->units[1].data.size());
+    ASSERT_EQ(unit2.size(), package->units[2].data.size());
+    EXPECT_EQ(unit0[0], package->units[0].data[0]);
+    EXPECT_EQ(unit1[0], package->units[1].data[0]);
+    EXPECT_EQ(unit2[0], package->units[2].data[0]);
+}
+
+using ModulesPackageGetNativeBinary = Test<L0::ult::DeviceFixture>;
+TEST_F(ModulesPackageGetNativeBinary, WhenPrepareNativeBinaryFailsThenReturnsError) {
+    struct MockModulePackageFailPrepare : MockModulesPackage<> {
+        using MockModulesPackage::MockModulesPackage;
+        ze_result_t prepareNativeBinary() override {
+            return ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET;
+        }
+    };
+    MockModulePackageFailPrepare mp{this->device};
+    size_t size = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET, mp.getNativeBinary(&size, nullptr));
+}
+
+TEST_F(ModulesPackageGetNativeBinary, WhenSizeIs0OrNativeBinaryOutPointerIsNullThenReturnsSize) {
+    MockModulesPackage<> mp{this->device};
+    mp.nativeBinary.resize(256);
+    size_t size = 0;
+    uint8_t outBinary = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getNativeBinary(&size, &outBinary));
+    EXPECT_EQ(256U, size);
+    size = 8U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getNativeBinary(&size, nullptr));
+    EXPECT_EQ(256U, size);
+}
+
+TEST_F(ModulesPackageGetNativeBinary, WhenSizeIsTooSmallThenFails) {
+    MockModulesPackage<> mp{this->device};
+    mp.nativeBinary.resize(256);
+    uint8_t outBinary = 0;
+    size_t size = sizeof(outBinary);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mp.getNativeBinary(&size, &outBinary));
+}
+
+TEST_F(ModulesPackageGetNativeBinary, GivenValidArgumentsThenReturnsNatieBinary) {
+    MockModulesPackage<> mp{this->device};
+    mp.nativeBinary.resize(4);
+    mp.nativeBinary[0] = 2;
+    mp.nativeBinary[1] = 3;
+    mp.nativeBinary[2] = 5;
+    mp.nativeBinary[3] = 7;
+    uint8_t outBinary[4] = {11, 13, 17, 19};
+    size_t size = sizeof(outBinary);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getNativeBinary(&size, outBinary));
+    EXPECT_EQ(2, outBinary[0]);
+    EXPECT_EQ(3, outBinary[1]);
+    EXPECT_EQ(5, outBinary[2]);
+    EXPECT_EQ(7, outBinary[3]);
 }
 
 } // namespace ult

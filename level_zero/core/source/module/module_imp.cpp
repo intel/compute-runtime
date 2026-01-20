@@ -50,6 +50,7 @@
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
+#include "level_zero/core/source/module/modules_package_binary.h"
 
 #include "program_debug_data.h"
 
@@ -1344,11 +1345,8 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
 
 Module *Module::create(Device *device, const ze_module_desc_t *desc,
                        ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
-    auto usesModuleProgExt = L0::PNextRange(desc->pNext).contains(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
-    bool modulesPackage = usesModuleProgExt && (desc->format == ZE_MODULE_FORMAT_NATIVE);
-
     Module *module = nullptr;
-    if (modulesPackage) {
+    if (ModulesPackage::isModulesPackageInput(desc)) {
         module = new ModulesPackage(device, moduleBuildLog, type);
     } else {
         module = new ModuleImp(device, moduleBuildLog, type);
@@ -1856,27 +1854,53 @@ size_t ModuleImp::getIsaAllocationPageSize() const {
 }
 
 ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
-    L0::PNextRange exts{desc->pNext};
-    auto moduleProgamExt = exts.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
-    UNRECOVERABLE_IF(nullptr == moduleProgamExt);
     UNRECOVERABLE_IF(ZE_MODULE_FORMAT_NATIVE != desc->format);
-    if (desc->pConstants || moduleProgamExt->pConstants) {
+    if (desc->pConstants) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto baseDesc = *desc;
     StackVec<ze_module_desc_t, 32> unitsInPackage;
-    if (baseDesc.pInputModule) {
-        unitsInPackage.push_back(baseDesc);
-    }
-    for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
-        baseDesc = *desc;
-        baseDesc.pInputModule = moduleProgamExt->pInputModules[i];
-        baseDesc.inputSize = moduleProgamExt->inputSizes[i];
-        if (moduleProgamExt->pBuildFlags && moduleProgamExt->pBuildFlags[i]) {
-            baseDesc.pBuildFlags = moduleProgamExt->pBuildFlags[i];
+
+    L0::PNextRange exts{desc->pNext};
+    auto moduleProgamExt = exts.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
+    if (nullptr == moduleProgamExt) {
+        // native modules package binary
+        std::string decodeWarings;
+        std::string decodeErrors;
+        auto package = ModulesPackageBinary::decode(std::span(desc->pInputModule, desc->inputSize), decodeErrors, decodeWarings);
+        append(packageBuildLog, std::string_view(decodeWarings));
+        append(packageBuildLog, std::string_view(decodeErrors));
+        if (package.has_value() == false) {
+            return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
         }
-        unitsInPackage.push_back(baseDesc);
+
+        auto baseDesc = *desc;
+        for (decltype(package->units.size()) i = 0, e = package->units.size(); i != e; ++i) {
+            baseDesc = *desc;
+            baseDesc.pInputModule = package->units[i].data.data();
+            baseDesc.inputSize = package->units[i].data.size();
+            unitsInPackage.push_back(baseDesc);
+        }
+        this->setNativeBinary(std::span(desc->pInputModule, desc->inputSize));
+    } else {
+        if (moduleProgamExt->pConstants) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        auto baseDesc = *desc;
+
+        if (baseDesc.pInputModule) {
+            unitsInPackage.push_back(baseDesc);
+        }
+        for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
+            baseDesc = *desc;
+            baseDesc.pInputModule = moduleProgamExt->pInputModules[i];
+            baseDesc.inputSize = moduleProgamExt->inputSizes[i];
+            if (moduleProgamExt->pBuildFlags && moduleProgamExt->pBuildFlags[i]) {
+                baseDesc.pBuildFlags = moduleProgamExt->pBuildFlags[i];
+            }
+            unitsInPackage.push_back(baseDesc);
+        }
     }
 
     for (auto &moduleDesc : unitsInPackage) {
@@ -1907,6 +1931,80 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
     }
 
     return this->linkStatus;
+}
+
+ze_result_t ModulesPackage::getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) {
+    auto binariesStatus = prepareNativeBinary();
+    if (ZE_RESULT_SUCCESS != binariesStatus) {
+        return binariesStatus;
+    }
+    if ((0 == *pSize) || (nullptr == pModuleNativeBinary)) {
+        *pSize = nativeBinary.size();
+        return ZE_RESULT_SUCCESS;
+    } else {
+        if (*pSize < nativeBinary.size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        memcpy_s(pModuleNativeBinary, *pSize, nativeBinary.data(), nativeBinary.size());
+        return ZE_RESULT_SUCCESS;
+    }
+}
+
+ze_result_t ModulesPackage::prepareNativeBinary() {
+    auto lock = std::lock_guard(nativeBinaryPrepareLock);
+    if (false == this->nativeBinary.empty()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<std::vector<uint8_t>> binaries;
+    binaries.reserve(modules.size());
+    ModulesPackageBinary modulesPackage;
+    modulesPackage.units.reserve(modules.size());
+    auto unitsErr = allModulesUnless<ReturnsFailure>([&](Module &mod) {
+        size_t unitSize = 0;
+        auto ret = mod.getNativeBinary(&unitSize, nullptr);
+        if (ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
+        std::vector<uint8_t> binary;
+        binary.resize(unitSize);
+        ret = mod.getNativeBinary(&unitSize, binary.data());
+        if (ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
+        binaries.push_back(std::move(binary));
+        ModulesPackageBinary::Unit unit;
+        unit.data = *binaries.rbegin();
+        modulesPackage.units.push_back(std::move(unit));
+        return ret;
+    });
+    if (ZE_RESULT_SUCCESS != unitsErr) {
+        return unitsErr;
+    }
+
+    this->nativeBinary = modulesPackage.encode();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+void ModulesPackage::setNativeBinary(std::span<const uint8_t> binary) {
+    auto lock = std::lock_guard(nativeBinaryPrepareLock);
+    this->nativeBinary.resize(binary.size());
+    memcpy_s(this->nativeBinary.data(), this->nativeBinary.size(), binary.data(), binary.size());
+}
+
+bool ModulesPackage::isModulesPackageInput(const ze_module_desc_t *desc) {
+    if (desc->format != ZE_MODULE_FORMAT_NATIVE) {
+        return false;
+    }
+
+    L0::PNextRange exts{desc->pNext};
+    if (exts.contains(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC)) {
+        return true;
+    }
+
+    auto binary = std::span<const uint8_t>(desc->pInputModule, desc->inputSize);
+    return ModulesPackageBinary::isModulesPackageBinary(binary);
 }
 
 } // namespace L0

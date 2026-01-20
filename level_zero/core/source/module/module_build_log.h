@@ -42,6 +42,14 @@ struct ModuleBuildLog : _ze_module_build_log_handle_t, NEO::NonCopyableAndNonMov
     inline ze_module_build_log_handle_t toHandle() { return this; }
 };
 
+inline void append(ModuleBuildLog *dst, std::string_view src) {
+    if (nullptr == dst) {
+        return;
+    }
+
+    dst->appendString(src.data(), src.size());
+}
+
 inline void append(ModuleBuildLog &dst, ModuleBuildLog &src) {
     size_t srcLen = 0U;
     src.getString(&srcLen, nullptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstddef>
+#include <span>
 #include <utility>
 
 template <typename DataType>
@@ -51,6 +52,10 @@ class ArrayRef {
 
     ArrayRef(const ArrayRef &src)
         : begIt(src.begIt), endIt(src.endIt) {
+    }
+
+    template <typename T>
+    ArrayRef(std::span<T> span) : begIt(span.data()), endIt(span.data() + span.size()) {
     }
 
     ArrayRef &operator=(const ArrayRef &src) {

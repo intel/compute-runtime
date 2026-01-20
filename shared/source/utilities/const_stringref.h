@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace NEO {
 
@@ -27,6 +28,9 @@ class ConstStringRef {
     }
 
     constexpr ConstStringRef(const ConstStringRef &rhs) : ptr(rhs.ptr), len(rhs.len) {
+    }
+
+    explicit constexpr ConstStringRef(std::string_view rhs) : ptr(rhs.data()), len(rhs.length()) {
     }
 
     ConstStringRef &operator=(const ConstStringRef &rhs) {

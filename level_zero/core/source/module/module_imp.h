@@ -312,9 +312,7 @@ struct ModulesPackage : public Module {
         return anyModuleThat<ReturnsNotNull>([&](Module &mod) { return mod.getKernelImmutableData(kernelName); });
     }
 
-    ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override;
 
     ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -399,6 +397,8 @@ struct ModulesPackage : public Module {
         return true;
     }
 
+    static bool isModulesPackageInput(const ze_module_desc_t *desc);
+
   protected:
     // Sequentially invokes callabale on modules, stops at first module which return value passes ValidatorT::isTrue
     template <typename ValidatorT, typename CallableT, typename ReturnT = std::invoke_result_t<CallableT, ModuleImp &>>
@@ -422,11 +422,16 @@ struct ModulesPackage : public Module {
         return std::make_unique<ModuleImp>(this->device, this->packageBuildLog, this->type);
     }
 
+    void setNativeBinary(std::span<const uint8_t> binary);
+    MOCKABLE_VIRTUAL ze_result_t prepareNativeBinary();
+
     Device *device = nullptr;
     ModuleBuildLog *packageBuildLog = nullptr;
     ModuleType type = ModuleType::builtin;
     std::vector<std::unique_ptr<Module>> modules;
     ze_result_t linkStatus = {};
+    std::mutex nativeBinaryPrepareLock;
+    std::vector<uint8_t> nativeBinary;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);
