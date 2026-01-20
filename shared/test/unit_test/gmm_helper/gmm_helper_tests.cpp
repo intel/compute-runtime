@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,33 @@ extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
 
 } // namespace NEO
+
+TEST(GmmHelperTest, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
+    auto hwInfo = *defaultHwInfo;
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(57u, addressWidth);
+    }
+}
 
 struct GmmHelperTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,7 +28,7 @@ set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}resource_info_impl.cpp
 )
 
 if(NOT ${DRIVER_MODEL} STREQUAL "drm")

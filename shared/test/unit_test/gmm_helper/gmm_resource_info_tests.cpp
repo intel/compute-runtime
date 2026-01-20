@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,31 +211,4 @@ TEST(GmmResourceInfo, GivenEmptyHandleWhenUsingBaseHandleAllocatorThenOpenHandle
     auto isNewHandleOpen = defaultAllocator.openHandle(handle, nullptr, defaultAllocator.getHandleSize());
     EXPECT_TRUE(isNewHandleOpen);
     defaultAllocator.destroyHandle(handle);
-}
-
-TEST(GmmResourceInfoTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    {
-        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
-        MockExecutionEnvironment executionEnvironment{&hwInfo};
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-
-        auto addressWidth = gmmHelper->getAddressWidth();
-        EXPECT_EQ(48u, addressWidth);
-    }
-    {
-        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
-        MockExecutionEnvironment executionEnvironment{&hwInfo};
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-
-        auto addressWidth = gmmHelper->getAddressWidth();
-        EXPECT_EQ(48u, addressWidth);
-    }
-    {
-        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
-        MockExecutionEnvironment executionEnvironment{&hwInfo};
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-        auto addressWidth = gmmHelper->getAddressWidth();
-        EXPECT_EQ(57u, addressWidth);
-    }
 }
