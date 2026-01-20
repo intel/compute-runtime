@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
+#include "neo_aot_platforms.h"
 
 struct ReleaseHelper1255Tests : public ReleaseHelperTests<12, 55> {
 
@@ -109,11 +110,16 @@ TEST_F(ReleaseHelper1255Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
 
-        EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
-        EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        if (ipVersion.value == AOT::DG2_G10_B0) {
+            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
+            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        } else {
+            EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
 
-        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
-        EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
+            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
+            EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
+        }
     }
 }
 
