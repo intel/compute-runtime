@@ -137,9 +137,13 @@ std::string GraphicsAllocation::getPatIndexInfoString(const ProductHelper &) con
 
 uint32_t GraphicsAllocation::getUsedPageSize() const {
     switch (this->memoryPool) {
+    case MemoryPool::localMemory:
+        if (this->size >= MemoryConstants::pageSize2M) {
+            return static_cast<uint32_t>(MemoryConstants::pageSize2M);
+        }
+        return MemoryConstants::pageSize64k;
     case MemoryPool::system64KBPages:
     case MemoryPool::system64KBPagesWith32BitGpuAddressing:
-    case MemoryPool::localMemory:
         return MemoryConstants::pageSize64k;
     default:
         return MemoryConstants::pageSize;
