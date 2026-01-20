@@ -244,7 +244,6 @@ struct WhiteBox<::L0::ModulesPackage> : public ::L0::ModulesPackage {
     }
 
     using BaseClass::device;
-    using BaseClass::linkStatus;
     using BaseClass::modules;
     using BaseClass::nativeBinary;
     using BaseClass::packageBuildLog;

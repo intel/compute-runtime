@@ -354,9 +354,7 @@ struct ModulesPackage : public Module {
 
     ze_result_t performDynamicLink(uint32_t numModules,
                                    ze_module_handle_t *phModules,
-                                   ze_module_build_log_handle_t *phLinkLog) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+                                   ze_module_build_log_handle_t *phLinkLog) override;
 
     ze_result_t inspectLinkage(ze_linkage_inspection_ext_desc_t *pInspectDesc,
                                uint32_t numModules,
@@ -429,7 +427,6 @@ struct ModulesPackage : public Module {
     ModuleBuildLog *packageBuildLog = nullptr;
     ModuleType type = ModuleType::builtin;
     std::vector<std::unique_ptr<Module>> modules;
-    ze_result_t linkStatus = {};
     std::mutex nativeBinaryPrepareLock;
     std::vector<uint8_t> nativeBinary;
 };

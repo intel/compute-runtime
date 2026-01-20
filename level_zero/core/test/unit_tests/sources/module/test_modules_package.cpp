@@ -487,7 +487,6 @@ TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturn
     ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.performDynamicLink(1, &paramModuleHandleT, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.inspectLinkage(&paramLinkeExtDesc, 1, &paramModuleHandleT, nullptr));
 }
 
@@ -1002,6 +1001,74 @@ TEST_F(ModulesPackageGetNativeBinary, GivenValidArgumentsThenReturnsNatieBinary)
     EXPECT_EQ(3, outBinary[1]);
     EXPECT_EQ(5, outBinary[2]);
     EXPECT_EQ(7, outBinary[3]);
+}
+
+using ModulesPackageDynamicLink = Test<L0::ult::DeviceFixture>;
+
+TEST_F(ModulesPackageDynamicLink, GivenEmptyModulesListTheReturnsSuccess) {
+    MockModulesPackage<> mp{this->device};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.performDynamicLink(0, nullptr, nullptr));
+}
+
+TEST_F(ModulesPackageDynamicLink, GivenNestedModulePackagesThenProcessUnitsRecursively) {
+    MockModulesPackage<> mp{this->device};
+    mp.modules.push_back(std::make_unique<MockModulesPackage<>>(this->device));
+    ze_module_handle_t moduleToLink = &mp;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.performDynamicLink(1, &moduleToLink, nullptr));
+}
+
+namespace {
+struct ModuleWithLinking : MockModule {
+    using MockModule::MockModule;
+    using ClbT = std::function<ze_result_t(uint32_t, ze_module_handle_t *, ze_module_build_log_handle_t *)>;
+
+    ModuleWithLinking(L0::Device *device, const ClbT &callback) : MockModule(device, nullptr, ModuleType::user), callback(callback) {}
+
+    ze_result_t performDynamicLink(uint32_t numModules,
+                                   ze_module_handle_t *phModules,
+                                   ze_module_build_log_handle_t *phLinkLog) override {
+
+        return callback(numModules, phModules, phLinkLog);
+    }
+    ClbT callback = [](uint32_t, ze_module_handle_t *, ze_module_build_log_handle_t *) { return ZE_RESULT_SUCCESS; };
+};
+} // namespace
+
+TEST_F(ModulesPackageDynamicLink, GivenModulePackagesThenUsesAllUnitModules) {
+    std::vector<ze_module_handle_t> inputModules;
+    auto clb = [&](uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog) {
+        inputModules.insert(inputModules.end(), phModules, phModules + numModules);
+        return ZE_RESULT_SUCCESS;
+    };
+
+    MockModulesPackage<> mp0{this->device};
+    mp0.modules.push_back(std::make_unique<ModuleWithLinking>(this->device, clb));
+    mp0.modules.push_back(std::make_unique<ModuleWithLinking>(this->device, clb));
+    mp0.modules.push_back(std::make_unique<ModuleWithLinking>(this->device, clb));
+    MockModulesPackage<> mp1{this->device};
+    mp1.modules.push_back(std::make_unique<ModuleWithLinking>(this->device, clb));
+    mp1.modules.push_back(std::make_unique<ModuleWithLinking>(this->device, clb));
+
+    MockModule mp2{this->device, nullptr, L0::ModuleType::user};
+
+    ze_module_handle_t mods[3] = {&mp0, &mp1, &mp2};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp0.performDynamicLink(3, mods, nullptr));
+    EXPECT_EQ(6U, inputModules.size());
+
+    ze_module_handle_t expectedModulesToLink[] = {mp0.modules[0]->toHandle(), mp0.modules[1]->toHandle(), mp0.modules[2]->toHandle(),
+                                                  mp1.modules[0]->toHandle(), mp1.modules[1]->toHandle(), mp2.toHandle()};
+    for (auto mod : expectedModulesToLink) {
+        EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
+    }
+
+    // also check that single module uses package's link routine
+    inputModules.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp2.performDynamicLink(3, mods, nullptr));
+    EXPECT_EQ(6U, inputModules.size());
+
+    for (auto mod : expectedModulesToLink) {
+        EXPECT_NE(inputModules.end(), std::ranges::find(inputModules, mod));
+    }
 }
 
 } // namespace ult

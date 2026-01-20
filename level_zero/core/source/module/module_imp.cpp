@@ -1492,6 +1492,13 @@ ze_result_t ModuleImp::inspectLinkage(
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
+    for (uint32_t i = 0; i < numModules; ++i) {
+        auto *mod = L0::Module::fromHandle(phModules[i]);
+        if (mod->isModulesPackage()) {
+            return static_cast<L0::ModulesPackage *>(mod)->performDynamicLink(numModules, phModules, phLinkLog);
+        }
+    }
+
     std::map<void *, std::map<void *, void *>> dependencies;
     ModuleBuildLog *moduleLinkLog = nullptr;
     const auto driverHandle = this->getDevice()->getDriverHandle();
@@ -1912,16 +1919,14 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
         this->modules.push_back(std::move(module));
     }
 
-    if (this->modules.size() < 2) {
-        this->linkStatus = ZE_RESULT_SUCCESS;
-    } else {
+    if (this->modules.size() > 1) {
         StackVec<ze_module_handle_t, 32> modulesToLink;
         std::transform(modules.begin(), modules.end(), std::back_inserter(modulesToLink),
-                       [](const auto &module) -> ze_module_handle_t { return module.get(); });
+                       [](const auto &module) -> ze_module_handle_t { return module->toHandle(); });
         ze_module_build_log_handle_t linkLog = {};
-        this->linkStatus = this->modules[0]->performDynamicLink(static_cast<uint32_t>(modulesToLink.size()),
-                                                                modulesToLink.data(),
-                                                                this->packageBuildLog ? &linkLog : nullptr);
+        this->modules[0]->performDynamicLink(static_cast<uint32_t>(modulesToLink.size()),
+                                             modulesToLink.data(),
+                                             this->packageBuildLog ? &linkLog : nullptr);
         if (linkLog) {
             UNRECOVERABLE_IF(nullptr == this->packageBuildLog);
             auto linkLogInternal = ModuleBuildLog::fromHandle(linkLog);
@@ -1930,7 +1935,7 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
         }
     }
 
-    return this->linkStatus;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ModulesPackage::getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) {
@@ -2005,6 +2010,30 @@ bool ModulesPackage::isModulesPackageInput(const ze_module_desc_t *desc) {
 
     auto binary = std::span<const uint8_t>(desc->pInputModule, desc->inputSize);
     return ModulesPackageBinary::isModulesPackageBinary(binary);
+}
+
+ze_result_t ModulesPackage::performDynamicLink(uint32_t numModules,
+                                               ze_module_handle_t *phModules,
+                                               ze_module_build_log_handle_t *phLinkLog) {
+    StackVec<ze_module_handle_t, 32> allUnits;
+    allUnits.reserve(this->modules.size() + numModules);
+    for (uint32_t i = 0; i < numModules; ++i) {
+        auto *module = L0::Module::fromHandle(phModules[i]);
+        if (false == module->isModulesPackage()) {
+            allUnits.push_back(module->toHandle());
+            continue;
+        }
+
+        auto package = static_cast<L0::ModulesPackage *>(module);
+        std::ranges::transform(package->modules, std::back_inserter(allUnits), [](const auto &mod) { return mod->toHandle(); });
+    }
+
+    if (allUnits.empty()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto mod0 = Module::fromHandle(allUnits[0]);
+    return mod0->performDynamicLink(static_cast<uint32_t>(allUnits.size()), allUnits.data(), phLinkLog);
 }
 
 } // namespace L0

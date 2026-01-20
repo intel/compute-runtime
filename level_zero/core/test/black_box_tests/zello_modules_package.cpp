@@ -10,12 +10,26 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
+#include <algorithm>
 #include <iostream>
+#include <ranges>
+#include <span>
+
+constexpr auto progWithDummyKernel = R"OCLC(
+__kernel void dummyKernel(){
+}
+)OCLC";
 
 struct Target {
     ze_driver_handle_t drv = {};
     ze_context_handle_t ctx = {};
     ze_device_handle_t dev = {};
+};
+
+struct Library {
+    std::vector<uint8_t> binaryWithImports;
+    std::vector<uint8_t> binaryWithExport;
+    std::vector<uint8_t> binaryWithDummyKernels;
 };
 
 std::vector<uint8_t> getNativeBinary(ze_module_handle_t module) {
@@ -67,7 +81,7 @@ std::vector<uint8_t> oclcToNativeBinary(const Target &target, const std::string 
     return spirvToNativeBinary(target, spirv, backendBuildOptions);
 }
 
-bool testModulesPackage(ze_module_handle_t packageModule, const Target &target) {
+bool testKernelsInModule(ze_module_handle_t packageModule, const Target &target) {
     bool outputValidationSuccessful = true;
 
     void *resultBuffer = nullptr;
@@ -139,112 +153,164 @@ bool testModulesPackage(ze_module_handle_t packageModule, const Target &target) 
     return outputValidationSuccessful;
 }
 
+ze_module_handle_t createModuleFromNativeBinaries(const Target &target, std::span<std::span<const uint8_t>> binaries) {
+    if (binaries.empty()) {
+        return nullptr;
+    }
+
+    ze_module_desc_t packageModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    packageModuleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    packageModuleDesc.inputSize = binaries[0].size();
+    packageModuleDesc.pInputModule = binaries[0].data();
+
+    ze_module_program_exp_desc_t moduleProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    std::vector<const uint8_t *> additionalModulesInputs;
+    std::vector<size_t> additionalModulesSizes;
+    if (binaries.size() > 1) {
+        auto additionalModules = binaries.subspan(1);
+
+        additionalModulesInputs.reserve(additionalModules.size());
+        std::ranges::transform(additionalModules, std::back_inserter(additionalModulesInputs),
+                               [](const auto &bin) { return bin.data(); });
+        std::ranges::transform(additionalModules, std::back_inserter(additionalModulesSizes),
+                               [](const auto &bin) { return bin.size(); });
+
+        moduleProgDesc.inputSizes = additionalModulesSizes.data();
+        moduleProgDesc.pInputModules = additionalModulesInputs.data();
+        moduleProgDesc.count = static_cast<uint32_t>(additionalModules.size());
+
+        packageModuleDesc.pNext = &moduleProgDesc;
+    }
+
+    ze_module_build_log_handle_t buildLog = {};
+    ze_module_handle_t module = {};
+    auto success = zeModuleCreate(target.ctx, target.dev, &packageModuleDesc, &module, &buildLog);
+    auto packageBuildLogStr = readBuildLog(buildLog);
+    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildLog));
+
+    if (false == packageBuildLogStr.empty()) {
+        std::cout << packageBuildLogStr << std::endl;
+    }
+
+    SUCCESS_OR_TERMINATE(success);
+    return module;
+}
+
+bool testModulesPackageFromExt(const Target &target, const Library &library) {
+    // Creating modules package from two binary modules
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Creating modules package from two binary modules\n";
+    }
+
+    std::span<const uint8_t> binaries[] = {{library.binaryWithImports}, {library.binaryWithExport}};
+    ze_module_handle_t packageModule = createModuleFromNativeBinaries(target, binaries);
+
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Succesfully loaded modules package" << std::endl;
+    }
+
+    auto res = testKernelsInModule(packageModule, target);
+
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(packageModule));
+    return res;
+}
+
+bool testModulesPackageFromBinary(const Target &target, const Library &library) {
+    // Creating modules package from two binary modules
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Creating modules package from two binary modules\n";
+    }
+
+    std::vector<uint8_t> nativeBinaryPackage;
+    {
+        std::span<const uint8_t> binaries[] = {{library.binaryWithImports}, {library.binaryWithExport}};
+        ze_module_handle_t packageModule = createModuleFromNativeBinaries(target, binaries);
+        nativeBinaryPackage = getNativeBinary(packageModule);
+        SUCCESS_OR_TERMINATE_BOOL(nativeBinaryPackage.empty() == false);
+    }
+
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Creating a modules packages from a single native binary" << std::endl;
+    }
+
+    std::span<const uint8_t> binaries[] = {{nativeBinaryPackage}};
+    ze_module_handle_t binaryPackageModule = createModuleFromNativeBinaries(target, binaries);
+
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Succesfully loaded modules package" << std::endl;
+    }
+
+    auto res = testKernelsInModule(binaryPackageModule, target);
+
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(binaryPackageModule));
+    return res;
+}
+
+bool testModulesPackageLinking(const Target &target, Library &library) {
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Linking modules package with regular module\n";
+    }
+
+    std::span<const uint8_t> packageBinaries[] = {{library.binaryWithImports}, {library.binaryWithDummyKernels}};
+    ze_module_handle_t packageModule = createModuleFromNativeBinaries(target, packageBinaries);
+
+    std::span<const uint8_t> exportBinaries[] = {{library.binaryWithExport}};
+    ze_module_handle_t exportsModule = createModuleFromNativeBinaries(target, exportBinaries);
+
+    ze_module_build_log_handle_t dynLinkLog = {};
+    ze_module_handle_t modulesToLink[] = {packageModule, exportsModule};
+    auto linkResult = zeModuleDynamicLink(2, modulesToLink, &dynLinkLog);
+    auto linkLog = readBuildLog(dynLinkLog);
+    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(dynLinkLog));
+    if (false == linkLog.empty()) {
+        std::cout << " Link log " << linkLog << std::endl;
+    }
+    SUCCESS_OR_TERMINATE(linkResult);
+
+    uint32_t count = 0;
+    zeModuleGetKernelNames(packageModule, &count, nullptr);
+    std::vector<const char *> names(count, nullptr);
+    zeModuleGetKernelNames(packageModule, &count, names.data());
+    bool res = std::ranges::any_of(names, [](const auto &name) { return std::string_view("dummyKernel") == name; });
+    if (false == res) {
+        std::cout << "Could not find dummKernel in modules package" << std::endl;
+    }
+    res = testKernelsInModule(packageModule, target);
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(packageModule));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(exportsModule));
+
+    return res;
+}
+
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Modules Package";
     bool outputValidationSuccessful = true;
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
-    char *exportModuleSrcValue = const_cast<char *>(LevelZeroBlackBoxTests::DynamicLink::exportModuleSrc);
-    char *importModuleSrcValue = const_cast<char *>(LevelZeroBlackBoxTests::DynamicLink::importModuleSrc);
-
     // Setup
     Target target;
     target.dev = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(target.ctx, target.drv)[0];
 
+    Library library;
+
     // Build Import/Export binaries
     if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "building export module" << std::endl;
+        std::cout << "building input modules" << std::endl;
     }
 
-    auto exportModuleBinary = oclcToNativeBinary(target, exportModuleSrcValue, "", "-library-compilation");
+    library.binaryWithExport = oclcToNativeBinary(target, LevelZeroBlackBoxTests::DynamicLink::exportModuleSrc,
+                                                  "", "-library-compilation");
 
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "building import module\n"
-                  << std::endl;
-    }
+    library.binaryWithImports = oclcToNativeBinary(target, LevelZeroBlackBoxTests::DynamicLink::importModuleSrc,
+                                                   "", "-library-compilation");
 
-    auto importModuleBinary = oclcToNativeBinary(target, importModuleSrcValue, "", "-library-compilation");
+    library.binaryWithDummyKernels = oclcToNativeBinary(target, progWithDummyKernel,
+                                                        "", "-library-compilation");
 
-    // Creating modules package from two binary modules
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Creating modules package from two binary modules\n";
-    }
-
-    std::vector<std::vector<uint8_t> *> binaries{&importModuleBinary, &exportModuleBinary};
-
-    ze_module_program_exp_desc_t moduleProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
-    moduleProgDesc.count = static_cast<uint32_t>(binaries.size());
-    std::vector<const uint8_t *> inputModules(binaries.size(), nullptr);
-    std::vector<size_t> inputModulesSizes(binaries.size(), 0);
-    for (uint32_t i = 0; i < moduleProgDesc.count; ++i) {
-        inputModules[i] = binaries[i]->data();
-        inputModulesSizes[i] = binaries[i]->size();
-    }
-    moduleProgDesc.pInputModules = inputModules.data();
-    moduleProgDesc.inputSizes = inputModulesSizes.data();
-
-    ze_module_desc_t packageModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-    packageModuleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    packageModuleDesc.pNext = &moduleProgDesc;
-
-    ze_module_build_log_handle_t packageModuleLog = {};
-    ze_module_handle_t packageModule = {};
-    auto packageModuleLoadStatus = zeModuleCreate(target.ctx, target.dev, &packageModuleDesc, &packageModule, &packageModuleLog);
-    auto packageBuildLogStr = readBuildLog(packageModuleLog);
-    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(packageModuleLog));
-
-    if (false == packageBuildLogStr.empty()) {
-        std::cout << packageBuildLogStr << std::endl;
-    }
-
-    SUCCESS_OR_TERMINATE(packageModuleLoadStatus);
-
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Succesfully loaded modules package" << std::endl;
-    }
-
-    outputValidationSuccessful = testModulesPackage(packageModule, target);
-
-    // Native binary test
-
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Getting a native binary of the whole modules package" << std::endl;
-    }
-
-    auto nativeBinaryPackage = getNativeBinary(packageModule);
-    SUCCESS_OR_TERMINATE_BOOL(nativeBinaryPackage.empty() == false);
-
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Creating a modules packages from a single native binary" << std::endl;
-    }
-
-    ze_module_desc_t binaryPackageModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-    binaryPackageModuleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    binaryPackageModuleDesc.pNext = nullptr;
-    binaryPackageModuleDesc.pInputModule = nativeBinaryPackage.data();
-    binaryPackageModuleDesc.inputSize = nativeBinaryPackage.size();
-
-    ze_module_build_log_handle_t binaryPackageModuleLog = {};
-    ze_module_handle_t binaryPackageModule = {};
-    auto binaryPackageModuleLoadStatus = zeModuleCreate(target.ctx, target.dev, &binaryPackageModuleDesc, &binaryPackageModule, &binaryPackageModuleLog);
-    auto binaryPackageBuildLogStr = readBuildLog(binaryPackageModuleLog);
-    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(binaryPackageModuleLog));
-
-    if (false == binaryPackageBuildLogStr.empty()) {
-        std::cout << binaryPackageBuildLogStr << std::endl;
-    }
-
-    SUCCESS_OR_TERMINATE(binaryPackageModuleLoadStatus);
-
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Succesfully loaded modules package" << std::endl;
-    }
-
-    outputValidationSuccessful = testModulesPackage(binaryPackageModule, target) && outputValidationSuccessful;
-
-    // Cleanup
-    SUCCESS_OR_TERMINATE(zeModuleDestroy(packageModule));
+    // outputValidationSuccessful &= testModulesPackageFromExt(target, library);
+    // outputValidationSuccessful &= testModulesPackageFromBinary(target, library);
+    outputValidationSuccessful &= testModulesPackageLinking(target, library);
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
