@@ -441,14 +441,12 @@ TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturn
 
     size_t paramSizeT = 0;
     uint8_t paramUint8t = 0;
-    uint32_t paramUint32t = 0;
-    const char *paramConstCharPtr = nullptr;
     ze_module_properties_t paramModuleProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
     ze_module_handle_t paramModuleHandleT = {};
     ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getNativeBinary(&paramSizeT, &paramUint8t));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getKernelNames(&paramUint32t, &paramConstCharPtr));
+
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getProperties(&paramModuleProperties));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.performDynamicLink(1, &paramModuleHandleT, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.inspectLinkage(&paramLinkeExtDesc, 1, &paramModuleHandleT, nullptr));
@@ -467,5 +465,83 @@ TEST(ModulesPackageUnrechableInternalApis, WhenUnreachableApiIsCalledThenRaiseUn
     EXPECT_ANY_THROW(mp.populateZebinExtendedArgsMetadata());
     EXPECT_ANY_THROW(mp.generateDefaultExtendedArgsMetadata());
 }
+
+TEST_F(ModulesPackageForwarding, WhenGetKernelsNamesIsCalledThenAccumulatesFromEachModule) {
+    MockModulesPackage<> mp{this->device};
+
+    uint32_t count = 0;
+    const char *names[16] = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, nullptr));
+    EXPECT_EQ(0U, count);
+
+    count = 16;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, nullptr));
+    EXPECT_EQ(0U, count);
+    EXPECT_EQ(nullptr, names[0]);
+
+    struct ModuleWithKernelNames : MockModule {
+        using MockModule::MockModule;
+        ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override {
+            if (*pCount == 0) {
+                *pCount = static_cast<uint32_t>(kernelNames.size());
+            } else {
+                *pCount = std::min(*pCount, static_cast<uint32_t>(kernelNames.size()));
+                for (uint32_t i = 0; i < *pCount; ++i) {
+                    pNames[i] = kernelNames[i].c_str();
+                }
+            }
+            return ZE_RESULT_SUCCESS;
+        }
+
+        std::vector<std::string> kernelNames;
+    };
+
+    std::vector<std::string> kernelNames = {"1", "2", "3", "4", "5", "6", "7", "8"};
+
+    std::unique_ptr<ModuleWithKernelNames> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithKernelNames>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithKernelNames>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithKernelNames>(this->device, nullptr, L0::ModuleType::user);
+
+    moduleUnits[0]->kernelNames.push_back(kernelNames[0]);
+    moduleUnits[0]->kernelNames.push_back(kernelNames[1]);
+    moduleUnits[0]->kernelNames.push_back(kernelNames[2]);
+    moduleUnits[1]->kernelNames.push_back(kernelNames[3]);
+
+    for (auto &m : moduleUnits) {
+        mp.modules.push_back(std::move(m));
+    }
+
+    count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, nullptr));
+    EXPECT_EQ(4U, count);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, names));
+    EXPECT_EQ(4U, count);
+    for (uint32_t i = 0; i < count; ++i) {
+        EXPECT_STREQ(kernelNames[i].c_str(), names[i]) << i << kernelNames[i] << " != " << names[i];
+        names[i] = nullptr;
+    }
+    EXPECT_EQ(nullptr, names[count]);
+
+    count = 16;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, names));
+    EXPECT_EQ(4U, count);
+    for (uint32_t i = 0; i < count; ++i) {
+        EXPECT_STREQ(kernelNames[i].c_str(), names[i]) << i << kernelNames[i] << " != " << names[i];
+        names[i] = nullptr;
+    }
+    EXPECT_EQ(nullptr, names[count]);
+
+    count = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getKernelNames(&count, names));
+    EXPECT_EQ(2U, count);
+    for (uint32_t i = 0; i < count; ++i) {
+        EXPECT_STREQ(kernelNames[i].c_str(), names[i]) << i << kernelNames[i] << " != " << names[i];
+        names[i] = nullptr;
+    }
+    EXPECT_EQ(nullptr, names[count]);
+}
+
 } // namespace ult
 } // namespace L0

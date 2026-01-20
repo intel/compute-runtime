@@ -262,6 +262,17 @@ struct ModulesPackage : public Module {
         }
     };
 
+    struct ReturnsFailure {
+        static bool isTrue(ze_result_t returnValue) {
+            return ZE_RESULT_SUCCESS != returnValue;
+        }
+
+        template <typename T>
+        constexpr static T defaultResult() {
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
     struct ReturnsNotNull {
         static bool isTrue(const void *returnValue) {
             return nullptr != returnValue;
@@ -310,7 +321,25 @@ struct ModulesPackage : public Module {
     }
 
     ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        if (0 == *pCount) { // accumulate sizes
+            return allModulesUnless<ReturnsFailure>([&](Module &mod) {
+                uint32_t count = 0;
+                auto ret = mod.getKernelNames(&count, nullptr);
+                *pCount += count;
+                return ret;
+            });
+        } else { // accumulate names
+            uint32_t spaceLeft = *pCount;
+            *pCount = 0;
+            return allModulesUnless<ReturnsFailure>([&](Module &mod) {
+                uint32_t count = spaceLeft;
+                auto ret = mod.getKernelNames(&count, pNames + *pCount);
+                count = std::min(spaceLeft, count);
+                spaceLeft = spaceLeft - count;
+                *pCount += count;
+                return ret;
+            });
+        }
     }
 
     ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override {
@@ -374,6 +403,11 @@ struct ModulesPackage : public Module {
             }
         }
         return res;
+    }
+
+    template <typename ValidatorT, typename CallableT, typename ReturnT = std::invoke_result_t<CallableT, ModuleImp &>>
+    auto allModulesUnless(const CallableT &callable) const -> ReturnT {
+        return anyModuleThat<ValidatorT, CallableT, ReturnT>(callable);
     }
 
     MOCKABLE_VIRTUAL std::unique_ptr<Module> createModuleUnit(Device *device, ModuleBuildLog *buildLog, ModuleType type) {
