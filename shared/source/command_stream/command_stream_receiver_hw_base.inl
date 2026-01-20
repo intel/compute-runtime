@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1397,14 +1397,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
     }
     return 0u;
 }
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr) {
-}
-
-template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const {
-    return 0u;
-}
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programExceptions(LinearStream &csr, Device &device) {
@@ -2486,5 +2478,26 @@ inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint
         }
     }
 }
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags) {
+    this->programEngineModeEpliogue(csr, dispatchFlags);
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const {
+    return this->getCmdSizeForEngineMode(dispatchFlags);
+}
+
+template <typename GfxFamily>
+GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
+    return nullptr;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { return 0; }
 
 } // namespace NEO

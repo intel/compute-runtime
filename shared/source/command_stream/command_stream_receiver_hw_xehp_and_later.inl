@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,6 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return is64bit; }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {}
-
-template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     if (this->globalStatelessHeapAllocation == nullptr) {
@@ -40,9 +37,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { return 0; }
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
     if (csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
         PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekRootDeviceEnvironment());
@@ -55,16 +49,6 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
     scratchSpaceController = std::make_unique<ScratchSpaceControllerXeHPAndLater>(this->rootDeviceIndex, executionEnvironment, *internalAllocationStorage.get());
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags) {
-    this->programEngineModeEpliogue(csr, dispatchFlags);
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const {
-    return this->getCmdSizeForEngineMode(dispatchFlags);
 }
 
 template <typename GfxFamily>
@@ -105,11 +89,6 @@ bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlu
     return ImplicitFlushSettings<GfxFamily>::getSettingForGpuIdle()
                ? getOSInterface()->gpuIdleImplicitFlush
                : false;
-}
-
-template <typename GfxFamily>
-GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
-    return nullptr;
 }
 
 template <typename GfxFamily>

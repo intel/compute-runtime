@@ -13,6 +13,7 @@
 using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_dg2_and_later.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_from_xe_hpc_to_xe3.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
@@ -36,26 +37,6 @@ template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
-    if (!this->isEnginePrologueSent) {
-        if (getGlobalFenceAllocation()) {
-            EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, getGlobalFenceAllocation());
-        }
-        this->isEnginePrologueSent = true;
-    }
-}
-
-template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
-    if (!this->isEnginePrologueSent) {
-        if (getGlobalFenceAllocation()) {
-            return EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
-        }
-    }
-    return 0u;
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_from_gen12lp_to_xe_hpg.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -55,16 +56,6 @@ void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags) {
-    this->programEngineModeEpliogue(csr, dispatchFlags);
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const {
-    return this->getCmdSizeForEngineMode(dispatchFlags);
-}
-
-template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
     return false;
 }
@@ -83,11 +74,6 @@ bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsNewResourceImplici
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlush() const {
     return false;
-}
-
-template <typename GfxFamily>
-GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
-    return nullptr;
 }
 
 template <typename GfxFamily>
@@ -216,15 +202,6 @@ bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaA
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getDummyBlitSize(const EncodeDummyBlitWaArgs &waArgs) {
     return 0u;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {
-}
-
-template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForL3Config() const {
-    return 0;
 }
 
 template <>

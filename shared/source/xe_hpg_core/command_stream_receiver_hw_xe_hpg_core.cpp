@@ -12,6 +12,7 @@
 using Family = NEO::XeHpgCoreFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_dg2_and_later.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_from_gen12lp_to_xe_hpg.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
@@ -33,11 +34,6 @@ template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
-}
-
-template <>
-MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired) const {
-    return MemoryCompressionState::notApplicable;
 }
 
 template <>
