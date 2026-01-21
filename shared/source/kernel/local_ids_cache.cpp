@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,9 +19,9 @@
 
 namespace NEO {
 
-LocalIdsCache::LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages)
-    : wgDimOrder(wgDimOrder), localIdsSizePerThread(getPerThreadSizeLocalIDs(static_cast<uint32_t>(simdSize), static_cast<uint32_t>(grfSize))),
-      grfCount(grfCount), grfSize(grfSize), simdSize(simdSize), usesOnlyImages(usesOnlyImages) {
+LocalIdsCache::LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, uint8_t numChannels, bool usesOnlyImages)
+    : wgDimOrder(wgDimOrder), localIdsSizePerThread(getPerThreadSizeLocalIDs(static_cast<uint32_t>(simdSize), static_cast<uint32_t>(grfSize), static_cast<uint32_t>(numChannels))),
+      grfCount(grfCount), grfSize(grfSize), simdSize(simdSize), numChannels(numChannels), usesOnlyImages(usesOnlyImages) {
     UNRECOVERABLE_IF(cacheSize == 0)
     cache.resize(cacheSize);
 }
@@ -82,7 +82,7 @@ void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_
         entry.localIdsSizeAllocated = entry.localIdsSize;
     }
     NEO::generateLocalIDs(entry.localIdsData, static_cast<uint16_t>(simdSize),
-                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize, grfCount, rootDeviceEnvironment);
+                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize, grfCount, rootDeviceEnvironment, numChannels);
 }
 
 } // namespace NEO

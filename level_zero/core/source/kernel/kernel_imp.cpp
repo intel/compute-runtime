@@ -539,8 +539,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         privateState.reservePerThreadDataForWholeThreadGroup(perThreadDataSizeForWholeThreadGroupNeeded);
 
         if (numChannels > 0) {
-            UNRECOVERABLE_IF(3 != numChannels);
-
             std::array<uint8_t, 3> walkOrder{0, 1, 2};
             if (kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
                 walkOrder = {
@@ -556,7 +554,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                          static_cast<uint16_t>(groupSizeY),
                                          static_cast<uint16_t>(groupSizeZ)}},
                 walkOrder,
-                false, grfSize, grfCount, rootDeviceEnvironment);
+                false, grfSize, grfCount, rootDeviceEnvironment, numChannels);
         }
 
         this->privateState.perThreadDataSize = this->privateState.perThreadDataSizeForWholeThreadGroup / this->privateState.numThreadsPerThreadGroup;

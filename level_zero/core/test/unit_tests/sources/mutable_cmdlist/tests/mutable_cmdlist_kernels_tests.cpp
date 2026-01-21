@@ -423,6 +423,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     size_t totalPayloadConsumedSize = kernel2CrossThreadInitSize + mutableCommandList->maxPerThreadDataSize;
+    totalPayloadConsumedSize += kernel2->getPerThreadDataSizeForWholeThreadGroup();
     totalPayloadConsumedSize = alignUp(totalPayloadConsumedSize, mutableCommandList->iohAlignment);
 
     void *usm1 = allocateUsm(4096);
@@ -452,7 +453,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    EXPECT_EQ(kernel2CrossThreadInitSize, mutation.kernelGroup->getMaxAppendIndirectHeapSize());
+    EXPECT_EQ(kernel2CrossThreadInitSize + kernel2->getPerThreadDataSizeForWholeThreadGroup(), mutation.kernelGroup->getMaxAppendIndirectHeapSize());
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -90,6 +90,7 @@ std::unique_ptr<ModuleImmutableDataFixture::MockImmutableData> MutableCommandLis
     nextIsaPtr = alignUp(nextIsaPtr, 0x1000);
 
     immData->kernelDescriptor->kernelAttributes.crossThreadDataSize = crossThreadInitSize;
+    immData->kernelDescriptor->kernelAttributes.numLocalIdChannels = 3;
     immData->crossThreadDataSize = crossThreadInitSize;
     immData->crossThreadDataTemplate.reset(new uint8_t[crossThreadInitSize]);
     immData->kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress.offset = 0;

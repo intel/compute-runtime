@@ -776,7 +776,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
         uint32_t simd = this->kernel->mockKernel->getKernelInfo().getMaxSimdSize();
         // only X is present
-        auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
+        auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf, kd.kernelAttributes.numLocalIdChannels);
         sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
         size_t perThreadTotalDataSize = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * sizePerThreadData;
 
@@ -857,9 +857,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
         kd.kernelAttributes.localId[1] = 0;
         kd.kernelAttributes.localId[2] = 0;
         kd.kernelAttributes.numLocalIdChannels = 1;
-
         auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(cmdQ->heaplessModeEnabled);
 
+        kernel->mockKernel->initializeLocalIdsCache();
         kernel->mockKernel->setCrossThreadData(crossThreadDataTwoGrf, inlineDataSize * 2);
 
         auto memoryManager = device->getUltCommandStreamReceiver<FamilyType>().getMemoryManager();
@@ -895,7 +895,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
         uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
         // only X is present
-        uint32_t localIdSizePerThread = getPerThreadSizeLocalIDs(simd, sizeGrf);
+        uint32_t localIdSizePerThread = getPerThreadSizeLocalIDs(simd, sizeGrf, kd.kernelAttributes.numLocalIdChannels);
         localIdSizePerThread = std::max(localIdSizePerThread, sizeGrf);
         auto sizePerThreadData = getThreadsPerWG(simd, lwsX) * localIdSizePerThread;
 

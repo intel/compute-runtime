@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,10 +88,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mockKernelImmData2->crossThreadDataSize = kernel2CrossThreadInitSize;
     mockKernelImmData2->crossThreadDataTemplate.reset(new uint8_t[kernel2CrossThreadInitSize]);
     kernel2->privateState.crossThreadData.resize(kernel2CrossThreadInitSize, 0x0);
-
+    auto perThreadDataSizeForTG = kernel2->getPerThreadDataSizeForWholeThreadGroup();
     createMutableKernelGroup();
 
-    EXPECT_EQ(kernel2CrossThreadInitSize, mockMutableKernelGroup->getMaxAppendIndirectHeapSize());
+    EXPECT_EQ(kernel2CrossThreadInitSize + perThreadDataSizeForTG, mockMutableKernelGroup->getMaxAppendIndirectHeapSize());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -116,9 +116,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mutableKernels[1]->setKernelDispatch(kernelDispatch);
     auto expectedCrossThreadSize = crossThreadDataSize - mutableKernels[1]->inlineDataSize;
     kernelDispatch->kernelData = kernel2Data;
-    kernelDispatch->offsets.perThreadOffset = expectedCrossThreadSize;
-    kernel2->privateState.perThreadDataSizeForWholeThreadGroup = 0x40;
-    kernel2->privateState.perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(kernel2->privateState.perThreadDataSizeForWholeThreadGroup, 32));
+    kernel2->privateState.reservePerThreadDataForWholeThreadGroup(0x40);
 
     mutableKernels[1]->createHostViewIndirectData(true);
     auto actualCrossThreadDataSize = mutableKernels[1]->getHostViewIndirectData()->getCrossThreadDataSize();
@@ -149,8 +147,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto expectedCrossThreadSize = crossThreadDataSize - mutableKernels[1]->inlineDataSize;
     kernelDispatch->kernelData = kernel2Data;
     kernelDispatch->offsets.perThreadOffset = expectedCrossThreadSize;
-    kernel2->privateState.perThreadDataSizeForWholeThreadGroup = 0x40;
-    kernel2->privateState.perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(kernel2->privateState.perThreadDataSizeForWholeThreadGroup, 32));
+    kernel2->privateState.reservePerThreadDataForWholeThreadGroup(0x40);
 
     auto srcPtr = kernel2->privateState.crossThreadData.data();
     memset(srcPtr, 0xFF, mutableKernels[1]->inlineDataSize);

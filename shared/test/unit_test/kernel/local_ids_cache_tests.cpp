@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class MockLocalIdsCache : public NEO::LocalIdsCache {
     using Base::Base;
     using Base::cache;
     MockLocalIdsCache(size_t cacheSize) : MockLocalIdsCache(cacheSize, 32u){};
-    MockLocalIdsCache(size_t cacheSize, uint8_t simd) : Base(cacheSize, {0, 1, 2}, GrfConfig::defaultGrfNumber, simd, 32, false){};
+    MockLocalIdsCache(size_t cacheSize, uint8_t simd) : Base(cacheSize, {0, 1, 2}, GrfConfig::defaultGrfNumber, simd, 32, 3, false){};
 };
 struct LocalIdsCacheFixture {
     void setUp() {

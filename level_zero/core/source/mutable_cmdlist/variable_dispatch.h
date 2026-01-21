@@ -100,7 +100,7 @@ struct VariableDispatch {
     size_t regionBarrierOffset = undefined<size_t>;
 
     const uint32_t grfSize;
-    const uint32_t numChannels = 3U;
+    const uint32_t numChannels;
     uint32_t walkOrder = 0U;
     uint32_t numThreadsPerThreadGroup;
     uint32_t threadExecutionMask;

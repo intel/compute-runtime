@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 2;
-
+    kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
     EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
 
     implicitArgs.v0.simdWidth = 1;

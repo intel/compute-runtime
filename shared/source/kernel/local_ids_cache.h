@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class LocalIdsCache : NEO::NonCopyableAndNonMovableClass {
 
     LocalIdsCache() = delete;
 
-    LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages = false);
+    LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, uint8_t numChannels, bool usesOnlyImages);
     ~LocalIdsCache();
 
     void setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -46,6 +46,7 @@ class LocalIdsCache : NEO::NonCopyableAndNonMovableClass {
     const uint32_t grfCount;
     const uint8_t grfSize;
     const uint8_t simdSize;
+    const uint8_t numChannels;
     const bool usesOnlyImages;
 };
 

@@ -2147,7 +2147,7 @@ void Kernel::initializeLocalIdsCache() {
     auto simdSize = getDescriptor().kernelAttributes.simdSize;
     auto grfCount = getDescriptor().kernelAttributes.numGrfRequired;
     auto grfSize = static_cast<uint8_t>(getDevice().getHardwareInfo().capabilityTable.grfSize);
-    localIdsCache = std::make_unique<LocalIdsCache>(4, wgDimOrder, grfCount, simdSize, grfSize, usingImagesOnly);
+    localIdsCache = std::make_unique<LocalIdsCache>(4, wgDimOrder, grfCount, simdSize, grfSize, kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels, usingImagesOnly);
 }
 
 void Kernel::setLocalIdsForGroup(const Vec3<uint16_t> &groupSize, void *destination) const {

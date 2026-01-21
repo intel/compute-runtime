@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/ptr_math.h"
 
@@ -12,9 +13,11 @@
 
 namespace NEO {
 
-template <typename Vec, int simd>
-inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
-                                 const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) {
+template <typename Vec, int simd, uint32_t activeChannels>
+inline void generateLocalIDsSimdImpl(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
+                                     const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) {
+    static_assert(activeChannels >= 1 && activeChannels <= 3, "activeChannels must be 1, 2, or 3");
+
     const int passes = simd / Vec::numChannels;
     int pass = 0;
 
@@ -39,31 +42,19 @@ inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWo
     do {
         xWrap = vSimdX >= vLwsX;
 
-        // xWrap ? lwsX : 0;
-        auto deltaX = blend(vLwsX, zero, xWrap);
+        // vSimdX -= xWrap ? lwsX : 0;
+        vSimdX -= blend(vLwsX, zero, xWrap);
 
-        // x -= xWrap ? lwsX : 0;
-        vSimdX -= deltaX;
+        if constexpr (activeChannels >= 2u) {
+            vSimdY += blend(one, zero, xWrap);
+            yWrap = vSimdY >= vLwsY;
+            vSimdY -= blend(vLwsY, zero, yWrap);
+        }
 
-        // xWrap ? 1 : 0;
-        auto deltaY = blend(one, zero, xWrap);
+        if constexpr (activeChannels == 3u) {
+            vSimdZ += blend(one, zero, yWrap);
+        }
 
-        // y += xWrap ? 1 : 0;
-        vSimdY += deltaY;
-
-        yWrap = vSimdY >= vLwsY;
-
-        // yWrap ? lwsY : 0;
-        auto deltaY2 = blend(vLwsY, zero, yWrap);
-
-        // y -= yWrap ? lwsY : 0;
-        vSimdY -= deltaY2;
-
-        // yWrap ? 1 : 0;
-        auto deltaZ = blend(one, zero, yWrap);
-
-        // z += yWrap ? 1 : 0;
-        vSimdZ += deltaZ;
     } while (xWrap || yWrap);
 
     // Loop for each of the passes
@@ -77,77 +68,76 @@ inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWo
         // Convert the initial SIMD lanes to localIDs
         do {
             xWrap = x >= vLwsX;
+            x -= blend(vLwsX, zero, xWrap);
 
-            // xWrap ? lwsX : 0;
-            auto deltaX = blend(vLwsX, zero, xWrap);
+            if constexpr (activeChannels >= 2u) {
+                y += blend(one, zero, xWrap);
 
-            // x -= xWrap ? lwsX : 0;
-            x -= deltaX;
+                yWrap = y >= vLwsY;
+                y -= blend(vLwsY, zero, yWrap);
+            }
 
-            // xWrap ? 1 : 0;
-            auto deltaY = blend(one, zero, xWrap);
-
-            // y += xWrap ? 1 : 0;
-            y += deltaY;
-
-            yWrap = y >= vLwsY;
-
-            // yWrap ? lwsY : 0;
-            auto deltaY2 = blend(vLwsY, zero, yWrap);
-
-            // y -= yWrap ? lwsY : 0;
-            y -= deltaY2;
-
-            // yWrap ? 1 : 0;
-            auto deltaZ = blend(one, zero, yWrap);
-
-            // z += yWrap ? 1 : 0;
-            z += deltaZ;
+            if constexpr (activeChannels == 3u) {
+                z += blend(one, zero, yWrap);
+            }
         } while (xWrap);
 
         for (size_t i = 0; i < threadsPerWorkGroup; ++i) {
             x.store(ptrOffset(buffer, xDimNum * threadSkipSize));
-            y.store(ptrOffset(buffer, yDimNum * threadSkipSize));
-            z.store(ptrOffset(buffer, zDimNum * threadSkipSize));
+            if constexpr (activeChannels >= 2u) {
+                y.store(ptrOffset(buffer, yDimNum * threadSkipSize));
+            }
+            if constexpr (activeChannels == 3u) {
+                z.store(ptrOffset(buffer, zDimNum * threadSkipSize));
+            }
 
             x += vSimdX;
-            y += vSimdY;
-            z += vSimdZ;
+            if constexpr (activeChannels >= 2u) {
+                y += vSimdY;
+            }
+            if constexpr (activeChannels == 3u) {
+                z += vSimdZ;
+            }
 
             xWrap = x >= vLwsX;
+            x -= blend(vLwsX, zero, xWrap);
 
-            // xWrap ? lwsX : 0;
-            auto deltaX = blend(vLwsX, zero, xWrap);
+            if constexpr (activeChannels >= 2u) {
+                y += blend(one, zero, xWrap);
 
-            // x -= xWrap ? lwsX : 0;
-            x -= deltaX;
+                yWrap = y >= vLwsY;
+                y -= blend(vLwsY, zero, yWrap);
+            }
 
-            // xWrap ? 1 : 0;
-            auto deltaY = blend(one, zero, xWrap);
+            if constexpr (activeChannels == 3u) {
+                z += blend(one, zero, yWrap);
+            }
 
-            // y += xWrap ? 1 : 0;
-            y += deltaY;
-
-            yWrap = y >= vLwsY;
-
-            // yWrap ? lwsY : 0;
-            auto deltaY2 = blend(vLwsY, zero, yWrap);
-
-            // y -= yWrap ? lwsY : 0;
-            y -= deltaY2;
-
-            // yWrap ? 1 : 0;
-            auto deltaZ = blend(one, zero, yWrap);
-
-            // z += yWrap ? 1 : 0;
-            z += deltaZ;
-
-            buffer = ptrOffset(buffer, 3 * threadSkipSize);
+            buffer = ptrOffset(buffer, activeChannels * threadSkipSize);
         }
 
         // Adjust buffer for next pass
         b = ptrOffset(b, Vec::numChannels * sizeof(uint16_t));
 
     } while (++pass < passes);
+}
+
+template <typename Vec, int simd>
+inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
+                                 const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize, uint8_t activeChannels) {
+    switch (activeChannels) {
+    default:
+        UNRECOVERABLE_IF(true);
+        [[fallthrough]];
+    case 3:
+        generateLocalIDsSimdImpl<Vec, simd, 3u>(b, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, chooseMaxRowSize);
+        break;
+    case 2:
+        generateLocalIDsSimdImpl<Vec, simd, 2u>(b, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, chooseMaxRowSize);
+        break;
+    case 1:
+        generateLocalIDsSimdImpl<Vec, simd, 1u>(b, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, chooseMaxRowSize);
+        break;
+    }
 }
 } // namespace NEO

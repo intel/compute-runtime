@@ -38,7 +38,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
       indirectData(std::move(mutableIndirectData)), mutableCommandWalker(mutableCommandWalker),
       groupSizeVar(groupSizeVariable), groupCountVar(groupCountVariable), globalOffsetVar(globalOffsetVariable), lastSlmArgumentVar(lastSlmArgumentVariable),
       perThreadDataSize(dispatchParams.perThreadSize),
-      grfSize(grfSize), walkOrder(dispatchParams.walkOrder), numThreadsPerThreadGroup(dispatchParams.numThreadsPerThreadGroup),
+      grfSize(grfSize), numChannels(kernelDispatch->kernelData->numLocalIdChannels), walkOrder(dispatchParams.walkOrder), numThreadsPerThreadGroup(dispatchParams.numThreadsPerThreadGroup),
       threadExecutionMask(dispatchParams.threadExecutionMask), maxCooperativeGroupCount(dispatchParams.maxCooperativeGroupCount),
       requiredPartitionDim(dispatchParams.requiredPartitionDim), requiredDispatchWalkOrder(dispatchParams.requiredDispatchWalkOrder),
       partitionCount(partitionCount), cmdListEngineType(cmdListEngineType),
@@ -371,7 +371,7 @@ void VariableDispatch::generateLocalIds(size_t localWorkSize, const NEO::RootDev
                                 static_cast<uint16_t>(groupSize[1]),
                                 static_cast<uint16_t>(groupSize[2])},
         walkOrder,
-        false, grfSize, grfCount, rootDeviceEnvironment);
+        false, grfSize, grfCount, rootDeviceEnvironment, numChannels);
 }
 
 Variable *VariableDispatch::getGroupSizeVar() const { return groupSizeVar; }

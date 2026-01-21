@@ -107,6 +107,7 @@ class MockKernel : public Kernel {
     using Kernel::graphicsAllocationTypeUseSystemMemory;
     using Kernel::imageFromBufferArgsCount;
     using Kernel::implicitArgsVersion;
+    using Kernel::initializeLocalIdsCache;
     using Kernel::isBuiltIn;
     using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;

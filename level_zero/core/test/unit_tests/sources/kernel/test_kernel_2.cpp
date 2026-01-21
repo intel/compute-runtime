@@ -1179,7 +1179,8 @@ TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenKernelSpecif
                                  static_cast<uint16_t>(12),
                                  static_cast<uint16_t>(1)}},
         walkOrder,
-        false, grfSize, GrfConfig::defaultGrfNumber, device->getNEODevice()->getRootDeviceEnvironment());
+        false, grfSize, GrfConfig::defaultGrfNumber, device->getNEODevice()->getRootDeviceEnvironment(),
+        kernelInfo.kernelDescriptor->kernelAttributes.numLocalIdChannels);
 
     EXPECT_EQ(0, memcmp(testPerThreadDataBuffer, kernel.KernelImp::getPerThreadData(), perThreadSizeNeeded));
 

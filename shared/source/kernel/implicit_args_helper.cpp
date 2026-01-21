@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,7 +103,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
                                      static_cast<uint16_t>(lws[1]),
                                      static_cast<uint16_t>(lws[2])}},
             dimensionOrder,
-            false, grfSize, grfCount, rootDeviceEnvironment);
+            false, grfSize, grfCount, rootDeviceEnvironment, 3);
 
         auto sizeForLocalIdsProgramming = totalSizeToProgram - implicitArgs.getAlignedSize();
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
