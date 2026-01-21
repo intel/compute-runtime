@@ -64,3 +64,6 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocato
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
+NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
+}
