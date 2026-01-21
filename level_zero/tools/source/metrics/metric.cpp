@@ -693,9 +693,17 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     if (pCalculationDesc->metricScopesCount == 0) {
         METRICS_LOG_ERR("%s", "Must define at least one metric scope");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    } else if (!isImplicitScalingCapable() && (pCalculationDesc->metricScopesCount > 1)) {
-        METRICS_LOG_ERR("%s", "Sub-device can only calculate single metric scope");
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else if (!isImplicitScalingCapable()) {
+        if (pCalculationDesc->metricScopesCount > 1) {
+            METRICS_LOG_ERR("%s", "Sub-device can only calculate single metric scope");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        auto metricScope = static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[0]));
+        if (metricScope->getId() != 0) {
+            METRICS_LOG_ERR("Sub-device can only use scope ID 0, got scope ID %d", metricScope->getId());
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
     }
 
     // Remove duplicates
