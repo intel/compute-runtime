@@ -286,7 +286,8 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
 
-    if (productHelper.is2MBLocalMemAlignmentEnabled()) {
+    if (auto forceEnable = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
+        (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
         auto &poolAllocator = device->getNEODevice()->getCommandBufferPoolAllocator();
         buffers[BufferAllocation::first] = poolAllocator.allocateCommandBuffer(alignedSize);
         buffers[BufferAllocation::second] = poolAllocator.allocateCommandBuffer(alignedSize);

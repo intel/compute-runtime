@@ -706,7 +706,9 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
 
     auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+    auto enableCommandBufferPoolAllocator = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
+    bool usePoolAllocator = (enableCommandBufferPoolAllocator == 1) ||
+                            (enableCommandBufferPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
 
     uint32_t cmdBufferAllocationsFound = 0;
     for (auto &allocationProperties : memoryManager->storedAllocationProperties) {
@@ -739,7 +741,9 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
 
     auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+    auto enableCommandBufferPoolAllocator = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
+    bool usePoolAllocator = (enableCommandBufferPoolAllocator == 1) ||
+                            (enableCommandBufferPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
 
     commandQueue->destroy();
 
@@ -751,9 +755,8 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
 }
 
 TEST_F(CommandQueueInitTests, givenPoolAllocatorDisabledWhenInitializingThenBuffersAreRegularAllocations) {
-    auto mockProductHelper = new MockProductHelper;
-    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
 
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -777,9 +780,8 @@ TEST_F(CommandQueueInitTests, givenPoolAllocatorDisabledWhenInitializingThenBuff
 }
 
 TEST_F(CommandQueueInitTests, givenPoolAllocatorEnabledWhenInitializingThenBuffersAreViewsFromPool) {
-    auto mockProductHelper = new MockProductHelper;
-    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
