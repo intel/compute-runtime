@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,18 +18,18 @@
 extern "C" {
 #endif
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexKernelGetArgumentSize(
     ze_kernel_handle_t hKernel,
     uint32_t argIndex,
     uint32_t *pArgSize);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexKernelGetArgumentType(
     ze_kernel_handle_t hKernel,
     uint32_t argIndex,

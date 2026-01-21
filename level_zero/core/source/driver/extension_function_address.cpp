@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/api/internal/l0_internal.h"
 #include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"
 #include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
@@ -28,17 +29,25 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
         }                                 \
     }
 
+#define RETURN_L0_FUNC_PTR_IF_EXIST(name)     \
+    {                                         \
+        if (functionName == #name) {          \
+            void *ret = ((void *)(L0::name)); \
+            return ret;                       \
+        }                                     \
+    }
+
     RETURN_FUNC_PTR_IF_EXIST(zexDriverImportExternalPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverReleaseImportedPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
 
     RETURN_FUNC_PTR_IF_EXIST(zeDeviceGetPriorityLevels);
 
-    RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
-    RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
-    RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentType);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexKernelGetArgumentType);
 
-    RETURN_FUNC_PTR_IF_EXIST(zeIntelKernelGetBinaryExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelKernelGetBinaryExp);
 
     RETURN_FUNC_PTR_IF_EXIST(zexMemGetIpcHandles);
     RETURN_FUNC_PTR_IF_EXIST(zexMemOpenIpcHandles);
@@ -139,6 +148,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasSetConfigExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
+#undef RETURN_L0_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);
 }

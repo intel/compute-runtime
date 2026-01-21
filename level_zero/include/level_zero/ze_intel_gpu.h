@@ -342,7 +342,7 @@ typedef enum _ze_intel_kernel_get_binary_exp_version_t {
 
 } ze_intel_kernel_get_binary_exp_version_t;
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, ///< [in] Kernel handle
     size_t *pSize,              ///< [in, out] pointer to variable with size of GEN ISA binary
