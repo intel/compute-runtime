@@ -170,7 +170,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
 
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -195,7 +195,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     });
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -234,7 +234,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return -2;             // Fail with a different negative value
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 0u, 0);
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0);
 
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
@@ -274,7 +274,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return 0; // Return 0 (valid fd)
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 0u, 0);
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;

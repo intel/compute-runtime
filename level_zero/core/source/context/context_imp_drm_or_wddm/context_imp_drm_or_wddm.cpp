@@ -102,7 +102,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
         bool pidfdSuccess = false;
         bool socketFallbackSuccess = false;
 
-        if (settings.useOpaqueHandle) {
+        if (settings.useOpaqueHandle && processId != 0) {
             // Try pidfd approach first (unless forced to use socket fallback)
             if (!NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
                 pid_t exporterPid = static_cast<pid_t>(processId);
