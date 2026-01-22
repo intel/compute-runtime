@@ -264,6 +264,5 @@ class DirectSubmissionHw {
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
     bool notifyKmdDuringMonitorFence = false;
-    bool isSwitchOnUnsuccessful = false;
 };
 } // namespace NEO

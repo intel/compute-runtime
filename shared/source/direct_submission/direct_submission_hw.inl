@@ -82,18 +82,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 
-    this->isSwitchOnUnsuccessful = false;
-    if (!this->osContext.isExclusivelyHpContext()) {
-        if (this->osContext.isHighPriority()) {
-            this->isSwitchOnUnsuccessful = true;
-        } else if (this->osContext.hasPriorityLevel()) {
-            this->isSwitchOnUnsuccessful = this->osContext.getPriorityLevel() == gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getHighestQueuePriorityLevel());
-        }
-    }
-    if (debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get() != -1) {
-        this->isSwitchOnUnsuccessful = !!debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get();
-    }
-
     currentQueueWorkCount = getInitialSemaphoreValue();
 }
 
@@ -303,10 +291,16 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
     if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingSchedulerSection(value);
     } else {
+        bool switchOnUnsuccessful = false;
+
+        if (debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get() != -1) {
+            switchOnUnsuccessful = !!debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get();
+        }
+
         EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                               semaphoreGpuVa,
                                                               value,
-                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, nullptr);
+                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, switchOnUnsuccessful, nullptr);
     }
 
     if (miMemFenceRequired) {
