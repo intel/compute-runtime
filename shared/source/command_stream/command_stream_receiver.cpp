@@ -775,15 +775,6 @@ HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {
     return *hostFunctionStreamer.get();
 }
 
-void CommandStreamReceiver::initializeTagAllocationOnTbx() {
-    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-
-    // initialize full page tables for the first time
-    if (tagAllocation->isTbxWritable(allBanks)) {
-        this->writeMemory(*tagAllocation, false, 0, 0);
-    }
-}
-
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainTagAllocationDownloadLock() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->tagAllocationDownloadMutex);
 }
@@ -957,10 +948,6 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
-
-    if (isTbxMode()) {
-        initializeTagAllocationOnTbx();
-    }
 
     return true;
 }

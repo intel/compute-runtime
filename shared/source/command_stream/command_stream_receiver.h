@@ -591,7 +591,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         this->hostFunctionWorker = hostFunctionWorker;
     }
 
-    void initializeTagAllocationOnTbx();
     [[nodiscard]] std::unique_lock<MutexType> obtainTagAllocationDownloadLock();
 
   protected:
