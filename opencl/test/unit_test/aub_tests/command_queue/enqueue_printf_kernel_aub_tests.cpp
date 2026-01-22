@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,10 @@ class AUBPrintfKernelFixture : public AUBFixture,
         AUBFixture::setUp(nullptr);
         ASSERT_NE(nullptr, device);
         HelloWorldKernelFixture::setUp(device, programFile, kernelName);
+        initialized = true;
     }
     void TearDown() override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         HelloWorldKernelFixture::tearDown();
@@ -36,6 +37,7 @@ class AUBPrintfKernelFixture : public AUBFixture,
     }
     const char *programFile = "simple_kernels";
     const char *kernelName = "test_printf_number";
+    bool initialized = false;
 };
 
 HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,10 +176,11 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
         image = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
         zeroCopyImage.reset(ImageHelperUlt<Image1dDefaults>::create(context));
+        initialized = true;
     }
 
     void TearDown() override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete image;
@@ -190,6 +191,7 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
     void *address = nullptr;
     Image *image = nullptr;
     std::unique_ptr<Image> zeroCopyImage;
+    bool initialized = false;
 };
 
 struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageTest,

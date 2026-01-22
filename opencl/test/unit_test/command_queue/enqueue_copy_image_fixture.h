@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,10 +24,11 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
         context = new MockContext(pClDevice);
         srcImage = Image2dHelperUlt<>::create(context);
         dstImage = Image2dHelperUlt<>::create(context);
+        initialized = true;
     }
 
     void TearDown(void) override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete dstImage;
@@ -50,6 +51,7 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
     MockContext *context = nullptr;
     Image *srcImage = nullptr;
     Image *dstImage = nullptr;
+    bool initialized = false;
 };
 
 struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
@@ -60,10 +62,11 @@ struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::setUp();
         context = new MockContext(pClDevice);
+        initialized = true;
     }
 
     void TearDown(void) override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete context;
@@ -71,5 +74,6 @@ struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
     }
 
     MockContext *context = nullptr;
+    bool initialized = false;
 };
 } // namespace NEO

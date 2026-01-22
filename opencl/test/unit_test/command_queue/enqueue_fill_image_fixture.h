@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,11 @@ struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
         CommandEnqueueFixture::setUp();
         context = new MockContext(pClDevice);
         image = Image2dHelperUlt<>::create(context);
+        initialized = true;
     }
 
     void tearDown() {
-        if (testing::Test::IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete image;
@@ -43,5 +44,6 @@ struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
 
     MockContext *context = nullptr;
     Image *image = nullptr;
+    bool initialized = false;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,13 +34,15 @@ struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
         debugManager.flags.PerformImplicitFlushForNewResource.set(0);
         debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
         HelloWorldTest<OOQFixtureFactory>::SetUp();
+        initialized = true;
     }
     void TearDown() override {
-        if (!IsSkipped()) {
+        if (initialized) {
             HelloWorldTest<OOQFixtureFactory>::TearDown();
         }
     }
     DebugManagerStateRestore stateRestore;
+    bool initialized = false;
 };
 
 TYPED_TEST_SUITE_P(OOQTaskTypedTests);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1581,14 +1581,13 @@ struct ImageTextureCacheFlushTest : public CommandQueueHwBlitTest<false> {
 
         CommandQueueHwBlitTest<false>::SetUp();
         debugManager.flags.ForceCacheFlushForBcs.set(0);
+        initialized = true;
     }
 
     void TearDown() override {
-        if (IsSkipped()) {
-            return;
+        if (initialized) {
+            CommandQueueHwBlitTest<false>::TearDown();
         }
-
-        CommandQueueHwBlitTest<false>::TearDown();
     }
 
     template <typename FamilyType>
@@ -1603,6 +1602,7 @@ struct ImageTextureCacheFlushTest : public CommandQueueHwBlitTest<false> {
     }
 
     DebugManagerStateRestore restorer;
+    bool initialized = false;
 };
 
 HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushNotRequiredWhenEnqueueWriteImageThenNoCacheFlushSubmitted) {

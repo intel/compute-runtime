@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -179,10 +179,11 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
             GTEST_SKIP();
         }
         ParentClass::setUp();
+        initialized = true;
     }
 
     void TearDown() override {
-        if (!IsSkipped()) {
+        if (initialized) {
             ParentClass::tearDown();
         }
     }
@@ -201,6 +202,7 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
         aubCsr->writeMemory(*allocation); // NOLINT(clang-analyzer-core.CallAndMessage)
     }
     TestParam param;
+    bool initialized = false;
 };
 
 HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
@@ -373,15 +375,17 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
             GTEST_SKIP();
         }
         ParentClass::setUp();
+        initialized = true;
     }
 
     void TearDown() override {
-        if (!IsSkipped()) {
+        if (initialized) {
             ParentClass::tearDown();
         }
     }
     cl_uint simd;
     TestParam param;
+    bool initialized = false;
 };
 
 HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {

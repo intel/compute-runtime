@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,11 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
                                                                                                     compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
         copyImageToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(compilerProductHelper.isForceToStatelessRequired(),
                                                                                                     compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo()));
+        initialized = true;
     }
 
     void TearDown() override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete dstImage;
@@ -60,6 +61,8 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
 
     EBuiltInOps::Type copyBufferToImageBuiltin;
     EBuiltInOps::Type copyImageToBufferBuiltin;
+
+    bool initialized = false;
 };
 
 class GetSizeRequiredImageMockedZebinTest : public GetSizeRequiredImageTest {

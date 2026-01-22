@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,10 +61,11 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
             ish.getSpace(ish.getAvailableSpace() - oomSize);
             ASSERT_EQ(oomSize, ish.getAvailableSpace());
         }
+        initialized = true;
     }
 
     void TearDown() override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete dstImage;
@@ -78,6 +79,7 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
     MockContext *context;
     Image *srcImage = nullptr;
     Image *dstImage = nullptr;
+    bool initialized = false;
 };
 
 HWTEST_P(OOMCommandQueueImageTest, WhenCopyingImageThenMaxAvailableSpaceIsNotExceeded) {

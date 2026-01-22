@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,11 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
 
         const auto &imageDesc = dstImage->getImageDesc();
         srcPtr = new float[imageDesc.image_width * imageDesc.image_height];
+        initialized = true;
     }
 
     void TearDown(void) override {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         delete dstImage;
@@ -56,6 +57,7 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
     Image *dstImage = nullptr;
     GraphicsAllocation *dstAllocation = nullptr;
     MockContext *context = nullptr;
+    bool initialized = false;
 };
 
 struct EnqueueWriteImageMipMapTest : public EnqueueWriteImageTest,

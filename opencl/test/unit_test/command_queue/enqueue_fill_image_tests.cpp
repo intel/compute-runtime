@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,7 +212,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuiltInIsSelected) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
 
@@ -227,7 +227,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuitInIsSelect
     EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
 }
 
-HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuiltInIsSelected) {
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
     if (!heaplessAllowed) {
         GTEST_SKIP();

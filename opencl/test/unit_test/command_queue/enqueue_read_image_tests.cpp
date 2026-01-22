@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1252,7 +1252,6 @@ HWTEST_F(EnqueueReadImageTest, given4gbImageAndIsForceStatelessIsFalseWhenEnqueu
         size_t getSize() const override { return static_cast<size_t>(4ull * MemoryConstants::gigaByte); }
     };
 
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     if (is32bit) {
         GTEST_SKIP();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1459,7 +1459,8 @@ struct BcsSvmTests : public BcsBufferTests {
             GTEST_SKIP();
         }
         BcsBufferTests::setUpT<FamilyType>();
-        if (IsSkipped()) {
+        if (IsSkipped()) { // clean up if base setup skippes
+            BcsBufferTests::tearDownT<FamilyType>();
             GTEST_SKIP();
         }
 
@@ -1478,11 +1479,13 @@ struct BcsSvmTests : public BcsBufferTests {
         ASSERT_NE(nullptr, sharedMemAlloc);
         ASSERT_EQ(CL_SUCCESS, retVal);
         allocation.push_back(sharedMemAlloc);
+
+        initialized = true;
     }
 
     template <typename FamilyType>
     void tearDownT() {
-        if (IsSkipped()) {
+        if (!initialized) {
             return;
         }
         BcsBufferTests::tearDownT<FamilyType>();
@@ -1501,6 +1504,8 @@ struct BcsSvmTests : public BcsBufferTests {
     void *sharedMemAlloc = nullptr;
 
     cl_int retVal = CL_SUCCESS;
+
+    bool initialized = false;
 };
 
 HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenProperValuesAreSet) {
