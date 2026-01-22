@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3487,11 +3487,18 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndBcsEnqueueNotP
             ccsCsr->taskCount = 0u;
         }
 
+        auto selectedCsr = &queue->selectCsrForBuiltinOperation(args);
         if (device->getProductHelper().blitEnqueuePreferred(false)) {
             // if BCS is preferred, it will be always selected
-            EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+            EXPECT_TRUE(EngineHelpers::isBcs(selectedCsr->getOsContext().getEngineType()));
+            if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+                EXPECT_EQ(bcsCsr, selectedCsr);
+            }
+
         } else {
-            EXPECT_EQ(state.csr, &queue->selectCsrForBuiltinOperation(args));
+            if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+                EXPECT_EQ(state.csr, selectedCsr);
+            }
         }
     }
 }

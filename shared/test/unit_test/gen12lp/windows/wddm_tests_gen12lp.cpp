@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
-
 struct Gen12LpWddmTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();

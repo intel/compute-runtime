@@ -4455,7 +4455,9 @@ HWTEST2_F(DeviceTest, givenHpCopyEngineWhenGettingHighPriorityCsrThenCorrectCsrA
                 EXPECT_EQ(ZE_RESULT_SUCCESS, result);
                 ASSERT_NE(nullptr, highPriorityCsr);
 
-                EXPECT_TRUE(highPriorityCsr->getOsContext().getIsPrimaryEngine());
+                if (!mockDevice.getProductHelper().areSecondaryContextsSupported()) {
+                    EXPECT_TRUE(highPriorityCsr->getOsContext().getIsPrimaryEngine());
+                }
                 EXPECT_TRUE(highPriorityCsr->getOsContext().isHighPriority());
 
                 EXPECT_EQ(aub_stream::ENGINE_BCS2, highPriorityCsr->getOsContext().getEngineType());

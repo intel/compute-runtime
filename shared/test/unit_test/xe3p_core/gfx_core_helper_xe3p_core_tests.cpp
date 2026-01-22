@@ -247,11 +247,11 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
     }
 
-    if (false == isBCS0Enabled) {
+    if (!isBCS0Enabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::internal));
-        if (gfxCoreHelper.areSecondaryContextsSupported()) {
-            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::lowPriority));
-        }
+    }
+    if (isBCSLowPriorityEnabled) {
+        EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::lowPriority));
     }
 
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::regular));

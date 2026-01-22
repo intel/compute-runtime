@@ -328,10 +328,10 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     size_t gws = 1;
 
     MockKernelWithInternals kernel(*pClDevice);
-    *pTagMemory = tagHW;
-    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto tagAddress = commandStreamReceiver.getTagAddress();
-    EXPECT_TRUE(pTagMemory == tagAddress);
+    *tagAddress = tagHW;
 
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
@@ -340,20 +340,22 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
         }
     };
 
-    size_t expectedTaskCount = pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u;
+    TaskCountType expectedTaskCount = commandStreamReceiver.peekTaskCount();
 
     TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(expectedTaskCount, taskCount);
 
     // enqueue something that can be finished...
-    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     expectedTaskCount += 2;
-    *pTagMemory = tagHW += static_cast<uint32_t>(expectedTaskCount);
-    auto ptr = pCmdQ->enqueueMapImage(
+    *tagAddress = tagHW += static_cast<uint32_t>(expectedTaskCount);
+    void *ptr = nullptr;
+    ptr = clEnqueueMapImage(
+        &mockCmdQueue,
         image,
-        false,
+        CL_FALSE,
         mapFlags,
         origin,
         region,
@@ -362,7 +364,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
         0,
         nullptr,
         &mapEventReturned,
-        retVal);
+        &retVal);
 
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -372,19 +374,19 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(expectedTaskCount, taskCount);
 
-    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)pTagMemory);
+    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)tagAddress);
 
     retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(5u, *pTagMemory);
+    EXPECT_EQ(5u, *tagAddress);
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(expectedTaskCount, taskCount);
 
     expectedTaskCount++;
-    auto newTag = *pTagMemory + 1;
-    (*pTagMemory) = newTag;
+    auto newTag = *tagAddress + 1;
+    *tagAddress = newTag;
     retVal = clEnqueueUnmapMemObject(
-        pCmdQ,
+        &mockCmdQueue,
         image,
         ptr,
         0,
@@ -417,12 +419,12 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     const size_t region[3] = {1, 1, 1};
     *pTagMemory = 5;
 
-    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto commandStreamReceiverTaskCountBefore = commandStreamReceiver.peekTaskCount();
 
-    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u, commandStreamReceiver.peekTaskCount());
-    auto ptr = pCmdQ->enqueueMapImage(image, false, mapFlags, origin, region, nullptr, nullptr, 0,
-                                      nullptr, &mapEventReturned, retVal);
+    auto ptr = clEnqueueMapImage(&mockCmdQueue, image, CL_FALSE, mapFlags, origin, region, nullptr, nullptr, 0,
+                                 nullptr, &mapEventReturned, &retVal);
 
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -434,7 +436,7 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clEnqueueUnmapMemObject(pCmdQ, image, ptr, 0, nullptr, &unmapEventReturned);
+    retVal = clEnqueueUnmapMemObject(&mockCmdQueue, image, ptr, 0, nullptr, &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
@@ -462,11 +464,13 @@ HWTEST_F(EnqueueMapImageTest, GivenPtrToReturnEventWhenMappingImageThenEventIsNo
     size_t imageSlicePitch = 0;
     uint32_t forceTaskCount = 100;
 
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.taskCount = forceTaskCount;
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    auto &queueCsrBase = mockCmdQueue.getGpgpuCommandStreamReceiver();
+    auto &queueUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queueCsrBase);
+    queueUltCsr.taskCount = forceTaskCount;
 
     auto ptr = clEnqueueMapImage(
-        pCmdQ,
+        &mockCmdQueue,
         image,
         CL_FALSE,
         mapFlags,
@@ -609,20 +613,26 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenNonReadOnlyMapAndUnmapOnNon
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = 1;
     csr.taskLevel = 1;
-    pCmdQ->taskCount = 1;
-    pCmdQ->taskLevel = 1;
+
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    auto &queueCsrBase = mockCmdQueue.getGpgpuCommandStreamReceiver();
+    auto &queueUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queueCsrBase);
+    queueUltCsr.taskCount = 1;
+    queueUltCsr.taskLevel = 1;
+    mockCmdQueue.taskCount = 1;
+    mockCmdQueue.taskLevel = 1;
 
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
-    void *data = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_WRITE, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    void *data = clEnqueueMapImage(&mockCmdQueue, image.get(), CL_TRUE, CL_MAP_WRITE, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, data);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2u, pCmdQ->taskCount);
-    EXPECT_EQ(2u, pCmdQ->taskLevel);
+    EXPECT_EQ(2u, mockCmdQueue.taskCount);
+    EXPECT_EQ(2u, mockCmdQueue.taskLevel);
 
-    retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), data, 0, NULL, NULL);
-    EXPECT_EQ(3u, pCmdQ->taskCount);
-    EXPECT_EQ(3u, pCmdQ->taskLevel);
+    retVal = clEnqueueUnmapMemObject(&mockCmdQueue, image.get(), data, 0, NULL, NULL);
+    EXPECT_EQ(3u, mockCmdQueue.taskCount);
+    EXPECT_EQ(3u, mockCmdQueue.taskLevel);
 }
 
 HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenReadOnlyMapAndUnmapOnNonTiledImageIsCalledThenMakeGpuCopy) {
@@ -634,20 +644,26 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenReadOnlyMapAndUnmapOnNonTil
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = 1;
     csr.taskLevel = 1;
-    pCmdQ->taskCount = 1;
-    pCmdQ->taskLevel = 1;
+
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    auto &queueCsrBase = mockCmdQueue.getGpgpuCommandStreamReceiver();
+    auto &queueUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queueCsrBase);
+    queueUltCsr.taskCount = 1;
+    queueUltCsr.taskLevel = 1;
+    mockCmdQueue.taskCount = 1;
+    mockCmdQueue.taskLevel = 1;
 
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
-    void *data = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    void *data = clEnqueueMapImage(&mockCmdQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, data);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2u, pCmdQ->taskCount);
-    EXPECT_EQ(2u, pCmdQ->taskLevel);
+    EXPECT_EQ(2u, mockCmdQueue.taskCount);
+    EXPECT_EQ(2u, mockCmdQueue.taskLevel);
 
-    retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), data, 0, NULL, NULL);
-    EXPECT_EQ(2u, pCmdQ->taskCount);
-    EXPECT_EQ(2u, pCmdQ->taskLevel);
+    retVal = clEnqueueUnmapMemObject(&mockCmdQueue, image.get(), data, 0, NULL, NULL);
+    EXPECT_EQ(2u, mockCmdQueue.taskCount);
+    EXPECT_EQ(2u, mockCmdQueue.taskLevel);
 }
 
 HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {

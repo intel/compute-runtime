@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,5 @@ const char *metricsLibraryDllName = "igdml32.dll";
 } // namespace Os
 
 namespace ContextGroup {
-uint32_t maxContextCount = 64;
+uint32_t maxContextCount = 8;
 }
