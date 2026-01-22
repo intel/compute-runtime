@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -241,6 +242,14 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
 
     this->pDevice->getRootDeviceEnvironmentRef().osInterface.reset(nullptr);
     EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
+    stagingBufferManager->resetDetectedPtrs();
+
+    if constexpr (is64bit) {
+        debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+        auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
+        auto invalidCpuPtr = reinterpret_cast<void *>((1ull << cpuVirtualAddressSize));
+        EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, invalidCpuPtr, 1024, false));
+    }
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 

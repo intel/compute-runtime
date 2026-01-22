@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/heap_allocator.h"
 
 namespace NEO {
@@ -416,9 +417,14 @@ bool StagingBufferManager::isValidForStaging(const Device &device, const void *p
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
+    auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
+    auto isValidCpuVirtualAddress = true;
+    if constexpr (is64bit) {
+        isValidCpuVirtualAddress = (reinterpret_cast<uint64_t>(ptr) + size) < (1ull << cpuVirtualAddressSize);
+    }
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(ptr, size) : true;
-    return stagingCopyEnabled && !hasDependencies && sizeWithinThreshold && !this->registerHostPtr(ptr);
+    return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && !this->registerHostPtr(ptr);
 }
 
 void StagingBufferManager::clearTrackedChunks() {
