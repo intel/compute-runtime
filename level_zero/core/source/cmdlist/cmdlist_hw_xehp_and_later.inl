@@ -222,8 +222,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         };
 
-        verifyKernelUsingSystemAllocations.template operator()<l3FlushAfterWalkerSupported>(kernel->getArgumentsResidencyContainer());
-        verifyKernelUsingSystemAllocations.template operator()<false>(kernel->getInternalResidencyContainer());
+        if (!launchParams.makeKernelCommandView) {
+            verifyKernelUsingSystemAllocations.template operator()<l3FlushAfterWalkerSupported>(kernel->getArgumentsResidencyContainer());
+            verifyKernelUsingSystemAllocations.template operator()<false>(kernel->getInternalResidencyContainer());
+        }
 
     } else {
         isKernelUsingSystemAllocation = launchParams.isDestinationAllocationInSystemMemory;

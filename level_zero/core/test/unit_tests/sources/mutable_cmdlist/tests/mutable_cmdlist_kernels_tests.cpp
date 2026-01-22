@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
@@ -1846,6 +1847,103 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmSize);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmOffsetValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenTwoKernelsWhenKernelBufferSetAsArgumentIsFreedThenBufferIsNotUsed) {
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    void *usm1 = allocateUsm(4096);
+    ASSERT_NE(nullptr, usm1);
+    void *usm2 = allocateUsm(4096);
+
+    auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
+    auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
+    auto freedMemory = svmAllocsManager->createSVMAlloc(4096, allocationProperties, this->context->rootDeviceIndices, this->context->deviceBitfields);
+    ASSERT_NE(nullptr, freedMemory);
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernel1Bit | kernel2Bit);
+    prepareKernelArg(1, L0::MCL::VariableType::buffer, kernel1Bit | kernel2Bit);
+
+    auto result = kernel->setArgBuffer(0, sizeof(void *), &usm1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel->setArgBuffer(1, sizeof(void *), &usm2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = kernel2->setArgBuffer(0, sizeof(void *), &usm1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel2->setArgBuffer(1, sizeof(void *), &freedMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    svmAllocsManager->freeSVMAlloc(freedMemory);
+
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg2 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &this->testGroupCount;
+    groupCountDesc.pNext = &groupSizeDesc;
+
+    groupSizeDesc.commandId = commandId;
+    groupSizeDesc.groupSizeX = 1;
+    groupSizeDesc.groupSizeY = 1;
+    groupSizeDesc.groupSizeZ = 1;
+    groupSizeDesc.pNext = &kernelBufferArg1;
+
+    kernelBufferArg1.argIndex = 0;
+    kernelBufferArg1.argSize = sizeof(void *);
+    kernelBufferArg1.commandId = commandId;
+    kernelBufferArg1.pArgValue = &usm1;
+    kernelBufferArg1.pNext = &kernelBufferArg2;
+
+    kernelBufferArg2.argIndex = 1;
+    kernelBufferArg2.argSize = sizeof(void *);
+    kernelBufferArg2.commandId = commandId;
+    kernelBufferArg2.pArgValue = &usm2;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto kernel2BufferVariables = getVariableList(commandId, L0::MCL::VariableType::buffer, kernel2.get());
+    ASSERT_EQ(2u, kernel2BufferVariables.size());
+
+    auto bufferVarArg1 = kernel2BufferVariables[0];
+    auto gpuVa1PatchFullAddress = reinterpret_cast<void *>(bufferVarArg1->getBufferUsages().statelessWithoutOffset[0]);
+
+    auto bufferVarArg2 = kernel2BufferVariables[1];
+    auto gpuVa2PatchFullAddress = reinterpret_cast<void *>(bufferVarArg2->getBufferUsages().statelessWithoutOffset[0]);
+
+    uint64_t usmPatchAddressValue = 0;
+    memcpy(&usmPatchAddressValue, gpuVa1PatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm1), usmPatchAddressValue);
+
+    memcpy(&usmPatchAddressValue, gpuVa2PatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
 }
 
 } // namespace ult
