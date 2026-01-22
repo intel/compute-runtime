@@ -41,10 +41,6 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
     using BaseClass::getAllocationOffsetForAppendBlitFill;
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        auto allocationData = BaseClass::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload);
-        if (allocationData.alloc) {
-            return allocationData;
-        }
         return {nullptr, 0, 0, nullptr, true};
     }
     ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
@@ -77,7 +73,7 @@ class MockDriverHandle : public L0::DriverHandle {
 
 using AppendMemoryCopyTests = Test<AppendMemoryCopyFixture>;
 
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned) {
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t pattern32bytes[4] = {1, 2, 3, 4};
@@ -86,7 +82,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillCalled
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned, IsAtLeastXeHpcCore) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned, IsAtLeastXeHpcCore) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint8_t pattern2bytes[2] = {1, 2};
@@ -95,7 +91,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillCalle
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToNotDeviceMemThenInvalidArgumentReturned) {
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
@@ -106,23 +102,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToNotD
     EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToExternalHostPointerThenSuccessReturned) {
-    MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(0);
-    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
-    sharedSystemMemCapabilities = 0xf;
-
-    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    uint8_t pattern = 1;
-    void *ptr = reinterpret_cast<void *>(0x1234);
-    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
-}
-
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToSharedSystemUsmThenSuccessReturned) {
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToSharedSystemUsmThenSuccessReturned) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     DebugManagerStateRestore restorer;
@@ -142,7 +122,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToShar
     free(ptr);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenCopyBltIsProgrammed, IsAtMostDg2) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, IsAtMostDg2) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
@@ -163,7 +143,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenC
     device->setDriverHandle(driverHandle.get());
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenCopyBltIsProgrammed, IsAtLeastXeHpcCore) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, IsAtLeastXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MEM_SET = typename GfxFamily::MEM_SET;
     DebugManagerStateRestore restorer;

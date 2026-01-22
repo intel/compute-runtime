@@ -2621,12 +2621,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto dstAllocation = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false);
+    bool hostPointerNeedsFlush = false;
 
-    if (!(dstAllocation.svmAllocData) && (sharedSystemEnabled == false) && (neoDevice->areSharedSystemAllocationsAllowed() == false) && (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    NEO::SvmAllocationData *allocData = nullptr;
+    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
+    if (dstAllocFound) {
+        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+            hostPointerNeedsFlush = true;
+        }
+
+    } else {
+        if ((sharedSystemEnabled == false) && (neoDevice->areSharedSystemAllocationsAllowed() == false) && (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS)) {
+            // first two conditions, above are default, and each may be turned true only with debug variables
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        hostPointerNeedsFlush = true;
     }
 
+    auto dstAllocation = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false);
     if ((dstAllocation.alloc == nullptr) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2643,7 +2656,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
     launchParams.isBuiltInKernel = true;
-    launchParams.isDestinationAllocationInSystemMemory = dstAllocation.needsFlush;
+    launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
     if (dstAllocation.alloc) {
         if constexpr (checkIfAllocationImportedRequired()) {
             launchParams.isDestinationAllocationImported = dstAllocation.alloc->getIsImported();
@@ -2868,7 +2881,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
 
     NEO::Device *neoDevice = device->getNEODevice();
-    bool sharedSystemEnabled = isSharedSystemEnabled();
+    bool sharedSystemEnabled = neoDevice->areSharedSystemAllocationsAllowed();
 
     if (this->maxFillPatternSizeForCopyEngine < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
@@ -2900,6 +2913,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
                 uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
                 gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr);
             }
+            if ((gpuAllocation == nullptr) && (sharedSystemEnabled == false)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
 
         uint32_t patternToCommand[4] = {};
@@ -2914,22 +2930,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
             blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, 0, size, patternToCommand, patternSize, offset);
             size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, neoDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
             useAdditionalTimestamp = nBlits > 1;
-        } else if (sharedSystemEnabled) {
+        } else if (sharedSystemEnabled == true) {
             if (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1) {
                 appendMemAdvise(device, ptr, size, static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
             }
             blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(ptr), size, patternToCommand, patternSize, 0ul);
-        } else if (neoDevice->areSharedSystemAllocationsAllowed()) {
-            auto dstAlignedAllocData = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false);
-
-            commandContainer.addToResidencyContainer(dstAlignedAllocData.alloc);
-
-            uint64_t dstPtr = dstAlignedAllocData.alignedAllocationPtr + dstAlignedAllocData.offset;
-            uint64_t allocPtr = dstAlignedAllocData.alloc->getGpuAddress();
-            auto offset = static_cast<size_t>(dstPtr - allocPtr);
-            blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(dstAlignedAllocData.alloc, 0, size, patternToCommand, patternSize, offset);
-            size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, neoDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
-            useAdditionalTimestamp = nBlits > 1;
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
