@@ -1,28 +1,22 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/neo_ww_calculator.cmake)
+
 if(UNIX)
   find_program(GIT NAMES git)
-  find_program(PYTHON_EXECUTABLE NAMES "python3")
-  if((NOT "${GIT}" STREQUAL "GIT-NOTFOUND") AND (NOT "${PYTHON_EXECUTABLE}" STREQUAL "PYTHON_EXECUTABLE-NOTFOUND"))
-    if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
-      set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git show -s --format=%ct)
-      execute_process(
-                      COMMAND ${GIT} ${GIT_arg}
-                      OUTPUT_VARIABLE GIT_output
-                      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-      set(PYTHON_arg ${CMAKE_CURRENT_SOURCE_DIR}/scripts/neo_ww_calculator.py ${GIT_output})
-      execute_process(
-                      COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_arg}
-                      OUTPUT_VARIABLE VERSION_output
-                      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-      string(REPLACE "." ";" VERSION_list ${VERSION_output})
-    endif()
+  if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND" AND IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
+    set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git show -s --format=%ct)
+    execute_process(
+                    COMMAND ${GIT} ${GIT_arg}
+                    OUTPUT_VARIABLE GIT_output
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    neo_ww_calculator(${GIT_output} VERSION_output)
+    string(REPLACE "." ";" VERSION_list ${VERSION_output})
   else()
     message(WARNING "Unable to determine OpenCL major.minor version. Defaulting to 1.0")
   endif()
