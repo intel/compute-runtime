@@ -20,7 +20,10 @@
 namespace NEO {
 
 namespace SysCalls {
-extern DWORD getLastErrorResult;
+extern const size_t getLastErrorResultCount;
+extern size_t getLastErrorCalled;
+extern DWORD getLastErrorResults[];
+extern BOOL getLastErrorOneResult;
 
 extern size_t createDirectoryACalled;
 extern BOOL createDirectoryAResult;
@@ -36,16 +39,20 @@ extern std::unordered_map<std::string, DWORD> pathAttributes;
 struct ClCacheDefaultConfigWindowsTest : public ::testing::Test {
     ClCacheDefaultConfigWindowsTest()
         : mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs),
-          getLastErrorResultBackup(&SysCalls::getLastErrorResult),
+          getLastErrorCalledBackup(&SysCalls::getLastErrorCalled),
           shGetKnownFolderPathResultBackup(&SysCalls::shGetKnownFolderPathResult),
           createDirectoryACalledBackup(&SysCalls::createDirectoryACalled),
           createDirectoryAResultBackup(&SysCalls::createDirectoryAResult) {}
 
     void SetUp() override {
         SysCalls::createDirectoryACalled = 0u;
+        SysCalls::getLastErrorCalled = 0u;
     }
 
     void TearDown() override {
+        for (size_t i = 0; i < SysCalls::getLastErrorResultCount; i++) {
+            SysCalls::getLastErrorResults[i] = 0;
+        }
         std::wmemset(SysCalls::shGetKnownFolderSetPath, 0, SysCalls::shGetKnownFolderSetPathSize);
         SysCalls::pathAttributes.clear();
     }
@@ -54,7 +61,7 @@ struct ClCacheDefaultConfigWindowsTest : public ::testing::Test {
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup;
     std::unordered_map<std::string, std::string> mockableEnvs;
 
-    VariableBackup<DWORD> getLastErrorResultBackup;
+    VariableBackup<size_t> getLastErrorCalledBackup;
     VariableBackup<HRESULT> shGetKnownFolderPathResultBackup;
     VariableBackup<size_t> createDirectoryACalledBackup;
     VariableBackup<BOOL> createDirectoryAResultBackup;
@@ -193,7 +200,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetAndNonExistingNeoCom
 
     SysCalls::shGetKnownFolderPathResult = S_OK;
     SysCalls::createDirectoryAResult = FALSE;
-    SysCalls::getLastErrorResult = ERROR_ALREADY_EXISTS + 1;
+    SysCalls::getLastErrorResults[0] = ERROR_ALREADY_EXISTS + 1;
 
     const wchar_t *localAppDataPath = L"C:\\Users\\user1\\AppData\\Local";
     wcscpy(SysCalls::shGetKnownFolderSetPath, localAppDataPath);
@@ -213,7 +220,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetWhenGetCompilerCache
 
     SysCalls::shGetKnownFolderPathResult = S_OK;
     SysCalls::createDirectoryAResult = FALSE;
-    SysCalls::getLastErrorResult = ERROR_ALREADY_EXISTS;
+    SysCalls::getLastErrorResults[0] = ERROR_ALREADY_EXISTS;
 
     const wchar_t *localAppDataPath = L"C:\\Users\\user1\\AppData\\Local";
     wcscpy(SysCalls::shGetKnownFolderSetPath, localAppDataPath);

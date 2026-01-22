@@ -24,6 +24,7 @@ namespace SysCalls {
 int fsync(int fd);
 int close(int fd);
 int mkdir(const std::string &path);
+int rmdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);

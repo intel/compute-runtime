@@ -44,6 +44,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/${BRANCH_DIR_SUFFIX}/perf_wddm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/elements_struct.h
 )
 
 set(NEO_CORE_OS_INTERFACE_WDDM

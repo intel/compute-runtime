@@ -26,6 +26,7 @@ namespace NEO {
 namespace SysCalls {
 
 extern int (*sysCallsMkdir)(const std::string &dir);
+extern int (*sysCallsRmdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);

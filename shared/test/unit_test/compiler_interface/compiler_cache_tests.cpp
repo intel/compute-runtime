@@ -384,6 +384,14 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     EXPECT_EQ(0U, size);
 }
 
+TEST(CompilerCacheTests, GivenTooShortKernelFileHashWhenGetCachedBinaryIsCalledThenNullIsReturned) {
+    CompilerCache cache(CompilerCacheConfig{});
+    size_t size;
+    auto ret = cache.loadCachedBinary("a", size);
+    EXPECT_EQ(nullptr, ret);
+    EXPECT_EQ(0U, size);
+}
+
 struct CompilerInterfaceCachedTests : public ::testing::Test {
     void SetUp() override {
         MockCompilerDebugVars fclDebugVars;

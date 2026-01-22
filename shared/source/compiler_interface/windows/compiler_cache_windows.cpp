@@ -15,50 +15,90 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "elements_struct.h"
 #include "os_inc.h"
 
 #include <algorithm>
+#include <queue>
 
 namespace NEO {
 
-struct ElementsStruct {
-    std::string path;
-    FILETIME lastAccessTime;
-    uint64_t fileSize;
-};
+bool CompilerCache::compareByLastAccessTime(const ElementsStruct &a, const ElementsStruct &b) {
+    return CompareFileTime(&a.lastAccessTime, &b.lastAccessTime) < 0;
+}
 
-std::vector<ElementsStruct> getFiles(const std::string &path) {
-    std::vector<ElementsStruct> files;
-
-    WIN32_FIND_DATAA ffd{0};
-    HANDLE hFind = INVALID_HANDLE_VALUE;
-
-    std::string newPath = joinPath(path, "*");
-    hFind = NEO::SysCalls::findFirstFileA(newPath.c_str(), &ffd);
-
-    if (hFind == INVALID_HANDLE_VALUE) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File search failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
-        return files;
+bool CompilerCache::createCacheDirectories(const std::string &cacheFile) {
+    std::string path = config.cacheDir;
+    for (int i = 0; i < maxCacheDepth; i++) {
+        path = joinPath(path, std::string(1, cacheFile[i]));
+        if (!NEO::SysCalls::createDirectoryA(path.c_str(), NULL)) {
+            DWORD error = NEO::SysCalls::getLastError();
+            if (error != ERROR_ALREADY_EXISTS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Create cache directories failed! error code: %lu\n", NEO::SysCalls::getProcessId(), error);
+                return false;
+            }
+        }
     }
 
-    do {
-        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            continue;
+    return true;
+}
+
+bool CompilerCache::getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles) {
+    struct DirectoryEntry {
+        std::string path;
+        int depth;
+    };
+
+    foundFiles.clear();
+    std::queue<DirectoryEntry> directoriesToProcess;
+    directoriesToProcess.push({startPath, 0});
+
+    while (!directoriesToProcess.empty()) {
+        auto currentEntry = std::move(directoriesToProcess.front());
+        directoriesToProcess.pop();
+
+        WIN32_FIND_DATAA ffd{0};
+        HANDLE hFind = INVALID_HANDLE_VALUE;
+
+        std::string newPath = joinPath(currentEntry.path, "*");
+        hFind = NEO::SysCalls::findFirstFileA(newPath.c_str(), &ffd);
+
+        if (hFind == INVALID_HANDLE_VALUE) {
+            DWORD error = NEO::SysCalls::getLastError();
+            if (error == ERROR_FILE_NOT_FOUND) {
+                continue;
+            }
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File search failed! error code: %lu\n", NEO::SysCalls::getProcessId(), error);
+            return false;
         }
 
-        auto fileName = joinPath(path, ffd.cFileName);
-        if (fileName.find(".cl_cache") != fileName.npos ||
-            fileName.find(".l0_cache") != fileName.npos) {
-            uint64_t fileSize = (ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow;
-            files.push_back({fileName, ffd.ftLastAccessTime, fileSize});
+        do {
+            if (strcmp(ffd.cFileName, ".") != 0 && strcmp(ffd.cFileName, "..") != 0) {
+                if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    if (currentEntry.depth < maxCacheDepth) {
+                        std::string subDirPath = joinPath(currentEntry.path, ffd.cFileName);
+                        directoriesToProcess.push({subDirPath, currentEntry.depth + 1});
+                    }
+                } else {
+                    auto fileName = joinPath(currentEntry.path, ffd.cFileName);
+                    if (filter(fileName)) {
+                        uint64_t fileSize = (ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow;
+                        foundFiles.push_back({ffd.ftLastAccessTime, fileSize, fileName});
+                    }
+                }
+            }
+        } while (NEO::SysCalls::findNextFileA(hFind, &ffd) != 0);
+        DWORD error = NEO::SysCalls::getLastError();
+        if (error != ERROR_NO_MORE_FILES) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Finding next file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), error);
+            NEO::SysCalls::findClose(hFind);
+            return false;
         }
-    } while (NEO::SysCalls::findNextFileA(hFind, &ffd) != 0);
 
-    NEO::SysCalls::findClose(hFind);
+        NEO::SysCalls::findClose(hFind);
+    }
 
-    std::sort(files.begin(), files.end(), [](const ElementsStruct &a, const ElementsStruct &b) { return CompareFileTime(&a.lastAccessTime, &b.lastAccessTime) < 0; });
-
-    return files;
+    return true;
 }
 
 void unlockFileAndClose(UnifiedHandle handle) {
@@ -74,7 +114,12 @@ void unlockFileAndClose(UnifiedHandle handle) {
 
 bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
     bytesEvicted = 0;
-    const auto cacheFiles = getFiles(config.cacheDir);
+    std::vector<ElementsStruct> cacheFiles;
+    if (!getCachedFiles(cacheFiles)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Get cached files failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+        return false;
+    }
+
     const auto evictionLimit = config.cacheSize / 3;
 
     for (const auto &file : cacheFiles) {
@@ -145,7 +190,14 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     }
 
     if (countDirectorySize) {
-        const auto cacheFiles = getFiles(config.cacheDir);
+        std::vector<ElementsStruct> cacheFiles;
+        if (!getCachedFiles(cacheFiles)) {
+            directorySize = 0;
+            unlockFileAndClose(std::get<void *>(handle));
+            std::get<void *>(handle) = INVALID_HANDLE_VALUE;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Get cached files failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+            return;
+        }
 
         for (const auto &file : cacheFiles) {
             directorySize += static_cast<size_t>(file.fileSize);
@@ -262,7 +314,14 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
 
     constexpr std::string_view configFileName = "config.file";
     std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
-    std::string cacheFilePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
+    std::string cacheFileName = kernelFileHash + config.cacheFileExtension;
+    std::string cacheFilePath = getCachedFilePath(cacheFileName);
+
+    if (cacheFileName.length() < maxCacheDepth + config.cacheFileExtension.length()) {
+        DEBUG_BREAK_IF(true);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Cache binary failed - cache file name is too short!\n", NEO::SysCalls::getProcessId());
+        return false;
+    }
 
     UnifiedHandle hConfigFile{INVALID_HANDLE_VALUE};
     size_t directorySize = 0u;
@@ -306,6 +365,11 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
         return false;
     }
 
+    if (!createCacheDirectories(cacheFileName)) {
+        NEO::SysCalls::deleteFileA(tmpFilePath.c_str());
+        return false;
+    }
+
     if (!renameTempFileBinaryToProperName(tmpFilePath, cacheFilePath)) {
         NEO::SysCalls::deleteFileA(tmpFilePath.c_str());
         return false;
@@ -315,10 +379,5 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     writeDirSizeToConfigFile(std::get<void *>(hConfigFile), directorySize);
 
     return true;
-}
-
-std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize) {
-    std::string filePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
-    return loadDataFromFile(filePath.c_str(), cachedBinarySize);
 }
 } // namespace NEO

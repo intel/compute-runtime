@@ -120,6 +120,7 @@ int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
 int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
 int (*sysCallsMkdir)(const std::string &dir) = nullptr;
+int (*sysCallsRmdir)(const std::string &dir) = nullptr;
 DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
@@ -150,6 +151,14 @@ std::string mkfifoPathNamePassed;
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
         return sysCallsMkdir(path);
+    }
+
+    return 0;
+}
+
+int rmdir(const std::string &path) {
+    if (sysCallsRmdir != nullptr) {
+        return sysCallsRmdir(path);
     }
 
     return 0;

@@ -8,15 +8,14 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/casts.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/utilities/io_functions.h"
 
-#include "config.h"
+#include "elements_struct.h"
 #include "os_inc.h"
 
 #include <cstring>
@@ -138,4 +137,41 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
 CompilerCache::CompilerCache(const CompilerCacheConfig &cacheConfig)
     : config(cacheConfig){};
 
+std::string CompilerCache::getCachedFilePath(const std::string &cacheFile) {
+    std::string path = config.cacheDir;
+    for (int i = 0; i < maxCacheDepth; i++) {
+        path = joinPath(path, std::string(1, cacheFile[i]));
+    }
+    path = joinPath(path, cacheFile);
+
+    return path;
+}
+
+std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize) {
+    auto cacheFilename = kernelFileHash + config.cacheFileExtension;
+    if (cacheFilename.length() < maxCacheDepth + config.cacheFileExtension.length()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "[Cache failure]: Load cached binary failed - cache file name is too short!\n");
+        cachedBinarySize = 0;
+        return nullptr;
+    }
+    std::string filePath = getCachedFilePath(cacheFilename);
+    return loadDataFromFile(filePath.c_str(), cachedBinarySize);
+}
+
+bool CompilerCache::getCachedFiles(std::vector<ElementsStruct> &cacheFiles) {
+    cacheFiles.clear();
+    auto filterFunction = [](const std::string_view &path) {
+        return path.find(".cl_cache") != path.npos || path.find(".l0_cache") != path.npos;
+    };
+
+    if (!getFiles(config.cacheDir, filterFunction, cacheFiles)) {
+        return false;
+    }
+
+    std::sort(cacheFiles.begin(), cacheFiles.end(), [this](const ElementsStruct &a, const ElementsStruct &b) {
+        return this->compareByLastAccessTime(a, b);
+    });
+
+    return true;
+}
 } // namespace NEO
