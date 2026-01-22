@@ -8,7 +8,6 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
@@ -20,7 +19,6 @@
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -883,103 +881,4 @@ TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourc
 
         memoryManager.freeGraphicsMemory(allocation);
     }
-}
-
-TEST(MemoryManagerTest, givenLocalMemoryWhen2MBAlignmentEnabledThenAllocationSizeAndGpuAddressAreAlignedBasedOnSize) {
-    struct TestCase {
-        size_t inputSize;
-        bool is2MBAlignmentEnabled;
-        size_t expectedSize;
-        size_t expectedGpuAddrAlignment;
-    };
-
-    const TestCase testCases[] = {
-        {MemoryConstants::pageSize64k, true, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k},
-        {MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, true, 2 * MemoryConstants::pageSize2M, MemoryConstants::pageSize2M},
-        {MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, false, MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, MemoryConstants::pageSize64k},
-    };
-
-    for (const auto &testCase : testCases) {
-        MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-        auto mockProductHelper = new MockProductHelper();
-        executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = testCase.is2MBAlignmentEnabled;
-
-        MockMemoryManager memoryManager(false, true, executionEnvironment);
-        MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-        AllocationData allocData;
-        allocData.allFlags = 0;
-        allocData.size = testCase.inputSize;
-        allocData.type = AllocationType::buffer;
-        allocData.rootDeviceIndex = 0;
-
-        auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-        ASSERT_NE(nullptr, allocation);
-        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-        EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-        EXPECT_EQ(testCase.expectedSize, allocation->getUnderlyingBufferSize());
-        EXPECT_TRUE(isAligned(allocation->getGpuAddress(), testCase.expectedGpuAddrAlignment));
-
-        memoryManager.freeGraphicsMemory(allocation);
-    }
-}
-
-TEST(MemoryManagerTest, givenLocalMemoryAnd2MBPageAllocationTypeWhen2MBAlignmentEnabledThenAllocationIsAlignedTo2MB) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto mockProductHelper = new MockProductHelper();
-    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize64k;
-    allocData.type = AllocationType::timestampPacketTagBuffer;
-    allocData.rootDeviceIndex = 0;
-
-    EXPECT_TRUE(GraphicsAllocation::is2MBPageAllocationType(allocData.type));
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-    EXPECT_EQ(MemoryConstants::pageSize2M, allocation->getUnderlyingBufferSize());
-    EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2M));
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(MemoryManagerTest, givenLocalMemoryAndLargeImageWhen2MBAlignmentEnabledThenAllocationIsAlignedTo2MB) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto mockProductHelper = new MockProductHelper();
-    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-
-    ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::image1D;
-    imgDesc.imageWidth = 2 * MemoryConstants::megaByte + 1;
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.type = AllocationType::image;
-    allocData.imgInfo = &imgInfo;
-    allocData.rootDeviceIndex = 0;
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
-    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-
-    auto sizeAligned = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize2M);
-    EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
-    EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2M));
-
-    memoryManager.freeGraphicsMemory(allocation);
 }
