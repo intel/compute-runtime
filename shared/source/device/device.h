@@ -336,7 +336,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool createGenericSubDevices();
     bool genericSubDevicesAllowed();
     void finalizeRayTracing();
-    void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount);
+    void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount);
     void allocateDebugSurface(size_t debugSurfaceSize);
 
     DeviceInfo deviceInfo = {};

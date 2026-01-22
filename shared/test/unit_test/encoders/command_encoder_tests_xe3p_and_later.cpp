@@ -55,16 +55,13 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
 
     DebugManagerStateRestore restore;
-
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    bool ret = directSubmission.initialize(false);
-    EXPECT_TRUE(ret);
-
-    auto &cmdStream = directSubmission.ringCommandStream;
-    auto offset = cmdStream.getUsed();
-
     {
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        bool ret = directSubmission.initialize(false);
+        EXPECT_TRUE(ret);
+
+        auto &cmdStream = directSubmission.ringCommandStream;
+        auto offset = cmdStream.getUsed();
         GenCmdList cmdList;
 
         directSubmission.dispatchSemaphoreSection(1u);
@@ -79,11 +76,14 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
 
         EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
     }
-
-    offset = cmdStream.getUsed();
-
     {
         debugManager.flags.DirectSubmissionSwitchSemaphoreMode.set(1);
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        bool ret = directSubmission.initialize(false);
+        EXPECT_TRUE(ret);
+
+        auto &cmdStream = directSubmission.ringCommandStream;
+        auto offset = cmdStream.getUsed();
         GenCmdList cmdList;
 
         directSubmission.dispatchSemaphoreSection(1u);
@@ -98,11 +98,14 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
 
         EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
     }
-
-    offset = cmdStream.getUsed();
-
     {
         debugManager.flags.DirectSubmissionSwitchSemaphoreMode.set(0);
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        bool ret = directSubmission.initialize(false);
+        EXPECT_TRUE(ret);
+
+        auto &cmdStream = directSubmission.ringCommandStream;
+        auto offset = cmdStream.getUsed();
         GenCmdList cmdList;
 
         directSubmission.dispatchSemaphoreSection(1u);
@@ -117,6 +120,64 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
 
         EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
     }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighestPriorityLevelSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
+
+    struct MockOsContext : public OsContext {
+        using OsContext::priorityLevel;
+    };
+    auto highestPriority = pDevice->getGfxCoreHelper().getHwQueuePriority(pDevice->getGfxCoreHelper().getHighestQueuePriorityLevel());
+    reinterpret_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->priorityLevel = highestPriority;
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
+    auto &cmdStream = directSubmission.ringCommandStream;
+    auto offset = cmdStream.getUsed();
+    GenCmdList cmdList;
+
+    directSubmission.dispatchSemaphoreSection(1u);
+
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), offset), (cmdStream.getUsed() - offset)));
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphore);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighPriorityContextSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
+
+    pDevice->getDefaultEngine().osContext->overrideEngineUsage(EngineUsage::highPriority);
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
+    auto &cmdStream = directSubmission.ringCommandStream;
+    auto offset = cmdStream.getUsed();
+    GenCmdList cmdList;
+
+    directSubmission.dispatchSemaphoreSection(1u);
+
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), offset), (cmdStream.getUsed() - offset)));
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphore);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenProgramBatchBufferStartCommandWhenItIsCalledThenCommandIsProgrammedCorrectly, IsAtLeastXe3pCore) {
