@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,6 +165,40 @@ ze_result_t ZE_APICALL zeEventGetWaitScope(
     ze_event_scope_flags_t *pWaitScope) {
     return L0::Event::fromHandle(hEvent)->getWaitScope(pWaitScope);
 }
+
+ze_result_t ZE_APICALL zeEventCounterBasedCreate(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_event_counter_based_desc_t *desc,
+    ze_event_handle_t *phEvent) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeEventCounterBasedGetDeviceAddress(
+    ze_event_handle_t hEvent,
+    uint64_t *completionValue,
+    uint64_t *deviceAddress) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeEventCounterBasedGetIpcHandle(
+    ze_event_handle_t hEvent,
+    ze_ipc_event_counter_based_handle_t *phIpc) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeEventCounterBasedOpenIpcHandle(
+    ze_context_handle_t hContext,
+    ze_ipc_event_counter_based_handle_t hIpc,
+    ze_event_handle_t *phEvent) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeEventCounterBasedCloseIpcHandle(
+    ze_event_handle_t hEvent) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -328,5 +362,38 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetWaitScope(
     ze_event_handle_t hEvent,
     ze_event_scope_flags_t *pWaitScope) {
     return L0::zeEventGetWaitScope(hEvent, pWaitScope);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedCreate(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_event_counter_based_desc_t *desc,
+    ze_event_handle_t *phEvent) {
+    return L0::zeEventCounterBasedCreate(hContext, hDevice, desc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedGetDeviceAddress(
+    ze_event_handle_t hEvent,
+    uint64_t *completionValue,
+    uint64_t *deviceAddress) {
+    return L0::zeEventCounterBasedGetDeviceAddress(hEvent, completionValue, deviceAddress);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedGetIpcHandle(
+    ze_event_handle_t hEvent,
+    ze_ipc_event_counter_based_handle_t *phIpc) {
+    return L0::zeEventCounterBasedGetIpcHandle(hEvent, phIpc);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedOpenIpcHandle(
+    ze_context_handle_t hContext,
+    ze_ipc_event_counter_based_handle_t hIpc,
+    ze_event_handle_t *phEvent) {
+    return L0::zeEventCounterBasedOpenIpcHandle(hContext, hIpc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedCloseIpcHandle(
+    ze_event_handle_t hEvent) {
+    return L0::zeEventCounterBasedCloseIpcHandle(hEvent);
 }
 }

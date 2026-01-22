@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ zeGetMemProcAddrTable(
     fillDdiEntry(pDdiTable->pfnFreeExt, L0::globalDriverDispatch.coreMem.pfnFreeExt, version, ZE_API_VERSION_1_3);
     fillDdiEntry(pDdiTable->pfnPutIpcHandle, L0::globalDriverDispatch.coreMem.pfnPutIpcHandle, version, ZE_API_VERSION_1_6);
     fillDdiEntry(pDdiTable->pfnGetPitchFor2dImage, L0::globalDriverDispatch.coreMem.pfnGetPitchFor2dImage, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetIpcHandleWithProperties, L0::globalDriverDispatch.coreMem.pfnGetIpcHandleWithProperties, version, ZE_API_VERSION_1_15);
     return result;
 }
 
@@ -100,6 +101,7 @@ zeGetPhysicalMemProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.corePhysicalMem.pfnCreate, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.corePhysicalMem.pfnDestroy, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.corePhysicalMem.pfnGetProperties, version, ZE_API_VERSION_1_15);
 
     return result;
 }
@@ -179,6 +181,7 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnReleaseExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnReleaseExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnGetVectorWidthPropertiesExt, L0::globalDriverDispatch.coreDevice.pfnGetVectorWidthPropertiesExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnSynchronize, L0::globalDriverDispatch.coreDevice.pfnSynchronize, version, ZE_API_VERSION_1_14);
+    fillDdiEntry(pDdiTable->pfnGetAggregatedCopyOffloadIncrementValue, L0::globalDriverDispatch.coreDevice.pfnGetAggregatedCopyOffloadIncrementValue, version, ZE_API_VERSION_1_15);
     return result;
 }
 
@@ -362,6 +365,11 @@ zeGetEventProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetEventPool, L0::globalDriverDispatch.coreEvent.pfnGetEventPool, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetSignalScope, L0::globalDriverDispatch.coreEvent.pfnGetSignalScope, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetWaitScope, L0::globalDriverDispatch.coreEvent.pfnGetWaitScope, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnCounterBasedCreate, L0::globalDriverDispatch.coreEvent.pfnCounterBasedCreate, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnCounterBasedGetDeviceAddress, L0::globalDriverDispatch.coreEvent.pfnCounterBasedGetDeviceAddress, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnCounterBasedGetIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedGetIpcHandle, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnCounterBasedOpenIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedOpenIpcHandle, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnCounterBasedCloseIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedCloseIpcHandle, version, ZE_API_VERSION_1_15);
     return result;
 }
 

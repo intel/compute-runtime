@@ -243,6 +243,13 @@ ze_result_t ZE_APICALL zesDevicePciGetStats(
         [&]() { return L0::Sysman::SysmanDevice::pciGetStats(hDevice, pStats); });
 }
 
+ze_result_t ZE_APICALL zesDevicePciLinkSpeedUpdateExt(
+    zes_device_handle_t hDevice,
+    ze_bool_t shouldDowngrade,
+    zes_device_action_t *pendingAction) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t ZE_APICALL zesDeviceEnumPowerDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
@@ -1318,6 +1325,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDevicePciGetStats(
     return L0::zesDevicePciGetStats(
         hDevice,
         pStats);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDevicePciLinkSpeedUpdateExt(
+    zes_device_handle_t hDevice,
+    ze_bool_t shouldDowngrade,
+    zes_device_action_t *pendingAction) {
+    return L0::zesDevicePciLinkSpeedUpdateExt(hDevice, shouldDowngrade, pendingAction);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumDiagnosticTestSuites(

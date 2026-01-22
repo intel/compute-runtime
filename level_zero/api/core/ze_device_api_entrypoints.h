@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,6 +165,12 @@ ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
     int32_t *lowestPriority,
     int32_t *highestPriority) {
     return L0::Device::fromHandle(hDevice)->getPriorityLevels(lowestPriority, highestPriority);
+}
+
+ze_result_t ZE_APICALL zeDeviceGetAggregatedCopyOffloadIncrementValue(
+    ze_device_handle_t hDevice,
+    uint32_t *incrementValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
@@ -353,5 +359,11 @@ ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
     int32_t *lowestPriority,
     int32_t *highestPriority) {
     return L0::zeDeviceGetPriorityLevels(hDevice, lowestPriority, highestPriority);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetAggregatedCopyOffloadIncrementValue(
+    ze_device_handle_t hDevice,
+    uint32_t *incrementValue) {
+    return L0::zeDeviceGetAggregatedCopyOffloadIncrementValue(hDevice, incrementValue);
 }
 }

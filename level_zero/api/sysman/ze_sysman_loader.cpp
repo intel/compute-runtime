@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ zesGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnReadOverclockState, L0::globalDriverDispatch.sysmanDevice.pfnReadOverclockState, version, ZE_API_VERSION_1_5);
     fillDdiEntry(pDdiTable->pfnEnumOverclockDomains, L0::globalDriverDispatch.sysmanDevice.pfnEnumOverclockDomains, version, ZE_API_VERSION_1_5);
     fillDdiEntry(pDdiTable->pfnResetExt, L0::globalDriverDispatch.sysmanDevice.pfnResetExt, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnPciLinkSpeedUpdateExt, L0::globalDriverDispatch.sysmanDevice.pfnPciLinkSpeedUpdateExt, version, ZE_API_VERSION_1_15);
 
     return result;
 }

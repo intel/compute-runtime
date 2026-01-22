@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
     this->core.isValidFlag = true;
-    this->core.version = ZE_API_VERSION_1_14;
+    this->core.version = ZE_API_VERSION_1_15;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
     this->core.RTASBuilder = &this->coreRTASBuilder;
     this->core.RTASParallelOperationExp = &this->coreRTASParallelOperationExp;
@@ -75,7 +75,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_12;
+    this->sysman.version = ZE_API_VERSION_1_15;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -108,8 +108,8 @@ DriverDispatch::DriverDispatch() {
     this->coreRTASBuilder.pfnCreateExt = L0::zeRTASBuilderCreateExt;
     this->coreRTASBuilder.pfnGetBuildPropertiesExt = L0::zeRTASBuilderGetBuildPropertiesExt;
     this->coreRTASBuilder.pfnBuildExt = L0::zeRTASBuilderBuildExt;
-    this->coreRTASBuilder.pfnDestroyExt = L0::zeRTASBuilderDestroyExt;
     this->coreRTASBuilder.pfnCommandListAppendCopyExt = L0::zeRTASBuilderCommandListAppendCopyExt;
+    this->coreRTASBuilder.pfnDestroyExt = L0::zeRTASBuilderDestroyExt;
     this->coreRTASBuilderExp.pfnCreateExp = L0::zeRTASBuilderCreateExp;
     this->coreRTASBuilderExp.pfnGetBuildPropertiesExp = L0::zeRTASBuilderGetBuildPropertiesExp;
     this->coreRTASBuilderExp.pfnBuildExp = L0::zeRTASBuilderBuildExp;
@@ -157,6 +157,7 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnReleaseExternalSemaphoreExt = L0::zeDeviceReleaseExternalSemaphoreExt;
     this->coreDevice.pfnGetVectorWidthPropertiesExt = L0::zeDeviceGetVectorWidthPropertiesExt;
     this->coreDevice.pfnSynchronize = L0::zeDeviceSynchronize;
+    this->coreDevice.pfnGetAggregatedCopyOffloadIncrementValue = L0::zeDeviceGetAggregatedCopyOffloadIncrementValue;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;
@@ -239,6 +240,7 @@ DriverDispatch::DriverDispatch() {
     this->coreMem.pfnFreeExt = L0::zeMemFreeExt;
     this->coreMem.pfnPutIpcHandle = L0::zeMemPutIpcHandle;
     this->coreMem.pfnGetPitchFor2dImage = L0::zeMemGetPitchFor2dImage;
+    this->coreMem.pfnGetIpcHandleWithProperties = L0::zeMemGetIpcHandleWithProperties;
     this->coreMemExp.pfnGetIpcHandleFromFileDescriptorExp = L0::zeMemGetIpcHandleFromFileDescriptorExp;
     this->coreMemExp.pfnGetFileDescriptorFromIpcHandleExp = L0::zeMemGetFileDescriptorFromIpcHandleExp;
     this->coreMemExp.pfnSetAtomicAccessAttributeExp = L0::zeMemSetAtomicAccessAttributeExp;
@@ -267,6 +269,11 @@ DriverDispatch::DriverDispatch() {
     this->coreEvent.pfnGetEventPool = L0::zeEventGetEventPool;
     this->coreEvent.pfnGetSignalScope = L0::zeEventGetSignalScope;
     this->coreEvent.pfnGetWaitScope = L0::zeEventGetWaitScope;
+    this->coreEvent.pfnCounterBasedCreate = L0::zeEventCounterBasedCreate;
+    this->coreEvent.pfnCounterBasedGetIpcHandle = L0::zeEventCounterBasedGetIpcHandle;
+    this->coreEvent.pfnCounterBasedOpenIpcHandle = L0::zeEventCounterBasedOpenIpcHandle;
+    this->coreEvent.pfnCounterBasedCloseIpcHandle = L0::zeEventCounterBasedCloseIpcHandle;
+    this->coreEvent.pfnCounterBasedGetDeviceAddress = L0::zeEventCounterBasedGetDeviceAddress;
     this->coreEventExp.pfnQueryTimestampsExp = L0::zeEventQueryTimestampsExp;
     this->coreModule.pfnCreate = L0::zeModuleCreate;
     this->coreModule.pfnDestroy = L0::zeModuleDestroy;
@@ -299,6 +306,7 @@ DriverDispatch::DriverDispatch() {
     this->coreSampler.pfnDestroy = L0::zeSamplerDestroy;
     this->corePhysicalMem.pfnCreate = L0::zePhysicalMemCreate;
     this->corePhysicalMem.pfnDestroy = L0::zePhysicalMemDestroy;
+    this->corePhysicalMem.pfnGetProperties = L0::zePhysicalMemGetProperties;
     this->coreVirtualMem.pfnReserve = L0::zeVirtualMemReserve;
     this->coreVirtualMem.pfnFree = L0::zeVirtualMemFree;
     this->coreVirtualMem.pfnQueryPageSize = L0::zeVirtualMemQueryPageSize;
@@ -422,6 +430,7 @@ DriverDispatch::DriverDispatch() {
     this->sysmanDevice.pfnReadOverclockState = L0::zesDeviceReadOverclockState;
     this->sysmanDevice.pfnEnumOverclockDomains = L0::zesDeviceEnumOverclockDomains;
     this->sysmanDevice.pfnResetExt = L0::zesDeviceResetExt;
+    this->sysmanDevice.pfnPciLinkSpeedUpdateExt = L0::zesDevicePciLinkSpeedUpdateExt;
     this->sysmanDeviceExp.pfnGetSubDevicePropertiesExp = L0::zesDeviceGetSubDevicePropertiesExp;
     this->sysmanDeviceExp.pfnEnumActiveVFExp = L0::zesDeviceEnumActiveVFExp;
     this->sysmanDeviceExp.pfnEnumEnabledVFExp = L0::zesDeviceEnumEnabledVFExp;
@@ -448,32 +457,10 @@ DriverDispatch::DriverDispatch() {
     this->sysmanScheduler.pfnSetTimesliceMode = L0::zesSchedulerSetTimesliceMode;
     this->sysmanScheduler.pfnSetExclusiveMode = L0::zesSchedulerSetExclusiveMode;
     this->sysmanScheduler.pfnSetComputeUnitDebugMode = L0::zesSchedulerSetComputeUnitDebugMode;
-    this->sysmanScheduler.pfnGetProperties = L0::zesSchedulerGetProperties;
-    this->sysmanScheduler.pfnGetCurrentMode = L0::zesSchedulerGetCurrentMode;
-    this->sysmanScheduler.pfnGetTimeoutModeProperties = L0::zesSchedulerGetTimeoutModeProperties;
-    this->sysmanScheduler.pfnGetTimesliceModeProperties = L0::zesSchedulerGetTimesliceModeProperties;
-    this->sysmanScheduler.pfnSetTimeoutMode = L0::zesSchedulerSetTimeoutMode;
-    this->sysmanScheduler.pfnSetTimesliceMode = L0::zesSchedulerSetTimesliceMode;
-    this->sysmanScheduler.pfnSetExclusiveMode = L0::zesSchedulerSetExclusiveMode;
-    this->sysmanScheduler.pfnSetComputeUnitDebugMode = L0::zesSchedulerSetComputeUnitDebugMode;
     this->sysmanPerformanceFactor.pfnGetProperties = L0::zesPerformanceFactorGetProperties;
     this->sysmanPerformanceFactor.pfnGetConfig = L0::zesPerformanceFactorGetConfig;
     this->sysmanPerformanceFactor.pfnSetConfig = L0::zesPerformanceFactorSetConfig;
     this->sysmanPower.pfnGetProperties = L0::zesPowerGetProperties;
-    this->sysmanPower.pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
-    this->sysmanPower.pfnGetLimits = L0::zesPowerGetLimits;
-    this->sysmanPower.pfnSetLimits = L0::zesPowerSetLimits;
-    this->sysmanPower.pfnGetEnergyThreshold = L0::zesPowerGetEnergyThreshold;
-    this->sysmanPower.pfnSetEnergyThreshold = L0::zesPowerSetEnergyThreshold;
-    this->sysmanPower.pfnGetLimitsExt = L0::zesPowerGetLimitsExt;
-    this->sysmanPower.pfnSetLimitsExt = L0::zesPowerSetLimitsExt;
-    this->sysmanPower.pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
-    this->sysmanPower.pfnGetLimits = L0::zesPowerGetLimits;
-    this->sysmanPower.pfnSetLimits = L0::zesPowerSetLimits;
-    this->sysmanPower.pfnGetEnergyThreshold = L0::zesPowerGetEnergyThreshold;
-    this->sysmanPower.pfnSetEnergyThreshold = L0::zesPowerSetEnergyThreshold;
-    this->sysmanPower.pfnGetLimitsExt = L0::zesPowerGetLimitsExt;
-    this->sysmanPower.pfnSetLimitsExt = L0::zesPowerSetLimitsExt;
     this->sysmanPower.pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
     this->sysmanPower.pfnGetLimits = L0::zesPowerGetLimits;
     this->sysmanPower.pfnSetLimits = L0::zesPowerSetLimits;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,13 @@ ze_result_t ZE_APICALL zePhysicalMemDestroy(
     ze_context_handle_t hContext,
     ze_physical_mem_handle_t hPhysicalMemory) {
     return L0::Context::fromHandle(hContext)->destroyPhysicalMem(hPhysicalMemory);
+}
+
+ze_result_t ZE_APICALL zePhysicalMemGetProperties(
+    ze_context_handle_t hContext,
+    ze_physical_mem_handle_t hPhysicalMem,
+    ze_physical_mem_properties_t *pMemProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zeVirtualMemMap(
@@ -211,5 +218,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeContextEvictImage(
     ze_device_handle_t hDevice,
     ze_image_handle_t hImage) {
     return L0::zeContextEvictImage(hContext, hDevice, hImage);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zePhysicalMemGetProperties(
+    ze_context_handle_t hContext,
+    ze_physical_mem_handle_t hPhysicalMem,
+    ze_physical_mem_properties_t *pMemProperties) {
+    return L0::zePhysicalMemGetProperties(hContext, hPhysicalMem, pMemProperties);
 }
 }
