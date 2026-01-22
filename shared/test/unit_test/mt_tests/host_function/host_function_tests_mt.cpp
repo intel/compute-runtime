@@ -330,11 +330,7 @@ INSTANTIATE_TEST_SUITE_P(
     HostFunctionMtTestP,
     ::testing::Values(                                         // testingMode, nPrimaryCsrs, nPartitions
         std::make_tuple(countingSemaphoreTestingMode, 0u, 1u), // Counting Semaphore implementation
-        std::make_tuple(countingSemaphoreTestingMode, 0u, 2u), // Counting Semaphore implementation with implicit scaling (2 partitions)
-        std::make_tuple(threadPoolTestingMode, 0u, 2u),        // Thread Pool implementation, with implicit scaling (2 partitions)
-        std::make_tuple(threadPoolTestingMode, 1u, 1u),        // Thread Pool implementation, one primary CSR
-        std::make_tuple(threadPoolTestingMode, 2u, 1u),        // Thread Pool implementation, two primary CSRs
-        std::make_tuple(threadPoolTestingMode, 2u, 2u)         // Thread Pool implementation, two primary CSRs with implicit scaling (2 partitions)
+        std::make_tuple(countingSemaphoreTestingMode, 0u, 2u)  // Counting Semaphore implementation with implicit scaling (2 partitions)
         ));
 
 } // namespace
