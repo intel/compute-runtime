@@ -218,7 +218,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
 
-    pPmuInterface->mockPmuReadCorrectable = true;
+    pPmuInterface->mockPmuReadErrors = true;
 
     for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
         delete handle;

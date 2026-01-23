@@ -792,6 +792,206 @@ TEST_F(SysmanRasExpFixture, GivenUnconfiguredCategoryWhenCallingZesIntelRasGetCo
     }
 }
 
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithSingleCategoryThenCorrectErrorCountIsReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = false;
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadErrors = true;
+
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    zes_intel_ras_state_exp_t state = {};
+    const uint32_t count = 1;
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[0], count, &state));
+    uint32_t expectedErrCount = correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors;
+    EXPECT_EQ(state.errorCounter, expectedErrCount);
+
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[1], count, &state));
+    expectedErrCount = fatalTlb + initialUncorrectableCacheErrors;
+    EXPECT_EQ(state.errorCounter, expectedErrCount);
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithMultipleSupportedCategoriesThenCorrectErrorCountsAreReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = false;
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadErrors = true;
+    pPmuInterface->mockPmuReadCount = 1;
+
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    const uint32_t count = 3;
+    std::vector<zes_intel_ras_state_exp_t> states(count);
+    states[0].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
+    states[1].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    states[2].category = ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[1], count, states.data()));
+    EXPECT_EQ(states[0].errorCounter, fatalTlb + initialUncorrectableCacheErrors);
+    EXPECT_EQ(states[1].errorCounter, fatalEuErrorCount + initialUncorrectableComputeErrors);
+    EXPECT_EQ(states[2].errorCounter, driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithNonExistentCategoryThenZeroErrorCountIsReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = false;
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadErrors = true;
+
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    zes_intel_ras_state_exp_t state = {};
+    const uint32_t count = 1;
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[0], count, &state));
+    EXPECT_EQ(state.errorCounter, 0u);
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithMultipleCategoriesThenErrorCountForSupportedCategoriesAreReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = false;
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadErrors = true;
+    pPmuInterface->mockPmuReadCount = 1;
+
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    const uint32_t count = 3;
+    std::vector<zes_intel_ras_state_exp_t> states(count);
+    states[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    states[1].category = ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS;
+    states[2].category = ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[1], count, states.data()));
+    EXPECT_EQ(states[0].errorCounter, fatalEuErrorCount + initialUncorrectableComputeErrors);
+    EXPECT_EQ(states[1].errorCounter, 0u);
+    EXPECT_EQ(states[2].errorCounter, driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithHbmThenCorrectErrorCountIsReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = true;
+    VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadResult = true;
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    zes_intel_ras_state_exp_t state = {};
+    const uint32_t count = 1;
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[0], count, &state));
+    EXPECT_EQ(state.errorCounter, hbmCorrectableErrorCount);
+
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[1], count, &state));
+    EXPECT_EQ(state.errorCounter, hbmUncorrectableErrorCount);
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExpWithSourceReturningZeroCategoriesThenZeroErrorCountIsReturned) {
+    pRasFwUtilInterface->mockMemorySuccess = false;
+
+    VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::SysfsAccess *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPerfEvent = true;
+
+    VariableBackup<L0::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(handles.size(), mockHandleCount);
+
+    zes_intel_ras_state_exp_t state = {};
+    const uint32_t count = 1;
+    state.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp(handles[0], count, &state));
+    EXPECT_EQ(state.errorCounter, 0u);
+}
+
 struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<MockRasFsAccess> pFsAccess;

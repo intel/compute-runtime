@@ -839,15 +839,22 @@ typedef ze_result_t(ZE_APICALL *zesIntelRasSetConfigExp_pfn)(
     const uint32_t count,
     const zes_intel_ras_config_exp_t *pConfig);
 
+typedef ze_result_t(ZE_APICALL *zesIntelRasGetStateExp_pfn)(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    zes_intel_ras_state_exp_t *pState);
+
 // Global function pointers for RAS experimental APIs
 zesIntelRasGetSupportedCategoriesExp_pfn zesIntelRasGetSupportedCategoriesExpPtr = nullptr;
 zesIntelRasGetConfigExp_pfn zesIntelRasGetConfigExpPtr = nullptr;
 zesIntelRasSetConfigExp_pfn zesIntelRasSetConfigExpPtr = nullptr;
+zesIntelRasGetStateExp_pfn zesIntelRasGetStateExpPtr = nullptr;
 
 void getRasExpFunctionPointers(ze_driver_handle_t driverHandle) {
     VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetSupportedCategoriesExp", reinterpret_cast<void **>(&zesIntelRasGetSupportedCategoriesExpPtr)));
     VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetConfigExp", reinterpret_cast<void **>(&zesIntelRasGetConfigExpPtr)));
     VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasSetConfigExp", reinterpret_cast<void **>(&zesIntelRasSetConfigExpPtr)));
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetStateExp", reinterpret_cast<void **>(&zesIntelRasGetStateExpPtr)));
 }
 
 void testSysmanRasExp(ze_device_handle_t &device) {
@@ -908,6 +915,19 @@ void testSysmanRasExp(ze_device_handle_t &device) {
             }
         }
 
+        std::vector<zes_intel_ras_state_exp_t> rasStatesExp(supportedCategoryCount);
+        for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+            rasStatesExp[i].category = supportedCategories[i];
+        }
+
+        VALIDATECALL(zesIntelRasGetStateExpPtr(handle, supportedCategoryCount, rasStatesExp.data()));
+        if (verbose) {
+            std::cout << "Get Error Counts For Supported Error Categories." << std::endl;
+            for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                std::cout << " Error category: " << getRasErrorCategoryExp(rasStatesExp[i].category) << " Count: " << rasStatesExp[i].errorCounter << std::endl;
+            }
+        }
+
         if (iamroot) {
             std::vector<zes_intel_ras_config_exp_t> setConfig(supportedCategoryCount);
             std::vector<zes_intel_ras_config_exp_t> getConfig(supportedCategoryCount);
@@ -917,6 +937,10 @@ void testSysmanRasExp(ze_device_handle_t &device) {
                 setConfig[i].pNext = nullptr;
                 setConfig[i].category = supportedCategories[i];
                 setConfig[i].threshold = 10;
+
+                getConfig[i].stype = ZES_INTEL_STRUCTURE_TYPE_RAS_CONFIG_EXP;
+                getConfig[i].pNext = nullptr;
+                getConfig[i].category = supportedCategories[i];
             }
 
             VALIDATECALL(zesIntelRasSetConfigExpPtr(handle, supportedCategoryCount, setConfig.data()));

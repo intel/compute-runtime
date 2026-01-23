@@ -101,5 +101,12 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasSetConfigExpThenErrorI
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
 }
 
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<L0::RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    const uint32_t count = 0u;
+    zes_intel_ras_state_exp_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp(count, &state));
+}
+
 } // namespace ult
 } // namespace L0

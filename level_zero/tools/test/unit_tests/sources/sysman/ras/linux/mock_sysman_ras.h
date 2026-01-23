@@ -106,7 +106,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
     int32_t mockPmuReadCountAfterClear = 0;
     int32_t mockPmuReadTileCount = 0;
 
-    bool mockPmuReadCorrectable = false;
+    bool mockPmuReadErrors = false;
     bool mockPmuReadAfterClear = false;
     bool mockPmuReadResult = false;
     bool mockPerfEvent = false;
@@ -221,7 +221,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
             return mockedPmuReadAndFailureReturn(fd, data, sizeOfdata);
         }
 
-        if (mockPmuReadCorrectable == true) {
+        if (mockPmuReadErrors == true) {
             if (mockPmuReadCount == 0) {
                 mockPmuReadCount++;
                 return mockedPmuReadForCorrectableAndSuccessReturn(fd, data, sizeOfdata);

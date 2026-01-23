@@ -146,6 +146,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetSupportedCategoriesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetConfigExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasSetConfigExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetStateExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 #undef RETURN_L0_FUNC_PTR_IF_EXIST

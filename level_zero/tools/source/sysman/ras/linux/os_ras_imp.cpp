@@ -186,6 +186,45 @@ ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
+ze_result_t LinuxRasImp::osRasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
+    // Fetch states from all RAS sources once
+    std::vector<zes_ras_state_exp_t> allSourceStates;
+
+    for (const auto &rasSource : rasSources) {
+        uint32_t numCategories = rasSource->osRasGetCategoryCount();
+        std::vector<zes_ras_state_exp_t> sourceStates(numCategories);
+        ze_result_t result = rasSource->osRasGetStateExp(numCategories, sourceStates.data());
+        if (result != ZE_RESULT_SUCCESS) {
+            continue;
+        }
+
+        // Check for duplicate categories and add to allSourceStates
+        for (const auto &state : sourceStates) {
+            DEBUG_BREAK_IF(std::find_if(allSourceStates.begin(), allSourceStates.end(),
+                                        [&state](const zes_ras_state_exp_t &currentState) { return currentState.category == state.category; }) != allSourceStates.end());
+            allSourceStates.push_back(state);
+        }
+    }
+
+    // Initialize all error counters to 0
+    for (uint32_t i = 0; i < count; i++) {
+        pState[i].errorCounter = 0;
+    }
+
+    // Populate counters directly
+    for (const auto &state : allSourceStates) {
+        // Find matching category in the requested list
+        for (uint32_t i = 0; i < count; i++) {
+            if (pState[i].category == state.category) {
+                pState[i].errorCounter += state.errorCounter;
+                break;
+            }
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 void LinuxRasImp::initSources() {
     rasSources.push_back(std::make_unique<L0::LinuxRasSourceGt>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {

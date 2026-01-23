@@ -29,6 +29,7 @@ class Ras : _zes_ras_handle_t {
     virtual ze_result_t rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) = 0;
     virtual ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) = 0;
     virtual ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) = 0;
+    virtual ze_result_t rasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) = 0;
 
     static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);

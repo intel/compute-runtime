@@ -55,7 +55,7 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint
 
 ze_result_t ZE_APICALL zesIntelRasGetStateExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_state_exp_t *pState) {
     if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return L0::Ras::fromHandle(hRas)->rasGetStateExp(count, pState);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp(count, pState);
     } else {
