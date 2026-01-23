@@ -283,7 +283,15 @@ void MemoryExportImportWinHandleTest::SetUp() {
 void *DriverHandleGetIpcHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags,
                                                    uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc,
                                                    NEO::SvmAllocationData &mappedPeerAllocData) {
-    EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
+    // Check if platform supports pidfd or socket for IPC
+    auto &productHelper = neoDevice->getProductHelper();
+    if (productHelper.isPidFdOrSocketForIpcSupported()) {
+        // Simulate pidfd where the original handle is not the same as the imported one
+        EXPECT_NE(handle, static_cast<uint64_t>(mockFd));
+    } else {
+        // Without pidfd/socket support, handle should be the same
+        EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
+    }
     if (mockFd == allocationMap.second) {
         return allocationMap.first;
     }
@@ -306,12 +314,32 @@ ze_result_t ContextGetIpcHandleMock::getIpcMemHandle(const void *ptr, ze_ipc_mem
     uint64_t handle = driverHandle->mockFd;
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
 
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-    ipcData = {};
-    ipcData.handle = handle;
-    auto type = Context::parseUSMType(allocData->memoryType);
-    if (type == ZE_MEMORY_TYPE_HOST) {
-        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
+    memset(pIpcHandle->data, 0, ZE_MAX_IPC_HANDLE_SIZE);
+
+    // Write in both formats to ensure compatibility regardless of settings
+    IpcOpaqueMemoryData *opaqueData = reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandle->data);
+    IpcMemoryData *legacyData = reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
+
+    // Set opaque format fields
+    opaqueData->handle.fd = static_cast<int>(handle);
+    opaqueData->poolOffset = 0;
+    opaqueData->processId = 1234;
+
+    // Set legacy format fields (these overlap with opaque format)
+    legacyData->handle = handle;
+    legacyData->poolOffset = 0;
+
+    // Set type fields based on allocation data
+    if (allocData) {
+        auto type = Context::parseUSMType(allocData->memoryType);
+        uint8_t memType = (type == ZE_MEMORY_TYPE_HOST)
+                              ? static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)
+                              : static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+        opaqueData->memoryType = memType;
+        legacyData->type = memType;
+    } else {
+        opaqueData->memoryType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+        legacyData->type = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -384,12 +412,31 @@ ze_result_t ContextIpcMock::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t
     uint64_t handle = mockFd;
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
 
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-    ipcData = {};
-    ipcData.handle = handle;
-    auto type = Context::parseUSMType(allocData->memoryType);
-    if (type == ZE_MEMORY_TYPE_HOST) {
-        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
+    memset(pIpcHandle->data, 0, ZE_MAX_IPC_HANDLE_SIZE);
+
+    // Write in both formats to ensure compatibility regardless of settings
+    IpcOpaqueMemoryData *opaqueData = reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandle->data);
+    IpcMemoryData *legacyData = reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
+
+    // Set opaque format fields
+    opaqueData->handle.fd = static_cast<int>(handle);
+    opaqueData->poolOffset = 0;
+
+    // Set legacy format fields (these overlap with opaque format)
+    legacyData->handle = handle;
+    legacyData->poolOffset = 0;
+
+    // Set type fields based on allocation data
+    if (allocData) {
+        auto type = Context::parseUSMType(allocData->memoryType);
+        uint8_t memType = (type == ZE_MEMORY_TYPE_HOST)
+                              ? static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)
+                              : static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+        opaqueData->memoryType = memType;
+        legacyData->type = memType;
+    } else {
+        opaqueData->memoryType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+        legacyData->type = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
     }
 
     return ZE_RESULT_SUCCESS;
