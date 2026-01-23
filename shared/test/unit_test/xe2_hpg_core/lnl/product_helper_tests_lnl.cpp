@@ -139,3 +139,7 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
     EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }
+
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
+    EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
+}
