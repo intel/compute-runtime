@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties) {
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     MiFlushArgs args{waArgs};
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
@@ -93,7 +93,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         }
     }
 
-    if (rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired()) {
+    if (rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() && !hasAdditionalBlitProperties) {
         EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
     }
 
@@ -232,7 +232,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
 
     appendColorDepth(blitProperties, bltCmd);
 
-    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+    const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -268,7 +268,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
 
                 tmpCmd.setDestinationBaseAddress(dstAddr);
                 tmpCmd.setSourceBaseAddress(srcAddr);
-                if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {
+                if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
                     applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
                     firstCommand = false;
                 }
@@ -280,7 +280,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 if (lastCommand) {
                     result.lastBlitCommand = bltStream;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
 
                 sizeToBlit -= blitSize;
                 offset += blitSize;
@@ -318,7 +318,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const B
 
     blitCmd.setFillColor(blitProperties.fillPattern);
     blitCmd.setColorDepth(colorDepth);
-    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+    const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -350,7 +350,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const B
         }
         appendBlitFillCommand(blitProperties, tmpCmd);
 
-        if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {
+        if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
             applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
             firstCommand = false;
         }
@@ -391,7 +391,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
     appendSurfaceType(blitProperties, bltCmd);
 
     dispatchPreBlitCommand(linearStream, rootDeviceEnvironment);
-    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+    const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
 
     BlitCommandsResult result{};
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
@@ -402,7 +402,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
             printImageBlitBlockCopyCommand(tmpCmd, i);
         }
         bool lastCommand = (i == (blitProperties.copySize.z - 1));
-        if (useAdditionalBlitProperties && (i == 0 || lastCommand)) {
+        if (hasAdditionalBlitProperties && (i == 0 || lastCommand)) {
             applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
         }
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_BLOCK_COPY_BLT>();
@@ -410,7 +410,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
         if (lastCommand) {
             result.lastBlitCommand = cmd;
         }
-        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
     }
     return result;
 }
@@ -504,7 +504,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
     bltCmd.setDestinationPitch(static_cast<uint32_t>(blitProperties.dstRowPitch));
     appendColorDepth(blitProperties, bltCmd);
 
-    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+    const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -533,7 +533,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
 
                 appendBlitCommandsForBuffer(blitProperties, tmpCmd, rootDeviceEnvironment);
 
-                if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {
+                if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
                     applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
                     firstCommand = false;
                 }
@@ -542,7 +542,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
                 if (lastCommand) {
                     result.lastBlitCommand = cmd;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
 
                 srcAddress += width;
                 dstAddress += width;

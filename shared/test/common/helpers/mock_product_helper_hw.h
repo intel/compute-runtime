@@ -27,7 +27,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     bool isBufferPoolAllocatorSupported() const override;
-    bool useAdditionalBlitProperties() const override { return enableAdditionalBlitProperties; }
+    bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override { return enableAdditionalBlitProperties; }
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;

@@ -27,6 +27,7 @@ class AubManager;
 namespace NEO {
 struct KmdNotifyProperties;
 struct AllocationData;
+struct BlitProperties;
 class CommandStreamReceiver;
 class Device;
 class Drm;
@@ -270,6 +271,7 @@ class ProductHelper {
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
     virtual bool isExposingSubdevicesAllowed() const = 0;
     virtual bool useAdditionalBlitProperties() const = 0;
+    virtual bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const = 0;
     virtual bool isFlushBetweenBlitsRequired() const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;

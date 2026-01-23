@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
@@ -1233,6 +1234,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggreg
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesThenFalseReturned) {
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties());
+}
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesWithBlitPropertiesThenFalseReturned) {
+    BlitProperties blitProperties{};
+    EXPECT_FALSE(productHelper->useAdditionalBlitProperties(blitProperties));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForCSThenFalseReturned, IsAtMostXeCore) {

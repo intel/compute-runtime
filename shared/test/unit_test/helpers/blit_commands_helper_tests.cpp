@@ -296,7 +296,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         }
 
         // -1: default
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
 
         EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
@@ -320,7 +320,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
@@ -332,7 +332,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
@@ -344,9 +344,51 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
 
         EXPECT_EQ(0u, linearStream.getUsed());
+    }
+}
+
+HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWithDifferentHasAdditionalBlitPropertiesThenVerifyMiFlushBehavior) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PostBlitCommand.set(-1);
+
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = true;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+
+        HardwareParse hwParserWithoutAdditionalProps;
+        hwParserWithoutAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
+        auto miFlushCount = hwParserWithoutAdditionalProps.getCommandCount<MI_FLUSH_DW>();
+        auto miArbCheckCount = hwParserWithoutAdditionalProps.getCommandCount<MI_ARB_CHECK>();
+
+        EXPECT_GT(miFlushCount, 0u);
+        EXPECT_GT(miArbCheckCount, 0u);
+    }
+
+    {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true);
+
+        HardwareParse hwParserWithAdditionalProps;
+        hwParserWithAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
+        auto miFlushCount = hwParserWithAdditionalProps.getCommandCount<MI_FLUSH_DW>();
+        auto miArbCheckCount = hwParserWithAdditionalProps.getCommandCount<MI_ARB_CHECK>();
+
+        EXPECT_EQ(0u, miFlushCount);
+        EXPECT_GT(miArbCheckCount, 0u);
     }
 }
 
@@ -1150,6 +1192,7 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferPerRowThenValidateMiFlushBehavior, WithoutGen12Lp) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
     uint32_t clear[] = {5, 6, 7, 8};
@@ -1176,34 +1219,34 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
-    uint32_t streamBuffer[400] = {};
-    LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
-    uint32_t streamBuffer2[400] = {};
-    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
-    auto blitResult2 = NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
-    EXPECT_NE(nullptr, blitResult2.lastBlitCommand);
+    uint32_t streamBuffer[400] = {};
+    LinearStream streamWithoutAdditionalProps(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, streamWithoutAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
+
+    HardwareParse hwParserWithoutAdditionalProps;
+    hwParserWithoutAdditionalProps.parseCommands<FamilyType>(streamWithoutAdditionalProps, 0);
+    auto miFlushCountWithoutAdditionalProps = hwParserWithoutAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
 
-    uint32_t streamBuffer3[400] = {};
-    LinearStream stream3(streamBuffer3, sizeof(streamBuffer3));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream3, pDevice->getRootDeviceEnvironmentRef());
+    uint32_t streamBuffer2[400] = {};
+    LinearStream streamWithAdditionalProps(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, streamWithAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
 
-    HardwareParse hwParserWithPostSync;
-    hwParserWithPostSync.parseCommands<FamilyType>(stream3, 0);
+    HardwareParse hwParserWithAdditionalProps;
+    hwParserWithAdditionalProps.parseCommands<FamilyType>(streamWithAdditionalProps, 0);
+    auto miFlushCountWithAdditionalProps = hwParserWithAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
-    auto miFlushCountPostSync = hwParserWithPostSync.getCommandCount<typename FamilyType::MI_FLUSH_DW>();
-
-    EXPECT_EQ(0u, miFlushCountPostSync);
-
-    EXPECT_LT(stream3.getUsed(), stream2.getUsed());
+    EXPECT_EQ(0u, miFlushCountWithAdditionalProps);
+    EXPECT_GT(miFlushCountWithoutAdditionalProps, 0u);
+    EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
     uint32_t clear[] = {5, 6, 7, 8};
@@ -1232,30 +1275,28 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
 
     uint32_t streamBuffer[400] = {};
-    LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    LinearStream streamWithoutAdditionalProps(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, streamWithoutAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
 
-    uint32_t streamBuffer2[400] = {};
-    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
-    auto blitResult2 = NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
-    EXPECT_NE(nullptr, blitResult2.lastBlitCommand);
+    HardwareParse hwParserWithoutAdditionalProps;
+    hwParserWithoutAdditionalProps.parseCommands<FamilyType>(streamWithoutAdditionalProps, 0);
+    auto miFlushCountWithoutAdditionalProps = hwParserWithoutAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
 
-    uint32_t streamBuffer3[400] = {};
-    LinearStream stream3(streamBuffer3, sizeof(streamBuffer3));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, stream3, pDevice->getRootDeviceEnvironmentRef());
+    uint32_t streamBuffer2[400] = {};
+    LinearStream streamWithAdditionalProps(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, streamWithAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
 
-    HardwareParse hwParserWithPostSync;
-    hwParserWithPostSync.parseCommands<FamilyType>(stream3, 0);
+    HardwareParse hwParserWithAdditionalProps;
+    hwParserWithAdditionalProps.parseCommands<FamilyType>(streamWithAdditionalProps, 0);
+    auto miFlushCountWithAdditionalProps = hwParserWithAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
-    auto miFlushCountPostSync = hwParserWithPostSync.getCommandCount<typename FamilyType::MI_FLUSH_DW>();
-
-    EXPECT_EQ(0u, miFlushCountPostSync);
-
-    EXPECT_LT(stream3.getUsed(), stream2.getUsed());
+    EXPECT_EQ(0u, miFlushCountWithAdditionalProps);
+    EXPECT_GT(miFlushCountWithoutAdditionalProps, 0u);
+    EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForImageRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
@@ -1290,26 +1331,28 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
 
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
-    mockProductHelper->enableAdditionalBlitProperties = false;
 
-    uint32_t streamBuffer[100] = {};
-    LinearStream streamWithoutPostSync(streamBuffer, sizeof(streamBuffer));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, streamWithoutPostSync, pDevice->getRootDeviceEnvironmentRef());
+    uint32_t streamBuffer[400] = {};
+    LinearStream streamWithoutAdditionalProps(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, streamWithoutAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
+
+    HardwareParse hwParserWithoutAdditionalProps;
+    hwParserWithoutAdditionalProps.parseCommands<FamilyType>(streamWithoutAdditionalProps, 0);
+    auto miFlushCountWithoutAdditionalProps = hwParserWithoutAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
     mockProductHelper->enableAdditionalBlitProperties = true;
 
-    uint32_t streamBuffer2[100] = {};
-    LinearStream streamWithPostSync(streamBuffer2, sizeof(streamBuffer2));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, streamWithPostSync, pDevice->getRootDeviceEnvironmentRef());
+    uint32_t streamBuffer2[400] = {};
+    LinearStream streamWithAdditionalProps(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, streamWithAdditionalProps, pDevice->getRootDeviceEnvironmentRef());
 
-    HardwareParse hwParserWithPostSync;
-    hwParserWithPostSync.parseCommands<FamilyType>(streamWithPostSync, 0);
+    HardwareParse hwParserWithAdditionalProps;
+    hwParserWithAdditionalProps.parseCommands<FamilyType>(streamWithAdditionalProps, 0);
+    auto miFlushCountWithAdditionalProps = hwParserWithAdditionalProps.getCommandCount<MI_FLUSH_DW>();
 
-    auto miFlushCountPostSync = hwParserWithPostSync.getCommandCount<MI_FLUSH_DW>();
-
-    EXPECT_EQ(0u, miFlushCountPostSync);
-
-    EXPECT_LT(streamWithPostSync.getUsed(), streamWithoutPostSync.getUsed());
+    EXPECT_EQ(0u, miFlushCountWithAdditionalProps);
+    EXPECT_GT(miFlushCountWithoutAdditionalProps, 0u);
+    EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
@@ -1343,7 +1386,6 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
     auto blitResult2 = NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
     EXPECT_NE(nullptr, blitResult2.lastBlitCommand);
 
-    // change productHelper to return true
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
@@ -1382,7 +1424,6 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     auto blitResult2 = NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
     EXPECT_NE(nullptr, blitResult2.lastBlitCommand);
 
-    // change productHelper to return true
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
@@ -1423,7 +1464,6 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
     auto blitResult2 = NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
     EXPECT_NE(nullptr, blitResult2.lastBlitCommand);
 
-    // change productHelper to return true
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
@@ -1449,17 +1489,6 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired);
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize();
     EXPECT_EQ(expectedSize, totalSize);
-}
-
-HWTEST_F(BlitTests, givenXyCopyBltCommandWhenApplyBlitPropertiesIsCalledWithUninitializedPropertiesThenNothingChanged) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
-    auto bltCmdBefore = bltCmd;
-    BlitProperties properties = {};
-    NEO::BlitCommandsHelper<FamilyType>::applyAdditionalBlitProperties(properties, bltCmd, pDevice->getRootDeviceEnvironment(), false);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
-    NEO::BlitCommandsHelper<FamilyType>::applyAdditionalBlitProperties(properties, bltCmd, pDevice->getRootDeviceEnvironment(), true);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
 }
 
 HWTEST2_F(BlitTests, givenSrcAndDstAllocationWithCompressionEnabledWhenAppendBlitCommandsBlockCopyThenSetSrcAndDstTargetMemToLocalMemAndCompressionHandled, IsXeHpgCore) {
