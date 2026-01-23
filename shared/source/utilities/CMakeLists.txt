@@ -60,6 +60,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_pool_allocator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_pool_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.h
 )

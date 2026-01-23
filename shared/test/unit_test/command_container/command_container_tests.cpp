@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -588,10 +588,6 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
             EXPECT_TRUE(cmdContainer->isHeapDirty(heapType));
         }
     }
-    for (auto deallocation : cmdContainer->getDeallocationContainer()) {
-        cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
-    }
-    cmdContainer->getDeallocationContainer().clear();
 }
 
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAllocationHaveDifferentBaseThenHeapIsDirty) {
@@ -619,11 +615,6 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAllocationHaveDiffere
 
     EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
     EXPECT_FALSE(cmdContainer->isHeapDirty(type));
-
-    for (auto deallocation : cmdContainer->getDeallocationContainer()) {
-        cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
-    }
-    cmdContainer->getDeallocationContainer().clear();
 }
 
 TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationIsCreatedAndCommandStreamReplaced) {
@@ -1651,6 +1642,9 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
+    auto &productHelper = pDevice->getProductHelper();
+    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+
     cmdContainer->fillReusableAllocationLists();
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
     auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
@@ -1659,8 +1653,14 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     cmdContainer->getIndirectHeap(HeapType::surfaceState)->getSpace(cmdContainer->getIndirectHeap(HeapType::surfaceState)->getMaxAvailableSpace());
     auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);
 
-    EXPECT_EQ(heap->getGraphicsAllocation(), reusableAlloc);
-    EXPECT_TRUE(reusableHeapsList.peekContains(*baseAlloc));
+    if (usePoolAllocator) {
+        EXPECT_TRUE(heap->getGraphicsAllocation()->isView());
+        EXPECT_NE(heap->getGraphicsAllocation(), reusableAlloc);
+        EXPECT_FALSE(reusableHeapsList.peekContains(*baseAlloc));
+    } else {
+        EXPECT_EQ(heap->getGraphicsAllocation(), reusableAlloc);
+        EXPECT_TRUE(reusableHeapsList.peekContains(*baseAlloc));
+    }
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1965,6 +1965,9 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
 
     auto internalStorage = pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
 
+    auto &productHelper = pDevice->getProductHelper();
+    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
+
     auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
                                                                          iohOldAllocation->getAllocationType())
                                    .release();
@@ -1982,14 +1985,20 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
                                 sshOldAllocation);
     EXPECT_NE(deallocationList.end(), sshAllocIt);
 
+    auto sshOldBufferSize = sshOldAllocation->getUnderlyingBufferSize();
+    auto sshOldAllocType = sshOldAllocation->getAllocationType();
+
     cmdContainer.reset();
     EXPECT_EQ(0u, deallocationList.size());
 
-    auto sshReusedAllocation = internalStorage->obtainReusableAllocation(sshOldAllocation->getUnderlyingBufferSize(),
-                                                                         sshOldAllocation->getAllocationType())
-                                   .release();
-    EXPECT_EQ(sshOldAllocation, sshReusedAllocation);
-    pDevice->getMemoryManager()->freeGraphicsMemory(sshReusedAllocation);
+    if (usePoolAllocator) {
+        auto sshReusedAllocation = internalStorage->obtainReusableAllocation(sshOldBufferSize, sshOldAllocType).release();
+        EXPECT_EQ(nullptr, sshReusedAllocation);
+    } else {
+        auto sshReusedAllocation = internalStorage->obtainReusableAllocation(sshOldBufferSize, sshOldAllocType).release();
+        EXPECT_EQ(sshOldAllocation, sshReusedAllocation);
+        pDevice->getMemoryManager()->freeGraphicsMemory(sshReusedAllocation);
+    }
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenNonHeapIsStoredAndResetContainerThenNonHeapAllocationIsNotStoredForReuse) {
