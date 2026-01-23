@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,7 +186,6 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromDeviceName(const st
         config = getProductConfigFromAcronym(device);
     }
 
-    adjustProductConfig(config);
     if (!isSupportedProductConfig(config)) {
         return AOT::UNKNOWN_ISA;
     }
