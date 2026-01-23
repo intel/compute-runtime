@@ -44,7 +44,9 @@
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
+#if !defined(__riscv)
 #include <emmintrin.h>
+#endif
 
 namespace NEO {
 
@@ -1187,11 +1189,25 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     int64_t timestamp0, timestamp1, localVariableReadDelta, inputPointerReadDelta;
 
     // compute timing overhead
+#if defined(__riscv)
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp0)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp1)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+#else
     _mm_lfence();
     timestamp0 = __rdtsc();
     _mm_lfence();
     timestamp1 = __rdtsc();
     _mm_lfence();
+#endif
 
     if (timestamp1 - timestamp0 < meassurmentOverhead) {
         meassurmentOverhead = timestamp1 - timestamp0;
@@ -1200,14 +1216,32 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     // dummy read
     cacheable = *localVariablePointer;
 
+#if defined(__riscv)
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp0)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+#else
     _mm_lfence();
     timestamp0 = __rdtsc();
     _mm_lfence();
+#endif
     // do read
     cacheable = *localVariablePointer;
+#if defined(__riscv)
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp1)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+#else
     _mm_lfence();
     timestamp1 = __rdtsc();
     _mm_lfence();
+#endif
     localVariableReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
     if (localVariableReadDelta <= 0) {
         localVariableReadDelta = 1;
@@ -1218,13 +1252,31 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     // dummy read
     cacheable = *volatileInputPtr;
 
+#if defined(__riscv)
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp0)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+#else
     _mm_lfence();
     timestamp0 = __rdtsc();
     _mm_lfence();
+#endif
     cacheable = *volatileInputPtr;
+#if defined(__riscv)
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+    __asm__ __volatile__(
+       "rdtime %0;\n"
+       : "=r"(timestamp1)
+    :: );
+    __asm__ __volatile__ ("fence ir, ir" : : : "memory");
+#else
     _mm_lfence();
     timestamp1 = __rdtsc();
     _mm_lfence();
+#endif
     inputPointerReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
     if (inputPointerReadDelta <= 0) {
         inputPointerReadDelta = 1;
