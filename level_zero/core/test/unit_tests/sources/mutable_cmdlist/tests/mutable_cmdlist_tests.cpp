@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -588,10 +588,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
-            givenMutableCommandListWhenKernelDispatchIsSelectedToMutateGroupCountThenUpdatePayloadUponMutation) {
+            givenMutableCommandListWhenKernelWithoutLocalIDsIsDispatchedToMutateGroupCountThenUpdatePayloadUponMutation) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
 
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.numLocalIdChannels = 0;
     dispatchTraits.globalWorkSize[0] = this->crossThreadOffset + 3 * sizeof(uint32_t);
     dispatchTraits.globalWorkSize[1] = this->crossThreadOffset + 4 * sizeof(uint32_t);
     dispatchTraits.globalWorkSize[2] = this->crossThreadOffset + 5 * sizeof(uint32_t);

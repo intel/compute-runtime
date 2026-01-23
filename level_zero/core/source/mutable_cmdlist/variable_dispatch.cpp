@@ -76,7 +76,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
         lastSlmArgumentVar->addDispatch(this);
     }
 
-    for (auto dimension = 0u; dimension < numChannels; dimension++) {
+    for (auto dimension = 0u; dimension < 3u; dimension++) {
         this->groupSize[dimension] = dispatchParams.groupSize[dimension];
         this->groupCount[dimension] = dispatchParams.groupCount[dimension];
         this->globalOffset[dimension] = dispatchParams.globalOffset[dimension];
@@ -311,8 +311,8 @@ void VariableDispatch::setGlobalOffset(const uint32_t globalOffset[3]) {
 }
 
 void VariableDispatch::setGws() {
-    std::array<uint32_t, 3> gws;
-    for (auto dimension = 0u; dimension < numChannels; dimension++) {
+    std::array<uint32_t, 3> gws = {0u, 0u, 0u};
+    for (auto dimension = 0u; dimension < 3; dimension++) {
         gws[dimension] = groupSize[dimension] * groupCount[dimension];
     }
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set gws %u %u %u\n", gws[0], gws[1], gws[2]);
