@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 
-#include <array>
 #include <memory>
 
 namespace L0::MCL {
@@ -32,14 +31,14 @@ class MutableIndirectData {
                         ArrayRef<uint8_t> inlineData)
         : offsets(std::move(offsets)), crossThreadData(crossThreadData), perThreadData(perThreadData), inlineData(inlineData){};
 
-    inline void setIfDefined(const CrossThreadDataOffset (&offsets)[3], std::array<uint32_t, 3> data);
-    void setLocalWorkSize(std::array<uint32_t, 3> localWorkSize);
-    void setLocalWorkSize2(std::array<uint32_t, 3> localWorkSize2);
-    void setEnqLocalWorkSize(std::array<uint32_t, 3> enqLocalWorkSize);
-    void setGlobalWorkSize(std::array<uint32_t, 3> globalWorkSize);
-    void setNumWorkGroups(std::array<uint32_t, 3> numWorkGroups);
+    inline void setIfDefined(const CrossThreadDataOffset (&offsets)[3], MaxChannelsArray data);
+    void setLocalWorkSize(MaxChannelsArray localWorkSize);
+    void setLocalWorkSize2(MaxChannelsArray localWorkSize2);
+    void setEnqLocalWorkSize(MaxChannelsArray enqLocalWorkSize);
+    void setGlobalWorkSize(MaxChannelsArray globalWorkSize);
+    void setNumWorkGroups(MaxChannelsArray numWorkGroups);
     void setWorkDimensions(uint32_t workDimensions);
-    void setGlobalWorkOffset(std::array<uint32_t, 3> globalWorkOffset);
+    void setGlobalWorkOffset(MaxChannelsArray globalWorkOffset);
 
     void setPerThreadData(ArrayRef<const uint8_t> perThreadData);
     void setCrossThreadData(ArrayRef<const uint8_t> crossThreadData);

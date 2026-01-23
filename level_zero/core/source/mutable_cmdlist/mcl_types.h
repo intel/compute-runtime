@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -41,6 +42,12 @@ using LocalSshOffset = LocalOffsetT;
 
 using SlmOffset = uint32_t;
 
+namespace Constants {
 static constexpr AddressT dirtyAddress = 0xDEADBEEFDEADBEEF;
+static constexpr uint32_t maxNumChannels = 3;
+} // namespace Constants
+
+using MaxChannelsArray = std::array<uint32_t, Constants::maxNumChannels>;
+using MaxChannelsCArray = uint32_t[Constants::maxNumChannels];
 
 } // namespace L0::MCL

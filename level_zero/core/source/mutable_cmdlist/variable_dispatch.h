@@ -12,7 +12,6 @@
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_indirect_data.h"
 
-#include <array>
 #include <functional>
 #include <memory>
 
@@ -34,9 +33,9 @@ struct VariableDispatch {
                      uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount,
                      NEO::EngineGroupType cmdListEngineType);
 
-    void setGroupSize(const uint32_t groupSize[3], NEO::Device &device, bool stageData);
-    void setGroupCount(const uint32_t groupCount[3], const NEO::Device &device, bool stageData);
-    void setGlobalOffset(const uint32_t globalOffset[3]);
+    void setGroupSize(const MaxChannelsCArray groupSize, NEO::Device &device, bool stageData);
+    void setGroupCount(const MaxChannelsCArray, const NEO::Device &device, bool stageData);
+    void setGlobalOffset(const MaxChannelsCArray);
     void setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData);
     void commitChanges(const NEO::Device &device);
 
@@ -79,9 +78,9 @@ struct VariableDispatch {
         commitSlmSize = false;
     }
 
-    std::array<uint32_t, 3> groupSize = {1, 1, 1};
-    std::array<uint32_t, 3> groupCount = {1, 1, 1};
-    std::array<uint32_t, 3> globalOffset = {0, 0, 0};
+    MaxChannelsArray groupSize = {1, 1, 1};
+    MaxChannelsArray groupCount = {1, 1, 1};
+    MaxChannelsArray globalOffset = {0, 0, 0};
 
     std::unique_ptr<uint8_t, std::function<void(void *)>> perThreadData;
 

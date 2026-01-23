@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -259,9 +259,9 @@ struct Variable : public VariableHandle {
     };
 
     struct KernelDispatchProperties {
-        uint32_t groupCount[3] = {0, 0, 0};
-        uint32_t groupSize[3] = {0, 0, 0};
-        uint32_t globalOffset[3] = {undefined<uint32_t>, undefined<uint32_t>, undefined<uint32_t>};
+        MaxChannelsCArray groupCount = {0, 0, 0};
+        MaxChannelsCArray groupSize = {0, 0, 0};
+        MaxChannelsCArray globalOffset = {undefined<uint32_t>, undefined<uint32_t>, undefined<uint32_t>};
     };
 
     void setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc);

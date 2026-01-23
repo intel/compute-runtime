@@ -153,7 +153,7 @@ void MutableComputeWalkerHw<GfxFamily>::setNumberThreadsPerThreadGroup(uint32_t 
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::setNumberWorkGroups(std::array<uint32_t, 3> numberWorkGroups) {
+void MutableComputeWalkerHw<GfxFamily>::setNumberWorkGroups(MaxChannelsArray numberWorkGroups) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
 
     auto cpuBufferWalker = reinterpret_cast<WalkerType *>(this->cpuBuffer);
@@ -170,7 +170,7 @@ void MutableComputeWalkerHw<GfxFamily>::setNumberWorkGroups(std::array<uint32_t,
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::setWorkGroupSize(std::array<uint32_t, 3> workgroupSize) {
+void MutableComputeWalkerHw<GfxFamily>::setWorkGroupSize(MaxChannelsArray workgroupSize) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
 
     constexpr uint32_t workGroupSizeIndex = 6;

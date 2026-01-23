@@ -45,13 +45,13 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
       localIdGenerationByRuntime(dispatchParams.generationOfLocalIdsByRuntime), isCooperative(dispatchParams.cooperativeDispatch) {
 
     if (groupSizeVar != nullptr) {
-        groupSizeVar->getDesc().size = 3 * sizeof(uint32_t);
+        groupSizeVar->getDesc().size = Constants::maxNumChannels * sizeof(uint32_t);
         groupSizeVar->addDispatch(this);
         groupSizeVar->setGroupSizeProperty(dispatchParams.groupSize);
     }
 
     if (groupCountVar != nullptr) {
-        groupCountVar->getDesc().size = 3 * sizeof(uint32_t);
+        groupCountVar->getDesc().size = Constants::maxNumChannels * sizeof(uint32_t);
         groupCountVar->addDispatch(this);
         groupCountVar->setGroupCountProperty(dispatchParams.groupCount);
 
@@ -67,7 +67,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
     }
 
     if (globalOffsetVar != nullptr) {
-        globalOffsetVar->getDesc().size = 3 * sizeof(uint32_t);
+        globalOffsetVar->getDesc().size = Constants::maxNumChannels * sizeof(uint32_t);
         globalOffsetVar->addDispatch(this);
         globalOffsetVar->setGlobalOffsetProperty(dispatchParams.globalOffset);
     }
@@ -76,7 +76,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
         lastSlmArgumentVar->addDispatch(this);
     }
 
-    for (auto dimension = 0u; dimension < 3u; dimension++) {
+    for (uint32_t dimension = 0u; dimension < Constants::maxNumChannels; dimension++) {
         this->groupSize[dimension] = dispatchParams.groupSize[dimension];
         this->groupCount[dimension] = dispatchParams.groupCount[dimension];
         this->globalOffset[dimension] = dispatchParams.globalOffset[dimension];
@@ -94,7 +94,7 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
 
     if (calcVar != nullptr && this->isCooperative) {
         auto device = calcVar->getCmdList()->getBase()->getDevice();
-        const uint32_t workDim = 3;
+        const uint32_t workDim = Constants::maxNumChannels;
         const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
         this->maxCooperativeGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(*device->getNEODevice(),
                                                                                  kernelDispatch->kernelData->grfCount,
@@ -112,10 +112,10 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
     this->isSlmKernel = this->lastSlmArgumentVar != nullptr || this->kernelDispatch->slmInlineSize > 0;
 }
 
-void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &device, bool stageData) {
+void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Device &device, bool stageData) {
     this->totalLwsSize = 1u;
 
-    for (auto dimension = 0u; dimension < 3; dimension++) {
+    for (uint32_t dimension = 0u; dimension < Constants::maxNumChannels; dimension++) {
         this->groupSize[dimension] = groupSize[dimension];
         this->totalLwsSize *= groupSize[dimension];
     }
@@ -143,7 +143,7 @@ void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &de
     }
 
     if (this->isCooperative) {
-        const uint32_t workDim = 3;
+        const uint32_t workDim = Constants::maxNumChannels;
         const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
         this->maxCooperativeGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(device,
                                                                                  kernelDispatch->kernelData->grfCount,
@@ -210,10 +210,10 @@ void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &de
     mutableCommandWalker->updateSpecificFields(device, args);
 }
 
-void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::Device &device, bool stageData) {
+void VariableDispatch::setGroupCount(const MaxChannelsCArray groupCount, const NEO::Device &device, bool stageData) {
     this->threadGroupCount = 1;
 
-    for (auto dimension = 0u; dimension < 3; dimension++) {
+    for (uint32_t dimension = 0u; dimension < Constants::maxNumChannels; dimension++) {
         this->groupCount[dimension] = groupCount[dimension];
         this->threadGroupCount *= this->groupCount[dimension];
     }
@@ -300,9 +300,9 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
     indirectData->setNumWorkGroups(this->groupCount);
 }
 
-void VariableDispatch::setGlobalOffset(const uint32_t globalOffset[3]) {
-    for (int i = 0; i < 3; i++) {
-        this->globalOffset[i] = globalOffset[i];
+void VariableDispatch::setGlobalOffset(const MaxChannelsCArray globalOffset) {
+    for (uint32_t dimension = 0; dimension < Constants::maxNumChannels; dimension++) {
+        this->globalOffset[dimension] = globalOffset[dimension];
     }
 
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation global offset variable %p new value %u %u %u\n", globalOffsetVar, globalOffset[0], globalOffset[1], globalOffset[2]);
@@ -311,8 +311,8 @@ void VariableDispatch::setGlobalOffset(const uint32_t globalOffset[3]) {
 }
 
 void VariableDispatch::setGws() {
-    std::array<uint32_t, 3> gws = {0u, 0u, 0u};
-    for (auto dimension = 0u; dimension < 3; dimension++) {
+    MaxChannelsArray gws = {0, 0, 0};
+    for (uint32_t dimension = 0u; dimension < Constants::maxNumChannels; dimension++) {
         gws[dimension] = groupSize[dimension] * groupCount[dimension];
     }
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set gws %u %u %u\n", gws[0], gws[1], gws[2]);
@@ -331,8 +331,8 @@ void VariableDispatch::setWorkDim() {
 }
 
 bool VariableDispatch::requiresLocalIdGeneration(size_t localWorkSize, uint32_t &outWalkOrder, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t localWorkSizes[3] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
-    std::array<uint8_t, 3> kernelWalkOrder{
+    size_t localWorkSizes[Constants::maxNumChannels] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
+    std::array<uint8_t, Constants::maxNumChannels> kernelWalkOrder{
         kernelDispatch->kernelData->workgroupWalkOrder[0],
         kernelDispatch->kernelData->workgroupWalkOrder[1],
         kernelDispatch->kernelData->workgroupWalkOrder[2]};
@@ -357,7 +357,7 @@ void VariableDispatch::generateLocalIds(size_t localWorkSize, const NEO::RootDev
     }
     memset(perThreadData.get(), 0, perThreadDataSize);
 
-    std::array<uint8_t, 3> walkOrder{0, 1, 2};
+    std::array<uint8_t, Constants::maxNumChannels> walkOrder{0, 1, 2};
     if (kernelDispatch->kernelData->requiresWorkgroupWalkOrder) {
         walkOrder = {kernelDispatch->kernelData->workgroupWalkOrder[0],
                      kernelDispatch->kernelData->workgroupWalkOrder[1],
@@ -367,9 +367,9 @@ void VariableDispatch::generateLocalIds(size_t localWorkSize, const NEO::RootDev
     NEO::generateLocalIDs(
         perThreadData.get(),
         static_cast<uint16_t>(simdSize),
-        std::array<uint16_t, 3>{static_cast<uint16_t>(groupSize[0]),
-                                static_cast<uint16_t>(groupSize[1]),
-                                static_cast<uint16_t>(groupSize[2])},
+        std::array<uint16_t, Constants::maxNumChannels>{static_cast<uint16_t>(groupSize[0]),
+                                                        static_cast<uint16_t>(groupSize[1]),
+                                                        static_cast<uint16_t>(groupSize[2])},
         walkOrder,
         false, grfSize, grfCount, rootDeviceEnvironment, numChannels);
 }
@@ -391,7 +391,7 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
     }
 
     if (this->isCooperative) {
-        const uint32_t workDim = 3;
+        const uint32_t workDim = Constants::maxNumChannels;
         const size_t localWorkSize[] = {this->groupSize[0], this->groupSize[1], this->groupSize[2]};
         this->maxCooperativeGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(device,
                                                                                  kernelDispatch->kernelData->grfCount,

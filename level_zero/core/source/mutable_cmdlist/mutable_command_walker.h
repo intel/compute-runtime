@@ -10,8 +10,6 @@
 
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 
-#include <array>
-
 namespace NEO {
 class Device;
 } // namespace NEO
@@ -52,8 +50,8 @@ struct MutableComputeWalker {
 
     virtual void setGenerateLocalId(bool generateLocalIdsByGpu, uint32_t walkOrder, uint32_t localIdDimensions) = 0;
     virtual void setNumberThreadsPerThreadGroup(uint32_t numThreadPerThreadGroup) = 0;
-    virtual void setNumberWorkGroups(std::array<uint32_t, 3> numberWorkGroups) = 0;
-    virtual void setWorkGroupSize(std::array<uint32_t, 3> workgroupSize) = 0;
+    virtual void setNumberWorkGroups(MaxChannelsArray numberWorkGroups) = 0;
+    virtual void setWorkGroupSize(MaxChannelsArray workgroupSize) = 0;
     virtual void setExecutionMask(uint32_t mask) = 0;
 
     virtual void setPostSyncAddress(GpuAddress postSyncAddress, GpuAddress inOrderIncrementAddress) = 0;

@@ -28,8 +28,8 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     void setGenerateLocalId(bool generateLocalIdsByGpu, uint32_t walkOrder, uint32_t localIdDimensions) override;
     void setNumberThreadsPerThreadGroup(uint32_t numThreadPerThreadGroup) override;
-    void setNumberWorkGroups(std::array<uint32_t, 3> numberWorkGroups) override;
-    void setWorkGroupSize(std::array<uint32_t, 3> workgroupSize) override;
+    void setNumberWorkGroups(MaxChannelsArray numberWorkGroups) override;
+    void setWorkGroupSize(MaxChannelsArray workgroupSize) override;
     void setExecutionMask(uint32_t mask) override;
 
     void setPostSyncAddress(GpuAddress postSyncAddress, GpuAddress inOrderIncrementAddress) override;

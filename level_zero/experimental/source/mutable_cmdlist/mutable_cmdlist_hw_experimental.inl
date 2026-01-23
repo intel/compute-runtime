@@ -202,7 +202,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendJump(Label *label
         }
     }
 
-    GpuAddress jumpAddress = dirtyAddress;
+    GpuAddress jumpAddress = Constants::dirtyAddress;
     if (label->isSet()) {
         jumpAddress = label->getAddress();
     }
@@ -283,7 +283,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegV
     auto cs = this->commandContainer.getCommandStream();
     CommandBufferOffset offset = cs->getUsed() + 2 * sizeof(uint32_t);
     CommandBufferOffset fullOffset = reinterpret_cast<CommandBufferOffset>(ptrOffset(cs->getCpuBase(), offset));
-    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(*cs, regToMMIO(reg), dirtyAddress, getBase()->isCopyOnly(false));
+    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(*cs, regToMMIO(reg), Constants::dirtyAddress, getBase()->isCopyOnly(false));
 
     auto retVal = variable->addCsUsage(offset, fullOffset);
     if (retVal != ZE_RESULT_SUCCESS) {
@@ -298,7 +298,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMIStoreReg
     auto cs = this->commandContainer.getCommandStream();
     CommandBufferOffset offset = cs->getUsed() + 2 * sizeof(uint32_t);
     CommandBufferOffset fullOffset = reinterpret_cast<CommandBufferOffset>(ptrOffset(cs->getCpuBase(), offset));
-    NEO::EncodeStoreMMIO<GfxFamily>::encode(*cs, regToMMIO(reg), dirtyAddress, false, nullptr, getBase()->isCopyOnly(false));
+    NEO::EncodeStoreMMIO<GfxFamily>::encode(*cs, regToMMIO(reg), Constants::dirtyAddress, false, nullptr, getBase()->isCopyOnly(false));
 
     auto retVal = variable->addCsUsage(offset, fullOffset);
     if (retVal != ZE_RESULT_SUCCESS) {

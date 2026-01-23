@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ void MutableIndirectData::setAddress(CrossThreadDataOffset offset, uint64_t addr
     }
 }
 
-inline void MutableIndirectData::setIfDefined(const CrossThreadDataOffset (&offsets)[3], std::array<uint32_t, 3> data) {
+inline void MutableIndirectData::setIfDefined(const CrossThreadDataOffset (&offsets)[3], MaxChannelsArray data) {
     if (isDefined(offsets[0])) {
         size_t sizeToCopy = sizeof(data[0]) * (1 + !!(offsets[1] != undefined<CrossThreadDataOffset>)+!!(offsets[2] != undefined<CrossThreadDataOffset>));
 
@@ -67,26 +67,26 @@ inline void MutableIndirectData::setIfDefined(const CrossThreadDataOffset (&offs
     }
 }
 
-void MutableIndirectData::setLocalWorkSize(std::array<uint32_t, 3> localWorkSize) {
+void MutableIndirectData::setLocalWorkSize(MaxChannelsArray localWorkSize) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set lws %u %u %u\n", localWorkSize[0], localWorkSize[1], localWorkSize[2]);
     setIfDefined(offsets->localWorkSize, localWorkSize);
 }
 
-void MutableIndirectData::setLocalWorkSize2(std::array<uint32_t, 3> localWorkSize2) {
+void MutableIndirectData::setLocalWorkSize2(MaxChannelsArray localWorkSize2) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set lws2 %u %u %u\n", localWorkSize2[0], localWorkSize2[1], localWorkSize2[2]);
     setIfDefined(offsets->localWorkSize2, localWorkSize2);
 }
 
-void MutableIndirectData::setEnqLocalWorkSize(std::array<uint32_t, 3> enqLocalWorkSize) {
+void MutableIndirectData::setEnqLocalWorkSize(MaxChannelsArray enqLocalWorkSize) {
     setIfDefined(offsets->enqLocalWorkSize, enqLocalWorkSize);
 }
 
-void MutableIndirectData::setGlobalWorkSize(std::array<uint32_t, 3> globalWorkSize) {
+void MutableIndirectData::setGlobalWorkSize(MaxChannelsArray globalWorkSize) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set gws %u %u %u\n", globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
     setIfDefined(offsets->globalWorkSize, globalWorkSize);
 }
 
-void MutableIndirectData::setNumWorkGroups(std::array<uint32_t, 3> numWorkGroups) {
+void MutableIndirectData::setNumWorkGroups(MaxChannelsArray numWorkGroups) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set num wgs %u %u %u\n", numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
     setIfDefined(offsets->numWorkGroups, numWorkGroups);
 }
@@ -105,7 +105,7 @@ void MutableIndirectData::setWorkDimensions(uint32_t workDimensions) {
     }
 }
 
-void MutableIndirectData::setGlobalWorkOffset(std::array<uint32_t, 3> globalWorkOffset) {
+void MutableIndirectData::setGlobalWorkOffset(MaxChannelsArray globalWorkOffset) {
     setIfDefined(offsets->globalWorkOffset, globalWorkOffset);
 }
 
