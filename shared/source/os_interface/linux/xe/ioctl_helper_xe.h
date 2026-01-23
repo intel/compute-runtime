@@ -189,8 +189,9 @@ class IoctlHelperXe : public IoctlHelper {
 
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     void setOptionalContextProperties(const OsContextLinux &osContext, Drm &drm, void *extProperties, uint32_t &extIndexInOut);
-    virtual void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut);
+    void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut);
     virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt);
+    virtual uint32_t getPriorityValue(const OsContextLinux &osContext);
 
     struct GtIpVersion {
         uint16_t major;

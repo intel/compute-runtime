@@ -2004,19 +2004,22 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
             setContextPropertiesForRootDeviceContext(osContext, deviceIndex, extProperties, extIndexInOut);
         }
 
-        uint32_t priorityValue = 0;
-        if (osContext.isHighPriority()) {
-            priorityValue = 2;
-        }
-
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
         ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = getExecQueueSetPropertyMultiQueuePriorityValue();
-        ext[extIndexInOut].value = priorityValue;
+        ext[extIndexInOut].value = getPriorityValue(osContext);
         xeLog(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
         extIndexInOut++;
     }
+}
+
+uint32_t IoctlHelperXe::getPriorityValue(const OsContextLinux &osContext) {
+    uint32_t priorityValue = 0;
+    if (osContext.isHighPriority()) {
+        priorityValue = 2;
+    }
+    return priorityValue;
 }
 
 uint32_t IoctlHelperXe::getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex) {
