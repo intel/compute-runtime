@@ -1421,7 +1421,7 @@ struct MockHeapHelper : public HeapHelper {
     using HeapHelper::storageForReuse;
 };
 
-TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndMadeResident) {
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndHeapAllocsCreated) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
@@ -1449,14 +1449,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
             numHeaps++;
         }
     }
-    auto numAllocsAddedToResidencyContainer = amountToFill + (amountToFill * numHeaps);
+    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
     EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusableAllocationListsThenCreateAlocsForSecondaryCmdBuffer) {
+TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusableAllocationListsThenHeapAllocsCreated) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
@@ -1481,9 +1481,145 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
             numHeaps++;
         }
     }
-    auto numAllocsAddedToResidencyContainer = 2 * amountToFill + (amountToFill * numHeaps);
+    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
     EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenUnusedCommandBufferInReusableListWhenDetachingAllocationThenBufferIsSuccessfullyReused) {
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    // Create a command buffer allocation that has never been used
+    auto unusedCmdBuffer = cmdContainer->allocateCommandBuffer(false);
+    ASSERT_NE(unusedCmdBuffer, nullptr);
+
+    // Verify it's not used by the OS context
+    EXPECT_FALSE(unusedCmdBuffer->isUsedByOsContext(csr->getOsContext().getContextId()));
+
+    // Add it to the reusable list (shared list) without using it
+    allocList.pushTailOne(*unusedCmdBuffer);
+
+    // Try to detach an allocation from the reusable list
+    auto alignedSize = cmdContainer->getAlignedCmdBufferSize();
+    auto detachedAllocation = allocList.detachAllocation(
+        alignedSize, nullptr, false, csr, AllocationType::commandBuffer);
+
+    // Verify the unused buffer was successfully detached and reused
+    EXPECT_NE(detachedAllocation, nullptr);
+    EXPECT_EQ(detachedAllocation.get(), unusedCmdBuffer);
+
+    // Clean up
+    pDevice->getMemoryManager()->freeGraphicsMemory(detachedAllocation.release());
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenEmptyImmediateListWhenReuseExistingCmdBufferThenFallbackToReusableList) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    // Initialize immediate reusable list (but keep it empty)
+    cmdContainer->fillReusableAllocationLists();
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+
+    // Clear the immediate list to make it empty
+    while (!cmdContainer->immediateReusableAllocationList->peekIsEmpty()) {
+        auto alloc = cmdContainer->immediateReusableAllocationList->detachAllocation(
+            0, nullptr, false, csr, AllocationType::commandBuffer);
+        if (alloc) {
+            pDevice->getMemoryManager()->freeGraphicsMemory(alloc.release());
+        } else {
+            break;
+        }
+    }
+
+    // Ensure immediate reusable list is now empty
+    EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    // Create a command buffer and add it to the fallback reusable list
+    auto cmdBuffer = cmdContainer->allocateCommandBuffer(false);
+    ASSERT_NE(cmdBuffer, nullptr);
+    allocList.pushTailOne(*cmdBuffer);
+
+    // Verify the fallback list has the allocation
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    // Call reuseExistingCmdBuffer - should fall back to reusableAllocationList
+    auto reusedBuffer = cmdContainer->reuseExistingCmdBuffer();
+
+    // Verify the buffer was successfully retrieved from fallback list
+    EXPECT_NE(reusedBuffer, nullptr);
+    EXPECT_EQ(reusedBuffer, cmdBuffer);
+
+    // Verify it was removed from the fallback list
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    // Clean up
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenFillReusableAllocationListsWhenCommandBufferNotUsedThenNotAddedToResidencyUntilSetCmdBuffer) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    // Get initial residency container size
+    auto initialResidencySize = cmdContainer->getResidencyContainer().size();
+
+    // Fill reusable allocation lists
+    cmdContainer->fillReusableAllocationLists();
+
+    // Calculate expected residency increase (only heap allocations, not command buffers)
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
+    uint32_t numHeaps = 0;
+    for (int heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
+        if (!cmdContainer->skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
+            numHeaps++;
+        }
+    }
+    auto expectedHeapAllocations = amountToFill * numHeaps;
+
+    // Verify command buffers were NOT added to residency (only heap allocations)
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), initialResidencySize + expectedHeapAllocations);
+
+    // Verify command buffers are in the immediate reusable list
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    // Get a command buffer from the reusable list
+    auto reusedBuffer = cmdContainer->reuseExistingCmdBuffer();
+    ASSERT_NE(reusedBuffer, nullptr);
+
+    // Record residency size after reuse but before setCmdBuffer
+    auto residencySizeBeforeSet = cmdContainer->getResidencyContainer().size();
+
+    // Now set the command buffer - this should add it to residency
+    cmdContainer->setCmdBuffer(reusedBuffer);
+
+    // Verify residency increased by 1 (the command buffer)
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), residencySizeBeforeSet + 1);
+
+    // Clean up
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }
