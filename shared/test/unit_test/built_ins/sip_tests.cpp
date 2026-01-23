@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -647,6 +647,39 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorr
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
+TEST(DebugSip, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
+    auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+    mockDevice->deviceBitfield.set(0);
+    mockDevice->deviceBitfield.set(1);
+    auto memoryManager = static_cast<MockMemoryManager *>(mockDevice->getMemoryManager());
+
+    const uint32_t contextId = 2u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           mockDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    std::vector<char> sipBinary;
+    std::vector<char> stateSaveAreaHeader;
+    mockDevice->getCompilerInterface()->getSipKernelBinary(*mockDevice, SipKernelType::dbgBindless, sipBinary, stateSaveAreaHeader);
+
+    memoryManager->copyMemoryToAllocationBanksCalled = 0;
+    auto &sipKernel = NEO::SipKernel::getSipKernel(*mockDevice, &csr->getOsContext());
+    ASSERT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(2u, memoryManager->copyMemoryToAllocationBanksCalled);
+
+    EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
+}
+
 TEST(DebugSip, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
@@ -672,9 +705,11 @@ TEST(DebugSip, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransf
     mockDevice->getCompilerInterface()->getSipKernelBinary(*mockDevice, SipKernelType::dbgBindless, sipBinary, stateSaveAreaHeader);
 
     memoryManager->copyMemoryToAllocationBanksCalled = 0;
+    memoryManager->copyMemoryToAllocationCalled = 0;
     auto &sipKernel = NEO::SipKernel::getSipKernel(*mockDevice, &csr->getOsContext());
     ASSERT_NE(nullptr, &sipKernel);
-    EXPECT_EQ(1u, memoryManager->copyMemoryToAllocationBanksCalled);
+    EXPECT_EQ(0u, memoryManager->copyMemoryToAllocationBanksCalled);
+    EXPECT_EQ(1u, memoryManager->copyMemoryToAllocationCalled);
 
     EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
 }

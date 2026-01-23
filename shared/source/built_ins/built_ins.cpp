@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,10 +117,16 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
                 auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
                 auto &productHelper = device.getProductHelper();
 
-                DeviceBitfield copyBitfield{};
-                copyBitfield.set(deviceIndex);
-                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
-                                                                                    device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
+                if (context->getDeviceBitfield().count() == 1) {
+                    copySuccess = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                                                   device, sipAllocation, 0, binary.get(),
+                                                                                   bindlessSip.getBinary().size());
+                } else {
+                    DeviceBitfield copyBitfield{};
+                    copyBitfield.set(deviceIndex);
+                    copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                                                        device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
+                }
                 DEBUG_BREAK_IF(!copySuccess);
             }
         }
