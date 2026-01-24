@@ -61,7 +61,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_global_int32_base_atomics "
                              "cl_khr_global_int32_extended_atomics "
                              "cl_khr_icd "
-                             "cl_khr_icd_unloadable "
                              "cl_khr_local_int32_base_atomics "
                              "cl_khr_local_int32_extended_atomics "
                              "cl_intel_command_queue_families "
