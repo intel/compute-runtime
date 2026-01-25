@@ -18,7 +18,6 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/command_buffer_pool_allocator.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
-#include "shared/source/utilities/linear_stream_pool_allocator.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
@@ -209,9 +208,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ISAPoolAllocator &getIsaPoolAllocator() {
         return isaPoolAllocator;
     }
-    LinearStreamPoolAllocator &getLinearStreamPoolAllocator() {
-        return linearStreamPoolAllocator;
-    }
     TimestampPoolAllocator &getDeviceTimestampPoolAllocator() {
         return deviceTimestampPoolAllocator;
     }
@@ -379,7 +375,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
 
     ISAPoolAllocator isaPoolAllocator;
-    LinearStreamPoolAllocator linearStreamPoolAllocator;
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;

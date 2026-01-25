@@ -47,7 +47,6 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex),
       isaPoolAllocator(this),
-      linearStreamPoolAllocator(this),
       deviceTimestampPoolAllocator(this),
       globalSurfacePoolAllocator(this),
       constantSurfacePoolAllocator(this),
@@ -82,7 +81,6 @@ Device::~Device() {
 
     syncBufferHandler.reset();
     isaPoolAllocator.releasePools();
-    linearStreamPoolAllocator.releasePools();
     deviceTimestampPoolAllocator.releasePools();
     globalSurfacePoolAllocator.releasePools();
     constantSurfacePoolAllocator.releasePools();
