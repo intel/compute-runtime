@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,8 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtProperties) override;
+    ze_result_t getLimitsExp(uint32_t *pLimit) override;
+    ze_result_t setLimitsExp(const uint32_t limit) override;
 
     bool isPowerModuleSupported() override;
     bool isIntelGraphicsHwmonDir(const std::string &name);

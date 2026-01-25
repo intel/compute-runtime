@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,8 +282,64 @@ ze_result_t ZE_APICALL zesIntelRasGetStateExp(
     zes_intel_ras_state_exp_t *pState ///< [in][out] Array of RAS error states.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get Experimental Power Limits
+///
+/// @details
+///     - This function returns the power limit associated with the supplied power domain.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET
+///     - ::ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hPower`
+ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(
+    zes_pwr_handle_t hPower, ///< [in] Power domain handle instance.
+    uint32_t *pLimit         ///< [out] Returns limit value in milliwatts for given power domain.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Set Experimental Power Limits
+///
+/// @details
+///     - This function sets the power limit associated with the supplied power domain.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET
+///     - ::ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hPower`
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to make these modifications.
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The device is in use, meaning that the GPU is under Over clocking, applying power limits under overclocking is not supported.
+ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(
+    zes_pwr_handle_t hPower, ///< [in] Power domain handle instance.
+    const uint32_t limit     ///< [in] Limit value in milliwatts to be set for given power domain.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
 
-#endif
+#endif // _ZES_INTEL_GPU_SYSMAN_H

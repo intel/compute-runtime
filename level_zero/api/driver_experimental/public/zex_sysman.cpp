@@ -63,6 +63,26 @@ ze_result_t ZE_APICALL zesIntelRasGetStateExp(zes_ras_handle_t hRas, const uint3
     }
 }
 
+ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(zes_pwr_handle_t hPower, uint32_t *pLimit) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExp(pLimit);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(zes_pwr_handle_t hPower, const uint32_t limit) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExp(limit);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -85,6 +105,14 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint
 
 ze_result_t ZE_APICALL zesIntelRasGetStateExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_state_exp_t *pState) {
     return L0::zesIntelRasGetStateExp(hRas, count, pState);
+}
+
+ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(zes_pwr_handle_t hPower, uint32_t *pLimit) {
+    return L0::zesIntelPowerGetLimitsExp(hPower, pLimit);
+}
+
+ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(zes_pwr_handle_t hPower, const uint32_t limit) {
+    return L0::zesIntelPowerSetLimitsExp(hPower, limit);
 }
 
 } // extern "C"

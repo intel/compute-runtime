@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <vector>
 
@@ -26,6 +27,8 @@ class OsPower {
     virtual ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
     virtual ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
     virtual ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) = 0;
+    virtual ze_result_t getLimitsExp(uint32_t *pLimit) = 0;
+    virtual ze_result_t setLimitsExp(const uint32_t limit) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);

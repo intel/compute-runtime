@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,8 @@ class PowerImp : public Power, NEO::NonCopyableAndNonMovableClass {
     ze_result_t powerSetEnergyThreshold(double threshold) override;
     ze_result_t powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
+    ze_result_t powerGetLimitsExp(uint32_t *pLimit) override;
+    ze_result_t powerSetLimitsExp(const uint32_t limit) override;
 
     PowerImp() = default;
     PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId, zes_power_domain_t powerDomain);

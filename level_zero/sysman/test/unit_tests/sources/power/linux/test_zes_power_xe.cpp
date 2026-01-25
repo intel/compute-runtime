@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,6 +168,28 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallin
         uint32_t count = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
         EXPECT_EQ(0u, count);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallingGetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = getPowerHandles();
+    EXPECT_EQ(xePowerHandleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        uint32_t limit = 0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &limit));
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallingSetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = getPowerHandles();
+    EXPECT_EQ(xePowerHandleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        uint32_t limit = 100u;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, limit));
     }
 }
 

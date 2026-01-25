@@ -344,6 +344,14 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxPowerImp::getLimitsExp(uint32_t *pLimit) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxPowerImp::setLimitsExp(const uint32_t limit) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
     std::string intelGraphicsHwmonName = pSysmanKmdInterface->getHwmonName(subdeviceId, isSubdevice);
     if (name == intelGraphicsHwmonName) {

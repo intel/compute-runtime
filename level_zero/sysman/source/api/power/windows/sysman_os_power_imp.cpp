@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,6 +282,14 @@ ze_result_t WddmPowerImp::setLimits(const zes_power_sustained_limit_t *pSustaine
     }
 
     return status;
+}
+
+ze_result_t WddmPowerImp::getLimitsExp(uint32_t *pLimit) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmPowerImp::setLimitsExp(const uint32_t limit) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
