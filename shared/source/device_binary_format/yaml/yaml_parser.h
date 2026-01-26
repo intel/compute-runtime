@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -518,6 +518,28 @@ struct YamlParser {
     template <typename T>
     bool readValueChecked(const Node &node, T &outValue) const;
 
+    template <typename T>
+    bool readValueChecked(const Node &node, T &outValue, std::string_view messageOnError, std::string &outErrorLog) const {
+        auto success = readValueChecked(node, outValue);
+        if (false == success) {
+            outErrorLog += messageOnError;
+        }
+        return success;
+    }
+
+    template <typename T>
+    bool readValueChecked(const Node *node, T &outValue, std::string_view messageOnError, std::string &outErrorLog) const {
+        if (nullptr == node) {
+            outErrorLog += messageOnError;
+            return false;
+        }
+        auto success = readValueChecked(*node, outValue);
+        if (false == success) {
+            outErrorLog += messageOnError;
+        }
+        return success;
+    }
+
     ConstStringRef readValueNoQuotes(const Node &node) const {
         if (invalidTokenId == node.value) {
             return "";
@@ -530,6 +552,21 @@ struct YamlParser {
             return tok.cstrref();
         }
         return ConstStringRef(tok.pos + 1, tok.len - 2);
+    }
+
+    bool readValueNoQuotes(const Node *node, std::string &outValue, bool allowEmpty, std::string_view messageOnError, std::string &outErrorLog) const {
+        if (nullptr == node) {
+            outErrorLog += messageOnError;
+            return false;
+        }
+
+        outValue = readValueNoQuotes(*node).str();
+
+        if (outValue.empty() && (false == allowEmpty)) {
+            outErrorLog += messageOnError;
+            return false;
+        }
+        return true;
     }
 
     ConstChildrenRange createChildrenRange(const Node &parent) const {

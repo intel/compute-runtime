@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1200,6 +1200,39 @@ hex_value_64 : 0x123456789ABCDEF
     uint32_t readValue64 = 0;
     auto readSuccess64 = parser.readValueChecked<uint32_t>(*hex64Node, readValue64);
     EXPECT_FALSE(readSuccess64);
+}
+
+TEST(YamlParserReadValueCheckedHelpers, GivenNodeThenValidatesItAndEmitsErrorIfNeeded) {
+    ConstStringRef yaml = R"===(
+hex_value_32 : 0xABCDEF12
+hex_value_invalid : "not really a number"
+)===";
+    uint32_t expectedUint32 = 0xABCDEF12;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+
+    auto hex32Node = parser.getChild(*parser.getRoot(), "hex_value_32");
+    ASSERT_NE(hex32Node, nullptr);
+    uint32_t readValue32 = 0;
+    std::string errorLog;
+    auto readSuccess32 = parser.readValueChecked<uint32_t>(hex32Node, readValue32, "invalid", errorLog);
+    EXPECT_TRUE(readSuccess32);
+    EXPECT_EQ(expectedUint32, readValue32);
+    EXPECT_TRUE(errorLog.empty()) << errorLog;
+
+    readSuccess32 = parser.readValueChecked<uint32_t>(nullptr, readValue32, "invalid", errorLog);
+    EXPECT_FALSE(readSuccess32);
+    EXPECT_STREQ(errorLog.c_str(), "invalid");
+
+    errorLog.clear();
+    auto invalidNumberNode = parser.getChild(*parser.getRoot(), "hex_value_invalid");
+    ASSERT_NE(invalidNumberNode, nullptr);
+    readSuccess32 = parser.readValueChecked<uint32_t>(invalidNumberNode, readValue32, "invalid", errorLog);
+    EXPECT_FALSE(readSuccess32);
+    EXPECT_STREQ(errorLog.c_str(), "invalid");
 }
 
 TEST(YamlNode, WhenConstructedThenSetsUpProperDefaults) {
@@ -2438,6 +2471,31 @@ banana : 5
     auto banana = parser.findNodeWithKeyDfs("banana");
     ASSERT_NE(nullptr, banana);
     EXPECT_STREQ("5", parser.readValueNoQuotes(*banana).str().c_str());
+}
+
+TEST(YamlParserReadValueNoQuotesHelper, GivenNodeThenValidatesItAndEmitsErrorIfNeeded) {
+    ConstStringRef yaml = R"===( 
+banana : ""
+)===";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+
+    auto banana = parser.findNodeWithKeyDfs("banana");
+    ASSERT_NE(nullptr, banana);
+    std::string valueStr;
+    std::string errorLog;
+    EXPECT_TRUE(parser.readValueNoQuotes(banana, valueStr, true, "invalid", errorLog));
+    EXPECT_TRUE(errorLog.empty()) << errorLog;
+
+    EXPECT_FALSE(parser.readValueNoQuotes(nullptr, valueStr, true, "invalid", errorLog));
+    EXPECT_STREQ("invalid", errorLog.c_str());
+
+    errorLog.clear();
+    EXPECT_FALSE(parser.readValueNoQuotes(banana, valueStr, false, "invalid", errorLog));
+    EXPECT_STREQ("invalid", errorLog.c_str());
 }
 
 TEST(YamlParserReadValueCheckedInt64, GivenNodeWithoutASingleValueThenReturnFalse) {
