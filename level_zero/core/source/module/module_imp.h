@@ -343,7 +343,15 @@ struct ModulesPackage : public Module {
     }
 
     ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        pModuleProperties->flags = 0;
+        return allModulesUnless<ReturnsFailure>([&](Module &mod) {
+            ze_module_properties_t unitProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+            auto ret = mod.getProperties(&unitProperties);
+            pModuleProperties->flags |= unitProperties.flags;
+            DEBUG_BREAK_IF((pModuleProperties->flags != 0) && (pModuleProperties->flags != ZE_MODULE_PROPERTY_FLAG_IMPORTS));
+            DEBUG_BREAK_IF(pModuleProperties->pNext);
+            return ret;
+        });
     }
 
     ze_result_t performDynamicLink(uint32_t numModules,

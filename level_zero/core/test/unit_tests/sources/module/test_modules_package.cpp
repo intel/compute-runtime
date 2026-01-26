@@ -441,13 +441,11 @@ TEST(ModulesPackagePartialSupport, WhenCurrentlyUnsupportedApiIsCalledThenReturn
 
     size_t paramSizeT = 0;
     uint8_t paramUint8t = 0;
-    ze_module_properties_t paramModuleProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
     ze_module_handle_t paramModuleHandleT = {};
     ze_linkage_inspection_ext_desc_t paramLinkeExtDesc = {ZE_STRUCTURE_TYPE_LINKAGE_INSPECTION_EXT_DESC};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getNativeBinary(&paramSizeT, &paramUint8t));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getDebugInfo(&paramSizeT, &paramUint8t));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getProperties(&paramModuleProperties));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.performDynamicLink(1, &paramModuleHandleT, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.inspectLinkage(&paramLinkeExtDesc, 1, &paramModuleHandleT, nullptr));
 }
@@ -541,6 +539,48 @@ TEST_F(ModulesPackageForwarding, WhenGetKernelsNamesIsCalledThenAccumulatesFromE
         names[i] = nullptr;
     }
     EXPECT_EQ(nullptr, names[count]);
+}
+
+TEST_F(ModulesPackageForwarding, WhenGetPropertiesIsCalledThenAccumulatesFromEachModule) {
+    MockModulesPackage<> mp{this->device};
+
+    struct ModuleWithProperties : MockModule {
+        using MockModule::MockModule;
+        ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override {
+            pModuleProperties->flags = modulePropertiesToReturn.flags;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_module_properties_t modulePropertiesToReturn = {};
+    };
+
+    std::unique_ptr<ModuleWithProperties> moduleUnits[3] = {};
+    moduleUnits[0] = std::make_unique<ModuleWithProperties>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[1] = std::make_unique<ModuleWithProperties>(this->device, nullptr, L0::ModuleType::user);
+    moduleUnits[2] = std::make_unique<ModuleWithProperties>(this->device, nullptr, L0::ModuleType::user);
+
+    moduleUnits[0]->modulePropertiesToReturn.flags = 0;
+    moduleUnits[1]->modulePropertiesToReturn.flags = ZE_MODULE_PROPERTY_FLAG_IMPORTS;
+    moduleUnits[2]->modulePropertiesToReturn.flags = 0;
+
+    ze_module_properties_t moduleProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getProperties(&moduleProperties));
+    EXPECT_EQ(0U, moduleProperties.flags);
+
+    moduleProperties = ze_module_properties_t{ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+    mp.modules.push_back(std::move(moduleUnits[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getProperties(&moduleProperties));
+    EXPECT_EQ(0U, moduleProperties.flags);
+
+    moduleProperties = ze_module_properties_t{ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+    mp.modules.push_back(std::move(moduleUnits[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getProperties(&moduleProperties));
+    EXPECT_EQ(1U, moduleProperties.flags);
+
+    moduleProperties = ze_module_properties_t{ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+    mp.modules.push_back(std::move(moduleUnits[2]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mp.getProperties(&moduleProperties));
+    EXPECT_EQ(1U, moduleProperties.flags);
 }
 
 } // namespace ult
