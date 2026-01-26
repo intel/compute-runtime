@@ -10,10 +10,9 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/path.h"
+#include "shared/source/os_interface/linux/elements_struct.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_handle.h"
-
-#include "elements_struct.h"
 
 #include <algorithm>
 #include <dirent.h>
@@ -77,7 +76,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
             }
 
             std::string fullPath = joinPath(currentDir.path, entry->d_name);
-            struct stat statBuf;
+            struct stat statBuf = {};
             if (NEO::SysCalls::stat(fullPath.c_str(), &statBuf) != 0) {
                 int error = errno;
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [findFiles failure]: Reading file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
@@ -91,10 +90,10 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
                 }
             } else if (S_ISREG(statBuf.st_mode) && filter(fullPath)) {
                 ElementsStruct fileElement = {};
-                fileElement.path = fullPath;
+                fileElement.path = std::move(fullPath);
                 fileElement.lastAccessTime = statBuf.st_atime;
                 fileElement.fileSize = statBuf.st_size;
-                foundFiles.push_back(fileElement);
+                foundFiles.push_back(std::move(fileElement));
             }
 
             errno = 0;

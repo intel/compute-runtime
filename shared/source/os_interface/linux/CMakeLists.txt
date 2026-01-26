@@ -99,6 +99,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/pmt_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pmt_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/elements_struct.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

@@ -11,11 +11,11 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/path.h"
+#include "shared/source/os_interface/windows/elements_struct.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
 
-#include "elements_struct.h"
 #include "os_inc.h"
 
 #include <algorithm>
