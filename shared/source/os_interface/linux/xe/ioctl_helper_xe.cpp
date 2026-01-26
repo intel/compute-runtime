@@ -1964,11 +1964,11 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
 
     if (osContext.isLowPriority()) {
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
-        xeLog(" -> low priority ctx, DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY value = 0\n");
+        XELOG(" -> low priority ctx, DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY value = 0\n");
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY;
         ext[extIndexInOut].value = 0;
@@ -1991,10 +1991,10 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         const bool isPrimary = isPrimaryContext(osContext, deviceIndex);
 
         if (isPrimary) {
-            xeLog(" -> multi group create\n");
+            XELOG(" -> multi group create\n");
             ext[extIndexInOut].value = getPrimaryContextProperties();
         } else {
-            xeLog(" -> multi group secondary queue\n");
+            XELOG(" -> multi group secondary queue\n");
             // For MultiTile, match currently created context index with the primary context index
             ext[extIndexInOut].value = getPrimaryContextId(osContext, deviceIndex, currentContextIndex);
         }
@@ -2009,7 +2009,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = getExecQueueSetPropertyMultiQueuePriorityValue();
         ext[extIndexInOut].value = getPriorityValue(osContext);
-        xeLog(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
+        XELOG(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
         extIndexInOut++;
     }
 }
