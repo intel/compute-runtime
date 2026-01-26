@@ -1227,6 +1227,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     for (auto nPartitions : {1u, 2u}) {
         DebugManagerStateRestore restorer;
@@ -1244,6 +1245,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         auto deviceBitfield = NEO::DeviceBitfield{mask};
 
         MockCommandStreamReceiver mockCsr(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), deviceBitfield);
+        mockCsr.dcFlushSupport = csr->getDcFlushSupport();
         mockCsr.initializeTagAllocation();
         mockCsr.createHostFunctionStreamer();
         const auto oldCsr = commandQueue->csr;
@@ -1265,7 +1267,8 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         commandList->addHostFunctionToPatchCommands(hostFunction1);
 
         auto index = 0u;
-        auto *miStore1 = reinterpret_cast<MI_STORE_DATA_IMM *>(std::get<PatchHostFunctionId>(commandList->commandsToPatch[index++]).cmdBufferSpace);
+
+        auto *cmdToProgrammHostFunctionId1 = std::get<PatchHostFunctionId>(commandList->commandsToPatch[index++]).cmdBufferSpace;
         auto *miWait1 = reinterpret_cast<MI_SEMAPHORE_WAIT *>(std::get<PatchHostFunctionWait>(commandList->commandsToPatch[index++]).cmdBufferSpace);
         MI_SEMAPHORE_WAIT *miWait1Partition2 = nullptr;
         if (nPartitions > 1) {
@@ -1282,7 +1285,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
 
         commandList->addHostFunctionToPatchCommands(hostFunction2);
 
-        auto *miStore2 = reinterpret_cast<MI_STORE_DATA_IMM *>(std::get<PatchHostFunctionId>(commandList->commandsToPatch[index++]).cmdBufferSpace);
+        auto *cmdToProgrammHostFunctionId2 = std::get<PatchHostFunctionId>(commandList->commandsToPatch[index++]).cmdBufferSpace;
         auto *miWait2 = reinterpret_cast<MI_SEMAPHORE_WAIT *>(std::get<PatchHostFunctionWait>(commandList->commandsToPatch[index++]).cmdBufferSpace);
         MI_SEMAPHORE_WAIT *miWait2Partition2 = nullptr;
         if (nPartitions > 1) {
@@ -1295,18 +1298,33 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
 
         auto &hostFunctionStreamer = commandQueue->csr->getHostFunctionStreamer();
         uint64_t hostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(0u);
-
+        uint64_t expectedId = 1u;
         {
             // callback id - mi store
-            uint64_t expectedId = 1u;
-            EXPECT_EQ(getLowPart(expectedId), miStore1->getDataDword0());
-            EXPECT_EQ(getHighPart(expectedId), miStore1->getDataDword1());
-            EXPECT_TRUE(miStore1->getStoreQword());
-            EXPECT_EQ(hostFunctionIdGpuAddress, miStore1->getAddress());
+            if (commandList->dcFlushSupport) {
+                auto *pipeControl = reinterpret_cast<PIPE_CONTROL *>(cmdToProgrammHostFunctionId1);
+                EXPECT_TRUE(pipeControl->getDcFlushEnable());
+                EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+                EXPECT_EQ(expectedId, pipeControl->getImmediateData());
+                EXPECT_EQ(getLowPart(hostFunctionIdGpuAddress), pipeControl->getAddress());
+                EXPECT_EQ(getHighPart(hostFunctionIdGpuAddress), pipeControl->getAddressHigh());
 
-            if constexpr (requires { &miStore1->getWorkloadPartitionIdOffsetEnable; }) {
-                auto expectedWorkloadPartitionIdOffset = nPartitions > 1U;
-                EXPECT_EQ(expectedWorkloadPartitionIdOffset, miStore1->getWorkloadPartitionIdOffsetEnable());
+                if constexpr (requires { &pipeControl->getWorkloadPartitionIdOffsetEnable; }) {
+                    auto expectedWorkloadPartitionIdOffset = nPartitions > 1U;
+                    EXPECT_EQ(expectedWorkloadPartitionIdOffset, pipeControl->getWorkloadPartitionIdOffsetEnable());
+                }
+
+            } else {
+                auto *miStore1 = reinterpret_cast<MI_STORE_DATA_IMM *>(cmdToProgrammHostFunctionId1);
+                EXPECT_EQ(getLowPart(expectedId), miStore1->getDataDword0());
+                EXPECT_EQ(getHighPart(expectedId), miStore1->getDataDword1());
+                EXPECT_TRUE(miStore1->getStoreQword());
+                EXPECT_EQ(hostFunctionIdGpuAddress, miStore1->getAddress());
+
+                if constexpr (requires { &miStore1->getWorkloadPartitionIdOffsetEnable; }) {
+                    auto expectedWorkloadPartitionIdOffset = nPartitions > 1U;
+                    EXPECT_EQ(expectedWorkloadPartitionIdOffset, miStore1->getWorkloadPartitionIdOffsetEnable());
+                }
             }
 
             // semaphore wait
@@ -1333,12 +1351,21 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         }
         {
             // callback id - mi store
-            uint64_t expectedId = 3u;
-            EXPECT_EQ(getLowPart(expectedId), miStore2->getDataDword0());
-            EXPECT_EQ(getHighPart(expectedId), miStore2->getDataDword1());
-            EXPECT_TRUE(miStore2->getStoreQword());
-            EXPECT_EQ(hostFunctionIdGpuAddress, miStore2->getAddress());
-
+            expectedId = 3u;
+            if (commandList->dcFlushSupport) {
+                auto *pipeControl = reinterpret_cast<PIPE_CONTROL *>(cmdToProgrammHostFunctionId2);
+                EXPECT_TRUE(pipeControl->getDcFlushEnable());
+                EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+                EXPECT_EQ(expectedId, pipeControl->getImmediateData());
+                EXPECT_EQ(getLowPart(hostFunctionIdGpuAddress), pipeControl->getAddress());
+                EXPECT_EQ(getHighPart(hostFunctionIdGpuAddress), pipeControl->getAddressHigh());
+            } else {
+                auto *miStore2 = reinterpret_cast<MI_STORE_DATA_IMM *>(cmdToProgrammHostFunctionId2);
+                EXPECT_EQ(getLowPart(expectedId), miStore2->getDataDword0());
+                EXPECT_EQ(getHighPart(expectedId), miStore2->getDataDword1());
+                EXPECT_TRUE(miStore2->getStoreQword());
+                EXPECT_EQ(hostFunctionIdGpuAddress, miStore2->getAddress());
+            }
             // semaphore wait
             for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                 uint64_t expectedHostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(partitionId);

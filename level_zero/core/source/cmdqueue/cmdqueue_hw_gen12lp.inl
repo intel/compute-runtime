@@ -138,10 +138,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
     uint32_t hostFunctionsCounter = 0;
 
-    bool memorySynchronizationRequired = true;
-    if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
-        memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
-    }
+    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction();
 
     auto patchCommandsLambda = [&](auto &commandToPatch) {
         using CommandType = std::decay_t<decltype(commandToPatch)>;

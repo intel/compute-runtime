@@ -174,13 +174,8 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
     uint32_t hostFunctionsCounter = 0;
     bool dcFlushRequired = csr->getDcFlushSupport();
-    bool memorySynchronizationRequired = true;
-
-    if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
-        memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
-    }
-
-    bool usePipeControlForHostFunctionIdProgramming = dcFlushRequired && memorySynchronizationRequired;
+    bool usePipeControlForHostFunctionIdProgramming = NEO::HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(dcFlushRequired);
+    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction();
 
     auto patchCommandsLambda = [&](auto &commandToPatch) {
         using CommandType = std::decay_t<decltype(commandToPatch)>;

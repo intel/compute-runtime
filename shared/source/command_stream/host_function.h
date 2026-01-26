@@ -105,6 +105,8 @@ struct HostFunctionHelper {
     static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
     static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
     static void programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer, uint32_t partionId);
+    static bool isMemorySynchronizationRequiredForHostFunction();
+    static bool usePipeControlForHostFunction(bool dcFlushRequiredPlatform);
 };
 
 namespace HostFunctionFactory {

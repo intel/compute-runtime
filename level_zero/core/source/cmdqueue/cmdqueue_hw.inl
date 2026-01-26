@@ -871,16 +871,14 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
 
-        bool dcFlushRequired = this->getCsr()->getDcFlushSupport();
-        bool isInOrderEnabled = static_cast<CommandListImp *>(commandList)->isInOrderExecutionEnabled();
-        bool memorySynchronizationRequired = dcFlushRequired && isInOrderEnabled;
+        bool dcFlushRequired = csr->getDcFlushSupport();
+        bool usePipeControlForHostFunctionIdProgramming = NEO::HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(dcFlushRequired);
 
         uint32_t hostFunctionsCount = commandList->getHostFunctionPatchListCount();
         if (hostFunctionsCount > 0) {
-            auto miStoreSize = sizeof(MI_STORE_DATA_IMM);
-            auto pcSize = sizeof(PIPE_CONTROL);
+            auto sizeToEncodeId = usePipeControlForHostFunctionIdProgramming ? sizeof(PIPE_CONTROL) : sizeof(MI_STORE_DATA_IMM);
             auto semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
-            auto encodedHostFunctionIdCmdSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(memorySynchronizationRequired ? pcSize : miStoreSize);
+            auto encodedHostFunctionIdCmdSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeToEncodeId);
             auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(semaphoreSize);
 
             auto encodedHostFuncCmdSize = encodedHostFunctionIdCmdSize + (this->partitionCount * encodedMiSemaphoreSize);

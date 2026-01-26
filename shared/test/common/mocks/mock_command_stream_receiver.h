@@ -40,6 +40,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::cleanupResources;
     using CommandStreamReceiver::CommandStreamReceiver;
+    using CommandStreamReceiver::dcFlushSupport;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::gpuHangCheckPeriod;
     using CommandStreamReceiver::heaplessStateInitEnabled;

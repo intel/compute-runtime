@@ -83,4 +83,18 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearS
                                                               false);
 }
 
+template <typename GfxFamily>
+bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction() {
+    bool memorySynchronizationRequired = true;
+    if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
+        memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
+    }
+    return memorySynchronizationRequired;
+}
+
+template <typename GfxFamily>
+bool HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(bool dcFlushRequiredPlatform) {
+    return dcFlushRequiredPlatform && isMemorySynchronizationRequiredForHostFunction();
+}
+
 } // namespace NEO

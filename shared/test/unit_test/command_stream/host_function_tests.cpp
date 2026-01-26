@@ -550,3 +550,20 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
         EXPECT_EQ(1u, hostFunctionProgrammingHwCmd.size());
     }
 }
+
+HWTEST_F(HostFunctionTests, whenUsePipeControlForHostFunctionIsCalledThenResultIsCorrect) {
+    DebugManagerStateRestore restorer;
+
+    for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
+        bool expected = dcFlushRequiredPlatform;
+        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(dcFlushRequiredPlatform);
+        EXPECT_EQ(expected, result);
+    }
+
+    debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+    for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
+        bool expected = false;
+        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(dcFlushRequiredPlatform);
+        EXPECT_EQ(expected, result);
+    }
+}
