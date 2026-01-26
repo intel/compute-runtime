@@ -1325,7 +1325,8 @@ ze_result_t DebugSessionImp::readDebugScratchRegisters(uint32_t start, uint32_t 
     auto info = getModuleDebugAreaInfo();
 
     std::vector<uint64_t> packed;
-    packed.push_back(info.gpuVa);
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    packed.push_back(gmmHelper->canonize(info.gpuVa));
     packed.push_back(info.size);
 
     size_t size = count * debugScratchRegDesc->bytes;

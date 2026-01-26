@@ -7962,14 +7962,15 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
 TEST_F(DebugApiRegistersAccessTest, givenReadDebugScratchRegisterCalledThenCorrectValuesReturned) {
     SIP::version version = {3, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    uint64_t debugSurfaceAddress = 0xDEADBEEF;
+    uint64_t debugSurfaceAddress = 0x800100000000;
     uint64_t debugSurfaceSize = 0xBEEFDEAD;
     uint64_t scratch[2];
 
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToModuleDebugAreaBindInfo[0] = {debugSurfaceAddress, debugSurfaceSize};
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 2, scratch));
-    EXPECT_EQ(scratch[0], debugSurfaceAddress);
+    auto gmmHelper = neoDevice->getGmmHelper();
+    EXPECT_EQ(scratch[0], gmmHelper->canonize(debugSurfaceAddress));
     EXPECT_EQ(scratch[1], debugSurfaceSize);
 }
 
