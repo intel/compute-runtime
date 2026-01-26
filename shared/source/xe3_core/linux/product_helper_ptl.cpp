@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@ constexpr static auto gfxProduct = IGFX_PTL;
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
 #include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm_slm.inl"
 #include "shared/source/xe3_core/os_agnostic_product_helper_xe3_core.inl"
-#include "shared/source/xe3_core/ptl/os_agnostic_product_helper_ptl.inl"
 
 namespace NEO {
 

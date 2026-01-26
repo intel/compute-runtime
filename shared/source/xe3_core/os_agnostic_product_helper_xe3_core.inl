@@ -14,6 +14,8 @@
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
+#include "aubstream/product_family.h"
+
 namespace NEO {
 
 template <>
@@ -88,4 +90,30 @@ template <>
 bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationData.type);
+}
+
+template <>
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Ptl;
+};
+
+template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    return GfxMemoryAllocationMethod::allocateByKmd;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
 } // namespace NEO
