@@ -3188,6 +3188,91 @@ kernels:
     }
 }
 
+TEST(YamlParser, GivenSimpleModulesPackageManifestThenParseItCorrectly) {
+    ConstStringRef yaml = R"===(version:
+  major: 1
+  minor: 0
+units:
+  - filename: pkg.unit.0
+  - filename: pkg.unit.1
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+    EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+
+    uint32_t vU32;
+    std::string vS;
+
+    auto debugNodes = parser.buildDebugNodes();
+    ASSERT_EQ(2U, debugNodes->children.size());
+    delete debugNodes;
+
+    ASSERT_NE(nullptr, parser.getRoot());
+    const NEO::Yaml::Node *ndVersion = parser.getChild(*parser.getRoot(), "version");
+    ASSERT_NE(nullptr, ndVersion);
+    ASSERT_EQ(2U, ndVersion->numChildren);
+    const NEO::Yaml::Node *ndMajor = parser.getChild(*ndVersion, "major");
+    ASSERT_NE(nullptr, ndMajor);
+    EXPECT_TRUE(parser.readValueChecked(*ndMajor, vU32));
+    EXPECT_EQ(1U, vU32);
+    const NEO::Yaml::Node *ndMinor = parser.getChild(*ndVersion, "minor");
+    ASSERT_NE(nullptr, ndMinor);
+    EXPECT_TRUE(parser.readValueChecked(*ndMinor, vU32));
+    EXPECT_EQ(0U, vU32);
+
+    const NEO::Yaml::Node *ndUnits = parser.getChild(*parser.getRoot(), "units");
+    ASSERT_NE(nullptr, ndUnits);
+    EXPECT_EQ(2U, ndUnits->numChildren);
+
+    uint32_t unitNum = 0;
+    for (auto &unit : parser.createChildrenRange(*ndUnits)) {
+        const NEO::Yaml::Node *ndFileName = parser.getChild(unit, "filename");
+        ASSERT_NE(nullptr, ndFileName);
+        EXPECT_TRUE(parser.readValueChecked(*ndFileName, vS));
+        std::string expectedName = "pkg.unit." + std::to_string(unitNum);
+        EXPECT_EQ(expectedName, vS) << "EXPECTED(" << expectedName << ") != GOT(" << vS << ")";
+        ++unitNum;
+    }
+}
+
+TEST(YamlParser, GivenSingleEntryDictionaryAsListElementThenParseItCorrectly) {
+    ConstStringRef yaml = R"===(units:
+  - filename: pkg.unit.0
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+    EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+
+    std::string vS;
+
+    auto debugNodes = parser.buildDebugNodes();
+    ASSERT_EQ(1U, debugNodes->children.size());
+    delete debugNodes;
+
+    ASSERT_NE(nullptr, parser.getRoot());
+
+    const NEO::Yaml::Node *ndUnits = parser.getChild(*parser.getRoot(), "units");
+    ASSERT_NE(nullptr, ndUnits);
+    ASSERT_EQ(1U, ndUnits->numChildren);
+
+    const NEO::Yaml::Node &ndUnit0 = *parser.createChildrenRange(*ndUnits).begin();
+    const NEO::Yaml::Node *ndFileName = parser.getChild(ndUnit0, "filename");
+    ASSERT_NE(nullptr, ndFileName);
+    EXPECT_TRUE(parser.readValueChecked(*ndFileName, vS));
+    std::string expectedName = "pkg.unit.0";
+    EXPECT_EQ(expectedName, vS) << "EXPECTED(" << expectedName << ") != GOT(" << vS << ")";
+}
+
 TEST(ReserveBasedOnEstimates, WhenContainerNotFullThenDontGrow) {
     StackVec<int, 7> container;
     size_t beg = 0U;

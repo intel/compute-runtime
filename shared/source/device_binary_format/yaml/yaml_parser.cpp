@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -329,8 +329,11 @@ void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes
         ++valueTokenIt;
     }
     UNRECOVERABLE_IF((colon == invalidTokenId) || (colon + 1 == valueTokenIt));
-    UNRECOVERABLE_IF(invalidNodeID == node.lastChildId)
-    outNodes[node.lastChildId].nextSiblingId = static_cast<NodeId>(outNodes.size());
+    if (invalidNodeID != node.lastChildId) {
+        outNodes[node.lastChildId].nextSiblingId = static_cast<NodeId>(outNodes.size());
+    } else {
+        node.firstChildId = static_cast<NodeId>(outNodes.size());
+    }
 
     outNodes.push_back(Node());
     auto &newNode = *outNodes.rbegin();
@@ -363,12 +366,14 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
     outNodes.rbegin()->firstChildId = 1U;
     outNodes.rbegin()->lastChildId = 1U;
     nesting.resize(1); // root
+    NodeId unfinalizedSingleEntryDictNodeId = invalidNodeID;
     while (lineId < lines.size()) {
         if (isUnused(lines[lineId].lineType)) {
             ++lineId;
             continue;
         }
         auto currLineIndent = lines[lineId].indent;
+
         if (currLineIndent == outNodes.rbegin()->indent) {
             if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
                 return false;
@@ -376,6 +381,9 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
+            if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
+                finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning);
+            }
             auto &curr = addNode(outNodes, prev, parent);
             curr.indent = currLineIndent;
         } else if (currLineIndent > outNodes.rbegin()->indent) {
@@ -399,10 +407,14 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
+                if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
+                    finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning);
+                }
                 auto &curr = addNode(outNodes, prev, parent);
                 curr.indent = currLineIndent;
             }
         }
+        unfinalizedSingleEntryDictNodeId = invalidNodeID;
 
         if (Line::LineType::dictionaryEntry == lines[lineId].lineType) {
             auto numTokensInLine = lines[lineId].last - lines[lineId].first + 1;
@@ -447,10 +459,19 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             UNRECOVERABLE_IF('-' != tokens[lines[lineId].first]);
             if (('#' != tokens[lines[lineId].first + 1]) && ('\n' != tokens[lines[lineId].first + 1])) {
                 outNodes.rbegin()->value = lines[lineId].first + 1;
+                for (auto valueTokId = outNodes.rbegin()->value; valueTokId != lines[lineId].last; ++valueTokId) {
+                    if (':' == tokens[valueTokId]) {
+                        unfinalizedSingleEntryDictNodeId = outNodes.rbegin()->id;
+                        break;
+                    }
+                }
             }
         }
         lastUsedLine = lineId;
         ++lineId;
+    }
+    if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
+        nesting.push_back(unfinalizedSingleEntryDictNodeId);
     }
     outNodes.reserve(outNodes.size() + nesting.size());
     while (false == nesting.empty()) {
