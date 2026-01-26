@@ -460,6 +460,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     EXPECT_EQ(5u, computeWalker->getWalkOrder());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenSingleActiveChannelWhenAskHwForLocalIdsAndInlineDataThenExpectGenerationFieldsSet) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    kernel->kernelInfo.setLocalIds({1, 1, 1});
+    localWorkSizesIn[1] = 8;
+    localWorkSizesIn[2] = 2;
+    kernel->kernelInfo.kernelDescriptor.kernelAttributes.localId[0] = 1;
+    kernel->kernelInfo.kernelDescriptor.kernelAttributes.localId[1] = 0;
+    kernel->kernelInfo.kernelDescriptor.kernelAttributes.localId[2] = 0;
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
+                                                            localWorkSizesIn, simd, 3, false, true, 5u);
+    auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
+    auto localY = static_cast<size_t>(computeWalker->getLocalYMaximum() + 1);
+    auto localZ = static_cast<size_t>(computeWalker->getLocalZMaximum() + 1);
+    EXPECT_EQ(localWorkSizesIn[0], localX);
+    EXPECT_EQ(1u, localY);
+    EXPECT_EQ(1u, localZ);
+
+    constexpr uint32_t expectedEmit = (1 << 0);
+    EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
+    EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
@@ -1714,17 +1739,6 @@ HWTEST2_F(NonDefaultPlatformGpuWalkerTest, givenNonDefaultPlatformWhenSetupTimes
     GpgpuWalkerHelper<FamilyType>::setupTimestampPacket(&cmdStream, walker, static_cast<TagNodeBase *>(&timestamp), *rootDeviceEnvironment);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDefaultLocalIdsGenerationWhenPassingFittingParametersThenReturnFalse) {
-    uint32_t workDim = 1;
-    uint32_t simd = 8;
-    size_t lws[3] = {16, 1, 1};
-    std::array<uint8_t, 3> walkOrder = {};
-    uint32_t requiredWalkOrder = 0u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingOneDimParametersThenReturnFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
@@ -1737,12 +1751,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
+    EXPECT_EQ(4u, requiredWalkOrder);
 
     lws[0] = 15;
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
+    EXPECT_EQ(4u, requiredWalkOrder);
+
+    lws[1] = 15;
+    lws[2] = 15;
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+    EXPECT_EQ(4u, requiredWalkOrder);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalse) {
@@ -1757,11 +1777,52 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(workDim, lws, walkOrder, true, requiredWalkOrder, simd));
     EXPECT_EQ(2u, requiredWalkOrder);
+}
 
-    lws[0] = 15;
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(2u, requiredWalkOrder);
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalseWithCorrectWalkOrder) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    uint32_t workDim = 2;
+    uint32_t simd = 8;
+
+    struct WalkOrderTestCase {
+        size_t lws[3];
+        std::optional<std::array<uint8_t, 3>> inputWalkOrder;
+        std::optional<uint32_t> expectedWalkOrder;
+    } testCases[12] = {
+        {{15, 16, 1}, {{1, 0, 2}}, 4u}, // WalkOrder: (2, 0, 1)
+        {{15, 16, 1}, std::nullopt, 4u},
+        {{16, 16, 1}, {{1, 0, 2}}, 2u},  // WalkOrder: (1, 0, 2)
+        {{16, 16, 1}, std::nullopt, 0u}, // WalkOrder: (0, 1, 2)
+        {{16, 15, 1}, std::nullopt, 1u}, // WalkOrder: (0, 2, 1)
+        {{16, 15, 1}, {{0, 1, 2}}, 1u},
+
+        // Inactive channel (Z) is not power of 2 - HW generation allowed
+        {{16, 15, 15}, {{0, 1, 2}}, 1u},
+        {{16, 15, 15}, std::nullopt, 1u},
+
+        // Invalid cases - runtime generation required
+        {{15, 16, 1}, {{0, 1, 2}}, std::nullopt},
+        {{16, 15, 1}, {{1, 0, 2}}, std::nullopt},
+        {{15, 15, 1}, {{0, 1, 2}}, std::nullopt},
+        {{15, 15, 1}, std::nullopt, std::nullopt},
+    };
+
+    for (auto &testCase : testCases) {
+        uint32_t requiredWalkOrder = 6u;
+        auto &lws = testCase.lws;
+        std::array<uint8_t, 3> walkOrder = testCase.inputWalkOrder.value_or(std::array<uint8_t, 3>{{0, 1, 2}});
+        auto requireInputWalkOrder = testCase.inputWalkOrder.has_value();
+        auto isRuntimeGenerationRequired = !testCase.expectedWalkOrder.has_value();
+        EXPECT_EQ(isRuntimeGenerationRequired,
+                  EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+                      workDim, lws, walkOrder, requireInputWalkOrder, requiredWalkOrder, simd));
+
+        if (!isRuntimeGenerationRequired) {
+            EXPECT_EQ(testCase.expectedWalkOrder.value(), requiredWalkOrder);
+        }
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatNeedsToBeFollowedWithCompatibleDimSizesArePassedThenRuntimeGenerationIsNotRequired) {
@@ -1842,34 +1903,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatDoesntNeedToB
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
     EXPECT_EQ(4u, requiredWalkOrder);
-
-    workDim = 2;
-    lws = {17, 2, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(2u, requiredWalkOrder);
-
-    lws = {2, 17, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    lws = {2, 4, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    workDim = 1;
-    lws = {17, 2, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    workDim = 1;
-    lws = {2, 17, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDisabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnTrue) {
