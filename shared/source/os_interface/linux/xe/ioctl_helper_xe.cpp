@@ -1961,6 +1961,7 @@ void IoctlHelperXe::setOptionalContextProperties(const OsContextLinux &osContext
 }
 
 void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {
+    DEBUG_BREAK_IF(osContext.isLowPriority() && osContext.isPartOfContextGroup());
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
