@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,6 @@ bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
     return true;
-}
-
-template <typename Family>
-size_t L0GfxCoreHelperHw<Family>::getMaxFillPatternSizeForCopyEngine() const {
-    return sizeof(uint8_t);
 }
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_base.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe3p.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe2_hpg_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe3_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xehp_and_later.inl"

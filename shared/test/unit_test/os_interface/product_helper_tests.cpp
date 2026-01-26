@@ -1339,3 +1339,7 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
         EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
     }
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayloadSupportedThenFalseReturned, IsAtMostXe3pCore) {
+    EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
+}

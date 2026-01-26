@@ -221,6 +221,7 @@ class ProductHelperHw : public ProductHelper {
     bool sipUsesSubslicePools() const override;
     bool isScratchSpaceBasePointerInGrf() const override;
     bool scanFullTopologyBitmap() const override;
+    bool isMemSetExtendedPayloadSupported() const override;
 
     ~ProductHelperHw() override = default;
 

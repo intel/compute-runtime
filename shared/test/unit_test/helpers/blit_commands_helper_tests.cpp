@@ -392,7 +392,7 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
     }
 }
 
-HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
+HWTEST2_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed, IsAtMostXe3pCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
@@ -423,7 +423,7 @@ HWTEST_F(BlitTests, givenSystemAllocatedMemoryWhenConstructPropertiesForMemoryFi
     EXPECT_EQ(blitProperties.isSystemMemoryPoolUsed, true);
 }
 
-HWTEST_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorrectColorDepth) {
+HWTEST2_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorrectColorDepth, IsAtMostXe3pCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
@@ -450,7 +450,7 @@ HWTEST_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorre
     EXPECT_EQ(cmd->getDestinationPitch(), 0x4000u * 16u);
 }
 
-HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
+HWTEST2_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhenFillPatternWithBlitThenHeightIsOne, IsAtMostXe3pCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
@@ -473,7 +473,7 @@ HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhe
     }
 }
 
-HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress) {
+HWTEST2_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress, IsAtMostXe3pCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {5, 0, 0, 0};
     uint32_t streamBuffer[100] = {};

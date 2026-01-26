@@ -82,7 +82,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledW
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned, IsAtLeastXeHpcCore) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned, IsWithinXeHpcCoreAndXe3pCore) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint8_t pattern2bytes[2] = {1, 2};

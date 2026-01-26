@@ -2950,7 +2950,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
             using PatchCmdType = NEO::InOrderPatchCommandHelpers::PatchCmdType;
-            PatchCmdType patchCmdType = (blitProperties.fillPatternSize == 1) ? PatchCmdType::memSet : PatchCmdType::xyColorBlt;
+            PatchCmdType patchCmdType;
+            if (blitProperties.fillPatternSize == 1 || device->getProductHelper().isMemSetExtendedPayloadSupported()) {
+                patchCmdType = PatchCmdType::memSet;
+            } else {
+                patchCmdType = PatchCmdType::xyColorBlt;
+            }
+
             auto inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
             addCmdForPatching(nullptr, blitResult.lastBlitCommand, nullptr, inOrderCounterValue, patchCmdType);
         }

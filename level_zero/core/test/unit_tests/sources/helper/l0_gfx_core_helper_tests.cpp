@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1302,7 +1302,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSize
     EXPECT_EQ(4 * sizeof(uint32_t), l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine());
 }
 
-HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSizeForCopyEngineThenReturnCorrectValue, IsAtLeastXeHpcCore) {
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSizeForCopyEngineThenReturnCorrectValue, IsWithinXeHpcCoreAndXe3pCore) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
