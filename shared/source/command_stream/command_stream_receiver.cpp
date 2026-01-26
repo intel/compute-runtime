@@ -316,7 +316,8 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
         preallocateCommandBuffer();
     }
 
-    auto internalHeapsToFill = getProductHelper().getInternalHeapsPreallocated();
+    const bool isBcs = EngineHelpers::isBcs(this->osContext->getEngineType());
+    auto internalHeapsToFill = isBcs ? 0u : getProductHelper().getInternalHeapsPreallocated();
     for (auto i = 0u; i < internalHeapsToFill; i++) {
         preallocateInternalHeap();
     }

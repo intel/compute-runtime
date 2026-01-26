@@ -70,7 +70,7 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInte
     UltDeviceFactory factory{1, 0};
     factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
-    EXPECT_NE(nullptr, engine);
+    ASSERT_NE(nullptr, engine);
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine->getEngineType());
     EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());
@@ -86,7 +86,7 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInter
     UltDeviceFactory factory{1, 0};
     factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS1, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
-    EXPECT_NE(nullptr, engine);
+    ASSERT_NE(nullptr, engine);
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engine->getEngineType());
     EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());

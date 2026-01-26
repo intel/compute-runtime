@@ -217,6 +217,21 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFill
     EXPECT_EQ(AllocationType::internalHeap, allocation->getAllocationType());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenBcsEngineTypeWhenCallFillReusableAllocationsListThenDoNotAllocateInternalHeap) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
+    pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
+
+    reinterpret_cast<MockOsContext *>(pDevice->getUltCommandStreamReceiver<FamilyType>().osContext)->engineType = aub_stream::ENGINE_BCS;
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->fillReusableAllocationsList();
+
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenPreallocateCommandBufferCorrectly) {
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
