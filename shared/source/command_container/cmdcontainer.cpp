@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -25,6 +26,10 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/command_buffer_pool_allocator.h"
+
 namespace NEO {
 
 CommandContainer::~CommandContainer() {
@@ -164,6 +169,14 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
     if (alloc == nullptr) {
         return;
+    }
+
+    if (alloc->isView()) {
+        auto parentAllocation = alloc->getParentAllocation();
+        auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
+        if (poolAllocator.isPoolBuffer(parentAllocation)) {
+            alloc = parentAllocation;
+        }
     }
 
     this->residencyContainer.push_back(alloc);
@@ -312,14 +325,20 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     if (immediateReusableAllocationList != nullptr && !immediateReusableAllocationList->peekIsEmpty() && reusableAllocationList != nullptr) {
         reusableAllocationList->splice(*immediateReusableAllocationList->detachNodes());
     }
+    auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
-        if (this->reusableAllocationList) {
+        auto cmdBufferAllocation = cmdBufferAllocations[i];
+        if (cmdBufferAllocation->getParentAllocation() &&
+            poolAllocator.isPoolBuffer(cmdBufferAllocation->getParentAllocation())) {
+            DEBUG_BREAK_IF(!cmdBufferAllocation->isView());
+            poolAllocator.freeCommandBuffer(cmdBufferAllocation);
+        } else if (this->reusableAllocationList) {
             if (isHandleFenceCompletionRequired) {
-                this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
+                this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocation);
             }
-            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
+            reusableAllocationList->pushFrontOne(*cmdBufferAllocation);
         } else {
-            this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
+            this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocation);
         }
     }
 }
@@ -497,6 +516,20 @@ void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
 
 GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory) {
     size_t alignedSize = getAlignedCmdBufferSize();
+
+    if (!forceHostMemory) {
+        auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        if (auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
+            (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
+            auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
+            auto commandBufferAllocation = poolAllocator.allocateCommandBuffer(alignedSize);
+            if (commandBufferAllocation) {
+                return commandBufferAllocation;
+            }
+        }
+    }
+
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
@@ -527,15 +560,25 @@ void CommandContainer::fillReusableAllocationLists() {
         return;
     }
 
-    for (auto i = 0u; i < amountToFill; i++) {
-        auto allocToReuse = obtainNextCommandBufferAllocation();
-        this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
-        this->getResidencyContainer().push_back(allocToReuse);
+    auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    bool poolAllocatorEnabled = false;
+    if (auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
+        (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
+        poolAllocatorEnabled = true;
+    }
 
-        if (this->useSecondaryCommandStream) {
-            auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
-            this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
-            this->getResidencyContainer().push_back(hostAllocToReuse);
+    if (!poolAllocatorEnabled) {
+        for (auto i = 0u; i < amountToFill; i++) {
+            auto allocToReuse = obtainNextCommandBufferAllocation();
+            this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
+            this->getResidencyContainer().push_back(allocToReuse);
+
+            if (this->useSecondaryCommandStream) {
+                auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
+                this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
+                this->getResidencyContainer().push_back(hostAllocToReuse);
+            }
         }
     }
 
@@ -568,7 +611,14 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     allocation->updateTaskCount(taskCount, osContextId);
     allocation->updateResidencyTaskCount(taskCount, osContextId);
     if (allocation->getAllocationType() == AllocationType::commandBuffer) {
-        this->immediateReusableAllocationList->pushTailOne(*allocation);
+        auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
+        if (allocation->getParentAllocation() &&
+            poolAllocator.isPoolBuffer(allocation->getParentAllocation())) {
+            DEBUG_BREAK_IF(!allocation->isView());
+            poolAllocator.freeCommandBuffer(allocation);
+        } else {
+            this->immediateReusableAllocationList->pushTailOne(*allocation);
+        }
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);
     }

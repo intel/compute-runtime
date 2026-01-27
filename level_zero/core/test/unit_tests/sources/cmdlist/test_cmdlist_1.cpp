@@ -260,7 +260,8 @@ TEST_F(CommandListCreateTests, whenCommandListIsCreatedThenItIsInitialized) {
 
     EXPECT_LT(0u, commandList->getCmdContainer().getCommandStream()->getAvailableSpace());
     ASSERT_EQ(commandList->getCmdContainer().getResidencyContainer().size(), numAllocations);
-    EXPECT_EQ(commandList->getCmdContainer().getResidencyContainer().front(), allocation);
+    auto expectedInResidency = allocation->isView() ? allocation->getParentAllocation() : allocation;
+    EXPECT_EQ(commandList->getCmdContainer().getResidencyContainer().front(), expectedInResidency);
 }
 
 TEST_F(CommandListCreateTests, givenRegularCommandListThenDefaultNumIddPerBlockIsUsed) {
