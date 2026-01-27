@@ -656,19 +656,17 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
     if (!localIdsGenerationByRuntime && localIdDimensions > 0) {
         UNRECOVERABLE_IF(localIdDimensions > 3);
         uint32_t emitLocalIdsForDim = (1 << 0);
+        walkerCmd.setLocalXMaximum(static_cast<uint32_t>(workGroupSizes[0] - 1));
 
         if (localIdDimensions > 1) {
             emitLocalIdsForDim |= (1 << 1);
+            walkerCmd.setLocalYMaximum(static_cast<uint32_t>(workGroupSizes[1] - 1));
         }
         if (localIdDimensions > 2) {
             emitLocalIdsForDim |= (1 << 2);
+            walkerCmd.setLocalZMaximum(static_cast<uint32_t>(workGroupSizes[2] - 1));
         }
         walkerCmd.setEmitLocalId(emitLocalIdsForDim);
-
-        walkerCmd.setLocalXMaximum(static_cast<uint32_t>(workGroupSizes[0] - 1));
-        walkerCmd.setLocalYMaximum(static_cast<uint32_t>(workGroupSizes[1] - 1));
-        walkerCmd.setLocalZMaximum(static_cast<uint32_t>(workGroupSizes[2] - 1));
-
         walkerCmd.setGenerateLocalId(1);
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
     }

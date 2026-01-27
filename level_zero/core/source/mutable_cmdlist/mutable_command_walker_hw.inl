@@ -97,4 +97,25 @@ void MutableComputeWalkerHw<GfxFamily>::saveCpuBufferIntoGpuBuffer(bool useDispa
     }
 }
 
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::setWorkGroupSize(MaxChannelsArray workgroupSize, uint32_t localIdDimensions) {
+    using WalkerType = typename GfxFamily::DefaultWalkerType;
+
+    constexpr uint32_t workGroupSizeIndex = 6;
+
+    auto cpuBufferWalker = reinterpret_cast<WalkerType *>(this->cpuBuffer);
+    cpuBufferWalker->setLocalXMaximum(workgroupSize[0] - 1);
+    if (localIdDimensions > 1) {
+        cpuBufferWalker->setLocalYMaximum(workgroupSize[1] - 1);
+    }
+    if (localIdDimensions > 2) {
+        cpuBufferWalker->setLocalZMaximum(workgroupSize[2] - 1);
+    }
+
+    if (!this->stageCommitMode) {
+        auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
+        walkerCmd->getRawData(workGroupSizeIndex) = cpuBufferWalker->getRawData(workGroupSizeIndex);
+    }
+}
+
 } // namespace L0::MCL

@@ -166,7 +166,7 @@ void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Devi
         mutableCommandWalker->setGenerateLocalId(false, 0, kernelDispatch->kernelData->numLocalIdChannels);
     } else {
         mutableCommandWalker->setGenerateLocalId(true, this->walkOrder, kernelDispatch->kernelData->numLocalIdChannels);
-        mutableCommandWalker->setWorkGroupSize(this->groupSize);
+        mutableCommandWalker->setWorkGroupSize(this->groupSize, kernelDispatch->kernelData->numLocalIdChannels);
     }
 
     size_t indirectDataLength = indirectData->getCrossThreadDataSize() + this->perThreadDataSize;
@@ -447,7 +447,7 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
             mutableCommandWalker->setGenerateLocalId(false, 0, kernelDispatch->kernelData->numLocalIdChannels);
         } else {
             mutableCommandWalker->setGenerateLocalId(true, this->walkOrder, kernelDispatch->kernelData->numLocalIdChannels);
-            mutableCommandWalker->setWorkGroupSize(this->groupSize);
+            mutableCommandWalker->setWorkGroupSize(this->groupSize, kernelDispatch->kernelData->numLocalIdChannels);
         }
 
         size_t indirectDataLength = indirectData->getCrossThreadDataSize() + this->perThreadDataSize;

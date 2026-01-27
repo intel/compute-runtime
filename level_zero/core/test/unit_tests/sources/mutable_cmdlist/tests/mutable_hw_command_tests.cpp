@@ -307,7 +307,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
 
-    mutableWalker->setWorkGroupSize(workgroupSize);
+    mutableWalker->setWorkGroupSize(workgroupSize, 3u);
 
     EXPECT_EQ(workgroupSize[0] - 1, cpuBuffer->getLocalXMaximum());
     EXPECT_EQ(workgroupSize[1] - 1, cpuBuffer->getLocalYMaximum());
@@ -320,7 +320,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
 
-    mutableWalker->setWorkGroupSize(workgroupSize);
+    mutableWalker->setWorkGroupSize(workgroupSize, 3u);
 
     EXPECT_EQ(workgroupSize[0] - 1, cpuBuffer->getLocalXMaximum());
     EXPECT_EQ(workgroupSize[1] - 1, cpuBuffer->getLocalYMaximum());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -941,7 +941,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsPresentThenExpectEmitAndGenerateLocalIds) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     requiredWorkGroupOrder = 2u;
     workGroupSizes[1] = workGroupSizes[2] = 2u;
     MockExecutionEnvironment executionEnvironment{};
@@ -956,6 +955,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
                                         (1 << 0) | (1 << 1) | (1 << 2)};
 
     for (int i = 0; i < 3; i++) {
+        DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
         EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDims[i],
                                                            0, 0, false, false, false, requiredWorkGroupOrder, rootDeviceEnvironment);
         EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
@@ -975,8 +975,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 
         EXPECT_EQ(expectedEmitLocalIds[i], walkerCmd.getEmitLocalId());
         EXPECT_EQ(31u, walkerCmd.getLocalXMaximum());
-        EXPECT_EQ(1u, walkerCmd.getLocalYMaximum());
-        EXPECT_EQ(1u, walkerCmd.getLocalZMaximum());
+        auto expectedYMax = (localIdDims[i] > 1) ? 1u : 0u;
+        EXPECT_EQ(expectedYMax, walkerCmd.getLocalYMaximum());
+        auto expectedZMax = (localIdDims[i] > 2) ? 1u : 0u;
+        EXPECT_EQ(expectedZMax, walkerCmd.getLocalZMaximum());
         EXPECT_EQ(2u, walkerCmd.getWalkOrder());
 
         EXPECT_TRUE(walkerCmd.getGenerateLocalId());

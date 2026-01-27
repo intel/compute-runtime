@@ -51,7 +51,7 @@ struct MutableComputeWalker {
     virtual void setGenerateLocalId(bool generateLocalIdsByGpu, uint32_t walkOrder, uint32_t localIdDimensions) = 0;
     virtual void setNumberThreadsPerThreadGroup(uint32_t numThreadPerThreadGroup) = 0;
     virtual void setNumberWorkGroups(MaxChannelsArray numberWorkGroups) = 0;
-    virtual void setWorkGroupSize(MaxChannelsArray workgroupSize) = 0;
+    virtual void setWorkGroupSize(MaxChannelsArray workgroupSize, uint32_t localIdDimensions) = 0;
     virtual void setExecutionMask(uint32_t mask) = 0;
 
     virtual void setPostSyncAddress(GpuAddress postSyncAddress, GpuAddress inOrderIncrementAddress) = 0;
