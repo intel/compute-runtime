@@ -4774,7 +4774,9 @@ void CommandListCoreFamily<gfxCoreFamily>::patchInOrderCmds() {
 }
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
-    return (inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
+    const bool skip = (NEO::debugManager.flags.SkipImplicitInOrderDependencies.get() == 1);
+
+    return (!skip && inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
