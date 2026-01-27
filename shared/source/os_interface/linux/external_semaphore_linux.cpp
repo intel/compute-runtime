@@ -7,11 +7,14 @@
 
 #include "shared/source/os_interface/linux/external_semaphore_linux.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+
+#include <cinttypes>
 
 namespace NEO {
 
@@ -83,6 +86,11 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
         args.countHandles = 1u;
         args.flags = 0;
 
+        PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
+                     "ExternalSemaphore timeline wait: handle=0x%x, value=%" PRIu64 "\n",
+                     this->syncHandle,
+                     fenceValue ? *fenceValue : 0);
+
         int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineWait, &args);
         if (ret != 0) {
             return false;
@@ -114,6 +122,11 @@ bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
         args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
         args.points = reinterpret_cast<uintptr_t>(fenceValue);
         args.countHandles = 1u;
+
+        PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
+                     "ExternalSemaphore timeline signal: handle=0x%x, value=%" PRIu64 "\n",
+                     this->syncHandle,
+                     fenceValue ? *fenceValue : 0);
 
         int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineSignal, &args);
         if (ret != 0) {

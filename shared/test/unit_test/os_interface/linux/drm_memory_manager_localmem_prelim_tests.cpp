@@ -3769,3 +3769,282 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerAndResidentNe
     memoryManager->mmapFunction = SysCalls::mmap;
     memoryManager->munmapFunction = SysCalls::munmap;
 }
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndMappedPtrWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAndSharedHandleIsNonShared) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+    void *testMappedPtr = reinterpret_cast<void *>(0x12345000);
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, testMappedPtr, false, true);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndMappedPtrWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndSharedHandleIsPreserved) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    int testFd = 123;
+    void *testMappedPtr = reinterpret_cast<void *>(0x12345000);
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, testMappedPtr, false, false);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(static_cast<unsigned int>(testFd), allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNoBooMmapWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAndRegistered) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndNoBooMmapWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndSharedHandlePreserved) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, false);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(static_cast<unsigned int>(testFd), allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNewBoCreationWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAfterLseek) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndNewBoCreationWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosed) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, false);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndReuseSharedAllocationWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAndBoIsReused) {
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd1 = 123;
+    int testFd2 = 456;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    auto allocation1 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd1, properties, nullptr, false, false);
+    ASSERT_NE(allocation1, nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd2, properties, nullptr, true, true);
+
+    ASSERT_NE(allocation2, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd2, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(Sharing::nonSharedResource, allocation2->peekSharedHandle());
+
+    auto bo1 = static_cast<DrmAllocation *>(allocation1)->getBO();
+    auto bo2 = static_cast<DrmAllocation *>(allocation2)->getBO();
+    EXPECT_EQ(bo1, bo2);
+
+    memoryManager->freeGraphicsMemory(allocation1);
+    memoryManager->freeGraphicsMemory(allocation2);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndReuseSharedAllocationWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndBoIsReused) {
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd1 = 123;
+    int testFd2 = 456;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    auto allocation1 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd1, properties, nullptr, false, false);
+    ASSERT_NE(allocation1, nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd2, properties, nullptr, true, false);
+
+    ASSERT_NE(allocation2, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(static_cast<unsigned int>(testFd2), allocation2->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation1);
+    memoryManager->freeGraphicsMemory(allocation2);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenDefaultConsumeFdWhenCreateUSMHostAllocationFromSharedHandleCalledThenConsumeFdIsFalse) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(static_cast<unsigned int>(testFd), allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndIoctlFailureWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndNullptrReturned) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->fdToHandleRetVal = -1;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenIsHostIpcAllocationWhenCreateGraphicsAllocationFromSharedHandleCalledThenConsumeFdIsTrue) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(testFd)};
+
+    mock->outputHandle = 100;
+
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(
+        osHandleData, properties, false, true, false, nullptr);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
