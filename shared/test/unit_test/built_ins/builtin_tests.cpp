@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,10 +140,10 @@ TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinRe
         {EBuiltInOps::fillBufferStatelessHeapless, "fill_buffer_stateless.builtin_kernel"},
         {EBuiltInOps::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
         {EBuiltInOps::copyBufferToImage3dStateless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3dHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3dStatelessHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
         {EBuiltInOps::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
         {EBuiltInOps::copyImage3dToBufferStateless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBufferHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBufferStatelessHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
         {EBuiltInOps::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
         {EBuiltInOps::copyImageToImage1dHeapless, "copy_image_to_image1d.builtin_kernel"},
         {EBuiltInOps::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
@@ -203,10 +203,45 @@ TEST_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsC
 
         auto resourceNames = getBuiltinResourceNames(builtInType, BuiltinCode::ECodeType::binary, *pDevice);
 
-        std::string expectedResourceNameGeneric = "heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
+        std::string expectedResourceNameGeneric = "stateless_heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
         std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
+    }
+}
+
+TEST_F(BuiltInSharedTest, GivenRequestedTypeWhenGettingResourceNamesThenReturnReleaseForAllWideOps) {
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" +
+                                 std::to_string(hwInfo.ipVersion.release) + "_" +
+                                 std::to_string(hwInfo.ipVersion.revision);
+
+    struct WideCase {
+        EBuiltInOps::Type op;
+        const char *genericResource;
+    };
+
+    const WideCase wideCases[] = {
+        {EBuiltInOps::copyBufferToBufferWideStateless, "wide_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyBufferToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyBufferRectWideStateless, "wide_stateless_copy_buffer_rect_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyBufferRectWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_rect_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::fillBufferWideStateless, "wide_stateless_fill_buffer_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::fillBufferWideStatelessHeapless, "wide_stateless_heapless_fill_buffer_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyBufferToImage3dWideStateless, "wide_stateless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyImage3dToBufferWideStateless, "wide_stateless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
+        {EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
+    };
+
+    for (const auto &tc : wideCases) {
+        auto resourceNames = getBuiltinResourceNames(tc.op, BuiltinCode::ECodeType::binary, *pDevice);
+
+        std::string expectedGeneric = tc.genericResource;
+        std::string expectedForRelease = deviceIpString + "_" + expectedGeneric;
+
+        EXPECT_EQ(1u, resourceNames.size());
+        EXPECT_EQ(expectedForRelease, resourceNames[0]);
     }
 }

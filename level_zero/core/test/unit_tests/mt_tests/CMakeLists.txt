@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -78,7 +78,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
                  $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                  $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_HEAPLESS_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
   )

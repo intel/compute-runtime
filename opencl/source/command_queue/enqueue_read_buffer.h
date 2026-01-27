@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
@@ -86,8 +87,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
     }
 
     const bool isStateless = forceStateless(buffer->getSize());
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
+    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
 
     void *dstPtr = ptr;
 

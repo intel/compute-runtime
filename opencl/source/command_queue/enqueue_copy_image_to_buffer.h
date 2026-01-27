@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/addressing_mode_helper.h"
+
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -27,11 +29,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    bool isStateless = isForceStateless;
-    if (dstBuffer->getSize() >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled);
+    const bool isStateless = forceStateless(dstBuffer->getSize());
+    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(dstBuffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             this->getClDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);

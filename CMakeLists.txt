@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -990,7 +990,9 @@ endif()
 set(BIKSIM_LIB_NAME "biksim")
 set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
 set(BUILTINS_BINARIES_STATELESS_LIB_NAME "builtins_binaries_stateless")
-set(BUILTINS_BINARIES_HEAPLESS_LIB_NAME "builtins_binaries_heapless")
+set(BUILTINS_BINARIES_WIDE_STATELESS_LIB_NAME "builtins_binaries_wide_stateless")
+set(BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME "builtins_binaries_stateless_heapless")
+set(BUILTINS_BINARIES_WIDE_STATELESS_HEAPLESS_LIB_NAME "builtins_binaries_wide_stateless_heapless")
 set(BUILTINS_BINARIES_BINDFUL_LIB_NAME "builtins_binaries_bindful")
 set(BUILTINS_BINARIES_BINDLESS_LIB_NAME "builtins_binaries_bindless")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,7 +282,6 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
 }
 
 HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupport) {
-
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -316,8 +315,10 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKe
     EXPECT_EQ(0u, indirectDataPointerAddress.offset);
     EXPECT_EQ(8u, indirectDataPointerAddress.pointerSize);
 
-    EXPECT_EQ(8u, scratchPointerAddress.offset);
-    EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
+    if (NEO::isDefined(scratchPointerAddress.offset)) {
+        EXPECT_EQ(8u, scratchPointerAddress.offset);
+        EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
+    }
 }
 
 HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenL3ProgrammingIsCorrect) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1154,7 +1154,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedTh
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dHeapless, *pClDevice);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dStatelessHeapless, *pClDevice);
 
     BuiltinOpParams dc;
     dc.srcPtr = &buffer;
@@ -1181,7 +1181,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedTh
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferHeapless, *pClDevice);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStatelessHeapless, *pClDevice);
 
     BuiltinOpParams dc;
     dc.srcMemObj = image.get();
@@ -1496,10 +1496,10 @@ HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltIn
     EBuiltInOps::Type operationsImages[] = {
         EBuiltInOps::copyBufferToImage3d,
         EBuiltInOps::copyBufferToImage3dStateless,
-        EBuiltInOps::copyBufferToImage3dHeapless,
+        EBuiltInOps::copyBufferToImage3dStatelessHeapless,
         EBuiltInOps::copyImage3dToBuffer,
         EBuiltInOps::copyImage3dToBufferStateless,
-        EBuiltInOps::copyImage3dToBufferHeapless,
+        EBuiltInOps::copyImage3dToBufferStatelessHeapless,
         EBuiltInOps::copyImageToImage3d,
         EBuiltInOps::copyImageToImage3dHeapless,
         EBuiltInOps::fillImage3d,
@@ -1707,8 +1707,8 @@ HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuilti
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBufferHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3dStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
@@ -2919,14 +2919,8 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
 
     BuiltinOpParams dc;
-    dc.srcPtr = nullptr;
-    dc.srcMemObj = nullptr;
     dc.dstMemObj = image;
-    dc.srcOffset = {0, 0, 0};
-    dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
-    dc.srcRowPitch = 0;
-    dc.srcSlicePitch = 0;
 
     MultiDispatchInfo multiDispatchInfo(dc);
     ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
@@ -2938,4 +2932,194 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
 
     delete image;
+}
+
+HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    const bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    if (!isStateless) {
+        GTEST_SKIP();
+    }
+    const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+
+    const auto builtInType =
+        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, heaplessAllowed, true);
+
+    MockBuffer srcBuffer;
+    MockBuffer dstBuffer;
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &srcBuffer;
+    dc.dstPtr = &dstBuffer;
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo mdi(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(mdi));
+    ASSERT_EQ(1u, mdi.size());
+    EXPECT_TRUE(compareBuiltinOpParams(mdi.peekBuiltinOpParams(), dc));
+
+    auto kernel = mdi.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
+}
+
+HWTEST_F(BuiltInTests, givenAdjustedCopyBufferRect2dWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    const bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    if (!isStateless) {
+        GTEST_SKIP();
+    }
+    const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+
+    const auto builtInType =
+        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, heaplessAllowed, true);
+
+    MockBuffer srcBuffer;
+    MockBuffer dstBuffer;
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &srcBuffer;
+    dc.dstPtr = &dstBuffer;
+
+    dc.srcOffset = {1, 2, 0};
+    dc.dstOffset = {3, 4, 0};
+    dc.size = {5, 6, 1};
+
+    dc.srcRowPitch = 64;
+    dc.srcSlicePitch = 0;
+    dc.dstRowPitch = 128;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo mdi(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(mdi));
+    ASSERT_EQ(1u, mdi.size());
+    EXPECT_TRUE(compareBuiltinOpParams(mdi.peekBuiltinOpParams(), dc));
+
+    auto kernel = mdi.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size);
+}
+
+HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    const bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    if (!isStateless) {
+        GTEST_SKIP();
+    }
+    const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+
+    const auto builtInType =
+        EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, heaplessAllowed, true);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    uint64_t size = MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(size);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(size);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.dstOffset = {static_cast<size_t>(size), 0, 0};
+    dc.size = {static_cast<size_t>(size), 0, 0};
+
+    MultiDispatchInfo mdi(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(mdi));
+    ASSERT_EQ(1u, mdi.size());
+    EXPECT_TRUE(compareBuiltinOpParams(mdi.peekBuiltinOpParams(), dc));
+
+    auto kernel = mdi.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size);
+}
+
+HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToImage3dWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    const bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    if (!isStateless) {
+        GTEST_SKIP();
+    }
+    const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+
+    const auto builtInType =
+        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed, true);
+
+    MockBuffer buffer;
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &buffer;
+    dc.dstMemObj = image.get();
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo mdi(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(mdi));
+    ASSERT_EQ(1u, mdi.size());
+    EXPECT_TRUE(compareBuiltinOpParams(mdi.peekBuiltinOpParams(), dc));
+
+    auto kernel = mdi.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
+}
+
+HWTEST_F(BuiltInTests, givenAdjustedCopyImage3dToBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    const bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    if (!isStateless) {
+        GTEST_SKIP();
+    }
+    const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+
+    const auto builtInType =
+        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed, true);
+
+    MockBuffer buffer;
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image.get();
+    dc.dstPtr = &buffer;
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo mdi(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(mdi));
+    ASSERT_EQ(1u, mdi.size());
+    EXPECT_TRUE(compareBuiltinOpParams(mdi.peekBuiltinOpParams(), dc));
+
+    auto kernel = mdi.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
 }

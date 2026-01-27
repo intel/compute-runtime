@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/vec.h"
@@ -148,8 +149,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
     dc.direction = csrSelectionArgs.direction;
 
     const bool isStateless = forceStateless(srcImage->getSize());
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, useHeapless);
+    const bool isWideness =
+        AddressingModeHelper::isAnyValueWiderThan32bit(hostPtrSize);
+    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);

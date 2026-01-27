@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/addressing_mode_helper.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/enqueue_common.h"
@@ -31,8 +33,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     const bool isStateless = forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
+    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(srcBuffer->getSize(), dstBuffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
 
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;

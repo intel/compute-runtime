@@ -926,13 +926,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
                          0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    if (this->heaplessModeEnabled || isStateless) {
-        uint64_t pitch[] = {srcRowPitch, srcSlicePitch};
-        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
-    } else {
-        uint32_t pitch[] = {srcRowPitch, srcSlicePitch};
-        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
-    }
+    uint32_t pitch[] = {srcRowPitch, srcSlicePitch};
+    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pDstRegion->width;
     uint32_t groupSizeY = pDstRegion->height;
@@ -1152,13 +1147,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    if (this->heaplessModeEnabled || isStateless) {
-        uint64_t pitch[] = {destRowPitch, destSlicePitch};
-        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
-    } else {
-        uint32_t pitch[] = {destRowPitch, destSlicePitch};
-        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
-    }
+    uint32_t pitch[] = {destRowPitch, destSlicePitch};
+    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pSrcRegion->width;
     uint32_t groupSizeY = pSrcRegion->height;
@@ -2373,27 +2363,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    if (isStateless || isHeapless) {
-        uint64_t srcOrigin64[3] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
-                                   static_cast<uint64_t>(srcRegion->originY), static_cast<uint64_t>(srcRegion->originZ)};
-        uint64_t dstOrigin64[3] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
-                                   static_cast<uint64_t>(dstRegion->originY), static_cast<uint64_t>(dstRegion->originZ)};
-        uint64_t srcPitches64[2] = {static_cast<uint64_t>(srcPitch), static_cast<uint64_t>(srcSlicePitch)};
-        uint64_t dstPitches64[2] = {static_cast<uint64_t>(dstPitch), static_cast<uint64_t>(dstSlicePitch)};
-        builtinKernel->setArgumentValue(2, sizeof(srcOrigin64), &srcOrigin64);
-        builtinKernel->setArgumentValue(3, sizeof(dstOrigin64), &dstOrigin64);
-        builtinKernel->setArgumentValue(4, sizeof(srcPitches64), &srcPitches64);
-        builtinKernel->setArgumentValue(5, sizeof(dstPitches64), &dstPitches64);
-    } else {
-        uint32_t srcOrigin32[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
-        uint32_t dstOrigin32[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
-        uint32_t srcPitches32[2] = {srcPitch, srcSlicePitch};
-        uint32_t dstPitches32[2] = {dstPitch, dstSlicePitch};
-        builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
-        builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
-        builtinKernel->setArgumentValue(4, sizeof(srcPitches32), &srcPitches32);
-        builtinKernel->setArgumentValue(5, sizeof(dstPitches32), &dstPitches32);
-    }
+    uint32_t srcOrigin32[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
+    uint32_t dstOrigin32[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
+    uint32_t srcPitches32[2] = {srcPitch, srcSlicePitch};
+    uint32_t dstPitches32[2] = {dstPitch, dstSlicePitch};
+    builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
+    builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
+    builtinKernel->setArgumentValue(4, sizeof(srcPitches32), &srcPitches32);
+    builtinKernel->setArgumentValue(5, sizeof(dstPitches32), &dstPitches32);
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
@@ -2466,27 +2443,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    if (isStateless || isHeapless) {
-        uint64_t srcOrigin64[2] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
-                                   static_cast<uint64_t>(srcRegion->originY)};
-        uint64_t dstOrigin64[2] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
-                                   static_cast<uint64_t>(dstRegion->originY)};
-        uint64_t srcPitch64 = static_cast<uint64_t>(srcPitch);
-        uint64_t dstPitch64 = static_cast<uint64_t>(dstPitch);
-        builtinKernel->setArgumentValue(2, sizeof(srcOrigin64), &srcOrigin64);
-        builtinKernel->setArgumentValue(3, sizeof(dstOrigin64), &dstOrigin64);
-        builtinKernel->setArgumentValue(4, sizeof(srcPitch64), &srcPitch64);
-        builtinKernel->setArgumentValue(5, sizeof(dstPitch64), &dstPitch64);
-    } else {
-        uint32_t srcOrigin32[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
-        uint32_t dstOrigin32[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
-        uint32_t srcPitch32 = static_cast<uint32_t>(srcPitch);
-        uint32_t dstPitch32 = static_cast<uint32_t>(dstPitch);
-        builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
-        builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
-        builtinKernel->setArgumentValue(4, sizeof(srcPitch32), &srcPitch32);
-        builtinKernel->setArgumentValue(5, sizeof(dstPitch32), &dstPitch32);
-    }
+    uint32_t srcOrigin32[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
+    uint32_t dstOrigin32[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
+    uint32_t srcPitch32 = static_cast<uint32_t>(srcPitch);
+    uint32_t dstPitch32 = static_cast<uint32_t>(dstPitch);
+    builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
+    builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
+    builtinKernel->setArgumentValue(4, sizeof(srcPitch32), &srcPitch32);
+    builtinKernel->setArgumentValue(5, sizeof(dstPitch32), &dstPitch32);
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;

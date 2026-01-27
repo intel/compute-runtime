@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,4 +181,34 @@ TEST(AddressingModeHelperTest, GivenKernelInfosWhenCheckingForBindlessKernelThen
         std::vector<KernelInfo *> kernelInfos{&kernelInfo1, &kernelInfo2};
         EXPECT_TRUE(AddressingModeHelper::containsBindlessKernel(kernelInfos));
     }
+}
+
+TEST(AddressingModeHelperTest, GivenSingleValueWithinU32RangeThenReturnsFalse) {
+    constexpr auto u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+
+    EXPECT_FALSE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{0}));
+    EXPECT_FALSE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{1}));
+    EXPECT_FALSE(AddressingModeHelper::isAnyValueWiderThan32bit(u32Max));
+}
+
+TEST(AddressingModeHelperTest, GivenSingleValueAboveU32MaxThenReturnsTrue) {
+    constexpr auto u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+    constexpr auto above = u32Max + 1ULL;
+
+    EXPECT_TRUE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{above}));
+    EXPECT_TRUE(AddressingModeHelper::isAnyValueWiderThan32bit(std::numeric_limits<uint64_t>::max()));
+}
+
+TEST(AddressingModeHelperTest, GivenAllArgsWithinU32RangeThenReturnsFalse) {
+    constexpr auto u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+
+    EXPECT_FALSE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{0}, uint64_t{123}, uint64_t{u32Max}));
+}
+
+TEST(AddressingModeHelperTest, GivenAnyArgAboveU32MaxThenReturnsTrue) {
+    constexpr auto u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+    constexpr auto above = u32Max + 1ULL;
+
+    EXPECT_TRUE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{0}, uint64_t{u32Max}, uint64_t{above}));
+    EXPECT_TRUE(AddressingModeHelper::isAnyValueWiderThan32bit(uint64_t{above}, uint64_t{0}));
 }

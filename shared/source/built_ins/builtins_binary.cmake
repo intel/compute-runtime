@@ -1,14 +1,24 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-list(APPEND ADDRESSING_MODES
+list(APPEND HEAPLESS_ADDRESSING_MODES
+     "stateless_heapless"
+     "wide_stateless_heapless"
+)
+
+list(APPEND STATELESS_ADDRESSING_MODES
      "stateless"
+     "wide_stateless"
+     ${HEAPLESS_ADDRESSING_MODES}
+)
+
+list(APPEND ADDRESSING_MODES
      "bindful"
      "bindless"
-     "heapless"
+     ${STATELESS_ADDRESSING_MODES}
 )
 
 set(GENERATED_BUILTINS

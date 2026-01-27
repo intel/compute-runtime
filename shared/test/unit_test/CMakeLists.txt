@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -76,7 +76,9 @@ add_subdirectories()
 target_sources(neo_shared_tests PRIVATE
                $<TARGET_OBJECTS:neo_unit_tests_config>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
-               $<TARGET_OBJECTS:${BUILTINS_BINARIES_HEAPLESS_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_WIDE_STATELESS_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_WIDE_STATELESS_HEAPLESS_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )

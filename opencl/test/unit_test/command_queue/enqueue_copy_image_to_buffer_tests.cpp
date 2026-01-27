@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -217,7 +217,7 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
 
     EBuiltInOps::Type builtInType = EBuiltInOps::copyImage3dToBuffer;
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtInType = EBuiltInOps::copyImage3dToBufferHeapless;
+        builtInType = EBuiltInOps::copyImage3dToBufferStatelessHeapless;
     } else if (compilerProductHelper.isForceToStatelessRequired()) {
         builtInType = EBuiltInOps::copyImage3dToBufferStateless;
     }

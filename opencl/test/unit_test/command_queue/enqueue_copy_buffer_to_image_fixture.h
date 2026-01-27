@@ -89,7 +89,7 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
             switch (builtInType) {
             case EBuiltInOps::copyBufferToImage3d:
             case EBuiltInOps::copyBufferToImage3dStateless:
-                return EBuiltInOps::copyBufferToImage3dHeapless;
+                return EBuiltInOps::copyBufferToImage3dStatelessHeapless;
             }
         }
 

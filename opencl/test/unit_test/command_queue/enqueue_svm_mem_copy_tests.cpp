@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,8 +167,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto kernel = di->getKernel();
     EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
-    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, EBuiltInOps::isStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, EBuiltInOps::isStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, EBuiltInOps::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, EBuiltInOps::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {

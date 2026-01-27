@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,27 +32,37 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     case EBuiltInOps::copyBufferToBuffer:
         return "copy_buffer_to_buffer.builtin_kernel";
     case EBuiltInOps::copyBufferToBufferStateless:
+    case EBuiltInOps::copyBufferToBufferWideStateless:
     case EBuiltInOps::copyBufferToBufferStatelessHeapless:
+    case EBuiltInOps::copyBufferToBufferWideStatelessHeapless:
         return "copy_buffer_to_buffer_stateless.builtin_kernel";
     case EBuiltInOps::copyBufferRect:
         return "copy_buffer_rect.builtin_kernel";
     case EBuiltInOps::copyBufferRectStateless:
+    case EBuiltInOps::copyBufferRectWideStateless:
     case EBuiltInOps::copyBufferRectStatelessHeapless:
+    case EBuiltInOps::copyBufferRectWideStatelessHeapless:
         return "copy_buffer_rect_stateless.builtin_kernel";
     case EBuiltInOps::fillBuffer:
         return "fill_buffer.builtin_kernel";
     case EBuiltInOps::fillBufferStateless:
+    case EBuiltInOps::fillBufferWideStateless:
     case EBuiltInOps::fillBufferStatelessHeapless:
+    case EBuiltInOps::fillBufferWideStatelessHeapless:
         return "fill_buffer_stateless.builtin_kernel";
     case EBuiltInOps::copyBufferToImage3d:
         return "copy_buffer_to_image3d.builtin_kernel";
     case EBuiltInOps::copyBufferToImage3dStateless:
-    case EBuiltInOps::copyBufferToImage3dHeapless:
+    case EBuiltInOps::copyBufferToImage3dWideStateless:
+    case EBuiltInOps::copyBufferToImage3dStatelessHeapless:
+    case EBuiltInOps::copyBufferToImage3dWideStatelessHeapless:
         return "copy_buffer_to_image3d_stateless.builtin_kernel";
     case EBuiltInOps::copyImage3dToBuffer:
         return "copy_image3d_to_buffer.builtin_kernel";
     case EBuiltInOps::copyImage3dToBufferStateless:
-    case EBuiltInOps::copyImage3dToBufferHeapless:
+    case EBuiltInOps::copyImage3dToBufferWideStateless:
+    case EBuiltInOps::copyImage3dToBufferStatelessHeapless:
+    case EBuiltInOps::copyImage3dToBufferWideStatelessHeapless:
         return "copy_image3d_to_buffer_stateless.builtin_kernel";
     case EBuiltInOps::copyImageToImage1d:
     case EBuiltInOps::copyImageToImage1dHeapless:
@@ -109,11 +119,12 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     if (type == BuiltinCode::ECodeType::binary) {
         const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
-        const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
+        const bool builtInUsesWideStatelessAddressing = EBuiltInOps::isWideStateless(builtin);
+        const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin) || builtInUsesWideStatelessAddressing;
         if (heaplessEnabled) {
-            addressingModePrefix = "heapless_";
+            addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_heapless_" : "stateless_heapless_";
         } else if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
-            addressingModePrefix = "stateless_";
+            addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_" : "stateless_";
         } else if (ApiSpecificConfig::getBindlessMode(device)) {
             addressingModePrefix = "bindless_";
         } else {

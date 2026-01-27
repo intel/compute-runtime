@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,9 +51,9 @@ TEST_F(KernelAddressingTest,
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
@@ -63,9 +63,9 @@ TEST_F(KernelAddressingTest,
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
 }
 
@@ -79,10 +79,10 @@ TEST_F(KernelAddressingTest,
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, 2 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, 2 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::copyBufferRectBytes3d>(isStateless, isHeapless);
@@ -92,10 +92,10 @@ TEST_F(KernelAddressingTest,
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, 4 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, 4 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, 2 * sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, 2 * sizeof(uint32_t));
     }
 }
 
@@ -108,7 +108,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless);
@@ -118,7 +118,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::fillBufferSSHOffset>(isStateless, isHeapless);
@@ -128,8 +128,8 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::fillBufferMiddle>(isStateless, isHeapless);
@@ -139,8 +139,8 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
         const auto builtinType = BuiltinTypeHelper::adjustBuiltinType<L0::Builtin::fillBufferRightLeftover>(isStateless, isHeapless);
@@ -150,8 +150,8 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
 
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
-        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
+        EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
 }
 
@@ -166,9 +166,9 @@ TEST_F(KernelAddressingTest,
         ASSERT_NE(nullptr, kernelInfo);
 
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(2).template as<ArgDescValue>().elements[0].size,
-                  isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+                  sizeof(uint32_t));
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).template as<ArgDescValue>().elements[0].size,
-                  isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+                  2 * sizeof(uint32_t));
     };
 
     testBuiltinType(BuiltinTypeHelper::adjustImageBuiltinType<L0::ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeapless));
@@ -192,9 +192,9 @@ TEST_F(KernelAddressingTest,
         ASSERT_NE(nullptr, kernelInfo);
 
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).template as<ArgDescValue>().elements[0].size,
-                  isStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+                  sizeof(uint32_t));
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).template as<ArgDescValue>().elements[0].size,
-                  isStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+                  2 * sizeof(uint32_t));
     };
 
     testBuiltinType(BuiltinTypeHelper::adjustImageBuiltinType<L0::ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeapless));
