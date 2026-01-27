@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,7 @@ TEST_F(clGetDeviceIDsTests, givenDeviceTypeDefaultWhenGettingDeviceIdsThenDevice
 
     auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_DEFAULT, numEntries, pDevices, &numDevices);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_GT(numDevices, (cl_uint)0);
+    EXPECT_EQ(1u, numDevices);
 }
 
 TEST_F(clGetDeviceIDsTests, givenDeviceTypeCpuWhenGettingDeviceIdsThenDeviceNotFoundErrorIsReturned) {
@@ -328,6 +328,38 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWithAffinityMaskWhenGetDeviceId
             } else {
                 EXPECT_EQ(devices[i], dummyDevice);
             }
+        }
+    }
+}
+
+TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGettingDeviceIdsWithDeviceTypeDefaultThenOnlyOneDeviceIsReturned) {
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
+
+    std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
+    for (std::string hierarchy : hierarchies) {
+        platformsImpl->clear();
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+        for (auto i = 0u; i < numRootDevices; i++) {
+            devices[i] = dummyDevice;
+        }
+
+        auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_DEFAULT, numEntries, devices, &numDevices);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, numDevices);
+        EXPECT_EQ(devices[0], platform()->getClDevice(0));
+        for (auto i = 1u; i < numEntries; i++) {
+            EXPECT_EQ(devices[i], dummyDevice);
         }
     }
 }

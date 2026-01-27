@@ -180,10 +180,10 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
 
 bool checkDeviceTypeAndFillDeviceID(ClDevice &device, cl_device_type deviceType, cl_device_id *devices, cl_uint numEntries, cl_uint &retNum) {
     if (deviceType & device.getDeviceInfo().deviceType) {
+        if (retNum >= numEntries) {
+            return false;
+        }
         if (devices) {
-            if (retNum >= numEntries) {
-                return false;
-            }
             devices[retNum] = &device;
         }
         retNum++;
@@ -253,6 +253,9 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             numDev = std::min(static_cast<cl_uint>(debugManager.flags.LimitAmountOfReturnedDevices.get()), numDev);
         }
 
+        if (devices == nullptr) {
+            numEntries = std::numeric_limits<cl_uint>::max();
+        }
         if (deviceType == CL_DEVICE_TYPE_ALL) {
             /* According to Spec, set it to all except TYPE_CUSTOM. */
             deviceType = CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU |
@@ -260,6 +263,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         } else if (deviceType == CL_DEVICE_TYPE_DEFAULT) {
             /* We just set it to GPU now. */
             deviceType = CL_DEVICE_TYPE_GPU;
+            numEntries = 1;
         }
 
         cl_uint retNum = 0;
