@@ -472,7 +472,7 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemor
     size_t alignedSize = getAlignedCmdBufferSize();
     auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
     if (!cmdBufferAllocation) {
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
+        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
     }
 
     if (cmdBufferAllocation) {
@@ -528,12 +528,14 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 
     for (auto i = 0u; i < amountToFill; i++) {
-        auto allocToReuse = allocateCommandBuffer(false);
+        auto allocToReuse = obtainNextCommandBufferAllocation();
         this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
+        this->getResidencyContainer().push_back(allocToReuse);
 
         if (this->useSecondaryCommandStream) {
-            auto hostAllocToReuse = allocateCommandBuffer(true);
+            auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
             this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
+            this->getResidencyContainer().push_back(hostAllocToReuse);
         }
     }
 

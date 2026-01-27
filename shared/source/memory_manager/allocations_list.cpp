@@ -54,9 +54,6 @@ bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::Gra
 
 bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
     if (requirements->allocationType == NEO::AllocationType::commandBuffer) {
-        if (gfxAllocation->isUsedByOsContext(requirements->contextId) == false) {
-            return true;
-        }
         if (checkTagAddressReady(requirements, gfxAllocation, requirements->csrUcTagAddress)) {
             return true;
         }
