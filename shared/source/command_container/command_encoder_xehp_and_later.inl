@@ -562,13 +562,8 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
         }
 
         // check if we need to follow kernel requirements
-        if (activeChannels == 1) {
-            requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
-            return false;
-        }
-
-        if (requireInputWalkOrder && activeChannels == 3) {
-            for (uint32_t dimension = 0; dimension < 2u; dimension++) {
+        if (requireInputWalkOrder) {
+            for (uint32_t dimension = 0; dimension < activeChannels - 1; dimension++) {
                 if (!Math::isPow2<size_t>(lws[walkOrder[dimension]])) {
                     return true;
                 }
@@ -588,28 +583,17 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
             return false;
         }
 
-        for (uint32_t walkOrderId = 0; walkOrderId < HwWalkOrderHelper::walkOrderPossibilties; walkOrderId++) {
-            auto possibleWalkOrder = HwWalkOrderHelper::compatibleDimensionOrders[walkOrderId];
+        // kernel doesn't specify any walk order requirements, check if we have any compatible
+        for (uint32_t walkOrder = 0; walkOrder < HwWalkOrderHelper::walkOrderPossibilties; walkOrder++) {
             bool allDimensionsCompatible = true;
-            for (uint32_t dimension = 0; dimension < 2u; dimension++) {
-                if (walkOrder[2] == possibleWalkOrder[dimension] && activeChannels == 2) {
-                    // skip inactive dimension
-                    continue;
-                }
-                if (!Math::isPow2<size_t>(lws[possibleWalkOrder[dimension]])) {
+            for (uint32_t dimension = 0; dimension < activeChannels - 1; dimension++) {
+                if (!Math::isPow2<size_t>(lws[HwWalkOrderHelper::compatibleDimensionOrders[walkOrder][dimension]])) {
                     allDimensionsCompatible = false;
                     break;
                 }
             }
-
-            // Check if active channels remain in correct order if required
-            if (allDimensionsCompatible && requireInputWalkOrder && activeChannels == 2) {
-                auto [firstIndex, secondIndex] = HwWalkOrderHelper::getActiveIndices(possibleWalkOrder, walkOrder[0], walkOrder[1]);
-                allDimensionsCompatible = (firstIndex < secondIndex);
-            }
-
             if (allDimensionsCompatible) {
-                requiredWalkOrder = walkOrderId;
+                requiredWalkOrder = walkOrder;
                 return false;
             }
         }
