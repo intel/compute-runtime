@@ -294,6 +294,7 @@ void DebugSessionLinuxXe::readInternalEventsAsync() {
         event->type = euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeRead);
         event->flags = 0;
         event->reserved = 0;
+        event->seqno = 0;
 
         result = readEventImp(event);
 
