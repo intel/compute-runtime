@@ -882,3 +882,27 @@ TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourc
         memoryManager.freeGraphicsMemory(allocation);
     }
 }
+
+TEST(MemoryManagerTest, givenAllocationWithLargeAlignmentWhenAllocatingInDevicePoolThenGpuAddressIsAligned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    AllocationData allocData{};
+    allocData.size = 1;
+    allocData.alignment = 256 * MemoryConstants::kiloByte;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = mockRootDeviceIndex;
+    allocData.flags.allocateMemory = true;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
+
+    auto gpuAddress = allocation->getGpuAddress();
+    EXPECT_EQ(0u, gpuAddress % allocData.alignment);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}

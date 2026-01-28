@@ -771,7 +771,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         }
         auto sizeOfHeapChunk = sizeAligned64k;
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-        auto canonizedGpuAddress = gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, sizeOfHeapChunk));
+        auto gpuAddrAlignment = std::max(allocationData.alignment, MemoryConstants::pageSize64k);
+        auto canonizedGpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeOfHeapChunk, gpuAddrAlignment));
         if (heapIndex == HeapIndex::heapExtended) {
             canonizedGpuAddress = MemoryManager::adjustToggleBitFlagForGpuVa(allocationData.type, canonizedGpuAddress);
         }
