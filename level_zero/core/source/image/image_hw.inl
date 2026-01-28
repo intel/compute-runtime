@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,10 +121,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
-                auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHandle), device->getNEODevice()->getRootDeviceIndex(), true);
-                if (!verifyResult) {
-                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-                }
                 NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
