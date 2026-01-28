@@ -1987,6 +1987,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
     context->freeMem(alloc);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWithCounterBasedEventWhenAppendMemoryCopyThenReturnInvalidArgument) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->inOrderExecInfo.reset();
+    EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    void *deviceAlloc = nullptr;
+    void *hostAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 256u, 256u, &deviceAlloc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 256u, 0u, &hostAlloc));
+
+    CmdListMemoryCopyParams copyParams = {};
+    immCmdList->copyThroughLockedPtrEnabled = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendMemoryCopy(deviceAlloc, hostAlloc, 256u, eventHandle, 0, nullptr, copyParams));
+
+    context->freeMem(deviceAlloc);
+    context->freeMem(hostAlloc);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKernelThenProgramSemaphoreOnce) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     DebugManagerStateRestore restorer;

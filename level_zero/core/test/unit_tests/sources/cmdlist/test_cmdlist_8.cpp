@@ -82,13 +82,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
 
     std::array<size_t, 4> sizes = {1, 256, 4096, sz};
     for (size_t i = 0; i < sizes.size(); i++) {
+        CachedHostPtrAllocs cachedAllocs;
+
         CpuMemCopyInfo copyInfoDeviceUsmToHostUsm(hostPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.dstAllocData);
 
         CpuMemCopyInfo copyInfoDeviceUsmToHostImported(importedPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostImported.srcAllocData);
         EXPECT_EQ(nullptr, copyInfoDeviceUsmToHostImported.dstAllocData);
 
@@ -96,12 +98,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm);
+        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.dstAllocData);
 
         CpuMemCopyInfo copyInfoHostImportedToDeviceUsm(devicePtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm);
+        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm, cachedAllocs, false);
         EXPECT_EQ(nullptr, copyInfoHostImportedToDeviceUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostImportedToDeviceUsm.dstAllocData);
 
@@ -109,12 +111,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.dstAllocData);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostImported(importedPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocData);
         EXPECT_FALSE(device->getDriverHandle()->findAllocationDataForRange(importedPtr, sizes[i], copyInfoSharedUsmToHostImported.dstAllocData));
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocData);
@@ -124,12 +126,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoSharedUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm);
+        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.dstAllocData);
 
         CpuMemCopyInfo copyInfoHostImportedToSharedUsm(sharedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm);
+        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm, cachedAllocs, false);
         EXPECT_EQ(nullptr, copyInfoHostImportedToSharedUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostImportedToSharedUsm.dstAllocData);
 
@@ -137,14 +139,14 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm, cachedAllocs, false);
         EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.srcAllocData));
         EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.dstAllocData));
         EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.dstAllocData);
 
         CpuMemCopyInfo copyInfoHostUsmToHostImported(importedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostImported);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostImported, cachedAllocs, false);
         EXPECT_NE(nullptr, copyInfoHostUsmToHostImported.srcAllocData);
         EXPECT_EQ(nullptr, copyInfoHostUsmToHostImported.dstAllocData);
 
@@ -152,7 +154,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm, cachedAllocs, false);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostUsm.srcAllocData);
         EXPECT_NE(nullptr, copyInfoHostImportedToHostUsm.dstAllocData);
 
@@ -160,7 +162,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToHostUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostImported);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostImported, cachedAllocs, false);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.srcAllocData);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.dstAllocData);
 

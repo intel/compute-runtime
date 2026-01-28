@@ -46,6 +46,10 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     MockCommandListHw(bool failOnFirst) : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(), failOnFirstCopy(failOnFirst) {}
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
+        return getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, nullptr);
+    }
+
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc) override {
         getAlignedAllocationCalledTimes++;
         if (buffer && returnMockAllocationStruct) {
             auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(buffer, sizeof(uint32_t)));
@@ -347,6 +351,20 @@ HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemory
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
+    EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenAppendMemoryCopyWithCachedHostPtrAllocsThenBlitSucceeds) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    MockGraphicsAllocation srcAlloc;
+    MockGraphicsAllocation dstAlloc;
+    CachedHostPtrAllocs cachedAllocs(&srcAlloc, &dstAlloc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, copyParams, cachedAllocs));
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
 }
@@ -1578,8 +1596,13 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
     MockCommandListForRegionSize() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
+        return getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, nullptr);
+    }
+
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc) override {
         return {nullptr, 0, 0, &mockAllocationPtr, true};
     }
+
     ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                            AlignedAllocationData *dstAllocationData,
                                            ze_copy_region_t srcRegion,

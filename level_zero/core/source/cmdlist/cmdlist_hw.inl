@@ -1978,14 +1978,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents,
                                                                    CmdListMemoryCopyParams &memoryCopyParams) {
+    CachedHostPtrAllocs cachedAllocs{};
+    return appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, cachedAllocs);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
+                                                                   const void *srcptr,
+                                                                   size_t size,
+                                                                   ze_event_handle_t hSignalEvent,
+                                                                   uint32_t numWaitEvents,
+                                                                   ze_event_handle_t *phWaitEvents,
+                                                                   CmdListMemoryCopyParams &memoryCopyParams,
+                                                                   const CachedHostPtrAllocs &cachedAllocs) {
 
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopy");
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);
-    auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, false, isCopyOffloadEnabled());
-    auto srcAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, true, isCopyOffloadEnabled());
+    auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, false, isCopyOffloadEnabled(), cachedAllocs.dstAlloc);
+    auto srcAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, true, isCopyOffloadEnabled(), cachedAllocs.srcAlloc);
 
     bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
 
@@ -3002,6 +3015,11 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload) {
+    return getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, hostCopyAllowed, copyOffload, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc) {
     NEO::SvmAllocationData *allocData = nullptr;
     void *ptr = const_cast<void *>(buffer);
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
@@ -3026,7 +3044,11 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             if (sharedSystemEnabled) {
                 return {allocData, reinterpret_cast<uintptr_t>(ptr), 0, nullptr, true};
             } else {
-                alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed, copyOffload);
+                if (cachedAlloc != nullptr) {
+                    alloc = cachedAlloc;
+                } else {
+                    alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed, copyOffload);
+                }
                 if (alloc == nullptr) {
                     return {allocData, 0u, 0, nullptr, false};
                 }

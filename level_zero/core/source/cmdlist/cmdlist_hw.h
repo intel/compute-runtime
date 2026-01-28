@@ -160,6 +160,9 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
+                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, const CachedHostPtrAllocs &cachedAllocs);
     ze_result_t appendMemoryCopyWithParameters(void *dstptr, const void *srcptr, size_t size,
                                                const void *pNext,
                                                ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
@@ -380,6 +383,7 @@ struct CommandListCoreFamily : public CommandListImp {
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint32_t bufferSlicePitch, const ze_image_region_t *region, size_t pixelSize);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
+    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();

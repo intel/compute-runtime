@@ -672,7 +672,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     ze_result_t ret;
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
-    this->obtainAllocData(cpuMemCopyInfo);
+    CachedHostPtrAllocs cachedAllocs;
+    this->obtainAllocData(cpuMemCopyInfo, cachedAllocs, isCopyOffloadEnabled());
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
         ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
         if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
@@ -698,7 +699,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
-                                                                     numWaitEvents, phWaitEvents, memoryCopyParams);
+                                                                     numWaitEvents, phWaitEvents, memoryCopyParams, cachedAllocs);
     }
 
     copyOffloadFlush |= memoryCopyParams.copyOffloadAllowed;
@@ -1992,16 +1993,30 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::handleRelaxedOrderingSignali
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, CachedHostPtrAllocs &cachedAllocs, bool copyOffload) {
     this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(cpuMemCopyInfo.srcPtr), cpuMemCopyInfo.size, cpuMemCopyInfo.srcAllocData);
     this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocData);
+
     if (cpuMemCopyInfo.srcAllocData == nullptr) {
-        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.srcIsImportedHostPtr = hostAlloc != nullptr;
+        auto hostAlloc = this->device->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->device->getRootDeviceIndex());
+        if (hostAlloc != nullptr) {
+            cpuMemCopyInfo.srcIsImportedHostPtr = true;
+        } else {
+            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, copyOffload);
+            cpuMemCopyInfo.srcIsImportedHostPtr = cachedAlloc != nullptr;
+            cachedAllocs.srcAlloc = cachedAlloc;
+        }
     }
+
     if (cpuMemCopyInfo.dstAllocData == nullptr) {
-        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.dstIsImportedHostPtr = hostAlloc != nullptr;
+        auto hostAlloc = this->device->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->device->getRootDeviceIndex());
+        if (hostAlloc != nullptr) {
+            cpuMemCopyInfo.dstIsImportedHostPtr = true;
+        } else {
+            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, copyOffload);
+            cpuMemCopyInfo.dstIsImportedHostPtr = cachedAlloc != nullptr;
+            cachedAllocs.dstAlloc = cachedAlloc;
+        }
     }
 }
 

@@ -261,7 +261,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
     void tryResetKernelWithAssertFlag();
-    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo);
+    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, CachedHostPtrAllocs &cachedAllocs, bool copyOffload);
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
