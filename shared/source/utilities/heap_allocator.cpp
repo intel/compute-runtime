@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,17 +88,14 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
         return 0llu;
     }
 
-    std::vector<HeapChunk> &freedChunks = (sizeToAllocate > sizeThreshold) ? freedChunksBig : freedChunksSmall;
-    uint32_t defragmentCount = 0;
-
-    for (;;) {
+    auto getMemoryFromPool = [&](std::vector<HeapChunk> &freedChunks) {
         uint64_t ptrReturn = 0llu;
 
         if (sizeToAllocate > sizeThreshold) {
             const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
             if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
                 if (misalignment) {
-                    storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunks);
+                    storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunksBig);
                     pLeftBound += misalignment;
                 }
                 ptrReturn = pLeftBound;
@@ -110,7 +107,7 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
             if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
                 if (misalignment) {
                     pRightBound -= misalignment;
-                    storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunks);
+                    storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunksSmall);
                 }
                 pRightBound -= sizeToAllocate;
                 ptrReturn = pRightBound;
@@ -132,16 +129,40 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
             UNRECOVERABLE_IF(!isAligned(ptrReturn, alignment));
             return ptrReturn;
         }
+        return ptrReturn;
+    };
+    std::vector<HeapChunk> &primaryPool = (sizeToAllocate > sizeThreshold) ? freedChunksBig : freedChunksSmall;
 
-        if (defragmentCount == 0) {
-            defragment();
-            defragmentCount++;
-        } else if (alignment > 2 * MemoryConstants::megaByte && pRightBound - pLeftBound >= sizeToAllocate) {
-            alignment = Math::prevPowerOfTwo(static_cast<size_t>(pRightBound - pLeftBound - 1 - sizeToAllocate + 2 * MemoryConstants::pageSize64k));
-        } else {
-            return 0llu;
+    auto ptr = getMemoryFromPool(primaryPool);
+    if (ptr != 0llu) {
+        return ptr;
+    }
+
+    defragment();
+    ptr = getMemoryFromPool(primaryPool);
+    if (ptr != 0llu) {
+        return ptr;
+    }
+
+    std::vector<HeapChunk> &secondaryPool = (sizeToAllocate <= sizeThreshold) ? freedChunksBig : freedChunksSmall;
+    ptr = getMemoryFromPool(secondaryPool);
+    if (ptr != 0llu) {
+        return ptr;
+    }
+
+    if (alignment > 2 * MemoryConstants::megaByte && pRightBound - pLeftBound >= sizeToAllocate) {
+        alignment = Math::prevPowerOfTwo(static_cast<size_t>(pRightBound - pLeftBound - 1 - sizeToAllocate + 2 * MemoryConstants::pageSize64k));
+        ptr = getMemoryFromPool(primaryPool);
+        if (ptr != 0llu) {
+            return ptr;
+        }
+        ptr = getMemoryFromPool(secondaryPool);
+        if (ptr != 0llu) {
+            return ptr;
         }
     }
+
+    return 0llu;
 }
 
 void HeapAllocator::free(uint64_t ptr, size_t size) {

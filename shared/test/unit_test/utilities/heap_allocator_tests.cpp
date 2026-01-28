@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -711,11 +711,72 @@ TEST(HeapAllocatorTest, GivenSizeGreaterThanMemoryLeftWhenAllocatingThenZeroIsRe
     // third small fails
     size_t ptrSize4 = 2 * 4096;
     uint64_t ptr4 = heapAllocator->allocate(ptrSize4);
-    EXPECT_EQ(0llu, ptr4);
+    EXPECT_NE(0llu, ptr4);
+    EXPECT_GT(heapAllocator->pLeftBound, ptr4);
+
     // third big fails
     size_t ptrSize5 = 5 * 4096;
     uint64_t ptr5 = heapAllocator->allocate(ptrSize5);
     EXPECT_EQ(0llu, ptr5);
+}
+
+TEST(HeapAllocatorTest, GivenHeapAllocatorFilledWithSmallFreedChunksWhenBigAllocRequestThenPtrFromRightSideReturned) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 11 * 4096;
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, 3 * 4096);
+
+    size_t ptrSize = 4096;
+    size_t ptrBigSize = 4 * ptrSize;
+    uint64_t ptrBig = heapAllocator->allocate(ptrBigSize);
+    EXPECT_NE(0llu, ptrBig);
+    EXPECT_GT(heapAllocator->pLeftBound, ptrBig);
+    heapAllocator->free(ptrBig, ptrBigSize);
+
+    std::vector<uint64_t> allocatedPtrs;
+    for (int i = 0; i < 10; i++) {
+        uint64_t ptr = heapAllocator->allocate(ptrSize);
+        EXPECT_NE(0llu, ptr);
+        // free to store on free list
+        allocatedPtrs.push_back(ptr);
+    }
+    heapAllocator->allocate(ptrSize);
+    for (auto &ptr : allocatedPtrs) {
+        heapAllocator->free(ptr, ptrSize);
+    }
+    ptrBigSize = 4 * ptrSize;
+    ptrBig = heapAllocator->allocate(ptrBigSize);
+    EXPECT_NE(0llu, ptrBig);
+    EXPECT_LT(heapAllocator->pLeftBound, ptrBig);
+}
+
+TEST(HeapAllocatorTest, GivenHeapAllocatorFilledWithBigFreedChunksWhenSmallAllocRequestThenPtrFromLeftSideReturned) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 12 * 4096;
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, 3 * 4096);
+
+    size_t ptrSmallSize = 4096;
+    uint64_t ptrSmall = heapAllocator->allocate(ptrSmallSize);
+    EXPECT_NE(0llu, ptrSmall);
+    EXPECT_LT(heapAllocator->pLeftBound, ptrSmall);
+    heapAllocator->free(ptrSmall, ptrSmallSize);
+
+    // first small succeeds
+    size_t ptrSize = 4 * 4096;
+    std::vector<uint64_t> allocatedPtrs;
+    for (int i = 0; i < 2; i++) {
+        uint64_t ptr = heapAllocator->allocate(ptrSize);
+        EXPECT_NE(0llu, ptr);
+        // free to store on free list
+        allocatedPtrs.push_back(ptr);
+    }
+    heapAllocator->allocate(ptrSize);
+    for (auto &ptr : allocatedPtrs) {
+        heapAllocator->free(ptr, ptrSize);
+    }
+    ptrSmallSize = 4096;
+    ptrSmall = heapAllocator->allocate(ptrSmallSize);
+    EXPECT_NE(0llu, ptrSmall);
+    EXPECT_GT(heapAllocator->pLeftBound, ptrSmall);
 }
 
 TEST(HeapAllocatorTest, GivenNullWhenFreeingThenNothingHappens) {
