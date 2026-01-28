@@ -1281,15 +1281,15 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrWhenUnreferenceIsCalledThen
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useGemCloseWorker = true;
-    DrmMemoryManager drmMemoryManger(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
-    EXPECT_EQ(nullptr, drmMemoryManger.peekGemCloseWorker());
+    DrmMemoryManager drmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
+    EXPECT_EQ(nullptr, drmMemoryManager.peekGemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useGemCloseWorker = true;
-    DrmMemoryManager drmMemoryManger(GemCloseWorkerMode::gemCloseWorkerActive, false, false, *executionEnvironment);
-    EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
+    DrmMemoryManager drmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive, false, false, *executionEnvironment);
+    EXPECT_NE(nullptr, drmMemoryManager.peekGemCloseWorker());
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds) {
@@ -4255,20 +4255,20 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryCallSequenceTest, givenDrmMemoryManagerAn
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    TestedDrmMemoryManager memoryManger(executionEnvironment);
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
 
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield};
-    auto allocation = memoryManger.allocateGraphicsMemoryWithProperties(properties);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     ASSERT_NE(allocation, nullptr);
 
-    memoryManger.freeGraphicsMemory(allocation);
+    memoryManager.freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(EngineLimits::maxHandleCount, memoryManger.unreferenceCalled);
+    EXPECT_EQ(EngineLimits::maxHandleCount, memoryManager.unreferenceCalled);
     for (size_t i = 0; i < EngineLimits::maxHandleCount; ++i) {
-        EXPECT_TRUE(memoryManger.unreferenceParamsPassed[i].synchronousDestroy);
+        EXPECT_TRUE(memoryManager.unreferenceParamsPassed[i].synchronousDestroy);
     }
-    EXPECT_EQ(1u, memoryManger.releaseGpuRangeCalled);
-    EXPECT_EQ(1u, memoryManger.alignedFreeWrapperCalled);
+    EXPECT_EQ(1u, memoryManager.releaseGpuRangeCalled);
+    EXPECT_EQ(1u, memoryManager.alignedFreeWrapperCalled);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
@@ -4280,20 +4280,20 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    TestedDrmMemoryManager memoryManger(executionEnvironment);
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
 
     TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
-    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation);
 
-    auto allocation2 = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    auto allocation2 = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation2);
 
     EXPECT_NE(allocation->getGpuAddress(), allocation2->getGpuAddress());
 
-    memoryManger.freeGraphicsMemory(allocation2);
-    memoryManger.freeGraphicsMemory(allocation);
+    memoryManager.freeGraphicsMemory(allocation2);
+    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
@@ -4307,7 +4307,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    TestedDrmMemoryManager memoryManger(executionEnvironment);
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
 
     TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
@@ -4315,7 +4315,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
     StreamCapture capture;
     capture.captureStdout();
-    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation);
 
     std::stringstream expectedOutput;
@@ -4325,7 +4325,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     expectedOutput << std::hex << ptrOffset(allocation->getGpuAddress(), MemoryConstants::pageSize);
     expectedOutput << ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
 
-    memoryManger.freeGraphicsMemory(allocation);
+    memoryManager.freeGraphicsMemory(allocation);
 
     std::string output = capture.getCapturedStdout();
 
@@ -4552,20 +4552,20 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    TestedDrmMemoryManager memoryManger(executionEnvironment);
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
 
     TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
-    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, allocation);
 
-    auto allocation2 = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto allocation2 = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, allocation2);
 
     EXPECT_EQ(allocation->getGpuAddress(), allocation2->getGpuAddress());
 
-    memoryManger.freeGraphicsMemory(allocation2);
-    memoryManger.freeGraphicsMemory(allocation);
+    memoryManager.freeGraphicsMemory(allocation2);
+    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAndFreeGraphicsMemoryIsCalledForSharedAllocationThenUnreferenceBufferObjectIsCalledWithSynchronousDestroySetToFalse) {
@@ -4576,19 +4576,19 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    TestedDrmMemoryManager memoryManger(executionEnvironment);
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
 
     TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
-    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, allocation);
 
-    memoryManger.freeGraphicsMemory(allocation);
+    memoryManager.freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(1 + EngineLimits::maxHandleCount - 1, memoryManger.unreferenceCalled);
-    EXPECT_FALSE(memoryManger.unreferenceParamsPassed[0].synchronousDestroy);
+    EXPECT_EQ(1 + EngineLimits::maxHandleCount - 1, memoryManager.unreferenceCalled);
+    EXPECT_FALSE(memoryManager.unreferenceParamsPassed[0].synchronousDestroy);
     for (size_t i = 1; i < EngineLimits::maxHandleCount - 1; ++i) {
-        EXPECT_TRUE(memoryManger.unreferenceParamsPassed[i].synchronousDestroy);
+        EXPECT_TRUE(memoryManager.unreferenceParamsPassed[i].synchronousDestroy);
     }
 }
 
