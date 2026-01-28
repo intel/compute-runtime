@@ -537,15 +537,8 @@ class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true, 1
         nextMockGraphicsAddress = alignUp(nextMockGraphicsAddress + size + 1, MemoryConstants::pageSize2M);
         return ptr;
     }
-
     bool isDevicePool() {
         return InternalMemoryType::deviceUnifiedMemory == poolMemoryType;
-    }
-
-    void preallocatePools() {
-        for (const auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
-            EXPECT_NE(nullptr, usmMemAllocPoolsManager->tryAddPool(poolInfo));
-        }
     }
     const size_t poolSize = 2 * MemoryConstants::megaByte;
     std::unique_ptr<MockUsmMemAllocPoolsManager> usmMemAllocPoolsManager;
@@ -587,12 +580,11 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenUsmMemAllocPoolsManagerWhenCallingC
     EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(maxPoolableSize, unifiedMemoryProperties));
 }
 
-TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForPoolWhenCallingTryAddPullThenNullptrIsReturned) {
-    memoryManager->maxSuccessAllocatedGraphicsMemoryIndex = memoryManager->successAllocatedGraphicsMemoryIndex;
-    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
-    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    for (const auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
-        EXPECT_EQ(nullptr, usmMemAllocPoolsManager->tryAddPool(poolInfo));
+TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForOneOfTheSmallPoolsWhenInitializingPoolsManagerThenPoolsAreCleanedUp) {
+    memoryManager->maxSuccessAllocatedGraphicsMemoryIndex = memoryManager->successAllocatedGraphicsMemoryIndex + 2;
+    EXPECT_FALSE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
+    for (auto poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
         EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo].size());
     }
 }
@@ -602,7 +594,6 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenTrackResidencySetWhenInitializingTh
     EXPECT_TRUE(usmMemAllocPoolsManager->trackResidency);
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    this->preallocatePools();
     for (auto &[_, bucket] : usmMemAllocPoolsManager->pools) {
         for (const auto &pool : bucket) {
             EXPECT_TRUE(reinterpret_cast<MockUsmMemAllocPool *>(pool.get())->trackResidency);
@@ -622,7 +613,6 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenCustomCleanupFunctionWhenPoolsAreAd
 
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    this->preallocatePools();
     for (auto &[_, bucket] : usmMemAllocPoolsManager->pools) {
         for (const auto &pool : bucket) {
             poolPtrs.push_back(addrToPtr(pool->getPoolAddress()));
@@ -671,7 +661,6 @@ TEST_P(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsR
 TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenCallingMethodsWithNotAllocatedPointersThenReturnCorrectValues) {
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    this->preallocatePools();
 
     void *ptrOutsidePools = addrToPtr(0x1);
     EXPECT_FALSE(usmMemAllocPoolsManager->freeSVMAlloc(ptrOutsidePools, true));
@@ -694,12 +683,29 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
 
-    auto expectedWaitForEnginesCompletionCalled = 0u;
-    EXPECT_EQ(expectedWaitForEnginesCompletionCalled, memoryManager->waitForEnginesCompletionCalled);
     size_t totalSize = 0u;
     for (auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
-        size_t minServicedSize = poolInfo.minServicedSize ? poolInfo.minServicedSize : 1;
         totalSize += poolInfo.poolSize;
+    }
+    EXPECT_EQ(totalSize, usmMemAllocPoolsManager->totalSize);
+
+    for (auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
+        auto &pool = usmMemAllocPoolsManager->pools[poolInfo][0];
+
+        ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo].size());
+        ASSERT_TRUE(pool->isInitialized());
+        EXPECT_EQ(poolInfo.poolSize, pool->getPoolSize());
+        EXPECT_TRUE(pool->isEmpty());
+
+        EXPECT_FALSE(pool->sizeIsAllowed(poolInfo.minServicedSize - 1));
+        EXPECT_TRUE(pool->sizeIsAllowed(poolInfo.minServicedSize));
+        EXPECT_TRUE(pool->sizeIsAllowed(poolInfo.maxServicedSize));
+        EXPECT_FALSE(pool->sizeIsAllowed(poolInfo.maxServicedSize + 1));
+    }
+    auto expectedWaitForEnginesCompletionCalled = 0u;
+    EXPECT_EQ(expectedWaitForEnginesCompletionCalled, memoryManager->waitForEnginesCompletionCalled);
+    for (auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
+        size_t minServicedSize = poolInfo.minServicedSize ? poolInfo.minServicedSize : 1;
 
         auto poolAllocMinSize = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(minServicedSize, *poolMemoryProperties.get());
         EXPECT_NE(nullptr, poolAllocMinSize);
@@ -718,20 +724,6 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
         EXPECT_EQ(totalSize, usmMemAllocPoolsManager->totalSize);
         EXPECT_TRUE(usmMemAllocPoolsManager->freeSVMAlloc(poolAllocMaxSize, true));
         EXPECT_EQ(++expectedWaitForEnginesCompletionCalled, memoryManager->waitForEnginesCompletionCalled);
-    }
-
-    ASSERT_EQ(usmMemAllocPoolsManager->getPoolInfos().size(), usmMemAllocPoolsManager->pools.size());
-    for (auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
-        ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo].size());
-        auto &pool = usmMemAllocPoolsManager->pools[poolInfo][0];
-        ASSERT_TRUE(pool->isInitialized());
-        EXPECT_EQ(poolInfo.poolSize, pool->getPoolSize());
-        EXPECT_TRUE(pool->isEmpty());
-
-        EXPECT_FALSE(pool->sizeIsAllowed(poolInfo.minServicedSize - 1));
-        EXPECT_TRUE(pool->sizeIsAllowed(poolInfo.minServicedSize));
-        EXPECT_TRUE(pool->sizeIsAllowed(poolInfo.maxServicedSize));
-        EXPECT_FALSE(pool->sizeIsAllowed(poolInfo.maxServicedSize + 1));
     }
 
     usmMemAllocPoolsManager->canAddPools = false;

@@ -225,6 +225,14 @@ bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
                    poolMemoryType != InternalMemoryType::hostUnifiedMemory);
     DEBUG_BREAK_IF(device == nullptr && poolMemoryType == InternalMemoryType::deviceUnifiedMemory);
     this->svmMemoryManager = svmMemoryManager;
+    for (const auto &poolInfo : getPoolInfos()) {
+        this->pools[poolInfo] = std::vector<std::unique_ptr<UsmMemAllocPool>>();
+        auto pool = tryAddPool(poolInfo);
+        if (nullptr == pool) {
+            cleanup();
+            return false;
+        }
+    }
     return true;
 }
 
