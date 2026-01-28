@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     DebugManagerStateRestore dbgRestorer;
 };
 
-TEST_F(SoftwareTagsManagerTests, whenSWTagsMangerIsInitializedThenHeapAllocationsAreCorrect) {
+TEST_F(SoftwareTagsManagerTests, whenSWTagsManagerIsInitializedThenHeapAllocationsAreCorrect) {
     auto memoryMgr = pDevice->getMemoryManager();
     SWTagBXML bxml;
     BXMLHeapInfo bxmlInfo((sizeof(BXMLHeapInfo) + bxml.str.size() + 1) / sizeof(uint32_t));

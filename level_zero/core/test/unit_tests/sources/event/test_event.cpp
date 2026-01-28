@@ -681,7 +681,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingOpaqueEventPoolIpcHandleWithDeviceAll
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto curMemManger = driverHandle->getMemoryManager();
+    auto curMemManager = driverHandle->getMemoryManager();
     MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(memManager);
     auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
@@ -707,7 +707,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingOpaqueEventPoolIpcHandleWithDeviceAll
 
     EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
     delete memManager;
-    driverHandle->setMemoryManager(curMemManger);
+    driverHandle->setMemoryManager(curMemManager);
 }
 
 TEST_F(EventPoolIPCHandleTests, whenGettingNonOpaqueIpcEventPoolHandleWithDeviceAllocThenReturnsHandleButNotProcessID) {

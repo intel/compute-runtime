@@ -638,7 +638,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSh
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrmIsFromCorrectRootDevice) {
+TEST(DrmMemoryManagerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrmIsFromCorrectRootDevice) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
