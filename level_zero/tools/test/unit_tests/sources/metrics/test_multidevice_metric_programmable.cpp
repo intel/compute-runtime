@@ -984,9 +984,10 @@ TEST_F(MultiDeviceCreatedMetricGroupManagerTest, givenMetricFromSubDeviceIsUsedW
     std::vector<zet_metric_group_handle_t> metricGroups{};
     std::vector<zet_metric_handle_t> metrics(1);
     metrics[0] = metricHandle;
+    MetricGroupDescription metricGroupDesc("name", "desc");
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFromMetrics<DummyMetricGroup>(
                                                     *rootDeviceMetricContext, mockMetricSource,
-                                                    metrics, "name", "desc", &metricGroupFromMetricsCount, metricGroups));
+                                                    metrics, &metricGroupDesc, &metricGroupFromMetricsCount, metricGroups));
     EXPECT_EQ(metricGroupFromMetricsCount, 0u);
 }
 

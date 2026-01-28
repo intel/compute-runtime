@@ -23,8 +23,7 @@ struct MultiDeviceCreatedMetricGroupManager {
     static ze_result_t createMultipleMetricGroupsFromMetrics(const MetricDeviceContext &metricDeviceContext,
                                                              MetricSource &metricSource,
                                                              std::vector<zet_metric_handle_t> &metricList,
-                                                             const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                                             const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                             MetricGroupDescription *metricGroupDesc,
                                                              uint32_t *maxMetricGroupCount,
                                                              std::vector<zet_metric_group_handle_t> &metricGroupList);
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics);

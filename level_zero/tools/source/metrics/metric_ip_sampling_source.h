@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,8 +46,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
                                                     zet_metric_group_properties_t *pBaseProperties,
                                                     void *pNext) override;
     ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
-                                              const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                              const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                              MetricGroupDescription *metricGroupDesc,
                                               uint32_t *maxMetricGroupCount,
                                               std::vector<zet_metric_group_handle_t> &metricGroupList) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

@@ -240,29 +240,28 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
     return retVal;
 }
 
-void OaMetricSourceImp::metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                                          const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+void OaMetricSourceImp::metricGroupCreate(MetricGroupDescription *metricGroupDesc,
                                           zet_metric_group_sampling_type_flag_t samplingType,
                                           zet_metric_group_handle_t *pMetricGroupHandle) {
 
     zet_metric_group_properties_t properties{};
-    memcpy_s(properties.description, ZET_MAX_METRIC_GROUP_DESCRIPTION, description, ZET_MAX_METRIC_GROUP_DESCRIPTION);
-    memcpy_s(properties.name, ZET_MAX_METRIC_GROUP_NAME, name, ZET_MAX_METRIC_GROUP_NAME);
+    memcpy_s(properties.description, ZET_MAX_METRIC_GROUP_DESCRIPTION, metricGroupDesc->description, ZET_MAX_METRIC_GROUP_DESCRIPTION);
+    memcpy_s(properties.name, ZET_MAX_METRIC_GROUP_NAME, metricGroupDesc->namePrefix, ZET_MAX_METRIC_GROUP_NAME);
     properties.samplingType = samplingType;
     properties.domain = UINT32_MAX;
 
     auto concurrentGrp = getMetricEnumeration().getConcurrentGroup();
-    MetricsDiscovery::IMetricSet_1_13 *metricSet = concurrentGrp->AddMetricSet(name, description);
+    MetricsDiscovery::IMetricSet_1_13 *metricSet = concurrentGrp->AddMetricSet(metricGroupDesc->namePrefix, metricGroupDesc->description);
     auto metricGroup = OaMetricGroupUserDefined::create(properties, *metricSet, *concurrentGrp, *this);
     *pMetricGroupHandle = metricGroup->toHandle();
 }
 
-ze_result_t OaMetricSourceImp::metricGroupCreateFromMetric(const char *pName, const char *pDescription,
+ze_result_t OaMetricSourceImp::metricGroupCreateFromMetric(MetricGroupDescription *metricGroupDesc,
                                                            zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
                                                            zet_metric_group_handle_t *phMetricGroup) {
 
     zet_metric_group_handle_t hMetricGroup{};
-    metricGroupCreate(pName, pDescription, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), &hMetricGroup);
+    metricGroupCreate(metricGroupDesc, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), &hMetricGroup);
 
     auto oaMetricGroupImp = static_cast<OaMetricGroupUserDefined *>(MetricGroup::fromHandle(hMetricGroup));
     size_t errorStringSize = 0;
@@ -277,15 +276,14 @@ ze_result_t OaMetricSourceImp::metricGroupCreateFromMetric(const char *pName, co
 }
 
 ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
-                                                             const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                                             const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                             MetricGroupDescription *metricGroupDesc,
                                                              uint32_t *maxMetricGroupCount,
                                                              std::vector<zet_metric_group_handle_t> &metricGroupList) {
 
     if (isImplicitScalingCapable()) {
         return MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFromMetrics<OaMultiDeviceMetricGroupUserDefined>(
             metricDeviceContext, *this, metricList,
-            metricGroupNamePrefix, description,
+            metricGroupDesc,
             maxMetricGroupCount, metricGroupList);
     }
 
@@ -327,8 +325,9 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
                                              zet_metric_group_sampling_type_flags_t samplingType,
                                              zet_metric_group_handle_t &metricGroup) {
         char metricGroupName[ZET_MAX_METRIC_GROUP_NAME] = {};
-        snprintf(metricGroupName, ZET_MAX_METRIC_GROUP_NAME - 1, "%s%d", metricGroupNamePrefix, numMetricGroupsCreated);
-        auto status = metricGroupCreateFromMetric(metricGroupName, description, samplingType, metricHandle, &metricGroup);
+        snprintf(metricGroupName, ZET_MAX_METRIC_GROUP_NAME - 1, "%s%d", metricGroupDesc->namePrefix, numMetricGroupsCreated);
+        MetricGroupDescription newDescription(metricGroupName, metricGroupDesc->description);
+        auto status = metricGroupCreateFromMetric(&newDescription, samplingType, metricHandle, &metricGroup);
         if (status != ZE_RESULT_SUCCESS) {
             return status;
         }

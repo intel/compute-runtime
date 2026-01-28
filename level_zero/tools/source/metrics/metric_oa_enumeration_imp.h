@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,10 @@ struct MetricEnumeration {
         initializationState = state;
     }
 
+    bool isMetricProgrammableSupportEnabled() {
+        return metricSource.getMetricDeviceContext().isProgrammableMetricsEnabled;
+    }
+
   protected:
     ze_result_t initialize();
     virtual ze_result_t openMetricsDiscovery();
@@ -101,9 +105,6 @@ struct MetricEnumeration {
     virtual MetricsDiscovery::IAdapter_1_13 *getMetricsAdapter();
     ze_result_t cleanupMetricsDiscovery();
 
-    bool isMetricProgrammableSupportEnabled() {
-        return metricSource.getMetricDeviceContext().isProgrammableMetricsEnabled;
-    }
     ze_result_t cacheMetricInformation();
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                  MetricsDiscovery::IConcurrentGroup_1_13 &pConcurrentGroup,

@@ -68,7 +68,8 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingAvailableWhenCreateMet
     const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};
     uint32_t maxMetricGroupCount = 0;
     std::vector<zet_metric_group_handle_t> metricGroupList = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, metricSource.createMetricGroupsFromMetrics(metricList, metricGroupNamePrefix, description, &maxMetricGroupCount, metricGroupList));
+    MetricGroupDescription metricGroupDesc(metricGroupNamePrefix, description);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, metricSource.createMetricGroupsFromMetrics(metricList, &metricGroupDesc, &maxMetricGroupCount, metricGroupList));
 }
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenValidMetricGroupIsReturned, EustallSupportedPlatforms) {

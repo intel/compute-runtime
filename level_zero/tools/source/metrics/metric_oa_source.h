@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,19 +52,17 @@ class OaMetricSourceImp : public MetricSource {
     bool isImplicitScalingCapable() const;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
-    ze_result_t metricGroupCreateFromMetric(const char *pName, const char *pDescription,
+    ze_result_t metricGroupCreateFromMetric(MetricGroupDescription *metricGroupDesc,
                                             zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
                                             zet_metric_group_handle_t *phMetricGroup);
     ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
-                                              const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                              const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                              MetricGroupDescription *metricGroupDesc,
                                               uint32_t *maxMetricGroupCount,
                                               std::vector<zet_metric_group_handle_t> &metricGroupList) override;
     ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) override;
-    void metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                           const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                           zet_metric_group_sampling_type_flag_t samplingType,
-                           zet_metric_group_handle_t *pMetricGroupHandle);
+    virtual void metricGroupCreate(MetricGroupDescription *metricGroupDesc,
+                                   zet_metric_group_sampling_type_flag_t samplingType,
+                                   zet_metric_group_handle_t *pMetricGroupHandle);
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override {

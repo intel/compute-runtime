@@ -501,6 +501,15 @@ ze_result_t MetricDeviceContext::createMetricGroupsFromMetrics(uint32_t metricCo
                                                                const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
                                                                uint32_t *pMetricGroupCount,
                                                                zet_metric_group_handle_t *phMetricGroups) {
+    MetricGroupDescription metricGroupDesc(metricGroupNamePrefix, description);
+
+    return createMetricGroupsFromMetricsImp(metricCount, phMetrics, &metricGroupDesc, pMetricGroupCount, phMetricGroups);
+}
+
+ze_result_t MetricDeviceContext::createMetricGroupsFromMetricsImp(uint32_t metricCount, zet_metric_handle_t *phMetrics,
+                                                                  MetricGroupDescription *metricGroupDesc,
+                                                                  uint32_t *pMetricGroupCount,
+                                                                  zet_metric_group_handle_t *phMetricGroups) {
     if (!isProgrammableMetricsEnabled) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -539,7 +548,7 @@ ze_result_t MetricDeviceContext::createMetricGroupsFromMetrics(uint32_t metricCo
         MetricSource *metricSource = metricSourceEntry.first;
         std::vector<zet_metric_group_handle_t> metricGroupList{};
         uint32_t metricGroupCountPerSource = remainingMetricGroupCount;
-        auto status = metricSource->createMetricGroupsFromMetrics(metricSourceEntry.second, metricGroupNamePrefix, description, &metricGroupCountPerSource, metricGroupList);
+        auto status = metricSource->createMetricGroupsFromMetrics(metricSourceEntry.second, metricGroupDesc, &metricGroupCountPerSource, metricGroupList);
         if (status != ZE_RESULT_SUCCESS) {
             if (status == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
                 continue;

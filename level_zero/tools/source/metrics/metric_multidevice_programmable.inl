@@ -13,8 +13,7 @@ template <typename T>
 ze_result_t MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFromMetrics(const MetricDeviceContext &metricDeviceContext,
                                                                                         MetricSource &metricSource,
                                                                                         std::vector<zet_metric_handle_t> &metricList,
-                                                                                        const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                                                                        const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                                                        MetricGroupDescription *metricGroupDesc,
                                                                                         uint32_t *maxMetricGroupCount,
                                                                                         std::vector<zet_metric_group_handle_t> &metricGroupList) {
     const auto isCountCalculationPath = *maxMetricGroupCount == 0;
@@ -68,7 +67,7 @@ ze_result_t MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFrom
 
         uint32_t metricGroupCountPerSubDevice = *maxMetricGroupCount;
         auto status = subDeviceMetricSource.createMetricGroupsFromMetrics(metricHandles,
-                                                                          metricGroupNamePrefix, description,
+                                                                          metricGroupDesc,
                                                                           &metricGroupCountPerSubDevice,
                                                                           metricGroupsPerSubDevice[subDeviceIndex]);
         if (status != ZE_RESULT_SUCCESS) {
