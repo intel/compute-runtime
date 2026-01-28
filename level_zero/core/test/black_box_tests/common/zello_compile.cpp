@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,6 +215,17 @@ __kernel void mul_constant_output(global int *src, global int *dst, int mulval) 
     const int gid = get_global_id(0);
     dst[gid] = src[gid] * mulval;
 }
+
+__kernel void increment_dword_by_one(__global int *dst, __global int *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src[gid] + 1;
+}
+
+__kernel void add_two_src_buffer(__global int *dst, __global int *src1, __global int *src2) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src1[gid] + src2[gid];
+}
+
 )OpenCLC";
 
 const char *scratchKernelSrc = R"===(

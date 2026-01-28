@@ -536,18 +536,6 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
             if (err != ZE_RESULT_SUCCESS) {
                 return err;
             }
-
-            auto *forkTarget = this->src->getJoinedForkTarget(cmdId);
-            if (nullptr != forkTarget) {
-                if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels) {
-                    // interleave
-                    segmentBuilder.currCmdList->close();
-                    segmentBuilder.currCmdList = nullptr;
-                } else {
-                    // submit after current
-                    UNRECOVERABLE_IF(settings.forkPolicy != GraphInstatiateSettings::ForkPolicyMonolythicLevels)
-                }
-            }
         }
     }
     if ((settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels) && segmentBuilder.currCmdList) {

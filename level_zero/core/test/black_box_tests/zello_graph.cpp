@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -901,6 +901,197 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     return validRet;
 }
 
+bool testMultipleForkJoinsGraph(GraphApi &graphApi,
+                                ze_context_handle_t &context,
+                                ze_device_handle_t &device,
+                                TestKernelsContainer &testKernels,
+                                bool aubMode,
+                                const GraphDumpSettings &dumpSettings,
+                                bool reuse) {
+    bool validRet = true;
+
+    constexpr size_t allocSize = 1024;
+    constexpr size_t elemCount = allocSize / sizeof(uint32_t);
+
+    // srcBuffer = initialValue
+    // root: addVal(srcBuffer, addValue1, stageBuffer1, fork) -> fork && addVal(stageBuffer1, addValue2, stageBuffer2) -> join1 from fork -> addBuff(stageBuffer2, stageBuffer3, stageBuffer4) -> join 2 from fork -> addBuff(stageBuffer4, stageBuffer5, dstBuffer)
+    // fork: mulVal(stageBuffer1, mulValue1, stageBuffer3, join1) -> inc1(stageBuffer3, stageBuffer5, join2)
+
+    // order of kernels: add(init+add1 = st1) => mul(st1*mul1 = st3)/parallel/add(st1+add2 = st2) => inc(st3+1 = st5)/parallel/add(st2+st3 = st4) => add(st4+st5 = dst)
+
+    const uint32_t initialValue = 4;
+    const uint32_t addValue1 = 5;
+    const uint32_t addValue2 = 6;
+    const uint32_t mulValue1 = 2;
+
+    const uint32_t stage1 = initialValue + addValue1; // stageBuffer1
+    const uint32_t stage2 = stage1 + addValue2;       // stageBuffer2
+    const uint32_t stage3 = stage1 * mulValue1;       // stageBuffer3
+    const uint32_t stage4 = stage2 + stage3;          // stageBuffer4
+    const uint32_t stage5 = stage3 + 1;               // stageBuffer5
+    const uint32_t dstValue = stage4 + stage5;        // dstBuffer
+
+    uint32_t expectedValue = dstValue;
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_handle_t eventCbArray[2] = {nullptr, nullptr};
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
+                                                     eventPool, 0u,
+                                                     true, &counterBasedDesc,
+                                                     2, eventCbArray, 0u, 0u);
+
+    ze_event_handle_t eventCb = eventCbArray[0];
+    ze_event_handle_t eventCb2 = eventCbArray[1];
+
+    ze_event_handle_t forkJoin1Event = eventCb;
+    ze_event_handle_t join2Event = reuse ? eventCb : eventCb2;
+
+    ze_kernel_handle_t kernelAddValDst = testKernels["add_constant_output"];
+    ze_kernel_handle_t kernelMulValDst = testKernels["mul_constant_output"];
+    ze_kernel_handle_t kernelIncDwordByOne = testKernels["increment_dword_by_one"];
+    ze_kernel_handle_t kernelAddTwoSrcBuffer = testKernels["add_two_src_buffer"];
+
+    ze_command_list_handle_t cmdListRoot, cmdListFork;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, cmdListRoot);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, cmdListFork);
+
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBuffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<uint32_t *>(srcBuffer)[i] = initialValue;
+    }
+    void *stage1Buffer = nullptr; // results for addVal1
+    void *stage2Buffer = nullptr; // results for addVal2
+    void *stage3Buffer = nullptr; // results for mulVal1
+    void *stage4Buffer = nullptr; // results for addTwoSrcBuffer 2,3
+    void *stage5Buffer = nullptr; // results for incDwordByOne
+    void *finalBuffer = nullptr;  // results for addTwoSrcBuffer 4,5
+
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage5Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &finalBuffer));
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListRoot, virtualGraph, nullptr));
+
+    uint32_t groupSizeX = std::min(64u, static_cast<uint32_t>(elemCount));
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddValDst, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelMulValDst, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelIncDwordByOne, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddTwoSrcBuffer, groupSizeX, groupSizeY, groupSizeZ));
+
+    // set add kernel for add1 on root
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 0, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 1, sizeof(stage1Buffer), &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 2, sizeof(addValue1), &addValue1));
+
+    // attach event to append operation to signal to fork
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddValDst, &groupCount, forkJoin1Event, 0, nullptr));
+
+    // set add kernel for add2 on root
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 0, sizeof(stage1Buffer), &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 1, sizeof(stage2Buffer), &stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 2, sizeof(addValue2), &addValue2));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddValDst, &groupCount, nullptr, 0, nullptr));
+
+    // set mul kernel for fork
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 0, sizeof(stage1Buffer), &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 1, sizeof(stage3Buffer), &stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 2, sizeof(mulValue1), &mulValue1));
+
+    // wait for signal from root and reuse event to carry signal into join 1
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork, kernelMulValDst, &groupCount, forkJoin1Event, 1, &forkJoin1Event));
+
+    if (reuse == true) {
+        // set addbuffers kernel for addBuffer2,3 from fork into stage4Buffer
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 0, sizeof(stage4Buffer), &stage4Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 1, sizeof(stage2Buffer), &stage2Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 2, sizeof(stage3Buffer), &stage3Buffer));
+
+        // wait for signal from join1
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddTwoSrcBuffer, &groupCount, nullptr, 1, &forkJoin1Event));
+
+        // set inc1 kernel for fork stage3+1=stage5
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelIncDwordByOne, 0, sizeof(stage5Buffer), &stage5Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelIncDwordByOne, 1, sizeof(stage3Buffer), &stage3Buffer));
+
+        // reuse cb event to signal join2 completion
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork, kernelIncDwordByOne, &groupCount, join2Event, 0, nullptr));
+    } else {
+        // set inc1 kernel for fork stage3+1=stage5
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelIncDwordByOne, 0, sizeof(stage5Buffer), &stage5Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelIncDwordByOne, 1, sizeof(stage3Buffer), &stage3Buffer));
+
+        // reuse cb event to signal join2 completion
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork, kernelIncDwordByOne, &groupCount, join2Event, 0, nullptr));
+
+        // set addbuffers kernel for addBuffer2,3 from fork into stage4Buffer
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 0, sizeof(stage4Buffer), &stage4Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 1, sizeof(stage2Buffer), &stage2Buffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 2, sizeof(stage3Buffer), &stage3Buffer));
+
+        // wait for signal from join1
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddTwoSrcBuffer, &groupCount, nullptr, 1, &forkJoin1Event));
+    }
+
+    // set addbuffers kernel for addBuffer4,5 from fork into dstBuffer
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 0, sizeof(finalBuffer), &finalBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 1, sizeof(stage4Buffer), &stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddTwoSrcBuffer, 2, sizeof(stage5Buffer), &stage5Buffer));
+
+    // join to root for join2
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddTwoSrcBuffer, &groupCount, nullptr, 1, &join2Event));
+
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    // create physical graphs from the same virtual graph
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListRoot, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    // Dispatch and wait physicalGraph
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, std::numeric_limits<uint64_t>::max()));
+
+    // verify data
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, finalBuffer, elemCount);
+    }
+
+    std::stringstream ss;
+    ss << __func__ << (reuse ? "_reuse_join2" : "_new_join2");
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage5Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, finalBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListRoot));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListFork));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb2));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
@@ -910,6 +1101,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMultipleExecution = 5u;
     constexpr uint32_t bitNumberTestExternalCbEvents = 6u;
     constexpr uint32_t bitNumberTestMultiLevelGraph = 7u;
+    constexpr uint32_t bitNumberTestMultiJoinGraph = 8u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
@@ -961,6 +1153,8 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "memcpy_bytes", kernelsMap["memcpy_bytes"]);
     LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "add_constant_output", kernelsMap["add_constant_output"]);
     LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "mul_constant_output", kernelsMap["mul_constant_output"]);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "increment_dword_by_one", kernelsMap["increment_dword_by_one"]);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "add_two_src_buffer", kernelsMap["add_two_src_buffer"]);
 
     bool boxPass = true;
     bool casePass = true;
@@ -1028,6 +1222,36 @@ int main(int argc, char *argv[]) {
         casePass = testMultipleLevelGraph(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+    }
+
+    if (testMask.test(bitNumberTestMultiJoinGraph)) {
+        auto testTitle = "Multiple Fork Joins Graph";
+        auto getCaseName = [&testTitle](bool reuse) -> std::string {
+            std::ostringstream caseName;
+            caseName << testTitle;
+            caseName << " reuse single cb event: " << std::boolalpha << reuse;
+            caseName << ".";
+            return caseName.str();
+        };
+
+        std::vector<bool> reuseValues = {true, false};
+        size_t reuseValuesSize = reuseValues.size();
+
+        constexpr uint32_t defaultReuseSetting = 2u;
+        uint32_t reuseSetting = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-r", "--reuse", defaultReuseSetting);
+        if (reuseSetting < 2) {
+            reuseValues[0] = !!reuseSetting;
+            reuseValuesSize = 1;
+        }
+
+        for (size_t i = 0; i < reuseValuesSize; i++) {
+            bool reuse = reuseValues[i];
+            currentTest = getCaseName(reuse);
+
+            casePass = testMultipleForkJoinsGraph(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
     }
 
     for (auto kernel : kernelsMap) {
