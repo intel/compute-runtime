@@ -250,7 +250,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptio
     EXPECT_EQ(compilerProductHelper.getCachingPolicyOptions(true), nullptr);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsWithinXeCoreAndXe2HpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));

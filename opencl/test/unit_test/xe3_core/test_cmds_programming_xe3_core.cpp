@@ -44,7 +44,7 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, givenL3ToL1DebugFlagWhenStatelessMoc
 
     auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 2;
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
@@ -75,7 +75,7 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, whenAppendingRssThenProgramWtL1Cache
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    const uint8_t expectedL1CachePolicy = 2;
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
     EXPECT_EQ(expectedL1CachePolicy, rssCmd.getL1CacheControlCachePolicy());
 }
 
@@ -103,7 +103,7 @@ XE3_CORETEST_F(CmdsProgrammingTestsXe3Core, givenAlignedCacheableReadOnlyBufferT
 
     auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CacheControlCachePolicy());
 
-    const uint8_t expectedL1CachePolicy = 2;
+    const uint8_t expectedL1CachePolicy = pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);

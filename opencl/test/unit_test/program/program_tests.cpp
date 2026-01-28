@@ -74,6 +74,8 @@
 
 using namespace NEO;
 
+HWTEST_EXCLUDE_PRODUCT(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_PTL);
+
 void ProgramTests::SetUp() {
     ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
@@ -1992,16 +1994,10 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInterna
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=2"));
 }
 
-HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe2HpgCore) {
+HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=4"));
-}
-
-HWTEST2_F(ProgramTests, givenAtLeastXe3CoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3Core) {
-    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
-    auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
 }
 
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {

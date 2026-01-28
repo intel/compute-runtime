@@ -23,26 +23,15 @@ HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAn
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), 1u);
 }
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsWithinXeCoreAndXe2HpgCore) {
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     auto policy = [&](bool debuggerActive) -> uint32_t {
-        if constexpr (GfxFamily::isHeaplessRequired()) {
+        if constexpr (productFamily == IGFX_PTL) {
+            return debuggerActive ? GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP : GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+        } else if constexpr (GfxFamily::isHeaplessRequired()) {
             return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
         } else {
             return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
-        }
-    };
-    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), policy(false));
-    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), policy(true));
-}
-
-HWTEST2_F(ProductHelperTest, givenAtLeastXe3CoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXe3Core) {
-    using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
-    auto policy = [&](bool debuggerActive) -> uint32_t {
-        if constexpr (GfxFamily::isHeaplessRequired()) {
-            return debuggerActive ? GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP : GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
-        } else {
-            return debuggerActive ? GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP : GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
         }
     };
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), policy(false));

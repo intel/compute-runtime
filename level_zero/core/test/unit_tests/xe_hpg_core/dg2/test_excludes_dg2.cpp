@@ -9,6 +9,6 @@
 
 namespace L0 {
 namespace ult {
-HWTEST_EXCLUDE_PRODUCT(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsWithinXeCoreAndXe2HpgCore, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_DG2);
 }
 } // namespace L0

@@ -274,11 +274,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        if (productHelper.getL1CachePolicy(false) == 0u) {
-            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
-        } else {
-            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
-        }
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
