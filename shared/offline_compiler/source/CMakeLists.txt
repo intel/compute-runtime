@@ -363,6 +363,13 @@ add_subdirectories()
 create_project_source_tree(${OCLOC_NAME}_lib)
 set_target_properties(${OCLOC_NAME}_lib PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
 
+if(WIN32)
+  if(DEFINED OCLOC_LIB_RC_FILE)
+    message(STATUS "Setting ocloc_lib Resource Info")
+    target_sources(${OCLOC_NAME}_lib PRIVATE ${OCLOC_LIB_RC_FILE})
+  endif()
+endif()
+
 set(CLOC_LIB_INCLUDES
     ${AOT_CONFIG_HEADERS_DIR}
     ${ENGINE_NODE_DIR}
@@ -415,6 +422,13 @@ target_link_libraries(${OCLOC_NAME} ${OCLOC_NAME}_lib)
 
 create_project_source_tree(${OCLOC_NAME})
 set_target_properties(${OCLOC_NAME} PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
+
+if(WIN32)
+  if(DEFINED OCLOC_EXE_RC_FILE)
+    message(STATUS "Setting ocloc Resource Info")
+    target_sources(${OCLOC_NAME} PRIVATE ${OCLOC_EXE_RC_FILE})
+  endif()
+endif()
 
 if(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
