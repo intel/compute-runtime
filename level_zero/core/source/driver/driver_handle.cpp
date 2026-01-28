@@ -452,7 +452,8 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                    device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
                    nullptr == device.getL0Debugger() &&
-                   NEO::DeviceFactory::isHwModeSelected();
+                   NEO::DeviceFactory::isHwModeSelected() &&
+                   !multiDevice;
     auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(device.getGfxCoreHelper());
     if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;

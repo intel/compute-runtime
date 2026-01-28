@@ -169,10 +169,9 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
 
 struct MemoryExportImportObtainFdTest : public ::testing::Test {
     void SetUp() override {
-        // flag for whole test
-        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // not compatible with MemoryManagerIpcImplicitScalingObtainFdMock
         DebugManagerStateRestore restorer;
         debugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // not compatible with MemoryManagerIpcImplicitScalingObtainFdMock
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -226,8 +225,6 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
-
-    DebugManagerStateRestore restorer;
 
     static constexpr uint32_t numRootDevices = 2u;
     static constexpr uint32_t numSubDevices = 2u;
@@ -607,6 +604,7 @@ struct DriverHandleObtaindFdMock : public L0::DriverHandle {
 
 struct MemoryObtainFdTest : public ::testing::Test {
     void SetUp() override {
+        DebugManagerStateRestore restorer;
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // not compatible with MemoryManagerIpcObtainFdMock
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -660,8 +658,6 @@ struct MemoryObtainFdTest : public ::testing::Test {
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
-
-    DebugManagerStateRestore restorer;
 
     static constexpr uint32_t numRootDevices = 2u;
     static constexpr uint32_t numSubDevices = 2u;

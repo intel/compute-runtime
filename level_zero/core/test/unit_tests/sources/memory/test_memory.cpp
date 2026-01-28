@@ -4668,8 +4668,6 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenAllocDataWhenCheckingIfRemoteCop
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4679,6 +4677,12 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsRes
     L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
     auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -4709,8 +4713,6 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsRes
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4720,6 +4722,12 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsRes
     L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
     auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
 
     size_t size = 1024;
     size_t alignment = 1u;
