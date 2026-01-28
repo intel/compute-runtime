@@ -1927,52 +1927,64 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
         return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
     }
-    return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
+    return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, graphicsAllocation->storageInfo.memoryBanks);
 }
 
-bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
+bool DrmMemoryManager::processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, const std::function<void(void *)> &funcToProcess) {
     if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
     }
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
-        if (!handleMask.test(handleId)) {
-            continue;
+
+    BufferObjects bufferObjectsToUse{};
+    if (graphicsAllocation->storageInfo.memoryBanks.count() == 0) {
+        bufferObjectsToUse.push_back(drmAllocation->getBOs()[0]);
+    } else {
+        int handleId = -1;
+        for (auto bankId = 0u; bankId < graphicsAllocation->storageInfo.memoryBanks.size(); bankId++) {
+            if (!graphicsAllocation->storageInfo.memoryBanks.test(bankId)) {
+                continue;
+            }
+
+            handleId++;
+            if (!handleMask.test(bankId)) {
+                continue;
+            }
+            bufferObjectsToUse.push_back(drmAllocation->getBOs()[handleId]);
         }
-        auto ptr = lockBufferObject(drmAllocation->getBOs()[handleId]);
+    }
+    for (auto bufferObject : bufferObjectsToUse) {
+        auto ptr = lockBufferObject(bufferObject);
         if (!ptr) {
             return false;
         }
-        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
-        this->unlockBufferObject(drmAllocation->getBOs()[handleId]);
+        funcToProcess(ptr);
+        this->unlockBufferObject(bufferObject);
     }
     return true;
+}
+
+bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
+
+    auto copyMemoryFunc = [&](void *ptr) {
+        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
+    };
+
+    return processOverAllocationBanks(graphicsAllocation, handleMask, copyMemoryFunc);
 }
 
 bool DrmMemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) {
     if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
         return MemoryManager::memsetAllocation(graphicsAllocation, destinationOffset, value, sizeToSet);
     }
-    return memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
+    return memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, graphicsAllocation->storageInfo.memoryBanks);
 }
 
 bool DrmMemoryManager::memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) {
-    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
-        return false;
-    }
-    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
-        if (!handleMask.test(handleId)) {
-            continue;
-        }
-        auto ptr = lockBufferObject(drmAllocation->getBOs()[handleId]);
-        if (!ptr) {
-            return false;
-        }
+    auto memsetFunc = [&](void *ptr) {
         memset(ptrOffset(ptr, destinationOffset), value, sizeToSet);
-        this->unlockBufferObject(drmAllocation->getBOs()[handleId]);
-    }
-    return true;
+    };
+    return processOverAllocationBanks(graphicsAllocation, handleMask, memsetFunc);
 }
 
 void DrmMemoryManager::unlockBufferObject(BufferObject *bo) {

@@ -8546,32 +8546,220 @@ TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenC
     auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManger(executionEnvironment, destinationAllocationSize);
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
     std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
 
     MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::localMemory);
 
-    mockAllocation.storageInfo.memoryBanks = 0b1111;
+    mockAllocation.storageInfo.memoryBanks = 0b1110;
     DeviceBitfield memoryBanksToCopy = 0b1010;
     mockAllocation.bufferObjects.clear();
 
-    for (auto index = 0u; index < 4; index++) {
-        drmMemoryManger.lockedLocalMemory[index].reset();
+    for (auto index = 1u; index < 4; index++) {
+        drmMemoryManager.lockedLocalMemory[index].reset();
         mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, index, sourceAllocationSize, 3));
     }
 
-    auto ret = drmMemoryManger.copyMemoryToAllocationBanks(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size(), memoryBanksToCopy);
+    auto ret = drmMemoryManager.copyMemoryToAllocationBanks(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size(), memoryBanksToCopy);
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(nullptr, drmMemoryManger.lockedLocalMemory[0].get());
-    ASSERT_NE(nullptr, drmMemoryManger.lockedLocalMemory[1].get());
-    EXPECT_EQ(nullptr, drmMemoryManger.lockedLocalMemory[2].get());
-    ASSERT_NE(nullptr, drmMemoryManger.lockedLocalMemory[3].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
 
-    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManger.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
-    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManger.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
-    for (auto index = 0u; index < 4; index++) {
-        delete mockAllocation.bufferObjects[index];
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
+    }
+}
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationAndThereIsNoUnderlyingBufferThenAllocationIsFilledWithCorrectDataOnAllBanks) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::localMemory);
+
+    mockAllocation.storageInfo.memoryBanks = 0b1110;
+    mockAllocation.bufferObjects.clear();
+
+    for (auto index = 1u; index < 4; index++) {
+        drmMemoryManager.lockedLocalMemory[index].reset();
+        mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, index, sourceAllocationSize, 3));
+    }
+
+    auto ret = drmMemoryManager.copyMemoryToAllocation(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[2].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
+    }
+}
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenCopyMemoryToSystemMemoryAllocationAndThereIsNoUnderlyingBufferThenAllocationIsFilledWithTheFirstBufferObject) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(0u, AllocationType::constantSurface, MemoryPool::systemCpuInaccessible);
+
+    mockAllocation.storageInfo.memoryBanks = 0b0;
+    mockAllocation.bufferObjects.clear();
+
+    drmMemoryManager.lockedLocalMemory[0].reset();
+    mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, 0, sourceAllocationSize, 3));
+
+    auto ret = drmMemoryManager.copyMemoryToAllocation(&mockAllocation, offset, dataToCopy.data(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[0].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
+    }
+}
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenMemsetAllocationOnSpecificMemoryBanksThenAllocationIsFilledWithCorrectDataOnSpecificBanks) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::localMemory);
+
+    mockAllocation.storageInfo.memoryBanks = 0b1110;
+    DeviceBitfield memoryBanksToCopy = 0b1010;
+    mockAllocation.bufferObjects.clear();
+
+    for (auto index = 1u; index < 4; index++) {
+        drmMemoryManager.lockedLocalMemory[index].reset();
+        mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, index, sourceAllocationSize, 3));
+    }
+
+    auto ret = drmMemoryManager.memsetAllocationBanks(&mockAllocation, offset, dataToCopy.front(), dataToCopy.size(), memoryBanksToCopy);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
+    }
+}
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenMemsetAllocationAndThereIsNoUnderlyingBufferThenAllocationIsFilledWithCorrectDataOnAllBanks) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::localMemory);
+
+    mockAllocation.storageInfo.memoryBanks = 0b1110;
+    mockAllocation.bufferObjects.clear();
+
+    for (auto index = 1u; index < 4; index++) {
+        drmMemoryManager.lockedLocalMemory[index].reset();
+        mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, index, sourceAllocationSize, 3));
+    }
+
+    auto ret = drmMemoryManager.memsetAllocation(&mockAllocation, offset, dataToCopy.front(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[1].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[2].get(), offset), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[3].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
+    }
+}
+
+TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenMemsetSystemMemoryAllocationAndThereIsNoUnderlyingBufferThenAllocationIsFilledWithTheFirstBufferObject) {
+    uint8_t sourceData[64]{};
+    size_t offset = 3;
+    size_t sourceAllocationSize = sizeof(sourceData);
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+    MockExecutionEnvironment executionEnvironment;
+    auto drm = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManager(executionEnvironment, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    MockDrmAllocation mockAllocation(0u, AllocationType::constantSurface, MemoryPool::systemCpuInaccessible);
+
+    mockAllocation.storageInfo.memoryBanks = 0b0;
+    mockAllocation.bufferObjects.clear();
+
+    drmMemoryManager.lockedLocalMemory[0].reset();
+    mockAllocation.bufferObjects.push_back(new BufferObject(0u, drm, 3, 0, sourceAllocationSize, 3));
+
+    auto ret = drmMemoryManager.memsetAllocation(&mockAllocation, offset, dataToCopy.front(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+
+    ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[0].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[1].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[2].get());
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[3].get());
+
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[0].get(), offset), dataToCopy.data(), dataToCopy.size()));
+
+    for (auto bufferObject : mockAllocation.bufferObjects) {
+        delete bufferObject;
     }
 }
 
