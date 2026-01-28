@@ -41,9 +41,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
+    case Builtin::copyBufferBytesWideStateless:
+        kernelName = "copyBufferToBufferBytesSingle";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStateless;
+        break;
     case Builtin::copyBufferBytesStatelessHeapless:
         kernelName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        break;
+    case Builtin::copyBufferBytesWideStatelessHeapless:
+        kernelName = "copyBufferToBufferBytesSingle";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStatelessHeapless;
         break;
     case Builtin::copyBufferRectBytes2d:
         kernelName = "CopyBufferRectBytes2d";
@@ -77,9 +85,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "CopyBufferToBufferMiddleRegion";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
+    case Builtin::copyBufferToBufferMiddleWideStateless:
+        kernelName = "CopyBufferToBufferMiddleRegion";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStateless;
+        break;
     case Builtin::copyBufferToBufferMiddleStatelessHeapless:
         kernelName = "CopyBufferToBufferMiddleRegion";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        break;
+    case Builtin::copyBufferToBufferMiddleWideStatelessHeapless:
+        kernelName = "CopyBufferToBufferMiddleRegion";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStatelessHeapless;
         break;
     case Builtin::copyBufferToBufferSide:
         kernelName = "CopyBufferToBufferSideRegion";
@@ -89,9 +105,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "CopyBufferToBufferSideRegion";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
+    case Builtin::copyBufferToBufferSideWideStateless:
+        kernelName = "CopyBufferToBufferSideRegion";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStateless;
+        break;
     case Builtin::copyBufferToBufferSideStatelessHeapless:
         kernelName = "CopyBufferToBufferSideRegion";
         builtin = NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        break;
+    case Builtin::copyBufferToBufferSideWideStatelessHeapless:
+        kernelName = "CopyBufferToBufferSideRegion";
+        builtin = NEO::EBuiltInOps::copyBufferToBufferWideStatelessHeapless;
         break;
     case Builtin::fillBufferImmediate:
         kernelName = "FillBufferImmediate";
@@ -101,9 +125,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "FillBufferImmediate";
         builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
+    case Builtin::fillBufferImmediateWideStateless:
+        kernelName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::fillBufferWideStateless;
+        break;
     case Builtin::fillBufferImmediateStatelessHeapless:
         kernelName = "FillBufferImmediate";
         builtin = NEO::EBuiltInOps::fillBufferStatelessHeapless;
+        break;
+    case Builtin::fillBufferImmediateWideStatelessHeapless:
+        kernelName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::fillBufferWideStatelessHeapless;
         break;
     case Builtin::fillBufferImmediateLeftOver:
         kernelName = "FillBufferImmediateLeftOver";
@@ -113,9 +145,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "FillBufferImmediateLeftOver";
         builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
+    case Builtin::fillBufferImmediateLeftOverWideStateless:
+        kernelName = "FillBufferImmediateLeftOver";
+        builtin = NEO::EBuiltInOps::fillBufferWideStateless;
+        break;
     case Builtin::fillBufferImmediateLeftOverStatelessHeapless:
         kernelName = "FillBufferImmediateLeftOver";
         builtin = NEO::EBuiltInOps::fillBufferStatelessHeapless;
+        break;
+    case Builtin::fillBufferImmediateLeftOverWideStatelessHeapless:
+        kernelName = "FillBufferImmediateLeftOver";
+        builtin = NEO::EBuiltInOps::fillBufferWideStatelessHeapless;
         break;
     case Builtin::fillBufferSSHOffset:
         kernelName = "FillBufferSSHOffset";
@@ -137,9 +177,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "FillBufferMiddle";
         builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
+    case Builtin::fillBufferMiddleWideStateless:
+        kernelName = "FillBufferMiddle";
+        builtin = NEO::EBuiltInOps::fillBufferWideStateless;
+        break;
     case Builtin::fillBufferMiddleStatelessHeapless:
         kernelName = "FillBufferMiddle";
         builtin = NEO::EBuiltInOps::fillBufferStatelessHeapless;
+        break;
+    case Builtin::fillBufferMiddleWideStatelessHeapless:
+        kernelName = "FillBufferMiddle";
+        builtin = NEO::EBuiltInOps::fillBufferWideStatelessHeapless;
         break;
     case Builtin::fillBufferRightLeftover:
         kernelName = "FillBufferRightLeftover";
@@ -149,9 +197,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "FillBufferRightLeftover";
         builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
+    case Builtin::fillBufferRightLeftoverWideStateless:
+        kernelName = "FillBufferRightLeftover";
+        builtin = NEO::EBuiltInOps::fillBufferWideStateless;
+        break;
     case Builtin::fillBufferRightLeftoverStatelessHeapless:
         kernelName = "FillBufferRightLeftover";
         builtin = NEO::EBuiltInOps::fillBufferStatelessHeapless;
+        break;
+    case Builtin::fillBufferRightLeftoverWideStatelessHeapless:
+        kernelName = "FillBufferRightLeftover";
+        builtin = NEO::EBuiltInOps::fillBufferWideStatelessHeapless;
         break;
     case Builtin::queryKernelTimestamps:
         kernelName = "QueryKernelTimestamps";

@@ -16,6 +16,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/common_types.h"
@@ -2013,8 +2014,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
     const auto isStateless = this->forceStateless(size);
-
-    const bool isHeapless = this->isHeaplessModeEnabled();
+    const bool isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
+    const auto isHeapless = this->isHeaplessModeEnabled();
 
     if (!isCopyOnlyEnabled) {
         uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
@@ -2106,7 +2107,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && leftSize) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
+            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, dstAllocationStruct.offset,
@@ -2122,7 +2123,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless);
+            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
@@ -2139,7 +2140,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
+            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
@@ -2548,6 +2549,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     const auto isStateless = this->forceStateless(size);
+    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && isCopyOffloadForFillOrStagingPreferred() && (patternSize <= this->maxFillPatternSizeForCopyEngine);
@@ -2613,8 +2615,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     bool useImmediateFill = canUseImmediateFill(size, patternSize, dstAllocation.offset, this->device->getDeviceInfo().maxWorkGroupSize);
     auto builtin = useImmediateFill
-                       ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless)
-                       : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
+                       ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless, isWideness)
+                       : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless, isWideness);
 
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -2753,7 +2755,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         } else {
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
 
-            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless);
+            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
             Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
             builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
@@ -2779,7 +2781,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(fillArguments.rightOffset);
             uint64_t patternOffsetRemainder = fillArguments.patternOffsetRemainder;
 
-            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless);
+            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
             Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
             builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);

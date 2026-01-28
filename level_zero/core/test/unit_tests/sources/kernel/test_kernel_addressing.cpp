@@ -208,4 +208,40 @@ TEST_F(KernelAddressingTest,
     testBuiltinType(BuiltinTypeHelper::adjustImageBuiltinType<L0::ImageBuiltin::copyImage3dToBufferBytes>(isStateless, isHeapless));
     testBuiltinType(BuiltinTypeHelper::adjustImageBuiltinType<L0::ImageBuiltin::copyImage3dToBuffer16BytesAligned>(isStateless, isHeapless));
 }
+
+TEST(BuiltinTypeHelperTest,
+     whenStatelessAndWideAdjustBuiltinTypeIsCalledThenReturnsExpectedBuiltinForHeaplessVariants) {
+    const bool isStateless = true;
+    const bool isWide = true;
+
+    for (bool isHeapless : {false, true}) {
+        EXPECT_EQ(isHeapless ? Builtin::copyBufferBytesWideStatelessHeapless
+                             : Builtin::copyBufferBytesWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::copyBufferToBufferMiddleWideStatelessHeapless
+                             : Builtin::copyBufferToBufferMiddleWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::copyBufferToBufferSideWideStatelessHeapless
+                             : Builtin::copyBufferToBufferSideWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::fillBufferImmediateWideStatelessHeapless
+                             : Builtin::fillBufferImmediateWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::fillBufferImmediateLeftOverWideStatelessHeapless
+                             : Builtin::fillBufferImmediateLeftOverWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::fillBufferMiddleWideStatelessHeapless
+                             : Builtin::fillBufferMiddleWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless, isWide));
+
+        EXPECT_EQ(isHeapless ? Builtin::fillBufferRightLeftoverWideStatelessHeapless
+                             : Builtin::fillBufferRightLeftoverWideStateless,
+                  BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless, isWide));
+    }
+}
 } // namespace L0::ult

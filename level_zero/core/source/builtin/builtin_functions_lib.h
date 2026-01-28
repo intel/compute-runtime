@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,9 @@ struct Kernel;
 enum class Builtin : uint32_t {
     copyBufferBytes = 0u,
     copyBufferBytesStateless,
+    copyBufferBytesWideStateless,
     copyBufferBytesStatelessHeapless,
+    copyBufferBytesWideStatelessHeapless,
     copyBufferRectBytes2d,
     copyBufferRectBytes2dStateless,
     copyBufferRectBytes2dStatelessHeapless,
@@ -30,25 +32,37 @@ enum class Builtin : uint32_t {
     copyBufferRectBytes3dStatelessHeapless,
     copyBufferToBufferMiddle,
     copyBufferToBufferMiddleStateless,
+    copyBufferToBufferMiddleWideStateless,
     copyBufferToBufferMiddleStatelessHeapless,
+    copyBufferToBufferMiddleWideStatelessHeapless,
     copyBufferToBufferSide,
     copyBufferToBufferSideStateless,
+    copyBufferToBufferSideWideStateless,
     copyBufferToBufferSideStatelessHeapless,
+    copyBufferToBufferSideWideStatelessHeapless,
     fillBufferImmediate,
     fillBufferImmediateStateless,
+    fillBufferImmediateWideStateless,
     fillBufferImmediateStatelessHeapless,
+    fillBufferImmediateWideStatelessHeapless,
     fillBufferImmediateLeftOver,
     fillBufferImmediateLeftOverStateless,
+    fillBufferImmediateLeftOverWideStateless,
     fillBufferImmediateLeftOverStatelessHeapless,
+    fillBufferImmediateLeftOverWideStatelessHeapless,
     fillBufferSSHOffset,
     fillBufferSSHOffsetStateless,
     fillBufferSSHOffsetStatelessHeapless,
     fillBufferMiddle,
     fillBufferMiddleStateless,
+    fillBufferMiddleWideStateless,
     fillBufferMiddleStatelessHeapless,
+    fillBufferMiddleWideStatelessHeapless,
     fillBufferRightLeftover,
     fillBufferRightLeftoverStateless,
+    fillBufferRightLeftoverWideStateless,
     fillBufferRightLeftoverStatelessHeapless,
+    fillBufferRightLeftoverWideStatelessHeapless,
     queryKernelTimestamps,
     queryKernelTimestampsWithOffsets,
     count
@@ -136,125 +150,171 @@ struct BuiltinFunctionsLib {
 namespace BuiltinTypeHelper {
 
 template <Builtin type>
-constexpr Builtin adjustBuiltinType(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType(const bool isStateless, const bool isHeapless, const bool isWideness = false) {
     return type;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::copyBufferBytes>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferBytes>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::copyBufferBytesStatelessHeapless;
+        return isWideness ? Builtin::copyBufferBytesWideStatelessHeapless
+                          : Builtin::copyBufferBytesStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::copyBufferBytesStateless;
+        return isWideness ? Builtin::copyBufferBytesWideStateless
+                          : Builtin::copyBufferBytesStateless;
     }
+
     return Builtin::copyBufferBytes;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes2d>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes2d>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
         return Builtin::copyBufferRectBytes2dStatelessHeapless;
     } else if (isStateless) {
         return Builtin::copyBufferRectBytes2dStateless;
     }
+
     return Builtin::copyBufferRectBytes2d;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes3d>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes3d>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
         return Builtin::copyBufferRectBytes3dStatelessHeapless;
     } else if (isStateless) {
         return Builtin::copyBufferRectBytes3dStateless;
     }
+
     return Builtin::copyBufferRectBytes3d;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::copyBufferToBufferMiddleStatelessHeapless;
+        return isWideness ? Builtin::copyBufferToBufferMiddleWideStatelessHeapless
+                          : Builtin::copyBufferToBufferMiddleStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::copyBufferToBufferMiddleStateless;
+        return isWideness ? Builtin::copyBufferToBufferMiddleWideStateless
+                          : Builtin::copyBufferToBufferMiddleStateless;
     }
+
     return Builtin::copyBufferToBufferMiddle;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferSide>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferSide>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::copyBufferToBufferSideStatelessHeapless;
+        return isWideness ? Builtin::copyBufferToBufferSideWideStatelessHeapless
+                          : Builtin::copyBufferToBufferSideStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::copyBufferToBufferSideStateless;
+        return isWideness ? Builtin::copyBufferToBufferSideWideStateless
+                          : Builtin::copyBufferToBufferSideStateless;
     }
+
     return Builtin::copyBufferToBufferSide;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediate>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediate>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::fillBufferImmediateStatelessHeapless;
+        return isWideness ? Builtin::fillBufferImmediateWideStatelessHeapless
+                          : Builtin::fillBufferImmediateStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::fillBufferImmediateStateless;
+        return isWideness ? Builtin::fillBufferImmediateWideStateless
+                          : Builtin::fillBufferImmediateStateless;
     }
+
     return Builtin::fillBufferImmediate;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::fillBufferImmediateLeftOverStatelessHeapless;
+        return isWideness ? Builtin::fillBufferImmediateLeftOverWideStatelessHeapless
+                          : Builtin::fillBufferImmediateLeftOverStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::fillBufferImmediateLeftOverStateless;
+        return isWideness ? Builtin::fillBufferImmediateLeftOverWideStateless
+                          : Builtin::fillBufferImmediateLeftOverStateless;
     }
+
     return Builtin::fillBufferImmediateLeftOver;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::fillBufferSSHOffset>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferSSHOffset>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
         return Builtin::fillBufferSSHOffsetStatelessHeapless;
     } else if (isStateless) {
         return Builtin::fillBufferSSHOffsetStateless;
     }
+
     return Builtin::fillBufferSSHOffset;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::fillBufferMiddle>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferMiddle>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::fillBufferMiddleStatelessHeapless;
+        return isWideness ? Builtin::fillBufferMiddleWideStatelessHeapless
+                          : Builtin::fillBufferMiddleStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::fillBufferMiddleStateless;
+        return isWideness ? Builtin::fillBufferMiddleWideStateless
+                          : Builtin::fillBufferMiddleStateless;
     }
+
     return Builtin::fillBufferMiddle;
 }
 
 template <>
-constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(const bool isStateless, const bool isHeapless) {
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
     if (isHeapless) {
-        return Builtin::fillBufferRightLeftoverStatelessHeapless;
+        return isWideness ? Builtin::fillBufferRightLeftoverWideStatelessHeapless
+                          : Builtin::fillBufferRightLeftoverStatelessHeapless;
     } else if (isStateless) {
-        return Builtin::fillBufferRightLeftoverStateless;
+        return isWideness ? Builtin::fillBufferRightLeftoverWideStateless
+                          : Builtin::fillBufferRightLeftoverStateless;
     }
+
     return Builtin::fillBufferRightLeftover;
 }
 
 template <ImageBuiltin type>
-constexpr ImageBuiltin adjustImageBuiltinType(const bool isStateless, const bool isHeapless) {
+constexpr ImageBuiltin adjustImageBuiltinType(const bool isStateless, const bool isHeapless, const bool isWideness = false) {
     return type;
 }
 
-#define DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(type)                                                           \
-    template <>                                                                                          \
-    constexpr ImageBuiltin adjustImageBuiltinType<type>(const bool isStateless, const bool isHeapless) { \
-        if (isHeapless) {                                                                                \
-            return type##Heapless;                                                                       \
-        } else if (isStateless) {                                                                        \
-            return type##Stateless;                                                                      \
-        } else {                                                                                         \
-            return type;                                                                                 \
-        }                                                                                                \
+#define DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(type)                \
+    template <>                                               \
+    constexpr ImageBuiltin adjustImageBuiltinType<type>(      \
+        bool isStateless, bool isHeapless, bool isWideness) { \
+                                                              \
+        if (isHeapless) {                                     \
+            return type##Heapless;                            \
+        } else if (isStateless) {                             \
+            return type##Stateless;                           \
+        }                                                     \
+                                                              \
+        return type;                                          \
     }
 
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d16Bytes);
@@ -277,7 +337,7 @@ DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer8To6Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBufferBytes);
 
 template <>
-constexpr ImageBuiltin adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(const bool isStateless, const bool isHeapless) {
+constexpr ImageBuiltin adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(const bool isStateless, const bool isHeapless, const bool isWideness) {
     if (isHeapless) {
         return ImageBuiltin::copyImageRegionHeapless;
     }
