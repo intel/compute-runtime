@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -147,6 +147,24 @@ zello_image_view:
   pvc.b0:
 
 zello_immediate:
+  dg2:
+  pvc.b0:
+
+zello_mcl_commandid:
+  dg2:
+  - -mask 0x7FFF --verbose
+  pvc.b0:
+  - -mask 0x7FFF --verbose
+
+zello_mcl_mandelbrot:
+  dg2:
+  pvc.b0:
+
+zello_mcl_kernels:
+  dg2:
+  pvc.b0:
+
+zello_mcl_samples:
   dg2:
   pvc.b0:
 
