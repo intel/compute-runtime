@@ -61,7 +61,9 @@ void Graph::stopCapturing() {
             continue; // no join-like sequences found
         }
         auto potentialJoinEvent = static_cast<L0::Event *>(potentialJoin->second.joinEvent);
-        auto potentialJoinSignalId = potentialJoin->second.forkDestiny->recordedSignals.find(potentialJoinEvent)->second;
+        auto potentialJoinRecordedSignal = potentialJoin->second.forkDestiny->recordedSignals.find(potentialJoinEvent);
+        UNRECOVERABLE_IF(potentialJoin->second.forkDestiny->recordedSignals.end() == potentialJoinRecordedSignal);
+        auto potentialJoinSignalId = potentialJoinRecordedSignal->second;
         if (false == potentialJoin->second.forkDestiny->isLastCommand(potentialJoinSignalId)) {
             neverJoinedForks.push_back({unjFork.first, unjFork.second});
             continue; // join-like sequence found but is succeeded by unjoined commands

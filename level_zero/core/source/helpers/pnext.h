@@ -28,15 +28,6 @@ struct PNextRange {
             : curr(curr) {
         }
 
-        PNextIterator(const PNextIterator &rhs)
-            : curr(rhs.curr) {
-        }
-
-        PNextIterator &operator=(const PNextIterator &rhs) {
-            curr = rhs.curr;
-            return *this;
-        }
-
         bool operator==(const PNextIterator &rhs) const {
             return (curr == rhs.curr);
         }
