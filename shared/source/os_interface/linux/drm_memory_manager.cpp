@@ -1699,8 +1699,12 @@ void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *alloca
             registerAllocationInOs(allocation);
         }
         auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
-        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
-        DEBUG_BREAK_IF(!ret);
+        const auto &engines = this->getRegisteredEngines(rootDeviceIndex);
+        for (const auto &engine : engines) {
+            engine.commandStreamReceiver->initializeResources(false, engine.osContext->getPreemptionMode());
+            [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
+            DEBUG_BREAK_IF(!ret);
+        }
     }
 }
 

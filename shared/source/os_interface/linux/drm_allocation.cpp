@@ -382,7 +382,6 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (!drm->getIoctlHelper()->resourceRegistrationEnabled()) {
         return;
     }
-
     if (!registeredBoBindHandles.empty()) {
         return;
     }
