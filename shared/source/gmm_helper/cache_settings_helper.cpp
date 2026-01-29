@@ -51,7 +51,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsag
     if (debugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
     }
-    if (rootDeviceEnvironment.isWddmOnLinux() && debugManager.flags.WddmOnLinuxForceNoCpuAccessCachingFlagCleared.get()) {
+    if (rootDeviceEnvironment.isWddmOnLinux()) {
         return false;
     }
     if (isCpuCachingOfDeviceBuffersAllowed(rootDeviceEnvironment)) {
