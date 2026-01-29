@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2021 Intel Corporation
+Copyright (C) 2021-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -10,22 +10,26 @@ SPDX-License-Identifier: MIT
 
 ## Introduction
 
-This document describes ingredients required in order to use Intel&reg; Graphics Compute Runtime for oneAPI Level Zero and OpenCL&trade; Driver
-in WSL2 environment.
+This document describes ingredients required in order to use Intel&reg; Graphics Compute Runtime for oneAPI Level Zero and OpenCL&trade; Driver in WSL2 environment.
 
 ## Host OS
 
-Windows 11 or Windows 10 with the [21H2 update](https://blogs.windows.com/windowsexperience/2021/07/15/introducing-the-next-feature-update-to-windows-10-21h2/).
+- Required OS: [Windows 11](https://www.microsoft.com/en-us/software-download/windows11).
+- Configuration used for validation: [25H2 update](https://support.microsoft.com/en-us/topic/windows-11-version-25h2-update-history-99c7f493-df2a-4832-bd2d-6706baa0dec0).
 
 ## WSL kernel
 
-Tested with [5.10.16.3](https://docs.microsoft.com/en-us/windows/wsl/kernel-release-notes#510163).
+Tested with [6.1.3.0](https://github.com/microsoft/WSL/releases/tag/2.6.3).
 
-## Host Graphics Driver
+## Windows Host Graphics Driver
 
-Required driver package (30.0.100.9955) is available [here](https://www.intel.com/content/www/us/en/download/19344/intel-graphics-windows-dch-drivers.html).
+Please use the latest production drivers for:
+
+- [all currently supported platforms (Xe+)](https://www.intel.com/content/www/us/en/download/785597/intel-arc-graphics-windows.html).
+- [legacy platforms (11-14th Gen)](https://www.intel.com/content/www/us/en/download/864990/intel-11th-14th-gen-processor-graphics-windows.html).
 
 ## Guest (WSL2) Intel&reg; Graphics Compute Runtime for oneAPI Level Zero and OpenCL&trade; Driver
 
-Support was enabled at https://github.com/intel/compute-runtime/commit/fad4ee7e246839c36c3f6b0e14ea0c79d9e4758a
-and it is included in [21.30.20482](https://github.com/intel/compute-runtime/releases/tag/21.30.20482) and beyond - use [latest](https://github.com/intel/compute-runtime/releases) release for best experience.
+For the WSL2 client, please use the [latest NEO release](https://github.com/intel/compute-runtime/releases). Supported platforms list is available there in the form of release notes.
+
+General support for WSL in NEO was enabled in [this commit](https://github.com/intel/compute-runtime/commit/fad4ee7e246839c36c3f6b0e14ea0c79d9e4758a).
