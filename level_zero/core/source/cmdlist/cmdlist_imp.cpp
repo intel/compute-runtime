@@ -42,7 +42,7 @@ CommandListAllocatorFn commandListFactory[NEO::maxProductEnumValue] = {};
 CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {};
 
 ze_result_t CommandListImp::destroy() {
-    if (this->isBcsSplitNeeded) {
+    if (this->isBcsSplitEnabled()) {
         this->device->bcsSplit->releaseResources();
     }
 
@@ -134,10 +134,9 @@ ze_result_t CommandListImp::getContextHandle(ze_context_handle_t *phContext) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandListImp::getOrdinal(uint32_t *pOrdinal) {
+uint32_t CommandListImp::getOrdinal() const {
     UNRECOVERABLE_IF(ordinal == std::nullopt);
-    *pOrdinal = ordinal.value();
-    return ZE_RESULT_SUCCESS;
+    return ordinal.value();
 }
 
 ze_result_t CommandListImp::getImmediateIndex(uint32_t *pIndex) {
@@ -276,8 +275,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 }
 
 void CommandListImp::enableImmediateBcsSplit() {
-    if (device->getNEODevice()->isBcsSplitSupported() && isImmediateType() && !internalUsage && !isBcsSplitNeeded) {
-        isBcsSplitNeeded = getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled());
+    if (device->getNEODevice()->isBcsSplitSupported() && isImmediateType() && !internalUsage && !isBcsSplitEnabled()) {
+        if (getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled())) {
+            this->bcsSplitMode = BcsSplitParams::BcsSplitMode::immediate;
+        }
     }
 }
 

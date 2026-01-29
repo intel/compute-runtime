@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,21 +8,21 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
-                                      const BcsSplitParams::CopyParams &copyParams,
-                                      size_t size,
-                                      ze_event_handle_t hSignalEvent,
-                                      uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents,
-                                      bool performMigration,
-                                      bool hasRelaxedOrderingDependencies,
-                                      NEO::TransferDirection direction,
-                                      size_t estimatedCmdBufferSize,
-                                      AppendCallFuncT<gfxCoreFamily> appendCall) {
+ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
+                                               const BcsSplitParams::CopyParams &copyParams,
+                                               size_t size,
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents,
+                                               bool performMigration,
+                                               bool hasRelaxedOrderingDependencies,
+                                               NEO::TransferDirection direction,
+                                               size_t estimatedCmdBufferSize,
+                                               AppendCallFuncT<gfxCoreFamily> appendCall) {
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    const auto aggregatedEventsMode = this->events.aggregatedEventsMode;
+    const auto aggregatedEventsMode = this->events.isAggregatedEventMode();
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -34,7 +34,7 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
                                           (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
 
     if (!useSignalEventForSubcopy) {
-        auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), maxEventCountInPool<GfxFamily>);
+        auto markerEventIndexRet = this->events.obtainForImmediateSplit(Context::fromHandle(cmdList->getCmdListContext()), maxEventCountInPool<GfxFamily>);
         if (!markerEventIndexRet.has_value()) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
@@ -45,7 +45,7 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
 
     auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
     if (barrierRequired) {
-        cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle(), false);
+        cmdList->appendSignalEvent(this->events.getEventResources().barrier[markerEventIndex]->toHandle(), false);
     }
 
     auto subcopyEventIndex = markerEventIndex * this->cmdLists.size();
@@ -64,7 +64,7 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
         subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
 
         if (barrierRequired) {
-            auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
+            auto barrierEventHandle = this->events.getEventResources().barrier[markerEventIndex]->toHandle();
             subCmdList->addEventsToCmdList(1u, &barrierEventHandle, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
         }
 
@@ -90,10 +90,10 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
                    copyParams);
 
         auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
-        auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.subcopy[copyEventIndex]->toHandle();
+        auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.getEventResources().subcopy[copyEventIndex]->toHandle();
 
         if (aggregatedEventsMode && !useSignalEventForSubcopy) {
-            subCmdList->getCmdContainer().addToResidencyContainer(this->events.subcopy[copyEventIndex]->getInOrderExecInfo()->getDeviceCounterAllocation());
+            subCmdList->getCmdContainer().addToResidencyContainer(this->events.getEventResources().subcopy[copyEventIndex]->getInOrderExecInfo()->getDeviceCounterAllocation());
         }
 
         if (useSignalEventForSubcopy) {
@@ -138,7 +138,7 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
     }
 
     if (!aggregatedEventsMode) {
-        cmdList->appendSignalEventPostWalker(this->events.marker[markerEventIndex], nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
+        cmdList->appendSignalEventPostWalker(this->events.getEventResources().marker[markerEventIndex], nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
     }
 
     if (cmdList->isInOrderExecutionEnabled()) {
@@ -147,8 +147,8 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
     cmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
 
     if (aggregatedEventsMode && !useSignalEventForSubcopy) {
-        std::lock_guard<std::mutex> lock(events.mtx);
-        cmdList->assignInOrderExecInfoToEvent(this->events.marker[markerEventIndex]);
+        auto lock = events.obtainLock();
+        cmdList->assignInOrderExecInfoToEvent(this->events.getEventResources().marker[markerEventIndex]);
     }
 
     return result;

@@ -16,7 +16,6 @@
 
 #include <functional>
 #include <mutex>
-#include <variant>
 #include <vector>
 
 namespace NEO {
@@ -29,59 +28,41 @@ struct CommandQueue;
 struct Device;
 class BcsSplit;
 
-namespace BcsSplitParams {
-struct MemCopy {
-    void *dst = nullptr;
-    const void *src = nullptr;
-};
+class BcsSplitEvents {
+  public:
+    BcsSplitEvents(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
 
-struct RegionCopy {
-    // originXParams
-    uint32_t dst = 0;
-    uint32_t src = 0;
-};
+    bool isAggregatedEventMode() const { return aggregatedEventsMode; }
+    void setAggregatedEventMode(bool mode) { aggregatedEventsMode = mode; }
+    std::optional<size_t> obtainForImmediateSplit(Context *context, size_t maxEventCountInPool);
+    void releaseResources();
+    std::lock_guard<std::mutex> obtainLock() { return std::lock_guard<std::mutex>(mtx); }
+    void resetAggregatedEventState(size_t index, bool markerCompleted);
+    const BcsSplitParams::EventsResources &getEventResources() const { return eventResources; }
 
-using CopyParams = std::variant<MemCopy, RegionCopy>;
-} // namespace BcsSplitParams
-
-struct BcsSplitEvents {
-    BcsSplit &bcsSplit;
-
-    std::mutex mtx;
-    std::vector<EventPool *> pools;
-    std::vector<Event *> barrier;
-    std::vector<Event *> subcopy;
-    std::vector<Event *> marker;
-    std::vector<void *> allocsForAggregatedEvents;
-    size_t currentAggregatedAllocOffset = 0;
-    size_t createdFromLatestPool = 0u;
-    bool aggregatedEventsMode = false;
-
-    std::optional<size_t> obtainForSplit(Context *context, size_t maxEventCountInPool);
+  protected:
     size_t obtainAggregatedEventsForSplit(Context *context);
     void resetEventPackage(size_t index);
-    void resetAggregatedEventState(size_t index, bool markerCompleted);
-    void releaseResources();
     bool allocatePool(Context *context, size_t maxEventCountInPool, size_t neededEvents);
     std::optional<size_t> createFromPool(Context *context, size_t maxEventCountInPool);
     size_t createAggregatedEvent(Context *context);
     uint64_t *getNextAllocationForAggregatedEvent();
 
-    BcsSplitEvents(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
+    BcsSplit &bcsSplit;
+
+    BcsSplitParams::EventsResources eventResources;
+
+    std::mutex mtx;
+    bool aggregatedEventsMode = false;
 };
 
 class BcsSplit {
   public:
     template <GFXCORE_FAMILY gfxCoreFamily>
-    using AppendCallFuncT = std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, const BcsSplitParams::CopyParams &, size_t, ze_event_handle_t, uint64_t)>;
+    using AppendCallFuncT = std::function<ze_result_t(CommandListCoreFamily<gfxCoreFamily> *, const BcsSplitParams::CopyParams &, size_t, ze_event_handle_t, uint64_t)>;
 
     template <typename GfxFamily>
     static constexpr size_t maxEventCountInPool = MemoryConstants::pageSize64k / sizeof(typename GfxFamily::TimestampPacketType);
-
-    static constexpr size_t csrContainerSize = 12;
-
-    using CsrContainer = StackVec<NEO::CommandStreamReceiver *, csrContainerSize>;
-    using CmdListsForSplitContainer = StackVec<L0::CommandList *, csrContainerSize>;
 
     BcsSplitEvents events;
 
@@ -90,23 +71,23 @@ class BcsSplit {
     std::vector<CommandList *> d2hCmdLists;
 
     template <GFXCORE_FAMILY gfxCoreFamily>
-    ze_result_t appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
-                                const BcsSplitParams::CopyParams &copyParams,
-                                size_t size,
-                                ze_event_handle_t hSignalEvent,
-                                uint32_t numWaitEvents,
-                                ze_event_handle_t *phWaitEvents,
-                                bool performMigration,
-                                bool hasRelaxedOrderingDependencies,
-                                NEO::TransferDirection direction,
-                                size_t estimatedCmdBufferSize,
-                                AppendCallFuncT<gfxCoreFamily> appendCall);
+    ze_result_t appendImmediateSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
+                                         const BcsSplitParams::CopyParams &copyParams,
+                                         size_t size,
+                                         ze_event_handle_t hSignalEvent,
+                                         uint32_t numWaitEvents,
+                                         ze_event_handle_t *phWaitEvents,
+                                         bool performMigration,
+                                         bool hasRelaxedOrderingDependencies,
+                                         NEO::TransferDirection direction,
+                                         size_t estimatedCmdBufferSize,
+                                         AppendCallFuncT<gfxCoreFamily> appendCall);
 
     bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled);
     void releaseResources();
     Device &getDevice() const { return device; }
 
-    CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
+    BcsSplitParams::CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
 
     BcsSplit(Device &device) : events(*this), device(device){};
 

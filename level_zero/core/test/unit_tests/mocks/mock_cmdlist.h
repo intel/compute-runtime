@@ -211,6 +211,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
+    using BaseClass::bcsSplitMode;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
@@ -247,7 +248,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::inOrderPatchCmds;
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
-    using BaseClass::isBcsSplitNeeded;
     using BaseClass::isCopyOffloadAllowed;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
@@ -312,6 +312,7 @@ template <>
 struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
     using BaseClass::BaseClass;
+    using BaseClass::bcsSplitMode;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
@@ -340,7 +341,6 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::initialize;
     using BaseClass::inOrderExecInfo;
     using BaseClass::interruptEvents;
-    using BaseClass::isBcsSplitNeeded;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::l3FlushAfterPostSyncEnabled;
@@ -660,7 +660,7 @@ struct Mock<CommandList> : public CommandList {
 
     ADDMETHOD_NOBASE(getDeviceHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t * phDevice));
     ADDMETHOD_NOBASE(getContextHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_context_handle_t * phContext));
-    ADDMETHOD_NOBASE(getOrdinal, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pOrdinal));
+    ADDMETHOD_CONST_NOBASE(getOrdinal, uint32_t, ZE_RESULT_SUCCESS, (void));
     ADDMETHOD_NOBASE(appendHostFunction, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *pHostFunction,
                       void *pUserData,

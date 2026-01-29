@@ -365,7 +365,7 @@ using BcsSplitAubTests = Test<BcsSplitAubFixture<1>>;
 
 HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
     auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
-    if (!whiteboxCmdList->isBcsSplitNeeded) {
+    if (!whiteboxCmdList->isBcsSplitEnabled()) {
         GTEST_SKIP();
     }
 
@@ -507,7 +507,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
 
     auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
     EXPECT_TRUE(whiteboxCmdList->isCopyOffloadEnabled());
-    EXPECT_TRUE(whiteboxCmdList->isBcsSplitNeeded);
+    EXPECT_TRUE(whiteboxCmdList->isBcsSplitEnabled());
 
     size_t bufferSize = whiteboxCmdList->minimalSizeForBcsSplit;
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,

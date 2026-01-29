@@ -22,6 +22,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
+#include "level_zero/core/source/device/bcs_split_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
@@ -225,7 +226,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) = 0;
     virtual ze_result_t getContextHandle(ze_context_handle_t *phContext) = 0;
-    virtual ze_result_t getOrdinal(uint32_t *pOrdinal) = 0;
+    virtual uint32_t getOrdinal() const = 0;
     virtual ze_result_t getImmediateIndex(uint32_t *pIndex) = 0;
     virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate) = 0;
 
@@ -566,6 +567,8 @@ struct CommandList : _ze_command_list_handle_t {
                       size_t sizeOfComparison,
                       uint32_t comparisonMode) const;
 
+    bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -638,6 +641,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     CommandListType cmdListType = CommandListType::typeRegular;
     CopyOffloadMode copyOffloadMode = CopyOffloadModes::disabled;
+    BcsSplitParams::BcsSplitMode bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
@@ -650,7 +654,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool isTbxMode = false;
     bool commandListSLMEnabled = false;
     bool requiresQueueUncachedMocs = false;
-    bool isBcsSplitNeeded = false;
     bool immediateCmdListHeapSharing = false;
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;

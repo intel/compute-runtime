@@ -1198,7 +1198,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto copyOffloadEnabled = !device->getGfxCoreHelper().crossEngineCacheFlushRequired() && device->getProductHelper().blitEnqueuePreferred(false);
     EXPECT_EQ(copyOffloadEnabled, commandList1->isCopyOffloadEnabled());
-    EXPECT_EQ(commandList1->isCopyOffloadEnabled(), mockCmdList1->isBcsSplitNeeded);
+    EXPECT_EQ(commandList1->isCopyOffloadEnabled(), mockCmdList1->isBcsSplitEnabled());
 
     debugManager.flags.SplitBcsForCopyOffload.set(0);
 
@@ -1207,7 +1207,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_FALSE(mockCmdList2->isBcsSplitNeeded);
+    EXPECT_FALSE(mockCmdList2->isBcsSplitEnabled());
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCalledThenDontProgramBarriers, IsAtLeastXeHpcCore) {
@@ -1256,7 +1256,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenEventAllocationWhenAppendCalledThenMakeR
 
     cmdList->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
 
-    auto eventAlloc = bcsSplit->events.subcopy[0]->getInOrderExecInfo()->getDeviceCounterAllocation();
+    auto eventAlloc = bcsSplit->events.getEventResources().subcopy[0]->getInOrderExecInfo()->getDeviceCounterAllocation();
 
     for (auto &subCmdList : bcsSplit->cmdLists) {
         auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(subCmdList);
@@ -1286,8 +1286,8 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, event->toHandle(), 0, nullptr, copyParams);
 
-    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.subcopy.empty());
-    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.marker.empty());
+    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.getEventResources().subcopy.empty());
+    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.getEventResources().marker.empty());
 
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(mainCmdStream->getCpuBase(), mainOffset), (mainCmdStream->getUsed() - mainOffset)));
@@ -1325,8 +1325,8 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, event2->toHandle(), 0, nullptr, copyParams);
 
-    EXPECT_FALSE(bcsSplit->events.subcopy.empty());
-    EXPECT_FALSE(bcsSplit->events.marker.empty());
+    EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy.empty());
+    EXPECT_FALSE(bcsSplit->events.getEventResources().marker.empty());
 
     context->freeMem(ptr);
     context->freeMem(reinterpret_cast<void *>(devAddress));
@@ -1396,70 +1396,70 @@ HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhen
 
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
-    EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.aggregatedEventsMode);
+    EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.isAggregatedEventMode());
 
     bcsSplit.releaseResources();
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
-    EXPECT_EQ(0u, bcsSplit->events.subcopy.size());
-    EXPECT_TRUE(bcsSplit->events.aggregatedEventsMode);
+    EXPECT_EQ(0u, bcsSplit->events.getEventResources().subcopy.size());
+    EXPECT_TRUE(bcsSplit->events.isAggregatedEventMode());
 
     const auto deviceIncValue = static_cast<uint64_t>(device->getAggregatedCopyOffloadIncrementValue());
     const auto subCopySplitValue = deviceIncValue / static_cast<uint64_t>(bcsSplit->cmdLists.size());
 
     for (size_t i = 0; i < 8; i++) {
-        auto index = bcsSplit->events.obtainForSplit(context, 123);
+        auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(i, *index);
 
-        EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
-        EXPECT_FALSE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        EXPECT_TRUE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-        EXPECT_EQ(subCopySplitValue, bcsSplit->events.subcopy[i]->getInOrderIncrementValue(1));
-        EXPECT_EQ(deviceIncValue, bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+        EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_TRUE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+        EXPECT_EQ(subCopySplitValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderIncrementValue(1));
+        EXPECT_EQ(deviceIncValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecBaseSignalValue());
 
-        EXPECT_EQ(nullptr, bcsSplit->events.marker[i]->getInOrderExecInfo());
-        EXPECT_TRUE(bcsSplit->events.marker[i]->isCounterBased());
-        EXPECT_TRUE(bcsSplit->events.marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        EXPECT_FALSE(bcsSplit->events.marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+        EXPECT_EQ(nullptr, bcsSplit->events.getEventResources().marker[i]->getInOrderExecInfo());
+        EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i]->isCounterBased());
+        EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_FALSE(bcsSplit->events.getEventResources().marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
 
-        // already reserved for this obtainForSplit() call
-        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus(0));
+        // already reserved for this obtainForImmediateSplit() call
+        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.getEventResources().marker[i]->queryStatus(0));
 
-        EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
-        EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
-        EXPECT_EQ(8u, bcsSplit->events.marker.size());
-        EXPECT_EQ(0u, bcsSplit->events.barrier.size());
+        EXPECT_EQ(8u, bcsSplit->events.getEventResources().subcopy.size());
+        EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
+        EXPECT_EQ(8u, bcsSplit->events.getEventResources().marker.size());
+        EXPECT_EQ(0u, bcsSplit->events.getEventResources().barrier.size());
     }
 
-    auto index = bcsSplit->events.obtainForSplit(context, 123);
+    auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
     ASSERT_TRUE(index.has_value());
     EXPECT_EQ(8u, *index);
-    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
-    EXPECT_EQ(16u, bcsSplit->events.marker.size());
-    EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
+    EXPECT_EQ(16u, bcsSplit->events.getEventResources().marker.size());
+    EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
 
     for (size_t i = 0; i < 16; i++) {
-        EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
 
         if (i <= 8) {
-            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus(0));
+            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.getEventResources().marker[i]->queryStatus(0));
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.marker[i]->queryStatus(0));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.getEventResources().marker[i]->queryStatus(0));
         }
     }
 
     bcsSplit->events.resetAggregatedEventState(1, true);
 
-    index = bcsSplit->events.obtainForSplit(context, 123);
+    index = bcsSplit->events.obtainForImmediateSplit(context, 123);
     ASSERT_TRUE(index.has_value());
     EXPECT_EQ(1u, *index);
-    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
-    EXPECT_EQ(16u, bcsSplit->events.marker.size());
-    EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
+    EXPECT_EQ(16u, bcsSplit->events.getEventResources().marker.size());
+    EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
 
-    for (auto &event : bcsSplit->events.subcopy) {
+    for (auto &event : bcsSplit->events.getEventResources().subcopy) {
         EXPECT_TRUE(event->isCounterBased());
         EXPECT_EQ(subCopySplitValue, event->getInOrderIncrementValue(1));
         EXPECT_EQ(deviceIncValue, event->getInOrderExecSignalValueWithSubmissionCounter());
@@ -1467,38 +1467,40 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssignNewDeviceAlloc, IsAtLeastXeHpcCore) {
-    auto index = bcsSplit->events.obtainForSplit(context, 123);
-    EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
-    ASSERT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
-    auto alloc = bcsSplit->events.allocsForAggregatedEvents[0];
+    auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
+    EXPECT_EQ(8u, bcsSplit->events.getEventResources().subcopy.size());
+    ASSERT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
+    auto alloc = bcsSplit->events.getEventResources().allocsForAggregatedEvents[0];
 
-    for (size_t i = 0; i < bcsSplit->events.subcopy.size(); i++) {
-        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+    for (size_t i = 0; i < bcsSplit->events.getEventResources().subcopy.size(); i++) {
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
     }
 
-    bcsSplit->events.currentAggregatedAllocOffset = MemoryConstants::pageSize64k - (MemoryConstants::cacheLineSize - 1);
+    auto &eventResource = const_cast<BcsSplitParams::EventsResources &>(bcsSplit->events.getEventResources());
 
-    while (bcsSplit->events.subcopy.size() == 8) {
-        index = bcsSplit->events.obtainForSplit(context, 123);
+    eventResource.currentAggregatedAllocOffset = MemoryConstants::pageSize64k - (MemoryConstants::cacheLineSize - 1);
+
+    while (bcsSplit->events.getEventResources().subcopy.size() == 8) {
+        index = bcsSplit->events.obtainForImmediateSplit(context, 123);
     }
 
-    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
     EXPECT_EQ(8u, *index);
 
-    ASSERT_EQ(2u, bcsSplit->events.allocsForAggregatedEvents.size());
-    auto alloc2 = bcsSplit->events.allocsForAggregatedEvents[1];
+    ASSERT_EQ(2u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
+    auto alloc2 = bcsSplit->events.getEventResources().allocsForAggregatedEvents[1];
 
     for (size_t i = 0; i < 8; i++) {
-        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
     }
 
     for (size_t i = 8; i < 16; i++) {
         auto offset = MemoryConstants::cacheLineSize * (i - 8);
 
-        EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+        EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
     }
 }
 
@@ -1509,19 +1511,18 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[0]->getInOrderExecInfo().get());
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[0]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0]->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[1]->getInOrderExecInfo().get());
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[1]->getInOrderExecBaseSignalValue());
-
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[1]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[1]->getInOrderExecBaseSignalValue());
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(nullptr, bcsSplit->events.marker[2]->getInOrderExecInfo().get());
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[0]->getInOrderExecInfo().get());
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(nullptr, bcsSplit->events.getEventResources().marker[2]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[0]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0]->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
 
@@ -1604,10 +1605,10 @@ HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThe
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(remoteAlloc, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0]->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, remoteAlloc, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[1]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[1]->getInOrderExecBaseSignalValue());
 
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
@@ -1620,6 +1621,7 @@ struct MultiTileAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
         expectedTileCount = 2;
         expectedEnginesCount *= expectedTileCount;
         debugManager.flags.CreateMultipleSubDevices.set(expectedTileCount);
+        debugManager.flags.EnableImplicitScaling.set(1);
         AggregatedBcsSplitTests::SetUp();
         EXPECT_EQ(expectedTileCount, device->getNEODevice()->getNumSubDevices());
     }
@@ -1639,6 +1641,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThe
             auto &osContext = static_cast<CommandListImp *>(bcsSplit->cmdLists[engineId])->getCsr(false)->getOsContext();
             EXPECT_EQ(expectedEngineType, osContext.getEngineType());
             EXPECT_EQ(1u << tileId, osContext.getDeviceBitfield().to_ulong());
+            EXPECT_TRUE(bcsSplit->cmdLists[engineId]->getOrdinal() > 0);
         }
     }
 }
@@ -1655,7 +1658,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
     auto mockCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
     mockCmdList->useAdditionalBlitProperties = false;
 
-    if (!mockCmdList->isBcsSplitNeeded) {
+    if (!mockCmdList->isBcsSplitEnabled()) {
         GTEST_SKIP();
     }
 

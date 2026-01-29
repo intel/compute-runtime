@@ -37,7 +37,7 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     this->captureTargetDesc.desc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     this->captureTargetDesc.desc.pNext = nullptr;
     this->captureTargetDesc.desc.flags = captureSrc.getCmdListFlags();
-    captureSrc.getOrdinal(&this->captureTargetDesc.desc.commandQueueGroupOrdinal);
+    this->captureTargetDesc.desc.commandQueueGroupOrdinal = captureSrc.getOrdinal();
     if (isSubGraph) {
         this->executionTarget = &captureSrc;
     }

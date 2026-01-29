@@ -473,6 +473,8 @@ struct CommandListCoreFamily : public CommandListImp {
 
     bool isCopyOffloadForFillOrStagingPreferred() const;
 
+    void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     bool latestOperationHasHeapfullCbEventWithProfiling = false;

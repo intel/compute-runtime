@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,8 @@ ze_result_t ZE_APICALL zeCommandListGetContextHandle(
 ze_result_t ZE_APICALL zeCommandListGetOrdinal(
     ze_command_list_handle_t hCommandList,
     uint32_t *pOrdinal) {
-    return L0::CommandList::fromHandle(hCommandList)->getOrdinal(pOrdinal);
+    *pOrdinal = L0::CommandList::fromHandle(hCommandList)->getOrdinal();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(

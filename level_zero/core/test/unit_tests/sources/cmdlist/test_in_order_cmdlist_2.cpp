@@ -4276,7 +4276,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
 
         auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
-        cmdList->isBcsSplitNeeded = bcsSplit->setupDevice(cmdList->getCsr(false), false);
+        cmdList->bcsSplitMode = bcsSplit->setupDevice(cmdList->getCsr(false), false) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
 
         return cmdList;
     }
@@ -4304,7 +4304,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
 
     auto counterGpuAddress = inOrderExecInfo->getBaseDeviceAddress();
 
-    bool aggregatedEventSplit = bcsSplit->events.aggregatedEventsMode;
+    bool aggregatedEventSplit = bcsSplit->events.isAggregatedEventMode();
 
     for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
         auto subCmdStream = bcsSplit->cmdLists[i]->getCmdContainer().getCommandStream();
@@ -4318,9 +4318,9 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         uint64_t signalSubCopyEventGpuVa = 0;
 
         if (aggregatedEventSplit) {
-            signalSubCopyEventGpuVa = bcsSplit->events.subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
+            signalSubCopyEventGpuVa = bcsSplit->events.getEventResources().subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
         } else {
-            signalSubCopyEventGpuVa = bcsSplit->events.subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
+            signalSubCopyEventGpuVa = bcsSplit->events.getEventResources().subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
         }
 
         size_t numExpectedSemaphores = 0;
@@ -4414,7 +4414,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-        while (bcsSplit->events.subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
+        while (bcsSplit->events.getEventResources().subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
             semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
             ASSERT_NE(cmdList.end(), semaphoreItor);
 
@@ -4427,7 +4427,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
             ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-            EXPECT_EQ(bcsSplit->events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
 
             itor = ++semaphoreItor;
         }
@@ -4516,14 +4516,14 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
 
     auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
-    for (auto &event : bcsSplit->events.barrier) {
+    for (auto &event : bcsSplit->events.getEventResources().barrier) {
         EXPECT_FALSE(event->isCounterBased());
     }
-    for (auto &event : bcsSplit->events.subcopy) {
-        EXPECT_EQ(bcsSplit->events.aggregatedEventsMode, event->isCounterBased());
+    for (auto &event : bcsSplit->events.getEventResources().subcopy) {
+        EXPECT_EQ(bcsSplit->events.isAggregatedEventMode(), event->isCounterBased());
     }
-    for (auto &event : bcsSplit->events.marker) {
-        EXPECT_EQ(bcsSplit->events.aggregatedEventsMode, event->isCounterBased());
+    for (auto &event : bcsSplit->events.getEventResources().marker) {
+        EXPECT_EQ(bcsSplit->events.isAggregatedEventMode(), event->isCounterBased());
     }
 }
 

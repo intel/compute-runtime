@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ struct CommandListImp : public CommandList {
 
     ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) override;
     ze_result_t getContextHandle(ze_context_handle_t *phContext) override;
-    ze_result_t getOrdinal(uint32_t *pOrdinal) override;
+    uint32_t getOrdinal() const override;
     ze_result_t getImmediateIndex(uint32_t *pIndex) override;
     ze_result_t isImmediate(ze_bool_t *pIsImmediate) override;
 

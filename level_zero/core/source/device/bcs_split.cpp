@@ -47,7 +47,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
         return true;
     }
 
-    events.aggregatedEventsMode = NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled());
+    events.setAggregatedEventMode(NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled()));
 
     setupEnginesMask();
 
@@ -55,7 +55,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
 }
 
 bool BcsSplit::setupQueues() {
-    CsrContainer csrs;
+    BcsSplitParams::CsrContainer csrs;
 
     for (uint32_t tileId = 0; tileId < splitSettings.requiredTileCount; tileId++) {
         auto subDevice = this->device.getNEODevice()->getNearestGenericSubDevice(tileId);
@@ -79,16 +79,34 @@ bool BcsSplit::setupQueues() {
         return false;
     }
 
-    ze_command_queue_flags_t flags = events.aggregatedEventsMode ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
-    const ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .flags = flags, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
+    ze_command_queue_flags_t flags = events.isAggregatedEventMode() ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
+    ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .flags = flags, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
     auto productFamily = this->device.getHwInfo().platform.eProductFamily;
 
     for (const auto &csr : csrs) {
         ze_result_t result;
-        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, NEO::EngineHelpers::engineTypeToEngineGroupType(csr->getOsContext().getEngineType()), csr, result);
+
+        auto engineGroupType = NEO::EngineHelpers::engineTypeToEngineGroupType(csr->getOsContext().getEngineType());
+        device.getNEODevice()->getProductHelper().adjustEngineGroupType(engineGroupType);
+
+        const auto &regularEngines = device.getNEODevice()->getRegularEngineGroups();
+        auto ordinalIt = std::find_if(regularEngines.cbegin(), regularEngines.cend(), [engineGroupType](const NEO::EngineGroupT &engineGroup) { return (engineGroup.engineGroupType == engineGroupType); });
+
+        if (ordinalIt == regularEngines.cend()) {
+            const auto &subDeviceCopyEngineGroups = device.getSubDeviceCopyEngineGroups();
+            ordinalIt = std::find_if(subDeviceCopyEngineGroups.cbegin(), subDeviceCopyEngineGroups.cend(), [engineGroupType](const NEO::EngineGroupT &engineGroup) { return (engineGroup.engineGroupType == engineGroupType); });
+            UNRECOVERABLE_IF(ordinalIt == subDeviceCopyEngineGroups.cend());
+
+            splitDesc.ordinal = static_cast<uint32_t>(std::distance(subDeviceCopyEngineGroups.cbegin(), ordinalIt) + regularEngines.size());
+        } else {
+            splitDesc.ordinal = static_cast<uint32_t>(std::distance(regularEngines.cbegin(), ordinalIt));
+        }
+
+        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, engineGroupType, csr, result);
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         cmdList->forceDisableInOrderWaits();
+        cmdList->setOrdinal(splitDesc.ordinal);
 
         this->cmdLists.push_back(cmdList);
 
@@ -138,7 +156,7 @@ std::vector<CommandList *> &BcsSplit::selectCmdLists(NEO::TransferDirection dire
     return cmdLists;
 }
 
-BcsSplit::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize) {
+BcsSplitParams::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize) {
     auto &selectedCmdListType = selectCmdLists(direction);
 
     size_t maxEnginesToUse = std::max(totalTransferSize / splitSettings.perEngineMaxSize, size_t(1));
@@ -148,7 +166,7 @@ BcsSplit::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferD
 }
 
 uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEvent, bool useSignalEventForSplit, size_t engineCountForSplit) {
-    if (!events.aggregatedEventsMode) {
+    if (!events.isAggregatedEventMode()) {
         return 0;
     }
 
@@ -162,8 +180,8 @@ uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEve
 }
 
 size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {
-    for (size_t i = 0; i < this->marker.size(); i++) {
-        if (this->marker[i]->queryStatus(0) == ZE_RESULT_SUCCESS) {
+    for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
+        if (this->eventResources.marker[i]->queryStatus(0) == ZE_RESULT_SUCCESS) {
             resetAggregatedEventState(i, false);
             return i;
         }
@@ -172,15 +190,15 @@ size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {
     return this->createAggregatedEvent(context);
 }
 
-std::optional<size_t> BcsSplitEvents::obtainForSplit(Context *context, size_t maxEventCountInPool) {
-    std::lock_guard<std::mutex> lock(this->mtx);
+std::optional<size_t> BcsSplitEvents::obtainForImmediateSplit(Context *context, size_t maxEventCountInPool) {
+    auto lock = obtainLock();
 
     if (this->aggregatedEventsMode) {
         return obtainAggregatedEventsForSplit(context);
     }
 
-    for (size_t i = 0; i < this->marker.size(); i++) {
-        auto ret = this->marker[i]->queryStatus(0);
+    for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
+        auto ret = this->eventResources.marker[i]->queryStatus(0);
         if (ret == ZE_RESULT_SUCCESS) {
             this->resetEventPackage(i);
             return i;
@@ -188,11 +206,11 @@ std::optional<size_t> BcsSplitEvents::obtainForSplit(Context *context, size_t ma
     }
 
     auto newEventIndex = this->createFromPool(context, maxEventCountInPool);
-    if (newEventIndex.has_value() || this->marker.empty()) {
+    if (newEventIndex.has_value() || this->eventResources.marker.empty()) {
         return newEventIndex;
     }
 
-    this->marker[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    this->eventResources.marker[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
     this->resetEventPackage(0);
     return 0;
 }
@@ -200,8 +218,8 @@ std::optional<size_t> BcsSplitEvents::obtainForSplit(Context *context, size_t ma
 uint64_t *BcsSplitEvents::getNextAllocationForAggregatedEvent() {
     constexpr size_t allocationSize = MemoryConstants::pageSize64k;
 
-    if (!this->allocsForAggregatedEvents.empty() && (currentAggregatedAllocOffset + MemoryConstants::cacheLineSize) < allocationSize) {
-        currentAggregatedAllocOffset += MemoryConstants::cacheLineSize;
+    if (!this->eventResources.allocsForAggregatedEvents.empty() && (eventResources.currentAggregatedAllocOffset + MemoryConstants::cacheLineSize) < allocationSize) {
+        eventResources.currentAggregatedAllocOffset += MemoryConstants::cacheLineSize;
     } else {
         ze_device_mem_alloc_desc_t desc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
         void *ptr = nullptr;
@@ -210,19 +228,19 @@ uint64_t *BcsSplitEvents::getNextAllocationForAggregatedEvent() {
 
         context->allocDeviceMem(bcsSplit.getDevice().toHandle(), &desc, allocationSize, MemoryConstants::pageSize64k, &ptr);
         UNRECOVERABLE_IF(!ptr);
-        currentAggregatedAllocOffset = 0;
+        eventResources.currentAggregatedAllocOffset = 0;
 
-        this->allocsForAggregatedEvents.push_back(ptr);
+        this->eventResources.allocsForAggregatedEvents.push_back(ptr);
     }
 
-    auto basePtr = reinterpret_cast<uint64_t *>(this->allocsForAggregatedEvents.back());
+    auto basePtr = reinterpret_cast<uint64_t *>(this->eventResources.allocsForAggregatedEvents.back());
 
-    return ptrOffset(basePtr, currentAggregatedAllocOffset);
+    return ptrOffset(basePtr, eventResources.currentAggregatedAllocOffset);
 }
 
 size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
     constexpr int preallocationCount = 8;
-    size_t returnIndex = this->subcopy.size();
+    size_t returnIndex = this->eventResources.subcopy.size();
 
     const auto deviceIncValue = static_cast<uint64_t>(bcsSplit.getDevice().getAggregatedCopyOffloadIncrementValue());
     const auto engineCount = static_cast<uint64_t>(bcsSplit.cmdLists.size());
@@ -235,11 +253,11 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
 
     const zex_counter_based_event_desc_t counterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
                                                              .pNext = &externalStorageAllocProperties,
-                                                             .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
+                                                             .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE,
                                                              .signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE};
 
     const zex_counter_based_event_desc_t markerCounterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
-                                                                   .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE,
+                                                                   .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE,
                                                                    .signalScope = ZE_EVENT_SCOPE_FLAG_HOST};
 
     for (int i = 0; i < preallocationCount; i++) {
@@ -249,23 +267,23 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
         zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
         UNRECOVERABLE_IF(handle == nullptr);
 
-        this->subcopy.push_back(Event::fromHandle(handle));
+        this->eventResources.subcopy.push_back(Event::fromHandle(handle));
 
         ze_event_handle_t markerHandle = nullptr;
         zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
         UNRECOVERABLE_IF(markerHandle == nullptr);
 
-        this->marker.push_back(Event::fromHandle(markerHandle));
+        this->eventResources.marker.push_back(Event::fromHandle(markerHandle));
 
-        resetAggregatedEventState(this->subcopy.size() - 1, (i != 0));
+        resetAggregatedEventState(this->eventResources.subcopy.size() - 1, (i != 0));
     }
 
     return returnIndex;
 }
 
 bool BcsSplitEvents::allocatePool(Context *context, size_t maxEventCountInPool, size_t neededEvents) {
-    if (this->pools.empty() ||
-        this->createdFromLatestPool + neededEvents > maxEventCountInPool) {
+    if (this->eventResources.pools.empty() ||
+        this->eventResources.createdFromLatestPool + neededEvents > maxEventCountInPool) {
         ze_result_t result;
         ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
         desc.count = static_cast<uint32_t>(maxEventCountInPool);
@@ -274,8 +292,8 @@ bool BcsSplitEvents::allocatePool(Context *context, size_t maxEventCountInPool, 
         if (!pool) {
             return false;
         }
-        this->pools.push_back(pool);
-        this->createdFromLatestPool = 0u;
+        this->eventResources.pools.push_back(pool);
+        this->eventResources.createdFromLatestPool = 0u;
     }
 
     return true;
@@ -294,7 +312,7 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
         return std::nullopt;
     }
 
-    auto pool = this->pools[this->pools.size() - 1];
+    auto pool = this->eventResources.pools[this->eventResources.pools.size() - 1];
     ze_event_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
 
     for (size_t i = 0; i < neededEvents; i++) {
@@ -303,7 +321,7 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
         bool barrierEvent = (i == neededEvents - 2);
 
         desc.signal = markerEvent ? ZE_EVENT_SCOPE_FLAG_HOST : ZE_EVENT_SCOPE_FLAG_DEVICE;
-        desc.index = static_cast<uint32_t>(this->createdFromLatestPool++);
+        desc.index = static_cast<uint32_t>(this->eventResources.createdFromLatestPool++);
 
         ze_event_handle_t hEvent = {};
         pool->createEvent(&desc, &hEvent);
@@ -314,59 +332,58 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
 
         // Last event, created with host scope flag, is marker event.
         if (markerEvent) {
-            this->marker.push_back(event);
+            this->eventResources.marker.push_back(event);
 
             // One event to handle barrier and others to handle subcopy completion.
         } else if (barrierEvent) {
-            this->barrier.push_back(event);
+            this->eventResources.barrier.push_back(event);
         } else {
-            this->subcopy.push_back(event);
+            this->eventResources.subcopy.push_back(event);
         }
     }
 
-    return this->marker.size() - 1;
+    return this->eventResources.marker.size() - 1;
 }
 
 void BcsSplitEvents::resetEventPackage(size_t index) {
-    this->marker[index]->reset();
-    this->barrier[index]->reset();
+    this->eventResources.marker[index]->reset();
+    this->eventResources.barrier[index]->reset();
     for (size_t j = 0; j < this->bcsSplit.cmdLists.size(); j++) {
-        this->subcopy[index * this->bcsSplit.cmdLists.size() + j]->reset();
+        this->eventResources.subcopy[index * this->bcsSplit.cmdLists.size() + j]->reset();
     }
 }
 
 void BcsSplitEvents::resetAggregatedEventState(size_t index, bool markerCompleted) {
-    *this->subcopy[index]->getInOrderExecInfo()->getBaseHostAddress() = 0;
+    *this->eventResources.subcopy[index]->getInOrderExecInfo()->getBaseHostAddress() = 0;
 
-    auto markerEvent = this->marker[index];
+    auto markerEvent = this->eventResources.marker[index];
     markerEvent->resetCompletionStatus();
     markerEvent->unsetInOrderExecInfo();
     markerEvent->setReportEmptyCbEventAsReady(markerCompleted);
 }
 
 void BcsSplitEvents::releaseResources() {
-    for (auto &markerEvent : this->marker) {
+    for (auto &markerEvent : eventResources.marker) {
         markerEvent->destroy();
     }
-    marker.clear();
-    for (auto &subcopyEvent : this->subcopy) {
+    eventResources.marker.clear();
+    for (auto &subcopyEvent : eventResources.subcopy) {
         subcopyEvent->destroy();
     }
-    subcopy.clear();
-    for (auto &barrierEvent : this->barrier) {
+    eventResources.subcopy.clear();
+    for (auto &barrierEvent : eventResources.barrier) {
         barrierEvent->destroy();
     }
-    barrier.clear();
-    for (auto &pool : this->pools) {
+    eventResources.barrier.clear();
+    for (auto &pool : eventResources.pools) {
         pool->destroy();
     }
-    pools.clear();
-
+    eventResources.pools.clear();
     auto context = Context::fromHandle(bcsSplit.getDevice().getDriverHandle()->getDefaultContext());
-    for (auto &ptr : this->allocsForAggregatedEvents) {
+    for (auto &ptr : eventResources.allocsForAggregatedEvents) {
         context->freeMem(ptr);
     }
-    allocsForAggregatedEvents.clear();
+    eventResources.allocsForAggregatedEvents.clear();
 }
 
 } // namespace L0

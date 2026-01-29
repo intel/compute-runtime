@@ -4143,7 +4143,7 @@ inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::Memor
         directionSupported = (1 << static_cast<int32_t>(directionOut)) & NEO::debugManager.flags.SplitBcsTransferDirectionMask.get();
     }
 
-    return (this->isBcsSplitNeeded && (size >= minimalSizeForBcsSplit) && directionSupported);
+    return (this->isBcsSplitEnabled() && (size >= minimalSizeForBcsSplit) && directionSupported);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -5078,6 +5078,22 @@ bool CommandListCoreFamily<gfxCoreFamily>::isKernelUncachedMocsRequired(bool ker
         return false;
     }
     return this->containsStatelessUncachedResource;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize) {
+    memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
+    memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
+    memoryCopyParams.taskCountUpdateRequired = true;
+    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled();
+    copyOffloadFlush = memoryCopyParams.copyOffloadAllowed;
+    hasStallingCmds = !memoryCopyParams.relaxedOrderingDispatch;
+
+    memoryCopyParams.bscSplitEnabled = true;
+    memoryCopyParams.bcsSplitBaseDstPtr = dstPtr;
+    memoryCopyParams.bcsSplitBaseSrcPtr = srcPtr;
+    memoryCopyParams.bcsSplitTotalDstSize = dstSize;
+    memoryCopyParams.bcsSplitTotalSrcSize = srcSize;
 }
 
 } // namespace L0

@@ -178,9 +178,7 @@ TEST_F(CommandListCreate, givenCommandListWithValidOrdinalWhenCallingGetOrdinalT
         EXPECT_NE(nullptr, commandList);
 
         auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
-        uint32_t ordinal = 0;
-        whiteboxCommandList->getOrdinal(&ordinal);
-        EXPECT_EQ(engineGroup, ordinal);
+        EXPECT_EQ(engineGroup, whiteboxCommandList->getOrdinal());
 
         whiteboxCommandList->destroy();
     }

@@ -187,9 +187,8 @@ TEST_F(DefaultDescriptorWithoutBlitterTest, givenDeviceWithoutBlitterSupportWhen
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = CommandList::whiteboxCast(L0::CommandList::fromHandle(hCommandList));
-    uint32_t ordinal = std::numeric_limits<uint32_t>::max();
-    EXPECT_EQ(commandList->getOrdinal(&ordinal), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(ordinal, 0u);
+    EXPECT_EQ(commandList->getOrdinal(), 0u);
+
     uint32_t index = std::numeric_limits<uint32_t>::max();
     EXPECT_EQ(commandList->getImmediateIndex(&index), ZE_RESULT_SUCCESS);
     EXPECT_EQ(index, 0u);

@@ -204,6 +204,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     void createSysmanHandle(bool isSubDevice);
     void populateSubDeviceCopyEngineGroups();
+    const NEO::EngineGroupsT &getSubDeviceCopyEngineGroups() const { return subDeviceCopyEngineGroups; }
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
 
