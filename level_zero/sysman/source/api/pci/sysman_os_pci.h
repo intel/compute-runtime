@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class OsPci {
     virtual ze_result_t getState(zes_pci_state_t *state) = 0;
     virtual ze_result_t getStats(zes_pci_stats_t *stats) = 0;
     virtual ze_result_t getProperties(zes_pci_properties_t *properties) = 0;
-    virtual ze_result_t pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) = 0;
+    virtual ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) = 0;
     virtual bool resizableBarSupported() = 0;
     virtual bool resizableBarEnabled(uint32_t barIndex) = 0;
     virtual ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetState(invalidHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetBars(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciGetStats(invalidHandle, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciLinkSpeedUpdateExp(invalidHandle, true, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::pciLinkSpeedUpdate(invalidHandle, true, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::schedulerGet(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::rasGet(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::memoryGet(invalidHandle, &count, nullptr));

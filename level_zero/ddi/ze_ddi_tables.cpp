@@ -401,6 +401,7 @@ DriverDispatch::DriverDispatch() {
     this->sysmanDevice.pfnPciGetState = L0::zesDevicePciGetState;
     this->sysmanDevice.pfnPciGetBars = L0::zesDevicePciGetBars;
     this->sysmanDevice.pfnPciGetStats = L0::zesDevicePciGetStats;
+    this->sysmanDevice.pfnPciLinkSpeedUpdateExt = L0::zesDevicePciLinkSpeedUpdateExt;
     this->sysmanDevice.pfnEnumDiagnosticTestSuites = L0::zesDeviceEnumDiagnosticTestSuites;
     this->sysmanDevice.pfnEnumEngineGroups = L0::zesDeviceEnumEngineGroups;
     this->sysmanDevice.pfnEventRegister = L0::zesDeviceEventRegister;

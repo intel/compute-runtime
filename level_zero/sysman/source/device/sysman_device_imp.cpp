@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,8 +198,8 @@ ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties
     return pPci->pciGetInitializedBars(pCount, pProperties);
 }
 
-ze_result_t SysmanDeviceImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
-    return pPci->pciLinkSpeedUpdateExp(downgradeUpgrade, pendingAction);
+ze_result_t SysmanDeviceImp::pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    return pPci->pciLinkSpeedUpdate(downgradeUpgrade, pendingAction);
 }
 
 ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {

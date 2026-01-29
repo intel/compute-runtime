@@ -74,11 +74,31 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentW
     delete tempPciImp;
 }
 
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingZesDevicePciLinkSpeedUpdateExtThenVerifyApiCallReturnFailure, IsBMG) {
+    L0::Sysman::PciImp *tempPciImp = new L0::Sysman::PciImp(pOsSysman);
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    tempPciImp->init();
+
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
+
+    delete tempPciImp;
+}
+
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpThenVerifyApiCallSucceed, IsBMG) {
     ze_bool_t downgradeUpgrade = true;
     zes_device_action_t pendingAction = {};
     pSysfsAccess->mockpcieDowngradeStatus = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDevicePciLinkSpeedUpdateExp(device, downgradeUpgrade, &pendingAction));
+    EXPECT_EQ(ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT, pendingAction);
+}
+
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtThenVerifyApiCallSucceed, IsBMG) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    pSysfsAccess->mockpcieDowngradeStatus = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
     EXPECT_EQ(ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT, pendingAction);
 }
 
@@ -90,11 +110,26 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevi
     EXPECT_EQ(ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT, pendingAction);
 }
 
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtAndAttemptingUpgradeThenVerifyApiCallSucceed, IsBMG) {
+    ze_bool_t downgradeUpgrade = false;
+    zes_device_action_t pendingAction = {};
+    pSysfsAccess->mockpcieDowngradeStatus = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
+    EXPECT_EQ(ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT, pendingAction);
+}
+
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpAndFwUtilsGetGfspConfigCallFailsThenVerifyApiCallFails, IsBMG) {
     ze_bool_t downgradeUpgrade = true;
     zes_device_action_t pendingAction = {};
     pMockFwInterface->mockFwGetGfspConfigResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDevicePciLinkSpeedUpdateExp(device, downgradeUpgrade, &pendingAction));
+}
+
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtAndFwUtilsGetGfspConfigCallFailsThenVerifyApiCallFails, IsBMG) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    pMockFwInterface->mockFwGetGfspConfigResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
 }
 
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpAndFwUtilsSetGfspConfigCallFailsThenVerifyApiCallFails, IsBMG) {
@@ -104,11 +139,25 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevi
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDevicePciLinkSpeedUpdateExp(device, downgradeUpgrade, &pendingAction));
 }
 
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtAndFwUtilsSetGfspConfigCallFailsThenVerifyApiCallFails, IsBMG) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    pMockFwInterface->mockFwSetGfspConfigResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
+}
+
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpAndSysfsReadFailsThenVerifyApiCallFails, IsBMG) {
     ze_bool_t downgradeUpgrade = true;
     zes_device_action_t pendingAction = {};
     pSysfsAccess->mockReadFailure = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDevicePciLinkSpeedUpdateExp(device, downgradeUpgrade, &pendingAction));
+}
+
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtAndSysfsReadFailsThenVerifyApiCallFails, IsBMG) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    pSysfsAccess->mockReadFailure = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
 }
 
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePciLinkSpeedUpdateExpAndCurrentAndPendingStatesAreSameThenCorrectPendingActionIsReturned, IsBMG) {
@@ -117,6 +166,15 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesIntelDevi
     pSysfsAccess->mockpcieDowngradeStatus = 1;
     pMockFwInterface->mockBuf = {2, 0, 0, 0};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDevicePciLinkSpeedUpdateExp(device, downgradeUpgrade, &pendingAction));
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, pendingAction);
+}
+
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtAndCurrentAndPendingStatesAreSameThenCorrectPendingActionIsReturned, IsBMG) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    pSysfsAccess->mockpcieDowngradeStatus = 1;
+    pMockFwInterface->mockBuf = {2, 0, 0, 0};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
     EXPECT_EQ(ZES_DEVICE_ACTION_NONE, pendingAction);
 }
 

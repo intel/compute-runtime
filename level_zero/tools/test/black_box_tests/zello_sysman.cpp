@@ -116,6 +116,7 @@ void usage() {
                  "\n"
                  "\n OPTIONS:"
                  "\n  -p,   --pci                                                                       selectively run pci black box test"
+                 "\n        [--downgrade <deviceNo> <0/1>]                                              optionally set PCI link speed downgrade (0=disable, 1=enable) for particular device"
                  "\n  -f,   --frequency                                                                 selectively run frequency black box test"
                  "\n  -s,   --standby                                                                   selectively run standby black box test"
                  "\n  -e,   --engine                                                                    selectively run engine black box test"
@@ -633,12 +634,45 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
     }
 }
 
-void testSysmanPci(ze_device_handle_t &device) {
+std::string getDeviceActionString(zes_device_action_t action) {
+    static const std::map<zes_device_action_t, std::string> deviceActionMap{
+        {ZES_DEVICE_ACTION_NONE, "ZES_DEVICE_ACTION_NONE"},
+        {ZES_DEVICE_ACTION_WARM_CARD_RESET, "ZES_DEVICE_ACTION_WARM_CARD_RESET"},
+        {ZES_DEVICE_ACTION_COLD_CARD_RESET, "ZES_DEVICE_ACTION_COLD_CARD_RESET"},
+        {ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT, "ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT"}};
+    auto i = deviceActionMap.find(action);
+    if (i == deviceActionMap.end()) {
+        return "Unknown device action";
+    } else {
+        return deviceActionMap.at(action);
+    }
+}
+
+void setPciDowngrade(ze_device_handle_t &device, std::vector<std::string> &buf) {
+    ze_bool_t shouldDowngrade = static_cast<ze_bool_t>(std::stoi(buf[2]));
+    zes_device_action_t pendingAction = ZES_DEVICE_ACTION_NONE;
+
+    if (verbose) {
+        std::cout << "Setting PCI link speed downgrade to " << (shouldDowngrade ? "enabled" : "disabled") << std::endl;
+    }
+
+    ze_result_t result = zesDevicePciLinkSpeedUpdateExt(device, shouldDowngrade, &pendingAction);
+
+    if (result == ZE_RESULT_SUCCESS && pendingAction == ZES_DEVICE_ACTION_COLD_CARD_RESET) {
+        std::cout << "PCI link speed downgrade updated successfully" << std::endl;
+        std::cout << "A cold reset is required for the changes to take effect" << std::endl;
+    } else {
+        std::cout << "Failed to set PCI link speed downgrade: " << getErrorString(result) << std::endl;
+        std::cout << "Pending action: " << getDeviceActionString(pendingAction) << std::endl;
+    }
+}
+
+void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, uint32_t &curDeviceIndex) {
     std::cout << std::endl
               << " ----  PCI tests ---- " << std::endl;
     zes_pci_properties_t properties = {};
-    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
-    extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    zes_pci_link_speed_downgrade_ext_properties_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
     properties.pNext = &extProps;
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
     if (verbose) {
@@ -703,8 +737,8 @@ void testSysmanPci(ze_device_handle_t &device) {
     }
 
     zes_pci_state_t pciState = {};
-    zes_intel_pci_link_speed_downgrade_exp_state_t extState = {};
-    extState.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE;
+    zes_pci_link_speed_downgrade_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_STATE;
     pciState.pNext = &extState;
     VALIDATECALL(zesDevicePciGetState(device, &pciState));
     if (verbose) {
@@ -713,6 +747,21 @@ void testSysmanPci(ze_device_handle_t &device) {
         std::cout << "pciState.speed.maxBandWidth = " << std::dec << pciState.speed.maxBandwidth << std::endl;
         std::cout << "pciState.pciLinkSpeedDowngradeStatus = " << static_cast<bool>(extState.pciLinkSpeedDowngradeStatus) << std::endl;
     }
+
+    // Handle PCI downgrade setting if requested
+    if (buf.size() != 0) {
+        uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
+        if (deviceIndex == curDeviceIndex) {
+            bool iamroot = (geteuid() == 0);
+            if (iamroot) {
+                setPciDowngrade(device, buf);
+            } else {
+                std::cout << "Insufficient permissions to set PCI link speed downgrade" << std::endl;
+            }
+        }
+    }
+
+    curDeviceIndex++;
 }
 
 void testSysmanFrequency(ze_device_handle_t &device) {
@@ -1912,6 +1961,24 @@ bool validatePowerLimitArguments(const size_t devCount, std::vector<std::string>
     return true;
 }
 
+bool validatePciDowngradeArguments(const size_t devCount, std::vector<std::string> &buf) {
+    if (buf.size() != 3 || buf[0] != "--downgrade") {
+        return false;
+    }
+
+    uint32_t devIndex = static_cast<uint32_t>(std::stoi(buf[1]));
+    if (devIndex >= devCount) {
+        return false;
+    }
+
+    // Validate that the third argument is either 0 or 1
+    if (buf[2] != "0" && buf[2] != "1") {
+        return false;
+    }
+
+    return true;
+}
+
 bool validateGetenv(const char *name) {
     const char *env = getenv(name);
     if ((nullptr == env) || (0 == strcmp("0", env))) {
@@ -1975,9 +2042,24 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
     if (isParamEnabled(argc, argv, "-p", "--pci", &optind)) {
+        deviceIndex = 0;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+
+        if (buf.size() != 0) {
+            if (validatePciDowngradeArguments(devices.size(), buf) == false) {
+                std::cout << "Invalid Arguments passed to set PCI link speed downgrade" << std::endl;
+                usage();
+                exit(0);
+            }
+        }
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
-            testSysmanPci(device);
+            testSysmanPci(device, buf, deviceIndex);
         });
+        buf.clear();
     }
     if (isParamEnabled(argc, argv, "-z", "--survive", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {

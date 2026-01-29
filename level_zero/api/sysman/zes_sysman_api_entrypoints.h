@@ -247,7 +247,9 @@ ze_result_t ZE_APICALL zesDevicePciLinkSpeedUpdateExt(
     zes_device_handle_t hDevice,
     ze_bool_t shouldDowngrade,
     zes_device_action_t *pendingAction) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDevice::pciLinkSpeedUpdate(hDevice, shouldDowngrade, pendingAction); });
 }
 
 ze_result_t ZE_APICALL zesDeviceEnumPowerDomains(

@@ -17,7 +17,7 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(zes_device_handle_t h
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::SysmanDevice::pciLinkSpeedUpdateExp(hDevice, downgradeUpgrade, pendingAction);
+        return L0::Sysman::SysmanDevice::pciLinkSpeedUpdate(hDevice, downgradeUpgrade, pendingAction);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

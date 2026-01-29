@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,8 +121,8 @@ struct SysmanDevice : _ze_device_handle_t {
     static ze_result_t pciGetStats(zes_device_handle_t hDevice, zes_pci_stats_t *pStats);
     virtual ze_result_t pciGetStats(zes_pci_stats_t *pStats) = 0;
 
-    static ze_result_t pciLinkSpeedUpdateExp(zes_device_handle_t hDevice, ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction);
-    virtual ze_result_t pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) = 0;
+    static ze_result_t pciLinkSpeedUpdate(zes_device_handle_t hDevice, ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction);
+    virtual ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) = 0;
 
     static ze_result_t fanGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fan_handle_t *phFan);
     virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;

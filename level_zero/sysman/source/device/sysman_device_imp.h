@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
     ze_result_t pciGetProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
     ze_result_t pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
-    ze_result_t pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
+    ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
     ze_result_t pciGetStats(zes_pci_stats_t *pStats) override;
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) override;
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;

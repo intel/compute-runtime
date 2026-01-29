@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,7 +153,7 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t WddmPciImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+ze_result_t WddmPciImp::pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

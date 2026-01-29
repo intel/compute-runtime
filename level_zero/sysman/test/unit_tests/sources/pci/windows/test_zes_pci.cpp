@@ -444,12 +444,26 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesIntelDevicePc
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDevicePciLinkSpeedUpdateExp(pSysmanDevice->toHandle(), downgradeUpgrade, &pendingAction));
 }
 
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLinkSpeedUpdateExtThenVerifyApiCallFails) {
+    ze_bool_t downgradeUpgrade = true;
+    zes_device_action_t pendingAction = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciLinkSpeedUpdateExt(pSysmanDevice->toHandle(), downgradeUpgrade, &pendingAction));
+}
+
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureThenCallFails) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
     extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
+    properties = {};
+    zes_pci_link_speed_downgrade_ext_properties_t extProps1 = {};
+    extProps1.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    properties.pNext = &extProps1;
+    result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -461,6 +475,15 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(extProps.maxPciGenSupported, -1);
+
+    // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
+    properties = {};
+    zes_pci_link_speed_downgrade_ext_properties_t extProps1 = {};
+    extProps1.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
+    properties.pNext = &extProps1;
+    result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(extProps1.maxPciGenSupported, -1);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
@@ -480,6 +503,14 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
+    properties = {};
+    zes_pci_link_speed_downgrade_ext_properties_t extProps1 = {};
+    extProps1.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
+    properties.pNext = &extProps1;
+    result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
@@ -498,6 +529,14 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
+    properties = {};
+    zes_pci_link_speed_downgrade_ext_properties_t extProps1 = {};
+    extProps1.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    properties.pNext = &extProps1;
+    result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 

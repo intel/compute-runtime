@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,8 @@ ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *pProperties) {
     void *pNext = pProperties->pNext;
     while (pNext) {
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
-        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
-            auto pDowngradeExtProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES) {
+            auto pDowngradeExtProps = reinterpret_cast<zes_pci_link_speed_downgrade_ext_properties_t *>(pExtProps);
             auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
             uint32_t downgradeCapable;
             if (pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeCapable", downgradeCapable) == ZE_RESULT_SUCCESS) {
@@ -324,13 +324,18 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     while (pNext) {
         result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(const_cast<void *>(pNext));
-        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE) {
-            auto pDowngradeExpState = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_state_t *>(pExtProps);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_STATE || pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE) {
             auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
             uint32_t downgradeStatus;
             result = pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeStatus", downgradeStatus);
             if (result == ZE_RESULT_SUCCESS) {
-                pDowngradeExpState->pciLinkSpeedDowngradeStatus = downgradeStatus;
+                if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_STATE) {
+                    auto pDowngradeExpState = reinterpret_cast<zes_pci_link_speed_downgrade_ext_state_t *>(pExtProps);
+                    pDowngradeExpState->pciLinkSpeedDowngradeStatus = downgradeStatus;
+                } else {
+                    auto pDowngradeExpState = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_state_t *>(pExtProps);
+                    pDowngradeExpState->pciLinkSpeedDowngradeStatus = downgradeStatus;
+                }
             }
             break;
         }
@@ -339,7 +344,7 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     return result;
 }
 
-ze_result_t LinuxPciImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+ze_result_t LinuxPciImp::pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 
     if (!pSysmanProductHelper->isPcieDowngradeSupported()) {
