@@ -128,3 +128,90 @@ BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryMaxClkR
     drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
     EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }
+
+BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
+    auto mockDriverModel = std::make_unique<MockDriverModel>();
+    osInterface->setDriverModel(std::move(mockDriverModel));
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
+    drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = false;
+    drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnPhysicalSize) {
+    drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
+    drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
+    EXPECT_EQ(1024u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
+    auto mockDriverModel = std::make_unique<MockDriverModel>();
+    osInterface->setDriverModel(std::move(mockDriverModel));
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmClockRateQueryFailsWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenHighEndSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn256BitBandwidth) {
+    auto testHwInfo = pInHwInfo;
+    testHwInfo.gtSystemInfo.EUCount = 512;
+
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+
+    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 256 / 8;
+    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenMidRangeSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn192BitBandwidth) {
+    auto testHwInfo = pInHwInfo;
+    testHwInfo.gtSystemInfo.EUCount = 358;
+
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+
+    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
+    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenEntryLevelSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn192BitBandwidth) {
+    auto testHwInfo = pInHwInfo;
+    testHwInfo.gtSystemInfo.EUCount = 256;
+
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+
+    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
+    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenBoundaryEuCountWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenCorrectBusWidthIsUsed) {
+    auto testHwInfo = pInHwInfo;
+
+    // Test exactly 448 EUs (boundary) - should use 256-bit
+    testHwInfo.gtSystemInfo.EUCount = 448;
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 256 / 8;
+    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+
+    // Test 447 EUs (just below) - should use 192-bit
+    testHwInfo.gtSystemInfo.EUCount = 447;
+    expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
+    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+}

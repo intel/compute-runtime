@@ -70,5 +70,43 @@ uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareIn
     return memoryMaxClkRateInMhz;
 }
 
+template <>
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(
+    const OSInterface *osIface, uint32_t subDeviceIndex) const {
+
+    if (osIface == nullptr) {
+        return 0;
+    }
+
+    auto driverModel = osIface->getDriverModel();
+    if (driverModel->getDriverModelType() != DriverModelType::drm) {
+        return 0;
+    }
+
+    auto pDrm = driverModel->as<Drm>();
+    uint64_t memoryPhysicalSize = 0;
+    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
+        return 0;
+    }
+
+    return memoryPhysicalSize;
+}
+
+template <>
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(
+    const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
+
+    uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
+    if (memoryMaxClkRateInMhz == 0) {
+        return 0;
+    }
+
+    const uint32_t euCount = hwInfo.gtSystemInfo.EUCount;
+    const uint64_t memoryBusWidthInBits = (euCount >= 448) ? 256u : 192u;
+
+    // Bandwidth = Clock Rate (MHz) x 10^6 x Bus Width (bits) / 8
+    return memoryMaxClkRateInMhz * 1000 * 1000 * memoryBusWidthInBits / 8;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
