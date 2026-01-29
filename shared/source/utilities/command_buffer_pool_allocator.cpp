@@ -98,6 +98,8 @@ void CommandBufferPoolAllocator::freeCommandBuffer(GraphicsAllocation *allocatio
         return;
     }
 
+    device->getMemoryManager()->removeAllocationFromDownloadAllocationsInCsr(allocation);
+
     std::unique_lock lock(allocatorMtx);
     tryFreeFromPoolBuffer(allocation->getParentAllocation(), allocation->getOffsetInParent(), allocation->getUnderlyingBufferSize());
     delete allocation;

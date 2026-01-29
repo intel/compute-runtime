@@ -187,6 +187,7 @@ class MemoryManager {
     MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
     MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool isImportedAllocation);
     virtual void handleFenceCompletion(GraphicsAllocation *allocation){};
+    virtual void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc){};
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 

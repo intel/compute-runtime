@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/command_buffer_pool_allocator.h"
 #include "shared/source/utilities/heap_allocator.h"
@@ -246,4 +247,46 @@ TEST_F(CommandBufferPoolAllocatorTest, givenCommandBufferPoolAllocatorWhenPoolEx
     for (auto alloc : allocations) {
         allocator.freeCommandBuffer(alloc);
     }
+}
+
+class MockMemoryManagerTrackRemoveDownloadAllocation : public OsAgnosticMemoryManager {
+  public:
+    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+
+    void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) override {
+        removeAllocationFromDownloadAllocationsInCsrCalled++;
+        lastRemovedAllocation = alloc;
+        OsAgnosticMemoryManager::removeAllocationFromDownloadAllocationsInCsr(alloc);
+    }
+
+    uint32_t removeAllocationFromDownloadAllocationsInCsrCalled = 0u;
+    GraphicsAllocation *lastRemovedAllocation = nullptr;
+};
+
+TEST_F(CommandBufferPoolAllocatorTest, givenCommandBufferPoolAllocatorWhenFreeingViewAllocationThenRemovesFromDownloadAllocationsInCsr) {
+    auto mockMemoryManager = std::make_unique<MockMemoryManagerTrackRemoveDownloadAllocation>(*pDevice->getExecutionEnvironment());
+    auto *trackingMemoryManager = mockMemoryManager.get();
+
+    std::unique_ptr<MemoryManager> originalMemoryManager;
+    originalMemoryManager.reset(pDevice->executionEnvironment->memoryManager.release());
+    pDevice->executionEnvironment->memoryManager = std::move(mockMemoryManager);
+
+    {
+        MockCommandBufferPoolAllocator allocator(pDevice);
+        constexpr size_t requestSize = MemoryConstants::pageSize;
+
+        auto allocation = allocator.allocateCommandBuffer(requestSize);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(allocation->isView());
+
+        EXPECT_EQ(0u, trackingMemoryManager->removeAllocationFromDownloadAllocationsInCsrCalled);
+
+        auto allocationPtr = allocation;
+        allocator.freeCommandBuffer(allocation);
+
+        EXPECT_EQ(1u, trackingMemoryManager->removeAllocationFromDownloadAllocationsInCsrCalled);
+        EXPECT_EQ(allocationPtr, trackingMemoryManager->lastRemovedAllocation);
+    }
+
+    pDevice->executionEnvironment->memoryManager = std::move(originalMemoryManager);
 }
