@@ -410,6 +410,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return externalCbEventStorage;
     }
 
+    bool segmentRequiresSeperateSubmission(GraphCommandId segmentStart) const {
+        return this->myOrderedSegments.end() != this->myOrderedSegments.find(segmentStart);
+    }
+
     WeaklyShared<OrderedExecutableSegmentsList> getOrderedCommands() {
         return orderedCommands;
     }

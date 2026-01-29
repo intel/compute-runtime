@@ -501,8 +501,10 @@ void ExecGraphBuilder::finalize() {
 
     auto orderedExecutableCommands = rootDst.getOrderedCommands();
     for (const auto &segment : this->rootSrc.getOrderedCommands()) {
-        orderedExecutableCommands->push_back(OrderedCommandsExecutableSegment{.dst = this->subgraphs[segment.subgraph].dst,
-                                                                              .segmentStart = segment.begin});
+        if (this->subgraphs[segment.subgraph].dst->segmentRequiresSeperateSubmission(segment.begin)) {
+            orderedExecutableCommands->push_back(OrderedCommandsExecutableSegment{.dst = this->subgraphs[segment.subgraph].dst,
+                                                                                  .segmentStart = segment.begin});
+        }
     }
 }
 
@@ -575,15 +577,21 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
         if (this->orderedCommands->size() == 1) {
             segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents);
         } else {
+            bool monolithicMode = myOrderedSegments.size() == 1;
+            bool splitMode = (false == monolithicMode);
             auto lastSegment = this->getOrderedCommands()->end() - 1;
-            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, numWaitEvents, phWaitEvents);
+            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
+                                           monolithicMode ? hSignalEvent : nullptr,
+                                           numWaitEvents, phWaitEvents);
             ++segmentIt;
             while (segmentIt != lastSegment) {
                 segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr);
                 ++segmentIt;
             }
             DEBUG_BREAK_IF(segmentIt != lastSegment);
-            this->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, 0, nullptr);
+            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
+                                           splitMode ? hSignalEvent : nullptr,
+                                           0, nullptr);
         }
     }
     return ZE_RESULT_SUCCESS;

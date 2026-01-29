@@ -22,6 +22,8 @@
 #include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/ze_api.h"
 
+#include <tuple>
+
 using namespace NEO;
 
 namespace L0 {
@@ -1702,6 +1704,111 @@ TEST_F(GraphExecution, GivenForceForkPolicyDebugKeyWhenCreateGraphSettingsThenFo
 
     GraphInstatiateSettings settings2(nullptr, multiEngine);
     EXPECT_EQ(GraphInstatiateSettings::ForkPolicy::ForkPolicySplitLevels, settings2.forkPolicy);
+}
+
+TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandListWithEventsThenUseEventsCorrectly) {
+    struct MockGraphCommandListCapturingExecuteParams : MockGraphCmdListWithContext {
+        using MockGraphCmdListWithContext::MockGraphCmdListWithContext;
+        ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+            capturedParamsVec.push_back({numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents});
+            return ZE_RESULT_SUCCESS;
+        }
+        struct CaptureParams {
+            uint32_t numCommandLists;
+            ze_command_list_handle_t *phCommandLists;
+            ze_event_handle_t hSignalEvent;
+            uint32_t numWaitEvents;
+            ze_event_handle_t *phWaitEvents;
+        };
+
+        std::vector<CaptureParams> capturedParamsVec;
+    };
+
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningNewCmdList ctx;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCommandListCapturingExecuteParams mainExecCmdlist{&ctx};
+    MockGraphCommandListCapturingExecuteParams subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
+    subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setCaptureTarget(nullptr);
+
+    GraphInstatiateSettings settings;
+
+    Mock<Event> execWaitEvents[2];
+    ze_event_handle_t execWaitEventHandles[2] = {&execWaitEvents[0], &execWaitEvents[1]};
+    Mock<Event> signalEvent;
+    {
+        ExecutableGraph execMultiGraph;
+        settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+        execMultiGraph.instantiateFrom(srcGraph, settings);
+
+        auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, &signalEvent, 2, execWaitEventHandles);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ASSERT_EQ(1U, mainExecCmdlist.capturedParamsVec.size());
+        ASSERT_EQ(1U, subCmdlist.capturedParamsVec.size());
+
+        EXPECT_EQ(2U, mainExecCmdlist.capturedParamsVec[0].numWaitEvents);
+        EXPECT_EQ(execWaitEventHandles, mainExecCmdlist.capturedParamsVec[0].phWaitEvents);
+        EXPECT_EQ(&signalEvent, mainExecCmdlist.capturedParamsVec[0].hSignalEvent);
+
+        EXPECT_EQ(0U, subCmdlist.capturedParamsVec[0].numWaitEvents);
+        EXPECT_EQ(nullptr, subCmdlist.capturedParamsVec[0].phWaitEvents);
+        EXPECT_EQ(nullptr, subCmdlist.capturedParamsVec[0].hSignalEvent);
+    }
+
+    {
+        ExecutableGraph execMultiGraph;
+        mainExecCmdlist.capturedParamsVec.clear();
+        subCmdlist.capturedParamsVec.clear();
+        settings.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
+        execMultiGraph.instantiateFrom(srcGraph, settings);
+
+        auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, &signalEvent, 2, execWaitEventHandles);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ASSERT_EQ(2U, mainExecCmdlist.capturedParamsVec.size());
+        ASSERT_EQ(1U, subCmdlist.capturedParamsVec.size());
+
+        EXPECT_EQ(2U, mainExecCmdlist.capturedParamsVec[0].numWaitEvents);
+        EXPECT_EQ(execWaitEventHandles, mainExecCmdlist.capturedParamsVec[0].phWaitEvents);
+        EXPECT_EQ(nullptr, mainExecCmdlist.capturedParamsVec[0].hSignalEvent);
+
+        EXPECT_EQ(0U, subCmdlist.capturedParamsVec[0].numWaitEvents);
+        EXPECT_EQ(nullptr, subCmdlist.capturedParamsVec[0].phWaitEvents);
+        EXPECT_EQ(nullptr, subCmdlist.capturedParamsVec[0].hSignalEvent);
+
+        EXPECT_EQ(0U, mainExecCmdlist.capturedParamsVec[1].numWaitEvents);
+        EXPECT_EQ(nullptr, mainExecCmdlist.capturedParamsVec[1].phWaitEvents);
+        EXPECT_EQ(&signalEvent, mainExecCmdlist.capturedParamsVec[1].hSignalEvent);
+    }
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
 }
 
 TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
