@@ -208,7 +208,7 @@ DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &
 
 ze_result_t DebugSessionLinuxXe::initialize() {
     if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
-        clientHandleToConnection[euDebugInterface->getDefaultClientHandle()].reset(new ClientConnectionXe);
+        clientHandleToConnection[euDebugInterface->getDefaultClientHandle()].reset(new ClientConnectionXe(euDebugInterface.get()));
         clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client = NEO::EuDebugEventClient{};
         clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client.clientHandle = euDebugInterface->getDefaultClientHandle();
         this->clientHandle = euDebugInterface->getDefaultClientHandle();
@@ -344,7 +344,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
             DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent.clientHandle) != clientHandleToConnection.end());
-            clientHandleToConnection[clientEvent.clientHandle].reset(new ClientConnectionXe);
+            clientHandleToConnection[clientEvent.clientHandle].reset(new ClientConnectionXe(euDebugInterface.get()));
             clientHandleToConnection[clientEvent.clientHandle]->client = clientEvent;
         }
 
@@ -567,7 +567,12 @@ void DebugSessionLinuxXe::processPendingVmBindEvents() {
     auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
     for (auto &pair : vmBindMap) {
         auto &vmBindData = pair.second;
-        if (handleVmBind(vmBindData) == false) {
+
+        auto vmBindResult = euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream
+                                ? handleVmBindUpstream(vmBindData)
+                                : handleVmBind(vmBindData);
+
+        if (vmBindResult == false) {
             break;
         }
         keysToDelete.push_back(pair.first);
@@ -784,6 +789,172 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     }
 
     if (shouldAckEvent && (vmBindData.vmBindUfence.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitNeedAck))) {
+        EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
+        eventAckIoctl(ackEvent);
+    }
+
+    return true;
+}
+
+bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
+    if (!canHandleVmBind(vmBindData)) {
+        return false;
+    }
+
+    auto connection = clientHandleToConnection[clientHandle].get();
+
+    bool shouldAckEvent = vmBindData.vmBind.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventVmBindFlagUfence);
+    constexpr uint32_t tileIndex = 0;
+
+    auto loadedElf = false;
+    for (auto &entry : vmBindData.vmBindOpDebugDataVec) {
+        if (entry.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag)) {
+            DEBUG_BREAK_IF(entry.offset != 0);
+            if (entry.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
+                if (entry.pseudoPath == euDebugInterface->getParamValue(NEO::EuDebugParam::vmBindOpExtensionsDebugDataSbaArea)) {
+                    PRINT_DEBUGGER_INFO_LOG("Setting StateBaseArea Bind Info for vmHandle=%" SCNx64 " addr=0x%" SCNx64 " range=0x%" SCNx64 "\n",
+                                            vmBindData.vmBind.vmHandle, entry.addr, entry.range);
+                    connection->vmToStateBaseAreaBindInfo[vmBindData.vmBind.vmHandle] = {entry.addr, entry.range};
+                } else if (entry.pseudoPath == euDebugInterface->getParamValue(NEO::EuDebugParam::vmBindOpExtensionsDebugDataSipArea)) {
+                    PRINT_DEBUGGER_INFO_LOG("Setting ContextStateSaveArea Bind Info for vmHandle=%" SCNx64 " addr=0x%" SCNx64 " range=0x%" SCNx64 "\n",
+                                            vmBindData.vmBind.vmHandle, entry.addr, entry.range);
+                    connection->vmToContextStateSaveAreaBindInfo[vmBindData.vmBind.vmHandle] = {entry.addr, entry.range};
+                } else if (entry.pseudoPath == euDebugInterface->getParamValue(NEO::EuDebugParam::vmBindOpExtensionsDebugDataModuleArea)) {
+                    PRINT_DEBUGGER_INFO_LOG("Setting ModuleDebugArea Bind Info for vmHandle=%" SCNx64 " addr=0x%" SCNx64 " range=0x%" SCNx64 "\n",
+                                            vmBindData.vmBind.vmHandle, entry.addr, entry.range);
+                    connection->vmToModuleDebugAreaBindInfo[vmBindData.vmBind.vmHandle] = {entry.addr, entry.range};
+                    // needs to create isaMap entry for mirroring if not present already for this addr
+                    if (connection->isaMap[tileIndex].count(entry.addr) == 0) {
+                        PRINT_DEBUGGER_INFO_LOG("Creating ISA Allocation for ModuleDebugArea at addr=0x%" SCNx64 "\n", entry.addr);
+                        auto &isaMap = connection->isaMap[tileIndex];
+                        auto isa = std::make_unique<IsaAllocation>();
+                        isa->bindInfo = {entry.addr, entry.range};
+                        isa->vmHandle = vmBindData.vmBind.vmHandle;
+                        isa->elfHandle = invalidHandle;
+                        isa->moduleBegin = 0;
+                        isa->moduleEnd = 0;
+                        isa->tileInstanced = !(this->debugArea.isShared);
+                        isa->validVMs.insert(vmBindData.vmBind.vmHandle);
+
+                        isa->perKernelModule = false;
+                        isaMap[entry.addr] = std::move(isa);
+                    }
+                } else {
+                    PRINT_DEBUGGER_ERROR_LOG("Unknown pseudo path in vm bind debug data: %llu\n", entry.pseudoPath);
+                    DEBUG_BREAK_IF(true);
+                }
+            }
+        } else {
+            PRINT_DEBUGGER_INFO_LOG("Processing Debug Data Bind: path=%s addr=0x%" SCNx64 " range=0x%" SCNx64 " flags=0x%" SCNx64 "\n",
+                                    entry.pathName, entry.addr, entry.range, entry.base.flags);
+            if (entry.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
+
+                auto &module = connection->elfHandleToModule[elfHandle];
+
+                size_t elfSize = 0;
+                if (!loadedElf) {
+                    auto elfData = loadDataFromFile(entry.pathName, elfSize);
+                    if (elfData == nullptr) {
+                        PRINT_DEBUGGER_ERROR_LOG("Failed to read ELF file: %s\n", entry.pathName);
+                        return false;
+                    }
+                    auto &elfEntry = connection->elfInfoMap[elfHandle];
+                    elfEntry.elfData = std::move(elfData);
+                    elfEntry.elfSize = elfSize;
+
+                    auto &elfMap = connection->elfMap;
+                    auto mapIndex = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
+                    elfMap[mapIndex] = elfHandle;
+
+                    PRINT_DEBUGGER_INFO_LOG("Loaded ELF file: %s size=%zu addr=0x%" SCNx64 " handle=%" SCNx64 "\n",
+                                            entry.pathName, elfSize, entry.addr, elfHandle);
+                    loadedElf = true;
+                }
+
+                // now for all debug data in this bind, create isa allocations
+                if (connection->isaMap[tileIndex].count(entry.addr) == 0) {
+                    auto &isaMap = connection->isaMap[tileIndex];
+                    auto isa = std::make_unique<IsaAllocation>();
+
+                    isa->bindInfo = {entry.addr, entry.range};
+                    isa->vmHandle = vmBindData.vmBind.vmHandle;
+                    isa->elfHandle = elfHandle;
+                    isa->moduleHandle = elfHandle;
+                    isa->moduleBegin = reinterpret_cast<uint64_t>(connection->elfInfoMap[elfHandle].elfData.get());
+                    isa->moduleEnd = isa->moduleBegin + connection->elfInfoMap[elfHandle].elfSize;
+                    isa->validVMs.insert(vmBindData.vmBind.vmHandle);
+                    isa->perKernelModule = false;
+
+                    isaMap[entry.addr] = std::move(isa);
+                    isaMap[entry.addr]->moduleLoadEventAck = true;
+                    isaMap[entry.addr]->moduleHandle = elfHandle;
+                    module.loadAddresses[tileIndex].insert(entry.addr);
+                } else {
+                    auto &isa = connection->isaMap[tileIndex][entry.addr];
+                    isa->validVMs.insert(vmBindData.vmBind.vmHandle);
+                }
+
+                if (&entry == &vmBindData.vmBindOpDebugDataVec.back()) {
+
+                    // send module load event
+                    zet_debug_event_t debugEvent = {};
+                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                    debugEvent.info.module.load = entry.addr;
+                    auto &elfEntry = connection->elfInfoMap[elfHandle];
+                    debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
+                    debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfEntry.elfData.get()) + elfEntry.elfSize;
+                    debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                    pushApiEvent(debugEvent, elfHandle);
+
+                    // add to ackIsaEvents list
+                    {
+                        std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                        if (vmBindData.vmBind.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventVmBindFlagUfence)) {
+                            if (vmBindData.vmBindUfence.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitNeedAck)) {
+                                EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
+                                module.ackEvents[tileIndex].push_back(ackEvent);
+                                shouldAckEvent = false;
+                            }
+                        }
+                    }
+
+                    elfHandle++;
+                }
+            } else if (entry.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy)) {
+                UNRECOVERABLE_IF(connection->isaMap[tileIndex].count(entry.addr) == 0)
+
+                auto &isa = connection->isaMap[tileIndex][entry.addr];
+
+                if (isa->validVMs.count(vmBindData.vmBind.vmHandle)) {
+                    isa->validVMs.erase(vmBindData.vmBind.vmHandle);
+
+                    if (&entry == &vmBindData.vmBindOpDebugDataVec.back()) {
+                        auto &module = connection->elfHandleToModule[isa->elfHandle];
+
+                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                        zet_debug_event_t debugEvent = {};
+                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                        debugEvent.info.module.load = loadAddress;
+                        auto &elfEntry = connection->elfInfoMap[isa->elfHandle];
+                        debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
+                        debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfEntry.elfData.get()) + elfEntry.elfSize;
+
+                        pushApiEvent(debugEvent, isa->elfHandle);
+                    }
+
+                    if (isa->validVMs.size() == 0) {
+                        connection->isaMap[tileIndex].erase(entry.addr);
+                    }
+                }
+            }
+        }
+    }
+
+    if (shouldAckEvent && (vmBindData.vmBindUfence.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitNeedAck))) {
+        PRINT_DEBUGGER_INFO_LOG("Acknowledging VM_BIND_UFENCE event seqno=%llu\n", (uint64_t)vmBindData.vmBindUfence.base.seqno);
         EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
         eventAckIoctl(ackEvent);
     }

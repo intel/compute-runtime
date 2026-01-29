@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ struct DebugSessionLinux : DebugSessionImp {
     constexpr static uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
     uint64_t clientHandle = invalidClientHandle;
     uint64_t clientHandleClosed = invalidClientHandle;
-    static constexpr size_t maxEventSize = 4096;
+    static constexpr size_t maxEventSize = 8192;
 
     struct IoctlHandler {
         virtual ~IoctlHandler() = default;

@@ -87,6 +87,20 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
     case EuDebugParam::vmBindOpExtensionsAttachDebug:
         return PRELIM_XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG;
+    case EuDebugParam::vmBindOpExtensionsAddDebugData:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsRemoveDebugData:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsDebugDataModuleArea:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsDebugDataSbaArea:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsDebugDataSipArea:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag:
+        return 0;
+    case EuDebugParam::vmBindOpExtensionsDebugDataName:
+        return 0;
     default:
         return getAdditionalParamValue(param);
     }

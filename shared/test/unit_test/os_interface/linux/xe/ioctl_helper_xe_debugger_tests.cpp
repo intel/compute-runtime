@@ -350,6 +350,8 @@ TEST_F(IoctlHelperXeTest, givenUpstreamEuDebugInterfaceThenRegisterAndUnregister
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
 
     constexpr size_t bufferSize = 20;
     uint8_t buffer[bufferSize];

@@ -117,6 +117,8 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
                 return returnError;
             }
             return -1;
+        } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlAckEvent)) && (arg != nullptr)) {
+            debugEventAckCount++;
         }
 
         return ioctlRetVal;
@@ -156,6 +158,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     std::unique_ptr<uint8_t[]> outputBitmask;
     size_t outputBitmaskSize = 0;
     int vmOpenRetVal = 600;
+    int debugEventAckCount = 0;
 };
 
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
@@ -188,11 +191,13 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::euDebugInterface;
     using L0::DebugSessionLinuxXe::eventTypeIsAttention;
     using L0::DebugSessionLinuxXe::getEuControlCmdUnlock;
+    using L0::DebugSessionLinuxXe::getModule;
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
     using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
     using L0::DebugSessionLinuxXe::handleEvent;
     using L0::DebugSessionLinuxXe::handleInternalEvent;
     using L0::DebugSessionLinuxXe::handleVmBind;
+    using L0::DebugSessionLinuxXe::handleVmBindUpstream;
     using L0::DebugSessionLinuxXe::internalEventQueue;
     using L0::DebugSessionLinuxXe::internalEventThread;
     using L0::DebugSessionLinuxXe::invalidClientHandle;
@@ -207,7 +212,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
 
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, std::make_unique<MockEuDebugInterface>(), params) {
-        clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe);
+        clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe(euDebugInterface.get()));
         clientHandle = mockClientHandle;
         createEuThreads();
     }
@@ -243,6 +248,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     bool handleVmBind(VmBindData &vmBindData) override {
         handleVmBindCallCount++;
         return DebugSessionLinuxXe::handleVmBind(vmBindData);
+    }
+
+    bool handleVmBindUpstream(VmBindData &vmBindData) override {
+        handleVmBindUpstreamCallCount++;
+        return DebugSessionLinuxXe::handleVmBindUpstream(vmBindData);
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
@@ -349,10 +359,16 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return 0x1000;
     }
 
+    void setCurrentInterfaceType(EuDebugInterfaceType newType) {
+        auto mockEuDebugInterface = static_cast<MockEuDebugInterface *>(euDebugInterface.get());
+        mockEuDebugInterface->setCurrentInterfaceType(newType);
+    }
+
     uint32_t readSystemRoutineIdentCallCount = 0;
     uint32_t processPendingVmBindEventsCallCount = 0;
     uint32_t threadControlCallCount = 0;
     uint32_t handleVmBindCallCount = 0;
+    uint32_t handleVmBindUpstreamCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;

@@ -62,6 +62,13 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::metadataSbaArea);
         RETURN_AS_IS(EuDebugParam::metadataSipArea);
         RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsAttachDebug);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsAddDebugData);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsRemoveDebugData);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataSipArea);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataName);
     }
     return 0;
 }

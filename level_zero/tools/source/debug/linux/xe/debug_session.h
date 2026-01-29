@@ -81,8 +81,13 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     MOCKABLE_VIRTUAL int getEuControlCmdUnlock() const;
     Module &getModule(uint64_t moduleHandle) override {
         auto connection = clientHandleToConnection[clientHandle].get();
-        DEBUG_BREAK_IF(connection->metaDataToModule.find(moduleHandle) == connection->metaDataToModule.end());
-        return connection->metaDataToModule[moduleHandle];
+        if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
+            DEBUG_BREAK_IF(connection->elfHandleToModule.find(moduleHandle) == connection->elfHandleToModule.end());
+            return connection->elfHandleToModule[moduleHandle];
+        } else {
+            DEBUG_BREAK_IF(connection->metaDataToModule.find(moduleHandle) == connection->metaDataToModule.end());
+            return connection->metaDataToModule[moduleHandle];
+        }
     }
 
     void startAsyncThread() override;
@@ -108,6 +113,11 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         std::unique_ptr<char[]> data;
     };
 
+    struct ElfInfo {
+        uint64_t elfSize;
+        std::unique_ptr<char[]> elfData;
+    };
+
     using VmBindOpSeqNo = uint64_t;
     using VmBindSeqNo = uint64_t;
     struct VmBindOpData {
@@ -126,21 +136,45 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     };
 
     struct ClientConnectionXe : public ClientConnection {
+        ClientConnectionXe() = default;
+        ClientConnectionXe(const NEO::EuDebugInterface *euDebugInterface) : euDebugInterface(euDebugInterface) {}
+
         NEO::EuDebugEventClient client = {};
-        size_t getElfSize(uint64_t elfHandle) override { return metaDataMap[elfHandle].metadata.len; };
-        char *getElfData(uint64_t elfHandle) override { return metaDataMap[elfHandle].data.get(); };
+        size_t getElfSize(uint64_t elfHandle) override {
+            DEBUG_BREAK_IF(metaDataMap.size() > 0 && elfInfoMap.size() > 0);
+            if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
+                return elfInfoMap[elfHandle].elfSize;
+            } else {
+                return metaDataMap[elfHandle].metadata.len;
+            }
+        };
+        char *getElfData(uint64_t elfHandle) override {
+            DEBUG_BREAK_IF(metaDataMap.size() > 0 && elfInfoMap.size() > 0);
+            if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
+                return elfInfoMap[elfHandle].elfData.get();
+            } else {
+                return metaDataMap[elfHandle].data.get();
+            }
+        };
 
         std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
+        std::unordered_map<VmBindSeqNo, VmBindData> vmBindMap;
+        // prelim data
         std::unordered_map<uint64_t, MetaData> metaDataMap;
         std::unordered_map<uint64_t, Module> metaDataToModule;
-        std::unordered_map<VmBindSeqNo, VmBindData> vmBindMap;
         std::unordered_map<VmBindOpSeqNo, VmBindSeqNo> vmBindIdentifierMap;
+        // upstream data
+        std::unordered_map<uint64_t, Module> elfHandleToModule;
+        std::unordered_map<uint64_t, ElfInfo> elfInfoMap;
+
+        const NEO::EuDebugInterface *euDebugInterface = nullptr;
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
     bool canHandleVmBind(VmBindData &vmBindData) const;
     MOCKABLE_VIRTUAL bool handleVmBind(VmBindData &vmBindData);
     void handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData);
+    MOCKABLE_VIRTUAL bool handleVmBindUpstream(VmBindData &vmBindData);
 
     void extractMetaData(uint64_t client, const MetaData &metaData);
     bool checkAllEventsCollected();
@@ -177,6 +211,8 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     std::atomic<bool> processEntryEventGenerated = false;
     std::atomic<uint64_t> newestAttSeqNo = 0;
     std::unique_ptr<NEO::EuDebugInterface> euDebugInterface;
+
+    uint64_t elfHandle = 0;
 };
 
 } // namespace L0

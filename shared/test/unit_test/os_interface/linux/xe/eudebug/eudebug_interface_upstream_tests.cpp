@@ -51,6 +51,13 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::metadataSbaArea));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::metadataSipArea));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSipArea));
+    EXPECT_EQ(static_cast<uint32_t>(XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataName));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsRemoveDebugData));
 }
 
 TEST(EuDebugInterfaceUpstreamTest, whenGettingInterfaceTypeThenUpstreamIsReturned) {

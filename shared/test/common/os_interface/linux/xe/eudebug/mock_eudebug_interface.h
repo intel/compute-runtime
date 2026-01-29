@@ -43,7 +43,7 @@ class MockEuDebugInterface : public EuDebugInterface {
 
     bool pageFaultEnableSupported = false;
 
-    EuDebugInterfaceType currentInterfaceType = EuDebugInterfaceType::upstream;
+    EuDebugInterfaceType currentInterfaceType = EuDebugInterfaceType::prelim;
     void setCurrentInterfaceType(EuDebugInterfaceType newType) {
         currentInterfaceType = newType;
     }

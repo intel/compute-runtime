@@ -92,6 +92,20 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return 0;
     case EuDebugParam::eventTypeVmBindOpDebugData:
         return DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_DEBUG_DATA;
+    case EuDebugParam::vmBindOpExtensionsAddDebugData:
+        return DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA;
+    case EuDebugParam::vmBindOpExtensionsRemoveDebugData:
+        return DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA;
+    case EuDebugParam::vmBindOpExtensionsDebugDataModuleArea:
+        return DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA;
+    case EuDebugParam::vmBindOpExtensionsDebugDataSbaArea:
+        return DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA;
+    case EuDebugParam::vmBindOpExtensionsDebugDataSipArea:
+        return DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA;
+    case EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag:
+        return DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO;
+    case EuDebugParam::vmBindOpExtensionsDebugDataName:
+        return XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA;
     }
     return 0;
 }
@@ -371,5 +385,15 @@ static_assert(sizeof(XeUserExtension) == sizeof(drm_xe_user_extension));
 static_assert(offsetof(XeUserExtension, nextExtension) == offsetof(drm_xe_user_extension, next_extension));
 static_assert(offsetof(XeUserExtension, name) == offsetof(drm_xe_user_extension, name));
 static_assert(offsetof(XeUserExtension, pad) == offsetof(drm_xe_user_extension, pad));
+
+static_assert(sizeof(VmBindOpExtDebugData) == sizeof(drm_xe_vm_bind_op_ext_debug_data));
+static_assert(offsetof(VmBindOpExtDebugData, base) == offsetof(drm_xe_vm_bind_op_ext_debug_data, base));
+static_assert(offsetof(VmBindOpExtDebugData, addr) == offsetof(drm_xe_vm_bind_op_ext_debug_data, addr));
+static_assert(offsetof(VmBindOpExtDebugData, range) == offsetof(drm_xe_vm_bind_op_ext_debug_data, range));
+static_assert(offsetof(VmBindOpExtDebugData, flags) == offsetof(drm_xe_vm_bind_op_ext_debug_data, flags));
+static_assert(offsetof(VmBindOpExtDebugData, offset) == offsetof(drm_xe_vm_bind_op_ext_debug_data, offset));
+static_assert(offsetof(VmBindOpExtDebugData, reserved) == offsetof(drm_xe_vm_bind_op_ext_debug_data, reserved));
+static_assert(offsetof(VmBindOpExtDebugData, pseudopath) == offsetof(drm_xe_vm_bind_op_ext_debug_data, pseudopath));
+static_assert(offsetof(VmBindOpExtDebugData, pathname) == offsetof(drm_xe_vm_bind_op_ext_debug_data, pathname));
 
 } // namespace NEO

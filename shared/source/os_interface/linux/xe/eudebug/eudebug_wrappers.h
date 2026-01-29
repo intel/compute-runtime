@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "limits.h"
+
 #include <cstdint>
 #include <linux/limits.h>
 namespace NEO {
@@ -199,6 +201,19 @@ struct VmBindOpExtAttachDebug {
     uint64_t reserved;
 };
 
+struct VmBindOpExtDebugData {
+    struct XeUserExtension base;
+    uint64_t addr;
+    uint64_t range;
+    uint64_t flags;
+    uint32_t offset;
+    uint32_t reserved;
+    union {
+        uint64_t pseudopath;
+        char pathname[PATH_MAX];
+    };
+};
+
 enum class EuDebugParam {
     connect,
     euControlCmdInterruptAll,
@@ -238,5 +253,12 @@ enum class EuDebugParam {
     metadataSbaArea,
     metadataSipArea,
     vmBindOpExtensionsAttachDebug,
+    vmBindOpExtensionsAddDebugData,
+    vmBindOpExtensionsRemoveDebugData,
+    vmBindOpExtensionsDebugDataModuleArea,
+    vmBindOpExtensionsDebugDataSbaArea,
+    vmBindOpExtensionsDebugDataSipArea,
+    vmBindOpExtensionsDebugDataPseudoFlag,
+    vmBindOpExtensionsDebugDataName
 };
 } // namespace NEO
