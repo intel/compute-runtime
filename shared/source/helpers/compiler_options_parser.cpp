@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/release_helper/release_helper.h"
 
 #include <cstdint>
+#include <cstring>
 #include <sstream>
 
 namespace NEO {
@@ -44,6 +45,22 @@ bool requiresAdditionalExtensions(const std::string &compileOptions) {
 bool isOclVersionBelow12(const std::string &compileOptions) {
     auto [majorVersion, minorVersion] = getMajorMinorVersion(compileOptions);
     return majorVersion == 1 && minorVersion < 2;
+}
+
+bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *currentCachePolicy) {
+    if (currentCachePolicy) {
+        auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
+        if (currentCachePolicyIter == std::string::npos) {
+            constexpr const char *cachePolicyPrefix = "-cl-store-cache-default=";
+
+            auto cachePolicyIter = buildOptions.find(cachePolicyPrefix);
+            if (cachePolicyIter != std::string::npos) {
+                buildOptions.replace(cachePolicyIter, strlen(currentCachePolicy), currentCachePolicy);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {

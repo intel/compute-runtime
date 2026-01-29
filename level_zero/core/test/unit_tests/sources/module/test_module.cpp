@@ -3175,6 +3175,84 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
 }
 
+HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeBuildWithOldCachePolicyWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(1); //"-cl-store-cache-default=2 -cl-load-cache-default=2"
+
+    const auto &compilerProductHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+    bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+
+    auto currentCachePolicy = compilerProductHelper.getCachingPolicyOptions(isDebuggerActive);
+    if (!currentCachePolicy) {
+        GTEST_SKIP();
+    }
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    NEO::ConstStringRef buildOptions = "-cl-example-untouched-option-first=1 -cl-store-cache-default=9 -cl-load-cache-default=9 -cl-example-untouched-option-second=2";
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
+                        {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-store-cache-default=2 -cl-load-cache-default=2 -cl-example-untouched-option-second=2") != std::string::npos);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeBuildCorrectCachePolicyWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(1); //"-cl-store-cache-default=2 -cl-load-cache-default=2"
+
+    const auto &compilerProductHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+    bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+
+    auto currentCachePolicy = compilerProductHelper.getCachingPolicyOptions(isDebuggerActive);
+    if (!currentCachePolicy) {
+        GTEST_SKIP();
+    }
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    NEO::ConstStringRef buildOptions = "-cl-example-untouched-option-first=1 -cl-store-cache-default=2 -cl-load-cache-default=2 -cl-example-untouched-option-second=2";
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
+                        {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-store-cache-default=2 -cl-load-cache-default=2 -cl-example-untouched-option-second=2") != std::string::npos);
+}
+
 HWTEST_F(ModuleTranslationUnitTest, GivenModuleInitializationEvenWhenTranslationUnitInitializationFailsThenBuildLogIsAlwaysUpdated) {
     DebugManagerStateRestore dgbRestorer;
     NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
