@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,6 +169,8 @@ void Device::initializeCaps() {
     if (maxParameterSizeFromIgc > 0) {
         deviceInfo.maxParameterSize = maxParameterSizeFromIgc;
     }
+
+    deviceInfo.semaphore64bCmdSupport = productHelper.isAvailableSemaphore64(releaseHelper);
 }
 
 } // namespace NEO

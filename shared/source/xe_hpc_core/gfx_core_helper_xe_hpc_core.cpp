@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,7 +177,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                        false, true, false, false, false);
+                                                        false, true, false, false, false, false);
         commandsBuffer = ptrOffset(commandsBuffer, EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
 }

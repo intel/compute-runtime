@@ -80,7 +80,8 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearS
                                                               true,
                                                               false,
                                                               false,
-                                                              false);
+                                                              false,
+                                                              streamer.isUsingSemaphore64bCmd());
 }
 
 template <typename GfxFamily>

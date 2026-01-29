@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5948,7 +5948,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiLoadRegisterRegWhenSetterUsedThenGe
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWaitWhenInitCalledThenFieldsSetToDefault) {
-    using MI_SEMAPHORE_WAIT = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT_LEGACY; // patched
     MI_SEMAPHORE_WAIT cmd;
     cmd.init();
 
@@ -5969,7 +5969,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWaitWhenInitCalledThenFiel
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWaitWhenSetterUsedThenGetterReturnsValidValue) {
-    using MI_SEMAPHORE_WAIT = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT_LEGACY; // patched
     MI_SEMAPHORE_WAIT cmd;
     cmd.init();
 

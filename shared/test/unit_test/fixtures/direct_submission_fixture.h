@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,8 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
+
+        UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     void tearDown() {

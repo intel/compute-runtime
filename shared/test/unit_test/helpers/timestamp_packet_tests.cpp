@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreIsProgrammedThenUseGpuAd
     StackVec<char, 4096> buffer(4096);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    TimestampPacketHelper::programSemaphore<FamilyType>(cmdStream, mockNode);
+    TimestampPacketHelper::programSemaphore<FamilyType>(cmdStream, mockNode, HasSemaphore64bCmd<FamilyType>);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -86,7 +86,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgra
     StackVec<char, 4096> buffer(4096);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    TimestampPacketHelper::programSemaphore<FamilyType>(cmdStream, mockNode);
+    TimestampPacketHelper::programSemaphore<FamilyType>(cmdStream, mockNode, HasSemaphore64bCmd<FamilyType>);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -377,7 +377,7 @@ HWTEST_F(DeviceTimestampPacketTests, givenTimestampPacketTypeAndSizeWhenChecking
 
 using TimestampPacketHelperTests = Test<DeviceFixture>;
 
-HWTEST_F(TimestampPacketHelperTests, givenTagNodesInMultiRootSyncContainerWhenProgramingDependensiecThenSemaforesAreProgrammed) {
+HWTEST_F(TimestampPacketHelperTests, givenTagNodesInMultiRootSyncContainerWhenProgrammingDependenciesThenSemaphoresAreProgrammed) {
     StackVec<char, 4096> buffer(4096);
     LinearStream cmdStream(buffer.begin(), buffer.size());
     CsrDependencies deps;
@@ -385,24 +385,24 @@ HWTEST_F(TimestampPacketHelperTests, givenTagNodesInMultiRootSyncContainerWhenPr
     TimestampPacketContainer container = {};
     container.add(mockTagAllocator->getTag());
     deps.multiRootTimeStampSyncContainer.push_back(&container);
-    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps, HasSemaphore64bCmd<FamilyType>);
     EXPECT_EQ(cmdStream.getUsed(), NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait());
 }
 
-HWTEST_F(TimestampPacketHelperTests, givenEmptyContainerMultiRootSyncContainerWhenProgramingDependensiecThenZeroSemaforesAreProgrammed) {
+HWTEST_F(TimestampPacketHelperTests, givenEmptyContainerMultiRootSyncContainerWhenProgrammingDependenciesThenZeroSemaphoresAreProgrammed) {
     StackVec<char, 4096> buffer(4096);
     LinearStream cmdStream(buffer.begin(), buffer.size());
     CsrDependencies deps;
     TimestampPacketContainer container = {};
     deps.multiRootTimeStampSyncContainer.push_back(&container);
-    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps, HasSemaphore64bCmd<FamilyType>);
     EXPECT_EQ(cmdStream.getUsed(), 0u);
 }
 
-HWTEST_F(TimestampPacketHelperTests, givenEmptyMultiRootSyncContainerWhenProgramingDependensiecThenZeroSemaforesAreProgrammed) {
+HWTEST_F(TimestampPacketHelperTests, givenEmptyMultiRootSyncContainerWhenProgrammingDependenciesThenZeroSemaphoresAreProgrammed) {
     StackVec<char, 4096> buffer(4096);
     LinearStream cmdStream(buffer.begin(), buffer.size());
     CsrDependencies deps;
-    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps, HasSemaphore64bCmd<FamilyType>);
     EXPECT_EQ(cmdStream.getUsed(), 0u);
 }

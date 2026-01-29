@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "metrics_library_api_1_0.h"
 
@@ -265,11 +266,13 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
     } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
+        const auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
         EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                        false, true, false, false, false);
+                                                        false, true, false, false, false, useSemaphore64bCmd);
         commandsBuffer = ptrOffset(commandsBuffer, EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,6 +120,7 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
 #include "shared/source/command_container/command_encoder_enablers.inl"
 
 namespace NEO {
+template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 template struct EncodeDispatchKernelWithHeap<Family>;

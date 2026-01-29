@@ -607,7 +607,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ResourceBarrierL1FlushMode, -1, "Invalidate or f
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64BitAddressing, -1, "Enable Enable64BitAddressing, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64bAddressingStateInit, -1, "Enable Enable64bAddressingStateInit, -1: default, 0: disabled, 1: enabled (when enabled all required state commands will be programmed at driver init)")
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedScratchSurfaceSize, true, "Enable support for increase per-thread scratch size HSD-14013581208")
-DECLARE_DEBUG_VARIABLE(bool, Enable64BitSemaphore, false, "Enable 64-bit semaphore")
+DECLARE_DEBUG_VARIABLE(int32_t, Enable64BitSemaphore, -1, "Enable 64-bit semaphore, -1: default, 0: disabled, 1: enabled")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

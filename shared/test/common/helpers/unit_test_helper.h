@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ struct RootDeviceEnvironment;
 struct UnitTestSetter {
     static void disableHeapless(const DebugManagerStateRestore &restorer);
     static void disableHeaplessStateInit(const DebugManagerStateRestore &restorer);
+    static void setupSemaphore64bCmdSupport(const DebugManagerStateRestore &restorer, uint32_t gfxCoreFamily);
     static void setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
     static void setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
 };

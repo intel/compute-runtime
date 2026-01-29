@@ -1231,6 +1231,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
 
     for (auto nPartitions : {1u, 2u}) {
         DebugManagerStateRestore restorer;
+        UnitTestSetter::setupSemaphore64bCmdSupport(restorer, device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
 
         if (nPartitions > 1u) {
             debugManager.flags.EnableImplicitScaling.set(1);

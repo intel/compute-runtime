@@ -215,5 +215,6 @@ struct MutableCommandListImp : public MutableCommandList {
     bool hasStageCommitVariables = false;
     bool updatedCommandList = false;
     bool finalizeCommandListResidency = true;
+    bool semaphore64bCmdSupported = false;
 };
 } // namespace L0::MCL

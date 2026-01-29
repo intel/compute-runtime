@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -23,6 +24,7 @@ struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableWalkerPartition.set(1u);
         debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
+        UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
         rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 0));
 

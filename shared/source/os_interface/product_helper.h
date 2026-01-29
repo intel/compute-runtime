@@ -287,6 +287,7 @@ class ProductHelper {
     virtual bool scanFullTopologyBitmap() const = 0;
     virtual bool isMemSetExtendedPayloadSupported() const = 0;
 
+    virtual bool isAvailableSemaphore64(const ReleaseHelper *releaseHelper) const = 0;
     virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;

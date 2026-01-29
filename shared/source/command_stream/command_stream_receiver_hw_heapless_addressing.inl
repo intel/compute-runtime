@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,8 +130,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
         programActivePartitionConfig(commandStreamCSR);
     }
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()));
-    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
+    const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()), useSemaphore64bCmd);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, useSemaphore64bCmd);
 
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);

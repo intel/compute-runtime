@@ -55,6 +55,8 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
 
     DebugManagerStateRestore restore;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restore, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
         bool ret = directSubmission.initialize(false);
@@ -126,6 +128,9 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighestPriorityLevelSetWhenP
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
 
+    DebugManagerStateRestore restore;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restore, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+
     struct MockOsContext : public OsContext {
         using OsContext::priorityLevel;
     };
@@ -156,6 +161,9 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighestPriorityLevelSetWhenP
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighPriorityContextSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
+
+    DebugManagerStateRestore restore;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restore, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     pDevice->getDefaultEngine().osContext->overrideEngineUsage(EngineUsage::highPriority);
 

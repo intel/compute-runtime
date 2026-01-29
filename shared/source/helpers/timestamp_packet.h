@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
+    static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode, bool useSemaphore64bCmd) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
         PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1,
@@ -111,7 +111,7 @@ struct TimestampPacketHelper {
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
-            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, TimestampPacketConstants::initValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, nullptr);
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, TimestampPacketConstants::initValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
         }
     }
 
@@ -128,13 +128,13 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled, bool isBcs) {
+    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled, bool isBcs, bool useSemaphore64bCmd) {
         for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
                 if (relaxedOrderingEnabled) {
                     TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(cmdStream, *node, isBcs);
                 } else {
-                    TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+                    TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);
                 }
             }
         }
@@ -149,10 +149,10 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForForMultiRootDeviceSyncContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
+    static void programCsrDependenciesForForMultiRootDeviceSyncContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool useSemaphore64bCmd) {
         for (auto timestampPacketContainer : csrDependencies.multiRootTimeStampSyncContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+                TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);
             }
         }
     }
@@ -177,8 +177,12 @@ struct TimestampPacketHelper {
                 cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        const bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
+
         for (auto &node : container.peekNodes()) {
-            TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+            TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);
         }
     }
 

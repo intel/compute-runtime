@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,7 @@ struct DeviceInfo {
     uint32_t vendorId;
     uint32_t vmeAvcSupportsPreemption;
     std::string name;
+    bool semaphore64bCmdSupport;
 };
 
 } // namespace NEO

@@ -663,6 +663,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCom
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenAddingAdditionalSynchronizationThenSemaphoreWaitIsCalled) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    UnitTestSetter::setupSemaphore64bCmdSupport(debugRestorer, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 

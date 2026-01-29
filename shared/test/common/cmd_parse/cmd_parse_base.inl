@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ using STATE_BASE_ADDRESS              = typename StateBaseAddressTypeHelper<GenS
 using MI_REPORT_PERF_COUNT            = GenStruct::MI_REPORT_PERF_COUNT;
 using MI_MATH                         = GenStruct::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GenStruct::MI_LOAD_REGISTER_REG;
-using MI_SEMAPHORE_WAIT               = GenStruct::MI_SEMAPHORE_WAIT;
+using MI_SEMAPHORE_WAIT               = GenGfxFamily::MI_SEMAPHORE_WAIT;
 using MI_STORE_DATA_IMM               = GenStruct::MI_STORE_DATA_IMM;
 using MI_FLUSH_DW                     = GenStruct::MI_FLUSH_DW;
 using MI_USER_INTERRUPT               = GenGfxFamily::MI_USER_INTERRUPT;

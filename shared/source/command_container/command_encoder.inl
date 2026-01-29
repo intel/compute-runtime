@@ -884,12 +884,13 @@ void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *comman
                                                             bool waitMode,
                                                             bool useQwordData,
                                                             bool indirect,
-                                                            bool switchOnUnsuccessful) {
+                                                            bool switchOnUnsuccessful,
+                                                            bool native64bCmd) {
     if (cmdBuffer == nullptr) {
         DEBUG_BREAK_IF(commandStream == nullptr);
         cmdBuffer = commandStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
-    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer), compareAddress, compareData, compareMode, registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful);
+    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer), compareAddress, compareData, compareMode, registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
 }
 
 template <typename Family>

@@ -73,6 +73,7 @@ class ReleaseHelper {
     virtual bool isUsmCompressionSupportedOnPeerAccess() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
     virtual bool isStateCacheInvalidationWaRequired() const = 0;
+    virtual bool isAvailableSemaphore64() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -123,6 +124,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isUsmCompressionSupportedOnPeerAccess() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
     bool isStateCacheInvalidationWaRequired() const override;
+    bool isAvailableSemaphore64() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

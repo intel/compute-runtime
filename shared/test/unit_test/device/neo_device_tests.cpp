@@ -440,6 +440,21 @@ TEST_F(DeviceGetCapsTest,
     EXPECT_LE(pDevice->getDeviceInfo().maxMemAllocSize, pDevice->getDeviceInfo().globalMemSize);
 }
 
+TEST_F(DeviceGetCapsTest, givenSemaphore64FlagWhenInitializeCapsIsCalledThensemaphore64bCmdSupportIsSetCorrectly) {
+    DebugManagerStateRestore dbgRestorer;
+
+    {
+        debugManager.flags.Enable64BitSemaphore.set(1);
+        pDevice->initializeCaps();
+        EXPECT_TRUE(pDevice->getDeviceInfo().semaphore64bCmdSupport);
+    }
+    {
+        debugManager.flags.Enable64BitSemaphore.set(0);
+        pDevice->initializeCaps();
+        EXPECT_FALSE(pDevice->getDeviceInfo().semaphore64bCmdSupport);
+    }
+}
+
 TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
     DebugManagerStateRestore dbgRestorer;
     {

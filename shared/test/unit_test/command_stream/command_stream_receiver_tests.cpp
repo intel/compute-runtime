@@ -5629,6 +5629,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenStaticPartitionEnabledWhenMultiplePa
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    DebugManagerStateRestore restorer;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     constexpr size_t cmdSize = 256;
     std::unique_ptr<char[]> buffer(new char[cmdSize]);
@@ -5717,6 +5720,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenImplicitScalingEnabledWhenProgrammin
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restorer;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.activePartitions = 2;

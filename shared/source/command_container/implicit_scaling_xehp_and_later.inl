@@ -9,6 +9,8 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/device/device.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -38,6 +40,7 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(ImplicitScalingD
     args.synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
     args.crossTileAtomicSynchronization = ImplicitScalingHelper::isCrossTileAtomicRequired(args.emitPipeControlStall);
     args.semaphoreProgrammingRequired = ImplicitScalingHelper::isSemaphoreProgrammingRequired();
+    args.semaphore64bCmdSupported = dispatchCommandArgs.device != nullptr ? dispatchCommandArgs.device->getDeviceInfo().semaphore64bCmdSupport : false;
 
     args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(args, dispatchCommandArgs.apiSelfCleanup);
     args.emitBatchBufferEnd = false;
@@ -154,11 +157,13 @@ bool &ImplicitScalingDispatch<GfxFamily>::getPipeControlStallRequired() {
 
 template <typename GfxFamily>
 WalkerPartition::WalkerPartitionArgs prepareBarrierWalkerPartitionArgs(bool emitSelfCleanup,
-                                                                       bool usePostSync) {
+                                                                       bool usePostSync,
+                                                                       bool semaphore64bCmdSupported) {
     WalkerPartition::WalkerPartitionArgs args = {};
     args.crossTileAtomicSynchronization = true;
     args.useAtomicsForSelfCleanup = ImplicitScalingHelper::isAtomicsUsedForSelfCleanup();
     args.usePostSync = usePostSync;
+    args.semaphore64bCmdSupported = semaphore64bCmdSupported;
 
     args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(args, emitSelfCleanup);
     args.pipeControlBeforeCleanupCrossTileSync = ImplicitScalingHelper::pipeControlBeforeCleanupAtomicSyncRequired();
@@ -170,7 +175,8 @@ template <typename GfxFamily>
 size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                           bool apiSelfCleanup,
                                                           bool usePostSync) {
-    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, usePostSync);
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper());
+    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, usePostSync, semaphore64bCmdSupported);
 
     return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, rootDeviceEnvironment));
 }
@@ -186,7 +192,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
-    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, gpuAddress > 0);
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper());
+    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, gpuAddress > 0, semaphore64bCmdSupported);
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
     args.postSyncGpuAddress = gpuAddress;

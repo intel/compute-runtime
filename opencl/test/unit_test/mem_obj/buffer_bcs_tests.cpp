@@ -96,6 +96,8 @@ struct BcsBufferTests : public ::testing::Test {
             hwInfo.featureTable.ftrBcsInfo.set(bcsIndex, true);
             hwInfo.featureTable.ftrBcsInfo.set(EngineHelpers::getBcsIndex(aub_stream::EngineType::ENGINE_BCS3)); // add internal engine
         }
+        UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo.platform.eRenderCoreFamily);
+
         deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0));
         device = deviceFactory->rootDevices[0];
         device->device.disableSecondaryEngines = true;

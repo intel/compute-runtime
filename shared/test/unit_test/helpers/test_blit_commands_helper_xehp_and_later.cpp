@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
@@ -398,7 +399,7 @@ HWTEST2_F(BlitTests, givenEnabledGlobalCacheInvalidationWhenProgrammingGlobalSeq
     auto val = BlitCommandsHelper<FamilyType>::getSizeForGlobalSequencerFlush();
     EXPECT_EQ(expectedSize, val);
 
-    BlitCommandsHelper<FamilyType>::programGlobalSequencerFlush(stream);
+    BlitCommandsHelper<FamilyType>::programGlobalSequencerFlush(stream, HasSemaphore64bCmd<FamilyType>);
     EXPECT_EQ(expectedSize, stream.getUsed());
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(streamBuffer);
@@ -424,7 +425,7 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
     auto val = BlitCommandsHelper<FamilyType>::getSizeForGlobalSequencerFlush();
     EXPECT_EQ(expectedSize, val);
 
-    BlitCommandsHelper<FamilyType>::programGlobalSequencerFlush(stream);
+    BlitCommandsHelper<FamilyType>::programGlobalSequencerFlush(stream, HasSemaphore64bCmd<FamilyType>);
     EXPECT_EQ(0u, stream.getUsed());
 }
 

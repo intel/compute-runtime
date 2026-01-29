@@ -1337,3 +1337,10 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayloadSupportedThenFalseReturned, IsAtMostXe3pCore) {
     EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {
+    if (releaseHelper) {
+        EXPECT_EQ(releaseHelper->isAvailableSemaphore64(), productHelper->isAvailableSemaphore64(releaseHelper));
+    }
+    EXPECT_EQ(false, productHelper->isAvailableSemaphore64(nullptr));
+}

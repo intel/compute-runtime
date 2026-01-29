@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/test/common/test_macros/header/common_matchers.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_load_register_imm_hw.h"
@@ -125,7 +126,8 @@ struct VariableFixture : public MutableCommandListFixtureInit {
                                                                                                    offset,
                                                                                                    inOrderPatchListIndex,
                                                                                                    type,
-                                                                                                   qwordDataIndirect);
+                                                                                                   qwordDataIndirect,
+                                                                                                   HasSemaphore64bCmd<FamilyType>);
     }
 
     template <typename FamilyType>

@@ -197,6 +197,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
     bool isNonStallingIoqBarrier = commandType == CL_COMMAND_BARRIER && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
+    const bool useSemaphore64bCmd = this->getDevice().getDeviceInfo().semaphore64bCmdSupport;
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::gpuKernel &&
@@ -257,7 +258,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     if (this->context->getRootDeviceIndices().size() > 1) {
-        TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, csrDeps);
+        TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, csrDeps, useSemaphore64bCmd);
     }
 
     if (enqueueWithBlitAuxTranslation) {
@@ -280,7 +281,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (programBarrierInTaskStream) {
             CsrDependencies csrDeps{};
             fillCsrDependenciesWithLastBcsPackets(csrDeps);
-            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false, isCopyOnly);
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false, isCopyOnly, useSemaphore64bCmd);
 
             setupBarrierTimestampForBcsEngines(getGpgpuCommandStreamReceiver().getOsContext().getEngineType(), timestampPacketDependencies);
             getGpgpuCommandStreamReceiver().programStallingCommandsForBarrier(commandStream, &timestampPacketDependencies.barrierNodes, isDcFlushRequiredOnStallingCommandsOnNextFlush());
@@ -326,7 +327,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(commandStream, isCopyOnly);
             }
 
-            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, relaxedOrderingEnabled, isCopyOnly);
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, relaxedOrderingEnabled, isCopyOnly, useSemaphore64bCmd);
         }
 
         if (isNonStallingIoqBarrierWithDependencies) {
@@ -698,7 +699,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
                                                              LinearStream *commandStream,
                                                              CsrDependencies &csrDeps) {
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDeps, false, isCopyOnly);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDeps, false, isCopyOnly, this->getDevice().getDeviceInfo().semaphore64bCmdSupport);
 
     uint64_t postSyncAddress = 0;
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

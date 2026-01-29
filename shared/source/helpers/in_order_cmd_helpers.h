@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,8 +181,8 @@ enum class PatchCmdType {
 
 template <typename GfxFamily>
 struct PatchCmd {
-    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType, bool deviceAtomicSignaling, bool duplicatedHostStorage)
-        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType), deviceAtomicSignaling(deviceAtomicSignaling), duplicatedHostStorage(duplicatedHostStorage) {
+    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType, bool deviceAtomicSignaling, bool duplicatedHostStorage, bool useSemaphore64bCmd)
+        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType), deviceAtomicSignaling(deviceAtomicSignaling), duplicatedHostStorage(duplicatedHostStorage), useSemaphore64bCmd(useSemaphore64bCmd) {
         if (inOrderExecInfo) {
             this->inOrderExecInfo = *inOrderExecInfo;
         }
@@ -238,6 +238,7 @@ struct PatchCmd {
     bool deviceAtomicSignaling = false;
     bool duplicatedHostStorage = false;
     bool skipPatching = false;
+    bool useSemaphore64bCmd = false;
 
   protected:
     void patchSdi(uint64_t appendCounterValue) {
@@ -246,17 +247,7 @@ struct PatchCmd {
         sdiCmd->setDataDword1(getHighPart(baseCounterValue + appendCounterValue));
     }
 
-    void patchSemaphore(uint64_t appendCounterValue) {
-        if (isExternalDependency()) {
-            appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
-            if (appendCounterValue == 0) {
-                return;
-            }
-        }
-
-        EncodeSemaphore<GfxFamily>::setMiSemaphoreWaitValue(cmd1, static_cast<uint32_t>(baseCounterValue + appendCounterValue));
-    }
-
+    void patchSemaphore(uint64_t appendCounterValue);
     void patchComputeWalker(uint64_t appendCounterValue);
     void patchBlitterCommand(uint64_t appendCounterValue, PatchCmdType patchCmdType);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,6 +127,8 @@ struct Xe3pCoreFamily : public Xe3pCore {
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint64_t;
     using StallingBarrierType = PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT_LEGACY = MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT = MI_SEMAPHORE_WAIT_64;
     static const COMPUTE_WALKER_2 cmdInitGpgpuWalker2;
     static const COMPUTE_WALKER cmdInitGpgpuWalker;
     static const CFE_STATE cmdInitCfeState;
@@ -139,7 +141,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static const STATE_COMPUTE_MODE cmdInitStateComputeMode;
     static const _3DSTATE_BINDING_TABLE_POOL_ALLOC cmdInitStateBindingTablePoolAlloc;
     static const MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
-    static const MI_SEMAPHORE_WAIT_64 cmdInitMiSemaphoreWait64;
+    static const MI_SEMAPHORE_WAIT_LEGACY cmdInitMiSemaphoreWaitLegacy;
     static const RENDER_SURFACE_STATE cmdInitRenderSurfaceState;
     static const POSTSYNC_DATA cmdInitPostSyncData;
     static const MI_SET_PREDICATE cmdInitSetPredicate;

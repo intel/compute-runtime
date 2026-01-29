@@ -23,7 +23,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            uint32_t activePartitions,
                                            uint32_t partitionOffset,
                                            bool isTbx,
-                                           bool dcFlushRequired)
+                                           bool dcFlushRequired,
+                                           bool useSemaphore64bCmd)
     : hostFunctionIdAddress(reinterpret_cast<uint64_t *>(hostFunctionIdAddress)),
       csr(csr),
       allocation(allocation),
@@ -32,7 +33,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
       activePartitions(activePartitions),
       partitionOffset(partitionOffset),
       isTbx(isTbx),
-      dcFlushRequired(dcFlushRequired) {
+      dcFlushRequired(dcFlushRequired),
+      useSemaphore64bCmd(useSemaphore64bCmd) {
 }
 
 uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress(uint32_t partitionId) const {
@@ -162,6 +164,10 @@ uint64_t HostFunctionStreamer::getHostFunctionReadyToExecute() const {
     }
 
     return hostFunctionId;
+}
+
+bool HostFunctionStreamer::isUsingSemaphore64bCmd() const {
+    return useSemaphore64bCmd;
 }
 
 namespace HostFunctionFactory {

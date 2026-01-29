@@ -760,6 +760,7 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
     auto partitionOffset = this->immWritePostSyncWriteOffset;
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
     auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
+    auto useSemaphore64bCmd = getProductHelper().isAvailableSemaphore64(getReleaseHelper());
     auto dcFlushRequired = this->getDcFlushSupport();
 
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
@@ -769,7 +770,8 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
                                                                         nPartitions,
                                                                         partitionOffset,
                                                                         isTbxMode(),
-                                                                        dcFlushRequired);
+                                                                        dcFlushRequired,
+                                                                        useSemaphore64bCmd);
 }
 
 HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {

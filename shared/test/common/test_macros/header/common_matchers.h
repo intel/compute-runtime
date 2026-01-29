@@ -277,3 +277,8 @@ struct ImageSupport {
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::imagesSupported;
     }
 };
+
+template <typename GfxFamily>
+concept HasSemaphore64bCmd = requires {
+                                 typename GfxFamily::MI_SEMAPHORE_WAIT_64;
+                             };

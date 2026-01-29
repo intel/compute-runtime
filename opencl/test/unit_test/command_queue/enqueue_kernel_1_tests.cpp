@@ -1864,6 +1864,7 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
 
 struct PauseOnGpuTests : public EnqueueKernelTest {
     void SetUp() override {
+        UnitTestSetter::setupSemaphore64bCmdSupport(this->restore, defaultHwInfo->platform.eRenderCoreFamily);
         EnqueueKernelTest::SetUp();
 
         auto &csr = pDevice->getGpgpuCommandStreamReceiver();

@@ -24,6 +24,7 @@ struct WalkerPartitionArgs {
     bool synchronizeBeforeExecution = false;
     bool crossTileAtomicSynchronization = false;
     bool semaphoreProgrammingRequired = false;
+    bool semaphore64bCmdSupported = false;
     bool staticPartitioning = false;
     bool emitSelfCleanup = false;
     bool useAtomicsForSelfCleanup = false;

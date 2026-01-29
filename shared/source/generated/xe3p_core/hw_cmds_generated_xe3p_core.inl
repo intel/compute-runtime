@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7953,8 +7953,10 @@ typedef struct tagMI_SEMAPHORE_WAIT {
             uint32_t Reserved_128 : BITFIELD_RANGE(0, 1);
             uint32_t WaitTokenNumber : BITFIELD_RANGE(2, 9);
             uint32_t Reserved_138 : BITFIELD_RANGE(10, 31);
+            // DWORD 5, 6
+            uint64_t Padding : BITFIELD_RANGE(0, 63); // patched: 2 bytes of MI_NOOP padding to match MI_SEMAPHORE_WAIT_64 in size
         } Common;
-        uint32_t RawData[5];
+        uint32_t RawData[7]; // patched
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x3,
@@ -8082,7 +8084,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         return TheStructure.Common.WaitTokenNumber;
     }
 } MI_SEMAPHORE_WAIT;
-STATIC_ASSERT(20 == sizeof(MI_SEMAPHORE_WAIT));
+STATIC_ASSERT(28 == sizeof(MI_SEMAPHORE_WAIT));
 
 typedef struct tagMI_SEMAPHORE_WAIT_64 {
     union tagTheStructure {

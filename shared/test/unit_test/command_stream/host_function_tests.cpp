@@ -59,7 +59,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
                                                                                nPartitions,
                                                                                partitionOffset,
                                                                                isTbx,
-                                                                               dcFlushRequired);
+                                                                               dcFlushRequired,
+                                                                               HasSemaphore64bCmd<FamilyType>);
 
             HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction), isMemorySynchronizationRequired);
 
@@ -136,7 +137,8 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                                                                                nPartitions,
                                                                                partitionOffset,
                                                                                isTbx,
-                                                                               dcFlushRequired);
+                                                                               dcFlushRequired,
+                                                                               HasSemaphore64bCmd<FamilyType>);
 
             constexpr auto size = 1024u;
             std::byte buff[size] = {};
@@ -271,7 +273,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                                                                                    nPartitions,
                                                                                    partitionOffset,
                                                                                    isTbx,
-                                                                                   dcFlushRequired);
+                                                                                   dcFlushRequired,
+                                                                                   HasSemaphore64bCmd<FamilyType>);
 
                 EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute());
 
@@ -460,7 +463,8 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
                                                                        1u,
                                                                        partitionOffset,
                                                                        isTbx,
-                                                                       dcFlushRequired);
+                                                                       dcFlushRequired,
+                                                                       HasSemaphore64bCmd<FamilyType>);
 
     bool memorySynchronizationRequired = true;
     if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
@@ -522,7 +526,8 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
                                                                        1u,
                                                                        partitionOffset,
                                                                        isTbx,
-                                                                       dcFlushRequired);
+                                                                       dcFlushRequired,
+                                                                       HasSemaphore64bCmd<FamilyType>);
 
     bool memorySynchronizationRequired = true;
     if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {

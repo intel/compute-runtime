@@ -1138,4 +1138,15 @@ bool ProductHelperHw<gfxProduct>::isMemSetExtendedPayloadSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *releaseHelper) const {
+    if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
+        return debugManager.flags.Enable64BitSemaphore.get() == 1;
+    }
+    if (releaseHelper) {
+        return releaseHelper->isAvailableSemaphore64();
+    }
+    return false;
+}
+
 } // namespace NEO

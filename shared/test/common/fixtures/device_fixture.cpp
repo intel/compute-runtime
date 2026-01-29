@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,10 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     pTagMemory = commandStreamReceiver.getTagAddress();
     ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
+
+    if (hardwareInfo && hardwareInfo->platform.eRenderCoreFamily == IGFX_XE3P_CORE) {
+        pDevice->deviceInfo.semaphore64bCmdSupport = true;
+    }
 }
 
 void DeviceFixture::tearDown() {

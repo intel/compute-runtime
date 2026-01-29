@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/encoders/walker_partition_fixture_xehp_and_later.h"
 
@@ -21,6 +22,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     mockExecutionEnvironment.incRefInternal();
     testArgs.partitionCount = 16u;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     auto device = std::make_unique<MockDevice>(&mockExecutionEnvironment, 0);
 
@@ -176,6 +178,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     uint64_t postSyncAddress = 0x8000456000;
     testArgs.workPartitionAllocationGpuVa = 0x8000444000;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
@@ -259,6 +262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     testArgs.synchronizeBeforeExecution = true;
@@ -369,6 +373,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -461,6 +466,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -619,6 +625,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -777,6 +784,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -942,6 +950,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.staticPartitioning = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -1107,6 +1116,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     auto device = std::make_unique<MockDevice>(&mockExecutionEnvironment, 0);
 
@@ -1359,6 +1369,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     testArgs.preferredStaticPartitioning = preferredStaticPartitioning;
     testArgs.workPartitionAllocationGpuVa = 0x800BADA55000;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     auto device = std::make_unique<MockDevice>(&mockExecutionEnvironment, 0);
 
@@ -1486,6 +1497,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     testArgs.usePostSync = true;
     testArgs.postSyncGpuAddress = 0xDAAB00;
     testArgs.postSyncImmediateValue = 0x421;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
@@ -1576,6 +1588,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     testArgs.usePostSync = true;
     testArgs.postSyncGpuAddress = 0xDAAB00;
     testArgs.postSyncImmediateValue = 0x421;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
@@ -1720,6 +1733,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     testArgs.usePostSync = true;
     testArgs.postSyncGpuAddress = 0xDAAB00;
     testArgs.postSyncImmediateValue = 0x421;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;

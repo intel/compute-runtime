@@ -23,6 +23,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include <cstddef>
+
 namespace L0 {
 namespace ult {
 
@@ -1365,12 +1367,13 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     commandList->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1417,8 +1420,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     auto semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, semWaitCmds.size()); // semaphore will be encoded using mi store cmds
 
+    size_t expectedMiStoresForStore = (miStoreSize + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+    size_t expectedMiStoresForSemaphore = (semaphoreSize + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+    size_t additionalMiStores = 2; // for batch buffer start
+    size_t totalExpectedMiStores = expectedMiStoresForStore + expectedMiStoresForSemaphore + additionalMiStores;
     auto miStoreCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(8u, miStoreCmds.size()); // 3 for mi store, 3 for mi semaphore wait, 2 for batch buffer start
+    ASSERT_EQ(totalExpectedMiStores, miStoreCmds.size());
 
     // read programmed mi store commands and reconstruct mi store and mi semaphore wait commands
 
@@ -1428,7 +1435,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     void *semaphoreWaitAddress = &semaphoreWait;
 
     auto offset = 0u;
-    for (auto i = 0u; i < 3; i++) {
+    for (auto i = 0u; i < expectedMiStoresForStore; i++) {
 
         auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
         auto dword0 = miStoreCmd->getDataDword0();
@@ -1442,7 +1449,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreamblWhenAppend
     }
 
     offset = 0u;
-    for (auto i = 3u; i < 6; i++) {
+    for (auto i = expectedMiStoresForStore; i < expectedMiStoresForStore + expectedMiStoresForSemaphore; i++) {
         auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*miStoreCmds[i]);
         auto dword0 = miStoreCmd->getDataDword0();
         memcpy(ptrOffset(semaphoreWaitAddress, offset), &dword0, sizeof(uint32_t));
@@ -1475,6 +1482,9 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     if (!device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getDcFlushSupport()) {
         GTEST_SKIP();
     }
+
+    DebugManagerStateRestore restore;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restore, FamilyType::gfxCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};

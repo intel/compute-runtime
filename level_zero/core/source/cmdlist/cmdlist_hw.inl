@@ -3302,9 +3302,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()));
 
                 if (!noopDispatch) {
+                    bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
                     auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
                     NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                            false, true, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful);
+                                                                            false, true, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd);
                 } else {
                     memset(semaphoreCommand, 0, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
                 }
@@ -4388,6 +4389,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
 
     bool indirectMode = false;
+    bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
 
     if (useQwordData) {
         if (isQwordInOrderCounter()) {
@@ -4403,7 +4405,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         UNRECOVERABLE_IF(getHighPart(data) != 0);
     }
 
-    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode, false, nullptr);
+    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode, false, useSemaphore64bCmd, nullptr);
 
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();
@@ -4688,10 +4690,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, Event::STATE_CLEARED,
                                                                                                    NEO::CompareOperation::equal, true, false, isCopyOnly(dualStreamCopyOffload));
         } else {
+            bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), outSemWaitCmdBuffer);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), useSemaphore64bCmd, outSemWaitCmdBuffer);
 
             if (outWaitCmds != nullptr) {
                 if constexpr (!std::is_same_v<PatchSemaphoreType, PatchInvalidPatchType>) {
@@ -4712,7 +4715,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if (inOrderCmdsPatchingEnabled()) {
-        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, this->inOrderAtomicSignalingEnabled, this->duplicatedInOrderCounterStorageEnabled);
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, this->inOrderAtomicSignalingEnabled, this->duplicatedInOrderCounterStorageEnabled, device->getDeviceInfo().semaphore64bCmdSupport);
         return this->inOrderPatchCmds.size() - 1;
     }
     return 0;
@@ -4857,9 +4860,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchInitializat
     }
 
     if (getSynchronizedDispatchMode() == NEO::SynchronizedDispatchMode::limited) {
+        bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), syncAlloc->getGpuAddress() + sizeof(uint32_t), 0u,
                                                                    GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                                   false, false, false, true, nullptr);
+                                                                   false, false, false, true, useSemaphore64bCmd, nullptr);
     } else if (getSynchronizedDispatchMode() == NEO::SynchronizedDispatchMode::full) {
         appendFullSynchronizedDispatchInit();
     }
@@ -4876,6 +4880,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
     const uint32_t queueId = this->syncDispatchQueueId + 1;
     const uint64_t queueIdToken = static_cast<uint64_t>(queueId) << 32;
     const uint64_t tokenInitialValue = queueIdToken + this->partitionCount;
+    const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
 
     auto syncAllocationGpuVa = device->getSyncDispatchTokenAllocation()->getGpuAddress();
     auto workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation()->getGpuAddress();
@@ -4903,7 +4908,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
         // Semaphore for potential switch
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa + sizeof(uint32_t), 0u,
                                                                    GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                                   false, false, false, true, nullptr);
+                                                                   false, false, false, true, useSemaphore64bCmd, nullptr);
 
         // Loop back to acquire again
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(cmdStream, acquireTokenCmdBufferVa, false, false, false);
@@ -4920,7 +4925,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
         // Wait for token acquisition by Primary Tile
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa + sizeof(uint32_t), queueId,
                                                                    GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                                   false, false, false, true, nullptr);
+                                                                   false, false, false, true, useSemaphore64bCmd, nullptr);
     }
 
     // Patch Primary Tile section jump to end

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,13 @@ template <typename GfxFamily>
 struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     using SemaphoreWait = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    MutableSemaphoreWaitHw(void *semWait, size_t offset, size_t inOrderPatchListIndex, Type type, bool qwordDataIndirect)
+    MutableSemaphoreWaitHw(void *semWait, size_t offset, size_t inOrderPatchListIndex, Type type, bool qwordDataIndirect, bool useSemaphore64bCmd)
         : MutableSemaphoreWait(inOrderPatchListIndex),
           semWait(semWait),
           offset(offset),
           type(type),
-          qwordDataIndirect(qwordDataIndirect) {}
+          qwordDataIndirect(qwordDataIndirect),
+          useSemaphore64bCmd(useSemaphore64bCmd) {}
     ~MutableSemaphoreWaitHw() override {}
 
     void setSemaphoreAddress(GpuAddress semaphoreAddress) override;
@@ -32,6 +33,7 @@ struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     size_t offset;
     Type type;
     bool qwordDataIndirect = false;
+    bool useSemaphore64bCmd = false;
 
   private:
     static GpuAddress commandAddressRange;

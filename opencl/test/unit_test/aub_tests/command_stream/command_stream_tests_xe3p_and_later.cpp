@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
@@ -62,13 +63,15 @@ HWTEST2_F(CommandStreamTestsXe3pAndLater, given64bDataToCompareWhenUsingIndirect
     const uint32_t compareDataMem0Low = static_cast<uint32_t>(compareDataMem0);
     const uint32_t compareDataMem0High = static_cast<uint32_t>(compareDataMem0 >> 32);
 
+    const bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0, compareDataGpr0Low, true, false);
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0 + 4, compareDataGpr0High, true, false);
 
     EncodeStoreMemory<FamilyType>::programStoreDataImm(*taskStream, bufferAllocation->getGpuAddress(), compareDataMem0Low, compareDataMem0High, true, false,
                                                        nullptr);
 
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(*taskStream, bufferAllocation->getGpuAddress(), 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, false, true, true, false, nullptr);
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(*taskStream, bufferAllocation->getGpuAddress(), 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, false, true, true, false, useSemaphore64bCmd, nullptr);
 
     const uint64_t storeValue = 0x456'0000'0123;
     const uint32_t storeValueLow = static_cast<uint32_t>(storeValue);

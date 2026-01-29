@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,13 +298,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramWaitForSemaphoreW
     auto expectedUsedSize = sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
     uint64_t gpuAddress = 0x6432100llu;
     uint32_t compareData = 1u;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
     void *semaphoreWaitAddress = cmdBufferAddress;
     programWaitForSemaphore<FamilyType>(cmdBufferAddress,
                                         totalBytesProgrammed,
                                         gpuAddress,
                                         compareData,
-                                        MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+                                        MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                        useSemaphore64bCmd);
     auto semaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(semaphoreWaitAddress);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
 
@@ -923,6 +925,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     checkForProperCmdBufferAddressOffset = false;
     testArgs.emitSelfCleanup = true;
@@ -1139,6 +1142,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     testArgs.emitSelfCleanup = true;
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -1473,6 +1477,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDoNotEmitSelfCleanupThenExpectNoCleanupSection) {
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = false;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -1540,6 +1545,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = true;
     testArgs.secondaryBatchBuffer = true;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
@@ -1658,6 +1664,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     testArgs.emitSelfCleanup = true;
     testArgs.secondaryBatchBuffer = true;
     testArgs.useAtomicsForSelfCleanup = true;
+    testArgs.semaphore64bCmdSupported = HasSemaphore64bCmd<FamilyType>;
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;

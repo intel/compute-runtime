@@ -54,7 +54,8 @@ class HostFunctionStreamer {
                          uint32_t activePartition,
                          uint32_t partitionOffset,
                          bool isTbx,
-                         bool dcFlushRequired);
+                         bool dcFlushRequired,
+                         bool useSemaphore64bCmd);
     ~HostFunctionStreamer() = default;
 
     uint64_t getHostFunctionReadyToExecute() const;
@@ -64,6 +65,7 @@ class HostFunctionStreamer {
     uint64_t getHostFunctionIdGpuAddress(uint32_t partitionId) const;
     uint64_t *getHostFunctionIdPtr(uint32_t partitionId) const;
     uint64_t getNextHostFunctionIdAndIncrement();
+    bool isUsingSemaphore64bCmd() const;
 
     void addHostFunction(uint64_t hostFunctionId, HostFunction &&hostFunction);
     void downloadHostFunctionAllocation() const;
@@ -92,6 +94,7 @@ class HostFunctionStreamer {
     std::atomic<bool> inOrderExecutionInProgress{false};
     const bool isTbx = false;
     bool dcFlushRequired = false;
+    const bool useSemaphore64bCmd = false;
 };
 
 enum class HostFunctionWorkerMode : int32_t {

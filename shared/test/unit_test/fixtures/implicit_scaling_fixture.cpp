@@ -33,6 +33,7 @@ void ImplicitScalingFixture::setUp() {
     testHardwareInfo = *defaultHwInfo;
 
     dcFlushFlag = pDevice->getDefaultEngine().commandStreamReceiver->getDcFlushSupport();
+    UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, testHardwareInfo.platform.eRenderCoreFamily);
 }
 
 void ImplicitScalingFixture::tearDown() {

@@ -49,6 +49,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isUsmCompressionSupportedOnPeerAccess, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

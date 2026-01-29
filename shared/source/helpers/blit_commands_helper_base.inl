@@ -356,7 +356,11 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger),
                                               args);
 
-    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
+
+    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
 }
 
 template <typename GfxFamily>

@@ -569,7 +569,8 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      bool waitMode,
                                                      bool useQwordData,
                                                      bool indirect,
-                                                     bool switchOnUnsuccessful) {
+                                                     bool switchOnUnsuccessful,
+                                                     bool native64bCmd) {
     constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
     UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
     UNRECOVERABLE_IF(indirect);
@@ -581,11 +582,6 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
 
     *cmd = localCmd;
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue) {
-    reinterpret_cast<Family::MI_SEMAPHORE_WAIT *>(cmd)->setSemaphoreDataDword(static_cast<uint32_t>(semaphoreValue));
 }
 
 template <typename GfxFamily>
@@ -679,6 +675,19 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 template <typename Family>
 size_t EncodeStates<Family>::getSshHeapSize() {
     return 64 * MemoryConstants::kiloByte;
+}
+
+template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue) {
+    if (this->isExternalDependency()) {
+        appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+        if (appendCounterValue == 0) {
+            return;
+        }
+    }
+
+    auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmd1);
+    semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
 }
 
 template <typename Family>
@@ -852,12 +861,13 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         bool useQwordData,
                                                         bool indirect,
                                                         bool switchOnUnsuccessful,
+                                                        bool native64bCmd,
                                                         void **outSemWaitCmd) {
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     if (outSemWaitCmd != nullptr) {
         *outSemWaitCmd = semaphoreCommand;
     }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
+    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
 }
 
 } // namespace NEO
@@ -867,6 +877,7 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
 namespace NEO {
 template struct EncodeL3State<Family>;
 
+template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 template struct EncodeDispatchKernelWithHeap<Family>;

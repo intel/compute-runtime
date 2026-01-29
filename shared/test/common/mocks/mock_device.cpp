@@ -68,6 +68,10 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
 
     initializeCaps();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
+
+    if (hwInfo.platform.eRenderCoreFamily == IGFX_XE3P_CORE) {
+        this->deviceInfo.semaphore64bCmdSupport = true;
+    }
 }
 
 bool MockDevice::createDeviceImpl() {

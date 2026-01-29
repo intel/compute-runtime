@@ -519,8 +519,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()));
-    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
+    const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()), useSemaphore64bCmd);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, useSemaphore64bCmd);
 
     programActivePartitionConfigFlushTask(commandStreamCSR);
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
@@ -1066,11 +1067,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, rootDeviceEnvironment.get()};
     MiFlushArgs args{waArgs};
+    const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
 
     for (auto &blitProperties : blitPropertiesContainer) {
-        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, isRelaxedOrderingDispatch, EngineHelpers::isBcs(this->osContext->getEngineType()));
-        TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);
-
+        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, isRelaxedOrderingDispatch, EngineHelpers::isBcs(this->osContext->getEngineType()), useSemaphore64bCmd);
+        TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, useSemaphore64bCmd);
         BlitCommandsHelper<GfxFamily>::encodeWa(commandStream, blitProperties, latestSentBcsWaValue);
 
         if (blitProperties.blitSyncProperties.outputTimestampPacket && blitProperties.blitSyncProperties.isTimestampMode()) {
@@ -1127,7 +1128,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         }
     }
 
-    BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
+    BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream, device.getDeviceInfo().semaphore64bCmdSupport);
 
     if (updateTag) {
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());

@@ -34,7 +34,8 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      bool waitMode,
                                                      bool useQwordData,
                                                      bool indirect,
-                                                     bool switchOnUnsuccessful) {
+                                                     bool switchOnUnsuccessful,
+                                                     bool native64bCmd) {
     constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
     UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
 
@@ -47,11 +48,6 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     localCmd.setIndirectSemaphoreDataDword(indirect);
 
     *cmd = localCmd;
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue) {
-    reinterpret_cast<Family::MI_SEMAPHORE_WAIT *>(cmd)->setSemaphoreDataDword(static_cast<uint32_t>(semaphoreValue));
 }
 
 template <typename Family>
@@ -68,12 +64,13 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         bool useQwordData,
                                                         bool indirect,
                                                         bool switchOnUnsuccessful,
+                                                        bool native64bCmd,
                                                         void **outSemWaitCmd) {
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     if (outSemWaitCmd != nullptr) {
         *outSemWaitCmd = semaphoreCommand;
     }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
+    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
 }
 
 template <typename Family>
@@ -125,6 +122,19 @@ void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename P
 
     postSyncData.setMocs(mocs);
     postSyncData.setSystemMemoryFenceRequest(requiresSystemMemoryFence);
+}
+
+template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue) {
+    if (this->isExternalDependency()) {
+        appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+        if (appendCounterValue == 0) {
+            return;
+        }
+    }
+
+    auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmd1);
+    semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
 }
 
 template <typename Family>

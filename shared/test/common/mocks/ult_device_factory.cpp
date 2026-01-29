@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
 
     debugManager.flags.CreateMultipleRootDevices.set(rootDevicesCount);
     debugManager.flags.CreateMultipleSubDevices.set(subDevicesCount);
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, defaultHwInfo->platform.eRenderCoreFamily);
     createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
             UnitTestSetter::setRcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);

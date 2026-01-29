@@ -279,7 +279,8 @@ inline auto &EncodePostSync<Family>::getPostSync(CommandType &cmd, size_t index)
 
 template <typename Family>
 size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
-    return NEO::debugManager.flags.Enable64BitSemaphore.get() == 1 ? sizeof(typename Family::MI_SEMAPHORE_WAIT_64) : sizeof(MI_SEMAPHORE_WAIT);
+    static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY), "MI_SEMAPHORE_WAIT_64/MI_SEMAPHORE_WAIT size mismatch");
+    return sizeof(MI_SEMAPHORE_WAIT);
 }
 
 template <typename Family>
@@ -291,13 +292,14 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         bool useQwordData,
                                                         bool indirect,
                                                         bool switchOnUnsuccessful,
+                                                        bool native64bCmd,
                                                         void **outSemWaitCmd) {
     void *semaphoreCommand = commandStream.getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
 
     if (outSemWaitCmd != nullptr) {
         *outSemWaitCmd = semaphoreCommand;
     }
-    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(semaphoreCommand), compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
+    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(semaphoreCommand), compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
 }
 
 template <typename Family>
@@ -309,41 +311,42 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      bool waitMode,
                                                      bool useQwordData,
                                                      bool indirect,
-                                                     bool switchOnUnsuccessful) {
+                                                     bool switchOnUnsuccessful,
+                                                     bool native64bCmd) {
     if (debugManager.flags.ForceSwitchQueueOnUnsuccessful.get() != -1) {
         switchOnUnsuccessful = debugManager.flags.ForceSwitchQueueOnUnsuccessful.get() == 1;
     }
 
-    if (debugManager.flags.Enable64BitSemaphore.get()) {
-        using MI_SEMAPHORE_WAIT_64 = typename Family::MI_SEMAPHORE_WAIT_64;
-        using COMPARE_OPERATION_64 = typename MI_SEMAPHORE_WAIT_64::COMPARE_OPERATION;
-
+    if (native64bCmd) {
         UNRECOVERABLE_IF(!waitMode) // WAIT_MODE_SIGNAL_MODE is not supported
 
-        MI_SEMAPHORE_WAIT_64 localCmd = Family::cmdInitMiSemaphoreWait64;
-        localCmd.setCompareOperation(static_cast<COMPARE_OPERATION_64>(compareMode));
+        MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
+        localCmd.setCompareOperation(compareMode);
         localCmd.setSemaphoreDataDword(compareData);
         localCmd.setSemaphoreGraphicsAddress(compareAddress);
-        localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT_64::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT_64::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
+        localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
         localCmd.setIndirectSemaphoreDataDword(indirect);
-        localCmd.set64BCompareDisable(useQwordData ? MI_SEMAPHORE_WAIT_64::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_64B_COMPARE : MI_SEMAPHORE_WAIT_64::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_32B_COMPARE);
+        localCmd.set64BCompareDisable(useQwordData ? MI_SEMAPHORE_WAIT::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_64B_COMPARE : MI_SEMAPHORE_WAIT::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_32B_COMPARE);
 
         if (switchOnUnsuccessful) {
-            localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT_64::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
+            localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
         }
 
         if (indirect && useQwordData) {
             localCmd.setSemaphoreDataDword(0);
         }
 
-        memcpy_s(cmd, sizeof(MI_SEMAPHORE_WAIT_64), &localCmd, sizeof(MI_SEMAPHORE_WAIT_64));
+        *cmd = localCmd;
     } else {
-        MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
-        localCmd.setCompareOperation(compareMode);
+        using MI_SEMAPHORE_WAIT_LEGACY = typename Family::MI_SEMAPHORE_WAIT_LEGACY;
+        using COMPARE_OPERATION_LEGACY = typename MI_SEMAPHORE_WAIT_LEGACY::COMPARE_OPERATION;
+
+        MI_SEMAPHORE_WAIT_LEGACY localCmd = Family::cmdInitMiSemaphoreWaitLegacy;
+        localCmd.setCompareOperation(static_cast<COMPARE_OPERATION_LEGACY>(compareMode));
         localCmd.setSemaphoreDataDword(static_cast<uint32_t>(compareData));
         localCmd.setSemaphoreGraphicsAddress(compareAddress);
-        localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
-        localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
+        localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
+        localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT_LEGACY::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT_LEGACY::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
         localCmd.setIndirectSemaphoreDataDword(indirect);
 
         if (indirect && useQwordData) {
@@ -353,19 +356,30 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
         }
 
         if (switchOnUnsuccessful) {
-            localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
+            localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
         }
 
-        *cmd = localCmd;
+        static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY));
+        static_assert(std::is_trivially_copyable_v<MI_SEMAPHORE_WAIT_LEGACY>);
+        memcpy(cmd, &localCmd, sizeof(MI_SEMAPHORE_WAIT));
     }
 }
 
 template <typename Family>
-void EncodeSemaphore<Family>::setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue) {
-    if (debugManager.flags.Enable64BitSemaphore.get()) {
-        reinterpret_cast<Family::MI_SEMAPHORE_WAIT_64 *>(cmd)->setSemaphoreDataDword(semaphoreValue);
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue) {
+    if (this->isExternalDependency()) {
+        appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+        if (appendCounterValue == 0) {
+            return;
+        }
+    }
+
+    if (this->useSemaphore64bCmd) {
+        auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmd1);
+        semaphoreCmd->setSemaphoreDataDword(baseCounterValue + appendCounterValue);
     } else {
-        reinterpret_cast<Family::MI_SEMAPHORE_WAIT *>(cmd)->setSemaphoreDataDword(static_cast<uint32_t>(semaphoreValue));
+        auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT_LEGACY *>(cmd1);
+        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
     }
 }
 
@@ -404,6 +418,7 @@ template void NEO::EncodePostSync<Family>::setupPostSyncForRegularEvent<Family::
 template void NEO::EncodePostSync<Family>::encodeL3Flush<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
 template void NEO::EncodePostSync<Family>::setupPostSyncForInOrderExec<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
 
+template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 

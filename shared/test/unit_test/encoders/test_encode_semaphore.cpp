@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,9 @@ using CommandEncodeSemaphore = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    MI_SEMAPHORE_WAIT miSemaphore1;
+    bool useSemaphore64 = false;
 
+    MI_SEMAPHORE_WAIT miSemaphore1;
     EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore1,
                                                         0x123400,
                                                         4,
@@ -27,7 +28,8 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         true,
                                                         false,
                                                         false,
-                                                        false);
+                                                        false,
+                                                        useSemaphore64);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
     EXPECT_EQ(4u, miSemaphore1.getSemaphoreDataDword());
@@ -43,7 +45,8 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         false,
                                                         false,
                                                         false,
-                                                        false);
+                                                        false,
+                                                        useSemaphore64);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphore2.getWaitMode());
 }
 
@@ -59,7 +62,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
                                                            0xFF00FF000u,
                                                            5u,
-                                                           compareMode, false, false, false, false, nullptr);
+                                                           compareMode, false, false, false, false, HasSemaphore64bCmd<FamilyType>, nullptr);
 
     EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 
@@ -86,7 +89,7 @@ HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreTh
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
                                                            0xFF00FF000u,
                                                            5u,
-                                                           compareMode, false, false, true, false, &outSemWait);
+                                                           compareMode, false, false, true, false, HasSemaphore64bCmd<FamilyType>, &outSemWait);
 
     EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 

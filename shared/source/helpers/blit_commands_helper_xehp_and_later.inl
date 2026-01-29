@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -269,7 +269,7 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream) {
+void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream, bool useSemaphore64bCmd) {
     if (debugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         constexpr uint32_t globalInvalidationRegister = 0xB404u;
@@ -278,7 +278,7 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
                                                               globalInvalidationRegister,
                                                               0u,
                                                               COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                              true, false, false, false, nullptr);
+                                                              true, false, false, false, useSemaphore64bCmd, nullptr);
     }
 }
 

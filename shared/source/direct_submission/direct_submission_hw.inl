@@ -41,6 +41,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
     auto &productHelper = inputParams.rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = inputParams.rootDeviceEnvironment.getReleaseHelper();
     auto &compilerProductHelper = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
     if (debugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
@@ -95,6 +96,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     }
 
     currentQueueWorkCount = getInitialSemaphoreValue();
+    this->useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -306,7 +308,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
         EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                               semaphoreGpuVa,
                                                               value,
-                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, nullptr);
+                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, this->useSemaphore64bCmd, nullptr);
     }
 
     if (miMemFenceRequired) {
@@ -790,7 +792,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreForPagin
     EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                           this->gpuVaForPagingFenceSemaphore,
                                                           value,
-                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, nullptr);
+                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, this->useSemaphore64bCmd, nullptr);
 }
 
 template <typename GfxFamily, typename Dispatcher>

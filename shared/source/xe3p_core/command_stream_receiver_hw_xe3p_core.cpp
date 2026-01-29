@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -304,7 +304,7 @@ const Family::STATE_COMPUTE_MODE Family::cmdInitStateComputeMode = Family::STATE
 const Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC Family::cmdInitStateBindingTablePoolAlloc =
     Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC::sInit();
 const Family::MI_SEMAPHORE_WAIT Family::cmdInitMiSemaphoreWait = Family::MI_SEMAPHORE_WAIT::sInit();
-const Family::MI_SEMAPHORE_WAIT_64 Family::cmdInitMiSemaphoreWait64 = Family::MI_SEMAPHORE_WAIT_64::sInit();
+const Family::MI_SEMAPHORE_WAIT_LEGACY Family::cmdInitMiSemaphoreWaitLegacy = Family::MI_SEMAPHORE_WAIT_LEGACY::sInit();
 const Family::RENDER_SURFACE_STATE Family::cmdInitRenderSurfaceState = Family::RENDER_SURFACE_STATE::sInit();
 const Family::POSTSYNC_DATA Family::cmdInitPostSyncData = Family::POSTSYNC_DATA::sInit();
 const Family::MI_SET_PREDICATE Family::cmdInitSetPredicate = Family::MI_SET_PREDICATE::sInit();

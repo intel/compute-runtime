@@ -176,7 +176,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream) {
+void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream, bool useSemaphore64bCmd) {
 }
 
 template <typename GfxFamily>

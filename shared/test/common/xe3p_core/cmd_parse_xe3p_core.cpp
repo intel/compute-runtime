@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,8 @@ using MEM_SET = GenStruct::MEM_SET;
 using STATE_CONTEXT_DATA_BASE_ADDRESS = GenStruct::STATE_CONTEXT_DATA_BASE_ADDRESS;
 using COMPUTE_WALKER_2 = GenStruct::COMPUTE_WALKER_2;
 using RESOURCE_BARRIER = GenStruct::RESOURCE_BARRIER;
+using MI_SEMAPHORE_WAIT_LEGACY = GenGfxFamily::MI_SEMAPHORE_WAIT_LEGACY;
 using MI_SEMAPHORE_WAIT = GenGfxFamily::MI_SEMAPHORE_WAIT;
-using MI_SEMAPHORE_WAIT_64 = GenGfxFamily::MI_SEMAPHORE_WAIT_64;
 
 template <>
 COMPUTE_WALKER_2 *genCmdCast<COMPUTE_WALKER_2 *>(void *buffer) {
@@ -43,11 +43,11 @@ COMPUTE_WALKER_2 *genCmdCast<COMPUTE_WALKER_2 *>(void *buffer) {
 }
 
 template <>
-MI_SEMAPHORE_WAIT_64 *genCmdCast<MI_SEMAPHORE_WAIT_64 *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_64 *>(buffer);
+MI_SEMAPHORE_WAIT_LEGACY *genCmdCast<MI_SEMAPHORE_WAIT_LEGACY *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
 
-    return MI_SEMAPHORE_WAIT_64::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
-                   MI_SEMAPHORE_WAIT_64::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == pCmd->TheStructure.Common.MiCommandOpcode
+    return MI_SEMAPHORE_WAIT_LEGACY::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_SEMAPHORE_WAIT_LEGACY::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == pCmd->TheStructure.Common.MiCommandOpcode
                ? pCmd
                : nullptr;
 }
@@ -89,10 +89,9 @@ size_t CmdParse<GenGfxFamily>::getAdditionalCommandLength(void *cmd) {
             return sizeof(RESOURCE_BARRIER) / sizeof(uint32_t);
         }
     }
-
     {
-        if (genCmdCast<MI_SEMAPHORE_WAIT_64 *>(cmd)) {
-            return sizeof(MI_SEMAPHORE_WAIT_64) / sizeof(uint32_t);
+        if (genCmdCast<MI_SEMAPHORE_WAIT_LEGACY *>(cmd)) {
+            return sizeof(MI_SEMAPHORE_WAIT_LEGACY) / sizeof(uint32_t);
         }
     }
 

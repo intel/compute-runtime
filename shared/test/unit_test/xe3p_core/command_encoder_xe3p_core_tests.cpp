@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
@@ -23,6 +24,9 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -234,114 +238,142 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenXe3pWhenEncodeAdditionalWalkerF
     }
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenEnable64BitSemaphoreFlagWhenProgrammingSemaphoreThenProperSemaphoreIsProgrammed) {
-    using MI_SEMAPHORE_WAIT_64 = typename FamilyType::MI_SEMAPHORE_WAIT_64;
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenUseSemaphore64bCmdArgWhenProgrammingSemaphoreThenProperSemaphoreIsProgrammed) {
+    using MI_SEMAPHORE_WAIT_LEGACY = typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore debugRestorer;
+    bool useSemaphore64bCmd = false;
 
-    {
-        debugManager.flags.Enable64BitSemaphore.set(0);
+    // MI_SEMAPHORE_WAIT_LEGACY must be compatible in size with MI_SEMAPHORE_WAIT_64, which is default for Xe3p
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
 
-        uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
-        LinearStream linearStream(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+    auto semaphoreLegacy = genCmdCast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
+    EXPECT_NE(semaphoreLegacy, nullptr);
 
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
-        auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(buffer);
-        EXPECT_NE(semaphore, nullptr);
-    }
+    useSemaphore64bCmd = true;
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
 
-    {
-        debugManager.flags.Enable64BitSemaphore.set(1);
-
-        uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT_64)] = {};
-        LinearStream linearStream(buffer, sizeof(buffer));
-
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
-        auto semaphore64 = genCmdCast<MI_SEMAPHORE_WAIT_64 *>(buffer);
-        EXPECT_NE(semaphore64, nullptr);
-    }
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+    auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(buffer);
+    EXPECT_NE(semaphore, nullptr);
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenEnable64BitSemaphoreFlagWhenProgrammingSemaphoreThenSetSwitchOnUnsuccessfulSwitchMode) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using MI_SEMAPHORE_WAIT_64 = typename FamilyType::MI_SEMAPHORE_WAIT_64;
-
-    DebugManagerStateRestore debugRestorer;
-    {
-        debugManager.flags.Enable64BitSemaphore.set(0);
-
-        uint8_t buffer[2 * sizeof(MI_SEMAPHORE_WAIT)] = {};
-        LinearStream linearStream(buffer, 2 * sizeof(MI_SEMAPHORE_WAIT));
-        auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
-
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
-
-        semaphoreCmd++;
-
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
-    }
-    {
-        debugManager.flags.Enable64BitSemaphore.set(1);
-
-        uint8_t buffer[2 * sizeof(MI_SEMAPHORE_WAIT_64)] = {};
-        LinearStream linearStream(buffer, 2 * sizeof(MI_SEMAPHORE_WAIT_64));
-        auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_64 *>(buffer);
-
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT_64::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
-
-        semaphoreCmd++;
-
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT_64::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
-    }
-    {
-        debugManager.flags.Enable64BitSemaphore.set(0);
-        uint8_t buffer[2 * sizeof(MI_SEMAPHORE_WAIT)] = {};
-        LinearStream linearStream(buffer, 2 * sizeof(MI_SEMAPHORE_WAIT));
-        auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
-
-        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(0);
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
-
-        semaphoreCmd++;
-
-        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(1);
-        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
-    }
-}
-
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenIndirectModeAndQwordDataWhenProgrammingSemaphoreThenEnable64bGprMode) {
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenForceSwitchQueueOnUnsuccessfulFlagWhenProgrammingSemaphoreLegacyThenSetSwitchOnUnsuccessfulSwitchMode) {
+    using MI_SEMAPHORE_WAIT_LEGACY = typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore debugRestorer;
-    debugManager.flags.Enable64BitSemaphore.set(0);
+    bool useSemaphore64bCmd = false;
 
     uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
-    LinearStream linearStream(buffer, sizeof(MI_SEMAPHORE_WAIT));
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
+
+    {
+        bool switchOnUnsuccessful = false;
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(1);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, switchOnUnsuccessful, useSemaphore64bCmd, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+    }
+
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    {
+        bool switchOnUnsuccessful = true;
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(0);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, switchOnUnsuccessful, useSemaphore64bCmd, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+    }
+}
+
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenForceSwitchQueueOnUnsuccessfulFlagWhenProgrammingSemaphore64ThenSetSwitchOnUnsuccessfulSwitchMode) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore debugRestorer;
+    bool useSemaphore64bCmd = true;
+
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+    LinearStream linearStream(buffer, sizeof(buffer));
+    {
+        bool switchOnUnsuccessful = false;
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(1);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, switchOnUnsuccessful, useSemaphore64bCmd, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+    }
+
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    {
+        bool switchOnUnsuccessful = true;
+        debugManager.flags.ForceSwitchQueueOnUnsuccessful.set(0);
+        EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, switchOnUnsuccessful, useSemaphore64bCmd, nullptr);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+    }
+}
+
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, whenProgrammingSemaphoreLegacyThenSetSwitchOnUnsuccessfulSwitchMode) {
+    using MI_SEMAPHORE_WAIT_LEGACY = typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    bool useSemaphore64bCmd = false;
+
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
+
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, useSemaphore64bCmd, nullptr);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+}
+
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, whenProgrammingSemaphore64ThenSetSwitchOnUnsuccessfulSwitchMode) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    bool useSemaphore64bCmd = true;
+
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
     auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
 
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, useSemaphore64bCmd, nullptr);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+}
+
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenIndirectModeAndQwordDataWhenProgrammingSemaphoreLegacyThenEnable64bGprMode) {
+    using MI_SEMAPHORE_WAIT_LEGACY = typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    bool useSemaphore64bCmd = false;
+
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
+
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
     EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, true, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, true, false, useSemaphore64bCmd, nullptr);
     EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
     EXPECT_TRUE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, useSemaphore64bCmd, nullptr);
     EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, true, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, true, false, useSemaphore64bCmd, nullptr);
     EXPECT_TRUE(semaphoreCmd->get64bCompareEnableWithGPR());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 }
@@ -350,29 +382,28 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenIndirectModeAndQwordDataWhenPro
     using MI_SEMAPHORE_WAIT_64 = typename FamilyType::MI_SEMAPHORE_WAIT_64;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.Enable64BitSemaphore.set(1);
+    bool useSemaphore64bCmd = true;
 
     uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT_64)] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
     auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_64 *>(buffer);
 
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
     EXPECT_TRUE(semaphoreCmd->get64BCompareDisable());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT_64));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, true, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, true, false, useSemaphore64bCmd, nullptr);
     EXPECT_TRUE(semaphoreCmd->get64BCompareDisable());
     EXPECT_TRUE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT_64));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, useSemaphore64bCmd, nullptr);
     EXPECT_FALSE(semaphoreCmd->get64BCompareDisable());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
-    linearStream.replaceBuffer(buffer, sizeof(MI_SEMAPHORE_WAIT_64));
-    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, true, false, nullptr);
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, true, false, useSemaphore64bCmd, nullptr);
     EXPECT_FALSE(semaphoreCmd->get64BCompareDisable());
     EXPECT_TRUE(semaphoreCmd->getIndirectSemaphoreDataDword());
 }
@@ -381,8 +412,7 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWait64WhenProgrammin
     using MI_SEMAPHORE_WAIT_64 = typename FamilyType::MI_SEMAPHORE_WAIT_64;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.Enable64BitSemaphore.set(1);
+    bool useSemaphore64bCmd = true;
 
     uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT_64)] = {};
     auto miSemaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
@@ -396,14 +426,15 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWait64WhenProgrammin
                                                         true,
                                                         false,
                                                         false,
-                                                        false);
+                                                        false,
+                                                        useSemaphore64bCmd);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore64->getCompareOperation());
     EXPECT_EQ(4u, miSemaphore64->getSemaphoreDataDword());
     EXPECT_EQ(0x123400u, miSemaphore64->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore64->getWaitMode());
 
-    memset(buffer, 0, sizeof(MI_SEMAPHORE_WAIT));
+    memset(buffer, 0, sizeof(buffer));
     EXPECT_ANY_THROW(EncodeSemaphore<FamilyType>::programMiSemaphoreWait(miSemaphore,
                                                                          0x123400,
                                                                          4,
@@ -412,17 +443,20 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWait64WhenProgrammin
                                                                          false,
                                                                          false,
                                                                          false,
-                                                                         false));
+                                                                         false,
+                                                                         useSemaphore64bCmd));
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWaitWhenProgrammingWithSelectedWaitModeThenProperWaitModeIsSet) {
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWaitLegacyWhenProgrammingWithSelectedWaitModeThenProperWaitModeIsSet) {
+    using MI_SEMAPHORE_WAIT_LEGACY = typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.Enable64BitSemaphore.set(0);
+    bool useSemaphore64bCmd = false;
 
-    MI_SEMAPHORE_WAIT miSemaphore;
-    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore,
+    uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    auto miSemaphoreLegacy = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
+    auto miSemaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(miSemaphore,
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
@@ -430,15 +464,16 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWaitWhenProgrammingW
                                                         true,
                                                         false,
                                                         false,
-                                                        false);
+                                                        false,
+                                                        useSemaphore64bCmd);
 
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore.getCompareOperation());
-    EXPECT_EQ(4u, miSemaphore.getSemaphoreDataDword());
-    EXPECT_EQ(0x123400u, miSemaphore.getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore.getWaitMode());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreLegacy->getCompareOperation());
+    EXPECT_EQ(4u, miSemaphoreLegacy->getSemaphoreDataDword());
+    EXPECT_EQ(0x123400u, miSemaphoreLegacy->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphoreLegacy->getWaitMode());
 
-    memset(&miSemaphore, 0, sizeof(MI_SEMAPHORE_WAIT));
-    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore,
+    memset(buffer, 0, sizeof(buffer));
+    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(miSemaphore,
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
@@ -446,32 +481,40 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWaitWhenProgrammingW
                                                         false,
                                                         false,
                                                         false,
-                                                        false);
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphore.getWaitMode());
+                                                        false,
+                                                        useSemaphore64bCmd);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphoreLegacy->getWaitMode());
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenEnable64BitSemaphoreFlagWhenSettingSemaphoreValueThenProperValueIsSet) {
-    DebugManagerStateRestore debugRestorer;
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenInOrderExecInfoWhenPatchingLegacySemaphoreThenSetCorrectValues) {
+    MockDevice mockDevice;
 
-    const uint64_t testValue = 0x123456789ABCDEF0ull;
-    {
-        using MI_SEMAPHORE_WAIT_64 = typename FamilyType::MI_SEMAPHORE_WAIT_64;
-        debugManager.flags.Enable64BitSemaphore.set(1);
-        uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT_64)] = {};
-        auto miSemaphore = reinterpret_cast<MI_SEMAPHORE_WAIT_64 *>(buffer);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    MockMemoryManager memoryManager(mockExecutionEnvironment);
 
-        EncodeSemaphore<FamilyType>::setMiSemaphoreWaitValue(miSemaphore, testValue);
-        EXPECT_EQ(testValue, miSemaphore->getSemaphoreDataDword());
-    }
-    {
-        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-        debugManager.flags.Enable64BitSemaphore.set(0);
-        uint8_t buffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
-        auto miSemaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
 
-        EncodeSemaphore<FamilyType>::setMiSemaphoreWaitValue(miSemaphore, testValue);
-        EXPECT_EQ(static_cast<uint32_t>(testValue), miSemaphore->getSemaphoreDataDword());
-    }
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(node, nullptr, mockDevice, 2, true, false);
+    inOrderExecInfo->addCounterValue(1);
+
+    bool useSemaphore64bCmd = false;
+
+    auto miSemaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
+    auto miSemaphoreLegacyCmd = reinterpret_cast<typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY *>(&miSemaphoreCmd);
+    miSemaphoreLegacyCmd->setSemaphoreDataDword(1);
+
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &miSemaphoreCmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false, useSemaphore64bCmd);
+    patchCmd.patch(2);
+    EXPECT_EQ(1u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
+
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(3);
+    patchCmd.patch(3);
+    EXPECT_EQ(3u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &miSemaphoreCmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false, useSemaphore64bCmd);
+    patchCmdInternal.patch(3);
+
+    EXPECT_EQ(4u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
 }
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, given57bitVaForDestinationAddressWhenProgrammingMiFlushDwThenVerifyAll57bitsAreUsed) {

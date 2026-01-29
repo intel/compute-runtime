@@ -106,6 +106,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
     this->maxPerThreadDataSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize * 3 * sizeof(uint16_t));
     this->iohAlignment = NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment();
     this->inlineDataSize = getInlineDataSize();
+    this->semaphore64bCmdSupported = device->getDeviceInfo().semaphore64bCmdSupport;
 
     // this is a unique ptr storage for all variables
     this->variableStorage.reserve(estimatedMutableAppendCount * estimatedVariablesPerAppendCount);
@@ -608,7 +609,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           semaphoreWaitCmdToPatch->inOrderPatchListIndex,
                                                                           MutableSemaphoreWait::cbEventWait,
-                                                                          qwordIndirect);
+                                                                          qwordIndirect,
+                                                                          this->semaphore64bCmdSupported);
     mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
     auto semWaitCmd = (*mutableSemaphoreWaitCmds.rbegin()).get();
     variableSemaphoreWaitList.emplace_back(semWaitCmd);
@@ -627,7 +629,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureRegularWaitEventCommand
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           0,
                                                                           MutableSemaphoreWait::regularEventWait,
-                                                                          false);
+                                                                          false,
+                                                                          this->semaphore64bCmdSupported);
     mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
     auto semWaitCmd = (*mutableSemaphoreWaitCmds.rbegin()).get();
     variableSemaphoreWaitList.emplace_back(semWaitCmd);
@@ -661,7 +664,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSi
                                                                                   semaphoreWaitPatch->offset,
                                                                                   0,
                                                                                   MutableSemaphoreWait::cbEventTimestampSyncWait,
-                                                                                  false);
+                                                                                  false,
+                                                                                  this->semaphore64bCmdSupported);
             mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
             auto semWaitCmd = (*mutableSemaphoreWaitCmds.rbegin()).get();
             variableSemaphoreWaitList.emplace_back(semWaitCmd);

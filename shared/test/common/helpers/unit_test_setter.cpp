@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 void UnitTestSetter::disableHeapless([[maybe_unused]] const DebugManagerStateRestore &restorer) {
@@ -35,4 +37,13 @@ void UnitTestSetter::setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment
         rootDeviceEnvironment.setRcsExposure();
     }
 }
+
+void UnitTestSetter::setupSemaphore64bCmdSupport([[maybe_unused]] const DebugManagerStateRestore &restorer, uint32_t gfxCoreFamily) {
+    // for Xe3p force 64b semaphore cmd to have consistency between platforms in tests,
+    // as default semaphore cmd is set to 64b for Xe3p gen but some platforms may have it disabled (see isAvailableSemaphore64 method)
+    if (gfxCoreFamily == IGFX_XE3P_CORE) {
+        debugManager.flags.Enable64BitSemaphore.set(1);
+    }
+}
+
 } // namespace NEO

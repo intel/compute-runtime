@@ -558,7 +558,8 @@ struct EncodeSemaphore {
                                               bool waitMode,
                                               bool useQwordData,
                                               bool indirect,
-                                              bool switchOnUnsuccessful);
+                                              bool switchOnUnsuccessful,
+                                              bool native64bCmd);
 
     static void programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                        uint64_t compareAddress,
@@ -568,7 +569,8 @@ struct EncodeSemaphore {
                                        bool waitMode,
                                        bool useQwordData,
                                        bool indirect,
-                                       bool switchOnUnsuccessful);
+                                       bool switchOnUnsuccessful,
+                                       bool native64bCmd);
 
     static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                           uint64_t compareAddress,
@@ -578,11 +580,10 @@ struct EncodeSemaphore {
                                           bool useQwordData,
                                           bool indirect,
                                           bool switchOnUnsuccessful,
+                                          bool native64bCmd,
                                           void **outSemWaitCmd);
 
     static size_t getSizeMiSemaphoreWait();
-
-    static void setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue);
 };
 
 template <typename GfxFamily>

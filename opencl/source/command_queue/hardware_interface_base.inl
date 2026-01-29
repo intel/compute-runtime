@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     LinearStream *commandStream = nullptr;
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     auto mainKernel = multiDispatchInfo.peekMainKernel();
-    walkerArgs.preemptionMode = ClPreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), multiDispatchInfo);
+    auto &device = commandQueue.getDevice();
+    walkerArgs.preemptionMode = ClPreemptionHelper::taskPreemptionMode(device, multiDispatchInfo);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes
@@ -104,11 +105,11 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         commandStream = &commandQueue.getCS(0);
     }
 
-    if (commandQueue.getDevice().getDebugger()) {
+    if (device.getDebugger()) {
         auto debugSurface = commandQueue.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
         void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
         size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
+        Buffer::setSurfaceState(&device, device.getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
                                 false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0,
                                 mainKernel->areMultipleSubDevicesInContext());
     }
@@ -117,7 +118,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandStream, false);
     }
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled, commandQueue.isBcs());
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled, commandQueue.isBcs(), device.getDeviceInfo().semaphore64bCmdSupport);
 
     dsh->align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment());
 
@@ -138,7 +139,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     dispatchProfilingPerfStartCommands(walkerArgs.hwTimeStamps, walkerArgs.hwPerfCounter, commandStream, commandQueue);
 
-    const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
+    const auto &hwInfo = device.getHardwareInfo();
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation,
                                    DebugPauseState::hasUserStartConfirmation, hwInfo);
@@ -147,13 +148,13 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     walkerArgs.currentDispatchIndex = 0;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
+        dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, device.getRootDeviceEnvironment());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
         dispatchKernelCommands<WalkerType>(commandQueue, dispatchInfo, *commandStream, *dsh, *ioh, *ssh, walkerArgs);
 
         walkerArgs.currentDispatchIndex++;
-        dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
+        dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, device.getRootDeviceEnvironment());
     }
 
     commandQueue.registerWalkerWithProfilingEnqueued(walkerArgs.event);
@@ -163,14 +164,14 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         uint32_t registerData = debugManager.flags.GpuScratchRegWriteRegisterData.get();
 
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device.getRootDeviceEnvironment());
         args.isWalkerWithProfilingEnqueued = commandQueue.getAndClearIsWalkerWithProfilingEnqueued();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandStream,
             PostSyncMode::noWrite,
             0u,
             0u,
-            commandQueue.getDevice().getRootDeviceEnvironment(),
+            device.getRootDeviceEnvironment(),
             args);
         LriHelper<GfxFamily>::program(commandStream, registerOffset, registerData, EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset), commandQueue.isBcs());
     }
@@ -297,10 +298,12 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
 
         {
             using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+            const bool useSemaphore64bCmd = commandQueue.getDevice().getDeviceInfo().semaphore64bCmdSupport;
             EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
                                                                   address,
                                                                   static_cast<uint32_t>(waitCondition),
-                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
+                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
         }
     }
 }

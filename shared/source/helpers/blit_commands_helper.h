@@ -93,7 +93,7 @@ struct BlitCommandsHelper {
     static size_t getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
-    static void programGlobalSequencerFlush(LinearStream &commandStream);
+    static void programGlobalSequencerFlush(LinearStream &commandStream, bool useSemaphore64bCmd);
     static size_t getSizeForGlobalSequencerFlush();
     static bool preBlitCommandWARequired();
     static void appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);

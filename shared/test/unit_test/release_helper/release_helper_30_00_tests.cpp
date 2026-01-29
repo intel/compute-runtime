@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ TEST_F(ReleaseHelper3000Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_EQ(revision != 0, releaseHelper->getFtrXe2Compression());
+        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
     }
 }
 

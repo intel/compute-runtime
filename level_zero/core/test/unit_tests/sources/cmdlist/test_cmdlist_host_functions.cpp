@@ -192,8 +192,9 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore restorer;
+    DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+    UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -225,10 +226,10 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     hwParser.parseCommands<FamilyType>(*cmdStream, offset);
 
     auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miStores.size());
+    ASSERT_EQ(1u, miStores.size());
 
     auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miWait.size());
+    ASSERT_EQ(1u, miWait.size());
 
     // program callback
     uint64_t expectedHostFunctionId = 1u;
@@ -270,6 +271,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -303,10 +305,10 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
     hwParser.parseCommands<FamilyType>(*cmdStream, offset);
 
     auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miStores.size());
+    ASSERT_EQ(1u, miStores.size());
 
     auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(nPartitions, miWait.size());
+    ASSERT_EQ(nPartitions, miWait.size());
 
     // program callback
     uint64_t expectedHostFunctionId = 1u;

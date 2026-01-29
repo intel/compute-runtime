@@ -3359,11 +3359,11 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow) {
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::none, false, false);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::none, false, false, false);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker, false, false);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker, false, false, false);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }

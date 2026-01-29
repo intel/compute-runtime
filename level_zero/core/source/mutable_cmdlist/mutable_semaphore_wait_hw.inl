@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,19 +46,20 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
                                                                 semaphoreAddress,
                                                                 Event::STATE_CLEARED,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                                false, true, false, false, false);
+                                                                false, true, false, false, false, this->useSemaphore64bCmd);
     } else if (type == Type::cbEventWait) {
         NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(semWait),
                                                                 semaphoreAddress,
                                                                 0,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                false, true, this->qwordDataIndirect, this->qwordDataIndirect, false);
+                                                                false, true, this->qwordDataIndirect, this->qwordDataIndirect, false, this->useSemaphore64bCmd);
     }
 }
 
 template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreValue(uint64_t value) {
-    NEO::EncodeSemaphore<GfxFamily>::setMiSemaphoreWaitValue(semWait, value);
+    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
+    semWaitCmd->setSemaphoreDataDword(static_cast<uint32_t>(value));
 }
 
 } // namespace L0::MCL

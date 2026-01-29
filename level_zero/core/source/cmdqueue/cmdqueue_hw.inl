@@ -1000,6 +1000,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
                                                this->isCopyOnlyCommandQueue);
             ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, sizeof(MI_LOAD_REGISTER_IMM));
 
+            bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(ctx.currentPatchPreambleBuffer),
                                                                     commandList->getLatestTagGpuAddress(),
                                                                     commandList->getLatestTaskCount(),
@@ -1008,7 +1009,8 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
                                                                     true,
                                                                     GfxFamily::isQwordInOrderCounter,
                                                                     GfxFamily::isQwordInOrderCounter,
-                                                                    false);
+                                                                    false,
+                                                                    useSemaphore64bCmd);
             ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
 
             this->csr->makeResident(*commandList->getLatestTagGpuAllocation());

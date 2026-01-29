@@ -87,6 +87,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         createKernel();
 
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.usesPrintf = false;
+        UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
     }
 
     void TearDown() override {

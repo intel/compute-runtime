@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,7 +210,7 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(3u, semaphores.size());
+        ASSERT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
@@ -439,7 +439,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(1u, semaphores.size());
+        ASSERT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
         EXPECT_EQ(reinterpret_cast<uint64_t>(event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
@@ -449,7 +449,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         csHwParser.parseCommands<FamilyType>(pCmdQ2->getGpgpuCommandStreamReceiver().getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(1u, semaphores.size());
+        ASSERT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
         EXPECT_EQ(reinterpret_cast<uint64_t>(event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
