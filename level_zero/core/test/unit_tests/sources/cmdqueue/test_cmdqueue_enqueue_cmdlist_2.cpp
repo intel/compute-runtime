@@ -982,7 +982,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     uint64_t endGpuAddress = commandList->getCmdContainer().getEndCmdGpuAddress();
     uint64_t startGpuAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
 
-    commandQueue->setPatchingPreamble(true, false);
+    commandQueue->setPatchingPreamble(true);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
@@ -1121,7 +1121,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
     uint64_t start2GpuAddress = commandList2->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
     uint64_t endGpuAddress = commandList2->getCmdContainer().getEndCmdGpuAddress();
 
-    commandQueue->setPatchingPreamble(true, false);
+    commandQueue->setPatchingPreamble(true);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
@@ -1322,8 +1322,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
 
-    mockCmdQHw->setPatchingPreamble(true, false);
+    mockCmdQHw->setPatchingPreamble(true);
     EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
+    mockCmdQHw->saveWaitForPreamble = false;
     EXPECT_FALSE(mockCmdQHw->getSaveWaitForPreamble());
 
     NEO::GraphicsAllocation *expectedGpuAllocation = mockCmdQHw->getCsr()->getTagAllocation();
@@ -1338,8 +1339,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
-    mockCmdQHw->setPatchingPreamble(true, true);
+    mockCmdQHw->setPatchingPreamble(true);
     EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
+    mockCmdQHw->saveWaitForPreamble = true;
     EXPECT_TRUE(mockCmdQHw->getSaveWaitForPreamble());
 
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
@@ -1389,7 +1391,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    mockCmdQHw->setPatchingPreamble(true, false);
+    mockCmdQHw->setPatchingPreamble(true);
 
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
@@ -1500,7 +1502,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    mockCmdQHw->setPatchingPreamble(true, false);
+    mockCmdQHw->setPatchingPreamble(true);
 
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
@@ -1626,7 +1628,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->setPatchingPreamble(true, true);
+    commandQueue->setPatchingPreamble(true);
+    commandQueue->saveWaitForPreamble = true;
     returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1652,7 +1655,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     CommandList *immediateCmdListPtr = static_cast<CommandList *>(immediateCmdList.get());
-    auto immediateQueue = static_cast<L0::CommandQueueImp *>(immediateCmdListPtr->cmdQImmediate);
+    auto immediateQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(immediateCmdListPtr->cmdQImmediate);
 
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1660,7 +1663,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
 
-    immediateCmdList->setPatchingPreamble(true, true);
+    immediateCmdList->setPatchingPreamble(true);
+    immediateQueue->saveWaitForPreamble = true;
+
     returnValue = immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1703,7 +1708,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
 
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
-    commandQueue->setPatchingPreamble(true, true);
+    commandQueue->setPatchingPreamble(true);
+    commandQueue->saveWaitForPreamble = true;
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);

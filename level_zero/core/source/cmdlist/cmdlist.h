@@ -533,7 +533,7 @@ struct CommandList : _ze_command_list_handle_t {
         return flags;
     }
 
-    void setPatchingPreamble(bool patching, bool saveWait);
+    void setPatchingPreamble(bool patching);
 
     uint32_t getActiveScratchPatchElements() const {
         return activeScratchPatchElements;

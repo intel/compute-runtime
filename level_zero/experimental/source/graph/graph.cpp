@@ -513,8 +513,6 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
     this->src = segment.subgraph;
 
     this->executionTarget = this->src->getExecutionTarget();
-    auto device = Device::fromHandle(src->getCaptureTargetDesc().hDevice);
-    this->multiEngineGraph = device->getGfxCoreHelper().getContextGroupContextsCount() > 1;
     auto &segmentBuilder = builder.getSubGraphBuilder(segment.subgraph);
 
     if (segment.empty() == false) {
@@ -594,9 +592,9 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
         return ZE_RESULT_SUCCESS; // part of preceeding segment
     }
     ze_command_list_handle_t hCmdList = segmentIt->second;
-    executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
+    executionTarget->setPatchingPreamble(this->usePatchingPreamble);
     auto res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents);
-    executionTarget->setPatchingPreamble(false, false);
+    executionTarget->setPatchingPreamble(false);
     return res;
 }
 

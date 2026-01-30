@@ -424,7 +424,6 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
-    bool multiEngineGraph = false;
     bool usePatchingPreamble = true;
     WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
 };

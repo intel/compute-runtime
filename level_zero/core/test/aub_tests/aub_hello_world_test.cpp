@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint32_t commandListCount = sizeof(commandLists) / sizeof(commandLists[0]);
 
-    pCmdq->setPatchingPreamble(true, false);
+    pCmdq->setPatchingPreamble(true);
 
     auto queueHandle = pCmdq->toHandle();
 

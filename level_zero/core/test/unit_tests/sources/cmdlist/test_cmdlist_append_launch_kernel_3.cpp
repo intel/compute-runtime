@@ -745,7 +745,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
 
-    commandQueue->setPatchingPreamble(true, false);
+    commandQueue->setPatchingPreamble(true);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();

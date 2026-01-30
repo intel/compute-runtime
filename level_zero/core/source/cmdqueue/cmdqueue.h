@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,9 +89,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
         this->isWalkerWithProfilingEnqueued = false;
         return retVal;
     }
-    inline void setPatchingPreamble(bool patching, bool saveWait) {
+    inline void setPatchingPreamble(bool patching) {
         this->patchingPreamble = patching;
-        this->saveWaitForPreamble = saveWait;
     }
     inline bool getPatchingPreamble() const {
         return this->patchingPreamble;

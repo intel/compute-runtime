@@ -722,7 +722,7 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
                                                      false,
                                                      returnValue));
     ASSERT_NE(nullptr, commandQueue);
-    commandQueue->setPatchingPreamble(true, false);
+    commandQueue->setPatchingPreamble(true);
 
     NEO::EncodeDispatchKernelArgs args{};
     args.isHeaplessModeEnabled = true;

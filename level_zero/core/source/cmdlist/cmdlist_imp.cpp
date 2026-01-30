@@ -32,9 +32,9 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
-void CommandList::setPatchingPreamble(bool patching, bool saveWait) {
+void CommandList::setPatchingPreamble(bool patching) {
     if (isImmediateType()) {
-        cmdQImmediate->setPatchingPreamble(patching, saveWait);
+        cmdQImmediate->setPatchingPreamble(patching);
     }
 }
 

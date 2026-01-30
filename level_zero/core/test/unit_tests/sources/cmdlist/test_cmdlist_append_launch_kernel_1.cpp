@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1583,7 +1583,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
         void *cfeInputPtr = std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).pCommand;
         void *cfeInputPtr2 = std::get<PatchFrontEndState>(commandList->commandsToPatch[1]).pCommand;
 
-        commandQueue->setPatchingPreamble(true, false);
+        commandQueue->setPatchingPreamble(true);
 
         void *queueCpuBase = commandQueue->commandStream.getCpuBase();
         auto usedSpaceBefore = commandQueue->commandStream.getUsed();

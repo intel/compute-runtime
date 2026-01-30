@@ -22,7 +22,6 @@ struct MockGraph : Graph {
 
 struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::ExecutableGraph;
-    using ExecutableGraph::multiEngineGraph;
     using ExecutableGraph::myCommandLists;
     using ExecutableGraph::myOrderedSegments;
     using ExecutableGraph::usePatchingPreamble;

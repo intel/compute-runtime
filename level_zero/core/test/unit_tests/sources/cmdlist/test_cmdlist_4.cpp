@@ -1674,7 +1674,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint64_t queueGpuBase = cmdStream->getGpuBase();
 
     auto commandListHandle = commandList->toHandle();
-    commandListImmediate->setPatchingPreamble(true, false);
+    commandListImmediate->setPatchingPreamble(true);
     auto usedSpaceBefore = cmdStream->getUsed();
     returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

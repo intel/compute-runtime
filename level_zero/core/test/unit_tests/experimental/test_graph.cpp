@@ -1428,21 +1428,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(64);
 
+    ze_command_list_handle_t immCmdListHandleMultiEngine;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &cmdQueueDesc, &immCmdListHandleMultiEngine));
+
     GraphsCleanupGuard graphCleanup;
 
-    auto immCmdListHw = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(L0::CommandList::fromHandle(immCmdListHandle));
+    auto immCmdListHw = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(L0::CommandList::fromHandle(immCmdListHandleMultiEngine));
     Graph srcGraph(context, true);
     immCmdListHw->setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(*immCmdListHw, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandleMultiEngine, nullptr, 0U, nullptr));
     srcGraph.stopCapturing();
     immCmdListHw->setCaptureTarget(nullptr);
 
     MockExecutableGraph execGraph;
     execGraph.instantiateFrom(srcGraph);
 
-    ASSERT_TRUE(execGraph.multiEngineGraph);
     ASSERT_NE(0u, execGraph.myCommandLists.size());
+    auto whiteBoxCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(immCmdListHw);
+    EXPECT_TRUE(whiteBoxCmdList->cmdQImmediate->getSaveWaitForPreamble());
 
     void *dummyCpuPtr = reinterpret_cast<void *>(0x123AA000);
     MockGraphicsAllocation otherTagAllocation(dummyCpuPtr, immCmdListHw->getCsr(false)->getTagAllocation()->getGpuAddress() + 0x1000, 1);
@@ -1467,6 +1473,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(semWaitCmds[0], cmdList.end());
     ASSERT_NE(0u, sdiCmds.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(immCmdListHandleMultiEngine));
 }
 
 TEST_F(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {
