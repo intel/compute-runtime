@@ -281,7 +281,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
             NEO::HostFunction hostFunction = {.hostFunctionAddress = commandToPatch.callbackAddress,
                                               .userDataAddress = commandToPatch.userDataAddress};
-            csr->ensureHostFunctionWorkerStarted();
+
+            auto allocator = this->getDevice()->getHostFunctionAllocator(csr);
+            csr->ensureHostFunctionWorkerStarted(allocator);
             auto &hostFunctionStreamer = csr->getHostFunctionStreamer();
 
             if (this->patchingPreamble) {
@@ -347,6 +349,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     }
 
     if (hostFunctionsCounter > 0) {
+        csr->makeResidentHostFunctionAllocation();
         csr->signalHostFunctionWorker(hostFunctionsCounter);
     }
 }

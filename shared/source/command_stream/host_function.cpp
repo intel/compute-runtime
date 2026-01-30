@@ -93,7 +93,7 @@ void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
     };
 
     if (isTbx) {
-        auto lock = csr->obtainTagAllocationDownloadLock();
+        auto lock = csr->obtainHostAllocationLock();
         setAsCompleted();
         updateTbxData();
 

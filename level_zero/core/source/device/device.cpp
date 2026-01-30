@@ -11,6 +11,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/host_function_allocator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
@@ -1648,6 +1649,7 @@ void Device::releaseResources() {
     hostInOrderCounterAllocator.reset();
     inOrderTimestampAllocator.reset();
     fillPatternAllocator.reset();
+    hostFunctionAllocator.reset();
 
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
@@ -2332,6 +2334,31 @@ ze_result_t Device::getPriorityLevels(int32_t *lowestPriority, int32_t *highestP
     *lowestPriority = queuePriorityLow;
 
     return ZE_RESULT_SUCCESS;
+}
+
+NEO::HostFunctionAllocator *Device::getHostFunctionAllocator(NEO::CommandStreamReceiver *csr) {
+    if (!hostFunctionAllocator) {
+        std::unique_lock<std::mutex> lock(hostFunctionAllocatorMutex);
+
+        if (!hostFunctionAllocator) {
+
+            uint32_t rootDeviceIndex = getNEODevice()->getRootDeviceIndex();
+            uint32_t maxRootDeviceIndex = static_cast<uint32_t>(getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments.size() - 1);
+
+            const bool isTbx = csr->isTbxMode();
+            constexpr size_t defaultPoolSize = MemoryConstants::pageSize64k;
+
+            hostFunctionAllocator = std::make_unique<NEO::HostFunctionAllocator>(getNEODevice()->getMemoryManager(),
+                                                                                 csr,
+                                                                                 defaultPoolSize,
+                                                                                 rootDeviceIndex,
+                                                                                 maxRootDeviceIndex,
+                                                                                 csr->getActivePartitions(),
+                                                                                 isTbx);
+        }
+    }
+
+    return hostFunctionAllocator.get();
 }
 
 } // namespace L0

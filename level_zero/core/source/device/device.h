@@ -44,6 +44,7 @@ class GfxCoreHelper;
 class GraphicsAllocation;
 class MemoryManager;
 class OSInterface;
+class HostFunctionAllocator;
 class TagAllocatorBase;
 enum class AllocationType;
 enum class EngineUsage : uint32_t;
@@ -207,6 +208,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     const NEO::EngineGroupsT &getSubDeviceCopyEngineGroups() const { return subDeviceCopyEngineGroups; }
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
+    NEO::HostFunctionAllocator *getHostFunctionAllocator(NEO::CommandStreamReceiver *csr);
 
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
@@ -276,9 +278,13 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<NEO::TagAllocatorBase> hostInOrderCounterAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> inOrderTimestampAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> fillPatternAllocator;
+    std::unique_ptr<NEO::HostFunctionAllocator> hostFunctionAllocator;
+
     NEO::GraphicsAllocation *syncDispatchTokenAllocation = nullptr;
     std::mutex inOrderAllocatorMutex;
     std::mutex syncDispatchTokenMutex;
+    std::mutex hostFunctionAllocatorMutex;
+
     std::atomic<uint32_t> syncDispatchQueueIdAllocator = 0;
     uint32_t aggregatedCopyIncValue = 0;
     uint32_t identifier = 0;

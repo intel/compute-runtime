@@ -1918,11 +1918,14 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
 
     if (isImmediateType()) {
         auto csr = getCsr(false);
-        csr->ensureHostFunctionWorkerStarted();
-
+        auto allocator = this->getDevice()->getHostFunctionAllocator(csr);
+        csr->ensureHostFunctionWorkerStarted(allocator);
+        auto &streamer = csr->getHostFunctionStreamer();
+        auto *allocation = streamer.getHostFunctionIdAllocation();
+        this->commandContainer.addToResidencyContainer(allocation);
         bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction();
         NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
-                                                                csr->getHostFunctionStreamer(),
+                                                                streamer,
                                                                 std::move(hostFunction),
                                                                 memorySynchronizationRequired);
         csr->signalHostFunctionWorker(1u);

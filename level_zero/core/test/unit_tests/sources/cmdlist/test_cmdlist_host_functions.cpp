@@ -222,6 +222,9 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     auto hostFunctionIdAddress = csr->getHostFunctionStreamer().getHostFunctionIdGpuAddress(0u);
 
+    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    EXPECT_TRUE(std::ranges::find(residencyContainer, hostFunctionAllocation) != residencyContainer.end());
+
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdStream, offset);
 

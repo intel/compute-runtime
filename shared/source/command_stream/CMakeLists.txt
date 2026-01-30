@@ -32,6 +32,8 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function.h
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function_enablers.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.cpp

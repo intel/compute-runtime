@@ -280,9 +280,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         BaseClass::setupContext(osContext);
     }
 
-    void startHostFunctionWorker() override {
+    void startHostFunctionWorker(HostFunctionAllocator *allocator) override {
         startHostFunctionWorkerCalledTimes++;
-        BaseClass::startHostFunctionWorker();
+        BaseClass::startHostFunctionWorker(allocator);
     }
 
     void signalHostFunctionWorker(uint32_t nHostFunction) override {

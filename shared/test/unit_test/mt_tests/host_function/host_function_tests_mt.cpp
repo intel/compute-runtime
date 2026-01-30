@@ -9,6 +9,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_host_function_allocator.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <atomic>
@@ -62,7 +64,8 @@ class HostFunctionMtFixture {
         this->callbacksPerCsr = callbacksPerCsr;
         this->nPartitions = nPartitions;
         executionEnvironment.prepareRootDeviceEnvironments(1);
-        executionEnvironment.initializeMemoryManager();
+        mockMemoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        executionEnvironment.memoryManager.reset(mockMemoryManager.release());
         auto bitfield = maxNBitValue(nPartitions);
         DeviceBitfield deviceBitfield(bitfield);
 
@@ -73,16 +76,25 @@ class HostFunctionMtFixture {
             csrs[i]->immWritePostSyncWriteOffset = 32u;
         }
 
+        if (!csrs.empty()) {
+
+            uint32_t rootDeviceIndex = csrs[0]->getRootDeviceIndex();
+            uint32_t maxRootDeviceIndex = static_cast<uint32_t>(csrs[0]->peekExecutionEnvironment().rootDeviceEnvironments.size() - 1);
+            hostFunctionAllocator = std::make_unique<MockHostFunctionAllocator>(executionEnvironment.memoryManager.get(),
+                                                                                csrs[0].get(),
+                                                                                MemoryConstants::pageSize64k,
+                                                                                rootDeviceIndex,
+                                                                                maxRootDeviceIndex,
+                                                                                nPartitions,
+                                                                                false);
+        }
+
         if (nPrimaryCSRs > 0) {
             setupPrimaryCSRs(nPrimaryCSRs, numberOfCSRs);
         }
 
         for (auto &csr : csrs) {
-            csr->initializeTagAllocation();
-        }
-
-        for (auto &csr : csrs) {
-            csr->ensureHostFunctionWorkerStarted();
+            csr->ensureHostFunctionWorkerStarted(hostFunctionAllocator.get());
         }
 
         for (auto i = 0u; i < csrs.size(); i++) {
@@ -206,6 +218,7 @@ class HostFunctionMtFixture {
     }
 
     void clearResources() {
+        hostFunctionAllocator.reset();
         csrs.clear();
         hostFunctionArgs.clear();
     }
@@ -216,6 +229,9 @@ class HostFunctionMtFixture {
     MockExecutionEnvironment executionEnvironment;
     uint32_t callbacksPerCsr = 0;
     uint32_t nPartitions = 0;
+
+    std::unique_ptr<MockMemoryManager> mockMemoryManager;
+    std::unique_ptr<MockHostFunctionAllocator> hostFunctionAllocator;
 };
 
 class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, uint32_t, uint32_t>>, public HostFunctionMtFixture {

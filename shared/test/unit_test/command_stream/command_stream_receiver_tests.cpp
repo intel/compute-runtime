@@ -48,6 +48,7 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_host_function_allocator.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_kmd_notify_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -6479,7 +6480,18 @@ using CommandStreamReceiverHostFunctionHwTest = Test<CommandStreamReceiverFixtur
 HWTEST_F(CommandStreamReceiverHostFunctionHwTest, givenHostFunctionWhenMakeResidentHostFunctionAllocationIsCalledThenHostAllocationIsResident) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    csr.ensureHostFunctionWorkerStarted();
+    uint32_t rootDeviceIndex = csr.getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = static_cast<uint32_t>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments.size() - 1);
+    MockMemoryManager mockMemoryManager(*pDevice->executionEnvironment);
+    MockHostFunctionAllocator hostFunctionAllocator(&mockMemoryManager,
+                                                    &csr,
+                                                    MemoryConstants::pageSize64k,
+                                                    rootDeviceIndex,
+                                                    maxRootDeviceIndex,
+                                                    csr.getActivePartitions(),
+                                                    false);
+
+    csr.ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
     EXPECT_EQ(1u, csr.createHostFunctionWorkerCounter);
 
     auto *hostFunctionIdAllocation = csr.getHostFunctionStreamer().getHostFunctionIdAllocation();
@@ -6488,8 +6500,14 @@ HWTEST_F(CommandStreamReceiverHostFunctionHwTest, givenHostFunctionWhenMakeResid
     auto csrContextId = csr.getOsContext().getContextId();
     EXPECT_FALSE(hostFunctionIdAllocation->isResident(csrContextId));
 
-    csr.makeResident(*csr.tagAllocation);
+    auto *mockHostFunctionAllocation = hostFunctionAllocator.allocation.get();
+    ASSERT_NE(nullptr, mockHostFunctionAllocation);
+    EXPECT_FALSE(mockHostFunctionAllocation->isResident(csrContextId));
+
+    csr.makeResident(*mockHostFunctionAllocation);
+
     EXPECT_TRUE(hostFunctionIdAllocation->isResident(csrContextId));
+    EXPECT_TRUE(mockHostFunctionAllocation->isResident(csrContextId));
 
     csr.makeNonResident(*hostFunctionIdAllocation);
     EXPECT_FALSE(hostFunctionIdAllocation->isResident(csrContextId));
@@ -6501,7 +6519,18 @@ HWTEST_F(CommandStreamReceiverHostFunctionHwTest, givenHostFunctionWhenSignalHos
     ASSERT_EQ(0u, csr.createHostFunctionWorkerCounter);
     ASSERT_EQ(0u, csr.createHostFunctionWorkerCounter);
 
-    csr.ensureHostFunctionWorkerStarted();
+    uint32_t rootDeviceIndex = csr.getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = static_cast<uint32_t>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments.size() - 1);
+    MockMemoryManager mockMemoryManager(*pDevice->executionEnvironment);
+    MockHostFunctionAllocator hostFunctionAllocator(&mockMemoryManager,
+                                                    &csr,
+                                                    MemoryConstants::pageSize64k,
+                                                    rootDeviceIndex,
+                                                    maxRootDeviceIndex,
+                                                    csr.getActivePartitions(),
+                                                    false);
+
+    csr.ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
     csr.signalHostFunctionWorker(10u);
 
     ASSERT_EQ(1u, csr.createHostFunctionWorkerCounter);

@@ -17,6 +17,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_host_function_allocator.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -1246,9 +1247,9 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         auto deviceBitfield = NEO::DeviceBitfield{mask};
 
         MockCommandStreamReceiver mockCsr(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), deviceBitfield);
+        mockCsr.activePartitions = nPartitions;
         mockCsr.dcFlushSupport = csr->getDcFlushSupport();
-        mockCsr.initializeTagAllocation();
-        mockCsr.createHostFunctionStreamer();
+
         const auto oldCsr = commandQueue->csr;
         commandQueue->csr = &mockCsr;
 

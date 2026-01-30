@@ -6,7 +6,10 @@
  */
 
 #include "shared/source/command_stream/host_function.h"
+#include "shared/source/command_stream/host_function_allocator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -15,9 +18,12 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_host_function_allocator.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <cstddef>
+#include <limits>
 
 using namespace NEO;
 
@@ -391,25 +397,34 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsur
     DeviceBitfield devices(0b11);
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    MockMemoryManager mockMemoryManager(executionEnvironment);
+    uint32_t rootDeviceIndex = csr->getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = static_cast<uint32_t>(executionEnvironment.rootDeviceEnvironments.size() - 1);
 
-    csr->initializeTagAllocation();
-    csr->ensureHostFunctionWorkerStarted();
+    MockHostFunctionAllocator hostFunctionAllocator(&mockMemoryManager,
+                                                    csr.get(),
+                                                    MemoryConstants::pageSize64k,
+                                                    rootDeviceIndex,
+                                                    maxRootDeviceIndex,
+                                                    csr->getActivePartitions(),
+                                                    false);
+
+    csr->ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
     auto *streamer = &csr->getHostFunctionStreamer();
     EXPECT_NE(nullptr, streamer);
     EXPECT_EQ(1u, csr->startHostFunctionWorkerCalledTimes);
 
-    csr->ensureHostFunctionWorkerStarted();
+    csr->ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
     EXPECT_EQ(streamer, &csr->getHostFunctionStreamer());
     EXPECT_EQ(1u, csr->startHostFunctionWorkerCalledTimes);
 
-    csr->startHostFunctionWorker();
+    csr->startHostFunctionWorker(&hostFunctionAllocator);
     EXPECT_EQ(2u, csr->startHostFunctionWorkerCalledTimes); // direct call -> the counter updated but due to an early return allocation didn't change
     EXPECT_EQ(streamer, &csr->getHostFunctionStreamer());
 
-    EXPECT_EQ(AllocationType::tagBuffer, streamer->getHostFunctionIdAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::hostFunction, streamer->getHostFunctionIdAllocation()->getAllocationType());
 
-    auto expectedHostFunctionIdAddress = reinterpret_cast<uint64_t>(ptrOffset(streamer->getHostFunctionIdAllocation()->getUnderlyingBuffer(),
-                                                                              TagAllocationLayout::hostFunctionDataOffset));
+    auto expectedHostFunctionIdAddress = reinterpret_cast<uint64_t>(streamer->getHostFunctionIdAllocation()->getUnderlyingBuffer());
 
     EXPECT_EQ(expectedHostFunctionIdAddress, streamer->getHostFunctionIdGpuAddress(0u));
 
@@ -422,9 +437,19 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceive
 
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    csr->initializeTagAllocation();
 
-    csr->ensureHostFunctionWorkerStarted();
+    MockMemoryManager mockMemoryManager(executionEnvironment);
+    uint32_t rootDeviceIndex = csr->getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = static_cast<uint32_t>(executionEnvironment.rootDeviceEnvironments.size() - 1);
+    MockHostFunctionAllocator hostFunctionAllocator(&mockMemoryManager,
+                                                    csr.get(),
+                                                    MemoryConstants::pageSize64k,
+                                                    rootDeviceIndex,
+                                                    maxRootDeviceIndex,
+                                                    csr->getActivePartitions(),
+                                                    false);
+
+    csr->ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
     EXPECT_NE(nullptr, csr->getHostFunctionStreamer().getHostFunctionIdAllocation());
     EXPECT_EQ(1u, csr->createHostFunctionWorkerCounter);
 }
@@ -571,4 +596,137 @@ HWTEST_F(HostFunctionTests, whenUsePipeControlForHostFunctionIsCalledThenResultI
         bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(dcFlushRequiredPlatform);
         EXPECT_EQ(expected, result);
     }
+}
+
+TEST(HostFunctionAllocatorTests, givenSufficientAllocationWhenAllocateChunkThenChunkIsAlignedZeroedAndAllocationIsReused) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    auto *mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    DeviceBitfield deviceBitfield(1u);
+    MockCommandStreamReceiver csr(executionEnvironment, 0u, deviceBitfield);
+    size_t poolSize = 2 * HostFunctionAllocator::chunkAlignment;
+    HostFunctionAllocator allocator(mockMemoryManager,
+                                    &csr,
+                                    poolSize,
+                                    0,
+                                    0,
+                                    csr.getActivePartitions(),
+                                    false);
+
+    auto firstChunk = allocator.obtainChunk();
+    ASSERT_NE(nullptr, firstChunk.allocation);
+    ASSERT_NE(nullptr, firstChunk.cpuPtr);
+    EXPECT_EQ(0u, *reinterpret_cast<uint64_t *>(firstChunk.cpuPtr));
+
+    auto firstBase = static_cast<uint8_t *>(firstChunk.allocation->getUnderlyingBuffer());
+    EXPECT_EQ(firstBase, firstChunk.cpuPtr);
+
+    auto secondChunk = allocator.obtainChunk();
+    ASSERT_NE(nullptr, secondChunk.allocation);
+    EXPECT_EQ(firstChunk.allocation, secondChunk.allocation);
+
+    auto expectedOffset = HostFunctionAllocator::chunkAlignment;
+    EXPECT_EQ(firstChunk.cpuPtr + expectedOffset, secondChunk.cpuPtr);
+
+    for (uint32_t i = 0u; i < 2u; i++) {
+        auto slot = reinterpret_cast<uint64_t *>(secondChunk.cpuPtr + i * HostFunctionAllocator::partitionOffset);
+        EXPECT_EQ(0u, *slot);
+    }
+}
+
+TEST(HostFunctionAllocatorTests, givenTooSmallAllocationWhenAllocateChunkThenThrowIsExpected) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    auto *mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    DeviceBitfield deviceBitfield(1u);
+    MockCommandStreamReceiver csr(executionEnvironment, 0u, deviceBitfield);
+
+    size_t poolSize = HostFunctionAllocator::chunkAlignment;
+    HostFunctionAllocator allocator(mockMemoryManager,
+                                    &csr,
+                                    poolSize,
+                                    0,
+                                    0,
+                                    csr.getActivePartitions(),
+                                    false);
+
+    auto firstChunk = allocator.obtainChunk();
+    ASSERT_NE(nullptr, firstChunk.allocation);
+
+    EXPECT_ANY_THROW(allocator.obtainChunk());
+}
+
+TEST(HostFunctionAllocatorTests, givenTbxModeWhenAllocateChunkThenWriteMemoryIsIssuedAndTbxWritableIsRestored) {
+
+    class HostFunctionCsr : public MockCommandStreamReceiver {
+      public:
+        using MockCommandStreamReceiver::MockCommandStreamReceiver;
+
+        bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+            ++writeMemoryCallCount;
+            lastIsChunkCopy = isChunkCopy;
+            lastChunkSize = chunkSize;
+            lastChunkOffset = gpuVaChunkOffset;
+            lastAllocation = &gfxAllocation;
+            return true;
+        }
+
+        uint32_t writeMemoryCallCount = 0u;
+        bool lastIsChunkCopy = false;
+        size_t lastChunkSize = 0u;
+        uint64_t lastChunkOffset = 0u;
+        GraphicsAllocation *lastAllocation = nullptr;
+    };
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    auto *mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    DeviceBitfield deviceBitfield(1u);
+    HostFunctionCsr csr(executionEnvironment, 0u, deviceBitfield);
+    size_t poolSize = HostFunctionAllocator::chunkAlignment;
+    HostFunctionAllocator allocator(mockMemoryManager,
+                                    &csr,
+                                    poolSize,
+                                    0,
+                                    0,
+                                    csr.getActivePartitions(),
+                                    true);
+
+    auto chunk = allocator.obtainChunk();
+    ASSERT_NE(nullptr, chunk.allocation);
+
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+    EXPECT_FALSE(chunk.allocation->isTbxWritable(allBanks));
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_TRUE(csr.lastIsChunkCopy);
+    EXPECT_EQ(0u, csr.lastChunkOffset);
+
+    auto expectedAlignedSize = HostFunctionAllocator::chunkAlignment;
+    EXPECT_EQ(expectedAlignedSize, csr.lastChunkSize);
+    EXPECT_EQ(chunk.allocation, csr.lastAllocation);
+}
+
+TEST(HostFunctionAllocatorTests, givenMultipleObtainChunksWhenAllocatorIsDestroyedThenAllAllocationIsFreed) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    auto *mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    DeviceBitfield deviceBitfield(1u);
+    MockCommandStreamReceiver csr(executionEnvironment, 0u, deviceBitfield);
+    size_t poolSize = HostFunctionAllocator::chunkAlignment * 2;
+
+    {
+        HostFunctionAllocator allocator(executionEnvironment.memoryManager.get(),
+                                        &csr,
+                                        poolSize,
+                                        0,
+                                        0,
+                                        csr.getActivePartitions(),
+                                        false);
+
+        allocator.obtainChunk();
+        allocator.obtainChunk();
+    }
+
+    EXPECT_GE(mockMemoryManager->freeGraphicsMemoryCalled, 1u);
 }

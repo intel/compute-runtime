@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
+#include "shared/source/command_stream/host_function_allocator.h"
 #include "shared/source/command_stream/host_function_worker_interface.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
@@ -598,6 +599,7 @@ MultiGraphicsAllocation &CommandStreamReceiver::createMultiAllocationInSystemMem
     this->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
     return *allocations;
 }
+
 bool CommandStreamReceiver::ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex) {
     UNRECOVERABLE_IF(!tagsMultiAllocation);
     if (rootDeviceIndex >= tagsMultiAllocation->getGraphicsAllocations().size()) {
@@ -736,35 +738,37 @@ void CommandStreamReceiver::signalHostFunctionWorker(uint32_t nHostFunctions) {
     hostFunctionWorker->submit(nHostFunctions);
 }
 
-void CommandStreamReceiver::ensureHostFunctionWorkerStarted() {
+void CommandStreamReceiver::ensureHostFunctionWorkerStarted(HostFunctionAllocator *allocator) {
     if (!this->hostFunctionWorkerStarted.load(std::memory_order_acquire)) {
-        startHostFunctionWorker();
+        startHostFunctionWorker(allocator);
     }
 }
 
-void CommandStreamReceiver::startHostFunctionWorker() {
+void CommandStreamReceiver::startHostFunctionWorker(HostFunctionAllocator *allocator) {
     auto lock = obtainHostFunctionWorkerStartLock();
     if (this->hostFunctionWorkerStarted.load(std::memory_order_relaxed)) {
         return;
     }
 
-    createHostFunctionStreamer();
+    createHostFunctionStreamer(allocator);
     createHostFunctionWorker();
 
     this->hostFunctionWorkerStarted.store(true, std::memory_order_release);
 }
 
-void CommandStreamReceiver::createHostFunctionStreamer() {
+void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *allocator) {
 
     auto nPartitions = this->activePartitions;
     auto partitionOffset = this->immWritePostSyncWriteOffset;
-    auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
-    auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
-    auto useSemaphore64bCmd = getProductHelper().isAvailableSemaphore64(getReleaseHelper());
-    auto dcFlushRequired = this->getDcFlushSupport();
+    HostFunctionChunk chunk = allocator->obtainChunk();
+    UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
+    auto hostFunctionIdAddress = chunk.cpuPtr;
 
+    auto useSemaphore64bCmd = getProductHelper().isAvailableSemaphore64(getReleaseHelper());
+
+    auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
-                                                                        this->tagAllocation,
+                                                                        chunk.allocation,
                                                                         hostFunctionIdAddress,
                                                                         this->downloadAllocationImpl,
                                                                         nPartitions,
@@ -778,8 +782,16 @@ HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {
     return *hostFunctionStreamer.get();
 }
 
-std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainTagAllocationDownloadLock() {
-    return std::unique_lock<CommandStreamReceiver::MutexType>(this->tagAllocationDownloadMutex);
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainHostAllocationLock() {
+    return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostAllocationMutex);
+}
+
+void CommandStreamReceiver::makeResidentHostFunctionAllocation() {
+    auto &streamer = this->getHostFunctionStreamer();
+    auto *hostFunctionAllocation = streamer.getHostFunctionIdAllocation();
+    if (hostFunctionAllocation) {
+        this->makeResident(*hostFunctionAllocation);
+    }
 }
 
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
@@ -927,7 +939,6 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     auto tagAddress = this->tagAddress;
     auto ucTagAddress = this->ucTagAddress;
     auto completionFence = reinterpret_cast<TaskCountType *>(getCompletionAddress());
-    auto hostFunctionDataAddress = reinterpret_cast<uint64_t *>(ptrOffset(this->tagAllocation->getUnderlyingBuffer(), TagAllocationLayout::hostFunctionDataOffset));
     UNRECOVERABLE_IF(!completionFence);
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
@@ -937,8 +948,6 @@ bool CommandStreamReceiver::initializeTagAllocation() {
         ucTagAddress = ptrOffset(ucTagAddress, this->immWritePostSyncWriteOffset);
         *completionFence = 0;
         completionFence = ptrOffset(completionFence, this->immWritePostSyncWriteOffset);
-        *hostFunctionDataAddress = 0u;
-        hostFunctionDataAddress = ptrOffset(hostFunctionDataAddress, this->immWritePostSyncWriteOffset);
     }
     *this->debugPauseStateAddress = debugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 

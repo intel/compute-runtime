@@ -45,6 +45,7 @@ class FlushStampTracker;
 class Thread;
 class FlatBatchBufferHelper;
 class AllocationsList;
+class HostFunctionAllocator;
 class Device;
 class ExecutionEnvironment;
 class GmmPageTableMngr;
@@ -581,8 +582,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
 
     MOCKABLE_VIRTUAL void signalHostFunctionWorker(uint32_t nHostFunctions);
-    void ensureHostFunctionWorkerStarted();
-    void createHostFunctionStreamer();
+    void ensureHostFunctionWorkerStarted(HostFunctionAllocator *allocator);
+    void createHostFunctionStreamer(HostFunctionAllocator *allocator);
     HostFunctionStreamer &getHostFunctionStreamer();
 
     [[nodiscard]] std::unique_lock<MutexType> obtainHostFunctionWorkerStartLock();
@@ -591,10 +592,11 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         this->hostFunctionWorker = hostFunctionWorker;
     }
 
-    [[nodiscard]] std::unique_lock<MutexType> obtainTagAllocationDownloadLock();
+    [[nodiscard]] std::unique_lock<MutexType> obtainHostAllocationLock();
+    void makeResidentHostFunctionAllocation();
 
   protected:
-    MOCKABLE_VIRTUAL void startHostFunctionWorker();
+    MOCKABLE_VIRTUAL void startHostFunctionWorker(HostFunctionAllocator *allocator);
 
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
@@ -642,7 +644,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MutexType hostPtrSurfaceCreationMutex;
     MutexType registeredClientsMutex;
     MutexType hostFunctionWorkerStartMutex;
-    MutexType tagAllocationDownloadMutex;
+    MutexType hostAllocationMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;
