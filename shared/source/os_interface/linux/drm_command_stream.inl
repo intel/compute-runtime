@@ -68,7 +68,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
 template <typename GfxFamily>
 inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
-    if (this->isUpdateTagFromWaitEnabled() && this->getTagAllocation()) {
+    if (this->isUpdateTagFromWaitEnabled() && this->resourcesInitialized) {
         this->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, this->peekTaskCount());
     }
 

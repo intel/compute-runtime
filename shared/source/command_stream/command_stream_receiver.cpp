@@ -360,14 +360,13 @@ bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const Pr
             if (!osContext->ensureContextInitialized(allocateInterrupt)) {
                 return false;
             }
-            this->resourcesInitialized = true;
-
             if (preemptionMode == NEO::PreemptionMode::MidThread &&
                 !this->getPreemptionAllocation()) {
                 this->createPreemptionAllocation();
             }
             this->fillReusableAllocationsList();
             initializeEngine();
+            this->resourcesInitialized = true;
         }
     }
 
