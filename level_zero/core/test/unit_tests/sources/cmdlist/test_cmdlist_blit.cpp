@@ -1237,12 +1237,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCal
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
     auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-
-    if (computeCommandList->isCopyOffloadEnabled() && !computeCommandList->isDualStreamCopyOffloadOperation(true)) {
-        EXPECT_NE(cmdList.end(), itor);
-    } else {
-        EXPECT_EQ(cmdList.end(), itor);
-    }
+    EXPECT_EQ(cmdList.end(), itor);
 
     context->freeMem(ptr);
 }
@@ -1658,6 +1653,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
     };
     std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto mockCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
+    mockCmdList->useAdditionalBlitProperties = false;
 
     if (!mockCmdList->isBcsSplitNeeded) {
         GTEST_SKIP();
@@ -1695,7 +1691,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
         itor = find<MI_ATOMIC *>(++itor, genCmdList.end());
     }
 
-    EXPECT_EQ(miAtomicFound, mockCmdList->isDualStreamCopyOffloadOperation(true));
+    EXPECT_TRUE(miAtomicFound);
 
     context->freeMem(ptr);
     context->freeMem(reinterpret_cast<void *>(devAddress));

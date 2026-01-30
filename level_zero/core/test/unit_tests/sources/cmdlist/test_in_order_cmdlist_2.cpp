@@ -341,9 +341,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
-        } else if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
@@ -370,9 +367,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
-        } else if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
@@ -424,11 +418,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        } else {
-            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        }
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -458,9 +448,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
-        } else if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
@@ -474,11 +461,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        } else {
-            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        }
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -504,9 +487,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
-        } else if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
@@ -520,11 +500,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        if (device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        } else {
-            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        }
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -590,12 +566,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        ASSERT_EQ(mainQueueCsr, copyQueueCsr);
-    } else {
-        ASSERT_NE(mainQueueCsr, copyQueueCsr);
-    }
-
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     auto mainTaskCount = mainQueueCsr->taskCount.load();
@@ -613,10 +583,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), copyItor);
-
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 1, copyQueueCsr->taskCount);
     }
 
@@ -634,9 +601,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), copyItor);
 
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 2, copyQueueCsr->taskCount);
     }
 
@@ -654,9 +619,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), fillItor);
 
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
     mainTaskCount++;
@@ -676,8 +639,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-            EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
         }
+        EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
     if (immCmdList->isWalkerPostSyncSkipEnabled) {
         mainTaskCount++;
@@ -706,10 +669,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-            EXPECT_EQ(initialCopyTaskCount + 4, copyQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 4, copyQueueCsr->taskCount);
     }
 
     {
@@ -725,10 +686,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-            EXPECT_EQ(initialCopyTaskCount + 5, copyQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 5, copyQueueCsr->taskCount);
     }
 
     {
@@ -744,10 +703,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
 
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialCopyTaskCount + 6, copyQueueCsr->taskCount);
-            EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
-        }
+        EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 6, copyQueueCsr->taskCount);
     }
     context->freeMem(data);
 }
@@ -898,12 +855,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        ASSERT_EQ(mainQueueCsr, copyQueueCsr);
-    } else {
-        ASSERT_NE(mainQueueCsr, copyQueueCsr);
-    }
-
     auto initialMainTaskCount = mainQueueCsr->taskCount.load();
     auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
 
@@ -921,9 +872,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
         EXPECT_EQ(cmdList.end(), copyItor);
 
         EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
-        }
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
     }
 
     {
@@ -941,9 +890,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
         EXPECT_EQ(cmdList.end(), copyItor);
 
         EXPECT_EQ(initialMainTaskCount + 2, mainQueueCsr->taskCount);
-        if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
-        }
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
     }
 
     context->freeMem(deviceMem);
@@ -954,9 +901,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCom
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, true);
@@ -1007,15 +951,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenApp
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
-
-    EXPECT_NE(mainQueueCsr, copyQueueCsr);
 
     auto mainQueueDirectSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*mainQueueCsr);
     auto offloadDirectSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*copyQueueCsr);
@@ -1133,10 +1072,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
     constexpr uint32_t partitionCount = 4;
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
-
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
@@ -1145,6 +1080,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1174,6 +1110,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1203,6 +1140,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1279,9 +1217,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDeviceToHostCopyWhenProgrammingThenAddFe
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAtLeastXeHpcCore) {
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
 
     auto regularEventsPool = createEvents<FamilyType>(1, false);
 
@@ -1368,9 +1303,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
         bool latestRelaxedOrderingMode = false;
     };
 
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
@@ -1378,8 +1310,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
-
-    EXPECT_NE(mainQueueCsr, copyQueueCsr);
 
     auto mainQueueDirectSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*mainQueueCsr);
     auto offloadDirectSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*copyQueueCsr);
@@ -1422,9 +1352,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeCore) {
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     if (!immCmdList->isHeaplessModeEnabled()) {
@@ -1505,9 +1432,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeCore) {
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     immCmdList->isTbxMode = true;
 
@@ -1549,9 +1473,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAlloc
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeCore) {
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -1593,9 +1514,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeCore) {
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
@@ -1709,11 +1627,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
 
 HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramUserInterrupt, IsAtLeastXeHpcCore) {
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
-
-    if (device->getProductHelper().useAdditionalBlitProperties()) {
-        GTEST_SKIP();
-    }
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->enableInterruptMode();
 
