@@ -827,11 +827,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
             srcRowPitch = pDstRegion->width * bytesPerPixel;
         }
     }
+    uint64_t srcSlicePitchCalculated = srcSlicePitch;
     if (srcSlicePitch == 0) {
-        srcSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
+        srcSlicePitchCalculated = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion, bytesPerPixel);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitchCalculated, pDstRegion, bytesPerPixel);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, srcPtr, bufferSize, true, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -867,7 +868,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
         auto status = appendCopyImageBlit(ptr, nullptr, ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.offset), image->getAllocation(),
-                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
+                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitchCalculated,
                                           imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(Event::fromHandle(hEvent));
@@ -875,37 +876,38 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     const auto isStateless = this->forceStateless(bufferSize);
-    bool isHeaplessEnabled = this->heaplessModeEnabled;
+    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
+    const auto isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 16u: {
         bool isSrc16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
-                                                 srcRowPitch, srcSlicePitch);
+                                                 srcRowPitch, srcSlicePitchCalculated);
         if (isSrc16BytesAligned) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     }
@@ -927,8 +929,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
                          0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    uint32_t pitch[] = {srcRowPitch, srcSlicePitch};
-    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    if (!isWideness) {
+        uint32_t pitch[] = {srcRowPitch, static_cast<uint32_t>(srcSlicePitchCalculated)};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    } else {
+        size_t pitch[] = {srcRowPitch, srcSlicePitchCalculated};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    }
 
     uint32_t groupSizeX = pDstRegion->width;
     uint32_t groupSizeY = pDstRegion->height;
@@ -1038,11 +1045,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
             destRowPitch = pSrcRegion->width * bytesPerPixel;
         }
     }
+    uint64_t destSlicePitchCalculated = destSlicePitch;
     if (destSlicePitch == 0) {
-        destSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
+        destSlicePitchCalculated = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion, bytesPerPixel);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitchCalculated, pSrcRegion, bytesPerPixel);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, dstPtr, bufferSize, false, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -1079,50 +1087,51 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
         auto status = appendCopyImageBlit(ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.offset), image->getAllocation(), ptr, nullptr,
                                           {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
-                                          destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
+                                          destRowPitch, destSlicePitchCalculated, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
                                           imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(event);
         return status;
     }
 
     const auto isStateless = this->forceStateless(bufferSize);
-    bool isHeaplessEnabled = this->heaplessModeEnabled;
+    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
+    const auto isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 3u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 6u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 16u: {
         bool isDst16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
-                                                 destRowPitch, destSlicePitch);
+                                                 destRowPitch, destSlicePitchCalculated);
         if (isDst16BytesAligned) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
 
         break;
@@ -1148,8 +1157,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    uint32_t pitch[] = {destRowPitch, destSlicePitch};
-    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    if (!isWideness) {
+        uint32_t pitch[] = {destRowPitch, static_cast<uint32_t>(destSlicePitchCalculated)};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    } else {
+        size_t pitch[] = {destRowPitch, destSlicePitchCalculated};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    }
 
     uint32_t groupSizeX = pSrcRegion->width;
     uint32_t groupSizeY = pSrcRegion->height;
@@ -2978,7 +2992,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::ImageType imageType,
                                                                          uint32_t bufferRowPitch,
-                                                                         uint32_t bufferSlicePitch,
+                                                                         uint64_t bufferSlicePitch,
                                                                          const ze_image_region_t *region, size_t pixelSize) {
     switch (imageType) {
     case NEO::ImageType::image1D:
