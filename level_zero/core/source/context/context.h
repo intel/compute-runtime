@@ -52,9 +52,30 @@ struct IpcOpaqueMemoryData {
     unsigned int processId = 0;
     IpcHandleType type = IpcHandleType::maxHandle;
     uint8_t memoryType = 0;
+    // Computes and returns the cache ID hash
+    uint64_t computeCacheID() const noexcept;
 };
 #pragma pack()
 static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+constexpr uint64_t ipcOpaqueHashRatio = 0x9e3779b97f4a7c15ull;
+
+template <class T>
+inline void ipcHashCombine(uint64_t &seed, const T &v) {
+    std::hash<T> h;
+    seed ^= h(v) + ipcOpaqueHashRatio + (seed << 6) + (seed >> 2);
+}
+
+inline uint64_t normalizeIPCHandle(const IpcOpaqueMemoryData &x) {
+    switch (x.type) {
+    case IpcHandleType::fdHandle:
+        return static_cast<uint64_t>(static_cast<int64_t>(x.handle.fd));
+    case IpcHandleType::ntHandle:
+        return x.handle.reserved;
+    default:
+        return 0ull;
+    }
+}
 
 struct IpcHandleTracking {
     uint64_t refcnt = 0;
@@ -62,6 +83,7 @@ struct IpcHandleTracking {
     uint32_t handleId = 0;
     uint64_t handle = 0;
     uint64_t ptr = 0;
+    uint64_t cacheID = 0;
     struct IpcMemoryData ipcData = {};
     struct IpcOpaqueMemoryData opaqueData = {};
 };
@@ -212,9 +234,9 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) = 0;
     virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) = 0;
-    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) = 0;
-    virtual void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) = 0;
-    virtual bool isOpaqueHandleSupported(IpcHandleType *handleType) = 0;
+    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID) = 0;
+    virtual void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID) = 0;
+    virtual uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) = 0;
     virtual ze_result_t mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext) = 0;
 
     virtual ze_result_t getPitchFor2dImage(

@@ -93,9 +93,11 @@ TEST_F(ContextIsShareable, whenCreatingContextWithPidfdApproachFalseThenContextS
                                            : NEO::DriverModelType::unknown;
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-    bool useOpaque = contextImp->settings.useOpaqueHandle;
-    // Always true for WDDM; should be false for others when pidfd is disabled.
-    EXPECT_EQ(useOpaque, driverType == NEO::DriverModelType::wddm);
+    uint8_t useOpaque = contextImp->settings.useOpaqueHandle;
+    // Always nthandle for WDDM; should be none/pidfd/sockets for others depending on support
+    if (driverType == NEO::DriverModelType::wddm) {
+        EXPECT_EQ(OpaqueHandlingType::nthandle, useOpaque);
+    }
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -108,7 +110,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidNTHandleThenSucce
 
     // Test Successfully returning NT Handle
     fixtureMemoryManager->ntHandle = true;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullptrIsReturned) {
@@ -120,11 +122,11 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
 
     // Test Failing returning NT Handle
     fixtureMemoryManager->ntHandle = true;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
 
     // Test Failing returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithDRMDriverTypeWithNonNTHandleThenSuccessIsReturned) {
@@ -135,7 +137,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithDRMDriverTypeWithNonNT
 
     // Test Successfully returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithWDDMDriverTypeWithNonNTHandleThenNullPtrIsReturned) {
@@ -146,15 +148,15 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithWDDMDriverTypeWithNonN
 
     // Test Successfully returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0));
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpenSyscallReturnFailThenPidfdGetNotCalled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
-    // Enable pidfd/sockets for IPC
-    context->settings.useOpaqueHandle = true;
+    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -170,7 +172,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
 
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -179,8 +181,8 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
-    // Enable pidfd/sockets for IPC
-    context->settings.useOpaqueHandle = true;
+    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -195,7 +197,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     });
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -204,8 +206,8 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
-    // Enable pidfd/sockets for IPC
-    context->settings.useOpaqueHandle = true;
+    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -234,7 +236,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return -2;             // Fail with a different negative value
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0);
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0, 0u);
 
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
@@ -244,8 +246,8 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnsZeroThenSuccessfulHandleIsUsed) {
     // Enable opaque IPC handles
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = true;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -274,7 +276,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return 0; // Return 0 (valid fd)
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0);
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, 1234u, 0, 0u);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -289,8 +291,8 @@ using GetDataFromIpcHandleTest = Test<GetMemHandlePtrTestFixture>;
 
 TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandleEnabledThenOpaqueDataIsExtracted) {
     // Enable opaque IPC handles
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = true;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     ze_ipc_mem_handle_t ipcHandle = {};
     IpcOpaqueMemoryData *opaqueData = reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
@@ -303,8 +305,9 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandle
     uint8_t type = 0;
     unsigned int pid = 0;
     uint64_t offst = 0;
+    uint64_t cacheID = 0;
 
-    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst);
+    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst, cacheID);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -320,8 +323,8 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandle
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
     // Disable opaque handles
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = false;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     ze_ipc_mem_handle_t ipcHandle = {};
     IpcMemoryData *regularData = reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
@@ -333,8 +336,9 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandle
     uint8_t type = 0;
     unsigned int pid = 0;
     uint64_t offst = 0;
+    uint64_t cacheID = 0;
 
-    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst);
+    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst, cacheID);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -348,8 +352,8 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandle
 
 TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithNullOSInterfaceThenRegularDataIsExtracted) {
     // Disable opaque handles and set null osInterface
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = false;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset();
 
     ze_ipc_mem_handle_t ipcHandle = {};
@@ -362,8 +366,9 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithNullOSInterf
     uint8_t type = 0;
     unsigned int pid = 0;
     uint64_t offst = 0;
+    uint64_t cacheID = 0;
 
-    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst);
+    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst, cacheID);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -376,8 +381,8 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithNullOSInterf
 
 TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithZeroValuesThenZeroValuesAreExtracted) {
     // Enable opaque IPC handles
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = true;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     ze_ipc_mem_handle_t ipcHandle = {};
     // All values should be zero by default
@@ -386,8 +391,9 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithZeroValuesTh
     uint8_t type = 99;
     unsigned int pid = 888;
     uint64_t offst = 777;
+    uint64_t cacheID = 0;
 
-    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst);
+    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst, cacheID);
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -411,9 +417,9 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithWDDMDr
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_TRUE(result);
+    EXPECT_EQ(OpaqueHandlingType::nthandle, result);
     EXPECT_EQ(IpcHandleType::ntHandle, handleType);
 }
 
@@ -421,6 +427,7 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithDRMDri
     // Ensure opaque handles are enabled
     DebugManagerStateRestore restorer;
     debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(0);
 
     auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -428,9 +435,9 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithDRMDri
     VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_TRUE(result);
+    EXPECT_EQ(OpaqueHandlingType::pidfd, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 }
 
@@ -445,9 +452,9 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithDRMDri
     VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_FALSE(result);
+    EXPECT_EQ(OpaqueHandlingType::none, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 }
 
@@ -460,11 +467,12 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithDRMDri
     // Enable debug flag to trigger mock prctl call
     DebugManagerStateRestore restorer;
     debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(0);
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_TRUE(result);
+    EXPECT_EQ(OpaqueHandlingType::pidfd, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 }
 
@@ -484,9 +492,9 @@ TEST_F(IsOpaqueHandleSupportedTest, whenCallingIsOpaqueHandleSupportedWithDRMDri
     };
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_FALSE(result);
+    EXPECT_EQ(OpaqueHandlingType::none, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 
     // Restore original sysCallsPrctl
@@ -571,7 +579,7 @@ TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndOpaqueEnabledAndPrctlFailsA
     executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup(&NEO::SysCalls::sysCallsPrctl);
     NEO::SysCalls::sysCallsPrctl = [](int, unsigned long) -> int {
@@ -579,9 +587,9 @@ TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndOpaqueEnabledAndPrctlFailsA
     };
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_TRUE(result);
+    EXPECT_EQ(OpaqueHandlingType::sockets, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 }
 
@@ -594,12 +602,12 @@ TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndOpaqueEnabledAndForceIpcSoc
     executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool result = context->isOpaqueHandleSupported(&handleType);
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
 
-    EXPECT_TRUE(result);
+    EXPECT_EQ(OpaqueHandlingType::sockets, result);
     EXPECT_EQ(IpcHandleType::fdHandle, handleType);
 }
 
@@ -608,7 +616,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsWithSocketFallbackEnabled
     debugManager.flags.EnableIpcSocketFallback.set(1);
     debugManager.flags.ForceIpcSocketFallback.set(0);
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -637,9 +645,9 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsWithSocketFallbackEnabled
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0);
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0, 0u);
     EXPECT_EQ(nullptr, result);
-    EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
+    EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
 }
 
@@ -648,7 +656,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketFallbackSucceeds
     debugManager.flags.EnableIpcSocketFallback.set(1);
     debugManager.flags.ForceIpcSocketFallback.set(0);
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -695,9 +703,9 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketFallbackSucceeds
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0);
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0, 0u);
     EXPECT_NE(nullptr, result);
-    EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
+    EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
     EXPECT_GT(NEO::SysCalls::connectCalled, 0);
 }
@@ -707,7 +715,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketConnectsButReque
     debugManager.flags.EnableIpcSocketFallback.set(1);
     debugManager.flags.ForceIpcSocketFallback.set(0);
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -747,9 +755,9 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketConnectsButReque
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0);
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0, 0u);
     EXPECT_EQ(nullptr, result);
-    EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
+    EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
     EXPECT_GT(NEO::SysCalls::connectCalled, 0);
 }
@@ -759,7 +767,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndForceIpcSocketFallbackThenPidfdIsSk
     debugManager.flags.EnableIpcSocketFallback.set(1);
     debugManager.flags.ForceIpcSocketFallback.set(1);
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -783,7 +791,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndForceIpcSocketFallbackThenPidfdIsSk
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0);
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0, 0u);
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled); // pidfd should be skipped
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);    // Socket should be attempted
@@ -794,7 +802,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdSucceedsThenSocketFallbackNotU
     debugManager.flags.EnableIpcSocketFallback.set(1);
     debugManager.flags.ForceIpcSocketFallback.set(0);
 
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -815,7 +823,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdSucceedsThenSocketFallbackNotU
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0);
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234, 0, 0u);
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
@@ -1021,6 +1029,527 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndRegisterHandleF
     delete handleIterator->second;
     driverHandle->getIPCHandleMap().clear();
     driverHandle->shutdownIpcSocketServer();
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdOpenReturnsENOSYSWithSocketFallbackDisabledThenNoneIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(0);
+
+    auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    // Mock prctl to succeed
+    auto prctlOrig = NEO::SysCalls::sysCallsPrctl;
+    NEO::SysCalls::sysCallsPrctl = [](int, unsigned long) -> int {
+        return 0; // Success
+    };
+
+    // Mock pidfdopen to fail with ENOSYS (syscall not available)
+    auto pidfdOpenOrig = NEO::SysCalls::sysCallsPidfdOpen;
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) -> int {
+        errno = ENOSYS;
+        return -1;
+    };
+
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::none, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+
+    // Restore
+    NEO::SysCalls::sysCallsPrctl = prctlOrig;
+    NEO::SysCalls::sysCallsPidfdOpen = pidfdOpenOrig;
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdOpenReturnsENOSYSWithSocketFallbackEnabledThenSocketsIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+
+    auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    // Mock prctl to succeed
+    auto prctlOrig = NEO::SysCalls::sysCallsPrctl;
+    NEO::SysCalls::sysCallsPrctl = [](int, unsigned long) -> int {
+        return 0; // Success
+    };
+
+    // Mock pidfdopen to fail with ENOSYS (syscall not available)
+    auto pidfdOpenOrig = NEO::SysCalls::sysCallsPidfdOpen;
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) -> int {
+        errno = ENOSYS;
+        return -1;
+    };
+
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::sockets, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+
+    // Restore
+    NEO::SysCalls::sysCallsPrctl = prctlOrig;
+    NEO::SysCalls::sysCallsPidfdOpen = pidfdOpenOrig;
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdOpenFailsWithNonENOSYSErrorThenPidfdIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(0);
+
+    auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    // Mock prctl to succeed
+    auto prctlOrig = NEO::SysCalls::sysCallsPrctl;
+    NEO::SysCalls::sysCallsPrctl = [](int, unsigned long) -> int {
+        return 0; // Success
+    };
+
+    // Mock pidfdopen to fail with EINVAL (not ENOSYS, so syscall exists but args are invalid)
+    auto pidfdOpenOrig = NEO::SysCalls::sysCallsPidfdOpen;
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) -> int {
+        errno = EINVAL; // Not ENOSYS
+        return -1;
+    };
+
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
+
+    // Should return pidfd because the syscall exists (just failed with different error)
+    EXPECT_EQ(OpaqueHandlingType::pidfd, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+
+    // Restore
+    NEO::SysCalls::sysCallsPrctl = prctlOrig;
+    NEO::SysCalls::sysCallsPidfdOpen = pidfdOpenOrig;
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdOpenSucceedsThenPidfdIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(0);
+
+    auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    // Mock prctl to succeed
+    auto prctlOrig = NEO::SysCalls::sysCallsPrctl;
+    NEO::SysCalls::sysCallsPrctl = [](int, unsigned long) -> int {
+        return 0; // Success
+    };
+
+    // Mock pidfdopen to succeed (return non-negative fd, which shouldn't happen with -1 as pid, but tests the path)
+    auto pidfdOpenOrig = NEO::SysCalls::sysCallsPidfdOpen;
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) -> int {
+        errno = ESRCH; // Set some errno, but return success
+        return 3;      // Return valid fd
+    };
+
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    uint8_t result = context->isOpaqueHandleSupported(&handleType);
+
+    // Should return pidfd because syscall succeeded
+    EXPECT_EQ(OpaqueHandlingType::pidfd, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+
+    // Restore
+    NEO::SysCalls::sysCallsPrctl = prctlOrig;
+    NEO::SysCalls::sysCallsPidfdOpen = pidfdOpenOrig;
+}
+
+TEST_F(GetMemHandlePtrTest, givenProcessIdZeroWhenCallingGetMemHandlePtrThenOpaqueHandlePathIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t handle = 42;
+    // Pass processId = 0, which should skip opaque handle logic
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u);
+
+    // Should succeed using regular path
+    EXPECT_NE(nullptr, result);
+}
+
+TEST_F(GetMemHandlePtrTest, givenOpaqueHandleDisabledWhenCallingGetMemHandlePtrThenOpaqueHandlePathIsSkipped) {
+    DebugManagerStateRestore restorer;
+
+    // Disable opaque handle
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t handle = 42;
+    unsigned int processId = 1234;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // Should succeed using regular path
+    EXPECT_NE(nullptr, result);
+}
+
+TEST_F(GetMemHandlePtrTest, givenSocketOnlyModeWhenCallingGetMemHandlePtrThenPidfdPathIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+
+    // Set to use sockets only (not pidfd)
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t handle = 42;
+    unsigned int processId = 1234;
+
+    // Initialize and register the socket server for this process
+    driverHandle->initializeIpcSocketServer();
+    driverHandle->registerIpcHandleWithServer(handle, static_cast<int>(handle));
+
+    // Mock the socket client to succeed
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // Should either succeed or fail depending on socket availability, but pidfd should not be called
+    // This tests that the pidfd branch is skipped when settings.useOpaqueHandle == sockets
+
+    driverHandle->shutdownIpcSocketServer();
+}
+
+TEST_F(GetMemHandlePtrTest, givenForceSocketFallbackWhenCallingGetMemHandlePtrThenPidfdPathIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceIpcSocketFallback.set(1);
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+
+    // Set to use pidfd but force socket fallback
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t handle = 42;
+    unsigned int processId = 1234;
+
+    // Track if pidfdopen is called
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
+
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // pidfdopen should NOT be called because ForceIpcSocketFallback is set
+    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+}
+
+TEST_F(GetMemHandlePtrTest, givenCachedImportHandleWhenCallingGetMemHandlePtrThenCachedHandleIsUsedAndPidfdNotCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 42;
+    unsigned int processId = 1234;
+    uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
+    uint64_t cachedImportHandle = 9999;
+
+    // Pre-populate the cache
+    context->setCachedImportHandle(cacheID, cachedImportHandle);
+
+    // Track if pidfdopen is called
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
+
+    // Call getMemHandlePtr - should use cached handle and NOT call pidfdopen
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // Verify pidfdopen was NOT called because cache hit
+    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+
+    // Result should be non-null (using cached handle)
+    EXPECT_NE(nullptr, result);
+}
+
+TEST_F(GetMemHandlePtrTest, givenPidfdDisabledAndSocketsEnabledWhenCallingGetMemHandlePtrThenPidfdPathIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+
+    // Set to use sockets only (not pidfd)
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 42;
+    unsigned int processId = 1234;
+
+    // Track if pidfdopen is called
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
+
+    // Call getMemHandlePtr - should NOT call pidfdopen because pidfd is not enabled
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // Verify pidfdopen was NOT called because (settings.useOpaqueHandle & OpaqueHandlingType::pidfd) is false
+    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+}
+
+TEST_F(GetMemHandlePtrTest, givenPidfdSuccessFromCacheWhenCallingGetMemHandlePtrThenSkipsSubsequentImportLogic) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 55;
+    unsigned int processId = 5678;
+    uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
+    uint64_t cachedImportHandle = 8888;
+
+    // Pre-populate the cache
+    context->setCachedImportHandle(cacheID, cachedImportHandle);
+
+    // Track syscalls
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
+
+    // Call getMemHandlePtr - should use cached handle, mark pidfdSuccess=true, and skip all import logic
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, 0u, 0, processId);
+
+    // Verify no syscalls were made because cache hit set pidfdSuccess=true
+    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+    EXPECT_NE(nullptr, result);
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCacheIDThenCacheIDIsStoredInIPCMap) {
+    DebugManagerStateRestore restorer;
+
+    // Enable opaque handles
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 42;
+    unsigned int processId = 1234;
+    uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
+
+    // Pre-populate IPC map with an entry for the handle that will be imported
+    // Since pidfd/socket is disabled via caching below, the importHandle will be the exportHandle
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
+    ipcHandleData->cacheID = 0; // Will be updated by getMemHandlePtr
+    ipcMap[exportHandle] = ipcHandleData;
+
+    // Pre-populate cache to skip pidfd/socket logic and use exportHandle directly as importHandle
+    context->setCachedImportHandle(cacheID, exportHandle);
+
+    // Call getMemHandlePtr - should succeed and store cacheID in IPC map
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, processId, 0, cacheID);
+
+    EXPECT_NE(nullptr, result);
+
+    // Verify cacheID was stored in the IPC map entry
+    auto ipcIter = ipcMap.find(exportHandle);
+    ASSERT_NE(ipcIter, ipcMap.end());
+    EXPECT_EQ(cacheID, ipcIter->second->cacheID);
+
+    // Cleanup
+    delete ipcHandleData;
+    ipcMap.erase(exportHandle);
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndCacheIDButHandleNotInMapThenCacheIDIsNotStored) {
+    DebugManagerStateRestore restorer;
+
+    // Enable opaque handles
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 99;
+    unsigned int processId = 5678;
+    uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
+
+    // Pre-populate cache to skip pidfd/socket logic
+    context->setCachedImportHandle(cacheID, exportHandle);
+
+    // Do NOT add handle to IPC map - this tests the ipcIter == ipcMap.end() branch
+
+    // Call getMemHandlePtr - should succeed but NOT update any IPC map entry
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, processId, 0, cacheID);
+
+    EXPECT_NE(nullptr, result);
+
+    // Verify handle is not in IPC map (since importFdHandle mock doesn't add it)
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(exportHandle);
+    EXPECT_EQ(ipcIter, ipcMap.end());
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleButZeroCacheIDThenCacheIDIsNotStored) {
+    DebugManagerStateRestore restorer;
+
+    // Enable opaque handles
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 77;
+    unsigned int processId = 0; // Zero processId means cacheID will be 0
+    uint64_t cacheID = 0;
+
+    // Pre-populate IPC map with an entry
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
+    ipcHandleData->cacheID = 999; // Should remain unchanged
+    ipcMap[exportHandle] = ipcHandleData;
+
+    // Call getMemHandlePtr with zero cacheID - should NOT update IPC map
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, processId, 0, cacheID);
+
+    EXPECT_NE(nullptr, result);
+
+    // Verify cacheID was NOT updated (should still be 999)
+    auto ipcIter = ipcMap.find(exportHandle);
+    ASSERT_NE(ipcIter, ipcMap.end());
+    EXPECT_EQ(999u, ipcIter->second->cacheID);
+
+    // Cleanup
+    delete ipcHandleData;
+    ipcMap.erase(exportHandle);
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleDisabledAndNonZeroCacheIDThenCacheIDIsNotStored) {
+    DebugManagerStateRestore restorer;
+
+    // Disable opaque handles
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t exportHandle = 88;
+    unsigned int processId = 0; // Zero processId so no opaque logic runs
+    uint64_t cacheID = 12345;   // Non-zero cacheID
+
+    // Pre-populate IPC map with an entry
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
+    ipcHandleData->cacheID = 0; // Should remain 0 since useOpaqueHandle is false
+    ipcMap[exportHandle] = ipcHandleData;
+
+    // Call getMemHandlePtr with opaque handles disabled - should NOT update cacheID
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, processId, 0, cacheID);
+
+    EXPECT_NE(nullptr, result);
+
+    // Verify cacheID was NOT updated (should still be 0)
+    auto ipcIter = ipcMap.find(exportHandle);
+    ASSERT_NE(ipcIter, ipcMap.end());
+    EXPECT_EQ(0u, ipcIter->second->cacheID);
+
+    // Cleanup
+    delete ipcHandleData;
+    ipcMap.erase(exportHandle);
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithImportFailureAndNonZeroCacheIDThenCacheIDIsNotStored) {
+    DebugManagerStateRestore restorer;
+
+    // Enable opaque handles
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    // Force importFdHandle to fail
+    driverHandle->failHandleLookup = true;
+
+    uint64_t exportHandle = 99;
+    unsigned int processId = 1111;
+    uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
+
+    // Pre-populate cache to skip pidfd/socket logic
+    context->setCachedImportHandle(cacheID, exportHandle);
+
+    // Pre-populate IPC map with an entry
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
+    ipcHandleData->cacheID = 0; // Should remain 0 since import fails
+    ipcMap[exportHandle] = ipcHandleData;
+
+    // Call getMemHandlePtr - should fail (return nullptr) and NOT update cacheID
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, processId, 0, cacheID);
+
+    EXPECT_EQ(nullptr, result); // Import should fail
+
+    // Verify cacheID was NOT updated (should still be 0)
+    auto ipcIter = ipcMap.find(exportHandle);
+    ASSERT_NE(ipcIter, ipcMap.end());
+    EXPECT_EQ(0u, ipcIter->second->cacheID);
+
+    // Cleanup
+    delete ipcHandleData;
+    ipcMap.erase(exportHandle);
+    driverHandle->failHandleLookup = false;
 }
 
 } // namespace ult

@@ -82,9 +82,9 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(putVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
     ADDMETHOD_NOBASE(lockMemory, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size));
     ADDMETHOD_NOBASE(isShareableMemory, bool, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle));
-    ADDMETHOD_NOBASE(isOpaqueHandleSupported, bool, true, (IpcHandleType * handleType));
-    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags));
-    ADDMETHOD_NOBASE_VOIDRETURN(getDataFromIpcHandle, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset));
+    ADDMETHOD_NOBASE(isOpaqueHandleSupported, uint8_t, (OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets), (IpcHandleType * handleType));
+    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID));
+    ADDMETHOD_NOBASE_VOIDRETURN(getDataFromIpcHandle, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID));
     ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
     ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice));
@@ -148,9 +148,9 @@ struct Mock<ContextImp> : public ContextImp {
     ADDMETHOD(putVirtualAddressSpaceIpcHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle), (ipcHandle));
     ADDMETHOD(lockMemory, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size), (hDevice, ptr, size));
     ADDMETHOD(isShareableMemory, bool, false, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle), (exportDesc, exportableMemory, neoDevice, shareableWithoutNTHandle));
-    ADDMETHOD(isOpaqueHandleSupported, bool, false, true, (IpcHandleType * handleType), (handleType));
-    ADDMETHOD(getMemHandlePtr, void *, false, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags), (hDevice, handle, allocationType, processId, flags));
-    ADDMETHOD_VOIDRETURN(getDataFromIpcHandle, false, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset), (hDevice, ipcHandle, handle, type, processId, poolOffset));
+    ADDMETHOD(isOpaqueHandleSupported, uint8_t, false, (OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets), (IpcHandleType * handleType), (handleType));
+    ADDMETHOD(getMemHandlePtr, void *, false, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID), (hDevice, handle, allocationType, processId, flags, cacheID));
+    ADDMETHOD_VOIDRETURN(getDataFromIpcHandle, false, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID), (hDevice, ipcHandle, handle, type, processId, poolOffset, cacheID));
     ADDMETHOD(getPitchFor2dImage, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t imageWidth, size_t imageHeight, unsigned int elementSizeInBytes, size_t *rowPitch), (hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch));
     ADDMETHOD(getContextExt, ContextExt *, false, nullptr, (), ());
     ADDMETHOD(systemBarrier, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice), (hDevice));

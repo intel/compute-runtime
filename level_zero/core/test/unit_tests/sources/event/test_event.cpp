@@ -677,7 +677,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingOpaqueEventPoolIpcHandleWithDeviceAll
         numEvents};
 
     // Enable opaque IPC handles
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -720,7 +720,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingNonOpaqueIpcEventPoolHandleWithDevice
 
     // Set to non-opaque IPC handles.
     bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = false;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -767,7 +767,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPool
 
     // Enable opaque IPC handles
     bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -822,7 +822,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithShareable
 
     // Enable opaque IPC handles
     bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -874,7 +874,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningNonOpaqueIpcEventPoolHandleThenEventP
 
     // Set to non-opaque IPC handles.
     bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = false;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;

@@ -31,36 +31,52 @@
 
 namespace L0 {
 
-bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
+uint8_t ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
     auto rootEnv = this->driverHandle->getMemoryManager()->peekExecutionEnvironment().rootDeviceEnvironments[0].get();
     auto driverType = rootEnv->osInterface ? rootEnv->osInterface->getDriverModel()->getDriverModelType()
                                            : NEO::DriverModelType::unknown;
     if (driverType == NEO::DriverModelType::wddm) {
         *handleType = IpcHandleType::ntHandle;
+        return OpaqueHandlingType::nthandle;
     } else {
         *handleType = IpcHandleType::fdHandle;
         for (auto &device : this->driverHandle->devices) {
             auto &productHelper = device->getNEODevice()->getProductHelper();
             if (!productHelper.isPidFdOrSocketForIpcSupported()) {
-                return false;
+                return OpaqueHandlingType::none;
             }
         }
         if (NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "Forcing IPC socket method instead of pidfd\n");
-            return true;
+            return OpaqueHandlingType::sockets;
         }
         if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed: %s\n", strerror(errno));
             if (NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                              "pidfd unavailable, but socket fallback is enabled - opaque handles still supported\n");
-                return true;
+                return OpaqueHandlingType::sockets;
             }
-            return false;
+            return OpaqueHandlingType::none;
+        } else {
+            // Verify pidfdopen and pidfdgetfd syscalls are available
+            int testPidfd = NEO::SysCalls::pidfdopen(-1, 0);
+            if (testPidfd == -1 && errno == ENOSYS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "pidfd_open syscall not available: %s\n", strerror(errno));
+                if (NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "pidfd unavailable, but socket fallback is enabled - opaque handles still supported\n");
+                    return OpaqueHandlingType::sockets;
+                }
+                return OpaqueHandlingType::none;
+            }
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "pidfd approach for IPC handles is supported\n");
+            return OpaqueHandlingType::pidfd;
         }
     }
-    return true;
 }
 
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
@@ -81,7 +97,8 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                   uint64_t handle,
                                   NEO::AllocationType allocationType,
                                   unsigned int processId,
-                                  ze_ipc_memory_flags_t flags) {
+                                  ze_ipc_memory_flags_t flags,
+                                  uint64_t cacheID) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
@@ -99,12 +116,17 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
 
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         uint64_t importHandle = handle;
+        uint64_t effectiveCacheID = cacheID;
         bool pidfdSuccess = false;
         bool socketFallbackSuccess = false;
-
         if (settings.useOpaqueHandle && processId != 0) {
-            // Try pidfd approach first (unless forced to use socket fallback)
-            if (!NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
+            // Check cache first for opaque handles
+            if (tryGetCachedImportHandle(cacheID, importHandle)) {
+                pidfdSuccess = true; // Mark as successful to skip import logic
+            }
+
+            // Try pidfd approach first (unless forced to use socket fallback or already cached)
+            if (!pidfdSuccess && (settings.useOpaqueHandle & OpaqueHandlingType::pidfd) && !NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
                 pid_t exporterPid = static_cast<pid_t>(processId);
                 unsigned int pidfdFlags = 0u;
                 int pidfd = NEO::SysCalls::pidfdopen(exporterPid, pidfdFlags);
@@ -119,12 +141,17 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                     } else {
                         importHandle = static_cast<uint64_t>(newfd);
                         pidfdSuccess = true;
+                        // Cache the imported handle for future use
+                        setCachedImportHandle(cacheID, importHandle);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                     "Cached import handle %lu for cache ID %lu\n",
+                                     importHandle, cacheID);
                     }
                 }
             }
 
             // Try socket fallback if pidfd failed and socket fallback is enabled
-            if (!pidfdSuccess && NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+            if (!pidfdSuccess && (settings.useOpaqueHandle == OpaqueHandlingType::sockets)) {
                 pid_t exporterPid = static_cast<pid_t>(processId);
                 std::string socketPath = "neo_ipc_" + std::to_string(exporterPid);
 
@@ -134,8 +161,11 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                     if (receivedFd != -1) {
                         importHandle = static_cast<uint64_t>(receivedFd);
                         socketFallbackSuccess = true;
+                        // Cache the imported handle for future use
+                        setCachedImportHandle(cacheID, importHandle);
                         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                     "IPC socket fallback successful for handle %lu\n", handle);
+                                     "IPC socket fallback successful for handle %lu, cached as %lu\n",
+                                     handle, importHandle);
                     } else {
                         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                      "IPC socket fallback failed for handle %lu\n", handle);
@@ -145,38 +175,54 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                  "Failed to connect to IPC socket server at %s\n", socketPath.c_str());
                 }
 
+                // If socket fallback was attempted but failed, return nullptr
                 if (!socketFallbackSuccess) {
                     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                  "Socket fallback failed for handle %lu, returning nullptr\n", handle);
                     return nullptr;
                 }
             }
+            // If sockets are not enabled and pidfd failed, fall back to original handle
         }
 
-        return this->driverHandle->importFdHandle(neoDevice,
-                                                  flags,
-                                                  importHandle,
-                                                  allocationType,
-                                                  nullptr,
-                                                  nullptr,
-                                                  allocDataInternal);
+        auto result = this->driverHandle->importFdHandle(neoDevice,
+                                                         flags,
+                                                         importHandle,
+                                                         allocationType,
+                                                         nullptr,
+                                                         nullptr,
+                                                         allocDataInternal);
+
+        // Store cacheID in IPC handle tracking if opaque handles are used
+        if (result && settings.useOpaqueHandle && effectiveCacheID != 0) {
+            auto lock = driverHandle->lockIPCHandleMap();
+            auto &ipcMap = driverHandle->getIPCHandleMap();
+            auto ipcIter = ipcMap.find(importHandle);
+            if (ipcIter != ipcMap.end()) {
+                ipcIter->second->cacheID = effectiveCacheID;
+            }
+        }
+
+        return result;
     } else {
         return nullptr;
     }
 }
 
-void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) {
+void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID) {
     if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
         type = ipcData->memoryType;
         processId = ipcData->processId;
         poolOffset = ipcData->poolOffset;
+        cacheID = ipcData->computeCacheID();
     } else {
         const IpcMemoryData *ipcData = reinterpret_cast<const IpcMemoryData *>(ipcHandle.data);
         handle = ipcData->handle;
         type = ipcData->type;
         poolOffset = ipcData->poolOffset;
+        cacheID = 0;
     }
 }
 

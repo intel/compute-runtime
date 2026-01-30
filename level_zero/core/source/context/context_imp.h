@@ -19,6 +19,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 
 #include <map>
+#include <mutex>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -37,8 +38,19 @@ class DriverHandle;
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
 
+#ifndef BIT
+#define BIT(x) (1u << (x))
+#endif
+
+enum OpaqueHandlingType : uint8_t {
+    none = 0,
+    pidfd = BIT(0),
+    sockets = BIT(1),
+    nthandle = BIT(2)
+};
+
 struct ContextSettings {
-    bool useOpaqueHandle = true;
+    uint8_t useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     bool enableSvmHeapReservation = true;
     IpcHandleType handleType = IpcHandleType::maxHandle;
 };
@@ -195,9 +207,24 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) override;
-    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) override;
-    bool isOpaqueHandleSupported(IpcHandleType *handleType) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID) override;
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID) override;
+    uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) override;
+
+    bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
+
+    void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache[cacheID] = importHandle;
+    }
+
+    void clearCachedImportHandle(uint64_t cacheID) {
+        if (cacheID == 0) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache.erase(cacheID);
+    }
 
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
@@ -274,7 +301,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
 
             if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
-                if (handleType == IpcHandleType::fdHandle && NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+                if (handleType == IpcHandleType::fdHandle && settings.useOpaqueHandle == OpaqueHandlingType::sockets) {
                     if (this->driverHandle->initializeIpcSocketServer()) {
                         if (!this->driverHandle->registerIpcHandleWithServer(handle, static_cast<int>(handle))) {
                             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -295,6 +322,9 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);
+
+    std::map<uint64_t, uint64_t> opaqueHandleImportCache;
+    std::mutex opaqueHandleImportCacheMutex;
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;

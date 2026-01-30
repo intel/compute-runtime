@@ -68,8 +68,8 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     // Save context useOpaqueHandle setting
-    bool useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = false;
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;
     result = context->getIpcMemHandle(ptr, &ipcHandle);
@@ -108,7 +108,7 @@ TEST_F(MemoryIPCTests,
     // Save and set context settings for opaque FD handle mode
     bool useOpaque = context->settings.useOpaqueHandle;
     IpcHandleType handleType = context->settings.handleType;
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
     context->settings.handleType = IpcHandleType::fdHandle;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;
@@ -153,7 +153,7 @@ TEST_F(MemoryIPCTests,
     // Save and set context settings for opaque NT handle mode
     bool useOpaque = context->settings.useOpaqueHandle;
     IpcHandleType handleType = context->settings.handleType;
-    context->settings.useOpaqueHandle = true;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
     context->settings.handleType = IpcHandleType::ntHandle;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;

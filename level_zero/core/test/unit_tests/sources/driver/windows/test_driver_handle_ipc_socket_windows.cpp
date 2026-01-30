@@ -185,12 +185,15 @@ class ContextWhiteboxForMockDriverHandle : public ::L0::ContextImp {
 TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketServerInitSucceedsAndRegisterSucceedsThenHandleIsRegistered) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
+    NEO::debugManager.flags.ForceIpcSocketFallback.set(1);
 
     MockDriverHandleForIpcSocket mockDriverHandle;
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = true;
 
     ContextWhiteboxForMockDriverHandle contextWhitebox(&mockDriverHandle);
+    contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
 
     NEO::MockGraphicsAllocation mockAllocation;
     uint64_t handle = 33333;
@@ -218,12 +221,15 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
 TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketServerInitSucceedsAndRegisterFailsThenHandleStillAdded) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
+    NEO::debugManager.flags.ForceIpcSocketFallback.set(1);
 
     MockDriverHandleForIpcSocket mockDriverHandle;
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = false;
 
     ContextWhiteboxForMockDriverHandle contextWhitebox(&mockDriverHandle);
+    contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
 
     NEO::MockGraphicsAllocation mockAllocation;
     uint64_t handle = 44444;

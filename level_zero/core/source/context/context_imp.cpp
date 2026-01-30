@@ -130,7 +130,8 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::bufferHostMemory,
                                    0u,
-                                   flags);
+                                   flags,
+                                   0u);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -279,7 +280,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::buffer,
                                    0u,
-                                   flags);
+                                   flags,
+                                   0u);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -554,9 +556,11 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
             if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
-                if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
+                if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
                     this->driverHandle->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
                 }
+                // Clear the cached import handle when IPC memory is freed
+                clearCachedImportHandle(ipcHandleIterator->second->cacheID);
                 delete ipcHandleIterator->second;
                 this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
             }
@@ -776,9 +780,11 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
             driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
-            if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
+            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
                 this->driverHandle->unregisterIpcHandleWithServer(handle);
             }
+            // Clear the cached import handle when IPC handle is closed
+            clearCachedImportHandle(trackIPC->cacheID);
             delete trackIPC;
             ipcMap.erase(handle);
         }
@@ -895,6 +901,18 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
     return ZE_RESULT_SUCCESS;
 }
 
+uint64_t IpcOpaqueMemoryData::computeCacheID() const noexcept {
+    uint64_t hash = 0;
+
+    ipcHashCombine(hash, normalizeIPCHandle(*this));
+    ipcHashCombine(hash, poolOffset);
+    ipcHashCombine(hash, static_cast<uint32_t>(processId));
+    ipcHashCombine(hash, static_cast<uint8_t>(type));
+    ipcHashCombine(hash, memoryType);
+
+    return hash;
+}
+
 ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
                                         ze_ipc_mem_handle_t *pIpcHandle) {
     return getIpcMemHandlesImpl(ptr, nullptr, pIpcHandle);
@@ -915,8 +933,9 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     uint8_t type;
     unsigned int processId;
     uint64_t poolOffset;
+    uint64_t cacheID;
 
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset);
+    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -931,7 +950,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                            handle,
                            allocationType,
                            processId,
-                           flags);
+                           flags,
+                           cacheID);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -954,8 +974,9 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         uint8_t type;
         unsigned int processId;
         [[maybe_unused]] uint64_t poolOffset;
+        uint64_t cacheID;
 
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset);
+        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID);
 
         if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1811,6 +1832,20 @@ ze_result_t ContextImp::getPitchFor2dImage(
     size_t *rowPitch) {
 
     return Image::getPitchFor2dImage(hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
+}
+
+bool ContextImp::tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle) {
+    std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+    auto cacheIt = opaqueHandleImportCache.find(cacheID);
+    if (cacheIt != opaqueHandleImportCache.end()) {
+        // Found in cache, reuse the imported handle
+        importHandle = cacheIt->second;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Reusing cached import handle %lu for cache ID %lu\n",
+                     importHandle, cacheID);
+        return true;
+    }
+    return false;
 }
 
 } // namespace L0
