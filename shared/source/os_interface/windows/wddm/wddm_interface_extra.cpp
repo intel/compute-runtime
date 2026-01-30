@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
     createNativeFenceObject.Info.Type = D3DDDI_NATIVEFENCE_TYPE_DEFAULT;
     createNativeFenceObject.Info.InitialFenceValue = 0;
     auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
-    privateData->UseHw64bToken = 1;
+    privateData->UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get();
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);

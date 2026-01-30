@@ -533,6 +533,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableReservingInSvmRange, true, "Enables reserving
 DECLARE_DEBUG_VARIABLE(bool, EnableDeferBacking, false, "Enables defer backing on xe kmd")
 DECLARE_DEBUG_VARIABLE(bool, DisableProgrammableMetricsSupport, false, "Disable Programmable Metrics support")
 DECLARE_DEBUG_VARIABLE(bool, Enable512NumGrfs, true, "Enable support for 512 of GRFs per thread")
+DECLARE_DEBUG_VARIABLE(bool, WddmUseHw64bToken, true, "Set UseHw64bToken on context and native fence creation")
 DECLARE_DEBUG_VARIABLE(int64_t, VmBindWaitUserFenceTimeout, -1, "-1: default, >0: time in ns for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
