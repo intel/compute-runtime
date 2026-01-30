@@ -563,12 +563,10 @@ void CommandContainer::fillReusableAllocationLists() {
         for (auto i = 0u; i < amountToFill; i++) {
             auto allocToReuse = obtainNextCommandBufferAllocation();
             this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
-            this->getResidencyContainer().push_back(allocToReuse);
 
             if (this->useSecondaryCommandStream) {
                 auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
                 this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
-                this->getResidencyContainer().push_back(hostAllocToReuse);
             }
         }
     }
