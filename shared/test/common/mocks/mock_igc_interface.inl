@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,6 +117,14 @@ const char *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 3)::GetIGCRevision() {
     return "";
 }
 
+IgcBuiltinsBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 4)::GetIgcBuiltinsHandleImpl(CIF::Version_t ver) {
+    return nullptr;
+}
+
+IgcOptionsAndCapabilitiesBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 5)::GetIgcOptionsAndCapabilitiesHandleImpl(CIF::Version_t ver) {
+    return nullptr;
+}
+
 OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 1)::TranslateImpl(
     CIF::Version_t outVersion,
     CIF::Builtins::BufferSimple *src,
@@ -220,5 +228,16 @@ IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 3)::Crea
 IGC::PlatformBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 4)::GetPlatformHandleImpl(CIF::Version_t ver) {
     return nullptr;
 }
+
+void CIF_GET_INTERFACE_CLASS(IgcOptionsAndCapabilities, 1)::GetCompilerAPIOptionsHelp(CIF::Builtins::BufferSimple *outAPIOptions) const {
+}
+
+void CIF_GET_INTERFACE_CLASS(IgcOptionsAndCapabilities, 1)::GetCompilerInternalOptionsHelp(CIF::Builtins::BufferSimple *outInternalOptions) const {
+}
+
+void CIF_GET_INTERFACE_CLASS(IgcOptionsAndCapabilities, 1)::GetCompilerSupportedSPIRVExtensionsYAML(CIF::Builtins::BufferSimple *
+                                                                                                        outSupportedSPIRVExtensionsYAML) const {
+}
+
 #include "cif/macros/disable.h"
 } // namespace IGC

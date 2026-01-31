@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,6 +154,11 @@ FclOclDeviceCtx<0>::~FclOclDeviceCtx() {}
 
 template <typename... ArgsT>
 FclOclDeviceCtx<0>::FclOclDeviceCtx(ArgsT &&...args) {}
+
+IgcOptionsAndCapabilities<0>::~IgcOptionsAndCapabilities() {}
+
+template <typename... ArgsT>
+IgcOptionsAndCapabilities<0>::IgcOptionsAndCapabilities(ArgsT &&...args) {}
 
 } // namespace IGC
 
