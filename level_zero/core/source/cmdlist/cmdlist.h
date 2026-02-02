@@ -568,6 +568,8 @@ struct CommandList : _ze_command_list_handle_t {
                       uint32_t comparisonMode) const;
 
     bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
+    bool isPatchPreambleEnabled() const { return patchPreambleEnabled; }
+    void setupPatchPreambleEnabled();
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
@@ -689,6 +691,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
+    bool patchPreambleEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

@@ -32,12 +32,6 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
-void CommandList::setPatchingPreamble(bool patching) {
-    if (isImmediateType()) {
-        cmdQImmediate->setPatchingPreamble(patching);
-    }
-}
-
 CommandListAllocatorFn commandListFactory[NEO::maxProductEnumValue] = {};
 CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {};
 

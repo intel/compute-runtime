@@ -634,6 +634,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         if (!commandList->isClosed()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+        ctx.patchPreambleEnabled |= commandList->isPatchPreambleEnabled();
         this->processMemAdviseOperations(commandList);
 
         commandList->storeReferenceTsToMappedEvents(false);

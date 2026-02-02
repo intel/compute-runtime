@@ -1569,5 +1569,20 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
     }
 }
 
+HWTEST_F(CommandListCreateTests, givenForcePatchPreambleDebugSetToValueWhenCommandListCreatedThenPatchPreambleFlagIsToDebugKey) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceEnableRegularCmdListPatchPreamble.set(0);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_FALSE(commandList->isPatchPreambleEnabled());
+
+    debugManager.flags.ForceEnableRegularCmdListPatchPreamble.set(1);
+    commandList.reset(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_TRUE(commandList->isPatchPreambleEnabled());
+}
+
 } // namespace ult
 } // namespace L0

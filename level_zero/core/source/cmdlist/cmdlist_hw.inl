@@ -291,7 +291,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
     this->swTagsEnabled = NEO::debugManager.flags.EnableSWTags.get();
-
+    this->setupPatchPreambleEnabled();
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);

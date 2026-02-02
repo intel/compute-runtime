@@ -8,6 +8,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -303,6 +304,19 @@ bool CommandList::verifyMemory(const void *allocationPtr,
                                size_t sizeOfComparison,
                                uint32_t comparisonMode) const {
     return getCsr(false)->expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+}
+
+void CommandList::setPatchingPreamble(bool patching) {
+    if (isImmediateType()) {
+        cmdQImmediate->setPatchingPreamble(patching);
+    }
+}
+
+void CommandList::setupPatchPreambleEnabled() {
+    int32_t enableRegularCmdListPatchPreamble = NEO::debugManager.flags.ForceEnableRegularCmdListPatchPreamble.get();
+    if (enableRegularCmdListPatchPreamble != -1) {
+        this->patchPreambleEnabled = !!(enableRegularCmdListPatchPreamble);
+    }
 }
 
 } // namespace L0
