@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,6 +157,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void addCurrentCommandBufferToReusableAllocationList();
 
     void fillReusableAllocationLists();
+    void updateAllocationTaskCount(GraphicsAllocation *allocation);
     void storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation);
 
     HeapReserveData &getSurfaceStateHeapReserve() {

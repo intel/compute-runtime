@@ -604,12 +604,18 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 }
 
-void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation) {
+void CommandContainer::updateAllocationTaskCount(GraphicsAllocation *allocation) {
     auto lock = this->immediateCmdListCsr->obtainUniqueOwnership();
     auto taskCount = this->immediateCmdListCsr->peekTaskCount() + 1;
     auto osContextId = this->immediateCmdListCsr->getOsContext().getContextId();
     allocation->updateTaskCount(taskCount, osContextId);
     allocation->updateResidencyTaskCount(taskCount, osContextId);
+    this->immediateCmdListCsr->flushTagUpdate();
+}
+
+void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation) {
+    updateAllocationTaskCount(allocation);
+
     if (allocation->getAllocationType() == AllocationType::commandBuffer) {
         auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
         if (allocation->getParentAllocation() &&
@@ -622,7 +628,6 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);
     }
-    this->immediateCmdListCsr->flushTagUpdate();
 }
 
 HeapReserveData::HeapReserveData() {
