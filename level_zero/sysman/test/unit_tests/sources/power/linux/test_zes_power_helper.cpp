@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,6 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGett
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
-    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -81,7 +80,6 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
-    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -119,7 +117,6 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPropertiesWithNullDescWhenGettingPowerPropertiesThenCallSucceeds) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
-    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -214,6 +211,32 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
             EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile0);
         } else if (properties.subdeviceId == 1) {
             EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile1);
+        }
+    }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingGetLimitsExpForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+
+    for (auto handle : handles) {
+        uint32_t getLimit = 0;
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &getLimit));
+        }
+    }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingSetLimitsExpForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+
+    for (auto handle : handles) {
+        uint32_t setLimit = 0;
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, setLimit));
         }
     }
 }

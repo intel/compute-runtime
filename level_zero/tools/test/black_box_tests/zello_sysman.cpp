@@ -209,6 +209,23 @@ std::string getPowerLimitSourceType(zes_power_source_t type) {
     return powerLimitsSourceTypeMap.at(type);
 }
 
+// Experimental Power APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelPowerGetLimitsExp_pfn)(
+    zes_pwr_handle_t hPower,
+    uint32_t *pLimit);
+
+typedef ze_result_t(ZE_APICALL *zesIntelPowerSetLimitsExp_pfn)(
+    zes_pwr_handle_t hPower,
+    const uint32_t limit);
+
+zesIntelPowerGetLimitsExp_pfn zesIntelPowerGetLimitsExpPtr = nullptr;
+zesIntelPowerSetLimitsExp_pfn zesIntelPowerSetLimitsExpPtr = nullptr;
+
+void getPowerExpFunctionPointers(ze_driver_handle_t driverHandle) {
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerGetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerGetLimitsExpPtr)));
+    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerSetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerSetLimitsExpPtr)));
+}
+
 void getPowerLimits(const zes_pwr_handle_t &handle) {
     uint32_t limitCount = 0;
     VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, nullptr));
@@ -285,6 +302,34 @@ void setPowerLimit(const zes_pwr_handle_t &handle, std::vector<std::string> &buf
         std::cout << "Unsupported Power Level to set limit" << std::endl;
     }
 }
+
+void setPowerLimitExp(const zes_pwr_handle_t &handle, uint32_t limitValue) {
+    // First get current value
+    uint32_t currentLimit = 0;
+    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &currentLimit));
+
+    if (verbose) {
+        std::cout << "Current experimental power limit: " << currentLimit << " mW" << std::endl;
+        std::cout << "Setting experimental power limit to: " << limitValue << " mW" << std::endl;
+    }
+
+    // Set the new value
+    VALIDATECALL(zesIntelPowerSetLimitsExpPtr(handle, limitValue));
+
+    // Verify by reading back
+    uint32_t verifyLimit = 0;
+    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &verifyLimit));
+
+    if (verbose) {
+        std::cout << "Successfully set experimental power limit" << std::endl;
+        std::cout << "Verified experimental power limit: " << verifyLimit << " mW" << std::endl;
+    }
+    if (verifyLimit != limitValue) {
+        std::cout << "Warning: Set value (" << limitValue << " mW) differs from read value ("
+                  << verifyLimit << " mW)" << std::endl;
+    }
+}
+
 #if defined(_WIN32) || defined(_WIN64)
 int geteuid() {
     if (IsUserAnAdmin()) {
@@ -383,6 +428,32 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
                 }
             }
             getPowerLimits(handle);
+
+            // Test experimental power limit APIs
+            if (zesIntelPowerGetLimitsExpPtr && zesIntelPowerSetLimitsExpPtr) {
+                std::cout << std::endl
+                          << " --- Testing Experimental Power Limit APIs --- " << std::endl;
+
+                // Get current experimental power limit
+                uint32_t currentLimit = 0;
+                ze_result_t result = zesIntelPowerGetLimitsExpPtr(handle, &currentLimit);
+
+                if (result == ZE_RESULT_SUCCESS) {
+                    if (verbose) {
+                        std::cout << " --- Experimental Power Limit --- " << std::endl;
+                        std::cout << "powerLimit = " << currentLimit << " mW" << std::endl;
+                    }
+
+                    // If we're root, test set operation
+                    if (iamroot && currentLimit > 0) {
+                        setPowerLimitExp(handle, currentLimit);
+                    } else if (!iamroot) {
+                        std::cout << "Insufficient permissions to test experimental power limit set operation" << std::endl;
+                    }
+                } else {
+                    std::cout << "Experimental Power Get API returned: " << getErrorString(result) << std::endl;
+                }
+            }
         }
     }
     curDeviceIndex++;
@@ -2125,6 +2196,7 @@ int main(int argc, char *argv[]) {
         });
     }
     if (isParamEnabled(argc, argv, "-o", "--power", &optind)) {
+        getPowerExpFunctionPointers(driver);
         deviceIndex = 0;
         optind = optind + 1;
         while (optind < argc) {

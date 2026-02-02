@@ -119,7 +119,6 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenDefaultLimitSysfsNodesNotAvailableWhenGe
 
 TEST_F(SysmanDevicePowerFixtureXe, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
-    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -168,28 +167,6 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallin
         uint32_t count = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
         EXPECT_EQ(0u, count);
-    }
-}
-
-TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallingGetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
-    auto handles = getPowerHandles();
-    EXPECT_EQ(xePowerHandleComponentCount, handles.size());
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        uint32_t limit = 0;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &limit));
-    }
-}
-
-TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallingSetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
-    auto handles = getPowerHandles();
-    EXPECT_EQ(xePowerHandleComponentCount, handles.size());
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        uint32_t limit = 100u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, limit));
     }
 }
 

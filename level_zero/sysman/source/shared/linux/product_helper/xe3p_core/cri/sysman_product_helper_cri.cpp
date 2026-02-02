@@ -115,6 +115,13 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240},
       {"NUM_OF_MEM_CHANNEL", 3660}}}};
 
+static ze_result_t getErrorCode(ze_result_t result) {
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return result;
+}
+
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
     return false;
@@ -137,13 +144,119 @@ void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *
 }
 
 template <>
-bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
-    return false;
+int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defaultLimit) {
+    return static_cast<int32_t>(defaultLimit * minPowerLimitFactor);
 }
 
 template <>
-int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defaultLimit) {
-    return static_cast<int32_t>(defaultLimit * minPowerLimitFactor);
+ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    uint64_t powerLimit = 0;
+
+    const auto &[sustainedPowerLimitFile, sustainedPowerLimitFileExists] = powerLimitFiles.at("sustainedLimitFile");
+    const auto &[burstPowerLimitFile, burstPowerLimitFileExists] = powerLimitFiles.at("burstLimitFile");
+
+    // Return PL1 if enabled, otherwise return PL2
+    if (sustainedPowerLimitFileExists) {
+        result = pSysfsAccess->read(sustainedPowerLimitFile, powerLimit);
+        if (ZE_RESULT_SUCCESS != result) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            return getErrorCode(result);
+        }
+    } else if (burstPowerLimitFileExists) {
+        result = pSysfsAccess->read(burstPowerLimitFile, powerLimit);
+        if (ZE_RESULT_SUCCESS != result) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+            return getErrorCode(result);
+        }
+    } else {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No power limit files exist for given power domain , returning unsupported feature\n", __FUNCTION__);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, SysfsValueUnit::micro, powerLimit, powerLimit);
+    *pLimit = static_cast<uint32_t>(powerLimit);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    uint64_t val = static_cast<uint64_t>(limit);
+    uint64_t convertedVal = 0;
+    bool anyLimitSet = false;
+
+    const auto &[sustainedPowerLimitFile, sustainedPowerLimitFileExists] = powerLimitFiles.at("sustainedLimitFile");
+    const auto &[burstPowerLimitFile, burstPowerLimitFileExists] = powerLimitFiles.at("burstLimitFile");
+    const auto &[criticalPowerLimitFile, criticalPowerLimitFileExists] = powerLimitFiles.at("criticalLimitFile");
+
+    if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+        // Card domain: Apply to PL1 and PL2 if enabled, Apply x2 to PsysCRIT if enabled
+        if (sustainedPowerLimitFileExists) {
+            convertedVal = val;
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardSustainedPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
+            result = pSysfsAccess->write(sustainedPowerLimitFile, convertedVal);
+            if (ZE_RESULT_SUCCESS != result) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+            anyLimitSet = true;
+        }
+
+        if (burstPowerLimitFileExists) {
+            convertedVal = val;
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardBurstPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
+            result = pSysfsAccess->write(burstPowerLimitFile, convertedVal);
+            if (ZE_RESULT_SUCCESS != result) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+            anyLimitSet = true;
+        }
+
+        if (criticalPowerLimitFileExists) {
+            convertedVal = val * criticalLimitMultiplyFactor;
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardCriticalPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
+            result = pSysfsAccess->write(criticalPowerLimitFile, convertedVal);
+            if (ZE_RESULT_SUCCESS != result) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, criticalPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+            anyLimitSet = true;
+        }
+    } else if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        // Package domain: Apply to PL1 and PL2 if enabled
+        if (sustainedPowerLimitFileExists) {
+            convertedVal = val;
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
+            result = pSysfsAccess->write(sustainedPowerLimitFile, convertedVal);
+            if (ZE_RESULT_SUCCESS != result) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+            anyLimitSet = true;
+        }
+
+        if (burstPowerLimitFileExists) {
+            convertedVal = val;
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageBurstPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
+            result = pSysfsAccess->write(burstPowerLimitFile, convertedVal);
+            if (ZE_RESULT_SUCCESS != result) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+            anyLimitSet = true;
+        }
+    } else {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power Limits for given domain do not exist , returning error:0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    if (!anyLimitSet) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

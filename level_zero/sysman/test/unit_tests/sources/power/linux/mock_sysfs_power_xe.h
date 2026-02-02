@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
     ze_result_t mockScanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockRead64Result = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteIntResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
     std::vector<ze_result_t> mockReadValueUnsignedLongResult{};
@@ -118,7 +119,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         } else if ((file.compare(xeHwmonDir + "/" + xeCardCriticalLimitNode) == 0 || file.compare(xeHwmonDir + "/" + xePackageCriticalLimitNode) == 0) && criticalReadResult == ZE_RESULT_SUCCESS) {
             val = criticalPowerLimitVal;
         } else {
-            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+            result = (mockRead64Result != ZE_RESULT_SUCCESS) ? mockRead64Result : ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
         return result;
@@ -161,9 +162,9 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             }
         } else if ((file.compare(xeHwmonDir + "/" + xeCardCriticalLimitNode) == 0 || file.compare(xeHwmonDir + "/" + xePackageCriticalLimitNode) == 0) && criticalWriteResult == ZE_RESULT_SUCCESS) {
             if (val < xeMockMinPowerLimitVal) {
-                burstPowerLimitVal = xeMockMinPowerLimitVal;
+                criticalPowerLimitVal = xeMockMinPowerLimitVal;
             } else if (val > xeMockMaxPowerLimitVal) {
-                burstPowerLimitVal = xeMockMaxPowerLimitVal;
+                criticalPowerLimitVal = xeMockMaxPowerLimitVal;
             } else {
                 criticalPowerLimitVal = val;
             }

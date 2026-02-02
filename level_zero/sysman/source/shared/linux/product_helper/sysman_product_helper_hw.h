@@ -57,10 +57,11 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     int32_t getPowerMinLimit(const int32_t &defaultLimit) override;
     uint64_t setPowerLimitValue(int32_t value) override;
     zes_limit_unit_t getPowerLimitUnit() override;
-    bool isPowerSetLimitSupported() override;
     std::string getPackageCriticalPowerLimitFile() override;
     SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() override;
     ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subDeviceId) override;
+    ze_result_t getLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) override;
+    ze_result_t setLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) override;
 
     // standby
     bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;

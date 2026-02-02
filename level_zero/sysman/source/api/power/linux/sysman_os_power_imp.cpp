@@ -345,11 +345,30 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
 }
 
 ze_result_t LinuxPowerImp::getLimitsExp(uint32_t *pLimit) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (isSubdevice) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getLimitsExp() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, std::pair<std::string, bool>> powerLimitFiles = {
+        {"sustainedLimitFile", {sustainedPowerLimitFile, sustainedPowerLimitFileExists}},
+        {"burstLimitFile", {burstPowerLimitFile, burstPowerLimitFileExists}}};
+
+    return pSysmanProductHelper->getLimitsExp(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, pLimit);
 }
 
 ze_result_t LinuxPowerImp::setLimitsExp(const uint32_t limit) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (isSubdevice) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setLimitsExp() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, std::pair<std::string, bool>> powerLimitFiles = {
+        {"sustainedLimitFile", {sustainedPowerLimitFile, sustainedPowerLimitFileExists}},
+        {"burstLimitFile", {burstPowerLimitFile, burstPowerLimitFileExists}},
+        {"criticalLimitFile", {criticalPowerLimitFile, criticalPowerLimitFileExists}}};
+
+    return pSysmanProductHelper->setLimitsExp(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, powerDomain, limit);
 }
 
 bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
@@ -375,7 +394,7 @@ void LinuxPowerImp::init() {
         }
         if (isIntelGraphicsHwmonDir(name)) {
             intelGraphicsHwmonDir = hwmonDir + "/" + tempHwmonDirEntry;
-            canControl = (!isSubdevice) && (pSysmanProductHelper->isPowerSetLimitSupported());
+            canControl = (!isSubdevice);
             break;
         }
     }

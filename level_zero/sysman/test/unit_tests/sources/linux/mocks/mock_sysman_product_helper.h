@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,6 @@ struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_U
     MockSysmanProductHelper() = default;
     std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override { return &mockGuidToKeyOffsetMap; }
     ADDMETHOD_NOBASE(isFrequencySetRangeSupported, bool, false, ());
-    ADDMETHOD_NOBASE(isPowerSetLimitSupported, bool, false, ());
     ADDMETHOD_NOBASE(isUpstreamPortConnected, bool, true, ());
 
     ze_result_t mockGetPciStatsResult = ZE_RESULT_SUCCESS;

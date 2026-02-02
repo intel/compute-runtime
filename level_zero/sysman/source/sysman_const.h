@@ -24,6 +24,7 @@ inline constexpr double milliVoltsFactor = 1000.0;
 inline constexpr uint32_t maxRasErrorCategoryCount = 7;
 inline constexpr uint32_t maxRasErrorCategoryExpCount = 10;
 
+inline constexpr uint32_t criticalLimitMultiplyFactor = 2;
 inline constexpr double maxPerformanceFactor = 100;
 inline constexpr double halfOfMaxPerformanceFactor = 50;
 inline constexpr double minPerformanceFactor = 0;
