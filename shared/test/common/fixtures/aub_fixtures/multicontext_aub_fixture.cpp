@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,10 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
 
+extern std::optional<uint32_t> blitterMaskOverride;
+
 namespace NEO {
+
 void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -28,6 +31,9 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     HardwareInfo localHwInfo = *defaultHwInfo;
 
+    if (blitterMaskOverride.has_value()) {
+        debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
+    }
     if (debugManager.flags.BlitterEnableMaskOverride.get() > 0) {
         localHwInfo.featureTable.ftrBcsInfo = debugManager.flags.BlitterEnableMaskOverride.get();
     }

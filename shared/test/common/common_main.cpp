@@ -95,7 +95,7 @@ void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
 
 bool generateRandomInput = false;
-std::optional<uint32_t> blitterMaskOverride;
+extern std::optional<uint32_t> blitterMaskOverride;
 
 std::string getRunPath(char *argv0) {
     std::string res(argv0);

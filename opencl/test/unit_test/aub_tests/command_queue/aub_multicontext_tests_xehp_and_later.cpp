@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,7 +212,7 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
 
 // 4 Tiles
 using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
@@ -441,6 +441,9 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenPreWalkerSyncWhenStaticWalke
     DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
+    if constexpr (FamilyType::template isHeaplessMode<DefaultWalkerType>()) {
+        walkerCmd.setMaximumNumberOfThreads(64);
+    }
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
@@ -487,6 +490,9 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAre
     DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
+    if constexpr (FamilyType::template isHeaplessMode<DefaultWalkerType>()) {
+        walkerCmd.setMaximumNumberOfThreads(64);
+    }
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
@@ -541,7 +547,7 @@ HWTEST2_F(TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenSubmitting
 
 // 1 Tile
 using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
@@ -588,12 +594,12 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
 
 // 1 Tile
 using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(SingleTileAllContextsTest, HEAVY_givenSingleTileAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(SingleTileAllContextsTest, HEAVY_givenSingleTileAndAllContextsWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
 
@@ -604,12 +610,12 @@ HWTEST2_F(TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenWritingIma
 }
 
 using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(TwoTilesAllContextsTest, GENERATEONLY_givenTwoTilesAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(TwoTilesAllContextsTest, GENERATEONLY_givenTwoTilesAndAllContextsWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
 
@@ -620,11 +626,11 @@ HWTEST2_F(FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenWritingI
 }
 
 using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(FourTilesDualContextTest, GENERATEONLY_givenFourTilesAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(FourTilesDualContextTest, GENERATEONLY_givenFourTilesAndDualContextWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenWritingImageThenDataIsValid, IsPVC) {
     runAubWriteImageTest<FamilyType>();
 }
