@@ -166,6 +166,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
                                                   bool patchNewScratchController,
+                                                  bool patchPreambleEnabled,
                                                   void **patchPreambleBuffer) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
@@ -190,7 +191,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
                 NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, false);
 
-                if (this->patchingPreamble) {
+                if (patchPreambleEnabled) {
                     NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, commandToPatch.pCommand, sizeof(CFE_STATE));
                 } else {
                     *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
@@ -247,7 +248,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             }
 
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
-            if (this->patchingPreamble) {
+            if (patchPreambleEnabled) {
                 uint64_t gpuAddressToPatch = commandToPatch.gpuAddress + commandToPatch.offset;
                 NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, commandToPatch.patchSize);
             } else {
@@ -261,7 +262,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 return;
             }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
-            if (this->patchingPreamble) {
+            if (patchPreambleEnabled) {
                 uint64_t gpuAddressToPatch = commandToPatch.gpuAddress + commandToPatch.offset;
                 NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, commandToPatch.patchSize);
             } else {
@@ -271,7 +272,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             commandToPatch.scratchAddressAfterPatch = scratchAddress;
         } else if constexpr (std::is_same_v<CommandType, PatchNoopSpace>) {
             if (commandToPatch.pDestination != nullptr) {
-                if (this->patchingPreamble) {
+                if (patchPreambleEnabled) {
                     NEO::EncodeDataMemory<GfxFamily>::programNoop(*patchPreambleBuffer, commandToPatch.gpuAddress, commandToPatch.patchSize);
                 } else {
                     memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
@@ -286,7 +287,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             csr->ensureHostFunctionWorkerStarted(allocator);
             auto &hostFunctionStreamer = csr->getHostFunctionStreamer();
 
-            if (this->patchingPreamble) {
+            if (patchPreambleEnabled) {
 
                 size_t size = 0u;
                 void *cmdBuffer = nullptr;
@@ -322,7 +323,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionWait>) {
             auto partitionId = commandToPatch.partitionId;
 
-            if (this->patchingPreamble) {
+            if (patchPreambleEnabled) {
                 MI_SEMAPHORE_WAIT miSemaphore{};
                 NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
                                                                                          &miSemaphore,

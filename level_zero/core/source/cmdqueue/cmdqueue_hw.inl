@@ -126,6 +126,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ctx.lockScratchController = lockScratchController;
     ctx.lockCSR = &lockCSR;
     ctx.regularHeapful = !this->isCopyOnlyCommandQueue && !this->heaplessStateInitEnabled;
+    ctx.patchPreambleEnabled |= this->patchingPreamble;
 
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
@@ -834,7 +835,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         uint32_t feCmdCount = commandList->getFrontEndPatchListCount();
         if (feCmdCount > 0) {
             const size_t feCmdSize = NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
@@ -851,7 +852,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     size_t waitSize = 0;
-    if (this->patchingPreamble && this->saveWaitForPreamble) {
+    if (ctx.patchPreambleEnabled && this->saveWaitForPreamble) {
         uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
         ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
         if (ctx.patchPreambleWaitSyncNeeded) {
@@ -869,7 +870,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     size_t encodeSize = 0;
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
 
         bool dcFlushRequired = csr->getDcFlushSupport();
         bool usePipeControlForHostFunctionIdProgramming = NEO::HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(dcFlushRequired);
@@ -893,7 +894,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreambleData(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t encodeSize = 0;
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
         size_t singleBbStartEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(bbStartSize);
         encodeSize = singleBbStartEncodeSize * numCommandLists;
@@ -922,7 +923,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
         ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
     }
@@ -930,7 +931,7 @@ inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(Comma
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream) {
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         ctx.currentPatchPreambleBuffer = commandStream.getSpace(ctx.bufferSpaceForPatchPreamble);
         ctx.basePatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
 
@@ -941,7 +942,7 @@ void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecuti
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecutionContext &ctx) {
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         NEO::PipeControlArgs args;
 
         NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(ctx.currentPatchPreambleBuffer, args);
@@ -961,7 +962,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList) {
     auto commandListImp = static_cast<CommandListImp *>(commandList);
-    if (this->patchingPreamble && commandListImp->isInOrderExecutionEnabled()) {
+    if (ctx.patchPreambleEnabled && commandListImp->isInOrderExecutionEnabled()) {
         auto deviceNodeGpuAddress = commandListImp->getInOrderExecDeviceGpuAddress();
         UNRECOVERABLE_IF(deviceNodeGpuAddress == 0u);
         NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, deviceNodeGpuAddress, commandListImp->getInOrderExecDeviceRequiredSize());
@@ -979,7 +980,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    if (this->patchingPreamble) {
+    if (ctx.patchPreambleEnabled) {
         if (ctx.patchPreambleWaitSyncNeeded) {
             constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
             constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
@@ -1352,7 +1353,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartPrimaryBatc
         if (ctx.currentPatchForChainedBbStart) {
             // dynamic preamble, 2nd or later command list
             // jump from previous command list to the position before dynamic preamble
-            if (this->patchingPreamble) {
+            if (ctx.patchPreambleEnabled) {
                 NEO::EncodeDataMemory<GfxFamily>::programBbStart(ctx.currentPatchPreambleBuffer,
                                                                  ctx.currentGpuAddressForChainedBbStart,
                                                                  ctx.childGpuAddressPositionBeforeDynamicPreamble,
@@ -1379,7 +1380,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartPrimaryBatc
             this->startingCmdBuffer = &this->firstCmdListStream;
         } else {
             // chain between command lists when no dynamic preamble required between 2nd and next command list
-            if (this->patchingPreamble) {
+            if (ctx.patchPreambleEnabled) {
                 NEO::EncodeDataMemory<GfxFamily>::programBbStart(ctx.currentPatchPreambleBuffer,
                                                                  ctx.currentGpuAddressForChainedBbStart,
                                                                  cmdListFirstCmdBuffer->getGpuAddress(),
@@ -1447,7 +1448,7 @@ void CommandQueueHw<gfxCoreFamily>::programLastCommandListReturnBbStart(
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     if (this->dispatchCmdListBatchBufferAsPrimary) {
         auto finalReturnPosition = commandStream.getCurrentGpuAddressPosition();
-        if (this->patchingPreamble) {
+        if (ctx.patchPreambleEnabled) {
             NEO::EncodeDataMemory<GfxFamily>::programBbStart(ctx.currentPatchPreambleBuffer,
                                                              ctx.currentGpuAddressForChainedBbStart,
                                                              finalReturnPosition,
@@ -1988,7 +1989,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
         }
     }
 
-    patchCommands(commandList, scratchAddress, patchNewScratchController, &ctx.currentPatchPreambleBuffer);
+    patchCommands(commandList, scratchAddress, patchNewScratchController, ctx.patchPreambleEnabled, &ctx.currentPatchPreambleBuffer);
 
     if (patchNewScratchController) {
         commandList.setCommandListUsedScratchController(ctx.scratchSpaceController);
@@ -1998,11 +1999,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandListImp *commandList, CommandListExecutionContext &ctx) {
     if (commandList->inOrderCmdsPatchingEnabled()) {
-        UNRECOVERABLE_IF(this->patchingPreamble);
+        UNRECOVERABLE_IF(ctx.patchPreambleEnabled);
         commandList->addRegularCmdListSubmissionCounter();
         commandList->patchInOrderCmds();
     } else {
-        if (this->patchingPreamble) {
+        if (ctx.patchPreambleEnabled) {
             ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecDeviceRequiredSize();
             ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecHostRequiredSize();
         } else {

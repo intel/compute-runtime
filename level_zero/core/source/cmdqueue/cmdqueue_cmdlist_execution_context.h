@@ -87,6 +87,7 @@ struct CommandListExecutionContext {
     bool lockScratchController = false;
     bool cmdListScratchAddressPatchingEnabled = false;
     bool containsParentImmediateStream = false;
+    bool patchPreambleEnabled = false;
     bool patchPreambleWaitSyncNeeded = false;
     bool regularHeapful = false;
     bool stateCacheFlushRequired = false;

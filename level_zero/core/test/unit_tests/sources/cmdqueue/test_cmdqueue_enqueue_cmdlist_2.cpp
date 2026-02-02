@@ -1322,6 +1322,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
 
+    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
     EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
     mockCmdQHw->saveWaitForPreamble = false;
@@ -1391,6 +1392,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
+    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
@@ -1502,6 +1504,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
+    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));

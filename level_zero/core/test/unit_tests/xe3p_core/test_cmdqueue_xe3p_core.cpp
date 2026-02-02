@@ -61,7 +61,7 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
 
     commandList->commandsToPatch.push_back(patch);
 
-    commandQueue->patchCommands(*commandList, 0, true, nullptr);
+    commandQueue->patchCommands(*commandList, 0, true, false, nullptr);
 
     EXPECT_EQ(expectedScratchPtr, implicitArgs.v1.scratchPtr);
 
@@ -72,7 +72,7 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
     ASSERT_NE(nullptr, patchToModify);
     patchToModify->baseAddress = notExpectedScratchPtr;
 
-    commandQueue->patchCommands(*commandList, 0, false, nullptr);
+    commandQueue->patchCommands(*commandList, 0, false, false, nullptr);
 
     EXPECT_NE(notExpectedScratchPtr, implicitArgs.v1.scratchPtr);
     EXPECT_EQ(expectedScratchPtr, implicitArgs.v1.scratchPtr);

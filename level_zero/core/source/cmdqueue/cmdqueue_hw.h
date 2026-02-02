@@ -49,7 +49,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController,
-                       void **patchPreambleBuffer);
+                       bool patchPreambleEnabled, void **patchPreambleBuffer);
 
   protected:
     struct EstimateRegularHeapfulPerCmdlistData {
