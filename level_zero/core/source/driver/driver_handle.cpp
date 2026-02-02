@@ -355,13 +355,6 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
     }
     createContext(&DefaultDescriptors::contextDesc, static_cast<uint32_t>(this->devicesToExpose.size()), this->devicesToExpose.data(), &defaultContext);
     this->stagingBufferManager = std::make_unique<NEO::StagingBufferManager>(svmAllocsManager, this->rootDeviceIndices, this->deviceBitfields, false);
-    if (NEO::debugManager.flags.EnableUsmPoolLazyInit.get() != -1) {
-        this->lazyInitUsmPools = 1 == NEO::debugManager.flags.EnableUsmPoolLazyInit.get();
-    }
-    if (!this->lazyInitUsmPools) {
-        this->initHostUsmAllocPoolOnce();
-        this->initDeviceUsmAllocPoolOnce();
-    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -481,6 +474,16 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
             }
             device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
         }
+    }
+}
+
+void DriverHandle::initUsmPooling() {
+    if (NEO::debugManager.flags.EnableUsmPoolLazyInit.get() != -1) {
+        this->lazyInitUsmPools = 1 == NEO::debugManager.flags.EnableUsmPoolLazyInit.get();
+    }
+    if (!this->lazyInitUsmPools) {
+        this->initHostUsmAllocPoolOnce();
+        this->initDeviceUsmAllocPoolOnce();
     }
 }
 

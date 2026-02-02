@@ -63,6 +63,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     void initDriverImp() {
         driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
+        driverHandle->initUsmPooling();
         std::copy(driverHandle->devices.begin(), driverHandle->devices.end(), l0Devices);
 
         ze_context_handle_t hContext;
