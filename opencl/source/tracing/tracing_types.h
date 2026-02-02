@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,7 +186,7 @@ enum ClFunctionId {
     CL_FUNCTION_clEnqueueMemAdviseINTEL = 136,
     CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR = 137,
     CL_FUNCTION_clCreateAcceleratorINTEL = 138,
-    CL_FUNCTION_clRetainAcceleratorINTEL = 149,
+    CL_FUNCTION_clRetainAcceleratorINTEL = 139,
     CL_FUNCTION_clGetAcceleratorInfoINTEL = 140,
     CL_FUNCTION_clReleaseAcceleratorINTEL = 141,
     CL_FUNCTION_clCreateProgramWithILKHR = 142,
