@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,9 +52,9 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
         hardwareContextController->writeMemory(allocationParams);
     }
 
-    virtual void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;
+    virtual void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) const = 0;
     virtual bool isAubWritable(GraphicsAllocation &graphicsAllocation) const = 0;
-    virtual void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;
+    virtual void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) const = 0;
     virtual bool isTbxWritable(GraphicsAllocation &graphicsAllocation) const = 0;
 
     virtual void dumpAllocation(GraphicsAllocation &gfxAllocation) = 0;

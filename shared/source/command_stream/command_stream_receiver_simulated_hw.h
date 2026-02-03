@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         }
     }
 
-    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
+    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) const override {
         auto bank = getMemoryBank(&graphicsAllocation);
         if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
             bank = GraphicsAllocation::defaultBank;
@@ -130,7 +130,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return graphicsAllocation.isAubWritable(bank);
     }
 
-    void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
+    void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) const override {
         auto bank = getMemoryBank(&graphicsAllocation);
         if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
             bank = GraphicsAllocation::defaultBank;
