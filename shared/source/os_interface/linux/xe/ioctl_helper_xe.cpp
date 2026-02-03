@@ -853,8 +853,7 @@ bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t siz
         uint16_t regionInstance = static_cast<uint16_t>(param & 0xFFFF);
         vmAdvise.preferred_mem_loc.devmem_fd = devmemFd;
         vmAdvise.preferred_mem_loc.migration_policy = migrationPolicy;
-        drm_xe_madvise *ptr = &vmAdvise;
-        setRegionInstance(reinterpret_cast<void *>(ptr), regionInstance);
+        vmAdvise.preferred_mem_loc.region_instance = regionInstance;
     } else if (vmAdvise.type == this->getAtomicAdvise(false)) {
         // Set atomic access param.
         uint32_t val = static_cast<uint32_t>(param);
@@ -1982,7 +1981,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
     if (osContext.isPartOfContextGroup()) {
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-        ext[extIndexInOut].property = getExecQueueSetPropertyMultiGroupValue();
+        ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP;
         if (extIndexInOut > 0) {
             ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
         }
@@ -2008,11 +2007,15 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
         ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-        ext[extIndexInOut].property = getExecQueueSetPropertyMultiQueuePriorityValue();
+        ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
         ext[extIndexInOut].value = getPriorityValue(osContext);
         XELOG(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
         extIndexInOut++;
     }
+}
+
+uint64_t IoctlHelperXe::getPrimaryContextProperties() const {
+    return DRM_XE_MULTI_GROUP_CREATE;
 }
 
 uint32_t IoctlHelperXe::getPriorityValue(const OsContextLinux &osContext) {
