@@ -349,13 +349,13 @@ TEST_F(AllocUsmDeviceDefaultSinglePoolMemoryTest, givenDeviceWhenCallingInitDevi
 }
 
 using AllocUsmMultiDeviceDefaultSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true, false>;
-TEST_F(AllocUsmMultiDeviceDefaultSinglePoolMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolNotInitialized) {
+TEST_F(AllocUsmMultiDeviceDefaultSinglePoolMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolIsInitialized) {
     mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
     initDriverImp();
     {
-        EXPECT_EQ(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
-        EXPECT_EQ(nullptr, l0Devices[1]->getNEODevice()->getUsmMemAllocPool());
+        EXPECT_NE(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
+        EXPECT_NE(nullptr, l0Devices[1]->getNEODevice()->getUsmMemAllocPool());
     }
     context->destroy();
 }
