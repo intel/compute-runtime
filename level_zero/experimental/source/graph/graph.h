@@ -258,6 +258,10 @@ struct Graph : _ze_graph_handle_t {
         return *orderedCommands;
     }
 
+    bool isMultiEngineGraph() const {
+        return multiEngineGraph;
+    }
+
   protected:
     void unregisterSignallingEvents();
 
@@ -278,6 +282,7 @@ struct Graph : _ze_graph_handle_t {
 
     bool preallocated = false;
     bool wasCapturingStopped = false;
+    bool multiEngineGraph = false;
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 };
@@ -326,9 +331,7 @@ void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &conta
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
-    GraphInstatiateSettings(void *pNext) {
-        UNRECOVERABLE_IF(nullptr != pNext);
-    }
+    GraphInstatiateSettings(void *pNext, bool multiEngineGraph);
 
     enum ForkPolicy {
         ForkPolicyMonolythicLevels, // build and submit monolythic commandlists for each level

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,18 +42,24 @@ class MockGraphDotExporter : public GraphDotExporter {
     using GraphDotExporter::writeUnjoinedForkEdges;
 };
 
-class GraphDotExporterTest : public ::testing::Test {
-  protected:
+struct GraphDotExporterFixture : public DeviceFixture {
+    void setUp() {
+        DeviceFixture::setUp();
+    }
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
+
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphDotExporter exporter{GraphExportStyle::detailed};
     const std::string testFilePath = "test_graph_export.gv";
 };
 
-class GraphDotExporterFileTest : public GraphDotExporterTest {
-  protected:
-    void SetUp() override {
-        GraphDotExporterTest::SetUp();
+struct GraphDotExporterFileFixture : public GraphDotExporterFixture {
+  public:
+    void setUp() {
+        GraphDotExporterFixture::setUp();
 
         fopenBackup = std::make_unique<VariableBackup<decltype(NEO::IoFunctions::fopenPtr)>>(&NEO::IoFunctions::fopenPtr, NEO::IoFunctions::mockFopen);
         fwriteBackup = std::make_unique<VariableBackup<decltype(NEO::IoFunctions::fwritePtr)>>(&NEO::IoFunctions::fwritePtr, NEO::IoFunctions::mockFwrite);
@@ -64,6 +70,10 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
         mockFopenCalledBefore = NEO::IoFunctions::mockFopenCalled;
         mockFwriteCalledBefore = NEO::IoFunctions::mockFwriteCalled;
         mockFcloseCalledBefore = NEO::IoFunctions::mockFcloseCalled;
+    }
+
+    void tearDown() {
+        GraphDotExporterFixture::tearDown();
     }
 
     void setupSuccessfulWrite(Graph &testGraph, MockGraphDotExporter &usedExporter) {
@@ -112,6 +122,23 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
     uint32_t mockFwriteCalledBefore;
     uint32_t mockFcloseCalledBefore;
 };
+
+struct GraphDotExporterSimpleStyleFixture : public DeviceFixture {
+    void setUp() {
+        DeviceFixture::setUp();
+    }
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
+
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockGraphDotExporter exporter{GraphExportStyle::simple};
+};
+
+using GraphDotExporterTest = Test<GraphDotExporterFixture>;
+using GraphDotExporterFileTest = Test<GraphDotExporterFileFixture>;
+using GraphDotExporterSimpleStyleTest = Test<GraphDotExporterSimpleStyleFixture>;
 
 #define DEFINE_APIARGS_FIELDS(api, ...)                                                                             \
     template <>                                                                                                     \

@@ -328,6 +328,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionThreadPoolSize, -1, "-1: default - o
 DECLARE_DEBUG_VARIABLE(int32_t, UseMemorySynchronizationForHostFunction, -1, "-1: default, 0: disable, 1: enable if applicable on platform, When enabled program host function id with a DC flush using pipeControl")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceEnableRegularCmdListPatchPreamble, -1, "-1: default, 0: disable patch preamble on regular cmdlist, 1: enable regular cmdlist patch preamble. If enabled, use patch preamble on api command lists")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceGraphForkPolicy, -1, "-1: default, >=0: Use GraphInstatiateSettings::ForkPolicy policy")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, -1, "-1: default, 0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")
 DECLARE_DEBUG_VARIABLE(int32_t, SerializeWalkerPostSyncOps, -1, "-1 : default. 0: disabled. 1: Enable serialization for all PostSync operations in ComputeWalker")
 DECLARE_DEBUG_VARIABLE(int32_t, SingleTileExecutionForCooperativeKernels, -1, "-1 : default. 0: disabled. 1: enable single tile execution for cooperative kernels")

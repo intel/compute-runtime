@@ -21,6 +21,16 @@
 
 namespace L0 {
 
+GraphInstatiateSettings::GraphInstatiateSettings(void *pNext, bool multiEngineGraph) {
+    UNRECOVERABLE_IF(nullptr != pNext);
+
+    this->forkPolicy = multiEngineGraph ? ForkPolicy::ForkPolicyMonolythicLevels : ForkPolicy::ForkPolicySplitLevels;
+    int32_t overrideForceGraphForkPolicy = NEO::debugManager.flags.ForceGraphForkPolicy.get();
+    if (overrideForceGraphForkPolicy != -1) {
+        this->forkPolicy = static_cast<ForkPolicy>(overrideForceGraphForkPolicy);
+    }
+}
+
 Graph::~Graph() {
     this->unregisterSignallingEvents();
     for (auto *sg : subGraphs) {
@@ -41,6 +51,7 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     if (isSubGraph) {
         this->executionTarget = &captureSrc;
     }
+    this->multiEngineGraph = captureSrc.getDevice()->getGfxCoreHelper().getContextGroupContextsCount() > 1;
 }
 
 void Graph::stopCapturing() {

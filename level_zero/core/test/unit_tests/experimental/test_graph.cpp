@@ -51,6 +51,9 @@ using GraphTestInstantiationTest = Test<GraphFixture>;
 using GraphInstantiation = Test<GraphFixture>;
 using GraphExecution = Test<GraphFixture>;
 using GraphTestCaptureRestrictions = Test<GraphFixture>;
+using GraphTestDebugApis = Test<GraphFixture>;
+using GraphInstantiationValidation = Test<GraphFixture>;
+using GraphTestApiCaptureBeginEnd = Test<GraphFixture>;
 
 TEST(GraphTestApiCreate, GivenNonNullPNextThenGraphCreateReturnsError) {
     GraphsCleanupGuard graphCleanup;
@@ -92,7 +95,7 @@ TEST(GraphTestApiCreate, GivenInvalidGraphThenGraphDestroyReturnsError) {
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenForkingToRegularOrSynchronousCmdlistThenFail) {
+TEST_F(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenForkingToRegularOrSynchronousCmdlistThenFail) {
     GraphsCleanupGuard graphCleanup;
 
     Mock<CommandList> parentCmdList;
@@ -117,11 +120,12 @@ TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenForkingToRegularOrSynchr
     EXPECT_EQ(ret2, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsError) {
+TEST_F(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
@@ -136,18 +140,20 @@ TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsE
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenNullDestinyGraphThenBeginCaptureReturnsError) {
+TEST_F(GraphTestApiCaptureBeginEnd, GivenNullDestinyGraphThenBeginCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     auto err = zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsSuccessAndOutputGraphIsTheSameAsInput) {
+TEST_F(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsSuccessAndOutputGraphIsTheSameAsInput) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
     cmdlist.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     auto cmdListHandle = cmdlist.toHandle();
     L0::Graph graph(&ctx, true);
@@ -163,11 +169,12 @@ TEST(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsS
     EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER), graph.getCaptureTargetDesc().desc.flags);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphEndCaptureReturnsError) {
+TEST_F(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphEndCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
@@ -182,11 +189,12 @@ TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphEndCaptureReturnsErr
     EXPECT_EQ(nullptr, retGraph);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureReturnsNewGraph) {
+TEST_F(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureReturnsNewGraph) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
@@ -199,9 +207,10 @@ TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureReturn
     zeGraphDestroyExp(retGraph);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureReturnsError) {
+TEST_F(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     ze_graph_handle_t retGraph = nullptr;
     auto err = zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, nullptr);
@@ -209,10 +218,11 @@ TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureRet
     EXPECT_EQ(nullptr, retGraph);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureRequiresOutputGraphPlaceholder) {
+TEST_F(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureRequiresOutputGraphPlaceholder) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
@@ -221,10 +231,11 @@ TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureRequir
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, WhenDestinyGraphProvidedThenEndCaptureDoesNotRequireOutputGraphPlaceholder) {
+TEST_F(GraphTestApiCaptureBeginEnd, WhenDestinyGraphProvidedThenEndCaptureDoesNotRequireOutputGraphPlaceholder) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     L0::Graph graph(&ctx, true);
     auto graphHandle = graph.toHandle();
@@ -235,10 +246,11 @@ TEST(GraphTestApiCaptureBeginEnd, WhenDestinyGraphProvidedThenEndCaptureDoesNotR
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
-TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsAlreadyRecordingThenBeginCaptureReturnsError) {
+TEST_F(GraphTestApiCaptureBeginEnd, WhenCommandListIsAlreadyRecordingThenBeginCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
 
     L0::Graph graph1(&ctx, true);
     auto graphHandle1 = graph1.toHandle();
@@ -372,12 +384,12 @@ TEST_F(GraphTestApiInstantiate, GivenUnclosedGraphThenInstantiateFails) {
     EXPECT_EQ(nullptr, execGraphHandle);
 }
 
-TEST(GraphTestDebugApis, GivenNullGraphWhenIsGraphCaptureEnabledIsCalledThenReturnError) {
+TEST_F(GraphTestDebugApis, GivenNullGraphWhenIsGraphCaptureEnabledIsCalledThenReturnError) {
     GraphsCleanupGuard graphCleanup;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListIsGraphCaptureEnabledExp(nullptr));
 }
 
-TEST(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnFalse) {
+TEST_F(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnFalse) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
@@ -385,10 +397,11 @@ TEST(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCapture
     EXPECT_EQ(ZE_RESULT_QUERY_FALSE, zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
 }
 
-TEST(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnTrue) {
+TEST_F(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnTrue) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
 
     Graph srcGraph(&ctx, true);
@@ -405,17 +418,19 @@ TEST(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEna
     EXPECT_EQ(ZE_RESULT_QUERY_FALSE, zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
 }
 
-TEST(GraphTestDebugApis, GivenNullGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+TEST_F(GraphTestDebugApis, GivenNullGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeGraphIsEmptyExp(nullptr));
 }
 
-TEST(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+TEST_F(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
 
@@ -435,7 +450,7 @@ TEST(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsRet
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, zeGraphIsEmptyExp(srcGraphHandle));
 }
 
-TEST(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
+TEST_F(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Graph srcGraph(&ctx, true);
@@ -444,11 +459,12 @@ TEST(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
     EXPECT_EQ(ZE_RESULT_QUERY_TRUE, zeGraphIsEmptyExp(srcGraphHandle));
 }
 
-TEST(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+TEST_F(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
     auto cmdListHandle = cmdlist.toHandle();
+    cmdlist.device = this->device;
 
     Graph srcGraph(&ctx, true);
     auto srcGraphHandle = srcGraph.toHandle();
@@ -675,9 +691,11 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     Mock<CommandList> subCmdlist;
     subCmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdlist.device = this->device;
     Mock<Event> signalEvents[3];
     ze_event_handle_t signalEventsHandles[3]{signalEvents[0].toHandle(), signalEvents[1].toHandle(), signalEvents[2].toHandle()};
     Mock<Event> waitEvents[3];
@@ -685,8 +703,8 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     uint64_t memA[16] = {};
     uint64_t memB[16] = {};
 
-    GraphInstatiateSettings instantiateAsMonolithic;
-    instantiateAsMonolithic.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+    GraphInstatiateSettings instantiateAsMonolithic(nullptr, true);
+    ASSERT_EQ(GraphInstatiateSettings::ForkPolicyMonolythicLevels, instantiateAsMonolithic.forkPolicy);
     {
         ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
         auto *graphCmdList = ctx.cmdListsToReturn[0];
@@ -776,9 +794,11 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
     MockGraphContextReturningSpecificCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
     subCmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdlist.device = this->device;
     auto subCmdListHandle = subCmdlist.toHandle();
     Mock<Event> forkEvent;
     Mock<Event> joinEvent;
@@ -826,8 +846,10 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
 
     MockGraphContextReturningNewCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
     Mock<Event> forkEvent;
     Mock<Event> joinEvent;
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
@@ -858,8 +880,8 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
     }
 
     {
-        GraphInstatiateSettings instantiateAsInterleaved;
-        instantiateAsInterleaved.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
+        GraphInstatiateSettings instantiateAsInterleaved(nullptr, false);
+        ASSERT_EQ(GraphInstatiateSettings::ForkPolicySplitLevels, instantiateAsInterleaved.forkPolicy);
 
         MockExecutableGraph execMultiGraph;
         execMultiGraph.instantiateFrom(srcGraph, instantiateAsInterleaved);
@@ -867,7 +889,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
     }
 }
 
-TEST(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForInstantiation) {
+TEST_F(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForInstantiation) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Graph srcGraph(&ctx, true);
@@ -876,13 +898,16 @@ TEST(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForI
     EXPECT_TRUE(srcGraph.validForInstantiation());
 }
 
-TEST(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForInstantiation) {
+TEST_F(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForInstantiation) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
     MockGraphCmdListWithContext grandChildCmdlist{&ctx};
+    grandChildCmdlist.device = this->device;
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -946,13 +971,16 @@ TEST(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForI
     }
 }
 
-TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenWholeGraphIsNotReadyForInstantiation) {
+TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenWholeGraphIsNotReadyForInstantiation) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
     MockGraphCmdListWithContext grandChildCmdlist{&ctx};
+    grandChildCmdlist.device = this->device;
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> forkEventLvl2;
@@ -1520,6 +1548,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
     Mock<CommandList> cmdlist;
     cmdlist.cmdQImmediate = &cmdQueue;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
@@ -1617,8 +1646,10 @@ TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendR
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
     ctx.cmdListsToReturn[1]->appendWriteGlobalTimestampResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
     MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    mainRecordCmdlist.device = this->device;
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
     auto subCmdlistHandle = subCmdlist.toHandle();
 
     Mock<Event> signalEventParent; // fork
@@ -1654,6 +1685,23 @@ TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendR
     ze_executable_graph_handle_t physicalGraph = nullptr;
     auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, &physicalGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+}
+
+TEST_F(GraphExecution, GivenForceForkPolicyDebugKeyWhenCreateGraphSettingsThenFollowDebugKeyValue) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ForceGraphForkPolicy.set(GraphInstatiateSettings::ForkPolicy::ForkPolicyMonolythicLevels);
+    bool multiEngine = false;
+
+    GraphInstatiateSettings settings1(nullptr, multiEngine);
+    EXPECT_EQ(GraphInstatiateSettings::ForkPolicy::ForkPolicyMonolythicLevels, settings1.forkPolicy);
+
+    debugManager.flags.ForceGraphForkPolicy.set(GraphInstatiateSettings::ForkPolicy::ForkPolicySplitLevels);
+    multiEngine = true;
+
+    GraphInstatiateSettings settings2(nullptr, multiEngine);
+    EXPECT_EQ(GraphInstatiateSettings::ForkPolicy::ForkPolicySplitLevels, settings2.forkPolicy);
 }
 
 TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
@@ -1764,7 +1812,9 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
 
     Mock<Context> ctx;
     MockGraphCmdListWithContext mainCmdlist{&ctx};
+    mainCmdlist.device = this->device;
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
     Mock<Event> forkEvent;
 
     auto mainCmdlistHandle = mainCmdlist.toHandle();
@@ -1801,6 +1851,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenCommandListAlreadyCapturingWhenBeginGr
     Mock<Context> ctx;
     Mock<CommandList> cmdList;
     cmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdList.device = this->device;
     auto cmdListHandle = cmdList.toHandle();
 
     auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
@@ -1835,6 +1886,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenNonEmptyGraphWhenBeginCaptureIntoGraph
 
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdList{&ctx};
+    cmdList.device = this->device;
     Mock<Event> event;
 
     auto cmdListHandle = cmdList.toHandle();

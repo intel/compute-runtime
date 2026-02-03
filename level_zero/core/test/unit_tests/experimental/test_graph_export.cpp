@@ -49,6 +49,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenExportToStringThenCo
 
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -62,6 +63,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenExportToStringThe
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
 
@@ -93,6 +95,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNod
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -110,6 +113,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGen
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
@@ -127,6 +131,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNo
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -143,6 +148,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenRet
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -156,6 +162,7 @@ TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttribu
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
@@ -213,8 +220,10 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGenera
     Mock<Event> joinEvent;
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
     testGraph.startCapturingFrom(mainCmdList, false);
 
     Graph *testGraphPtr = &testGraph;
@@ -250,10 +259,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNestedSubgraphsWhenWriteSubgraphsThen
     Mock<Event> joinEvent2;
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList1;
     subCmdList1.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList1.device = this->device;
     Mock<CommandList> subCmdList2;
     subCmdList2.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList2.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -296,10 +308,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithAdjacentSubgraphsWhenWriteSubgraphsTh
     Mock<Event> joinEvent2;
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList1;
     subCmdList1.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList1.device = this->device;
     Mock<CommandList> subCmdList2;
     subCmdList2.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList2.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -353,8 +368,10 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithInvalidSubgraphThenReturns
     auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -382,8 +399,10 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithValidGraphThenReturnsCorre
     auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -419,8 +438,10 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithInvalidComman
     auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -448,8 +469,10 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithValidCommandL
     auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -476,8 +499,10 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptySubgraphWhenWriteForkJoinEdgesTh
     Mock<Event> joinEvent;
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -512,8 +537,10 @@ TEST_F(GraphDotExporterTest, GivenGraphWithUnjoinedForksWhenWriteUnjoinedForkEdg
     auto forkEventHandle = forkEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -543,13 +570,6 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNoUnjoinedForksWhenWriteUnjoinedForkE
     EXPECT_EQ(output.find("// Unjoined forks:"), std::string::npos);
 }
 
-class GraphDotExporterSimpleStyleTest : public ::testing::Test {
-  protected:
-    GraphsCleanupGuard graphCleanup;
-    Mock<Context> ctx;
-    MockGraphDotExporter exporter{GraphExportStyle::simple};
-};
-
 TEST_F(GraphDotExporterSimpleStyleTest, GivenEmptyGraphWhenExportToStringThenHeaderUsesSimpleNodeStyle) {
     Graph testGraph{&ctx, true};
 
@@ -567,6 +587,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeAttributes
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -579,6 +600,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenL
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -591,6 +613,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
     Graph testGraph{&ctx, true};
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     MockDeviceImp l0Device(neoDevice);
@@ -632,8 +655,10 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraph
     Mock<Event> joinEvent;
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
@@ -1367,6 +1392,7 @@ TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContent
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -1390,6 +1416,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
 
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
@@ -1419,6 +1446,8 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();
@@ -1444,6 +1473,8 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsC
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+
     testGraph.startCapturingFrom(cmdlist, false);
     testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
     testGraph.stopCapturing();

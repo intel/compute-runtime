@@ -135,7 +135,7 @@ ze_result_t ZE_APICALL zeCommandListInstantiateGraphExp(ze_graph_handle_t hGraph
     }
 
     auto execGraph = std::make_unique<ExecutableGraph>();
-    GraphInstatiateSettings settings{pNext};
+    GraphInstatiateSettings settings{pNext, virtualGraph->isMultiEngineGraph()};
     auto ret = execGraph->instantiateFrom(*virtualGraph, settings);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
