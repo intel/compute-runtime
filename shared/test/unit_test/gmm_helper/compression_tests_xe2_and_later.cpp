@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,10 +66,10 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, whenApplyAdditionalCompressionS
     gmmResourceParams->Flags.Info.NotCompressed = 0;
 
     auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, true);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, true, true);
     EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false, true);
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
 }
 
