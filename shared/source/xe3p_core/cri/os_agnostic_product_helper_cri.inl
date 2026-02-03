@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,6 +132,11 @@ bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
     return true;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() const {
+    return 4;
 }
 
 } // namespace NEO

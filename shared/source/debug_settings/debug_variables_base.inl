@@ -475,6 +475,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMadviseSharedSystemPrefetchRegion, -1, "
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePrintsRedirection, -1, "-1, 0: redirection inactive, 1: stdout, 2: stderr, 3: file, Force redirecton of PRINT_STRING messages")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPostSyncSkip, -1, "Do not program post sync in compute walker if there's no signal event. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSwitchQueueOnUnsuccessful, -1, "Force queue switch mode on unsuccessful semaphore check. -1: default, 0: do not switch, 1: switch")
+DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredWorkgroupCountPerSubslice, -1, "Override preferred workgroup count per subslice. -1: default, >=0: override value")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

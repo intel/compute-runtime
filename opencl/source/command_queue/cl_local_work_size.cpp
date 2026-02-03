@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,11 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
 
     wsInfo.setIfUseImg(kernelInfo);
-    wsInfo.setPreferredWgCountPerSubslice(device.getProductHelper().getPreferredWorkgroupCountPerSubslice());
+    auto preferredWorkgroupCount = device.getProductHelper().getPreferredWorkgroupCountPerSubslice();
+    if (debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get() != -1) {
+        preferredWorkgroupCount = static_cast<uint32_t>(debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get());
+    }
+    wsInfo.setPreferredWgCountPerSubslice(preferredWorkgroupCount);
 
     return wsInfo;
 }

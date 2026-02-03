@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1170,6 +1170,22 @@ TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarri
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     EXPECT_TRUE(createWorkSizeInfoFromDispatchInfo(dispatchInfo).hasBarriers);
+}
+
+TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasCorrectWgCountPerSubslice) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.set(0);
+
+    MockClDevice device{new MockDevice};
+    MockKernelWithInternals kernel(device);
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setClDevice(&device);
+    dispatchInfo.setKernel(kernel.mockKernel);
+
+    EXPECT_EQ(0U, createWorkSizeInfoFromDispatchInfo(dispatchInfo).preferredWgCountPerSubSlice);
+
+    debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.set(4);
+    EXPECT_EQ(4U, createWorkSizeInfoFromDispatchInfo(dispatchInfo).preferredWgCountPerSubSlice);
 }
 
 TEST_F(LocalWorkSizeTest, givenMaxWorkgroupSizeEqualToSimdSizeWhenLwsIsCalculatedThenItIsDownsizedToMaxWorkgroupSize) {

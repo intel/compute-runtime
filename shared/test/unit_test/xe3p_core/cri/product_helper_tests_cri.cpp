@@ -303,3 +303,7 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIsMediaContextSupportedT
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
+
+CRITEST_F(CriProductHelper, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenFourIsReturned) {
+    EXPECT_EQ(4u, productHelper->getPreferredWorkgroupCountPerSubslice());
+}

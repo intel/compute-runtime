@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,3 +30,4 @@ HWTEST_EXCLUDE_PRODUCT(ProductHelperTestXe3pCore, givenGrfCount512WhenHeaplessMo
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned, IGFX_CRI);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingIsInterruptSupportedThenFalseReturned, IGFX_CRI);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingIsMediaContextSupportedThenFalseReturned, IGFX_CRI);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenZeroReturned, IGFX_CRI);
