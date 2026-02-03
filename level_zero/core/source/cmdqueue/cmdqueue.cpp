@@ -5,6 +5,8 @@
  *
  */
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
+
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
@@ -26,7 +28,6 @@
 #include "shared/source/utilities/command_buffer_pool_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -51,7 +52,7 @@ void CommandQueue::saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, 
     }
 }
 
-CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
+CommandQueue::CommandQueue(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
     : desc(*desc), device(device), csr(csr) {
     int overrideCmdQueueSyncMode = NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.get();
     if (overrideCmdQueueSyncMode != -1) {
@@ -64,7 +65,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
     }
 }
 
-ze_result_t CommandQueueImp::destroy() {
+ze_result_t CommandQueue::destroy() {
     unregisterCsrClient();
 
     if (commandStream.getCpuBase() != nullptr) {
@@ -80,7 +81,7 @@ ze_result_t CommandQueueImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) {
+ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) {
     ze_result_t returnValue;
     internalUsage = isInternal;
     returnValue = buffers.initialize(device, totalCmdBufferSize);
@@ -117,7 +118,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool imm
     return returnValue;
 }
 
-NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
+NEO::WaitStatus CommandQueue::reserveLinearStreamSize(size_t size) {
     auto waitStatus{NEO::WaitStatus::ready};
 
     if (commandStream.getAvailableSpace() < size) {
@@ -132,8 +133,8 @@ NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
     return waitStatus;
 }
 
-NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, void *endingCmdPtr,
-                                                         bool isCooperative) {
+NEO::SubmissionStatus CommandQueue::submitBatchBuffer(size_t offset, void *endingCmdPtr,
+                                                      bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     NEO::BatchBuffer batchBuffer(this->startingCmdBuffer->getGraphicsAllocation(), offset, 0, 0, nullptr, false,
@@ -160,7 +161,7 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, void *en
     return ret;
 }
 
-ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
+ze_result_t CommandQueue::synchronize(uint64_t timeout) {
     if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
         const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, NEO::QueueThrottle::MEDIUM);
@@ -176,7 +177,7 @@ ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     }
 }
 
-ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds) {
+ze_result_t CommandQueue::synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto taskCountToWait = getTaskCount();
@@ -203,7 +204,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNa
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
+void CommandQueue::printKernelsPrintfOutput(bool hangDetected) {
     for (auto &kernelWeakPtr : this->printfKernelContainer) {
         std::lock_guard<std::mutex> lock(this->getDevice()->printfKernelMutex);
         if (!kernelWeakPtr.expired()) {
@@ -213,7 +214,7 @@ void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
     this->printfKernelContainer.clear();
 }
 
-void CommandQueueImp::checkAssert() {
+void CommandQueue::checkAssert() {
     bool valueExpected = true;
     bool hadAssert = cmdListWithAssertExecuted.compare_exchange_strong(valueExpected, false);
 
@@ -223,7 +224,7 @@ void CommandQueueImp::checkAssert() {
     }
 }
 
-void CommandQueueImp::postSyncOperations(bool hangDetected) {
+void CommandQueue::postSyncOperations(bool hangDetected) {
     printKernelsPrintfOutput(hangDetected);
     checkAssert();
 
@@ -241,13 +242,13 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         allocator = commandQueueFactory[productFamily];
     }
 
-    CommandQueueImp *commandQueue = nullptr;
+    CommandQueue *commandQueue = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
     if (!allocator) {
         return nullptr;
     }
 
-    commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
+    commandQueue = (*allocator)(device, csr, desc);
     returnValue = commandQueue->initialize(isCopyOnly, isInternal, immediateCmdListQueue);
     if (returnValue != ZE_RESULT_SUCCESS) {
         commandQueue->destroy();
@@ -274,15 +275,15 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     return commandQueue;
 }
 
-void CommandQueueImp::unregisterCsrClient() {
+void CommandQueue::unregisterCsrClient() {
     this->csr->unregisterClient(this);
 }
 
-void CommandQueueImp::registerCsrClient() {
+void CommandQueue::registerCsrClient() {
     this->csr->registerClient(this);
 }
 
-ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
+ze_result_t CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
@@ -325,7 +326,7 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
+void CommandBufferManager::destroy(Device *device) {
     auto &poolAllocator = device->getNEODevice()->getCommandBufferPoolAllocator();
 
     if (auto firstBA = buffers[BufferAllocation::first]) {
@@ -351,7 +352,7 @@ void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
     }
 }
 
-NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
+NEO::WaitStatus CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
     if (bufferUse == BufferAllocation::first) {
         bufferUse = BufferAllocation::second;
     } else {
@@ -368,7 +369,7 @@ NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::Comman
     return waitStatus;
 }
 
-void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) {
+void CommandQueue::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) {
     NEO::Device *neoDevice = this->device->getNEODevice();
     auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
     auto submittedAsPack = svmAllocsManager->submitIndirectAllocationsAsPack(*(this->csr));
@@ -383,7 +384,7 @@ void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls un
     }
 }
 
-void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) {
+void CommandQueue::makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) {
     for (auto alloc : residencyContainer) {
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
@@ -396,12 +397,12 @@ void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::R
     }
 }
 
-ze_result_t CommandQueueImp::getOrdinal(uint32_t *pOrdinal) {
+ze_result_t CommandQueue::getOrdinal(uint32_t *pOrdinal) {
     *pOrdinal = desc.ordinal;
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandQueueImp::getIndex(uint32_t *pIndex) {
+ze_result_t CommandQueue::getIndex(uint32_t *pIndex) {
     *pIndex = desc.index;
     return ZE_RESULT_SUCCESS;
 }
@@ -434,7 +435,7 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
     return queueProperties;
 }
 
-void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer) {
+void CommandQueue::makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer) {
     for (auto alloc : residencyContainer) {
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);

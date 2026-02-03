@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ struct Device;
 namespace ult {
 
 WhiteBox<::L0::CommandQueue>::WhiteBox(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
-    : ::L0::CommandQueueImp(device, csr, desc) {}
+    : ::L0::CommandQueue(device, csr, desc) {}
 
 WhiteBox<::L0::CommandQueue>::~WhiteBox() {}
 

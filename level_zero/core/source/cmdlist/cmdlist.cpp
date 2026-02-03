@@ -16,7 +16,7 @@
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
@@ -228,7 +228,7 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
 NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
     auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
 
-    return static_cast<CommandQueueImp *>(queue)->getCsr();
+    return queue->getCsr();
 }
 
 void CommandList::registerWalkerWithProfilingEnqueued(Event *event) {

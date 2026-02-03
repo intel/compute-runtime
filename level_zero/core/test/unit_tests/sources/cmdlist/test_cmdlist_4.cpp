@@ -19,7 +19,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -181,8 +181,7 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalT
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
@@ -946,8 +945,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryF
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -992,7 +990,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryF
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -1388,7 +1386,7 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThen
 
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
-    auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
+    auto startStream = static_cast<L0::CommandQueue *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
 
     if (commandListImmediate->getCmdListBatchBufferFlag()) {
         auto expectedStreamAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
@@ -1450,7 +1448,7 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWh
     }
     EXPECT_EQ(regularCmdBufferAllocation, ultCsr.latestFlushedBatchBuffer.commandBufferAllocation);
 
-    auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
+    auto startStream = static_cast<L0::CommandQueue *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
     EXPECT_EQ(dispatchRegularBufferLinearStream, startStream);
 
     GenCmdList cmdList;
@@ -1501,7 +1499,7 @@ HWTEST_F(ImmediateCommandListTest, givenCopyEngineImmediateCmdListWithPrimaryBat
     EXPECT_EQ(immediateCmdBufferStream, ultCsr->recordedBcsDispatchFlags.optionalEpilogueCmdStream);
     EXPECT_EQ(regularCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
 
-    auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
+    auto startStream = static_cast<L0::CommandQueue *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
     EXPECT_EQ(dispatchRegularBufferLinearStream, startStream);
 
     GenCmdList cmdList;

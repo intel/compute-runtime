@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
 #include <limits>
 
@@ -18,7 +18,7 @@ namespace FenceDefinition {
 static constexpr TaskCountType fenceNotReady = NEO::CompletionStamp::notReady;
 } // namespace FenceDefinition
 
-Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
+Fence *Fence::create(CommandQueue *cmdQueue, const ze_fence_desc_t *desc) {
     auto fence = new Fence(cmdQueue);
     UNRECOVERABLE_IF(fence == nullptr);
     fence->reset(!!(desc->flags & ZE_FENCE_FLAG_SIGNALED));

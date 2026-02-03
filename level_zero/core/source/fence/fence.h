@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,10 +19,10 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);
 
 namespace L0 {
 
-struct CommandQueueImp;
+struct CommandQueue;
 
 struct Fence : _ze_fence_handle_t {
-    static Fence *create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc);
+    static Fence *create(CommandQueue *cmdQueue, const ze_fence_desc_t *desc);
     virtual ~Fence() = default;
     MOCKABLE_VIRTUAL ze_result_t destroy() {
         delete this;
@@ -38,10 +38,10 @@ struct Fence : _ze_fence_handle_t {
     inline ze_fence_handle_t toHandle() { return this; }
 
   protected:
-    Fence(CommandQueueImp *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
+    Fence(CommandQueue *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
-    CommandQueueImp *cmdQueue;
+    CommandQueue *cmdQueue;
     TaskCountType taskCount = 0;
 };
 

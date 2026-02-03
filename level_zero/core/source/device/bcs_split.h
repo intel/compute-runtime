@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/transfer_direction.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 

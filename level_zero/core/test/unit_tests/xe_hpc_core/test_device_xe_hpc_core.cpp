@@ -167,7 +167,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     res = device->createCommandQueue(&computeCommandQueueDesc, &hCommandQueue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    CommandQueue *computeCommandQueue = static_cast<CommandQueue *>(CommandQueue::fromHandle(hCommandQueue));
+    auto computeCommandQueue = L0::CommandQueue::fromHandle(hCommandQueue);
     EXPECT_FALSE(computeCommandQueue->peekIsCopyOnlyCommandQueue());
 
     ze_command_list_handle_t hCopyCommandList{};

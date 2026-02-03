@@ -1294,8 +1294,8 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesThenEachCmdQ
     result = device->createCommandQueue(&desc, &commandQueueHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
-    auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
+    auto commandQueue1 = L0::CommandQueue::fromHandle(commandQueueHandle1);
+    auto commandQueue2 = L0::CommandQueue::fromHandle(commandQueueHandle2);
 
     EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
 
@@ -1341,8 +1341,8 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     result = device->createCommandQueue(&desc, &commandQueueHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
-    auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
+    auto commandQueue1 = L0::CommandQueue::fromHandle(commandQueueHandle1);
+    auto commandQueue2 = L0::CommandQueue::fromHandle(commandQueueHandle2);
 
     EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
 
@@ -1460,9 +1460,9 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
         result = device->createCommandQueue(&desc, &commandQueueHandle4);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
-        auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
-        auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
-        auto commandQueue3 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle3));
+        auto commandQueue1 = L0::CommandQueue::fromHandle(commandQueueHandle1);
+        auto commandQueue2 = L0::CommandQueue::fromHandle(commandQueueHandle2);
+        auto commandQueue3 = L0::CommandQueue::fromHandle(commandQueueHandle3);
 
         EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).allocateInterruptPassed);
         EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).allocateInterruptPassed);

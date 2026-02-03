@@ -584,8 +584,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThen
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     size_t src = 0;
     size_t dst = 0;
@@ -608,8 +607,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWith
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);

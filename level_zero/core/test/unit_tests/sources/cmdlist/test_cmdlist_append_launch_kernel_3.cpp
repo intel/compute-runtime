@@ -225,8 +225,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLa
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -253,8 +252,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLa
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -486,8 +484,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLa
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -513,8 +510,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLa
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 

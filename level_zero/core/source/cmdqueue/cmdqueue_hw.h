@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
 namespace NEO {
 class ScratchSpaceController;
@@ -19,10 +19,11 @@ class ScratchSpaceController;
 
 namespace L0 {
 struct CommandListExecutionContext;
+struct CommandListImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-struct CommandQueueHw : public CommandQueueImp {
-    using CommandQueueImp::CommandQueueImp;
+struct CommandQueueHw : public CommandQueue {
+    using CommandQueue::CommandQueue;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,

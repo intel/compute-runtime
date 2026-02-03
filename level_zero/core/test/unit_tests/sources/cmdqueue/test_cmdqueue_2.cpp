@@ -148,7 +148,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteC
     ASSERT_NE(nullptr, commandQueue);
 
     auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
-    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
@@ -174,7 +174,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommand
     ASSERT_NE(nullptr, commandQueue);
 
     auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
-    CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
@@ -724,7 +724,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
         // Pool allocator creates main large allocations, views are sub-allocated from it
         EXPECT_GE(cmdBufferAllocationsFound, 1u);
     } else {
-        EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
+        EXPECT_EQ(static_cast<uint32_t>(CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
     }
 
     commandQueue->destroy();

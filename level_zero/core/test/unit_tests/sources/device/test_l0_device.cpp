@@ -41,7 +41,7 @@
 #include "shared/test/common/utilities/destructor_counted.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -127,8 +127,8 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     ASSERT_NE(nullptr, device->pageFaultCommandList);
 
     ASSERT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCommandQueueMode());
 }
 
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
@@ -148,8 +148,8 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCm
     ASSERT_NE(nullptr, device->pageFaultCommandList);
 
     ASSERT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCommandQueueMode());
     EXPECT_EQ(CommandList::whiteboxCast(device->pageFaultCommandList)->device, device->subDevices[0]);
 }
 

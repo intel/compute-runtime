@@ -24,7 +24,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -1198,8 +1198,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListThenInternalEngineIsUsed
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(static_cast<CommandList *>(commandList0.get())->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(static_cast<CommandList *>(commandList0.get())->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     internalEngine = false;
 
@@ -1211,8 +1210,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListThenInternalEngineIsUsed
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList1);
 
-    cmdQueue = reinterpret_cast<CommandQueueImp *>(static_cast<CommandList *>(commandList1.get())->cmdQImmediate);
-    EXPECT_NE(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_NE(static_cast<CommandList *>(commandList1.get())->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 }
 
 TEST_F(CommandListCreateTests, givenInternalUsageCommandListThenIsInternalReturnsTrue) {
@@ -1304,7 +1302,7 @@ TEST_F(CommandListCreateTests, givenAsynchronousOverrideWhenCreatingImmediateCom
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
     EXPECT_FALSE(whiteBoxCmdList->isSyncModeQueue);
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, whiteBoxCmdList->cmdQImmediate->getCommandQueueMode());
 }
 
 TEST_F(CommandListCreateTests, givenMakeEnqueueBlockingWhenCreatingImmediateCommandListWithASyncModeThenASynchronousCommandQueueIsCreatedButisSyncModeIsTrue) {
@@ -1322,7 +1320,7 @@ TEST_F(CommandListCreateTests, givenMakeEnqueueBlockingWhenCreatingImmediateComm
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
     EXPECT_TRUE(whiteBoxCmdList->isSyncModeQueue);
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, whiteBoxCmdList->cmdQImmediate->getCommandQueueMode());
 }
 
 TEST_F(CommandListCreateTests, givenSynchronousOverrideWhenCreatingImmediateCommandListWithAsyncModeThenSynchronousCommandQueueIsCreated) {
@@ -1341,7 +1339,7 @@ TEST_F(CommandListCreateTests, givenSynchronousOverrideWhenCreatingImmediateComm
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
     EXPECT_TRUE(whiteBoxCmdList->isSyncModeQueue);
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, whiteBoxCmdList->cmdQImmediate->getCommandQueueMode());
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendSignalEventThenUpdateTaskCountNeededFlagIsDisabled) {

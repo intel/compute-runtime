@@ -12,7 +12,6 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -37,36 +36,36 @@ template <typename Type>
 struct WhiteBox;
 
 template <>
-struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
-    using BaseClass = ::L0::CommandQueueImp;
+struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueue {
+    using BaseClass = ::L0::CommandQueue;
+    using BaseClass::activeSubDevices;
     using BaseClass::buffers;
+    using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListWithAssertExecuted;
     using BaseClass::commandStream;
     using BaseClass::csr;
     using BaseClass::desc;
     using BaseClass::device;
+    using BaseClass::dispatchCmdListBatchBufferAsPrimary;
+    using BaseClass::doubleSbaWa;
     using BaseClass::firstCmdListStream;
     using BaseClass::forceBbStartJump;
+    using BaseClass::frontEndStateTracking;
+    using BaseClass::heaplessModeEnabled;
+    using BaseClass::heaplessStateInitEnabled;
+    using BaseClass::internalUsage;
+    using BaseClass::partitionCount;
+    using BaseClass::patchingPreamble;
+    using BaseClass::pipelineSelectStateTracking;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfKernelContainer;
+    using BaseClass::saveWaitForPreamble;
     using BaseClass::startingCmdBuffer;
+    using BaseClass::stateBaseAddressTracking;
+    using BaseClass::stateComputeModeTracking;
     using BaseClass::submitBatchBuffer;
     using BaseClass::synchronizeByPollingForTaskCount;
     using BaseClass::taskCount;
-    using CommandQueue::activeSubDevices;
-    using CommandQueue::cmdListHeapAddressModel;
-    using CommandQueue::dispatchCmdListBatchBufferAsPrimary;
-    using CommandQueue::doubleSbaWa;
-    using CommandQueue::frontEndStateTracking;
-    using CommandQueue::heaplessModeEnabled;
-    using CommandQueue::heaplessStateInitEnabled;
-    using CommandQueue::internalUsage;
-    using CommandQueue::partitionCount;
-    using CommandQueue::patchingPreamble;
-    using CommandQueue::pipelineSelectStateTracking;
-    using CommandQueue::saveWaitForPreamble;
-    using CommandQueue::stateBaseAddressTracking;
-    using CommandQueue::stateComputeModeTracking;
 
     WhiteBox(Device *device, NEO::CommandStreamReceiver *csr,
              const ze_command_queue_desc_t *desc);
@@ -85,7 +84,6 @@ struct Mock<CommandQueue> : public CommandQueue {
     ADDMETHOD_NOBASE(createFence, ze_result_t, ZE_RESULT_SUCCESS, (const ze_fence_desc_t *desc, ze_fence_handle_t *phFence));
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(executeCommandLists, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration, NEO::LinearStream *parentImmediateCommandlistLinearStream, std::unique_lock<std::mutex> *outerLockForIndirect));
-    ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
     ADDMETHOD_NOBASE(getPreemptionCmdProgramming, bool, false, ());
 };
 
@@ -104,6 +102,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::waitForCommandQueueCompletion;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::cmdListHeapAddressModel;
+    using L0::CommandQueue::csr;
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;
     using L0::CommandQueue::doubleSbaWa;
     using L0::CommandQueue::frontEndStateTracking;
@@ -117,7 +116,6 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::saveWaitForPreamble;
     using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
-    using L0::CommandQueueImp::csr;
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }
@@ -182,7 +180,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
 };
 
 struct Deleter {
-    void operator()(CommandQueueImp *cmdQ) {
+    void operator()(::L0::CommandQueue *cmdQ) {
         cmdQ->destroy();
     }
 };

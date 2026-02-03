@@ -761,7 +761,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
 
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -831,7 +831,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
 
     res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_EQ(copyCsr.get(), commandQueue->getCsr());
     commandQueue->destroy();
@@ -863,8 +863,7 @@ TEST_F(DeferredContextCreationDeviceCreateCommandQueueTest, givenLowPriorityEngi
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_TRUE(lowPriorityCsr->getOsContext().isInitialized());
 
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
-    commandQueue->destroy();
+    L0::CommandQueue::fromHandle(commandQueueHandle)->destroy();
 }
 
 using DeviceCreateCommandQueueTest = Test<DeviceFixture>;
@@ -900,7 +899,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
     neoDevice->disableSecondaryEngines = true;
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -921,7 +920,7 @@ TEST_F(DeviceCreateCommandQueueTest,
     neoDevice->disableSecondaryEngines = true;
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -941,7 +940,7 @@ TEST_F(DeviceCreateCommandQueueTest,
 
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -988,7 +987,7 @@ TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQ
 
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -2007,7 +2006,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueu
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
+    auto cmdQueueSynchronousMode = static_cast<L0::CommandQueue *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_DEFAULT, cmdQueueSynchronousMode);
 
     commandQueue->destroy();
@@ -2030,7 +2029,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToAsynchronousWhenComman
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
+    auto cmdQueueSynchronousMode = static_cast<L0::CommandQueue *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdQueueSynchronousMode);
 
     commandQueue->destroy();
@@ -2053,7 +2052,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    auto cmdQueueSynchronousMode = reinterpret_cast<L0::CommandQueueImp *>(commandQueue)->getCommandQueueMode();
+    auto cmdQueueSynchronousMode = static_cast<L0::CommandQueue *>(commandQueue)->getCommandQueueMode();
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, cmdQueueSynchronousMode);
 
     commandQueue->destroy();
@@ -2213,7 +2212,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForInterna
     auto internalCsr = internalEngine.commandStreamReceiver;
 
     reinterpret_cast<L0::Device *>(device)->createInternalCommandQueue(&desc, &commandQueueHandle);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_EQ(commandQueue->getCsr(), internalCsr);
     commandQueue->destroy();
 }
@@ -2229,7 +2228,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForNonInte
     auto internalCsr = internalEngine.commandStreamReceiver;
 
     device->createCommandQueue(&desc, &commandQueueHandle);
-    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
     EXPECT_NE(commandQueue->getCsr(), internalCsr);
     commandQueue->destroy();
 }
@@ -2247,7 +2246,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForValidOr
             ze_command_queue_handle_t commandQueueHandle = {};
 
             EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
-            auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+            auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
             EXPECT_NE(commandQueue->getCsr(), internalCsr);
 
             uint32_t commandQueueOrdinal = 0u;
@@ -2272,7 +2271,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForValidOr
             ze_command_queue_handle_t commandQueueHandle = {};
 
             EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
-            auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+            auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
             EXPECT_NE(commandQueue->getCsr(), internalCsr);
 
             uint32_t commandQueueIndex = 0u;
@@ -2296,9 +2295,9 @@ TEST_F(DeviceCreateCommandQueueTest, givenMakeEachEnqueueBlockingSetToOneWhenIsS
     ze_command_queue_handle_t commandQueueHandle = {};
 
     device->createCommandQueue(&desc, &commandQueueHandle);
-    auto commandQueueImp = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
-    EXPECT_TRUE(commandQueueImp->isSynchronousMode());
-    commandQueueImp->destroy();
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+    EXPECT_TRUE(commandQueue->isSynchronousMode());
+    commandQueue->destroy();
 }
 
 TEST_F(DeviceCreateCommandQueueTest, givenMakeEachEnqueueBlockingSetToZeroWhenIsSynchronousModeIsCalledThenReturnsFalse) {
@@ -2313,9 +2312,9 @@ TEST_F(DeviceCreateCommandQueueTest, givenMakeEachEnqueueBlockingSetToZeroWhenIs
     ze_command_queue_handle_t commandQueueHandle = {};
 
     device->createCommandQueue(&desc, &commandQueueHandle);
-    auto commandQueueImp = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
-    EXPECT_FALSE(commandQueueImp->isSynchronousMode());
-    commandQueueImp->destroy();
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+    EXPECT_FALSE(commandQueue->isSynchronousMode());
+    commandQueue->destroy();
 }
 
 } // namespace ult

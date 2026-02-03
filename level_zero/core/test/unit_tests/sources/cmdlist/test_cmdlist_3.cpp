@@ -569,7 +569,7 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWi
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
@@ -613,8 +613,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWith
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+    EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);
@@ -660,7 +659,7 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWi
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -722,7 +721,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -769,7 +768,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -817,7 +816,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageTo
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -862,7 +861,7 @@ HWTEST_F(CommandListCreateWithBcs, givenImmediateCommandListWhenMemoryCopyRegion
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalCopyEngine()->commandStreamReceiver);
     } else {
@@ -1080,7 +1079,7 @@ HWTEST2_F(CommandListCreateWithBcs,
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
+    auto cmdQueue = whiteBoxCmdList->cmdQImmediate;
     auto internalCopyEngine = neoDevice->getInternalCopyEngine();
     EXPECT_NE(nullptr, internalCopyEngine);
     EXPECT_EQ(cmdQueue->getCsr(), internalCopyEngine->commandStreamReceiver);

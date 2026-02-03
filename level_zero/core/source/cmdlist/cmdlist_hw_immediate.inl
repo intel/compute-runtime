@@ -441,13 +441,12 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
                                                                                                                bool requireTaskCountUpdate, CommandQueue *cmdQ,
                                                                                                                MutexLock *outerLock,
                                                                                                                std::unique_lock<std::mutex> *outerLockForIndirect) {
-    auto cmdQImp = static_cast<CommandQueueImp *>(cmdQ);
     this->commandContainer.removeDuplicatesFromResidencyContainer();
 
     auto commandStream = this->commandContainer.getCommandStream();
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
     if (appendOperation == NEO::AppendOperations::cmdList && this->dispatchCmdListBatchBufferAsPrimary) {
-        auto cmdListStartCmdBufferStream = cmdQImp->getStartingCmdBuffer();
+        auto cmdListStartCmdBufferStream = cmdQ->getStartingCmdBuffer();
         // check if queue starting stream is the same as immediate,
         // if they are the same - immediate command list buffer has preamble in it including jump from immediate to regular cmdlist - proceed normal
         // if not - regular cmdlist is the starting command buffer - no queue preamble or waiting commands
@@ -457,7 +456,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
     }
 
-    auto csr = cmdQImp->getCsr();
+    auto csr = cmdQ->getCsr();
     auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
 
     std::unique_lock<std::mutex> lockForIndirect;
@@ -504,7 +503,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false, false, nullptr);
     } else {
         lockForIndirect = std::move(*outerLockForIndirect);
-        cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
+        cmdQ->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
 
     NEO::CompletionStamp completionStamp;
@@ -521,7 +520,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    cmdQImp->clearHeapContainer();
+    cmdQ->clearHeapContainer();
 
     // save offset from immediate stream - even when not used to dispatch commands, can be used for epilogue
     this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -556,10 +555,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryResetKernelWithAssertFlag
         return;
     }
 
-    auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
-    auto csr = cmdQueueImp->getCsr();
+    auto csr = this->cmdQImmediate->getCsr();
 
-    auto submittedTaskCount = cmdQueueImp->getTaskCount();
+    auto submittedTaskCount = this->cmdQImmediate->getTaskCount();
     auto *tagAddress = csr->getTagAddress();
 
     if (csr->testTaskCountReady(tagAddress, submittedTaskCount)) {
@@ -1212,7 +1210,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     }
 
     auto waitTaskCount = waitQueue->getTaskCount();
-    auto waitCsr = static_cast<CommandQueueImp *>(waitQueue)->getCsr();
+    auto waitCsr = waitQueue->getCsr();
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
@@ -1226,7 +1224,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
         auto waitStatus = NEO::WaitStatus::notReady;
 
-        if (indefinitelyPoll && static_cast<CommandQueueImp *>(waitQueue)->getUseKmdWaitFunction()) {
+        if (indefinitelyPoll && waitQueue->getUseKmdWaitFunction()) {
             waitStatus = waitCsr->waitForTaskCountWithKmdNotifyFallback(waitTaskCount,
                                                                         waitCsr->obtainCurrentFlushStamp(),
                                                                         true,
@@ -1285,9 +1283,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             this->printKernelsPrintfOutput(hangDetected);
             this->checkAssert();
             {
-                auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
-                cmdQueueImp->printKernelsPrintfOutput(hangDetected);
-                cmdQueueImp->checkAssert();
+                this->cmdQImmediate->printKernelsPrintfOutput(hangDetected);
+                this->cmdQImmediate->checkAssert();
             }
         }
         this->kernelWithAssertAppended = false;
@@ -1331,11 +1328,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     this->latestFlushIsHostVisible = !this->dcFlushSupport;
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
-        static_cast<CommandQueueImp *>(queue)->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
+        queue->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
     }
 
     if (signalEvent) {
-        signalEvent->setCsr(static_cast<CommandQueueImp *>(queue)->getCsr(), isInOrderExecutionEnabled());
+        signalEvent->setCsr(queue->getCsr(), isInOrderExecutionEnabled());
         if (!this->latestFlushIsDualCopyOffload) {
             this->latestFlushIsHostVisible |= signalEvent->isFlushRequiredForSignal() || (this->isHeaplessModeEnabled() && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         }
@@ -1779,8 +1776,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     constexpr bool requireTaskCountUpdate = true;
     constexpr bool hasStallingCmds = true;
 
-    auto queueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
-    auto mainAppendLock = queueImp->getCsr()->obtainUniqueOwnership();
+    auto mainAppendLock = this->cmdQImmediate->getCsr()->obtainUniqueOwnership();
 
     bool copyEngineExecution = isCopyOnly(copyOffloadOperation);
 
@@ -1825,7 +1821,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     if (this->dispatchCmdListBatchBufferAsPrimary) {
         // check if wait event preamble or implicit synchronization is present and force bb start jump in queue, even when no preamble is required there
         if (this->commandContainer.getCommandStream()->getUsed() != this->cmdListCurrentStartOffset) {
-            queueImp->triggerBbStartJump();
+            this->cmdQImmediate->triggerBbStartJump();
         }
     }
     ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists,
@@ -1870,7 +1866,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                   requireTaskCountUpdate,
                                   &mainAppendLock,
                                   &mainLockForIndirect);
-    queueImp->saveTagAndTaskCountForCommandLists(numCommandLists, phCommandLists, queueImp->getCsr()->getTagAllocation(), queueImp->getTaskCount());
+    this->cmdQImmediate->saveTagAndTaskCountForCommandLists(numCommandLists, phCommandLists, this->cmdQImmediate->getCsr()->getTagAllocation(), this->cmdQImmediate->getTaskCount());
     return retCode;
 }
 
