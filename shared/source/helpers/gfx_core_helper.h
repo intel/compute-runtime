@@ -529,7 +529,7 @@ struct MemorySynchronizationCommands {
     static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
-
+    static void *programMemoryFenceRelease(void *cmdBuffer);
     static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void setCacheFlushExtraProperties(PipeControlArgs &args);

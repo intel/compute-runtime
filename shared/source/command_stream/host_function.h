@@ -105,11 +105,13 @@ enum class HostFunctionWorkerMode : int32_t {
 
 template <typename GfxFamily>
 struct HostFunctionHelper {
-    static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
-    static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired);
+    static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool memorySynchronizationRequired);
+    static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool memorySynchronizationRequired);
     static void programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer, uint32_t partionId);
-    static bool isMemorySynchronizationRequiredForHostFunction();
-    static bool usePipeControlForHostFunction(bool dcFlushRequiredPlatform);
+    static bool isMemorySynchronizationRequired();
+    static bool usePipeControlForHostFunction(bool memorySynchronizationRequired, bool dcFlushPlatform);
+    static bool useMemoryFenceForHostFunction(bool memorySynchronizationRequired, bool dcFlushPlatform);
+    static size_t getSizeForHostFunctionIdProgramming(bool memorySynchronizationRequired, bool dcFlushPlatform);
 };
 
 namespace HostFunctionFactory {

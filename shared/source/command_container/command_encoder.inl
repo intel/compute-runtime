@@ -1147,26 +1147,6 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
 }
 
 template <typename Family>
-inline void EncodeStoreMemory<Family>::programStoreDataImmCommand(LinearStream *commandStream,
-                                                                  MI_STORE_DATA_IMM *cmdBuffer,
-                                                                  uint64_t gpuAddress,
-                                                                  uint32_t dataDword0,
-                                                                  uint32_t dataDword1,
-                                                                  bool storeQword,
-                                                                  bool workloadPartitionOffset) {
-    if (cmdBuffer == nullptr) {
-        DEBUG_BREAK_IF(commandStream == nullptr);
-        cmdBuffer = commandStream->getSpaceForCmd<MI_STORE_DATA_IMM>();
-    }
-    EncodeStoreMemory<Family>::programStoreDataImm(cmdBuffer,
-                                                   gpuAddress,
-                                                   dataDword0,
-                                                   dataDword1,
-                                                   storeQword,
-                                                   workloadPartitionOffset);
-}
-
-template <typename Family>
 inline void EncodeDataMemory<Family>::programDataMemory(LinearStream &commandStream,
                                                         uint64_t dstGpuAddress,
                                                         void *srcData,

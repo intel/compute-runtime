@@ -170,13 +170,10 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                   void **patchPreambleBuffer) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     uint32_t hostFunctionsCounter = 0;
-    bool dcFlushRequired = csr->getDcFlushSupport();
-    bool usePipeControlForHostFunctionIdProgramming = NEO::HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(dcFlushRequired);
-    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction();
+    bool dcFlushPlatform = csr->getDcFlushSupport();
+    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
 
     auto patchCommandsLambda = [&](auto &commandToPatch) {
         using CommandType = std::decay_t<decltype(commandToPatch)>;
@@ -289,20 +286,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
             if (patchPreambleEnabled) {
 
-                size_t size = 0u;
-                void *cmdBuffer = nullptr;
-                std::unique_ptr<MI_STORE_DATA_IMM> miStore;
-                std::unique_ptr<PIPE_CONTROL> pc;
-
-                if (usePipeControlForHostFunctionIdProgramming) {
-                    pc = std::make_unique_for_overwrite<PIPE_CONTROL>();
-                    cmdBuffer = static_cast<void *>(pc.get());
-                    size = sizeof(PIPE_CONTROL);
-                } else {
-                    miStore = std::make_unique_for_overwrite<MI_STORE_DATA_IMM>();
-                    cmdBuffer = static_cast<void *>(miStore.get());
-                    size = sizeof(MI_STORE_DATA_IMM);
-                }
+                auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, dcFlushPlatform);
+                auto cmdStorage = std::make_unique_for_overwrite<uint8_t[]>(size);
+                void *cmdBuffer = static_cast<void *>(cmdStorage.get());
 
                 NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
                                                                           cmdBuffer,

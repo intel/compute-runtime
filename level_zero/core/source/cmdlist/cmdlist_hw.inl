@@ -1923,7 +1923,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
         auto &streamer = csr->getHostFunctionStreamer();
         auto *allocation = streamer.getHostFunctionIdAllocation();
         this->commandContainer.addToResidencyContainer(allocation);
-        bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction();
+        bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
         NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
                                                                 streamer,
                                                                 std::move(hostFunction),
@@ -1937,16 +1937,14 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) {
 
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
     this->hostFunctionPatchListCount++;
 
     auto additionalSize = 1 + this->partitionCount;
     commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
-    bool usePC = NEO::HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(dcFlushSupport);
-    auto size = usePC ? sizeof(PIPE_CONTROL) : sizeof(MI_STORE_DATA_IMM);
+    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
+    auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, dcFlushSupport);
+
     auto gpuAddressInCmdStream = commandContainer.getCommandStream()->getCurrentGpuAddressPosition();
     auto cpuBufferCmd = commandContainer.getCommandStream()->getSpace(size);
 

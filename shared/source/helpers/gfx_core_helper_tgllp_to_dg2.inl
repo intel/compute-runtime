@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,11 @@ size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
 template <typename Family>
 bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
     return true;
-};
+}
+
+template <typename Family>
+void *MemorySynchronizationCommands<Family>::programMemoryFenceRelease(void *cmdBuffer) {
+    return nullptr;
+}
 
 } // namespace NEO

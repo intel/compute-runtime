@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,16 @@ size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
         return 0xE00 + (MemoryConstants::pageSize * debugManager.flags.ForceExtendedKernelIsaSize.get());
     }
     return 0xE00;
+}
+
+template <typename Family>
+void *MemorySynchronizationCommands<Family>::programMemoryFenceRelease(void *cmdBuffer) {
+    using MI_MEM_FENCE = Family::MI_MEM_FENCE;
+
+    MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
+    miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
+    *reinterpret_cast<MI_MEM_FENCE *>(cmdBuffer) = miMemFence;
+    return ptrOffset(cmdBuffer, sizeof(MI_MEM_FENCE));
 }
 
 } // namespace NEO

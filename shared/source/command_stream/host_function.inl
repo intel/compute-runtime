@@ -26,7 +26,6 @@ void HostFunctionHelper<GfxFamily>::programHostFunction(LinearStream &commandStr
 template <typename GfxFamily>
 void HostFunctionHelper<GfxFamily>::programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction, bool isMemorySynchronizationRequired) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     auto partitionId = 0u; // get address of partition 0, other partitions will use workloadPartitionIdOffset
     auto idGpuAddress = streamer.getHostFunctionIdGpuAddress(partitionId);
@@ -34,35 +33,41 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionId(LinearStream *commandS
     streamer.addHostFunction(hostFunctionId, std::move(hostFunction));
 
     bool workloadPartitionIdOffsetEnable = streamer.getActivePartitions() > 1;
-    bool isDcFlushRequired = streamer.getDcFlushRequired();
+    bool dcFlushPlatform = streamer.getDcFlushRequired();
+    auto size = getSizeForHostFunctionIdProgramming(isMemorySynchronizationRequired, dcFlushPlatform);
 
-    if (isMemorySynchronizationRequired && isDcFlushRequired) {
+    if (cmdBuffer == nullptr) {
+        DEBUG_BREAK_IF(commandStream == nullptr);
+        cmdBuffer = commandStream->getSpace(size);
+    }
+
+    bool programIdUsingPcWithDcFlush = usePipeControlForHostFunction(isMemorySynchronizationRequired, dcFlushPlatform);
+    if (programIdUsingPcWithDcFlush) {
         PipeControlArgs args{};
         args.dcFlushEnable = true;
         args.workloadPartitionOffset = workloadPartitionIdOffsetEnable;
-
-        if (cmdBuffer == nullptr) {
-            DEBUG_BREAK_IF(commandStream == nullptr);
-            cmdBuffer = commandStream->getSpaceForCmd<PIPE_CONTROL>();
-        }
-        MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(
-            cmdBuffer,
-            NEO::PostSyncMode::immediateData,
-            idGpuAddress,
-            hostFunctionId,
-            args);
-    } else {
-        auto lowPart = getLowPart(hostFunctionId);
-        auto highPart = getHighPart(hostFunctionId);
-        bool storeQword = true;
-        EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
-                                                                 static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
-                                                                 idGpuAddress,
-                                                                 lowPart,
-                                                                 highPart,
-                                                                 storeQword,
-                                                                 workloadPartitionIdOffsetEnable);
+        MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(cmdBuffer,
+                                                                   NEO::PostSyncMode::immediateData,
+                                                                   idGpuAddress,
+                                                                   hostFunctionId,
+                                                                   args);
+        return;
     }
+
+    bool needMemoryFence = useMemoryFenceForHostFunction(isMemorySynchronizationRequired, dcFlushPlatform);
+    if (needMemoryFence) {
+        cmdBuffer = MemorySynchronizationCommands<GfxFamily>::programMemoryFenceRelease(cmdBuffer);
+    }
+
+    auto lowPart = getLowPart(hostFunctionId);
+    auto highPart = getHighPart(hostFunctionId);
+    bool storeQword = true;
+    EncodeStoreMemory<GfxFamily>::programStoreDataImm(static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
+                                                      idGpuAddress,
+                                                      lowPart,
+                                                      highPart,
+                                                      storeQword,
+                                                      workloadPartitionIdOffsetEnable);
 }
 
 template <typename GfxFamily>
@@ -85,7 +90,7 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearS
 }
 
 template <typename GfxFamily>
-bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFunction() {
+bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired() {
     bool memorySynchronizationRequired = true;
     if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
         memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
@@ -94,8 +99,36 @@ bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequiredForHostFuncti
 }
 
 template <typename GfxFamily>
-bool HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(bool dcFlushRequiredPlatform) {
-    return dcFlushRequiredPlatform && isMemorySynchronizationRequiredForHostFunction();
+bool HostFunctionHelper<GfxFamily>::usePipeControlForHostFunction(bool memorySynchronizationRequired, bool dcFlushPlatform) {
+    return dcFlushPlatform && memorySynchronizationRequired;
+}
+
+template <typename GfxFamily>
+bool HostFunctionHelper<GfxFamily>::useMemoryFenceForHostFunction(bool memorySynchronizationRequired, bool dcFlushPlatform) {
+    return !dcFlushPlatform && memorySynchronizationRequired;
+}
+
+template <typename GfxFamily>
+size_t HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(bool memorySynchronizationRequired, bool dcFlushPlatform) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    bool usePipeControl = usePipeControlForHostFunction(memorySynchronizationRequired, dcFlushPlatform);
+    bool isMemoryFenceRequired = useMemoryFenceForHostFunction(memorySynchronizationRequired, dcFlushPlatform);
+
+    if (usePipeControl) {
+        return sizeof(PIPE_CONTROL);
+    }
+
+    if constexpr (requires { typename GfxFamily::MI_MEM_FENCE; }) {
+        using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
+
+        if (isMemoryFenceRequired) {
+            return sizeof(MI_MEM_FENCE) + sizeof(MI_STORE_DATA_IMM);
+        }
+    }
+
+    return sizeof(MI_STORE_DATA_IMM);
 }
 
 } // namespace NEO

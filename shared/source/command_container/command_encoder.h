@@ -749,14 +749,6 @@ struct EncodeStoreMemory {
                                     bool storeQword,
                                     bool workloadPartitionOffset);
 
-    static void programStoreDataImmCommand(LinearStream *commandStream,
-                                           MI_STORE_DATA_IMM *cmdBuffer,
-                                           uint64_t gpuAddress,
-                                           uint32_t dataDword0,
-                                           uint32_t dataDword1,
-                                           bool storeQword,
-                                           bool workloadPartitionOffset);
-
     static constexpr size_t getStoreDataImmSize() {
         return sizeof(MI_STORE_DATA_IMM);
     }

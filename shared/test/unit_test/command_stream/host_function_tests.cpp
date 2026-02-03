@@ -124,11 +124,15 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
+    constexpr bool hasMemFence = requires { typename FamilyType::MI_MEM_FENCE; };
     auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
     auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
 
-    for (bool isMemorySynchronizationRequired : ::testing::Bool()) {
+    for (int32_t memorySynchronizationRequired : {0, 1}) {
         for (auto nPartitions : {1u, 2u}) {
+
+            DebugManagerStateRestore restorer;
+            debugManager.flags.UseMemorySynchronizationForHostFunction.set(memorySynchronizationRequired);
 
             MockGraphicsAllocation allocation;
             std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
@@ -158,12 +162,15 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
 
             LinearStream commandStream(buff, size);
 
-            if (dcFlushRequired && isMemorySynchronizationRequired) {
-                auto pcBuffer1 = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-                HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, pcBuffer1, *hostFunctionStreamer.get(), std::move(hostFunction), isMemorySynchronizationRequired);
+            if (dcFlushRequired && memorySynchronizationRequired) {
+                auto *programHostFunctionIdCmdBuffer = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+                HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, programHostFunctionIdCmdBuffer, *hostFunctionStreamer.get(), std::move(hostFunction), memorySynchronizationRequired);
             } else {
-                auto miStoreDataImmBuffer1 = commandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
-                HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, miStoreDataImmBuffer1, *hostFunctionStreamer.get(), std::move(hostFunction), isMemorySynchronizationRequired);
+
+                size_t cmdSize = HostFunctionHelper<FamilyType>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, dcFlushRequired);
+                void *programHostFunctionIdCmdBuffer = commandStream.getSpace(cmdSize);
+
+                HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, programHostFunctionIdCmdBuffer, *hostFunctionStreamer.get(), std::move(hostFunction), memorySynchronizationRequired);
             }
 
             for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -180,7 +187,7 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
             // program host function id
             auto expectedHostFunctionId = 1u;
 
-            if (dcFlushRequired && isMemorySynchronizationRequired) {
+            if (dcFlushRequired && memorySynchronizationRequired) {
                 auto pipeControls = findAll<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
                 EXPECT_EQ(1u, pipeControls.size());
 
@@ -195,6 +202,18 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                 }
 
             } else {
+
+                if (memorySynchronizationRequired) {
+                    if constexpr (hasMemFence) {
+                        using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+                        auto memFences = findAll<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+                        EXPECT_EQ(1u, memFences.size());
+                        auto memFence = genCmdCast<MI_MEM_FENCE *>(*memFences[0]);
+                        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, memFence->getFenceType());
+                    }
+                }
+
                 auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
                 EXPECT_EQ(1u, miStores.size());
 
@@ -582,18 +601,56 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
 }
 
 HWTEST_F(HostFunctionTests, whenUsePipeControlForHostFunctionIsCalledThenResultIsCorrect) {
-    DebugManagerStateRestore restorer;
 
+    bool memorySynchronizationRequired = true;
     for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
         bool expected = dcFlushRequiredPlatform;
-        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(dcFlushRequiredPlatform);
+        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(memorySynchronizationRequired, dcFlushRequiredPlatform);
         EXPECT_EQ(expected, result);
     }
 
-    debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
+    memorySynchronizationRequired = false;
     for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
         bool expected = false;
-        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(dcFlushRequiredPlatform);
+        bool result = HostFunctionHelper<FamilyType>::usePipeControlForHostFunction(memorySynchronizationRequired, dcFlushRequiredPlatform);
+        EXPECT_EQ(expected, result);
+    }
+}
+
+HWTEST_F(HostFunctionTests, whenUseMemoryFenceForHostFunctionIsCalledThenResultIsCorrect) {
+
+    bool memorySynchronizationRequired = true;
+    for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
+        bool expected = !dcFlushRequiredPlatform;
+        bool result = HostFunctionHelper<FamilyType>::useMemoryFenceForHostFunction(memorySynchronizationRequired, dcFlushRequiredPlatform);
+        EXPECT_EQ(expected, result);
+    }
+
+    memorySynchronizationRequired = false;
+    for (auto dcFlushRequiredPlatform : ::testing::Bool()) {
+        bool expected = false;
+        bool result = HostFunctionHelper<FamilyType>::useMemoryFenceForHostFunction(memorySynchronizationRequired, dcFlushRequiredPlatform);
+        EXPECT_EQ(expected, result);
+    }
+}
+
+HWTEST_F(HostFunctionTests, whenIsMemorySynchronizationRequiredForHostFunctionIsCalledThenResultIsCorrect) {
+    DebugManagerStateRestore restorer;
+
+    struct TestParam {
+        int32_t debugKey;
+        bool expected;
+    };
+
+    TestParam testParams[] = {
+        {-1, true},
+        {0, false},
+        {1, true}};
+
+    for (auto &[debugKey, expected] : testParams) {
+        debugManager.flags.UseMemorySynchronizationForHostFunction.set(debugKey);
+
+        bool result = HostFunctionHelper<FamilyType>::isMemorySynchronizationRequired();
         EXPECT_EQ(expected, result);
     }
 }
