@@ -74,9 +74,6 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_PTL);
-HWTEST_EXCLUDE_PRODUCT(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_NVL_XE3G);
-
 void ProgramTests::SetUp() {
     ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
@@ -1998,7 +1995,11 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInterna
 HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=4"));
+    if (pClDevice->getProductHelper().getL1CachePolicy(false) == 0) {
+        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=4"));
+    } else {
+        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
+    }
 }
 
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {

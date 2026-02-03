@@ -307,3 +307,8 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
 CRITEST_F(CriProductHelper, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenFourIsReturned) {
     EXPECT_EQ(4u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
+
+CRITEST_F(CriProductHelper, givenAtLeastXe3pCoreWhenGetL1CachePolicyThenReturnWB) {
+    EXPECT_EQ(productHelper->getL1CachePolicy(false), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB);
+    EXPECT_EQ(productHelper->getL1CachePolicy(true), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+}
