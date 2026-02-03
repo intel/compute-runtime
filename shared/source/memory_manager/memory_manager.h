@@ -255,6 +255,7 @@ class MemoryManager {
 
     const EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) const { return allRegisteredEngines[rootDeviceIndex]; }
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }
+    const EngineControlContainer &getPrimaryEngines(uint32_t rootDeviceIndex) const { return primaryEngines[rootDeviceIndex]; }
     const EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
 
@@ -428,6 +429,7 @@ class MemoryManager {
     bool supportsMultiStorageResources = true;
     ExecutionEnvironment &executionEnvironment;
     MultiDeviceEngineControlContainer allRegisteredEngines;
+    MultiDeviceEngineControlContainer primaryEngines;
     MultiDeviceEngineControlContainer secondaryEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     std::unique_ptr<AllocationsList> temporaryAllocations;

@@ -532,7 +532,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Lo
 DECLARE_DEBUG_VARIABLE(bool, EnablePrivateBO, false, "Enable PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE extension creating VM_PRIVATE BOs")
 DECLARE_DEBUG_VARIABLE(bool, EnableAIL, true, "Enables AIL")
 DECLARE_DEBUG_VARIABLE(bool, EnableReservingInSvmRange, true, "Enables reserving virtual memory in the SVM range")
-DECLARE_DEBUG_VARIABLE(bool, EnableDeferBacking, false, "Enables defer backing on xe kmd")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDeferBacking, -1, "Enables defer backing on xe kmd, -1:default(enabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(bool, DisableProgrammableMetricsSupport, false, "Disable Programmable Metrics support")
 DECLARE_DEBUG_VARIABLE(bool, Enable512NumGrfs, true, "Enable support for 512 of GRFs per thread")
 DECLARE_DEBUG_VARIABLE(bool, WddmUseHw64bToken, true, "Set UseHw64bToken on context and native fence creation")

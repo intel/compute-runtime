@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::localMemorySupported;
     using BaseClass::mapPhysicalDeviceMemoryToVirtualMemory;
     using BaseClass::mapPhysicalHostMemoryToVirtualMemory;
+    using BaseClass::primaryEngines;
     using BaseClass::supportsMultiStorageResources;
     using BaseClass::unMapPhysicalDeviceMemoryFromVirtualMemory;
     using BaseClass::unMapPhysicalHostMemoryFromVirtualMemory;

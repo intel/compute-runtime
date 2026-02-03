@@ -59,6 +59,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     checkIsaPlacementOnceFlags = std::make_unique<std::once_flag[]>(rootEnvCount);
     isaInLocalMemory.resize(rootEnvCount);
     allRegisteredEngines.resize(rootEnvCount + 1);
+    primaryEngines.resize(rootEnvCount + 1);
     secondaryEngines.resize(rootEnvCount + 1);
     localMemAllocsSize = std::make_unique<std::atomic<size_t>[]>(rootEnvCount);
     sysMemAllocsSize.store(0u);
@@ -163,6 +164,7 @@ MemoryManager::~MemoryManager() {
         engineContainer.clear();
     }
     allRegisteredEngines.clear();
+    primaryEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
     }
@@ -496,6 +498,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
     allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
+    primaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
 }
