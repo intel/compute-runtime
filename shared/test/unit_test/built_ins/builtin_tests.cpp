@@ -245,3 +245,31 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeWhenGettingResourceNamesThenReturnRe
         EXPECT_EQ(expectedForRelease, resourceNames[0]);
     }
 }
+
+TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingWideStatelessBuiltinsThenReturnForReleaseAndGenericResourceNames) {
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
+
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferWideStateless, BuiltinCode::ECodeType::intermediate, *pDevice);
+
+    std::string expectedResourceNameGeneric = "wide_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.spv";
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
+
+    EXPECT_EQ(2u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
+    EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
+}
+
+TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingWideStatelessBuiltinsThenReturnForReleaseAndGenericResourceNames) {
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
+
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferWideStateless, BuiltinCode::ECodeType::source, *pDevice);
+
+    std::string expectedResourceNameGeneric = "copy_buffer_to_buffer_stateless.builtin_kernel.cl";
+    std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
+
+    EXPECT_EQ(2u, resourceNames.size());
+    EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
+    EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
+}

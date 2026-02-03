@@ -116,10 +116,10 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto extension = BuiltinCode::getExtension(type);
 
     std::string_view addressingModePrefix;
+    const bool builtInUsesWideStatelessAddressing = EBuiltInOps::isWideStateless(builtin);
     if (type == BuiltinCode::ECodeType::binary) {
         const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
-        const bool builtInUsesWideStatelessAddressing = EBuiltInOps::isWideStateless(builtin);
         const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin) || builtInUsesWideStatelessAddressing;
         if (heaplessEnabled) {
             addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_heapless_" : "stateless_heapless_";
@@ -130,6 +130,8 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         } else {
             addressingModePrefix = "bindful_";
         }
+    } else if (type == BuiltinCode::ECodeType::intermediate && builtInUsesWideStatelessAddressing) {
+        addressingModePrefix = "wide_stateless_";
     }
 
     auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilename, std::string_view extension) {

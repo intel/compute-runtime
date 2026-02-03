@@ -21,6 +21,12 @@ list(APPEND ADDRESSING_MODES
      ${STATELESS_ADDRESSING_MODES}
 )
 
+list(APPEND SPIRV_ADDRESSING_MODES
+     "stateful"
+     "stateless"
+     "wide_stateless"
+)
+
 set(GENERATED_BUILTINS
     "copy_buffer_rect"
     "copy_buffer_to_buffer"
