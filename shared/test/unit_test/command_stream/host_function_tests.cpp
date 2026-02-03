@@ -5,11 +5,11 @@
  *
  */
 
-#include "shared/source/command_stream/host_function.h"
-#include "shared/source/command_stream/host_function_allocator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/host_function/host_function.h"
+#include "shared/source/host_function/host_function_allocator.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"

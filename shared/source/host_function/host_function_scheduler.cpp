@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/host_function_scheduler.h"
+#include "shared/source/host_function/host_function_scheduler.h"
 
-#include "shared/source/command_stream/host_function.h"
+#include "shared/source/host_function/host_function.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/wait_util.h"
 

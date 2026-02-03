@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "shared/source/command_stream/host_function_allocator.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/host_function/host_function_allocator.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include <cstring>

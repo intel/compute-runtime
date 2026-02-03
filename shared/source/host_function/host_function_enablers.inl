@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/host_function.h"
+#include "shared/source/host_function/host_function.h"
 
 namespace NEO {
 

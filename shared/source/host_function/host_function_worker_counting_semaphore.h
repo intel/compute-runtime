@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/command_stream/host_function_worker_interface.h"
+#include "shared/source/host_function/host_function_worker_interface.h"
 
 #include <mutex>
 #include <semaphore>

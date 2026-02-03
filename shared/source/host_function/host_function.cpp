@@ -5,14 +5,14 @@
  *
  */
 
-#include "shared/source/command_stream/host_function.h"
+#include "shared/source/host_function/host_function.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/host_function_interface.h"
-#include "shared/source/command_stream/host_function_scheduler.h"
-#include "shared/source/command_stream/host_function_worker_counting_semaphore.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/host_function/host_function_interface.h"
+#include "shared/source/host_function/host_function_scheduler.h"
+#include "shared/source/host_function/host_function_worker_counting_semaphore.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {

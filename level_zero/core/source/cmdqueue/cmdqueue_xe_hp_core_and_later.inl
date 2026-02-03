@@ -7,13 +7,13 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/command_stream/host_function.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/host_function/host_function.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"

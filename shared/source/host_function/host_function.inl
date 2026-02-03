@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_stream/host_function.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/host_function/host_function.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 namespace NEO {

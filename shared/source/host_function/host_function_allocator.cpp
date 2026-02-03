@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/command_stream/host_function_allocator.h"
+#include "shared/source/host_function/host_function_allocator.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
