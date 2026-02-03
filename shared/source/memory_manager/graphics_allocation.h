@@ -208,8 +208,30 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         }
         return registeredContextsNum.load();
     }
-    MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
-    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const;
+    MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
+        if (parentAllocation) {
+            parentAllocation->updateTaskCount(newTaskCount, contextId);
+            return;
+        }
+        OPTIONAL_UNRECOVERABLE_IF(contextId >= usageInfos.size());
+        if (usageInfos[contextId].taskCount == objectNotUsed) {
+            registeredContextsNum++;
+        }
+        if (newTaskCount == objectNotUsed) {
+            registeredContextsNum--;
+        }
+        usageInfos[contextId].taskCount = newTaskCount;
+    }
+    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const {
+        if (parentAllocation) {
+            return parentAllocation->getTaskCount(contextId);
+        }
+        if (contextId >= usageInfos.size()) {
+            return objectNotUsed;
+        }
+        return usageInfos[contextId].taskCount;
+    }
+
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) const {
         if (parentAllocation) {
@@ -227,8 +249,21 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
-    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId);
-    TaskCountType getResidencyTaskCount(uint32_t contextId) const;
+    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
+        if (contextId >= usageInfos.size()) {
+            DEBUG_BREAK_IF(true);
+            return;
+        }
+        if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
+            usageInfos[contextId].residencyTaskCount = newTaskCount;
+        }
+    }
+    TaskCountType getResidencyTaskCount(uint32_t contextId) const {
+        if (contextId >= usageInfos.size()) {
+            return objectNotResident;
+        }
+        return usageInfos[contextId].residencyTaskCount;
+    }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
     bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 

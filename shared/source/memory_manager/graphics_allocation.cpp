@@ -81,48 +81,6 @@ GraphicsAllocation *GraphicsAllocation::createView(size_t offsetInParentAllocati
 
 GraphicsAllocation::~GraphicsAllocation() = default;
 
-void GraphicsAllocation::updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
-    if (parentAllocation) {
-        parentAllocation->updateTaskCount(newTaskCount, contextId);
-        return;
-    }
-    OPTIONAL_UNRECOVERABLE_IF(contextId >= usageInfos.size());
-    if (usageInfos[contextId].taskCount == objectNotUsed) {
-        registeredContextsNum++;
-    }
-    if (newTaskCount == objectNotUsed) {
-        registeredContextsNum--;
-    }
-    usageInfos[contextId].taskCount = newTaskCount;
-}
-
-TaskCountType GraphicsAllocation::getTaskCount(uint32_t contextId) const {
-    if (parentAllocation) {
-        return parentAllocation->getTaskCount(contextId);
-    }
-    if (contextId >= usageInfos.size()) {
-        return objectNotUsed;
-    }
-    return usageInfos[contextId].taskCount;
-}
-
-void GraphicsAllocation::updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
-    if (contextId >= usageInfos.size()) {
-        DEBUG_BREAK_IF(true);
-        return;
-    }
-    if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
-        usageInfos[contextId].residencyTaskCount = newTaskCount;
-    }
-}
-
-TaskCountType GraphicsAllocation::getResidencyTaskCount(uint32_t contextId) const {
-    if (contextId >= usageInfos.size()) {
-        return objectNotResident;
-    }
-    return usageInfos[contextId].residencyTaskCount;
-}
-
 std::string GraphicsAllocation::getAllocationInfoString() const {
     return "";
 }
