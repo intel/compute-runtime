@@ -27,6 +27,15 @@ static EnableGfxProductHw<IGFX_PTL> enableGfxProductHwPTL;
 #endif
 
 #ifdef SUPPORT_NVLS
+template <>
+uint32_t L1CachePolicyHelper<IGFX_NVL_XE3G>::getDefaultL1CachePolicy(bool isDebuggerActive) {
+    using GfxFamily = HwMapper<IGFX_NVL_XE3G>::GfxFamily;
+    if (isDebuggerActive) {
+        return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
+    }
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
+}
+
 template struct L1CachePolicyHelper<IGFX_NVL_XE3G>;
 static EnableGfxProductHw<IGFX_NVL_XE3G> enableGfxProductHwNVLS;
 #endif

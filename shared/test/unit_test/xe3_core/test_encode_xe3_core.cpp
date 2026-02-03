@@ -592,7 +592,7 @@ XE3_CORETEST_F(Xe3SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgram
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(pDevice->getHardwareInfo().platform.eProductFamily == IGFX_PTL ? 2 : 0, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2, sbaCmd.getL1CacheControlCachePolicy());
 }
 
 XE3_CORETEST_F(Xe3SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {

@@ -91,3 +91,8 @@ XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenCheckingIsUsmReuseSup
         EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }
+
+XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass) {
+    EXPECT_EQ(2u, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(0u, productHelper->getL1CachePolicy(true));
+}
