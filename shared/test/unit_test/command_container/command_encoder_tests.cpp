@@ -1143,3 +1143,96 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenAggregatedEventUsageCounte
     inOrderExecInfo->addAggregatedEventUsageCounter(7);
     EXPECT_EQ(7u, inOrderExecInfo->getAggregatedEventUsageCounter());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalseWithCorrectWalkOrder) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    uint32_t workDim = 2;
+    uint32_t simd = 8;
+
+    struct WalkOrderTestCase {
+        size_t lws[3];
+        std::optional<std::array<uint8_t, 3>> inputWalkOrder;
+        std::optional<uint32_t> expectedWalkOrder;
+    } testCases[12] = {
+        {{15, 16, 1}, {{1, 0, 2}}, 4u}, // WalkOrder: (2, 0, 1)
+        {{15, 16, 1}, std::nullopt, 4u},
+        {{16, 16, 1}, {{1, 0, 2}}, 2u},  // WalkOrder: (1, 0, 2)
+        {{16, 16, 1}, std::nullopt, 0u}, // WalkOrder: (0, 1, 2)
+        {{16, 15, 1}, std::nullopt, 1u}, // WalkOrder: (0, 2, 1)
+        {{16, 15, 1}, {{0, 1, 2}}, 1u},
+
+        // Inactive channel (Z) is set - runtime generation required
+        {{16, 15, 15}, {{0, 1, 2}}, std::nullopt},
+        {{16, 15, 15}, std::nullopt, std::nullopt},
+
+        // Invalid cases - runtime generation required
+        {{15, 16, 1}, {{0, 1, 2}}, std::nullopt},
+        {{16, 15, 1}, {{1, 0, 2}}, std::nullopt},
+        {{15, 15, 1}, {{0, 1, 2}}, std::nullopt},
+        {{15, 15, 1}, std::nullopt, std::nullopt},
+    };
+
+    for (auto &testCase : testCases) {
+        uint32_t requiredWalkOrder = 6u;
+        auto &lws = testCase.lws;
+        std::array<uint8_t, 3> walkOrder = testCase.inputWalkOrder.value_or(std::array<uint8_t, 3>{{0, 1, 2}});
+        auto requireInputWalkOrder = testCase.inputWalkOrder.has_value();
+        auto isRuntimeGenerationRequired = !testCase.expectedWalkOrder.has_value();
+        EXPECT_EQ(isRuntimeGenerationRequired,
+                  EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+                      workDim, lws, walkOrder, requireInputWalkOrder, requiredWalkOrder, simd));
+
+        if (!isRuntimeGenerationRequired) {
+            EXPECT_EQ(testCase.expectedWalkOrder.value(), requiredWalkOrder);
+        }
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnFalseAndProperWalkOrder) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    uint32_t workDim = 3;
+    uint32_t simd = 8;
+    size_t lws[3] = {16, 16, 2};
+    std::array<uint8_t, 3> walkOrder = {{2, 1, 0}};
+    uint32_t requiredWalkOrder = 77u;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(5u, requiredWalkOrder);
+
+    walkOrder = {2, 0, 1};
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(3u, requiredWalkOrder);
+
+    walkOrder = {1, 2, 0};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(4u, requiredWalkOrder);
+
+    walkOrder = {1, 0, 2};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(2u, requiredWalkOrder);
+
+    walkOrder = {0, 2, 1};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(1u, requiredWalkOrder);
+
+    walkOrder = {0, 1, 2};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(0u, requiredWalkOrder);
+
+    // incorrect walkOrder returns 6
+    walkOrder = {2, 2, 0};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+    EXPECT_EQ(6u, requiredWalkOrder);
+}

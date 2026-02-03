@@ -1714,17 +1714,6 @@ HWTEST2_F(NonDefaultPlatformGpuWalkerTest, givenNonDefaultPlatformWhenSetupTimes
     GpgpuWalkerHelper<FamilyType>::setupTimestampPacket(&cmdStream, walker, static_cast<TagNodeBase *>(&timestamp), *rootDeviceEnvironment);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDefaultLocalIdsGenerationWhenPassingFittingParametersThenReturnFalse) {
-    uint32_t workDim = 1;
-    uint32_t simd = 8;
-    size_t lws[3] = {16, 1, 1};
-    std::array<uint8_t, 3> walkOrder = {};
-    uint32_t requiredWalkOrder = 0u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingOneDimParametersThenReturnFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
@@ -1737,12 +1726,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
+    EXPECT_EQ(4u, requiredWalkOrder);
 
     lws[0] = 15;
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
+    EXPECT_EQ(4u, requiredWalkOrder);
+
+    lws[1] = 15;
+    lws[2] = 15;
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalse) {
@@ -1756,11 +1750,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
     uint32_t requiredWalkOrder = 77u;
 
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(2u, requiredWalkOrder);
-
-    lws[0] = 15;
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
     EXPECT_EQ(2u, requiredWalkOrder);
 }
 
@@ -1802,11 +1791,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenLocalWorkgroupSizeGreaterT
 
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-    workDim = 2;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatDoesntNeedToBeFollowedWhenIncompatibleDimSizesArePassedThenRuntimeGenerationIsReuqired) {
@@ -1842,34 +1826,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatDoesntNeedToB
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
     EXPECT_EQ(4u, requiredWalkOrder);
-
-    workDim = 2;
-    lws = {17, 2, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(2u, requiredWalkOrder);
-
-    lws = {2, 17, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    lws = {2, 4, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    workDim = 1;
-    lws = {17, 2, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    workDim = 1;
-    lws = {2, 17, 17};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDisabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnTrue) {
@@ -1885,53 +1841,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDisabledLocalIdsGeneration
 
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnFalseAndProperWalkOrder) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    uint32_t workDim = 3;
-    uint32_t simd = 8;
-    size_t lws[3] = {16, 16, 2};
-    std::array<uint8_t, 3> walkOrder = {{2, 1, 0}};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(5u, requiredWalkOrder);
-
-    walkOrder = {2, 0, 1};
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(3u, requiredWalkOrder);
-
-    walkOrder = {1, 2, 0};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(4u, requiredWalkOrder);
-
-    walkOrder = {1, 0, 2};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(2u, requiredWalkOrder);
-
-    walkOrder = {0, 2, 1};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(1u, requiredWalkOrder);
-
-    walkOrder = {0, 1, 2};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(0u, requiredWalkOrder);
-
-    // incorrect walkOrder returns 6
-    walkOrder = {2, 2, 0};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(6u, requiredWalkOrder);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingInvalidLwsTwoDimParametersThenReturnTrue) {

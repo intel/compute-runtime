@@ -354,7 +354,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariableDispatch(false, true, false, false);
     this->kernelDispatch->kernelData->numLocalIdChannels = 1;
 
-    uint32_t groupSizeValues[3] = {4, 4, 4};
+    uint32_t groupSizeValues[3] = {4, 1, 1};
     const void *argValue = &groupSizeValues;
 
     Variable *groupSize = getVariable(L0::MCL::VariableType::groupSize);
