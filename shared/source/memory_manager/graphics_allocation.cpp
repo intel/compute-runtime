@@ -107,10 +107,6 @@ TaskCountType GraphicsAllocation::getTaskCount(uint32_t contextId) const {
 }
 
 void GraphicsAllocation::updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
-    if (parentAllocation) {
-        parentAllocation->updateResidencyTaskCount(newTaskCount, contextId);
-        return;
-    }
     if (contextId >= usageInfos.size()) {
         DEBUG_BREAK_IF(true);
         return;
@@ -121,8 +117,8 @@ void GraphicsAllocation::updateResidencyTaskCount(TaskCountType newTaskCount, ui
 }
 
 TaskCountType GraphicsAllocation::getResidencyTaskCount(uint32_t contextId) const {
-    if (parentAllocation) {
-        return parentAllocation->getResidencyTaskCount(contextId);
+    if (contextId >= usageInfos.size()) {
+        return objectNotResident;
     }
     return usageInfos[contextId].residencyTaskCount;
 }

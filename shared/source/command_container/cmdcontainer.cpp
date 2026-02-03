@@ -170,15 +170,6 @@ void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
     if (alloc == nullptr) {
         return;
     }
-
-    if (alloc->isView()) {
-        auto parentAllocation = alloc->getParentAllocation();
-        auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
-        if (poolAllocator.isPoolBuffer(parentAllocation)) {
-            alloc = parentAllocation;
-        }
-    }
-
     this->residencyContainer.push_back(alloc);
 }
 
@@ -621,6 +612,7 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
         if (allocation->getParentAllocation() &&
             poolAllocator.isPoolBuffer(allocation->getParentAllocation())) {
             DEBUG_BREAK_IF(!allocation->isView());
+            std::erase(residencyContainer, allocation);
             poolAllocator.freeCommandBuffer(allocation);
         } else {
             this->immediateReusableAllocationList->pushTailOne(*allocation);

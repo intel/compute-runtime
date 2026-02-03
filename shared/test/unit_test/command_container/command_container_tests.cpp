@@ -647,11 +647,7 @@ TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationI
     EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[1], cmdContainer->getCommandStream()->getGraphicsAllocation());
 
     auto secondAllocation = cmdContainer->getCmdBufferAllocations()[1];
-    if (secondAllocation->isView()) {
-        EXPECT_EQ(secondAllocation->getParentAllocation(), cmdContainer->getResidencyContainer().back());
-    } else {
-        EXPECT_EQ(secondAllocation, cmdContainer->getResidencyContainer().back());
-    }
+    EXPECT_EQ(secondAllocation, cmdContainer->getResidencyContainer().back());
 }
 
 TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAreFreedAndStreamIsReplacedWithInitialBuffer) {
@@ -865,13 +861,10 @@ TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResetti
     EXPECT_EQ(firstCmdBufferAllocation, aferResetCmdBufferAllocation);
     EXPECT_EQ(firstCmdBufferCpuPointer, afterResetCmdBufferCpuPointer);
 
-    auto expectedInResidency = firstCmdBufferAllocation->isView()
-                                   ? firstCmdBufferAllocation->getParentAllocation()
-                                   : firstCmdBufferAllocation;
     bool firstAllocationFound = false;
     auto &residencyContainer = cmdContainer->getResidencyContainer();
     for (auto *allocation : residencyContainer) {
-        if (allocation == expectedInResidency) {
+        if (allocation == firstCmdBufferAllocation) {
             firstAllocationFound = true;
             break;
         }
@@ -2124,7 +2117,7 @@ TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenAllocatingCommandBuffe
     EXPECT_TRUE(poolAllocator.isPoolBuffer(cmdBufferAllocation->getParentAllocation()));
 }
 
-TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenCommandBufferAddedToResidencyThenParentAllocationIsInResidencyContainer) {
+TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenCommandBufferAddedToResidencyThenViewIsInResidencyContainer) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
 
@@ -2140,11 +2133,11 @@ TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenCommandBufferAddedToRe
     auto parentAllocation = cmdBufferAllocation->getParentAllocation();
     auto &residencyContainer = cmdContainer->getResidencyContainer();
 
-    bool parentFoundInResidency = std::find(residencyContainer.begin(), residencyContainer.end(), parentAllocation) != residencyContainer.end();
-    EXPECT_TRUE(parentFoundInResidency);
-
     bool viewFoundInResidency = std::find(residencyContainer.begin(), residencyContainer.end(), cmdBufferAllocation) != residencyContainer.end();
-    EXPECT_FALSE(viewFoundInResidency);
+    EXPECT_TRUE(viewFoundInResidency);
+
+    bool parentFoundInResidency = std::find(residencyContainer.begin(), residencyContainer.end(), parentAllocation) != residencyContainer.end();
+    EXPECT_FALSE(parentFoundInResidency);
 }
 
 TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenContainerIsResetThenPoolBuffersAreFreedToPoolNotToReusableList) {
@@ -2185,8 +2178,16 @@ HWTEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenAddCurrentCommandBuf
     ASSERT_EQ(1u, cmdBufferAllocations.size());
     ASSERT_TRUE(cmdBufferAllocations[0]->isView());
 
+    auto viewAllocation = cmdBufferAllocations[0];
+    auto &residencyContainer = cmdContainer->getResidencyContainer();
+    bool viewInResidencyBefore = std::find(residencyContainer.begin(), residencyContainer.end(), viewAllocation) != residencyContainer.end();
+    EXPECT_TRUE(viewInResidencyBefore);
+
     cmdContainer->addCurrentCommandBufferToReusableAllocationList();
 
     EXPECT_EQ(0u, cmdBufferAllocations.size());
     EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    bool viewInResidencyAfter = std::find(residencyContainer.begin(), residencyContainer.end(), viewAllocation) != residencyContainer.end();
+    EXPECT_FALSE(viewInResidencyAfter);
 }

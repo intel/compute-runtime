@@ -81,15 +81,17 @@ TEST_F(GraphicsAllocationViewTest, whenUpdatingTaskCountOnViewThenParentTaskCoun
     EXPECT_EQ(taskCount, view->getTaskCount(contextId));
 }
 
-TEST_F(GraphicsAllocationViewTest, whenUpdatingResidencyTaskCountOnViewThenParentResidencyTaskCountIsUpdated) {
+TEST_F(GraphicsAllocationViewTest, whenUpdatingResidencyTaskCountOnViewThenViewTracksItsOwnResidencyTaskCount) {
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
     const uint32_t contextId = 0u;
-    const TaskCountType residencyTaskCount = 42u;
+    const TaskCountType viewResidencyTaskCount = 42u;
+    const TaskCountType parentResidencyTaskCount = 100u;
 
-    view->updateResidencyTaskCount(residencyTaskCount, contextId);
+    parentAllocation->updateResidencyTaskCount(parentResidencyTaskCount, contextId);
+    view->updateResidencyTaskCount(viewResidencyTaskCount, contextId);
 
-    EXPECT_EQ(residencyTaskCount, parentAllocation->getResidencyTaskCount(contextId));
-    EXPECT_EQ(residencyTaskCount, view->getResidencyTaskCount(contextId));
+    EXPECT_EQ(parentResidencyTaskCount, parentAllocation->getResidencyTaskCount(contextId));
+    EXPECT_EQ(viewResidencyTaskCount, view->getResidencyTaskCount(contextId));
 }
 
 TEST_F(GraphicsAllocationViewTest, whenLockingViewThenParentIsLocked) {
@@ -270,4 +272,9 @@ TEST_F(GraphicsAllocationViewTest, whenCheckingIsUsedByManyOsContextsOnViewThenD
 
     EXPECT_TRUE(parentAllocation->isUsedByManyOsContexts());
     EXPECT_TRUE(view->isUsedByManyOsContexts());
+}
+
+TEST_F(GraphicsAllocationViewTest, givenInvalidContextIdWhenGetResidencyTaskCountThenReturnObjectNotResident) {
+    auto invalidContextId = static_cast<uint32_t>(MemoryManager::maxOsContextCount + 1);
+    EXPECT_EQ(GraphicsAllocation::objectNotResident, parentAllocation->getResidencyTaskCount(invalidContextId));
 }
