@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,17 +19,19 @@ class DeviceCapsReader {
     virtual ~DeviceCapsReader() = default;
     virtual uint32_t operator[](size_t offsetDw) const = 0;
     uint32_t getOffset() const { return offset; }
+    uint32_t getStride() const { return stride; }
 
   protected:
     DeviceCapsReader() = default;
-    DeviceCapsReader(uint32_t offset) : offset(offset) {}
+    DeviceCapsReader(uint32_t offset, uint32_t stride) : offset(offset), stride(stride) {}
     uint32_t offset = 0;
+    uint32_t stride = 0;
 };
 
 class DeviceCapsReaderTbx : public DeviceCapsReader {
   public:
-    static std::unique_ptr<DeviceCapsReaderTbx> create(aub_stream::AubManager &aubManager, uint32_t offset) {
-        return std::unique_ptr<DeviceCapsReaderTbx>(new DeviceCapsReaderTbx(aubManager, offset));
+    static std::unique_ptr<DeviceCapsReaderTbx> create(aub_stream::AubManager &aubManager, uint32_t offset, uint32_t stride) {
+        return std::unique_ptr<DeviceCapsReaderTbx>(new DeviceCapsReaderTbx(aubManager, offset, stride));
     }
 
     uint32_t operator[](size_t offsetDw) const override {
@@ -37,7 +39,7 @@ class DeviceCapsReaderTbx : public DeviceCapsReader {
     }
 
   protected:
-    DeviceCapsReaderTbx(aub_stream::AubManager &aubManager, uint32_t offset) : DeviceCapsReader(offset), aubManager(aubManager) {}
+    DeviceCapsReaderTbx(aub_stream::AubManager &aubManager, uint32_t offset, uint32_t stride) : DeviceCapsReader(offset, stride), aubManager(aubManager) {}
     aub_stream::AubManager &aubManager;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 TEST(DeviceCapsReaderTbxTest, givenTbxReaderWhenCreateIsCalledThenAReaderIsReturned) {
     auto aubManager = std::make_unique<MockAubManager>();
 
-    auto capsReader = DeviceCapsReaderTbx::create(*aubManager, 0);
+    auto capsReader = DeviceCapsReaderTbx::create(*aubManager, 0, 0);
     EXPECT_NE(nullptr, capsReader);
 }
 
@@ -27,7 +27,7 @@ TEST(DeviceCapsReaderTbxTest, givenTbxReaderWhenIndexOperatorIsUsedThenReadMMIO)
 
     MyMockAubManager aubManager;
 
-    auto capsReader = DeviceCapsReaderTbx::create(aubManager, 0);
+    auto capsReader = DeviceCapsReaderTbx::create(aubManager, 0, 0);
     EXPECT_NE(nullptr, capsReader);
 
     auto val = (*capsReader)[0];
@@ -38,9 +38,20 @@ TEST(DeviceCapsReaderTbxTest, givenTbxReaderWhenGettingOffsetThenOffsetIsReturne
     const auto offset = 123u;
     auto aubManager = std::make_unique<MockAubManager>();
 
-    auto capsReader = DeviceCapsReaderTbx::create(*aubManager, offset);
+    auto capsReader = DeviceCapsReaderTbx::create(*aubManager, offset, 0);
     EXPECT_NE(nullptr, capsReader);
 
     auto val = capsReader->getOffset();
     EXPECT_EQ(offset, val);
+}
+
+TEST(DeviceCapsReaderTbxTest, givenTbxReaderWhenGettingStrideThenStrideIsReturned) {
+    const auto stride = 123u;
+    auto aubManager = std::make_unique<MockAubManager>();
+
+    auto capsReader = DeviceCapsReaderTbx::create(*aubManager, 0, stride);
+    EXPECT_NE(nullptr, capsReader);
+
+    auto val = capsReader->getStride();
+    EXPECT_EQ(stride, val);
 }
