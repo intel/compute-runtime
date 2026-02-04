@@ -15,6 +15,16 @@
 #include <mutex>
 #include <unordered_map>
 
+#if defined(_WIN32)
+#if !defined(NEO_HOST_FUNCTION_CALLBACK)
+#define NEO_HOST_FUNCTION_CALLBACK __stdcall
+#endif
+#else
+#if !defined(NEO_HOST_FUNCTION_CALLBACK)
+#define NEO_HOST_FUNCTION_CALLBACK
+#endif
+#endif
+
 namespace NEO {
 
 class LinearStream;
@@ -29,7 +39,7 @@ struct HostFunction {
 
     void invoke() const {
 
-        using CallbackT = void (*)(void *);
+        using CallbackT = void(NEO_HOST_FUNCTION_CALLBACK *)(void *);
         CallbackT callback = reinterpret_cast<CallbackT>(hostFunctionAddress);
         void *callbackData = reinterpret_cast<void *>(userDataAddress);
 

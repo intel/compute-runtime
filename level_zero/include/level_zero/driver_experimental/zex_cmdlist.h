@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,16 @@
 
 #if defined(__cplusplus)
 extern "C" {
+#endif
+
+#if defined(_WIN32)
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK __stdcall
+#endif
+#else
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK
+#endif
 #endif
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -42,15 +52,17 @@ zexCommandListAppendWriteToMemory(
     void *ptr,
     uint64_t data);
 
+typedef void(ZE_CALLBACK *ze_host_function_callback_t)(void *pUserData);
+
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendHostFunction(
-    ze_command_list_handle_t hCommandList,
-    void *pHostFunction,
-    void *pUserData,
-    void *pNext,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents);
+    ze_command_list_handle_t hCommandList,     ///< [in] handle of the command list
+    ze_host_function_callback_t pHostFunction, ///< [in] host function to call
+    void *pUserData,                           ///< [in] user specific data that would be passed to function
+    void *pNext,                               ///< [in][optional] extensions
+    ze_event_handle_t hSignalEvent,            ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                    ///< [in][optional] number of events to wait on before launching
+    ze_event_handle_t *phWaitEvents);          ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListAppendMemoryCopyWithParameters(

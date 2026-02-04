@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/ze_api.h"
 
 #include <memory>
@@ -1011,7 +1012,7 @@ struct Closure<CaptureApi::zeCommandListAppendHostFunction> {
 
     struct ApiArgs {
         ze_command_list_handle_t hCommandList;
-        void *pHostFunction;
+        ze_host_function_callback_t pHostFunction;
         void *pUserData;
         void *pNext;
         ze_event_handle_t hSignalEvent;

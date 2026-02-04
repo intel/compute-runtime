@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ struct FunctionData {
     size_t nElements;
 };
 
-extern "C" void ZE_APICALL hostFunction1(void *pUserData) {
+extern "C" void ZE_CALLBACK hostFunction1(void *pUserData) {
     auto *data = static_cast<FunctionData *>(pUserData);
 
     for (auto i = 0u; i < data->nElements; ++i) {
@@ -22,7 +22,7 @@ extern "C" void ZE_APICALL hostFunction1(void *pUserData) {
     }
 }
 
-extern "C" void ZE_APICALL hostFunction2(void *pUserData) {
+extern "C" void ZE_CALLBACK hostFunction2(void *pUserData) {
     auto *data = static_cast<FunctionData *>(pUserData);
 
     for (auto i = 0u; i < data->nElements; ++i) {
@@ -77,8 +77,8 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
     callbackData.array = static_cast<uint16_t *>(hostBuffer);
     callbackData.nElements = numElements;
 
-    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction1), static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction2), static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, hostFunction1, static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, hostFunction2, static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer, hostBuffer, bufferSize, events[4], 1, &events[3]));
 
     void *resultHostBuffer = nullptr;

@@ -204,7 +204,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendHostFunction(
-        void *pHostFunction,
+        ze_host_function_callback_t pHostFunction,
         void *pUserData,
         void *pNext,
         ze_event_handle_t hSignalEvent,

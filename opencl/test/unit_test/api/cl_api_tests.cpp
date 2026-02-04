@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "cl_api_tests.h"
 
+#include "shared/source/host_function/host_function.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -16,6 +17,10 @@
 
 namespace NEO {
 class Program;
+
+static_assert(std::is_same_v<
+              void(CL_CALLBACK *)(void *),
+              void(NEO_HOST_FUNCTION_CALLBACK *)(void *)>);
 
 void CL_CALLBACK notifyFuncProgram(
     cl_program program,

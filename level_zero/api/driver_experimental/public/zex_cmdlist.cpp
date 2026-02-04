@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ zexCommandListAppendWriteToMemory(
 ze_result_t ZE_APICALL
 zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
-    void *pHostFunction,
+    ze_host_function_callback_t pHostFunction,
     void *pUserData,
     void *pNext,
     ze_event_handle_t hSignalEvent,
@@ -238,7 +238,7 @@ zexCommandListAppendWriteToMemory(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
-    void *pHostFunction,
+    ze_host_function_callback_t pHostFunction,
     void *pUserData,
     void *pNext,
     ze_event_handle_t hSignalEvent,

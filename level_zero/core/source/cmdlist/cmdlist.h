@@ -236,7 +236,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
 
-    virtual ze_result_t appendHostFunction(void *pHostFunction,
+    virtual ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction,
                                            void *pUserData,
                                            void *pNext,
                                            ze_event_handle_t hSignalEvent,
@@ -606,7 +606,7 @@ struct CommandList : _ze_command_list_handle_t {
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
-    virtual void dispatchHostFunction(void *pHostFunction,
+    virtual void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
                                       void *pUserData) = 0;
 
     virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) = 0;

@@ -1044,7 +1044,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteToMemory(v
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendHostFunction(
-    void *pHostFunction,
+    ze_host_function_callback_t pHostFunction,
     void *pUserData,
     void *pNext,
     ze_event_handle_t hSignalEvent,

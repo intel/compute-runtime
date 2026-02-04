@@ -1398,9 +1398,10 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
     uint64_t hostFunctionUserData = 0x12345678;
     CmdListHostFunctionParameters params{};
-    commandList->appendHostFunction(&hostFunctionAddress, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
+    commandList->appendHostFunction(pHostFunction, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
     commandList->close();
 
     auto miStoreSize = sizeof(MI_STORE_DATA_IMM);
@@ -1510,9 +1511,10 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
     uint64_t hostFunctionUserData = 0x12345678;
     CmdListHostFunctionParameters params{};
-    commandList->appendHostFunction(&hostFunctionAddress, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
+    commandList->appendHostFunction(pHostFunction, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, params);
     commandList->close();
 
     auto pcSize = sizeof(PIPE_CONTROL);

@@ -42,7 +42,7 @@ struct Arg {
     std::atomic<uint32_t> counter{0};
 };
 
-extern "C" void hostFunctionExample(void *data) {
+extern "C" void NEO_HOST_FUNCTION_CALLBACK hostFunctionExample(void *data) {
     Arg *arg = static_cast<Arg *>(data);
     arg->result.store(arg->expected, std::memory_order_release);
     arg->counter.fetch_add(1, std::memory_order_acq_rel);

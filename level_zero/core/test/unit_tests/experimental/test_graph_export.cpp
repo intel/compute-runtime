@@ -1070,7 +1070,7 @@ TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyFromMemoryExt) {
 
 TEST_F(ExtractParametersTest, zeCommandListAppendHostFunction) {
     Closure<CaptureApi::zeCommandListAppendHostFunction>::ApiArgs args{};
-    args.pHostFunction = reinterpret_cast<void *>(0xA0);
+    args.pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xA0);
     args.pUserData = reinterpret_cast<void *>(0xB0);
     args.pNext = nullptr;
     args.numWaitEvents = 1;
