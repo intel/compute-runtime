@@ -7,15 +7,19 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -27,6 +31,7 @@
 #include "level_zero/driver_experimental/zex_event.h"
 
 #include <array>
+#include <optional>
 
 namespace L0 {
 namespace ult {
@@ -1811,6 +1816,170 @@ HWTEST2_F(AppendMemoryCopyTests, givenZeroSizeWhenAppendMemoryFillThenNoMemSetOr
     EXPECT_EQ(cmdList.end(), xyColorBltItor);
 
     device->setDriverHandle(driverHandle.get());
+}
+
+struct BcsSplitHpFallbackTests : public ::testing::Test {
+    template <typename GfxFamily>
+    struct BcsSplitMockGfxCoreHelper : NEO::GfxCoreHelperHw<GfxFamily> {
+        uint32_t regularBcsEnginesMask = 0;
+        uint32_t hpBcsEnginesMask = 0;
+
+        const NEO::EngineInstancesContainer getGpgpuEngineInstances(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+            auto defaultEngine = NEO::getChosenEngineType(hwInfo);
+
+            NEO::EngineInstancesContainer engines;
+
+            engines.push_back(NEO::EngineTypeUsage{defaultEngine, NEO::EngineUsage::regular});
+            engines.push_back(NEO::EngineTypeUsage{defaultEngine, NEO::EngineUsage::lowPriority});
+            engines.push_back(NEO::EngineTypeUsage{defaultEngine, NEO::EngineUsage::internal});
+
+            if (hwInfo.capabilityTable.blitterOperationsSupported && hwInfo.featureTable.ftrBcsInfo.test(0)) {
+                engines.push_back(NEO::EngineTypeUsage{aub_stream::ENGINE_BCS, NEO::EngineUsage::regular});
+                engines.push_back(NEO::EngineTypeUsage{aub_stream::ENGINE_BCS, NEO::EngineUsage::internal});
+            }
+
+            for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
+                if (!hwInfo.featureTable.ftrBcsInfo.test(i)) {
+                    continue;
+                }
+
+                auto engineType = NEO::EngineHelpers::getBcsEngineAtIdx(i);
+
+                if (hpBcsEnginesMask & (1u << i)) {
+                    engines.push_back(NEO::EngineTypeUsage{engineType, NEO::EngineUsage::highPriority});
+                }
+                if (regularBcsEnginesMask & (1u << i)) {
+                    engines.push_back(NEO::EngineTypeUsage{engineType, NEO::EngineUsage::regular});
+                }
+            }
+
+            return engines;
+        }
+
+        aub_stream::EngineType getDefaultHpCopyEngine(const NEO::HardwareInfo &hwInfo) const override {
+            for (uint32_t i = static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.size() - 1); i > 0; i--) {
+                if (hwInfo.featureTable.ftrBcsInfo.test(i) && (hpBcsEnginesMask & (1u << i))) {
+                    return NEO::EngineHelpers::getBcsEngineAtIdx(i);
+                }
+            }
+            return aub_stream::EngineType::NUM_ENGINES;
+        }
+    };
+
+    struct BcsSplitTestable : public BcsSplit {
+        using BcsSplit::BcsSplit;
+        using BcsSplit::clientCount;
+        using BcsSplit::setupQueues;
+        using BcsSplit::splitSettings;
+    };
+
+    void SetUp() override {
+        debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
+        debugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsRequiredTileCount.set(1);
+        debugManager.flags.SplitBcsMask.set(0b11110);
+        debugManager.flags.SplitBcsTransferDirectionMask.set(~(1 << static_cast<int32_t>(NEO::TransferDirection::localToLocal)));
+        debugManager.flags.SplitBcsRequiredEnginesCount.set(4);
+    }
+
+    template <typename HelperFamily>
+    std::unique_ptr<NEO::RAIIGfxCoreHelperFactory<BcsSplitMockGfxCoreHelper<HelperFamily>>> createHwHelper(uint32_t regularMask, uint32_t hpMask) {
+        hwInfo = *NEO::defaultHwInfo;
+        hwInfo.featureTable.ftrBcsInfo = 0b010101011;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+        mockExecutionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>(&hwInfo);
+
+        mockExecutionEnvironment->incRefInternal();
+        auto raiiHwHelper = std::make_unique<NEO::RAIIGfxCoreHelperFactory<BcsSplitMockGfxCoreHelper<HelperFamily>>>(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
+
+        auto &gfxCoreHelper = mockExecutionEnvironment->rootDeviceEnvironments[0]->template getHelper<NEO::GfxCoreHelper>();
+        auto &bcsSplitHelper = static_cast<BcsSplitMockGfxCoreHelper<HelperFamily> &>(gfxCoreHelper);
+        bcsSplitHelper.regularBcsEnginesMask = regularMask;
+        bcsSplitHelper.hpBcsEnginesMask = hpMask;
+
+        auto neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, mockExecutionEnvironment.get(), 0);
+
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+        driverHandle->initialize(std::move(devices));
+
+        device = driverHandle->devices[0];
+
+        return raiiHwHelper;
+    }
+
+    std::unique_ptr<BcsSplitTestable> setupSplitSettings() {
+        auto bcsSplit = std::make_unique<BcsSplitTestable>(*device);
+
+        bcsSplit->splitSettings.allEngines = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
+        bcsSplit->splitSettings.h2dEngines = bcsSplit->splitSettings.allEngines;
+        bcsSplit->splitSettings.d2hEngines = bcsSplit->splitSettings.allEngines;
+        bcsSplit->splitSettings.minRequiredTotalCsrCount = static_cast<uint32_t>(bcsSplit->splitSettings.allEngines.count());
+        bcsSplit->splitSettings.requiredTileCount = 1;
+
+        return bcsSplit;
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::HardwareInfo hwInfo;
+    std::unique_ptr<NEO::MockExecutionEnvironment> mockExecutionEnvironment;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
+    L0::Device *device = nullptr;
+};
+
+HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesEqualToRequiredCountWhenCreatingBcsSplitThenNoHpFallbackNeeded, IsAtLeastXeHpcCore) {
+    auto raiiHwHelper = createHwHelper<FamilyType>(0b010101010, 0);
+
+    auto bcsSplit = setupSplitSettings();
+
+    ASSERT_TRUE(bcsSplit->setupQueues());
+    EXPECT_EQ(4u, bcsSplit->cmdLists.size());
+
+    for (auto cmd : bcsSplit->cmdLists) {
+        auto csr = static_cast<L0::CommandListImp *>(cmd)->getCsr(false);
+        EXPECT_TRUE(csr->getOsContext().isRegular());
+    }
+
+    bcsSplit->clientCount = 1u;
+    bcsSplit->releaseResources();
+}
+
+HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesLessThanRequiredCountWhenCreatingBcsSplitThenHpEnginesAreUsed, IsAtLeastXeHpcCore) {
+    auto raiiHwHelper = createHwHelper<FamilyType>(0b000101010, 0b010000000);
+
+    auto bcsSplit = setupSplitSettings();
+
+    ASSERT_TRUE(bcsSplit->setupQueues());
+    EXPECT_EQ(4u, bcsSplit->cmdLists.size());
+
+    bool hasHpEngine = false;
+    for (auto cmd : bcsSplit->cmdLists) {
+        auto csr = static_cast<L0::CommandListImp *>(cmd)->getCsr(false);
+        if (csr->getOsContext().isHighPriority()) {
+            hasHpEngine = true;
+        }
+    }
+    EXPECT_TRUE(hasHpEngine);
+
+    bcsSplit->clientCount = 1u;
+    bcsSplit->releaseResources();
+}
+
+HWTEST2_F(BcsSplitHpFallbackTests, givenInsufficientTotalEnginesWhenCreatingBcsSplitThenSetupFails, IsAtLeastXeHpcCore) {
+    auto raiiHwHelper = createHwHelper<FamilyType>(0b000001010, 0b000100000);
+
+    debugManager.flags.SplitBcsMask.set(0b110);
+
+    auto bcsSplit = setupSplitSettings();
+
+    EXPECT_FALSE(bcsSplit->setupQueues());
+
+    bcsSplit->clientCount = 1u;
+    bcsSplit->releaseResources();
 }
 
 } // namespace ult

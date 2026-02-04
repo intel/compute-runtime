@@ -54,9 +54,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
     return setupQueues();
 }
 
-bool BcsSplit::setupQueues() {
-    BcsSplitParams::CsrContainer csrs;
-
+void BcsSplit::populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::EngineUsage engineUsage) {
     for (uint32_t tileId = 0; tileId < splitSettings.requiredTileCount; tileId++) {
         auto subDevice = this->device.getNEODevice()->getNearestGenericSubDevice(tileId);
 
@@ -64,7 +62,7 @@ bool BcsSplit::setupQueues() {
 
         for (uint32_t engineId = 0; engineId < NEO::bcsInfoMaskSize; engineId++) {
             if (splitSettings.allEngines.test(engineId)) {
-                if (auto engine = subDevice->tryGetEngine(NEO::EngineHelpers::getBcsEngineAtIdx(engineId), NEO::EngineUsage::regular)) {
+                if (auto engine = subDevice->tryGetEngine(NEO::EngineHelpers::getBcsEngineAtIdx(engineId), engineUsage)) {
                     csrs.push_back(engine->commandStreamReceiver);
                 }
             }
@@ -74,9 +72,18 @@ bool BcsSplit::setupQueues() {
             }
         }
     }
+}
+
+bool BcsSplit::setupQueues() {
+    BcsSplitParams::CsrContainer csrs;
+
+    populateCsrsForQueues(csrs, NEO::EngineUsage::regular);
 
     if (csrs.size() < splitSettings.minRequiredTotalCsrCount) {
-        return false;
+        populateCsrsForQueues(csrs, NEO::EngineUsage::highPriority);
+        if (csrs.size() < splitSettings.minRequiredTotalCsrCount) {
+            return false;
+        }
     }
 
     ze_command_queue_flags_t flags = events.isAggregatedEventMode() ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;

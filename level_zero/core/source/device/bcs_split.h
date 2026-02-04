@@ -21,6 +21,7 @@
 namespace NEO {
 class CommandStreamReceiver;
 enum class TransferDirection;
+enum class EngineUsage : uint32_t;
 } // namespace NEO
 
 namespace L0 {
@@ -96,6 +97,7 @@ class BcsSplit {
     uint64_t getAggregatedEventIncrementValForSplit(const Event *signalEvent, bool useSignalEventForSplit, size_t engineCountForSplit);
     void setupEnginesMask();
     bool setupQueues();
+    void populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::EngineUsage engineUsage);
 
     Device &device;
     NEO::BcsSplitSettings splitSettings = {};
