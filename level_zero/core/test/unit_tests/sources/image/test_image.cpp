@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1213,6 +1213,12 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_BGRA));
+
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_D;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_DEPTH));
 }
 
 using ImageGetMemoryProperties = Test<DeviceFixture>;
