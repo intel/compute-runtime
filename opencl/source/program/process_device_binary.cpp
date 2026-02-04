@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,7 +220,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
-            pool.freeSharedAllocation(buildInfo.constantSurface.release());
+            pool.free(buildInfo.constantSurface.release());
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface->getGraphicsAllocation());
         }
@@ -234,7 +234,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {
-            pool.freeSharedAllocation(buildInfo.globalSurface.release());
+            pool.free(buildInfo.globalSurface.release());
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface->getGraphicsAllocation());
         }

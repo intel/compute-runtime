@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,26 @@ AllocationProperties ConstantSurfacePoolTraits::createAllocationProperties(Devic
                                 poolSize,
                                 allocationType,
                                 false, // isMultiStorageAllocation
+                                device->getDeviceBitfield()};
+}
+
+AllocationProperties CommandBufferPoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true, // allocateMemory
+                                poolSize,
+                                allocationType,
+                                (device->getNumGenericSubDevices() > 1u), // multiOsContextCapable
+                                false,
+                                device->getDeviceBitfield()};
+}
+
+AllocationProperties LinearStreamPoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true, // allocateMemory
+                                poolSize,
+                                allocationType,
+                                (device->getNumGenericSubDevices() > 1u), // multiOsContextCapable
+                                false,
                                 device->getDeviceBitfield()};
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/generic_pool_allocator.h"
@@ -29,13 +30,13 @@ GenericPool<Traits>::GenericPool(Device *device, size_t poolSize)
                                                       0u));
     this->mainStorage.reset(graphicsAllocation);
     this->mtx = std::make_unique<std::mutex>();
-    stackVec.push_back(graphicsAllocation);
+    poolAllocations.push_back(graphicsAllocation);
 }
 
 template <PoolTraits Traits>
 GenericPool<Traits>::GenericPool(GenericPool &&pool) noexcept : BaseType(std::move(pool)) {
     mtx.reset(pool.mtx.release());
-    this->stackVec = std::move(pool.stackVec);
+    this->poolAllocations = std::move(pool.poolAllocations);
     this->device = pool.device;
 }
 
@@ -59,15 +60,15 @@ SharedPoolAllocation *GenericPool<Traits>::allocate(size_t size) {
 }
 
 template <PoolTraits Traits>
-const StackVec<GraphicsAllocation *, 1> &GenericPool<Traits>::getAllocationsVector() {
-    return stackVec;
+const StackVec<GraphicsAllocation *, 1> &GenericPool<Traits>::getAllocationsVector() const {
+    return poolAllocations;
 }
 
 template <PoolTraits Traits>
 GenericPoolAllocator<Traits>::GenericPoolAllocator(Device *device) : device(device) {}
 
 template <PoolTraits Traits>
-SharedPoolAllocation *GenericPoolAllocator<Traits>::requestGraphicsAllocation(size_t size) {
+SharedPoolAllocation *GenericPoolAllocator<Traits>::allocate(size_t size) {
     if (size > Traits::maxAllocationSize) {
         return nullptr;
     }
@@ -95,12 +96,12 @@ SharedPoolAllocation *GenericPoolAllocator<Traits>::requestGraphicsAllocation(si
 }
 
 template <PoolTraits Traits>
-void GenericPoolAllocator<Traits>::freeSharedAllocation(SharedPoolAllocation *sharedPoolAllocation) {
+void GenericPoolAllocator<Traits>::free(SharedPoolAllocation *allocation) {
     std::unique_lock lock(allocatorMtx);
-    this->tryFreeFromPoolBuffer(sharedPoolAllocation->getGraphicsAllocation(),
-                                sharedPoolAllocation->getOffset(),
-                                sharedPoolAllocation->getSize());
-    delete sharedPoolAllocation;
+    this->tryFreeFromPoolBuffer(allocation->getGraphicsAllocation(),
+                                allocation->getOffset(),
+                                allocation->getSize());
+    delete allocation;
 }
 
 template <PoolTraits Traits>
@@ -115,6 +116,118 @@ SharedPoolAllocation *GenericPoolAllocator<Traits>::allocateFromPools(size_t siz
 
 template <PoolTraits Traits>
 size_t GenericPoolAllocator<Traits>::alignToPoolSize(size_t size) const {
+    return alignUp(size, Traits::poolAlignment);
+}
+
+template <PoolTraits Traits>
+GenericViewPool<Traits>::GenericViewPool(Device *device, size_t poolSize)
+    : BaseType(device->getMemoryManager(), nullptr), device(device) {
+    DEBUG_BREAK_IF(device->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(poolSize, MemoryConstants::pageSize2M));
+
+    auto properties = Traits::createAllocationProperties(device, poolSize);
+    auto graphicsAllocation = this->memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    this->chunkAllocator.reset(new NEO::HeapAllocator(this->params.startingOffset,
+                                                      graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u,
+                                                      MemoryConstants::pageSize,
+                                                      0u));
+    this->mainStorage.reset(graphicsAllocation);
+    this->mtx = std::make_unique<std::mutex>();
+    poolAllocations.push_back(graphicsAllocation);
+}
+
+template <PoolTraits Traits>
+GenericViewPool<Traits>::GenericViewPool(GenericViewPool &&pool) noexcept : BaseType(std::move(pool)) {
+    mtx.reset(pool.mtx.release());
+    this->poolAllocations = std::move(pool.poolAllocations);
+    this->device = pool.device;
+}
+
+template <PoolTraits Traits>
+GenericViewPool<Traits>::~GenericViewPool() {
+    if (this->mainStorage) {
+        device->getMemoryManager()->freeGraphicsMemory(this->mainStorage.release());
+    }
+}
+
+template <PoolTraits Traits>
+GraphicsAllocation *GenericViewPool<Traits>::allocate(size_t size) {
+    if (!this->mainStorage) {
+        return nullptr;
+    }
+
+    auto offset = static_cast<size_t>(this->chunkAllocator->allocate(size));
+    if (offset == 0) {
+        return nullptr;
+    }
+
+    return this->mainStorage->createView(offset - this->params.startingOffset, size);
+}
+
+template <PoolTraits Traits>
+const StackVec<GraphicsAllocation *, 1> &GenericViewPool<Traits>::getAllocationsVector() const {
+    return poolAllocations;
+}
+
+template <PoolTraits Traits>
+GenericViewPoolAllocator<Traits>::GenericViewPoolAllocator(Device *device) : device(device) {}
+
+template <PoolTraits Traits>
+GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size) {
+    if (size > Traits::maxAllocationSize) {
+        return nullptr;
+    }
+
+    std::lock_guard<std::mutex> lock(allocatorMtx);
+
+    if (this->bufferPools.empty()) {
+        this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
+    }
+
+    auto allocFromPool = allocateFromPools(size);
+    if (allocFromPool != nullptr) {
+        return allocFromPool;
+    }
+
+    this->drain();
+
+    allocFromPool = allocateFromPools(size);
+    if (allocFromPool != nullptr) {
+        return allocFromPool;
+    }
+
+    this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
+    return allocateFromPools(size);
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::free(GraphicsAllocation *allocation) {
+    if (!allocation || !allocation->isView()) {
+        return;
+    }
+
+    device->getMemoryManager()->removeAllocationFromDownloadAllocationsInCsr(allocation);
+
+    std::unique_lock lock(allocatorMtx);
+    this->tryFreeFromPoolBuffer(allocation->getParentAllocation(),
+                                allocation->getOffsetInParent(),
+                                allocation->getUnderlyingBufferSize());
+    delete allocation;
+}
+
+template <PoolTraits Traits>
+GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocateFromPools(size_t size) {
+    for (auto &pool : this->bufferPools) {
+        if (auto allocation = pool.allocate(size)) {
+            return allocation;
+        }
+    }
+    return nullptr;
+}
+
+template <PoolTraits Traits>
+size_t GenericViewPoolAllocator<Traits>::alignToPoolSize(size_t size) const {
     return alignUp(size, Traits::poolAlignment);
 }
 

@@ -38,7 +38,7 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
 
     if (allocationType == AllocationType::linearStream &&
         device && device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
-        heapAllocation = device->getLinearStreamPoolAllocator().allocateLinearStream(heapSize);
+        heapAllocation = device->getLinearStreamPoolAllocator().allocate(heapSize);
         if (heapAllocation) {
             return heapAllocation;
         }
@@ -60,7 +60,7 @@ void HeapHelper::storeHeapAllocation(GraphicsAllocation *heapAllocation) {
         if (heapAllocation->isView()) {
             auto *parent = heapAllocation->getParentAllocation();
             if (parent && device && device->getLinearStreamPoolAllocator().isPoolBuffer(parent)) {
-                device->getLinearStreamPoolAllocator().freeLinearStream(heapAllocation);
+                device->getLinearStreamPoolAllocator().free(heapAllocation);
                 return;
             }
         }

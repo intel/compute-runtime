@@ -9,8 +9,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
     ${CMAKE_CURRENT_SOURCE_DIR}/arrayref.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bitcontainers.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_buffer_pool_allocator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_buffer_pool_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics.h
     ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.h
@@ -60,8 +58,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_pool_allocator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_pool_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.h
 )

@@ -16,9 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/command_buffer_pool_allocator.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
-#include "shared/source/utilities/linear_stream_pool_allocator.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 

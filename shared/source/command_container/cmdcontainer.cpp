@@ -28,7 +28,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
-#include "shared/source/utilities/command_buffer_pool_allocator.h"
+#include "shared/source/utilities/pool_allocators.h"
 
 namespace NEO {
 
@@ -322,7 +322,7 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
         if (cmdBufferAllocation->getParentAllocation() &&
             poolAllocator.isPoolBuffer(cmdBufferAllocation->getParentAllocation())) {
             DEBUG_BREAK_IF(!cmdBufferAllocation->isView());
-            poolAllocator.freeCommandBuffer(cmdBufferAllocation);
+            poolAllocator.free(cmdBufferAllocation);
         } else if (this->reusableAllocationList) {
             if (isHandleFenceCompletionRequired) {
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocation);
@@ -514,7 +514,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory
         if (auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
             (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
             auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
-            auto commandBufferAllocation = poolAllocator.allocateCommandBuffer(alignedSize);
+            auto commandBufferAllocation = poolAllocator.allocate(alignedSize);
             if (commandBufferAllocation) {
                 return commandBufferAllocation;
             }
@@ -613,7 +613,7 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
             poolAllocator.isPoolBuffer(allocation->getParentAllocation())) {
             DEBUG_BREAK_IF(!allocation->isView());
             std::erase(residencyContainer, allocation);
-            poolAllocator.freeCommandBuffer(allocation);
+            poolAllocator.free(allocation);
         } else {
             this->immediateReusableAllocationList->pushTailOne(*allocation);
         }

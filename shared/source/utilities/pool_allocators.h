@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,5 +15,8 @@ namespace NEO {
 using TimestampPoolAllocator = GenericPoolAllocator<TimestampPoolTraits>;
 using GlobalSurfacePoolAllocator = GenericPoolAllocator<GlobalSurfacePoolTraits>;
 using ConstantSurfacePoolAllocator = GenericPoolAllocator<ConstantSurfacePoolTraits>;
+
+using CommandBufferPoolAllocator = GenericViewPoolAllocator<CommandBufferPoolTraits>;
+using LinearStreamPoolAllocator = GenericViewPoolAllocator<LinearStreamPoolTraits>;
 
 } // namespace NEO

@@ -25,7 +25,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
-#include "shared/source/utilities/command_buffer_pool_allocator.h"
+#include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/device/device.h"
@@ -292,8 +292,8 @@ ze_result_t CommandBufferManager::initialize(Device *device, size_t sizeRequeste
     if (auto forceEnable = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
         (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
         auto &poolAllocator = device->getNEODevice()->getCommandBufferPoolAllocator();
-        buffers[BufferAllocation::first] = poolAllocator.allocateCommandBuffer(alignedSize);
-        buffers[BufferAllocation::second] = poolAllocator.allocateCommandBuffer(alignedSize);
+        buffers[BufferAllocation::first] = poolAllocator.allocate(alignedSize);
+        buffers[BufferAllocation::second] = poolAllocator.allocate(alignedSize);
     }
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
@@ -333,7 +333,7 @@ void CommandBufferManager::destroy(Device *device) {
         if (firstBA->getParentAllocation() &&
             poolAllocator.isPoolBuffer(firstBA->getParentAllocation())) {
             DEBUG_BREAK_IF(!firstBA->isView());
-            poolAllocator.freeCommandBuffer(firstBA);
+            poolAllocator.free(firstBA);
         } else {
             device->storeReusableAllocation(*firstBA);
         }
@@ -344,7 +344,7 @@ void CommandBufferManager::destroy(Device *device) {
         if (secondBA->getParentAllocation() &&
             poolAllocator.isPoolBuffer(secondBA->getParentAllocation())) {
             DEBUG_BREAK_IF(!secondBA->isView());
-            poolAllocator.freeCommandBuffer(secondBA);
+            poolAllocator.free(secondBA);
         } else {
             device->storeReusableAllocation(*secondBA);
         }

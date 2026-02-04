@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -292,7 +292,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             }
             EXPECT_EQ(expectedBlitsCount, blitsCounter);
             if (device.getConstantSurfacePoolAllocator().isPoolBuffer(pAllocation)) {
-                device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+                device.getConstantSurfacePoolAllocator().free(globalSurface.release());
             } else {
                 device.getMemoryManager()->freeGraphicsMemory(pAllocation);
             }
@@ -338,7 +338,7 @@ TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithZeroInitSizeGreat
     EXPECT_EQ(0u, static_cast<MockMemoryManager *>(device.getMemoryManager())->copyMemoryToAllocationBanksCalled);
 
     if (device.getConstantSurfacePoolAllocator().isPoolBuffer(alloc)) {
-        device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+        device.getConstantSurfacePoolAllocator().free(globalSurface.release());
     } else {
         device.getMemoryManager()->freeGraphicsMemory(alloc);
     }
@@ -738,13 +738,13 @@ TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, Given2MBLocalMemAlignmentEnable
         if (isConstant) {
             EXPECT_TRUE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface1->getGraphicsAllocation()));
             EXPECT_TRUE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface2->getGraphicsAllocation()));
-            device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface1.release());
-            device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface2.release());
+            device.getConstantSurfacePoolAllocator().free(globalSurface1.release());
+            device.getConstantSurfacePoolAllocator().free(globalSurface2.release());
         } else {
             EXPECT_TRUE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface1->getGraphicsAllocation()));
             EXPECT_TRUE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface2->getGraphicsAllocation()));
-            device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface1.release());
-            device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface2.release());
+            device.getGlobalSurfacePoolAllocator().free(globalSurface1.release());
+            device.getGlobalSurfacePoolAllocator().free(globalSurface2.release());
         }
     }
 }
@@ -776,7 +776,7 @@ TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWhenDataIs
         std::memcpy(expectedData.data(), initData.data(), initSize);
         EXPECT_EQ(0, memcmp(globalSurface->getUnderlyingBuffer(), expectedData.data(), totalSize));
 
-        device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface);
+        device.getGlobalSurfacePoolAllocator().free(globalSurface);
     }
 }
 
@@ -795,7 +795,7 @@ TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWithBssOnl
         // Verify entire allocation is zeroed
         EXPECT_EQ(0, memcmp(constantSurface->getUnderlyingBuffer(), expectedZeros.data(), totalSize));
 
-        device.getConstantSurfacePoolAllocator().freeSharedAllocation(constantSurface);
+        device.getConstantSurfacePoolAllocator().free(constantSurface);
     }
 }
 
@@ -817,7 +817,7 @@ TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWhenOnlyIn
     ASSERT_NE(nullptr, globalSurface);
     EXPECT_EQ(0u, mockMemoryManager->memsetAllocationCalled);
 
-    device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+    device.getGlobalSurfacePoolAllocator().free(globalSurface.release());
 }
 
 TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, GivenAllocationExceedsMaxSizeThenFallbackToDirectAllocation) {

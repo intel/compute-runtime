@@ -163,13 +163,13 @@ void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocati
 
         if (auto &pool = device->getDevice().getConstantSurfacePoolAllocator();
             pool.isPoolBuffer(graphicsAllocation)) {
-            pool.freeSharedAllocation(globalBuffer.release());
+            pool.free(globalBuffer.release());
             return;
         }
 
         if (auto &pool = device->getDevice().getGlobalSurfacePoolAllocator();
             pool.isPoolBuffer(graphicsAllocation)) {
-            pool.freeSharedAllocation(globalBuffer.release());
+            pool.free(globalBuffer.release());
             return;
         }
     }

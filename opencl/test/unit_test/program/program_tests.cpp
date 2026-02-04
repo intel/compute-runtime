@@ -727,11 +727,11 @@ TEST_F(ProgramFromBinaryTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenProgramI
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
 
     // Verify constant surface was freed by allocating the same size and expecting the same GA
-    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().allocate(constantDataSize);
     ASSERT_NE(nullptr, newConstantAlloc);
     EXPECT_TRUE(newConstantAlloc->isFromPool());
     EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
-    pClDevice->getDevice().getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
+    pClDevice->getDevice().getConstantSurfacePoolAllocator().free(newConstantAlloc);
 
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.reset(allocateGlobalsSurface(nullptr, pClDevice->getDevice(), globalDataSize, 0u, false, &linkerInput, globalInitData.data()));
     auto &globalSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface;
@@ -747,11 +747,11 @@ TEST_F(ProgramFromBinaryTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenProgramI
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
 
     // Verify global surface was freed by allocating the same size and expecting the same GA
-    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().allocate(globalDataSize);
     ASSERT_NE(nullptr, newGlobalAlloc);
     EXPECT_TRUE(newGlobalAlloc->isFromPool());
     EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
-    pClDevice->getDevice().getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
+    pClDevice->getDevice().getGlobalSurfacePoolAllocator().free(newGlobalAlloc);
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {

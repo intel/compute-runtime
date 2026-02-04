@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,19 +32,19 @@ TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenNoAllocationsT
     auto &timestampAllocator = pDevice->getDeviceTimestampPoolAllocator();
     constexpr size_t requestAllocationSize = MemoryConstants::pageSize;
 
-    auto allocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(allocation, 0ul, requestAllocationSize);
     EXPECT_EQ(AllocationType::gpuTimestampDeviceBuffer,
               allocation->getGraphicsAllocation()->getAllocationType());
 
-    timestampAllocator.freeSharedAllocation(allocation);
+    timestampAllocator.free(allocation);
 }
 
 TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenAllocationsExistThenReuseAllocation) {
     auto &timestampAllocator = pDevice->getDeviceTimestampPoolAllocator();
     constexpr size_t requestAllocationSize = MemoryConstants::pageSize;
 
-    auto allocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(allocation, 0ul, requestAllocationSize);
 
     auto allocationSize = allocation->getGraphicsAllocation()->getUnderlyingBufferSize();
@@ -52,19 +52,19 @@ TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenAllocationsExi
 
     // Perform requests until allocation is full
     for (auto i = 1u; i < numOfSharedAllocations; i++) {
-        auto tempSharedAllocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+        auto tempSharedAllocation = timestampAllocator.allocate(requestAllocationSize);
         verifySharedTimestampAllocation(tempSharedAllocation, requestAllocationSize * i, requestAllocationSize);
         EXPECT_EQ(allocation->getGraphicsAllocation(), tempSharedAllocation->getGraphicsAllocation());
-        timestampAllocator.freeSharedAllocation(tempSharedAllocation);
+        timestampAllocator.free(tempSharedAllocation);
     }
 
     // Verify that draining freed chunks is correct and allocation can be reused
-    auto newAllocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto newAllocation = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(newAllocation, requestAllocationSize, requestAllocationSize);
     EXPECT_EQ(allocation->getGraphicsAllocation(), newAllocation->getGraphicsAllocation());
 
-    timestampAllocator.freeSharedAllocation(newAllocation);
-    timestampAllocator.freeSharedAllocation(allocation);
+    timestampAllocator.free(newAllocation);
+    timestampAllocator.free(allocation);
 }
 
 TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenPoolIsFullThenCreateNewPool) {
@@ -79,29 +79,29 @@ TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenPoolIsFullThen
     size_t requestAllocationSize = timestampAllocator.getDefaultPoolSize() / 2;
 
     // First allocation - should come from first pool
-    auto allocation1 = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation1 = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(allocation1, 0, requestAllocationSize);
 
     // Second allocation - should come from first pool but with offset
-    auto allocation2 = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation2 = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(allocation2, requestAllocationSize, requestAllocationSize);
     EXPECT_EQ(allocation1->getGraphicsAllocation(), allocation2->getGraphicsAllocation());
 
     // Third allocation - should create new pool because first one is full
-    auto allocation3 = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation3 = timestampAllocator.allocate(requestAllocationSize);
     verifySharedTimestampAllocation(allocation3, 0, requestAllocationSize);
     EXPECT_NE(allocation1->getGraphicsAllocation(), allocation3->getGraphicsAllocation());
 
-    timestampAllocator.freeSharedAllocation(allocation1);
-    timestampAllocator.freeSharedAllocation(allocation2);
-    timestampAllocator.freeSharedAllocation(allocation3);
+    timestampAllocator.free(allocation1);
+    timestampAllocator.free(allocation2);
+    timestampAllocator.free(allocation3);
 }
 
 TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenRequestExceedsMaxSizeThenReturnNull) {
     auto &timestampAllocator = pDevice->getDeviceTimestampPoolAllocator();
     constexpr size_t requestAllocationSize = 3 * MemoryConstants::megaByte; // Larger than maxAllocationSize
 
-    auto allocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation = timestampAllocator.allocate(requestAllocationSize);
     EXPECT_EQ(nullptr, allocation);
 }
 
@@ -109,13 +109,13 @@ TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenPoolSizeAlignm
     auto &timestampAllocator = pDevice->getDeviceTimestampPoolAllocator();
     constexpr size_t requestAllocationSize = MemoryConstants::pageSize;
 
-    auto allocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation = timestampAllocator.allocate(requestAllocationSize);
     ASSERT_NE(nullptr, allocation);
 
     auto allocationSize = allocation->getGraphicsAllocation()->getUnderlyingBufferSize();
     EXPECT_EQ(0u, allocationSize % MemoryConstants::pageSize2M);
 
-    timestampAllocator.freeSharedAllocation(allocation);
+    timestampAllocator.free(allocation);
 }
 
 TEST_F(TimestampPoolAllocatorTest, givenFailingMemoryManagerWhenRequestingAllocationThenReturnNull) {
@@ -126,10 +126,10 @@ TEST_F(TimestampPoolAllocatorTest, givenFailingMemoryManagerWhenRequestingAlloca
     memoryManager->forceFailureInPrimaryAllocation = true;
 
     size_t requestAllocationSize = timestampAllocator.getDefaultPoolSize() / 2;
-    auto allocation = timestampAllocator.requestGraphicsAllocation(requestAllocationSize);
+    auto allocation = timestampAllocator.allocate(requestAllocationSize);
     EXPECT_EQ(nullptr, allocation);
 
     if (allocation) {
-        timestampAllocator.freeSharedAllocation(allocation);
+        timestampAllocator.free(allocation);
     }
 }

@@ -121,13 +121,13 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::Shar
 
     if (auto &pool = device->getNEODevice()->getConstantSurfacePoolAllocator();
         pool.isPoolBuffer(graphicsAllocation)) {
-        pool.freeSharedAllocation(globalBuffer.release());
+        pool.free(globalBuffer.release());
         return;
     }
 
     if (auto &pool = device->getNEODevice()->getGlobalSurfacePoolAllocator();
         pool.isPoolBuffer(graphicsAllocation)) {
-        pool.freeSharedAllocation(globalBuffer.release());
+        pool.free(globalBuffer.release());
         return;
     }
 

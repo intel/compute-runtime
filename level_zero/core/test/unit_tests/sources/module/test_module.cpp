@@ -3833,18 +3833,18 @@ kernels:
     }
 
     // Allocate the same sizes again - should get the same chunks
-    auto newConstantAlloc = neoDevice->getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    auto newConstantAlloc = neoDevice->getConstantSurfacePoolAllocator().allocate(constantDataSize);
     ASSERT_NE(nullptr, newConstantAlloc);
     EXPECT_TRUE(newConstantAlloc->isFromPool());
     EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
 
-    auto newGlobalAlloc = neoDevice->getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    auto newGlobalAlloc = neoDevice->getGlobalSurfacePoolAllocator().allocate(globalDataSize);
     ASSERT_NE(nullptr, newGlobalAlloc);
     EXPECT_TRUE(newGlobalAlloc->isFromPool());
     EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
 
-    neoDevice->getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
-    neoDevice->getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
+    neoDevice->getConstantSurfacePoolAllocator().free(newConstantAlloc);
+    neoDevice->getGlobalSurfacePoolAllocator().free(newGlobalAlloc);
 }
 
 TEST_F(ModuleTranslationUnitTest, GivenUsmPoolEnabledWhenTwoModuleTranslationUnitsAreCreatedWithTheSameDeviceThenTheyShareUnderlyingGlobalSurfacePoolAllocations) {

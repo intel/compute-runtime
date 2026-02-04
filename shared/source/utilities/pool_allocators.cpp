@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,5 +20,14 @@ INSTANTIATE_POOL_ALLOCATOR(GlobalSurfacePoolTraits);
 INSTANTIATE_POOL_ALLOCATOR(ConstantSurfacePoolTraits);
 
 #undef INSTANTIATE_POOL_ALLOCATOR
+
+#define INSTANTIATE_VIEW_POOL_ALLOCATOR(Traits)                                           \
+    template class AbstractBuffersAllocator<GenericViewPool<Traits>, GraphicsAllocation>; \
+    template class GenericViewPoolAllocator<Traits>
+
+INSTANTIATE_VIEW_POOL_ALLOCATOR(CommandBufferPoolTraits);
+INSTANTIATE_VIEW_POOL_ALLOCATOR(LinearStreamPoolTraits);
+
+#undef INSTANTIATE_VIEW_POOL_ALLOCATOR
 
 } // namespace NEO

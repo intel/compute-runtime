@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,24 @@ struct ConstantSurfacePoolTraits {
     static constexpr AllocationType allocationType = AllocationType::constantSurface;
     static constexpr size_t maxAllocationSize = 2 * MemoryConstants::megaByte;
     static constexpr size_t defaultPoolSize = 2 * MemoryConstants::megaByte;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+};
+
+struct CommandBufferPoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::commandBuffer;
+    static constexpr size_t maxAllocationSize = MemoryConstants::pageSize2M;
+    static constexpr size_t defaultPoolSize = 4 * MemoryConstants::pageSize2M;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+};
+
+struct LinearStreamPoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::linearStream;
+    static constexpr size_t maxAllocationSize = MemoryConstants::pageSize2M;
+    static constexpr size_t defaultPoolSize = 2 * MemoryConstants::pageSize2M;
     static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
 
     static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);

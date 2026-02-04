@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,8 +100,8 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         }
     } else {
         if (device.getProductHelper().is2MBLocalMemAlignmentEnabled()) {
-            globalSurfaceAllocation = constant ? device.getConstantSurfacePoolAllocator().requestGraphicsAllocation(totalSize)
-                                               : device.getGlobalSurfacePoolAllocator().requestGraphicsAllocation(totalSize);
+            globalSurfaceAllocation = constant ? device.getConstantSurfacePoolAllocator().allocate(totalSize)
+                                               : device.getGlobalSurfacePoolAllocator().allocate(totalSize);
         }
 
         if (globalSurfaceAllocation) {

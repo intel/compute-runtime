@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -330,18 +330,18 @@ TEST_F(ProgramDataTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenGlobalsNotExpo
     this->pProgram = nullptr;
 
     // Allocate the same sizes again - should get the same chunks
-    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().allocate(constantDataSize);
     ASSERT_NE(nullptr, newConstantAlloc);
     EXPECT_TRUE(newConstantAlloc->isFromPool());
     EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
 
-    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().allocate(globalDataSize);
     ASSERT_NE(nullptr, newGlobalAlloc);
     EXPECT_TRUE(newGlobalAlloc->isFromPool());
     EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
 
-    pClDevice->getDevice().getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
-    pClDevice->getDevice().getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
+    pClDevice->getDevice().getConstantSurfacePoolAllocator().free(newConstantAlloc);
+    pClDevice->getDevice().getGlobalSurfacePoolAllocator().free(newGlobalAlloc);
 }
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {

@@ -119,7 +119,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
         if (isTimestampPoolingEnabled &&
             !isIpcPoolFlagSet()) {
-            auto sharedTsAlloc = neoDevice->getDeviceTimestampPoolAllocator().requestGraphicsAllocation(this->eventPoolSize);
+            auto sharedTsAlloc = neoDevice->getDeviceTimestampPoolAllocator().allocate(this->eventPoolSize);
             if (sharedTsAlloc) {
                 this->sharedTimestampAllocation.reset(sharedTsAlloc);
                 eventPoolAllocations->addAllocation(this->sharedTimestampAllocation->getGraphicsAllocation());
@@ -180,7 +180,7 @@ EventPool::~EventPool() {
     }
     if (this->sharedTimestampAllocation) {
         auto neoDevice = devices[0]->getNEODevice();
-        neoDevice->getDeviceTimestampPoolAllocator().freeSharedAllocation(this->sharedTimestampAllocation.release());
+        neoDevice->getDeviceTimestampPoolAllocator().free(this->sharedTimestampAllocation.release());
     }
 }
 
