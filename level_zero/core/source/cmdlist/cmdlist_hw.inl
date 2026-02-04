@@ -1873,6 +1873,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
         return ret;
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     auto signalEvent = Event::fromHandle(hSignalEvent);
     const bool beforeWalker = true;
     const bool skipBarrierForEndProfiling = true;
@@ -1900,6 +1902,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
 
     const bool nonWalkerInOrderCmdsChaining = false;
     handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdsChaining, copyOffload);
+
+    appendSynchronizedDispatchCleanupSection();
 
     return ZE_RESULT_SUCCESS;
 }

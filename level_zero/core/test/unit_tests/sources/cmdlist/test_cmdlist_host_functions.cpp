@@ -184,6 +184,39 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
     }
 }
 
+using HostFunctionTestsSynchronizedDispatch = InOrderCmdListFixture;
+
+HWTEST_F(HostFunctionTestsSynchronizedDispatch, whenAppendHostFunctionIsCalledThenSynchronizedDispatchLogicWasPresent) {
+
+    using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
+    class MyCmdList : public BaseClass {
+      public:
+        void appendSynchronizedDispatchInitializationSection() override {
+            initCalled++;
+            BaseClass::appendSynchronizedDispatchInitializationSection();
+        }
+
+        void appendSynchronizedDispatchCleanupSection() override {
+            cleanupCalled++;
+            BaseClass::appendSynchronizedDispatchCleanupSection();
+        }
+
+        uint32_t initCalled = 0;
+        uint32_t cleanupCalled = 0;
+    };
+
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyCmdList>(false);
+    void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+    CmdListHostFunctionParameters parameters{};
+
+    auto result = immCmdList->appendHostFunction(pHostFunction, pUserData, nullptr, nullptr, 0, nullptr, parameters);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1u, immCmdList->initCalled);
+    EXPECT_EQ(1u, immCmdList->cleanupCalled);
+}
+
 class HostFunctionTestsImmediateCmdListTest : public HostFunctionTests,
                                               public ::testing::WithParamInterface<ze_command_queue_mode_t> {
 };
