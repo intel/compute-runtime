@@ -11,7 +11,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 namespace NEO {
 enum class ImageType;
@@ -71,12 +71,12 @@ struct CmdListEventOperation {
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-struct CommandListCoreFamily : public CommandListImp {
+struct CommandListCoreFamily : public CommandList {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    using CommandListImp::skipInOrderNonWalkerSignalingAllowed;
+    using CommandList::skipInOrderNonWalkerSignalingAllowed;
 
-    using CommandListImp::CommandListImp;
+    using CommandList::CommandList;
     ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;
     void programL3(bool isSLMused);
     ~CommandListCoreFamily() override;

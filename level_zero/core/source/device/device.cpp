@@ -155,7 +155,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
         return returnValue;
     }
 
-    auto cmdList = static_cast<L0::CommandListImp *>(CommandList::fromHandle(*commandList));
+    auto cmdList = CommandList::fromHandle(*commandList);
     UNRECOVERABLE_IF(cmdList == nullptr);
 
     cmdList->setOrdinal(desc->commandQueueGroupOrdinal);

@@ -523,9 +523,9 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
         if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
-            EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+            EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
         } else {
-            EXPECT_EQ(nonDualStreamMode, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+            EXPECT_EQ(nonDualStreamMode, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
         }
 
         zeCommandListDestroy(hCmdList);
@@ -537,7 +537,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
         bool supported = device->getL0GfxCoreHelper().isDefaultCmdListWithCopyOffloadSupported(device->getProductHelper().useAdditionalBlitProperties());
 
-        EXPECT_EQ(!supported, CopyOffloadModes::disabled == static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+        EXPECT_EQ(!supported, CopyOffloadModes::disabled == CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
 
         zeCommandListDestroy(hCmdList);
     }
@@ -549,7 +549,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
-        EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+        EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
 
         zeCommandListDestroy(hCmdList);
     }
@@ -2817,7 +2817,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     auto result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // pNext == unknown type
@@ -2827,7 +2827,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // limited dispatch mode
@@ -2837,7 +2837,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // full dispatch mode
@@ -2847,7 +2847,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // No ZE_COMMAND_LIST_FLAG_IN_ORDER flag
@@ -2883,7 +2883,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     auto result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // pNext == unknown type
@@ -2892,7 +2892,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // limited dispatch mode
@@ -2902,7 +2902,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // full dispatch mode
@@ -2912,7 +2912,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreat
     result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, CommandList::fromHandle(hCmdList)->getSynchronizedDispatchMode());
     zeCommandListDestroy(hCmdList);
 
     // No ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG flag

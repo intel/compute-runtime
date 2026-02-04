@@ -776,7 +776,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
     };
 
     struct MockCmdListCheckSequence : Mock<CommandList> {
-        using WhiteBox<::L0::CommandListImp>::cmdListType;
+        using WhiteBox<::L0::CommandList>::cmdListType;
 
         std::vector<CmdInfo> &sequenceContainer;
         MockCmdListCheckSequence(std::vector<CmdInfo> &sequenceContainer) : sequenceContainer(sequenceContainer) {

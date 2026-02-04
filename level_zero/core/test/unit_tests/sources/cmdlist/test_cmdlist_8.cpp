@@ -457,7 +457,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenCo
                                                                                returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
     EXPECT_EQ(whiteBoxCmdList->copyThroughLockedPtrEnabled, device->getGfxCoreHelper().copyThroughLockedPtrEnabled(device->getHwInfo(), device->getProductHelper()));
 }
 

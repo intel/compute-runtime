@@ -9,7 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
@@ -400,8 +400,8 @@ ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metri
 
 ze_result_t OaMetricSourceImp::appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
 
-    auto commandListImp = static_cast<CommandListImp *>(CommandList::fromHandle(hCommandList));
-    Device *pDevice = commandListImp->getDevice();
+    auto commandList = CommandList::fromHandle(hCommandList);
+    Device *pDevice = commandList->getDevice();
 
     if (pDevice->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
@@ -419,8 +419,8 @@ ze_result_t OaMetricSourceImp::appendMarker(zet_command_list_handle_t hCommandLi
                              ? MetricsLibraryApi::GpuCommandBufferType::Compute
                              : MetricsLibraryApi::GpuCommandBufferType::Render;
 
-    return metricsLibrary.getGpuCommands(*commandListImp, commandBuffer) ? ZE_RESULT_SUCCESS
-                                                                         : ZE_RESULT_ERROR_UNKNOWN;
+    return metricsLibrary.getGpuCommands(*commandList, commandBuffer) ? ZE_RESULT_SUCCESS
+                                                                      : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 template <>

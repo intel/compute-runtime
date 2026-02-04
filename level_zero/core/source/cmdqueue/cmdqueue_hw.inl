@@ -630,7 +630,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     }
 
     for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
         if (!commandList->isClosed()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -960,15 +960,14 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList) {
-    auto commandListImp = static_cast<CommandListImp *>(commandList);
-    if (ctx.patchPreambleEnabled && commandListImp->isInOrderExecutionEnabled()) {
-        auto deviceNodeGpuAddress = commandListImp->getInOrderExecDeviceGpuAddress();
+    if (ctx.patchPreambleEnabled && commandList->isInOrderExecutionEnabled()) {
+        auto deviceNodeGpuAddress = commandList->getInOrderExecDeviceGpuAddress();
         UNRECOVERABLE_IF(deviceNodeGpuAddress == 0u);
-        NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, deviceNodeGpuAddress, commandListImp->getInOrderExecDeviceRequiredSize());
+        NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, deviceNodeGpuAddress, commandList->getInOrderExecDeviceRequiredSize());
 
-        auto hostNodeGpuAddress = commandListImp->getInOrderExecHostGpuAddress();
+        auto hostNodeGpuAddress = commandList->getInOrderExecHostGpuAddress();
         if (hostNodeGpuAddress != 0) {
-            NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, hostNodeGpuAddress, commandListImp->getInOrderExecHostRequiredSize());
+            NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, hostNodeGpuAddress, commandList->getInOrderExecHostRequiredSize());
         }
     }
 }
@@ -1996,7 +1995,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandListImp *commandList, CommandListExecutionContext &ctx) {
+void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx) {
     if (commandList->inOrderCmdsPatchingEnabled()) {
         UNRECOVERABLE_IF(ctx.patchPreambleEnabled);
         commandList->addRegularCmdListSubmissionCounter();

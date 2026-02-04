@@ -1643,7 +1643,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThe
 
             auto expectedEngineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + baseEngineId);
 
-            auto &osContext = static_cast<CommandListImp *>(bcsSplit->cmdLists[engineId])->getCsr(false)->getOsContext();
+            auto &osContext = CommandList::fromHandle(bcsSplit->cmdLists[engineId])->getCsr(false)->getOsContext();
             EXPECT_EQ(expectedEngineType, osContext.getEngineType());
             EXPECT_EQ(1u << tileId, osContext.getDeviceBitfield().to_ulong());
             EXPECT_TRUE(bcsSplit->cmdLists[engineId]->getOrdinal() > 0);
@@ -1940,7 +1940,7 @@ HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesEqualToRequiredCountWhenCr
     EXPECT_EQ(4u, bcsSplit->cmdLists.size());
 
     for (auto cmd : bcsSplit->cmdLists) {
-        auto csr = static_cast<L0::CommandListImp *>(cmd)->getCsr(false);
+        auto csr = static_cast<L0::CommandList *>(cmd)->getCsr(false);
         EXPECT_TRUE(csr->getOsContext().isRegular());
     }
 
@@ -1958,7 +1958,7 @@ HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesLessThanRequiredCountWhenC
 
     bool hasHpEngine = false;
     for (auto cmd : bcsSplit->cmdLists) {
-        auto csr = static_cast<L0::CommandListImp *>(cmd)->getCsr(false);
+        auto csr = static_cast<L0::CommandList *>(cmd)->getCsr(false);
         if (csr->getOsContext().isHighPriority()) {
             hasHpEngine = true;
         }

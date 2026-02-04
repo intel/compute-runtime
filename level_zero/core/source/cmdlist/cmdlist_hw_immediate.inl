@@ -127,7 +127,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
     dispatchBcsFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
     dispatchBcsFlags.dispatchOperation = appendOperation;
 
-    CommandListImp::storeReferenceTsToMappedEvents(true);
+    CommandList::storeReferenceTsToMappedEvents(true);
 
     return csr->flushBcsTask(cmdStreamTask, taskStartOffset, dispatchBcsFlags, this->device->getHwInfo());
 }
@@ -275,7 +275,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         this->isWalkerWithProfilingEnqueued // isWalkerWithProfilingEnqueued
     };
     this->isWalkerWithProfilingEnqueued = false;
-    CommandListImp::storeReferenceTsToMappedEvents(true);
+    CommandList::storeReferenceTsToMappedEvents(true);
 
     return getCsr(false)->flushImmediateTask(cmdStreamTask,
                                              taskStartOffset,
@@ -308,7 +308,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         this->isWalkerWithProfilingEnqueued // isWalkerWithProfilingEnqueued
     };
     this->isWalkerWithProfilingEnqueued = false;
-    CommandListImp::storeReferenceTsToMappedEvents(true);
+    CommandList::storeReferenceTsToMappedEvents(true);
 
     return getCsr(false)->flushImmediateTaskStateless(cmdStreamTask,
                                                       taskStartOffset,
@@ -414,7 +414,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         }
     }
 
-    CommandListImp::storeReferenceTsToMappedEvents(true);
+    CommandList::storeReferenceTsToMappedEvents(true);
 
     return csr->flushTask(
         cmdStreamTask,
@@ -1489,8 +1489,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (signalEvent) {
-        CommandListImp::addToMappedEventList(signalEvent);
-        CommandListImp::storeReferenceTsToMappedEvents(true);
+        CommandList::addToMappedEventList(signalEvent);
+        CommandList::storeReferenceTsToMappedEvents(true);
         signalEvent->setGpuStartTimestamp();
     }
 
@@ -1970,7 +1970,7 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
 
         size_t totalNoopSpace = 0;
         for (uint32_t i = 0; i < numCommandLists; i++) {
-            auto cmdList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
+            auto cmdList = CommandList::fromHandle(phCommandLists[i]);
             totalNoopSpace += cmdList->getTotalNoopSpace();
             totalNoopSpace += cmdList->getInOrderExecDeviceRequiredSize();
             totalNoopSpace += cmdList->getInOrderExecHostRequiredSize();

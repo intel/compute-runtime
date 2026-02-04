@@ -177,7 +177,7 @@ TEST_F(CommandListCreate, givenCommandListWithValidOrdinalWhenCallingGetOrdinalT
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_NE(nullptr, commandList);
 
-        auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+        auto whiteboxCommandList = CommandList::whiteboxCast(CommandList::fromHandle(commandList));
         EXPECT_EQ(engineGroup, whiteboxCommandList->getOrdinal());
 
         whiteboxCommandList->destroy();
@@ -192,7 +192,7 @@ TEST_F(CommandListCreate, givenCommandListWhenCallingImmediateCommandListIndexTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+    auto whiteboxCommandList = CommandList::whiteboxCast(CommandList::fromHandle(commandList));
 
     uint32_t index = 4;
     ze_bool_t isImmediate = true;
@@ -212,7 +212,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenCallingImmediateCommandLi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+    auto whiteboxCommandList = CommandList::whiteboxCast(CommandList::fromHandle(commandList));
 
     uint32_t index = 4, cmdQIndex = 2;
     ze_bool_t isImmediate = true;
@@ -235,7 +235,7 @@ TEST_F(CommandListCreate, givenQueueFlagsWhenCreatingImmediateCommandListThenDon
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+    auto whiteboxCommandList = CommandList::whiteboxCast(CommandList::fromHandle(commandList));
     EXPECT_EQ(0u, whiteboxCommandList->flags);
 
     whiteboxCommandList->destroy();
@@ -582,7 +582,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThen
                                                                                NEO::EngineGroupType::renderCompute,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
@@ -605,7 +605,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWith
                                                                                NEO::EngineGroupType::renderCompute,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(whiteBoxCmdList->cmdQImmediate->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
@@ -1807,7 +1807,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFor
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - commonImmediateCommandSize + 1;
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
@@ -1830,7 +1830,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFor
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     constexpr uint32_t numEvents = 100;
     size_t eventWaitSize = numEvents * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
@@ -1900,8 +1900,8 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     result = device->createCommandListImmediate(&desc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
@@ -1948,8 +1948,8 @@ HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingTo
     result = device->createCommandListImmediate(&desc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
@@ -2004,8 +2004,8 @@ HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingTo
     result = device->createCommandListImmediate(&desc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
@@ -2106,9 +2106,9 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         result = device->createCommandListImmediate(&desc, &commandListHandle4);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
-        auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-        auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
-        auto commandList3 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle3));
+        auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+        auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
+        auto commandList3 = L0::CommandList::fromHandle(commandListHandle3);
 
         EXPECT_TRUE(static_cast<MockOsContext &>(commandList1->getCsr(false)->getOsContext()).allocateInterruptPassed);
         EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr(false)->getOsContext()).allocateInterruptPassed);
@@ -2162,8 +2162,8 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     result = device->createCommandListImmediate(&desc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
@@ -2178,8 +2178,8 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     result = device->createCommandListImmediate(&desc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
@@ -2221,7 +2221,7 @@ TEST(CommandList, givenLowPriorityCopyEngineWhenCreatingCmdListThenAssignCorrect
     auto result = device->createCommandListImmediate(&desc, &commandListHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle));
+    auto commandList = L0::CommandList::fromHandle(commandListHandle);
 
     EXPECT_EQ(commandList->getCsr(false), lpBcsEngine->commandStreamReceiver);
 

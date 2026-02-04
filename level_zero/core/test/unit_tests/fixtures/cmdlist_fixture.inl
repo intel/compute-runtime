@@ -1586,10 +1586,10 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bo
 
         size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-        auto scratchCmdList = static_cast<L0::CommandList *>(commandList.get());
+        auto scratchCmdList = CommandList::whiteboxCast(commandList.get());
         auto cmdListStream = commandList->commandContainer.getCommandStream();
         if (useImmediate) {
-            scratchCmdList = static_cast<L0::CommandList *>(commandListImmediate.get());
+            scratchCmdList = CommandList::whiteboxCast(commandListImmediate.get());
             cmdListStream = commandListImmediate->commandContainer.getCommandStream();
         }
 

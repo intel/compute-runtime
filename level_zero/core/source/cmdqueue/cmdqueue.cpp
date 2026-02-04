@@ -27,7 +27,7 @@
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/pool_allocators.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"

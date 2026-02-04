@@ -1657,7 +1657,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     std::unique_ptr<L0::CommandList> immediateCmdList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    CommandList *immediateCmdListPtr = static_cast<CommandList *>(immediateCmdList.get());
+    CommandList *immediateCmdListPtr = CommandList::whiteboxCast(immediateCmdList.get());
     auto immediateQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(immediateCmdListPtr->cmdQImmediate);
 
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);

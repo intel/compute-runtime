@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -158,7 +158,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     res = device->createCommandList(&computeDesc, &hComputeCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
+    auto computeCommandList = CommandList::fromHandle(hComputeCommandList);
     EXPECT_FALSE(computeCommandList->isCopyOnly(false));
 
     ze_command_queue_handle_t hCommandQueue{};
@@ -176,7 +176,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     res = device->createCommandList(&copyDesc, &hCopyCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
+    auto copyCommandList = CommandList::fromHandle(hCopyCommandList);
     EXPECT_TRUE(copyCommandList->isCopyOnly(false));
 
     computeCommandQueue->destroy();
@@ -340,7 +340,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     res = device->createCommandListImmediate(&computeDesc, &hComputeCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
+    auto computeCommandList = CommandList::fromHandle(hComputeCommandList);
     EXPECT_FALSE(computeCommandList->isCopyOnly(false));
 
     ze_command_list_handle_t hCopyCommandList{};
@@ -349,7 +349,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     res = device->createCommandListImmediate(&copyDesc, &hCopyCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
+    auto copyCommandList = CommandList::fromHandle(hCopyCommandList);
     EXPECT_TRUE(copyCommandList->isCopyOnly(false));
 
     computeCommandList->destroy();

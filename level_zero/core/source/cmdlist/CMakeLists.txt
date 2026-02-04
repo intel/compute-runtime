@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,8 +14,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_imp.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_launch_params.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_memory_copy_params.h
                ${CMAKE_CURRENT_SOURCE_DIR}/command_to_patch.h

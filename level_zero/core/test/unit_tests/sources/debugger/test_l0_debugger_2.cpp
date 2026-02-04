@@ -404,7 +404,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedT
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
-    auto commandList = whiteboxCast(static_cast<L0::CommandListImp *>(CommandList::fromHandle(commandLists[0])));
+    auto commandList = whiteboxCast(CommandList::fromHandle(commandLists[0]));
     commandList->close();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);

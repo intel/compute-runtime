@@ -19,7 +19,7 @@ class ScratchSpaceController;
 
 namespace L0 {
 struct CommandListExecutionContext;
-struct CommandListImp;
+struct CommandList;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw : public CommandQueue {
@@ -222,7 +222,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void updateBaseAddressState(CommandList *lastCommandList);
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
     inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
-    void prepareInOrderCommandList(CommandListImp *commandList, CommandListExecutionContext &ctx);
+    void prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx);
 
     size_t alignedChildStreamPadding{};
 };

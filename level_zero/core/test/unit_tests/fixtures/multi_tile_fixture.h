@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace L0 {
 struct ContextImp;
 struct Device;
-struct CommandListImp;
+struct CommandList;
 
 namespace ult {
 template <typename Type>
@@ -24,7 +24,7 @@ struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleF
     void tearDown();
 
     ContextImp *contextImp = nullptr;
-    WhiteBox<::L0::CommandListImp> *commandList = nullptr;
+    WhiteBox<::L0::CommandList> *commandList = nullptr;
     L0::Device *device = nullptr;
     VariableBackup<bool> backup;
 };

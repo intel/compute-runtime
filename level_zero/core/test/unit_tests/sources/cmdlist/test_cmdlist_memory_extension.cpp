@@ -1442,7 +1442,7 @@ HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThe
     result = immCommandList->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 
     if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {

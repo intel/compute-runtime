@@ -167,7 +167,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     mutableWaitEventDesc.eventVariable = variable;
                     mutableWaitEventDesc.waitEventIndex = i;
 
-                    if (CommandListImp::isInOrderExecutionEnabled() && event->isCounterBased()) {
+                    if (CommandList::isInOrderExecutionEnabled() && event->isCounterBased()) {
                         mutableWaitEventDesc.waitEventPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
                         if (!isCbEventBoundToCmdList(event)) {
                             omitWaitEventResidency = true;
@@ -265,7 +265,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                 auto &variableLoadRegImmCmdList = mutableWaitEvent.eventVariable->getLoadRegImmList();
 
                 for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
-                    if (CommandListImp::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.event->hasInOrderTimestampNode())) {
+                    if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.event->hasInOrderTimestampNode())) {
                         captureCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
                     } else {
                         captureRegularWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList);
@@ -567,7 +567,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::reset() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) {
-    newEvent->updateInOrderExecState(CommandListImp::inOrderExecInfo, inOrderExecBaseSignalValue, inOrderAllocationOffset);
+    newEvent->updateInOrderExecState(CommandList::inOrderExecInfo, inOrderExecBaseSignalValue, inOrderAllocationOffset);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -782,7 +782,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
             launchParams.omitAddingEventResidency = event->getAllocation(this->device) != nullptr;
 
             mutableEventParams.l3FlushEvent = CommandListCoreFamily<gfxCoreFamily>::compactL3FlushEvent(CommandListCoreFamily<gfxCoreFamily>::getDcFlushRequired(event->isFlushRequiredForSignal()));
-            if (CommandListImp::isInOrderExecutionEnabled()) {
+            if (CommandList::isInOrderExecutionEnabled()) {
                 mutableEventParams.eventInsideInOrder = true;
                 mutableEventParams.counterBasedEvent = event->isCounterBased();
                 mutableEventParams.inOrderIncrementEvent = event->getInOrderIncrementValue(this->partitionCount) > 0;

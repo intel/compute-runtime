@@ -876,7 +876,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
@@ -938,7 +938,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
@@ -1033,7 +1033,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
@@ -1097,7 +1097,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
@@ -1172,7 +1172,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1460,7 +1460,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList0.get());
 
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);

@@ -878,7 +878,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateImmediateComm
     ze_result_t res = device->createCommandListImmediate(&desc, &commandListHandle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandList = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle));
+    auto commandList = L0::CommandList::fromHandle(commandListHandle);
 
     EXPECT_NE(commandList, nullptr);
     EXPECT_TRUE(commandList->getCsr(false)->getOsContext().isLowPriority());

@@ -63,7 +63,7 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
     DestroyableZeUniquePtr<ContextImp> context;
     DestroyableZeUniquePtr<Module> module;
     DestroyableZeUniquePtr<Kernel> kernel;
-    DestroyableZeUniquePtr<ult::WhiteBox<L0::CommandListImp>> commandList;
+    DestroyableZeUniquePtr<ult::WhiteBox<L0::CommandList>> commandList;
     DestroyableZeUniquePtr<CommandQueue> cmdQ;
 };
 

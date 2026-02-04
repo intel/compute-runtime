@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,11 @@
 namespace L0 {
 namespace ult {
 
-WhiteBox<::L0::CommandListImp>::WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
+WhiteBox<::L0::CommandList>::WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 
-WhiteBox<::L0::CommandListImp>::~WhiteBox() {}
+WhiteBox<::L0::CommandList>::~WhiteBox() {}
 
-Mock<CommandList>::Mock(Device *device) : WhiteBox<::L0::CommandListImp>() {
+Mock<CommandList>::Mock(Device *device) : WhiteBox<::L0::CommandList>() {
     this->device = device;
     size_t batchBufferSize = 65536u;
     batchBuffer = new uint8_t[batchBufferSize];

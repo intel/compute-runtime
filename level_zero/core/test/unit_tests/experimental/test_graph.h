@@ -30,7 +30,7 @@ struct GraphsCleanupGuard {
 };
 
 struct MockGraphCmdListWithContext : Mock<CommandList> {
-    using WhiteBox<::L0::CommandListImp>::cmdListType;
+    using WhiteBox<::L0::CommandList>::cmdListType;
 
     MockGraphCmdListWithContext(L0::Context *ctx) : ctx(ctx) {
         cmdListType = ::L0::CommandList::CommandListType::typeImmediate;

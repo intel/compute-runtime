@@ -364,7 +364,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
 using BcsSplitAubTests = Test<BcsSplitAubFixture<1>>;
 
 HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
-    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
+    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandList> *>(commandList.get());
     if (!whiteboxCmdList->isBcsSplitEnabled()) {
         GTEST_SKIP();
     }
@@ -398,7 +398,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     auto bcsSplit = static_cast<Device *>(rootDevice)->bcsSplit.get();
     ASSERT_NE(nullptr, bcsSplit);
 
-    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);
+    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandList> *>(bcsSplit->cmdLists[0]);
 
     auto taskCount = whiteboxSplitCmdList->cmdQImmediate->getTaskCount();
     EXPECT_TRUE(taskCount >= 1);
@@ -505,7 +505,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     commandList.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, commandList.get());
 
-    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
+    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandList> *>(commandList.get());
     EXPECT_TRUE(whiteboxCmdList->isCopyOffloadEnabled());
     EXPECT_TRUE(whiteboxCmdList->isBcsSplitEnabled());
 
@@ -538,7 +538,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     auto bcsSplit = static_cast<Device *>(rootDevice)->bcsSplit.get();
     ASSERT_NE(nullptr, bcsSplit);
 
-    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);
+    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandList> *>(bcsSplit->cmdLists[0]);
 
     auto taskCount = whiteboxSplitCmdList->cmdQImmediate->getTaskCount();
     EXPECT_TRUE(taskCount >= 1);

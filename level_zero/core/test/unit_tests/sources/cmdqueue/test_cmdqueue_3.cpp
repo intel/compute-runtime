@@ -701,7 +701,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
                                                                               NEO::EngineGroupType::compute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
@@ -1355,8 +1355,8 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     result = device->createCommandList(&cmdListDesc, &commandListHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
-    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
 
     auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue2->getCsr())->primaryCsr);
     EXPECT_NE(nullptr, primaryCsr);

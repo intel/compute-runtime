@@ -2356,7 +2356,7 @@ HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAn
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
     auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
     whiteBoxCmdList->enableInOrderExecution();
     uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {

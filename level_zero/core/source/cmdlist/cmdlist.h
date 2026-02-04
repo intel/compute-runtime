@@ -15,6 +15,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/private_allocs_to_reuse_container.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
@@ -91,7 +92,7 @@ struct CommandList : _ze_command_list_handle_t {
     using CmdListReturnPoints = StackVec<CmdListReturnPoint, 32>;
 
     virtual ze_result_t close() = 0;
-    virtual ze_result_t destroy() = 0;
+    virtual ze_result_t destroy();
     virtual ze_result_t appendEventReset(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
@@ -198,12 +199,12 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t reserveSpace(size_t size, void **ptr) = 0;
     virtual ze_result_t reset() = 0;
 
-    virtual ze_result_t appendMetricMemoryBarrier() = 0;
+    virtual ze_result_t appendMetricMemoryBarrier();
     virtual ze_result_t appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer,
-                                                   uint32_t value) = 0;
-    virtual ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) = 0;
+                                                   uint32_t value);
+    virtual ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery);
     virtual ze_result_t appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
-                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     virtual ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                                     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
@@ -225,11 +226,11 @@ struct CommandList : _ze_command_list_handle_t {
                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
 
-    virtual ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) = 0;
-    virtual ze_result_t getContextHandle(ze_context_handle_t *phContext) = 0;
-    virtual uint32_t getOrdinal() const = 0;
-    virtual ze_result_t getImmediateIndex(uint32_t *pIndex) = 0;
-    virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate) = 0;
+    MOCKABLE_VIRTUAL ze_result_t getDeviceHandle(ze_device_handle_t *phDevice);
+    MOCKABLE_VIRTUAL ze_result_t getContextHandle(ze_context_handle_t *phContext);
+    virtual uint32_t getOrdinal() const;
+    virtual ze_result_t getImmediateIndex(uint32_t *pIndex);
+    virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate);
 
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
@@ -572,6 +573,31 @@ struct CommandList : _ze_command_list_handle_t {
     bool isPatchPreambleEnabled() const { return patchPreambleEnabled; }
     void setupPatchPreambleEnabled();
 
+    virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
+    virtual void appendMultiPartitionEpilogue() = 0;
+    virtual void patchInOrderCmds() = 0;
+    virtual bool kernelMemoryPrefetchEnabled() const = 0;
+
+    void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
+    void enableInOrderExecution();
+    bool isInOrderExecutionEnabled() const { return inOrderExecInfo.get(); }
+    void storeReferenceTsToMappedEvents(bool clear);
+    void addToMappedEventList(Event *event);
+    const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
+    void addRegularCmdListSubmissionCounter();
+    bool inOrderCmdsPatchingEnabled() const;
+    void clearInOrderExecCounterAllocation();
+    void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
+    NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
+    void enableCopyOperationOffload();
+    void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    size_t getInOrderExecDeviceRequiredSize() const;
+    uint64_t getInOrderExecDeviceGpuAddress() const;
+    size_t getInOrderExecHostRequiredSize() const;
+    uint64_t getInOrderExecHostGpuAddress() const;
+    void enableImmediateBcsSplit();
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -601,6 +627,10 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<NEO::TagNodeBase *> patternTags;
     std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
     std::vector<CleanupCallbackT> cleanupCallbacks;
+    std::vector<Event *> mappedTsEventList;
+    std::vector<Event *> interruptEvents;
+
+    std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
 
     NEO::CommandContainer commandContainer;
 
@@ -634,6 +664,10 @@ struct CommandList : _ze_command_list_handle_t {
     size_t maxFillPatternSizeForCopyEngine = 0;
     size_t totalNoopSpace = 0;
 
+    static constexpr bool cmdListDefaultCoherency = false;
+    static constexpr bool cmdListDefaultDisableOverdispatch = true;
+    static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
+
     uint32_t commandListPerThreadScratchSize[2]{};
 
     ze_command_list_flags_t flags = 0u;
@@ -645,6 +679,7 @@ struct CommandList : _ze_command_list_handle_t {
     CommandListType cmdListType = CommandListType::typeRegular;
     CopyOffloadMode copyOffloadMode = CopyOffloadModes::disabled;
     BcsSplitParams::BcsSplitMode bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
+    NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
@@ -652,6 +687,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t frontEndPatchListCount = 0;
     uint32_t activeScratchPatchElements = 0;
     uint32_t hostFunctionPatchListCount = 0;
+    uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
 
     bool isSyncModeQueue = false;
     bool isTbxMode = false;

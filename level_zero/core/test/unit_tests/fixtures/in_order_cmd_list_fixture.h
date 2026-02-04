@@ -448,7 +448,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
                                                                                          copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,
                                                                                          returnValue));
 
-        *static_cast<L0::CommandListImp *>(commandList.get())->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
+        *commandList->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
 
         return commandList;
     }

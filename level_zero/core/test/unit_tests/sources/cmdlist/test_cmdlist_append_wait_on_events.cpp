@@ -82,7 +82,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 
@@ -178,7 +178,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 
@@ -429,7 +429,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 
@@ -466,7 +466,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 

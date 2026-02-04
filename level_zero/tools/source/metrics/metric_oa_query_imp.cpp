@@ -18,7 +18,6 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
@@ -820,7 +819,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
     if (metricQueriesSize) {
 
         const size_t allocationSizeForSubDevice = pool.allocationSize / metricQueriesSize;
-        static_cast<CommandListImp &>(commandList).appendMultiPartitionPrologue(static_cast<uint32_t>(allocationSizeForSubDevice));
+        commandList.appendMultiPartitionPrologue(static_cast<uint32_t>(allocationSizeForSubDevice));
         void *buffer = nullptr;
         bool gpuCommandStatus = true;
 
@@ -872,7 +871,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
                 break;
             }
         }
-        static_cast<CommandListImp &>(commandList).appendMultiPartitionEpilogue();
+        commandList.appendMultiPartitionEpilogue();
         if (!gpuCommandStatus) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }

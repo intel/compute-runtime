@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,22 +28,22 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
     auto usedSpaceBefore = commandContainer.getCommandStream()->getUsed();
 
-    CommandListImp *cmdListImp = static_cast<CommandListImp *>(commandList.get());
+    auto cmdList = commandList.get();
     uint32_t dataPartitionSize = 16;
-    cmdListImp->appendMultiPartitionPrologue(dataPartitionSize);
+    cmdList->appendMultiPartitionPrologue(dataPartitionSize);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    GenCmdList cmdList;
+    GenCmdList parsedCmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        parsedCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto itorLrm = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itorLrm);
+    auto itorLrm = find<MI_LOAD_REGISTER_MEM *>(parsedCmdList.begin(), parsedCmdList.end());
+    EXPECT_EQ(parsedCmdList.end(), itorLrm);
 
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(parsedCmdList.begin(), parsedCmdList.end());
+    ASSERT_NE(parsedCmdList.end(), itorLri);
 
     auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLri);
     EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmd->getRegisterOffset()));
@@ -62,9 +62,9 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
     auto usedSpaceBefore = commandContainer.getCommandStream()->getUsed();
 
-    CommandListImp *cmdListImp = static_cast<CommandListImp *>(commandList.get());
+    auto cmdList = commandList.get();
     uint32_t dataPartitionSize = 16;
-    cmdListImp->appendMultiPartitionPrologue(dataPartitionSize);
+    cmdList->appendMultiPartitionPrologue(dataPartitionSize);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_EQ(usedSpaceAfter, usedSpaceBefore);
@@ -83,18 +83,18 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledTh
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
     auto usedSpaceBefore = commandContainer.getCommandStream()->getUsed();
 
-    CommandListImp *cmdListImp = static_cast<CommandListImp *>(commandList.get());
-    cmdListImp->appendMultiPartitionEpilogue();
+    auto cmdList = commandList.get();
+    cmdList->appendMultiPartitionEpilogue();
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    GenCmdList cmdList;
+    GenCmdList parsedCmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        parsedCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorLri);
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(parsedCmdList.begin(), parsedCmdList.end());
+    ASSERT_NE(parsedCmdList.end(), itorLri);
 
     auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLri);
     EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, static_cast<uint64_t>(lriCmd->getRegisterOffset()));
@@ -114,8 +114,8 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionPrologueIsCalledTh
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
     auto usedSpaceBefore = commandContainer.getCommandStream()->getUsed();
 
-    CommandListImp *cmdListImp = static_cast<CommandListImp *>(commandList.get());
-    cmdListImp->appendMultiPartitionEpilogue();
+    auto cmdList = commandList.get();
+    cmdList->appendMultiPartitionEpilogue();
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_EQ(usedSpaceAfter, usedSpaceBefore);

@@ -309,8 +309,8 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
 };
 
 template <>
-struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
-    using BaseClass = ::L0::CommandListImp;
+struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
+    using BaseClass = ::L0::CommandList;
     using BaseClass::BaseClass;
     using BaseClass::bcsSplitMode;
     using BaseClass::closedCmdList;
@@ -362,12 +362,12 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     WhiteBox();
     ~WhiteBox() override;
 
-    static WhiteBox<L0::CommandListImp> *whiteboxCast(L0::CommandList *cmdlist) {
-        return static_cast<WhiteBox<L0::CommandListImp> *>(static_cast<L0::CommandListImp *>(cmdlist));
+    static WhiteBox<L0::CommandList> *whiteboxCast(L0::CommandList *cmdlist) {
+        return static_cast<WhiteBox<L0::CommandList> *>(cmdlist);
     }
 };
 
-using CommandList = WhiteBox<::L0::CommandListImp>;
+using CommandList = WhiteBox<::L0::CommandList>;
 
 template <>
 struct Mock<CommandList> : public CommandList {
