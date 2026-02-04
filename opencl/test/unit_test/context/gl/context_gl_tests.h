@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,12 +42,6 @@ struct GlContextTest : public PlatformFixture, public ::testing::Test {
 
         const cl_context_properties propertiesOneContext[] = {CL_CONTEXT_PLATFORM, platformId, contextType, 0x10000, 0};
         auto context = std::unique_ptr<Context>(Context::create<Context>(propertiesOneContext, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, context.get());
-        EXPECT_FALSE(context->getInteropUserSyncEnabled());
-
-        const cl_context_properties propertiesTwoContexts[] = {CL_CONTEXT_PLATFORM, platformId, contextType, 0x10000, contextType, 0x10000, 0};
-        context = std::unique_ptr<Context>(Context::create<Context>(propertiesTwoContexts, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, context.get());
         EXPECT_FALSE(context->getInteropUserSyncEnabled());

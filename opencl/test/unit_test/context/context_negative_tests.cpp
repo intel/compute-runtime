@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,6 +73,46 @@ TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenE
 
     context = Context::create<Context>(invalidProperties2, ClDeviceVector(&deviceID, 1), nullptr,
                                        nullptr, retVal);
+
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+    EXPECT_EQ(nullptr, context);
+    delete context;
+}
+
+TEST(InvalidPropertyContextTest, GivenInvalidValueForInteropUserSyncWhenContextIsCreatedThenErrorIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    cl_device_id deviceID = device.get();
+    auto pPlatform = NEO::platform();
+    cl_platform_id pid[1];
+    pid[0] = pPlatform;
+
+    cl_context_properties invalidValue{-1};
+    cl_context_properties invalidProperties[5] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(pid[0]),
+                                                  CL_CONTEXT_INTEROP_USER_SYNC, invalidValue, 0};
+
+    cl_int retVal = CL_SUCCESS;
+    auto context = Context::create<Context>(invalidProperties, ClDeviceVector(&deviceID, 1), nullptr,
+                                            nullptr, retVal);
+
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+    EXPECT_EQ(nullptr, context);
+    delete context;
+}
+
+TEST(InvalidPropertyContextTest, GivenDuplicatePropertyWhenContextIsCreatedThenInvalidPropertyErrorIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    cl_device_id deviceID = device.get();
+    auto pPlatform = NEO::platform();
+    cl_platform_id pid[1];
+    pid[0] = pPlatform;
+
+    cl_context_properties duplicatedProperties[7] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(pid[0]),
+                                                     CL_CONTEXT_INTEROP_USER_SYNC, CL_FALSE,
+                                                     CL_CONTEXT_INTEROP_USER_SYNC, CL_FALSE, 0};
+
+    cl_int retVal = CL_SUCCESS;
+    auto context = Context::create<Context>(duplicatedProperties, ClDeviceVector(&deviceID, 1), nullptr,
+                                            nullptr, retVal);
 
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
     EXPECT_EQ(nullptr, context);

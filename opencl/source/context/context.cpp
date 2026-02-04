@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <unordered_set>
 
 namespace NEO {
 
@@ -220,12 +221,20 @@ bool Context::createImpl(const cl_context_properties *properties,
     auto sharingBuilder = sharingFactory.build();
 
     std::unique_ptr<DriverDiagnostics> driverDiagnostics;
+    std::unordered_set<cl_context_properties> seenProperties;
+
     while (propertiesCurrent && *propertiesCurrent) {
         errcodeRet = CL_SUCCESS;
 
         auto propertyType = propertiesCurrent[0];
         auto propertyValue = propertiesCurrent[1];
         propertiesCurrent += 2;
+
+        if (seenProperties.count(propertyType) > 0) {
+            errcodeRet = CL_INVALID_PROPERTY;
+            return false;
+        }
+        seenProperties.insert(propertyType);
 
         switch (propertyType) {
         case CL_CONTEXT_PLATFORM:
@@ -234,6 +243,10 @@ bool Context::createImpl(const cl_context_properties *properties,
             driverDiagnosticsUsed = static_cast<int32_t>(propertyValue);
             break;
         case CL_CONTEXT_INTEROP_USER_SYNC:
+            if (propertyValue != CL_FALSE && propertyValue != CL_TRUE) {
+                errcodeRet = CL_INVALID_PROPERTY;
+                return false;
+            }
             interopUserSync = propertyValue > 0;
             break;
         default:
