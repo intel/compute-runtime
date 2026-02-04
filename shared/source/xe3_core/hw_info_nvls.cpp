@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ const PLATFORM NVLS::platform = {
 const RuntimeCapabilityTable NVLS::capabilityTable{
     .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
         {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
+        {aub_stream::ENGINE_BCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
     }),
     .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
     .gpuAddressSpace = MemoryConstants::max48BitAddress,

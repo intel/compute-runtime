@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,12 @@ NVLSTEST_F(NvlsHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSe
             EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
+            break;
+        case aub_stream::ENGINE_BCS:
+            EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             break;
         default:
