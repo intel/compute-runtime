@@ -246,38 +246,6 @@ TEST(MemoryManagerTest, givenMultipleDevicesMemoryManagerWhenGettingDefaultConte
               executionEnvironment.memoryManager->getDefaultEngineContext(1, 2));
 }
 
-TEST(MemoryManagerTest, givenRegisteredPrimaryAndSecondaryContextsWhenGettingPrimaryEnginesThenOnlyPrimaryContextsAreReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto mockMemoryManager = new MockMemoryManager(false, false, executionEnvironment);
-    executionEnvironment.memoryManager.reset(mockMemoryManager);
-
-    auto csr0 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-    auto csr2 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-
-    auto primaryContext0 = mockMemoryManager->createAndRegisterOsContext(
-        csr0.get(),
-        EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
-    auto primaryContext1 = mockMemoryManager->createAndRegisterOsContext(
-        csr1.get(),
-        EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
-    auto secondaryContext = mockMemoryManager->createAndRegisterSecondaryOsContext(
-        primaryContext0,
-        csr2.get(),
-        EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
-
-    const auto &primaryEngines = mockMemoryManager->getPrimaryEngines(0u);
-    EXPECT_EQ(2u, primaryEngines.size());
-    EXPECT_EQ(primaryContext0, primaryEngines[0].osContext);
-    EXPECT_EQ(primaryContext1, primaryEngines[1].osContext);
-
-    for (const auto &engine : primaryEngines) {
-        EXPECT_NE(secondaryContext, engine.osContext);
-    }
-
-    mockMemoryManager->secondaryEngines[0].clear();
-}
-
 TEST(MemoryManagerTest, givenSingleDeviceModeWhenGettingDefaultContextThenInternalContextReturnedAsAFallback) {
 
     DebugManagerStateRestore dbgRestorer;

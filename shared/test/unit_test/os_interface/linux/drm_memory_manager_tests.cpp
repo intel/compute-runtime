@@ -2725,8 +2725,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCa
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenLockIsCalledThenverifyAllocationIsResident) {
-    mock->ioctlExpected.total = -1;
-    this->dontTestIoctlInTearDown = true;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemCreateExt = 1;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
     mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
@@ -2735,7 +2737,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAnd
     drm.ioctlHelper.reset(mockIoctlHelper);
 
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
-
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::buffer});
     ASSERT_NE(nullptr, allocation);
 
