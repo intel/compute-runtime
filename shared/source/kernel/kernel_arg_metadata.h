@@ -197,6 +197,7 @@ struct ArgTypeMetadataExtended {
     std::string accessQualifier;
     std::string addressQualifier;
     std::string typeQualifiers;
+    size_t typeSize = 0u;
 };
 
 } // namespace NEO

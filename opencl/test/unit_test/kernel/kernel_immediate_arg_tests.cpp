@@ -192,6 +192,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelA
     elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
     elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
 
+    this->pKernelInfo->kernelDescriptor.explicitArgsExtendedMetadata[3].typeSize = sizeof(immediateStruct);
     this->pMultiDeviceKernel->setArg(3, sizeof(immediateStruct), &immediateStruct);
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
@@ -200,6 +201,40 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelA
         EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
 
         auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData() + elements[1].offset);
+        EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
+    }
+}
+
+TYPED_TEST(KernelArgImmediateTest, GivenStructWithTrailingPaddingWhenSettingKernelArgThenArgsAreSetCorrectly) {
+    if (sizeof(TypeParam) == 1) {
+        return; // no trailing padding for char-sized types
+    }
+
+    struct ImmediateStruct {
+        TypeParam a;
+        char b;
+    } immediateStruct;
+
+    immediateStruct.a = (TypeParam)0xaaaaaaaaULL;
+    immediateStruct.b = 'x';
+
+    auto &elements = this->pKernelInfo->argAsVal(3).elements;
+    elements.resize(2);
+    elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
+    elements[0].size = sizeof(TypeParam);
+    elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
+    elements[1].size = sizeof(char);
+
+    this->pKernelInfo->kernelDescriptor.explicitArgsExtendedMetadata[3].typeSize = sizeof(immediateStruct);
+    auto retVal = this->pMultiDeviceKernel->setArg(3, sizeof(immediateStruct), &immediateStruct);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData() + elements[0].offset);
+        EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
+
+        auto pCrossthreadB = pKernel->getCrossThreadData() + elements[1].offset;
         EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
     }
 }
@@ -363,4 +398,59 @@ TYPED_TEST(KernelArgImmediateTest, givenMultiplePatchesAndOneSourceOffsetBeyondA
 
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
+}
+
+TYPED_TEST(KernelArgImmediateTest, GivenArgSizeSmallerThanRequiredWhenSettingArgThenInvalidArgSizeIsReturned) {
+    TypeParam val = (TypeParam)0xaaaaaaaaULL;
+
+    auto retVal = this->pMultiDeviceKernel->setArg(0, sizeof(TypeParam) - 1, &val);
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, GivenMultipleElementsAndArgSizeSmallerThanRequiredWhenSettingArgThenInvalidArgSizeIsReturned) {
+    struct ImmediateStruct {
+        TypeParam a;
+        TypeParam b;
+        TypeParam c;
+    } immediateStruct;
+
+    immediateStruct.a = (TypeParam)0xaaaaaaaaULL;
+    immediateStruct.b = (TypeParam)0xbbbbbbbbULL;
+    immediateStruct.c = (TypeParam)0xccccccccULL;
+
+    auto &elements = this->pKernelInfo->argAsVal(3).elements;
+    elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
+    elements[0].size = sizeof(TypeParam);
+    elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
+    elements[1].size = sizeof(TypeParam);
+    elements[2].sourceOffset = offsetof(struct ImmediateStruct, c);
+    elements[2].size = sizeof(TypeParam);
+
+    this->pKernelInfo->kernelDescriptor.explicitArgsExtendedMetadata[3].typeSize = sizeof(ImmediateStruct);
+    auto retVal = this->pMultiDeviceKernel->setArg(3, sizeof(TypeParam) * 2, &immediateStruct);
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, GivenMultipleElementsAndExactArgSizeWhenSettingArgThenSuccessIsReturned) {
+    struct ImmediateStruct {
+        TypeParam a;
+        TypeParam b;
+        TypeParam c;
+    } immediateStruct;
+
+    immediateStruct.a = (TypeParam)0xaaaaaaaaULL;
+    immediateStruct.b = (TypeParam)0xbbbbbbbbULL;
+    immediateStruct.c = (TypeParam)0xccccccccULL;
+
+    auto &elements = this->pKernelInfo->argAsVal(3).elements;
+    elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
+    elements[0].size = sizeof(TypeParam);
+    elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
+    elements[1].size = sizeof(TypeParam);
+    elements[2].sourceOffset = offsetof(struct ImmediateStruct, c);
+    elements[2].size = sizeof(TypeParam);
+
+    this->pKernelInfo->kernelDescriptor.explicitArgsExtendedMetadata[3].typeSize = sizeof(ImmediateStruct);
+    auto retVal = this->pMultiDeviceKernel->setArg(3, sizeof(ImmediateStruct), &immediateStruct);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
