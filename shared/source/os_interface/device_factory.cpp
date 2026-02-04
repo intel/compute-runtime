@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -123,7 +124,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             rootDeviceEnvironment.initGmm();
             rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", csrType);
             auto aubCenter = rootDeviceEnvironment.aubCenter.get();
-            rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            auto opsHandler = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            opsHandler->setAddressWidth(rootDeviceEnvironment.getGmmHelper()->getAddressWidth());
+            rootDeviceEnvironment.memoryOperationsInterface = std::move(opsHandler);
 
             if (DeviceFactory::isTbxModeSelected()) {
                 auto capsReader = productHelper.getDeviceCapsReader(*aubCenter->getAubManager());

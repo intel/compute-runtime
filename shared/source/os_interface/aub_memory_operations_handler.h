@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/spinlock.h"
@@ -35,16 +36,22 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
 
     void setAubManager(aub_stream::AubManager *aubManager);
 
-    bool isAubWritable(GraphicsAllocation &graphicsAllocation, Device *device) const;
-    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, Device *device);
+    bool isAubWritable(GraphicsAllocation &graphicsAllocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) const;
+    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable);
+    void setAddressWidth(uint32_t addressWidth) { this->addressWidth = addressWidth; }
 
   protected:
-    DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const;
+    DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) const;
+    MemoryOperationsStatus makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, bool forcePagingFence, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
+    }
+    uint64_t decanonizeAddress(uint64_t address) const {
+        return addressWidth > 0 ? (address & maxNBitValue(addressWidth)) : address;
     }
     aub_stream::AubManager *aubManager = nullptr;
     std::vector<GraphicsAllocation *> residentAllocations;
     SpinLock resourcesLock;
+    uint32_t addressWidth = 0;
 };
 } // namespace NEO

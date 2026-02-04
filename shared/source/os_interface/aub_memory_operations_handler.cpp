@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "aubstream/allocation_params.h"
 #include "aubstream/hint_values.h"
@@ -32,19 +33,25 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
         return MemoryOperationsStatus::deviceUninitialized;
     }
 
-    if (device) {
-        device->getDefaultEngine().commandStreamReceiver->initializeEngine();
+    if (!device) {
+        return MemoryOperationsStatus::success;
     }
 
+    device->getDefaultEngine().commandStreamReceiver->initializeEngine();
+
+    return makeResidentWithinDevice(gfxAllocations, isDummyExecNeeded, forcePagingFence, device->getDeviceBitfield(), device->getDefaultEngine().commandStreamReceiver->isMultiOsContextCapable());
+}
+
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, bool forcePagingFence, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable) {
     auto lock = acquireLock(resourcesLock);
     int hint = aub_stream::DataTypeHintValues::TraceNotype;
     for (const auto &allocation : gfxAllocations) {
-        if (!isAubWritable(*allocation, device)) {
+        if (!isAubWritable(*allocation, deviceBitfield, isMultiOsContextCapable)) {
             continue;
         }
 
-        auto memoryBanks = static_cast<uint32_t>(getMemoryBanksBitfield(allocation, device).to_ulong());
-        uint64_t gpuAddress = device ? device->getGmmHelper()->decanonize(allocation->getGpuAddress()) : allocation->getGpuAddress();
+        auto memoryBanks = static_cast<uint32_t>(getMemoryBanksBitfield(allocation, deviceBitfield, isMultiOsContextCapable).to_ulong());
+        uint64_t gpuAddress = decanonizeAddress(allocation->getGpuAddress());
         aub_stream::AllocationParams params(gpuAddress,
                                             allocation->getUnderlyingBuffer(),
                                             allocation->getUnderlyingBufferSize(),
@@ -59,18 +66,14 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
             params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
-        if (allocation->storageInfo.cloningOfPageTables || !allocation->isAllocatedInLocalMemoryPool()) {
-            aubManager->writeMemory2(params);
-        } else {
-            device->getDefaultEngine().commandStreamReceiver->writeMemoryAub(params);
-        }
+        aubManager->writeMemory2(params);
 
         if (!allocation->getAubInfo().writeMemoryOnly) {
             residentAllocations.push_back(allocation);
         }
 
         if (AubHelper::isOneTimeAubWritableAllocationType(allocation->getAllocationType())) {
-            setAubWritable(false, *allocation, device);
+            setAubWritable(false, *allocation, deviceBitfield, isMultiOsContextCapable);
         }
     }
     return MemoryOperationsStatus::success;
@@ -100,7 +103,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::free(Device *device, Graphics
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) {
-    return makeResident(nullptr, gfxAllocations, false, forcePagingFence);
+    if (!osContext) {
+        return MemoryOperationsStatus::success;
+    }
+    return makeResidentWithinDevice(gfxAllocations, false, forcePagingFence, osContext->getDeviceBitfield(), osContext->getNumSupportedDevices() > 1);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
@@ -121,37 +127,32 @@ void AubMemoryOperationsHandler::setAubManager(aub_stream::AubManager *aubManage
     this->aubManager = aubManager;
 }
 
-bool AubMemoryOperationsHandler::isAubWritable(GraphicsAllocation &graphicsAllocation, Device *device) const {
-    if (!device) {
-        return false;
-    }
-    auto bank = static_cast<uint32_t>(getMemoryBanksBitfield(&graphicsAllocation, device).to_ulong());
+bool AubMemoryOperationsHandler::isAubWritable(GraphicsAllocation &graphicsAllocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) const {
+    auto bank = static_cast<uint32_t>(getMemoryBanksBitfield(&graphicsAllocation, contextDeviceBitfield, isMultiOsContextCapable).to_ulong());
     if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
         bank = GraphicsAllocation::defaultBank;
     }
     return graphicsAllocation.isAubWritable(bank);
 }
 
-void AubMemoryOperationsHandler::setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, Device *device) {
-    if (!device) {
-        return;
-    }
-    auto bank = static_cast<uint32_t>(getMemoryBanksBitfield(&graphicsAllocation, device).to_ulong());
+void AubMemoryOperationsHandler::setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) {
+
+    auto bank = static_cast<uint32_t>(getMemoryBanksBitfield(&graphicsAllocation, contextDeviceBitfield, isMultiOsContextCapable).to_ulong());
     if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
         bank = GraphicsAllocation::defaultBank;
     }
     graphicsAllocation.setAubWritable(writable, bank);
 }
 
-DeviceBitfield AubMemoryOperationsHandler::getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const {
+DeviceBitfield AubMemoryOperationsHandler::getMemoryBanksBitfield(GraphicsAllocation *allocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) const {
     if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         if (allocation->storageInfo.memoryBanks.any()) {
             if (allocation->storageInfo.cloningOfPageTables ||
-                device->getDefaultEngine().commandStreamReceiver->isMultiOsContextCapable()) {
+                isMultiOsContextCapable) {
                 return allocation->storageInfo.memoryBanks;
             }
         }
-        return device->getDeviceBitfield();
+        return contextDeviceBitfield;
     }
     return {};
 }

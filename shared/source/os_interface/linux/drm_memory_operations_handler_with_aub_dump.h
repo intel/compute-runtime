@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
@@ -32,6 +33,7 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
 
         const auto aubCenter = rootDeviceEnvironment.aubCenter.get();
         aubMemoryOperationsHandler = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+        aubMemoryOperationsHandler->setAddressWidth(rootDeviceEnvironment.getGmmHelper()->getAddressWidth());
     };
 
     ~DrmMemoryOperationsHandlerWithAubDump() override = default;
