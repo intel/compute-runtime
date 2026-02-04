@@ -1666,6 +1666,10 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         return retVal;
     }
 
+    if (argSize != sizeof(cl_sampler)) {
+        return CL_INVALID_ARG_SIZE;
+    }
+
     uint32_t *crossThreadData = reinterpret_cast<uint32_t *>(this->crossThreadData);
     auto clSamplerObj = *(static_cast<const cl_sampler *>(argVal));
     auto pSampler = castToObject<Sampler>(clSamplerObj);
@@ -1680,7 +1684,7 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         oldSampler->decRefInternal();
     }
 
-    if (pSampler && argSize == sizeof(cl_sampler *)) {
+    if (pSampler) {
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
         const auto &argAsSmp = arg.as<ArgDescSampler>();
 

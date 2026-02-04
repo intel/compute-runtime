@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -345,6 +345,28 @@ HWTEST_F(SamplerSetArgTest, GivenNullWhenSettingKernelArgThenInvalidSamplerError
         sizeof(samplerObj),
         nullptr);
     ASSERT_EQ(CL_INVALID_SAMPLER, retVal);
+}
+
+HWTEST_F(SamplerSetArgTest, GivenArgSizeSmallerThanSamplerSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
+    createSampler();
+    cl_sampler samplerObj = sampler;
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj) / 2,
+        &samplerObj);
+    ASSERT_EQ(CL_INVALID_ARG_SIZE, retVal);
+}
+
+HWTEST_F(SamplerSetArgTest, GivenArgSizeLargerThanSamplerSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
+    createSampler();
+    cl_sampler samplerObj = sampler;
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj) * 2,
+        &samplerObj);
+    ASSERT_EQ(CL_INVALID_ARG_SIZE, retVal);
 }
 
 HWTEST_F(SamplerSetArgTest, GivenInvalidSamplerWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
