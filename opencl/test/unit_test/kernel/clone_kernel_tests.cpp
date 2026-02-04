@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -422,7 +422,7 @@ TEST_F(CloneKernelTest, givenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect
 TEST_F(CloneKernelTest, givenArgImmediateWhenCloningKernelThenKernelInfoIsCorrect) {
     pKernelInfo->addArgImmediate(0, sizeof(void *), 0x20);
 
-    using TypeParam = unsigned long;
+    using TypeParam = uintptr_t;
     auto value = (TypeParam)0xAA55AA55UL;
 
     retVal = pSourceMultiDeviceKernel->setArg(0, sizeof(TypeParam), &value);

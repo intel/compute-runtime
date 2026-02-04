@@ -375,7 +375,11 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
         dstTypeTraits.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(dstMetadata.typeQualifiers);
         dst.payloadMappings.explicitArgs.at(srcMetadata.index).getTraits() = std::move(dstTypeTraits);
 
-        dstMetadata.type = dstMetadata.type.substr(0U, dstMetadata.type.find(";"));
+        auto semicolonPos = dstMetadata.type.find(";");
+        if (semicolonPos != std::string::npos) {
+            dstMetadata.typeSize = static_cast<size_t>(std::atoi(dstMetadata.type.c_str() + semicolonPos + 1));
+            dstMetadata.type = dstMetadata.type.substr(0U, semicolonPos);
+        }
         dst.explicitArgsExtendedMetadata.at(srcMetadata.index) = std::move(dstMetadata);
     }
 }

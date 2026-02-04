@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class MockKernelInfo : public KernelInfo {
 
     inline void setCrossThreadDataSize(uint16_t crossThreadDataSize) { kernelDescriptor.kernelAttributes.crossThreadDataSize = crossThreadDataSize; }
 
-    void addExtendedMetadata(uint32_t index, const std::string &argName = "", const std::string &type = "", const std::string &accessQualifier = "", const std::string &addressQualifier = "", const std::string &typeQualifiers = "");
+    void addExtendedMetadata(uint32_t index, const std::string &argName = "", const std::string &type = "", const std::string &accessQualifier = "", const std::string &addressQualifier = "", const std::string &typeQualifiers = "", size_t typeSize = 0u);
 
     inline void addToPrintfStringsMap(uint32_t index, const std::string &string) {
         kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
