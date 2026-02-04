@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -210,4 +210,8 @@ elseif(WIN32)
 
   set(CPACK_ARCHIVE_OCLOC_FILE_NAME "ocloc-${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_PACKAGE_ARCHITECTURE}")
   include(CPack)
+endif()
+
+if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
+  include("${BRANCH_TYPE}/package.cmake" OPTIONAL)
 endif()

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -35,6 +35,10 @@ export NEO_SKIP_AUB_TESTS_RUN="${NEO_SKIP_AUB_TESTS_RUN:-TRUE}"
 
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/versions.sh"
+
+if [ -f "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/exports.sh" ]; then
+    source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/exports.sh"
+fi
 
 get_api_version # API_VERSION-API_VERSION_SRC and API_DEB_MODEL_LINK
 get_neo_version # NEO_VERSION_MAJOR.NEO_VERSION_MINOR.NEO_VERSION_BUILD.NEO_VERSION_HOTFIX
@@ -72,6 +76,9 @@ if [ -f "${SHLIBS}" ]; then
 fi
 if [ -f "${DEV_INSTALL}" ]; then
     cp -v $DEV_INSTALL $BUILD_DIR/debian/
+fi
+if [ -f "${LIBZE_INSTALL}" ]; then
+    cp -v $LIBZE_INSTALL $BUILD_DIR/debian/
 fi
 
 if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
@@ -120,16 +127,16 @@ if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLAT
     mv -v "$BUILD_DIR/debian/intel-opencl-icd.install" "$BUILD_DIR/debian/intel-opencl-icd-${NEO_LEGACY_VERSION}.install"
 
     perl -pi -e "s/^Package: intel-ocloc$/Package: intel-ocloc-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
-    mv -v "$BUILD_DIR/debian/intel-ocloc.install" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.install" 
-    mv -v "$BUILD_DIR/debian/intel-ocloc.postinst" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst" 
-    mv -v "$BUILD_DIR/debian/intel-ocloc.prerm" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm" 
+    mv -v "$BUILD_DIR/debian/intel-ocloc.install" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.install"
+    mv -v "$BUILD_DIR/debian/intel-ocloc.postinst" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst"
+    mv -v "$BUILD_DIR/debian/intel-ocloc.prerm" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm"
     perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_VERSION_MAJOR}${NEO_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst"
     perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm"
     perl -i -lne 'if (/^Package: intel-ocloc-dev$/ .. /^$/) { print if !$flag } else {$flag=1; print}' "$BUILD_DIR/debian/control"
 
     if [ "${NEO_BUILD_WITH_L0}" == "TRUE" ]; then
         perl -pi -e "s/^Package: libze-intel-gpu1$/Package: libze-intel-gpu1-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
-        mv -v "$BUILD_DIR/debian/libze-intel-gpu1.install" "$BUILD_DIR/debian/libze-intel-gpu1-${NEO_LEGACY_VERSION}.install" 
+        mv -v "$BUILD_DIR/debian/libze-intel-gpu1.install" "$BUILD_DIR/debian/libze-intel-gpu1-${NEO_LEGACY_VERSION}.install"
     fi
     perl -i -lne 'if (/^Package: libze-intel-gpu-dev$/ .. /^$/) { print if !$flag } else {$flag=1; print}' "$BUILD_DIR/debian/control"
 else
@@ -139,7 +146,6 @@ else
     perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_VERSION_MAJOR}${NEO_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.postinst"
     perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.prerm"
 fi
-
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
