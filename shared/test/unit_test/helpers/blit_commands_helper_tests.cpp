@@ -392,6 +392,63 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
     }
 }
 
+HWTEST2_F(BlitTests, givenSmallPatternWhenDispatchBlitCommandsThenMemSetCommandIsProgrammed, IsAtLeastXeHpcCore) {
+    using MEM_SET = typename FamilyType::MEM_SET;
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint8_t), 0);
+
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
+
+HWTEST2_F(BlitTests, givenSmallPatternWhenDispatchBlitCommandsThenColorBltCommandIsProgrammed, IsAtMostXeHpgCore) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint8_t), 0);
+
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
+
+HWTEST2_F(BlitTests, givenLargePatternWhenDispatchBlitCommandsThenColorBltCommandIsProgrammed, IsAtMostXe3pCore) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
+
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
+
 HWTEST2_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed, IsAtMostXe3pCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};

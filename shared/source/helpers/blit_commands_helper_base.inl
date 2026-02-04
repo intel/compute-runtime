@@ -389,7 +389,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
         dispatchBlitCommandsForImageRegion(blitProperties, linearStream, rootDeviceEnvironment);
     } else {
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::fill) {
-            dispatchBlitMemoryColorFill(blitProperties, linearStream, rootDeviceEnvironment);
+            dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
         } else {
             bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
             preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
