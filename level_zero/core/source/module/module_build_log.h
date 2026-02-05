@@ -27,6 +27,7 @@ struct ModuleBuildLog : _ze_module_build_log_handle_t, NEO::NonCopyableAndNonMov
 
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getString(size_t *pSize, char *pBuildLog) = 0;
+    virtual const char *getBuildLog() const = 0;
     virtual void appendString(const char *pBuildLog, size_t size) = 0;
 
     ModuleBuildLog() = default;

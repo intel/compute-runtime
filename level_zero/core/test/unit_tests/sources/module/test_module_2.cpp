@@ -197,6 +197,7 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + strlen("\n") + strlen(warnLog) + 1), buildLogSize);
     EXPECT_STREQ("Error Log\nWarn Log", buildLog);
+    EXPECT_STREQ(buildLog, moduleBuildLog->getBuildLog());
 
     free(buildLog);
 
