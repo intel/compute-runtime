@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,9 +82,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    const bool isStateless = forceStateless(buffer->getSize());
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
+    const auto isStateless = forceStateless(buffer->getSize());
+    const auto isHeapless = this->getHeaplessModeEnabled();
+    const auto isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
 
     void *srcPtr = const_cast<void *>(ptr);
 

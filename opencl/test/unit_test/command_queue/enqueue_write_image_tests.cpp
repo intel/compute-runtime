@@ -1011,7 +1011,7 @@ HWTEST_F(EnqueueWriteImageTest, given4gbBufferAndIsForceStatelessIsFalseWhenEnqu
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
     mockCmdQ->isForceStateless = false;
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(true, pCmdQ->getHeaplessModeEnabled());
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(true, pCmdQ->getHeaplessModeEnabled(), true);
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -1029,7 +1029,16 @@ HWTEST_F(EnqueueWriteImageTest, given4gbBufferAndIsForceStatelessIsFalseWhenEnqu
 
     EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
-    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, &dstImage);
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 16384;
+    imageDesc.image_height = 16384;
+
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {0, 0, 0};
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
+
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, image.get(), true, origin, region, static_cast<size_t>(4ull * MemoryConstants::gigaByte));
 
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
