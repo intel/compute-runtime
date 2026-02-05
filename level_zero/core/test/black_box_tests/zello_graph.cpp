@@ -77,7 +77,7 @@ void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtual
     }
 }
 
-GraphApi loadGraphApi(ze_driver_handle_t driver) {
+GraphApi &loadGraphApi(ze_driver_handle_t driver) {
     static GraphApi testGraphFunctions;
 
     if (testGraphFunctions.loaded) {
@@ -1139,7 +1139,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "Device not supporting graph" << std::endl;
         return 1;
     }
-    auto graphApi = loadGraphApi(driverHandle);
+    auto &graphApi = loadGraphApi(driverHandle);
     if (false == graphApi.valid()) {
         std::cerr << "Graph API not available" << std::endl;
         return 1;
