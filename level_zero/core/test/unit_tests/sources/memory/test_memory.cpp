@@ -277,7 +277,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_ipc_memory_flags_t flags = {};
@@ -310,7 +310,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     uint64_t handle = 0u;
@@ -3836,7 +3836,7 @@ TEST_F(MemoryExportImportTest,
       public:
         ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
             return -1;
         }
     };
@@ -3857,7 +3857,7 @@ TEST_F(MemoryExportImportTest,
       public:
         ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
             return -1;
         }
     };
@@ -5488,7 +5488,7 @@ TEST_F(MemoryFailedOpenIpcHandleTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_ipc_memory_flags_t flags = {};
@@ -6422,7 +6422,7 @@ class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
   public:
     ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-    int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+    int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         return -1;
     }
 };

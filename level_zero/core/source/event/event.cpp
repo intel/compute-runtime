@@ -138,7 +138,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
                 allocatedMemory = true;
                 if (isIpcPoolFlagSet()) {
                     uint64_t handle = 0;
-                    this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
+                    this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle, nullptr) == 0);
                 }
             }
         }
@@ -373,7 +373,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     auto deviceAlloc = inOrderExecInfo->getDeviceCounterAllocation();
 
     uint64_t handle = 0;
-    if (int retCode = deviceAlloc->peekInternalHandle(memoryManager, handle); retCode != 0) {
+    if (int retCode = deviceAlloc->peekInternalHandle(memoryManager, handle, nullptr); retCode != 0) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(deviceAlloc);
@@ -386,7 +386,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
         auto hostAlloc = inOrderExecInfo->getHostCounterAllocation();
-        if (int retCode = hostAlloc->peekInternalHandle(memoryManager, handle); retCode != 0) {
+        if (int retCode = hostAlloc->peekInternalHandle(memoryManager, handle, nullptr); retCode != 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
@@ -406,7 +406,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     auto memoryManager = context->getDriverHandle()->getMemoryManager();
     auto allocation = eventPoolAllocations->getDefaultGraphicsAllocation();
     uint64_t handle{};
-    if (allocation->peekInternalHandle(memoryManager, handle) != 0) {
+    if (allocation->peekInternalHandle(memoryManager, handle, nullptr) != 0) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(allocation);

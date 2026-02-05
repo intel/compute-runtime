@@ -192,7 +192,7 @@ struct ContextGetIpcHandleMock : public L0::ContextImp {
                                size_t size,
                                size_t alignment, void **ptr) override;
 
-    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
+    ze_result_t getIpcMemHandle(const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle) override;
 
     DriverHandleGetIpcHandleMock *driverHandle = nullptr;
 };
@@ -327,7 +327,7 @@ struct ContextIpcMock : public L0::ContextImp {
         driverHandle = inDriverHandle;
     }
 
-    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
+    ze_result_t getIpcMemHandle(const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle) override;
 
     const int mockFd = 999;
 };

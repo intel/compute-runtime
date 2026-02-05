@@ -28,6 +28,8 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/special_heap_pool_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/storage_info_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/surface_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_graphics_allocation_internal_handle.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_memory_allocation_internal_handle.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager_cache_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling_tests.cpp

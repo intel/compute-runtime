@@ -74,7 +74,7 @@ ze_result_t ZE_APICALL zeMemGetIpcHandle(
     ze_context_handle_t hContext,
     const void *ptr,
     ze_ipc_mem_handle_t *pIpcHandle) {
-    return L0::Context::fromHandle(hContext)->getIpcMemHandle(ptr, pIpcHandle);
+    return L0::Context::fromHandle(hContext)->getIpcMemHandle(ptr, nullptr, pIpcHandle);
 }
 
 ze_result_t ZE_APICALL zeMemPutIpcHandle(
@@ -111,7 +111,7 @@ ze_result_t ZE_APICALL zeMemGetIpcHandleWithProperties(
     const void *ptr,
     void *pNext,
     ze_ipc_mem_handle_t *pIpcHandle) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->getIpcMemHandle(ptr, pNext, pIpcHandle);
 }
 
 } // namespace L0

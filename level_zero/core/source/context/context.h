@@ -52,6 +52,7 @@ struct IpcOpaqueMemoryData {
     unsigned int processId = 0;
     IpcHandleType type = IpcHandleType::maxHandle;
     uint8_t memoryType = 0;
+    uint8_t reservedHandleData[32] = {0};
     // Computes and returns the cache ID hash
     uint64_t computeCacheID() const noexcept;
 };
@@ -143,6 +144,7 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t closeIpcMemHandle(const void *ptr) = 0;
     virtual ze_result_t putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t getIpcMemHandle(const void *ptr,
+                                        void *pNext,
                                         ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) = 0;

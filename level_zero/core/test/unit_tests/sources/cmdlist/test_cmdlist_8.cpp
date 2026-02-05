@@ -318,7 +318,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
     ze_ipc_mem_handle_t ipcHandle{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(devicePtr, &ipcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(devicePtr, nullptr, &ipcHandle));
     ze_ipc_memory_flag_t ipcFlags{};
     void *ipcDevicePtr = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->openIpcMemHandle(device->toHandle(), ipcHandle, ipcFlags, &ipcDevicePtr));
@@ -346,7 +346,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
     ze_ipc_mem_handle_t ipcHandle{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(devicePtr, &ipcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(devicePtr, nullptr, &ipcHandle));
     ze_ipc_memory_flag_t ipcFlags{};
     void *ipcDevicePtr = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->openIpcMemHandle(device->toHandle(), ipcHandle, ipcFlags, &ipcDevicePtr));

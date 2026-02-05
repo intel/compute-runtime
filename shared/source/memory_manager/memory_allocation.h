@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ class MemoryAllocation : public GraphicsAllocation {
         }
     }
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         if (internalHandle == std::numeric_limits<uint64_t>::max()) {
             return -1;
         }

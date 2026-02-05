@@ -264,14 +264,14 @@ TEST(GraphicsAllocationTest, givenAlwaysResidentAllocationWhenUpdateTaskCountThe
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     uint64_t handle = 0;
-    graphicsAllocation.peekInternalHandle(nullptr, handle);
+    graphicsAllocation.peekInternalHandle(nullptr, handle, nullptr);
     EXPECT_EQ(0ull, handle);
 }
 
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedOrCreatedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     uint64_t handle = 0;
-    graphicsAllocation.createInternalHandle(nullptr, 0u, handle);
+    graphicsAllocation.createInternalHandle(nullptr, 0u, handle, nullptr);
     EXPECT_EQ(0ull, handle);
     graphicsAllocation.clearInternalHandle(0u);
 }

@@ -269,11 +269,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     virtual std::string getAllocationInfoString() const;
     virtual std::string getPatIndexInfoString(const ProductHelper &) const;
-    virtual int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) { return 0; }
-    virtual int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) { return 0; }
+    virtual int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) { return 0; }
+    virtual int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) { return 0; }
     virtual void clearInternalHandle(uint32_t handleId) { return; }
 
-    virtual int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+    virtual int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
         return 0;
     }
 

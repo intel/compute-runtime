@@ -825,7 +825,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
     uint64_t mmapOffset = physicalBo->getMmapOffset();
     uint64_t internalHandle = 0;
-    if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle) < 0)) {
+    if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle, nullptr) < 0)) {
         return false;
     }
 
@@ -1514,7 +1514,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         properties.gpuAddress = castToUint64(ptr);
 
         uint64_t internalHandle = 0;
-        int ret = defaultAlloc->peekInternalHandle(this, internalHandle);
+        int ret = defaultAlloc->peekInternalHandle(this, internalHandle, nullptr);
         if (ret < 0) {
             return nullptr;
         }

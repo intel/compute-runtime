@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_ALLOCATION_HANDLE_INTEL: {
-        auto retVal = allocation->peekInternalHandle(this->memoryManager, internalHandle);
+        auto retVal = allocation->peekInternalHandle(this->memoryManager, internalHandle, nullptr);
         if (retVal != 0) {
             return CL_OUT_OF_RESOURCES;
         }

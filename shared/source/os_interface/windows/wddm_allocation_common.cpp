@@ -13,9 +13,9 @@ GraphicsAllocation *WddmAllocation::createView(size_t offsetInParentAllocation, 
     return new WddmAllocation(this, offsetInParentAllocation, viewSize);
 }
 
-int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
     if (parentAllocation) {
-        return static_cast<WddmAllocation *>(parentAllocation)->createInternalHandle(memoryManager, handleId, handle);
+        return static_cast<WddmAllocation *>(parentAllocation)->createInternalHandle(memoryManager, handleId, handle, reservedHandleData);
     }
     handle = ntSecureHandle;
     if (handle == 0) {

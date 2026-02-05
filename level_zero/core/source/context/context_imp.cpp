@@ -841,6 +841,7 @@ ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64
 }
 
 ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
+                                             void *pNext,
                                              uint32_t *numIpcHandles,
                                              ze_ipc_mem_handle_t *pIpcHandles) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -874,11 +875,32 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
     if (type == InternalMemoryType::hostUnifiedMemory) {
         ipcType = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
     }
+    bool fabricAccessibleHandle = false;
+
+    if (pNext) {
+        ze_base_properties_t *extendedProperties =
+            reinterpret_cast<ze_base_properties_t *>(pNext);
+        if (extendedProperties->stype != ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        ze_ipc_mem_handle_type_ext_desc_t *ipcHandleTypeDesc = reinterpret_cast<ze_ipc_mem_handle_type_ext_desc_t *>(pNext);
+        if (ipcHandleTypeDesc->typeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE) {
+            fabricAccessibleHandle = true;
+        }
+    }
 
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
+        void *reservedHandleData = nullptr;
         uint64_t handle = 0;
-        int ret = alloc->createInternalHandle(memoryManager, i, handle);
+        if (settings.useOpaqueHandle) {
+            using IpcDataT = IpcOpaqueMemoryData;
+            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
+            if (fabricAccessibleHandle) {
+                reservedHandleData = &ipcData.reservedHandleData;
+            }
+        }
+        int ret = alloc->createInternalHandle(memoryManager, i, handle, reservedHandleData);
         if (ret < 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
@@ -914,15 +936,16 @@ uint64_t IpcOpaqueMemoryData::computeCacheID() const noexcept {
 }
 
 ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
+                                        void *pNext,
                                         ze_ipc_mem_handle_t *pIpcHandle) {
-    return getIpcMemHandlesImpl(ptr, nullptr, pIpcHandle);
+    return getIpcMemHandlesImpl(ptr, pNext, nullptr, pIpcHandle);
 }
 
 ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
                                          uint32_t *numIpcHandles,
                                          ze_ipc_mem_handle_t *pIpcHandles) {
     DEBUG_BREAK_IF(numIpcHandles == nullptr);
-    return getIpcMemHandlesImpl(ptr, numIpcHandles, pIpcHandles);
+    return getIpcMemHandlesImpl(ptr, nullptr, numIpcHandles, pIpcHandles);
 }
 
 ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
@@ -1020,10 +1043,10 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
             }
             ze_ipc_mem_handle_t ipcHandle;
             uint64_t handle = 0;
-            auto result = getIpcMemHandle(reinterpret_cast<void *>(alloc->getGpuAddress()), &ipcHandle);
+            auto result = getIpcMemHandle(reinterpret_cast<void *>(alloc->getGpuAddress()), nullptr, &ipcHandle);
             if (result != ZE_RESULT_SUCCESS) {
                 // If this memory is not an SVM Allocation like Images, then retrieve only the handle untracked.
-                auto ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle);
+                auto ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle, nullptr);
                 if (ret < 0) {
                     return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
                 }
@@ -1039,7 +1062,7 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             uint64_t handle = 0;
-            int ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle);
+            int ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle, nullptr);
             if (ret < 0) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }

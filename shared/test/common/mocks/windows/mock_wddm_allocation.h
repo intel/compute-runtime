@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,10 +38,12 @@ class MockWddmAllocation : public WddmAllocation {
         gmms.resize(newSize);
         handles.resize(newSize);
     }
+    using GraphicsAllocation::parentAllocation;
     using WddmAllocation::cpuPtr;
     using WddmAllocation::gmms;
     using WddmAllocation::handles;
     using WddmAllocation::memoryPool;
+    using WddmAllocation::ntSecureHandle;
     using WddmAllocation::size;
 
     D3DGPU_VIRTUAL_ADDRESS &gpuPtr;

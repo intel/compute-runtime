@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ TEST_F(MemoryIPCTests,
     uint32_t value = 0;
 
     ze_ipc_mem_handle_t ipcHandle;
-    ze_result_t result = context->getIpcMemHandle(&value, &ipcHandle);
+    ze_result_t result = context->getIpcMemHandle(&value, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -43,7 +43,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -64,7 +64,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -97,7 +97,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -130,7 +130,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -189,7 +189,7 @@ TEST_F(MemoryGetIpcHandleTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -219,7 +219,7 @@ TEST_F(MemoryOpenIpcHandleTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());

@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -37,6 +38,18 @@ ze_result_t ContextFdMock::allocDeviceMem(ze_device_handle_t hDevice,
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockFd;
+
+        // Set mock internal handle for IPC tests (Linux DRM allocations)
+        auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(*ptr);
+        if (allocData) {
+            auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+            if (allocation) {
+                // Set a non-zero internal handle so IPC handle creation succeeds
+                uint64_t mockInternalHandle = static_cast<uint64_t>(driverHandle->mockFd);
+                auto memAlloc = static_cast<NEO::MemoryAllocation *>(allocation);
+                memAlloc->internalHandle = mockInternalHandle;
+            }
+        }
     }
 
     return res;
@@ -49,6 +62,18 @@ ze_result_t ContextFdMock::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockFd;
+
+        // Set mock internal handle for IPC tests (Linux DRM allocations)
+        auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(*ptr);
+        if (allocData) {
+            auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+            if (allocation) {
+                // Set a non-zero internal handle so IPC handle creation succeeds
+                uint64_t mockInternalHandle = static_cast<uint64_t>(driverHandle->mockFd);
+                auto memAlloc = static_cast<NEO::MemoryAllocation *>(allocation);
+                memAlloc->internalHandle = mockInternalHandle;
+            }
+        }
     }
 
     return res;
@@ -310,7 +335,7 @@ ze_result_t ContextGetIpcHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
     return res;
 }
 
-ze_result_t ContextGetIpcHandleMock::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) {
+ze_result_t ContextGetIpcHandleMock::getIpcMemHandle(const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle) {
     uint64_t handle = driverHandle->mockFd;
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
 
@@ -408,7 +433,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     return alloc;
 }
 
-ze_result_t ContextIpcMock::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) {
+ze_result_t ContextIpcMock::getIpcMemHandle(const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle) {
     uint64_t handle = mockFd;
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
 

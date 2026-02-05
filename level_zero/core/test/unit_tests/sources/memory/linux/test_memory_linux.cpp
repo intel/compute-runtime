@@ -318,7 +318,7 @@ TEST_F(MemoryExportImportObtainFdTest,
 
     currMemoryManager->failOnObtainFdFromHandle = true;
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 
     result = context->freeMem(ptr);
@@ -340,7 +340,7 @@ TEST_F(MemoryExportImportObtainFdTest,
 
     currMemoryManager->failOnObtainFdFromHandle = false;
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -804,7 +804,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -1015,7 +1015,7 @@ TEST_F(MemoryGetIpcHandlePidfdTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);

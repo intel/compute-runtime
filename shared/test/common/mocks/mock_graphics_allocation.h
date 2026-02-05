@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
         this->memoryPool = pool;
     }
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         handle = internalHandle;
         return peekInternalHandleResult;
     }

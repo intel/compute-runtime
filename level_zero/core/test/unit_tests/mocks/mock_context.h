@@ -45,7 +45,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(freeMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr));
     ADDMETHOD_NOBASE(getMemAllocProperties, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice));
     ADDMETHOD_NOBASE(getMemAddressRange, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, void **pBase, size_t *pSize));
-    ADDMETHOD_NOBASE(getIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, ze_ipc_mem_handle_t *pIpcHandle));
+    ADDMETHOD_NOBASE(getIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle));
     ADDMETHOD_NOBASE(closeIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr));
     ADDMETHOD_NOBASE(openIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &handle, ze_ipc_memory_flags_t flags, void **ptr));
     ADDMETHOD_NOBASE(createModule, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog));
@@ -110,7 +110,7 @@ struct Mock<ContextImp> : public ContextImp {
     ADDMETHOD(freeMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr), (ptr));
     ADDMETHOD(getMemAllocProperties, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice), (ptr, pMemAllocProperties, phDevice));
     ADDMETHOD(getMemAddressRange, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, void **pBase, size_t *pSize), (ptr, pBase, pSize));
-    ADDMETHOD(getIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, ze_ipc_mem_handle_t *pIpcHandle), (ptr, pIpcHandle));
+    ADDMETHOD(getIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle), (ptr, pNext, pIpcHandle));
     ADDMETHOD(closeIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr), (ptr));
     ADDMETHOD(openIpcMemHandle, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &handle, ze_ipc_memory_flags_t flags, void **ptr), (hDevice, handle, flags, ptr));
     ADDMETHOD(createModule, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog), (hDevice, desc, phModule, phBuildLog));

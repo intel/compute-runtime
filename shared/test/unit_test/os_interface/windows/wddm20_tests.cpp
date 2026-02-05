@@ -532,7 +532,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
     EXPECT_TRUE(status);
     uint64_t handle = 0;
-    allocation.peekInternalHandle(&memoryManager, handle);
+    allocation.peekInternalHandle(&memoryManager, handle, nullptr);
     EXPECT_NE(0u, handle);
 }
 

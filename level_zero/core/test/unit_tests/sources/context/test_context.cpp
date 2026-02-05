@@ -5173,7 +5173,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
 
     // Get IPC handle - this will trigger setIPCHandleData
     ze_ipc_mem_handle_t ipcHandle = {};
-    res = contextImp->getIpcMemHandle(ptr, &ipcHandle);
+    res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     // Clean up
@@ -5217,7 +5217,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsButNtHandleThenServerR
 
     // Get IPC handle - this will trigger setIPCHandleData but the condition will be FALSE
     ze_ipc_mem_handle_t ipcHandle = {};
-    res = contextImp->getIpcMemHandle(ptr, &ipcHandle);
+    res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     // Clean up

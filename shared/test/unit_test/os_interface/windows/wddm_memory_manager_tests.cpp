@@ -370,11 +370,11 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHa
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -387,7 +387,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenNoAllocationThenCreateInternalHandl
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, nullptr);
 
@@ -402,9 +402,9 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHa
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
@@ -419,12 +419,12 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInt
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
     memoryManager->failCreateInternalNTHandle = true;
-    EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -2123,7 +2123,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
     EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getUnderlyingBufferSize()));
     uint64_t handle = 0;
-    allocation->peekInternalHandle(memoryManager.get(), handle);
+    allocation->peekInternalHandle(memoryManager.get(), handle, nullptr);
     EXPECT_NE(handle, 0u);
 
     EXPECT_EQ(1u, gmmResourceParams->Flags.Info.LocalOnly);
@@ -2158,7 +2158,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
     uint64_t handle = 0;
-    allocation->peekInternalHandle(memoryManager.get(), handle);
+    allocation->peekInternalHandle(memoryManager.get(), handle, nullptr);
     EXPECT_NE(handle, 0u);
 
     EXPECT_EQ(!productHelper.useLocalPreferredForCacheableBuffers(), gmmResourceParams->Flags.Info.LocalOnly);

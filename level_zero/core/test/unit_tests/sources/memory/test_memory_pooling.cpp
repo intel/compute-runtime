@@ -280,7 +280,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
     EXPECT_NE(0u, pooledAllocationOffset);
 
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(pooledAllocation, &ipcHandle);
+    result = context->getIpcMemHandle(pooledAllocation, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     EXPECT_EQ(pooledAllocationOffset, ipcData.poolOffset);
@@ -578,7 +578,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpening
     EXPECT_NE(0u, pooledAllocationOffset);
 
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(pooledAllocation, &ipcHandle);
+    result = context->getIpcMemHandle(pooledAllocation, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     EXPECT_EQ(pooledAllocationOffset, ipcData.poolOffset);
@@ -605,7 +605,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpening
     {
         void *notAllocatedPoolPtr = mockDeviceMemAllocPool->pool;
         ze_ipc_mem_handle_t ipcHandle{};
-        ze_result_t result = context->getIpcMemHandle(notAllocatedPoolPtr, &ipcHandle);
+        ze_result_t result = context->getIpcMemHandle(notAllocatedPoolPtr, nullptr, &ipcHandle);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
 
@@ -622,7 +622,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpening
     EXPECT_NE(allocationData, driverHandle->svmAllocsManager->getSVMAlloc(allocation));
 
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(allocation, &ipcHandle);
+    result = context->getIpcMemHandle(allocation, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     EXPECT_EQ(0u, ipcData.poolOffset);
@@ -661,13 +661,13 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenMultiplePooledAllocations
     EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(allocation2));
 
     ze_ipc_mem_handle_t ipcHandle1{};
-    result = context->getIpcMemHandle(allocation1, &ipcHandle1);
+    result = context->getIpcMemHandle(allocation1, nullptr, &ipcHandle1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData1 = *reinterpret_cast<IpcMemoryData *>(ipcHandle1.data);
     EXPECT_EQ(mockDeviceMemAllocPool->getOffsetInPool(allocation1), ipcData1.poolOffset);
 
     ze_ipc_mem_handle_t ipcHandle2{};
-    result = context->getIpcMemHandle(allocation1, &ipcHandle2);
+    result = context->getIpcMemHandle(allocation1, nullptr, &ipcHandle2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData2 = *reinterpret_cast<IpcMemoryData *>(ipcHandle2.data);
     EXPECT_EQ(mockDeviceMemAllocPool->getOffsetInPool(allocation1), ipcData2.poolOffset);
@@ -807,7 +807,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     EXPECT_EQ(allocation, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation));
     EXPECT_EQ(1u, usmMemAllocPoolsManager->getPooledAllocationSize(allocation));
     ze_ipc_mem_handle_t ipcHandle{};
-    result = context->getIpcMemHandle(allocation, &ipcHandle);
+    result = context->getIpcMemHandle(allocation, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     auto pooledAllocationOffset = usmMemAllocPoolsManager->getOffsetInPool(allocation);

@@ -29,7 +29,7 @@ TEST_F(MemoryIPCTests,
     uint32_t value = 0;
 
     ze_ipc_mem_handle_t ipcHandle;
-    ze_result_t result = context->getIpcMemHandle(&value, &ipcHandle);
+    ze_result_t result = context->getIpcMemHandle(&value, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -47,7 +47,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -72,7 +72,7 @@ TEST_F(MemoryIPCTests,
     context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Verify that non-opaque mode by checking the memory type
@@ -112,7 +112,7 @@ TEST_F(MemoryIPCTests,
     context->settings.handleType = IpcHandleType::fdHandle;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Verify that opaque mode was used by checking the memory type and process ID
@@ -157,7 +157,7 @@ TEST_F(MemoryIPCTests,
     context->settings.handleType = IpcHandleType::ntHandle;
 
     alignas(8) ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Verify that opaque mode was used by checking the memory type and process ID
@@ -196,7 +196,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -235,7 +235,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(ptr, &allocProps, &deviceHandle));
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     uint64_t readIpcHandle = 0;
@@ -629,10 +629,10 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->putIpcMemHandle(ipcHandle);
@@ -661,10 +661,10 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->putIpcMemHandle(ipcHandle);
@@ -699,7 +699,7 @@ TEST_F(MemoryIPCTests,
     contextInvalid->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->putIpcMemHandle(ipcHandle);
@@ -729,7 +729,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -750,7 +750,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -783,7 +783,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -816,7 +816,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -875,7 +875,7 @@ TEST_F(MemoryGetIpcHandleTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -905,7 +905,7 @@ TEST_F(MemoryOpenIpcHandleTest,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -1364,7 +1364,7 @@ TEST_F(MemoryDrmIpcPidfdTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
@@ -1387,7 +1387,7 @@ TEST_F(MemoryDrmIpcPidfdTests,
     EXPECT_NE(nullptr, ptr);
 
     ze_ipc_mem_handle_t ipcHandle;
-    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);

@@ -81,13 +81,13 @@ class DrmAllocation : public GraphicsAllocation {
     uint64_t getHandleAddressBase(uint32_t handleIndex) override;
 
     size_t getHandleSize(uint32_t handleIndex) override;
-    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
+    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override;
 
     void clearInternalHandle(uint32_t handleId) override;
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override;
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override;
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
+    int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override;
 
     bool setCacheRegion(Drm *drm, CacheRegion regionIndex);
     bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex, bool isSystemMemoryPool);

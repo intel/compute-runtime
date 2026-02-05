@@ -76,6 +76,7 @@ class DrmMemoryManager : public MemoryManager {
     bool memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) override;
 
     MOCKABLE_VIRTUAL int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
+    MOCKABLE_VIRTUAL void obtainReservedHandleData(int fd, void *reservedHandleData);
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override;
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override;

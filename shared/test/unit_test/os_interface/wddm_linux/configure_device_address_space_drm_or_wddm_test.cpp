@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -702,11 +702,11 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleThenSharedHandle
     auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, alloc);
     uint64_t handle = 0;
-    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, alloc);
 
-    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }
@@ -727,7 +727,7 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleWithoutAllocatio
     auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, alloc);
     uint64_t handle = 0;
-    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, nullptr);
 
@@ -751,12 +751,12 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmpyH
     ASSERT_NE(nullptr, alloc);
 
     uint64_t handle = 0;
-    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, alloc);
 
     memoryManager.failCreateInternalNTHandle = true;
-    EXPECT_EQ(1, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(1, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }

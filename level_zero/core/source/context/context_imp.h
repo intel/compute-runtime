@@ -94,6 +94,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ze_result_t closeIpcMemHandle(const void *ptr) override;
     ze_result_t putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) override;
     ze_result_t getIpcMemHandle(const void *ptr,
+                                void *pNext,
                                 ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t openIpcMemHandle(ze_device_handle_t hDevice,
                                  const ze_ipc_mem_handle_t &handle,
@@ -256,7 +257,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
   protected:
-    ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
+    ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>
     void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType) {
         std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
