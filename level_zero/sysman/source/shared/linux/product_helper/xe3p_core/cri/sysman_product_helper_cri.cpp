@@ -19,10 +19,11 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
-    {"0x5e2fa230",
-     {{"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[0]", 464},
-      {"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[1]", 470},
-      {"PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[2]", 474}}}};
+    {"0x1e2fa030",
+     {{"VR_TEMPERATURE_0", 200},
+      {"VR_TEMPERATURE_1", 204},
+      {"VR_TEMPERATURE_2", 208},
+      {"VR_TEMPERATURE_3", 212}}}};
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
@@ -173,7 +174,7 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 3;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 4;
 }
 
 template <>
@@ -195,11 +196,24 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(Li
     keyOffsetMap = keyOffsetMapEntry->second;
 
     // Build the key name based on sensor index
-    std::string key = "PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[" + std::to_string(sensorIndex) + "]";
+    std::string key = "VR_TEMPERATURE_" + std::to_string(sensorIndex);
 
     uint32_t vrTemperature = 0;
     if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, vrTemperature)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    switch (sensorIndex) {
+    case 0:
+        vrTemperature /= 10; // VR_TEMPERATURE_0 is reported in deci-degree celsius
+        break;
+    case 1:
+    case 2:
+    case 3:
+        vrTemperature = vrTemperature & 0xFF; // VR_TEMPERATURE_1/2/3 is reported in U8.0 format
+        break;
+    default:
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     *pTemperature = static_cast<double>(vrTemperature);

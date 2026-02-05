@@ -1190,15 +1190,16 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingVRTemperatureThenValidValueIsReturned, IsCRI) {
-    static uint32_t mockVrTemperature[3] = {45, 50, 55};
+    static uint32_t mockVrTemperature[4] = {450, 50, 55, 60};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
-        long vr0Offset = 464;
-        long vr1Offset = 470;
-        long vr2Offset = 474;
+        std::string validGuid = "0x1e2fa030";
+        long vr0Offset = 200;
+        long vr1Offset = 204;
+        long vr2Offset = 208;
+        long vr3Offset = 212;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -1210,6 +1211,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
                 memcpy(buf, &mockVrTemperature[1], count);
             } else if (offset == vr2Offset) {
                 memcpy(buf, &mockVrTemperature[2], count);
+            } else if (offset == vr3Offset) {
+                memcpy(buf, &mockVrTemperature[3], count);
             }
         }
         return count;
@@ -1218,12 +1221,13 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
-    // Test all three VR sensors
-    for (uint32_t sensorIndex = 0; sensorIndex < 3; sensorIndex++) {
+    for (uint32_t sensorIndex = 0; sensorIndex < 4; sensorIndex++) {
         double temperature = 0;
         ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, sensorIndex);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(static_cast<double>(mockVrTemperature[sensorIndex]), temperature);
+        double expectedTemp = (sensorIndex == 0) ? static_cast<double>(mockVrTemperature[sensorIndex] / 10)
+                                                 : static_cast<double>(mockVrTemperature[sensorIndex] & 0xFF);
+        EXPECT_EQ(expectedTemp, temperature);
     }
 }
 
@@ -1232,8 +1236,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
-        long vr0Offset = 464;
+        std::string validGuid = "0x1e2fa030";
+        long vr0Offset = 200;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -1254,11 +1258,48 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingVRTemperatureWithInvalidSensorIndexThenValueIsReturnedWithoutTransformationAlongWithError, IsCRI) {
+    static uint32_t mockVrTemperature = 0;
+
+    auto guidToKeyOffsetMapBackup = const_cast<std::map<std::string, std::map<std::string, uint64_t>> *>(
+        L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily)->getGuidToKeyOffsetMap());
+    std::map<std::string, std::map<std::string, uint64_t>> originalMap = *guidToKeyOffsetMapBackup;
+    (*guidToKeyOffsetMapBackup)["0x1e2fa030"]["VR_TEMPERATURE_4"] = 216;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telemOffset = 0;
+        std::string validGuid = "0x1e2fa030";
+        long vr4Offset = 216;
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validGuid.data(), count);
+        } else if (fd == 6) {
+            if (offset == vr4Offset) {
+                memcpy(buf, &mockVrTemperature, count);
+            }
+        }
+        return count;
+    });
+
+    uint32_t subdeviceId = 0;
+    uint32_t sensorIndex = 4;
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    double temperature = 0;
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, sensorIndex);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    *guidToKeyOffsetMapBackup = originalMap;
+}
+
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForVRThenValidTemperatureValueIsReturned, IsCRI) {
-    static uint32_t vr0Temperature = 45;
+    static uint32_t vr0Temperature = 450;
     static uint32_t vr1Temperature = 48;
     static uint32_t vr2Temperature = 43;
-    static uint32_t validTemperatureHandleCount = 5u;
+    static uint32_t vr3Temperature = 50;
+    static uint32_t validTemperatureHandleCount = 6u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1266,10 +1307,11 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
-        long vr0Offset = 464;
-        long vr1Offset = 470;
-        long vr2Offset = 474;
+        std::string validGuid = "0x1e2fa030";
+        long vr0Offset = 200;
+        long vr1Offset = 204;
+        long vr2Offset = 208;
+        long vr3Offset = 212;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -1281,6 +1323,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
                 memcpy(buf, &vr1Temperature, count);
             } else if (offset == vr2Offset) {
                 memcpy(buf, &vr2Temperature, count);
+            } else if (offset == vr3Offset) {
+                memcpy(buf, &vr3Temperature, count);
             } else {
                 return -1;
             }
@@ -1311,14 +1355,15 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
         if (properties.type == ZES_TEMP_SENSORS_VOLTAGE_REGULATOR) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
             vrCount++;
-            EXPECT_TRUE(temperature == static_cast<double>(vr0Temperature) ||
-                        temperature == static_cast<double>(vr1Temperature) ||
-                        temperature == static_cast<double>(vr2Temperature));
+            EXPECT_TRUE(temperature == static_cast<double>(vr0Temperature / 10) ||
+                        temperature == static_cast<double>(vr1Temperature & 0xFF) ||
+                        temperature == static_cast<double>(vr2Temperature & 0xFF) ||
+                        temperature == static_cast<double>(vr3Temperature & 0xFF));
         } else if (properties.type == ZES_TEMP_SENSORS_GLOBAL || properties.type == ZES_TEMP_SENSORS_GPU) {
             EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesTemperatureGetState(handle, &temperature));
         }
     }
-    EXPECT_EQ(vrCount, 3u);
+    EXPECT_EQ(vrCount, 4u);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenReadingVRTemperatureOnAnUnsupportedPlatformThenErrorIsReturned, IsAtMostBMG) {
