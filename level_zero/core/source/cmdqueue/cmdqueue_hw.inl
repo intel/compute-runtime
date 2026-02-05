@@ -685,6 +685,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
 
             ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
+
+            commandList->dispatchRecordedBcsSplit();
         } else {
             ctx.taskCountUpdateFenceRequired |= commandList->isTaskCountUpdateFenceRequired();
         }

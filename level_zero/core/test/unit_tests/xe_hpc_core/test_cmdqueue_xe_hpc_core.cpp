@@ -1682,7 +1682,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 2u);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 12u);
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker[1]->hostSignal(false);
+    static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker[1].event->hostSignal(false);
 
     ret = static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
 

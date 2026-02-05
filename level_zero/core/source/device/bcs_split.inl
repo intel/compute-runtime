@@ -68,88 +68,169 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
             subCmdList->addEventsToCmdList(1u, &barrierEventHandle, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
         }
 
-        if (cmdList->hasInOrderDependencies()) {
-            auto &inOrderExecInfo = cmdList->getInOrderExecInfo();
-            subCmdList->appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), hasRelaxedOrderingDependencies, false, false, false, false);
-        }
-        subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, hasRelaxedOrderingDependencies, false, false, false, false);
-
-        if (!useSignalEventForSubcopy && signalEvent && i == 0u) {
-            subCmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
-        }
-
-        auto localSize = totalSize / engineCount;
-
-        BcsSplitParams::CopyParams localCopyParams;
-
-        std::visit([&](auto &&arg) {
-            using T = std::decay_t<decltype(arg)>;
-            localCopyParams = T{ptrOffset(arg.dst, size - totalSize),
-                                ptrOffset(arg.src, size - totalSize)};
-        },
-                   copyParams);
-
         auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
         auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.getEventResources().subcopy[copyEventIndex]->toHandle();
 
-        if (aggregatedEventsMode && !useSignalEventForSubcopy) {
-            subCmdList->getCmdContainer().addToResidencyContainer(this->events.getEventResources().subcopy[copyEventIndex]->getInOrderExecInfo()->getDeviceCounterAllocation());
-        }
+        result = appendSubSplitCommon<gfxCoreFamily>(cmdList, subCmdList, copyParams, size, signalEvent, numWaitEvents, phWaitEvents, eventHandle, aggregatedEventIncrementVal,
+                                                     totalSize, engineCount, useSignalEventForSubcopy, (i == 0), appendCall);
 
-        if (useSignalEventForSubcopy) {
-            subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getDeviceCounterAllocation());
-            subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getHostCounterAllocation());
-        }
-
-        result = appendCall(subCmdList, localCopyParams, localSize, eventHandle, aggregatedEventIncrementVal);
         subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, &lock, nullptr);
 
         if ((aggregatedEventsMode && i == 0) || !aggregatedEventsMode) {
             eventHandles.push_back(eventHandle);
         }
 
-        totalSize -= localSize;
-        engineCount--;
-
         if (signalEvent) {
             signalEvent->appendAdditionalCsr(subCmdList->getCsr(false));
         }
     }
 
-    const bool dualStreamCopyOffload = cmdList->isDualStreamCopyOffloadOperation(cmdList->isCopyOffloadEnabled());
+    appendPostSubCopySync<gfxCoreFamily>(cmdList, eventHandles, signalEvent, markerEventIndex, useSignalEventForSubcopy, hasRelaxedOrderingDependencies);
 
-    if (useSignalEventForSubcopy && cmdList->isInOrderExecutionEnabled()) {
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
+                                     StackVec<ze_event_handle_t, 16> &subCopyEvents,
+                                     Event *signalEvent,
+                                     size_t markerEventIndex,
+                                     bool useSignalEventForSubCopy,
+                                     bool hasRelaxedOrderingDependencies) {
+
+    const bool dualStreamCopyOffload = mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
+
+    if (useSignalEventForSubCopy && mainCmdList->isInOrderExecutionEnabled()) {
         auto currentCounter = signalEvent->getInOrderExecInfo()->getAggregatedEventUsageCounter();
         auto expectedCounter = currentCounter + signalEvent->getInOrderIncrementValue(1);
-        cmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecInfo(), nullptr,
-                                               expectedCounter,
-                                               signalEvent->getInOrderAllocationOffset(),
-                                               hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
+        mainCmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecInfo(), nullptr,
+                                                   expectedCounter,
+                                                   signalEvent->getInOrderAllocationOffset(),
+                                                   hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
     }
+
+    if (!useSignalEventForSubCopy) {
+        mainCmdList->addEventsToCmdList(static_cast<uint32_t>(subCopyEvents.size()), subCopyEvents.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+    }
+
+    const auto isCopyCmdList = mainCmdList->isCopyOnly(dualStreamCopyOffload);
+
+    if (!useSignalEventForSubCopy && signalEvent) {
+        mainCmdList->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
+    }
+
+    if (!events.isAggregatedEventMode()) {
+        mainCmdList->appendSignalEventPostWalker(this->events.getEventResources().marker[markerEventIndex].event, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
+    }
+
+    if (mainCmdList->isInOrderExecutionEnabled()) {
+        mainCmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false, useSignalEventForSubCopy);
+    }
+    mainCmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
+
+    if (events.isAggregatedEventMode() && !useSignalEventForSubCopy) {
+        auto lock = events.obtainLock();
+        mainCmdList->assignInOrderExecInfoToEvent(this->events.getEventResources().marker[markerEventIndex].event);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t BcsSplit::appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
+                                           CommandListCoreFamily<gfxCoreFamily> *subCmdList,
+                                           const BcsSplitParams::CopyParams &copyParams,
+                                           size_t size,
+                                           Event *signalEvent,
+                                           uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents,
+                                           ze_event_handle_t subCopyOutEventHandle,
+                                           uint64_t aggregatedEventIncrementVal,
+                                           size_t &totalSize,
+                                           size_t &engineCount,
+                                           bool useSignalEventForSubcopy,
+                                           bool appendStartProfiling,
+                                           AppendCallFuncT<gfxCoreFamily> appendCall) {
+
+    if (mainCmdList->hasInOrderDependencies()) {
+        auto &inOrderExecInfo = mainCmdList->getInOrderExecInfo();
+        subCmdList->appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), false, false, false, false, false);
+    }
+
+    subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, false);
+
+    if (!useSignalEventForSubcopy && signalEvent && appendStartProfiling) {
+        subCmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
+    }
+
+    auto localSize = totalSize / engineCount;
+
+    BcsSplitParams::CopyParams localCopyParams;
+
+    std::visit([&](auto &&arg) {
+        using T = std::decay_t<decltype(arg)>;
+        localCopyParams = T{ptrOffset(arg.dst, size - totalSize),
+                            ptrOffset(arg.src, size - totalSize)};
+    },
+               copyParams);
+
+    if (events.isAggregatedEventMode() && !useSignalEventForSubcopy) {
+        subCmdList->getCmdContainer().addToResidencyContainer(Event::fromHandle(subCopyOutEventHandle)->getInOrderExecInfo()->getDeviceCounterAllocation());
+    }
+
+    if (useSignalEventForSubcopy) {
+        subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getDeviceCounterAllocation());
+        subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getHostCounterAllocation());
+    }
+
+    auto result = appendCall(subCmdList, localCopyParams, localSize, subCopyOutEventHandle, aggregatedEventIncrementVal);
+
+    totalSize -= localSize;
+    engineCount--;
+
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t BcsSplit::appendRecordedInOrderSplitCall(CommandListCoreFamily<gfxCoreFamily> *cmdList,
+                                                     const BcsSplitParams::CopyParams &copyParams,
+                                                     size_t size,
+                                                     ze_event_handle_t hSignalEvent,
+                                                     uint32_t numWaitEvents,
+                                                     ze_event_handle_t *phWaitEvents,
+                                                     AppendCallFuncT<gfxCoreFamily> appendCall) {
+
+    UNRECOVERABLE_IF(!this->events.isAggregatedEventMode());
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto cmdListsForSplit = cmdList->getRegularCmdListsForSplit(size, splitSettings.perEngineMaxSize, this->cmdLists.size());
+    auto engineCount = cmdListsForSplit.size();
+    size_t markerEventIndex = 0;
+
+    const bool useSignalEventForSubcopy = Event::isAggregatedEvent(signalEvent) && (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
 
     if (!useSignalEventForSubcopy) {
-        cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+        markerEventIndex = this->events.obtainForRecordedSplit(Context::fromHandle(cmdList->getCmdListContext()));
+        cmdList->storeEventsForBcsSplit(&this->events.getEventResources().marker[markerEventIndex]);
     }
 
-    const auto isCopyCmdList = cmdList->isCopyOnly(dualStreamCopyOffload);
+    const uint64_t aggregatedEventIncrementVal = getAggregatedEventIncrementValForSplit(signalEvent, useSignalEventForSubcopy, engineCount);
 
-    if (!useSignalEventForSubcopy && signalEvent) {
-        cmdList->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
+    if (!cmdList->handleCounterBasedEventOperations(signalEvent, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (!aggregatedEventsMode) {
-        cmdList->appendSignalEventPostWalker(this->events.getEventResources().marker[markerEventIndex], nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
+    auto subCopyOutEventHandle = useSignalEventForSubcopy ? signalEvent : this->events.getEventResources().subcopy[markerEventIndex]->toHandle();
+
+    auto totalSize = size;
+    for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
+        auto subCmdList = static_cast<CommandListCoreFamily<gfxCoreFamily> *>(cmdListsForSplit[i]);
+
+        result = appendSubSplitCommon<gfxCoreFamily>(cmdList, subCmdList, copyParams, size, signalEvent, numWaitEvents, phWaitEvents, subCopyOutEventHandle, aggregatedEventIncrementVal,
+                                                     totalSize, engineCount, useSignalEventForSubcopy, (i == 0), appendCall);
     }
 
-    if (cmdList->isInOrderExecutionEnabled()) {
-        cmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false, useSignalEventForSubcopy);
-    }
-    cmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
-
-    if (aggregatedEventsMode && !useSignalEventForSubcopy) {
-        auto lock = events.obtainLock();
-        cmdList->assignInOrderExecInfoToEvent(this->events.getEventResources().marker[markerEventIndex]);
-    }
+    StackVec<ze_event_handle_t, 16> subCopyEvents{subCopyOutEventHandle};
+    appendPostSubCopySync<gfxCoreFamily>(cmdList, subCopyEvents, signalEvent, markerEventIndex, useSignalEventForSubcopy, false);
 
     return result;
 }

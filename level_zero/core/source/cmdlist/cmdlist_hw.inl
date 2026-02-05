@@ -51,6 +51,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
@@ -159,6 +160,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->totalNoopSpace = 0;
     this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
+
+    destroyRecordedBcsSplitResources();
 
     this->executeCleanupCallbacks();
 
@@ -362,7 +365,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         enableCopyOperationOffload();
     }
 
-    enableImmediateBcsSplit();
+    enableBcsSplit();
 
     this->minimalSizeForBcsSplit = getDefaultMinBcsSplitSize();
 
@@ -385,6 +388,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     } else {
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
     }
+
+    for (auto &cmdList : this->subCmdListsForRecordedBcsSplit) {
+        cmdList->close();
+    }
+
     closedCmdList = true;
 
     return ZE_RESULT_SUCCESS;
@@ -1997,6 +2005,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopy");
+    NEO::TransferDirection direction;
+
+    if (this->bcsSplitMode == BcsSplitParams::BcsSplitMode::recorded && this->isAppendSplitNeeded(dstptr, srcptr, size, direction)) {
+        bool hasStallingCmds = true;
+        bool copyOffloadFlush = false;
+        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
+
+        auto splitCall = [&](CommandListCoreFamily<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
+            auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
+            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
+        };
+
+        BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
+        return this->device->bcsSplit->template appendRecordedInOrderSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, splitCall);
+    }
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);
     auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, false, isCopyOffloadEnabled(), cachedAllocs.dstAlloc);

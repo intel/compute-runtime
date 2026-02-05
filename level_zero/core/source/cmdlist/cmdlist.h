@@ -48,6 +48,7 @@ struct EncodeDispatchKernelArgs;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 struct HostFunction;
+enum class TransferDirection;
 } // namespace NEO
 
 namespace L0 {
@@ -570,6 +571,7 @@ struct CommandList : _ze_command_list_handle_t {
                       uint32_t comparisonMode) const;
 
     bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
+    void setForSubCopyBcsSplit();
     bool isPatchPreambleEnabled() const { return patchPreambleEnabled; }
     void setupPatchPreambleEnabled();
 
@@ -596,7 +598,10 @@ struct CommandList : _ze_command_list_handle_t {
     uint64_t getInOrderExecDeviceGpuAddress() const;
     size_t getInOrderExecHostRequiredSize() const;
     uint64_t getInOrderExecHostGpuAddress() const;
-    void enableImmediateBcsSplit();
+    void enableBcsSplit();
+    void storeEventsForBcsSplit(const BcsSplitParams::MarkerEvent *markerEvent);
+    BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);
+    void dispatchRecordedBcsSplit();
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
@@ -621,6 +626,10 @@ struct CommandList : _ze_command_list_handle_t {
         return (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled() || size >= 4ull * MemoryConstants::gigaByte;
     }
 
+    void resetBcsSplitEvents(bool release);
+    void ensureSubCmdLists(size_t count);
+    void destroyRecordedBcsSplitResources();
+
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
@@ -629,6 +638,8 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<CleanupCallbackT> cleanupCallbacks;
     std::vector<Event *> mappedTsEventList;
     std::vector<Event *> interruptEvents;
+    std::vector<const BcsSplitParams::MarkerEvent *> eventsForRecordedBcsSplit;
+    std::vector<CommandList *> subCmdListsForRecordedBcsSplit;
 
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
 

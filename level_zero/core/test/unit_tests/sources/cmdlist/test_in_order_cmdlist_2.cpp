@@ -4523,7 +4523,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
         EXPECT_EQ(bcsSplit->events.isAggregatedEventMode(), event->isCounterBased());
     }
     for (auto &event : bcsSplit->events.getEventResources().marker) {
-        EXPECT_EQ(bcsSplit->events.isAggregatedEventMode(), event->isCounterBased());
+        EXPECT_EQ(bcsSplit->events.isAggregatedEventMode(), event.event->isCounterBased());
     }
 }
 

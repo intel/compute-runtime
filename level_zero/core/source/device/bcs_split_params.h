@@ -51,13 +51,14 @@ struct MarkerEvent {
 enum class BcsSplitMode : uint8_t {
     disabled,
     immediate,
+    recorded
 };
 
 struct EventsResources {
     std::vector<L0::EventPool *> pools;
     std::vector<L0::Event *> barrier;
     std::vector<L0::Event *> subcopy;
-    std::vector<L0::Event *> marker;
+    std::vector<BcsSplitParams::MarkerEvent> marker;
     std::vector<void *> allocsForAggregatedEvents;
     size_t currentAggregatedAllocOffset = 0;
     size_t createdFromLatestPool = 0u;

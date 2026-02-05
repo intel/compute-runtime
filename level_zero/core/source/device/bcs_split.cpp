@@ -17,6 +17,8 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
+#include <algorithm>
+
 namespace L0 {
 
 bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled) {
@@ -113,6 +115,7 @@ bool BcsSplit::setupQueues() {
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         cmdList->forceDisableInOrderWaits();
+        cmdList->setForSubCopyBcsSplit();
         cmdList->setOrdinal(splitDesc.ordinal);
 
         this->cmdLists.push_back(cmdList);
@@ -186,26 +189,47 @@ uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEve
     return retVal;
 }
 
-size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {
+void BcsSplit::dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists) {
+    for (auto i = 0u; i < recordedSubCmdLists.size(); i++) {
+        auto splitImmCmdList = this->cmdLists[i];
+        auto recordedCmdListHandle = recordedSubCmdLists[i]->toHandle();
+
+        splitImmCmdList->appendCommandLists(1, &recordedCmdListHandle, nullptr, 0, nullptr);
+    }
+}
+
+size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context, bool reserveForRecordedCmdList) {
     for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
-        if (this->eventResources.marker[i]->queryStatus(0) == ZE_RESULT_SUCCESS) {
-            resetAggregatedEventState(i, false);
+        if (!this->eventResources.marker[i].reservedForRecordedCmdList && this->eventResources.marker[i].event->queryStatus(0) == ZE_RESULT_SUCCESS) {
+            resetAggregatedEventState(i, false, false);
+            if (reserveForRecordedCmdList) {
+                this->eventResources.marker[i].reservedForRecordedCmdList = true;
+            }
             return i;
         }
     }
 
-    return this->createAggregatedEvent(context);
+    auto ret = this->createAggregatedEvent(context);
+    if (reserveForRecordedCmdList) {
+        this->eventResources.marker[ret].reservedForRecordedCmdList = true;
+    }
+    return ret;
+}
+
+size_t BcsSplitEvents::obtainForRecordedSplit(Context *context) {
+    auto lock = obtainLock();
+    return obtainAggregatedEventsForSplit(context, true);
 }
 
 std::optional<size_t> BcsSplitEvents::obtainForImmediateSplit(Context *context, size_t maxEventCountInPool) {
     auto lock = obtainLock();
 
     if (this->aggregatedEventsMode) {
-        return obtainAggregatedEventsForSplit(context);
+        return obtainAggregatedEventsForSplit(context, false);
     }
 
     for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
-        auto ret = this->eventResources.marker[i]->queryStatus(0);
+        auto ret = this->eventResources.marker[i].event->queryStatus(0);
         if (ret == ZE_RESULT_SUCCESS) {
             this->resetEventPackage(i);
             return i;
@@ -217,7 +241,7 @@ std::optional<size_t> BcsSplitEvents::obtainForImmediateSplit(Context *context, 
         return newEventIndex;
     }
 
-    this->eventResources.marker[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    this->eventResources.marker[0].event->hostSynchronize(std::numeric_limits<uint64_t>::max());
     this->resetEventPackage(0);
     return 0;
 }
@@ -280,9 +304,10 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
         zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
         UNRECOVERABLE_IF(markerHandle == nullptr);
 
-        this->eventResources.marker.push_back(Event::fromHandle(markerHandle));
+        auto currentIndex = this->eventResources.subcopy.size() - 1;
+        this->eventResources.marker.emplace_back(Event::fromHandle(markerHandle), static_cast<uint32_t>(currentIndex), false);
 
-        resetAggregatedEventState(this->eventResources.subcopy.size() - 1, (i != 0));
+        resetAggregatedEventState(currentIndex, (i != 0), false);
     }
 
     return returnIndex;
@@ -339,7 +364,7 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
 
         // Last event, created with host scope flag, is marker event.
         if (markerEvent) {
-            this->eventResources.marker.push_back(event);
+            this->eventResources.marker.emplace_back(event, 0, false);
 
             // One event to handle barrier and others to handle subcopy completion.
         } else if (barrierEvent) {
@@ -353,25 +378,36 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
 }
 
 void BcsSplitEvents::resetEventPackage(size_t index) {
-    this->eventResources.marker[index]->reset();
+    this->eventResources.marker[index].event->reset();
     this->eventResources.barrier[index]->reset();
     for (size_t j = 0; j < this->bcsSplit.cmdLists.size(); j++) {
         this->eventResources.subcopy[index * this->bcsSplit.cmdLists.size() + j]->reset();
     }
 }
 
-void BcsSplitEvents::resetAggregatedEventState(size_t index, bool markerCompleted) {
+void BcsSplitEvents::resetAggregatedEventsStateForRecordedSubmission(const std::vector<const BcsSplitParams::MarkerEvent *> &markerEvents, bool keepRecordedCmdListReservation) {
+    auto lock = obtainLock();
+
+    for (auto &markerEvent : markerEvents) {
+        resetAggregatedEventState(markerEvent->index, false, keepRecordedCmdListReservation);
+    }
+}
+
+void BcsSplitEvents::resetAggregatedEventState(size_t index, bool markerCompleted, bool keepRecordedCmdListReservation) {
     *this->eventResources.subcopy[index]->getInOrderExecInfo()->getBaseHostAddress() = 0;
 
-    auto markerEvent = this->eventResources.marker[index];
-    markerEvent->resetCompletionStatus();
-    markerEvent->unsetInOrderExecInfo();
-    markerEvent->setReportEmptyCbEventAsReady(markerCompleted);
+    auto &markerEvent = this->eventResources.marker[index];
+    markerEvent.event->resetCompletionStatus();
+    if (!keepRecordedCmdListReservation) {
+        markerEvent.event->unsetInOrderExecInfo();
+        markerEvent.reservedForRecordedCmdList = false;
+    }
+    markerEvent.event->setReportEmptyCbEventAsReady(markerCompleted);
 }
 
 void BcsSplitEvents::releaseResources() {
     for (auto &markerEvent : eventResources.marker) {
-        markerEvent->destroy();
+        markerEvent.event->destroy();
     }
     eventResources.marker.clear();
     for (auto &subcopyEvent : eventResources.subcopy) {

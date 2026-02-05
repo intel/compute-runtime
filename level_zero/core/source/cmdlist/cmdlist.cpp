@@ -336,6 +336,7 @@ CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {
 
 ze_result_t CommandList::destroy() {
     if (this->isBcsSplitEnabled()) {
+        destroyRecordedBcsSplitResources();
         this->device->bcsSplit->releaseResources();
     }
 
@@ -562,15 +563,19 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->enableCopyOperationOffload();
     }
 
-    commandList->enableImmediateBcsSplit();
+    commandList->enableBcsSplit();
 
     return commandList;
 }
 
-void CommandList::enableImmediateBcsSplit() {
-    if (device->getNEODevice()->isBcsSplitSupported() && isImmediateType() && !internalUsage && !isBcsSplitEnabled()) {
-        if (getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled())) {
-            this->bcsSplitMode = BcsSplitParams::BcsSplitMode::immediate;
+void CommandList::enableBcsSplit() {
+    if (device->getNEODevice()->isBcsSplitSupported() && !internalUsage && !isBcsSplitEnabled()) {
+        if (isImmediateType()) {
+            this->bcsSplitMode = getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled()) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
+        } else if (isInOrderExecutionEnabled() && device->getProductHelper().useAdditionalBlitProperties() && (NEO::debugManager.flags.SplitBcsForRegularCmdList.get() == 1)) {
+            auto csr = getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+            auto isCopyEnabled = isCopyOnly(true);
+            bcsSplitMode = getDevice()->bcsSplit->setupDevice(csr, isCopyEnabled) ? BcsSplitParams::BcsSplitMode::recorded : BcsSplitParams::BcsSplitMode::disabled;
         }
     }
 }
@@ -729,6 +734,72 @@ void CommandList::setInterruptEventsCsr(NEO::CommandStreamReceiver &csr) {
     for (auto &event : interruptEvents) {
         event->setCsr(&csr, true);
     }
+}
+
+void CommandList::setForSubCopyBcsSplit() {
+    copyOffloadMode = CopyOffloadModes::disabled;
+    bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
+}
+
+void CommandList::resetBcsSplitEvents(bool release) {
+    device->bcsSplit->events.resetAggregatedEventsStateForRecordedSubmission(this->eventsForRecordedBcsSplit, !release);
+
+    if (release) {
+        this->eventsForRecordedBcsSplit.clear();
+    }
+}
+
+void CommandList::dispatchRecordedBcsSplit() {
+    if (this->bcsSplitMode != BcsSplitParams::BcsSplitMode::recorded) {
+        return;
+    }
+
+    resetBcsSplitEvents(false);
+
+    device->bcsSplit->dispatchRecordedCmdLists(this->subCmdListsForRecordedBcsSplit);
+}
+
+BcsSplitParams::CmdListsForSplitContainer CommandList::getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount) {
+    const size_t maxEnginesToUse = std::max(totalTransferSize / perEngineMaxSize, size_t(1));
+    const auto engineCount = std::min(splitQueuesCount, maxEnginesToUse);
+
+    ensureSubCmdLists(engineCount);
+
+    return {subCmdListsForRecordedBcsSplit.begin(), subCmdListsForRecordedBcsSplit.begin() + engineCount};
+}
+
+void CommandList::ensureSubCmdLists(size_t count) {
+    if (subCmdListsForRecordedBcsSplit.size() >= count) {
+        return;
+    }
+
+    const auto currentSize = subCmdListsForRecordedBcsSplit.size();
+
+    for (size_t i = currentSize; i < count; i++) {
+        auto splitCmdList = device->bcsSplit->cmdLists[i];
+        auto subCmdListDevice = splitCmdList->getDevice();
+
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+        auto subCmdList = CommandList::create(device->getHwInfo().platform.eProductFamily, subCmdListDevice, splitCmdList->getEngineGroupType(), ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, true);
+        UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
+
+        subCmdList->forceDisableInOrderWaits();
+
+        subCmdListsForRecordedBcsSplit.push_back(subCmdList);
+    }
+}
+
+void CommandList::storeEventsForBcsSplit(const BcsSplitParams::MarkerEvent *markerEvent) {
+    eventsForRecordedBcsSplit.push_back(markerEvent);
+}
+
+void CommandList::destroyRecordedBcsSplitResources() {
+    for (auto &subCmdList : this->subCmdListsForRecordedBcsSplit) {
+        subCmdList->destroy();
+    }
+    this->subCmdListsForRecordedBcsSplit.clear();
+    resetBcsSplitEvents(true);
 }
 
 } // namespace L0

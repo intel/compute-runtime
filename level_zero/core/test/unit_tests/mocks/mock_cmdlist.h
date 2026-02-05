@@ -57,6 +57,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendVfeStateCmdToPatch;
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::bcsSplitMode;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
@@ -87,6 +88,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
+    using BaseClass::eventsForRecordedBcsSplit;
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
@@ -126,6 +128,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
+    using BaseClass::resetBcsSplitEvents;
     using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::setAdditionalBlitProperties;
     using BaseClass::setupTimestampEventForMultiTile;
@@ -133,6 +136,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;
+    using BaseClass::subCmdListsForRecordedBcsSplit;
     using BaseClass::syncDispatchQueueId;
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::unifiedMemoryControls;
@@ -354,6 +358,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;
+    using BaseClass::subCmdListsForRecordedBcsSplit;
     using CommandList::dispatchHostFunction;
     using CommandList::flags;
     using CommandList::internalUsage;
