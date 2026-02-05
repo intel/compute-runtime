@@ -338,6 +338,8 @@ ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(
     const uint32_t limit     ///< [in] Limit value in milliwatts to be set for given power domain.
 );
 
+#define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

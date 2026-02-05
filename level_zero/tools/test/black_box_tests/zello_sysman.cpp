@@ -1312,7 +1312,8 @@ std::string getMemoryType(zes_mem_type_t memType) {
         {ZES_MEM_TYPE_L1, "ZES_MEM_TYPE_L1"},
         {ZES_MEM_TYPE_L3, "ZES_MEM_TYPE_L3"},
         {ZES_MEM_TYPE_GRF, "ZES_MEM_TYPE_GRF"},
-        {ZES_MEM_TYPE_SLM, "ZES_MEM_TYPE_SLM"}};
+        {ZES_MEM_TYPE_SLM, "ZES_MEM_TYPE_SLM"},
+        {static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X), "ZES_INTEL_MEM_TYPE_LPDDR5X"}};
     auto i = mgetMemoryType.find(memType);
     if (i == mgetMemoryType.end()) {
         return "NOT SUPPORTED MEMORY TYPE SET";

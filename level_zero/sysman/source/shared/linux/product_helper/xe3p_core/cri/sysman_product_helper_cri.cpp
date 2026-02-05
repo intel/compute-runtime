@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/linux/pmt_util.h"
+
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
@@ -18,12 +20,100 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
+constexpr static uint32_t memoryMsuCount = 20;
+constexpr static uint32_t busWidthPerChannelInBytes = 2; // 16 bits = 2 bytes
+constexpr static uint32_t transactionSize = 64;
+constexpr static uint32_t memoryBridgeCount = 2;
+
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x1e2fa030",
      {{"VR_TEMPERATURE_0", 200},
       {"VR_TEMPERATURE_1", 204},
       {"VR_TEMPERATURE_2", 208},
-      {"VR_TEMPERATURE_3", 212}}}};
+      {"VR_TEMPERATURE_3", 212},
+      {"VRAM_BANDWIDTH", 56}}},
+    {"0x5e2fa230",
+     {{"MEMSS0_PERF_CTR_MB0_CFI_NUM_READ_REQ", 688},
+      {"MEMSS1_PERF_CTR_MB0_CFI_NUM_READ_REQ", 768},
+      {"MEMSS2_PERF_CTR_MB0_CFI_NUM_READ_REQ", 848},
+      {"MEMSS3_PERF_CTR_MB0_CFI_NUM_READ_REQ", 928},
+      {"MEMSS4_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1008},
+      {"MEMSS5_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1088},
+      {"MEMSS6_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1168},
+      {"MEMSS7_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1248},
+      {"MEMSS8_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1328},
+      {"MEMSS9_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1408},
+      {"MEMSS10_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1488},
+      {"MEMSS11_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1568},
+      {"MEMSS12_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1648},
+      {"MEMSS13_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1728},
+      {"MEMSS14_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1808},
+      {"MEMSS15_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1888},
+      {"MEMSS16_PERF_CTR_MB0_CFI_NUM_READ_REQ", 1968},
+      {"MEMSS17_PERF_CTR_MB0_CFI_NUM_READ_REQ", 2048},
+      {"MEMSS18_PERF_CTR_MB0_CFI_NUM_READ_REQ", 2128},
+      {"MEMSS19_PERF_CTR_MB0_CFI_NUM_READ_REQ", 2208},
+      {"MEMSS0_PERF_CTR_MB1_CFI_NUM_READ_REQ", 728},
+      {"MEMSS1_PERF_CTR_MB1_CFI_NUM_READ_REQ", 808},
+      {"MEMSS2_PERF_CTR_MB1_CFI_NUM_READ_REQ", 888},
+      {"MEMSS3_PERF_CTR_MB1_CFI_NUM_READ_REQ", 968},
+      {"MEMSS4_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1048},
+      {"MEMSS5_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1128},
+      {"MEMSS6_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1208},
+      {"MEMSS7_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1288},
+      {"MEMSS8_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1368},
+      {"MEMSS9_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1448},
+      {"MEMSS10_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1528},
+      {"MEMSS11_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1608},
+      {"MEMSS12_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1688},
+      {"MEMSS13_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1768},
+      {"MEMSS14_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1848},
+      {"MEMSS15_PERF_CTR_MB1_CFI_NUM_READ_REQ", 1928},
+      {"MEMSS16_PERF_CTR_MB1_CFI_NUM_READ_REQ", 2008},
+      {"MEMSS17_PERF_CTR_MB1_CFI_NUM_READ_REQ", 2088},
+      {"MEMSS18_PERF_CTR_MB1_CFI_NUM_READ_REQ", 2168},
+      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_READ_REQ", 2248},
+      {"MEMSS0_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 680},
+      {"MEMSS1_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 760},
+      {"MEMSS2_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 840},
+      {"MEMSS3_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 920},
+      {"MEMSS4_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1000},
+      {"MEMSS5_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1080},
+      {"MEMSS6_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1160},
+      {"MEMSS7_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1240},
+      {"MEMSS8_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1320},
+      {"MEMSS9_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1400},
+      {"MEMSS10_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1480},
+      {"MEMSS11_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1560},
+      {"MEMSS12_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1640},
+      {"MEMSS13_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1720},
+      {"MEMSS14_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1800},
+      {"MEMSS15_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1880},
+      {"MEMSS16_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 1960},
+      {"MEMSS17_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 2040},
+      {"MEMSS18_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 2120},
+      {"MEMSS19_PERF_CTR_MB0_CFI_NUM_WRITE_REQ", 2200},
+      {"MEMSS0_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 720},
+      {"MEMSS1_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 800},
+      {"MEMSS2_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 880},
+      {"MEMSS3_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 960},
+      {"MEMSS4_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1040},
+      {"MEMSS5_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1120},
+      {"MEMSS6_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1200},
+      {"MEMSS7_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1280},
+      {"MEMSS8_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1360},
+      {"MEMSS9_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1440},
+      {"MEMSS10_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1520},
+      {"MEMSS11_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1600},
+      {"MEMSS12_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1680},
+      {"MEMSS13_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1760},
+      {"MEMSS14_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1840},
+      {"MEMSS15_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 1920},
+      {"MEMSS16_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2000},
+      {"MEMSS17_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2080},
+      {"MEMSS18_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2160},
+      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240},
+      {"NUM_OF_MEM_CHANNEL", 3660}}}};
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
@@ -223,6 +313,167 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(Li
 template <>
 const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return &guidToKeyOffsetMap;
+}
+
+static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                                   zes_mem_bandwidth_t *pBandwidth) {
+
+    uint64_t readCounter = 0;
+    uint64_t writeCounter = 0;
+    uint64_t telemOffset = 0;
+
+    for (uint32_t i = 0; i < memoryMsuCount; i++) {
+        uint64_t msuReadCounter = 0;
+        uint64_t msuWriteCounter = 0;
+
+        for (uint32_t mb = 0; mb < memoryBridgeCount; mb++) {
+            std::string mbSuffix = "MB" + std::to_string(mb);
+
+            std::string readKey = "MEMSS" + std::to_string(i) + "_PERF_CTR_" + mbSuffix + "_CFI_NUM_READ_REQ";
+            uint64_t readCounterValue = 0;
+            if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[readKey], readKey, telemOffset, readCounterValue)) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            msuReadCounter += readCounterValue;
+
+            std::string writeKey = "MEMSS" + std::to_string(i) + "_PERF_CTR_" + mbSuffix + "_CFI_NUM_WRITE_REQ";
+            uint64_t writeCounterValue = 0;
+            if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[writeKey], writeKey, telemOffset, writeCounterValue)) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            msuWriteCounter += writeCounterValue;
+        }
+
+        readCounter += msuReadCounter;
+        writeCounter += msuWriteCounter;
+    }
+
+    pBandwidth->readCounter = readCounter * transactionSize;
+    pBandwidth->writeCounter = writeCounter * transactionSize;
+    return ZE_RESULT_SUCCESS;
+}
+
+static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                         zes_mem_bandwidth_t *pBandwidth) {
+
+    uint64_t telemOffset = 0;
+    uint32_t maxBandwidth = 0;
+    std::string key = "VRAM_BANDWIDTH";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, maxBandwidth)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    maxBandwidth = maxBandwidth >> 16;
+    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * mbpsToBytesPerSec;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (const auto &[key, value] : tempKeyOffsetMap) {
+            keyOffsetMap[key] = value;
+            keyTelemInfoMap[key] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (ZE_RESULT_SUCCESS != getMemoryBandwidthCounterValues(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Read and Write Counter Values, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (ZE_RESULT_SUCCESS != getMemoryMaxBandwidth(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Max Bandwidth Value, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (const auto &[key, value] : tempKeyOffsetMap) {
+            keyOffsetMap[key] = value;
+            keyTelemInfoMap[key] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    uint32_t numOfChannelsPerMsu = 0;
+    std::string numOfChannelsKey = "NUM_OF_MEM_CHANNEL";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[numOfChannelsKey], numOfChannelsKey, 0, numOfChannelsPerMsu)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    pProperties->location = ZES_MEM_LOC_DEVICE;
+    pProperties->type = static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X);
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subDeviceId;
+    pProperties->numChannels = numOfChannelsPerMsu * memoryMsuCount;
+    pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBytes;
+    pProperties->physicalSize = 0;
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

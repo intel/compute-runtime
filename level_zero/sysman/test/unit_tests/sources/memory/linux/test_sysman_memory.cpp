@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -378,7 +378,7 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMem
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemoryGetPropertiesWithInvalidMemoryTypeThenVerifyGetPropertiesCallReturnsMemoryTypeAsDdrAndNumberOfChannelsAsUnknown) {
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemoryGetPropertiesWithInvalidMemoryTypeThenVerifyGetPropertiesCallReturnsMemoryTypeAsDdrAndNumberOfChannelsAsUnknown, IsAtMostPVC) {
     pDrm->setMemoryType(INT_MAX);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {

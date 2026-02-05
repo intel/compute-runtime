@@ -77,6 +77,7 @@ inline constexpr uint32_t milliFactor = 1000u;
 inline constexpr uint32_t microFactor = milliFactor * milliFactor;
 inline constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
 inline constexpr uint64_t megaBytesToBytes = 1000 * 1000;
+inline constexpr uint64_t mbpsToBytesPerSec = megaBytesToBytes / 8;
 
 inline constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 inline constexpr int32_t numMemoryChannels = 8;
