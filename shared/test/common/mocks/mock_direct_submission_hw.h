@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,6 +79,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::switchRingBuffersAllocations;
     using BaseClass::switchRingBuffersNeeded;
     using BaseClass::systemMemoryFenceAddressSet;
+    using BaseClass::tagAddress;
     using BaseClass::unblockGpu;
     using BaseClass::workPartitionAllocation;
     using typename BaseClass::RingBufferUse;

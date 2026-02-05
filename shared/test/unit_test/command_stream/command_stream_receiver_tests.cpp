@@ -5830,7 +5830,7 @@ HWTEST_F(CommandStreamReceiverTest, givenBcsCsrWhenInitializeDeviceWithFirstSubm
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmissionIsCalledThenFlushOnlyForTheFirstTime) {
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmissionIsCalledThenFlushOnlyForTheFirstTimeAndInitDirectSubmission) {
     MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultHwInfo->capabilityTable.defaultEngineType, EngineUsage::regular}));
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
 
@@ -5839,8 +5839,10 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmiss
     commandStreamReceiver.initializeTagAllocation();
     EXPECT_EQ(0u, commandStreamReceiver.taskCount);
 
+    EXPECT_EQ(0u, commandStreamReceiver.initDirectSubmissionCalled);
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.initDirectSubmissionCalled);
 
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
