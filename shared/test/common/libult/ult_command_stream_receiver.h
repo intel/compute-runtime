@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,6 +81,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
+    using BaseClass::isPerQueuePrologueEnabled;
     using BaseClass::isWalkerWithProfilingEnqueued;
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;

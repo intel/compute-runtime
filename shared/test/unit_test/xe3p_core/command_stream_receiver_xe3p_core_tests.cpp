@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -136,4 +137,29 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenStateInitDebugFlagDisabledAn
 
     EXPECT_FALSE(ultCsr.osContext->isPartOfContextGroup());
     EXPECT_EQ(0u, csrStream.getUsed());
+}
+
+XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, WhenFlushingImmediateTaskStatelessThenEnginePrologueIsNotSent) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.isEnginePrologueSent = false;
+
+    EXPECT_FALSE(csr.isPerQueuePrologueEnabled());
+    EXPECT_FALSE(csr.isPerQueuePrologueRequired());
+
+    static constexpr uint64_t cmdBufferGpuAddress = 0x10000;
+    static constexpr size_t bufferSize = 1024;
+    uint32_t cmdBuffer[bufferSize / sizeof(uint32_t)];
+
+    NEO::LinearStream cmdStream;
+    cmdStream.replaceBuffer(cmdBuffer, bufferSize);
+    auto graphicsAllocation = std::make_unique<MockGraphicsAllocation>(cmdBuffer, cmdBufferGpuAddress, bufferSize);
+    cmdStream.replaceGraphicsAllocation(graphicsAllocation.get());
+
+    csr.flushImmediateTaskStateless(cmdStream, 0, csr.recordedImmediateDispatchFlags, *device);
+
+    EXPECT_FALSE(csr.isEnginePrologueSent);
 }

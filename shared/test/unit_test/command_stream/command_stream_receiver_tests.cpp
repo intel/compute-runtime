@@ -148,6 +148,13 @@ HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableA
     EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
 }
 
+HWTEST_F(CommandStreamReceiverTest, WhenCheckingPerQueuePrologueRequirementsThenCorrectValueAreReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(csr.isPerQueuePrologueEnabled());
+    EXPECT_FALSE(csr.isPerQueuePrologueRequired());
+}
+
 HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRInitializeResourcesFail) {
     struct MyOsContext : OsContext {
         MyOsContext(uint32_t contextId,

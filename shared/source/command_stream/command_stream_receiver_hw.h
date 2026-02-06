@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
     bool flushBatchedSubmissions() override;
+    bool isPerQueuePrologueRequired() const override;
     void programHardwareContext(LinearStream &cmdStream) override;
     size_t getCmdsSizeForHardwareContext() const override;
 
@@ -229,6 +230,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programActivePartitionConfigFlushTask(LinearStream &csr);
 
+    bool isPerQueuePrologueEnabled() const;
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
     void programExceptions(LinearStream &csr, Device &device);

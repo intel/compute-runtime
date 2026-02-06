@@ -93,6 +93,7 @@ struct CommandListExecutionContext {
     bool stateCacheFlushRequired = false;
     bool instructionCacheFlushRequired = false;
     bool taskCountUpdateFenceRequired = false;
+    bool perQueuePrologueRequired = false;
 };
 
 } // namespace L0

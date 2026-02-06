@@ -188,6 +188,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     this->makeCsrTagAllocationResident();
 
     if (ctx.pipelineCmdsDispatch) {
+        if (ctx.perQueuePrologueRequired) {
+            this->csr->programHardwareContext(*streamForDispatch);
+        }
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, *streamForDispatch);
         this->programRequiredCacheFlushes(ctx, *streamForDispatch);
     }
@@ -624,7 +627,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
         ctx.instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
         ctx.stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
-        ctx.pipelineCmdsDispatch |= (ctx.instructionCacheFlushRequired || ctx.stateCacheFlushRequired);
+        if (this->heaplessStateInitEnabled) {
+            ctx.perQueuePrologueRequired = this->csr->isPerQueuePrologueRequired();
+        }
+        ctx.pipelineCmdsDispatch |= (ctx.instructionCacheFlushRequired || ctx.stateCacheFlushRequired || ctx.perQueuePrologueRequired);
     } else {
         ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
     }
@@ -741,6 +747,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeTotal(CommandListE
 
     if (ctx.regularHeapful) {
         linearStreamSizeEstimate += estimateLinearStreamSizeRegularHeapfulPostCmdList(ctx);
+    }
+
+    if (this->heaplessStateInitEnabled) {
+        if (ctx.perQueuePrologueRequired) {
+            linearStreamSizeEstimate += this->csr->getCmdsSizeForHardwareContext();
+        }
     }
 
     linearStreamSizeEstimate += estimateLinearStreamSizeSharedPostCmdList(ctx, numCommandLists);

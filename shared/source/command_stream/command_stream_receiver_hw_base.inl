@@ -174,6 +174,11 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
 }
 
 template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::isPerQueuePrologueRequired() const {
+    return isPerQueuePrologueEnabled() && getCmdsSizeForHardwareContext() > 0;
+}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programHardwareContext(LinearStream &cmdStream) {
     programEnginePrologue(cmdStream);
 }

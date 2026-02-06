@@ -126,6 +126,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void pollForCompletion() { pollForCompletion(false); }
     virtual void pollForAubCompletion(){};
     virtual void pollForCompletion(bool skipTaskCountCheck) {}
+    virtual bool isPerQueuePrologueRequired() const = 0;
     virtual void programHardwareContext(LinearStream &cmdStream) = 0;
     virtual size_t getCmdsSizeForHardwareContext() const = 0;
 

@@ -203,6 +203,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         downloadAllocationsCalledCount++;
     }
 
+    bool isPerQueuePrologueRequired() const override {
+        return false;
+    }
     void programHardwareContext(LinearStream &cmdStream) override {
         programHardwareContextCalled = true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -909,6 +909,9 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return CommandStreamReceiverType::hardware;
     }
 
+    bool isPerQueuePrologueRequired() const override {
+        return false;
+    }
     void programHardwareContext(LinearStream &cmdStream) override {}
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;

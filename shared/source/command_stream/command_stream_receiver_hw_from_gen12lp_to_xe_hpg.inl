@@ -10,6 +10,11 @@
 
 namespace NEO {
 
+template <>
+bool CommandStreamReceiverHw<Family>::isPerQueuePrologueEnabled() const {
+    return false;
+}
+
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr) {
 }

@@ -41,6 +41,11 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
+bool CommandStreamReceiverHw<Family>::isPerQueuePrologueEnabled() const {
+    return false;
+}
+
+template <>
 void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
     if (!this->isEnginePrologueSent) {
         auto &compilerProductHelper = this->peekRootDeviceEnvironment().getHelper<CompilerProductHelper>();

@@ -224,6 +224,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskStateless(
         if (this->isProgramActivePartitionConfigRequired()) {
             flushData.estimatedSize += this->getCmdSizeForActivePartitionConfig();
         }
+
+        if (this->isPerQueuePrologueEnabled()) {
+            flushData.estimatedSize += getCmdSizeForPrologue();
+        }
     }
 
     // this must be the last call after all estimate size operations
@@ -233,6 +237,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskStateless(
     flushData.csrStartOffset = csrCommandStream.getUsed();
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
+        if (isPerQueuePrologueEnabled()) {
+            programEnginePrologue(csrCommandStream);
+        }
+
         if (isProgramActivePartitionConfigRequired()) {
             programActivePartitionConfig(csrCommandStream);
         }
