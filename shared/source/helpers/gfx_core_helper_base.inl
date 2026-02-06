@@ -630,12 +630,8 @@ void GfxCoreHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bo
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isCompressionAppliedForImportedResource(Gmm &gmm) const {
     auto gmmFlags = gmm.gmmResourceInfo->getResourceFlags();
-    auto isResourceDenyCompressionEnabled = gmm.gmmResourceInfo->isResourceDenyCompressionEnabled();
-    if (((gmmFlags->Info.MediaCompressed == 1) || (gmmFlags->Info.RenderCompressed == 1)) && (!isResourceDenyCompressionEnabled)) {
-        return true;
-    }
-
-    return false;
+    bool denyCompression = gmm.gmmResourceInfo->isResourceDenyCompressionEnabled();
+    return (gmmFlags->Info.MediaCompressed || gmmFlags->Info.RenderCompressed) && !denyCompression;
 }
 
 template <typename GfxFamily>
