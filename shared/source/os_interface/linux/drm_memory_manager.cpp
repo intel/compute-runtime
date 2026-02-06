@@ -1930,7 +1930,8 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, graphicsAllocation->storageInfo.memoryBanks);
 }
 
-bool DrmMemoryManager::processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, const std::function<void(void *)> &funcToProcess) {
+template <typename Func>
+bool DrmMemoryManager::processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess) {
     if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
     }
@@ -1966,11 +1967,8 @@ bool DrmMemoryManager::processOverAllocationBanks(GraphicsAllocation *graphicsAl
 
 bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
 
-    auto copyMemoryFunc = [&](void *ptr) {
-        memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
-    };
-
-    return processOverAllocationBanks(graphicsAllocation, handleMask, copyMemoryFunc);
+    return processOverAllocationBanks(graphicsAllocation, handleMask,
+                                      [&](void *ptr) { memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy); });
 }
 
 bool DrmMemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) {
@@ -1981,10 +1979,9 @@ bool DrmMemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, 
 }
 
 bool DrmMemoryManager::memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) {
-    auto memsetFunc = [&](void *ptr) {
+    return processOverAllocationBanks(graphicsAllocation, handleMask, [&](void *ptr) {
         memset(ptrOffset(ptr, destinationOffset), value, sizeToSet);
-    };
-    return processOverAllocationBanks(graphicsAllocation, handleMask, memsetFunc);
+    });
 }
 
 void DrmMemoryManager::unlockBufferObject(BufferObject *bo) {

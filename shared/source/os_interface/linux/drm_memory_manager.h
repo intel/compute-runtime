@@ -207,7 +207,9 @@ class DrmMemoryManager : public MemoryManager {
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
     void setLocalMemBanksCount(uint32_t rootDeviceIndex);
     bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const override;
-    bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, const std::function<void(void *)> &funcToProcess);
+
+    template <typename Func>
+    bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess);
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;
