@@ -9,10 +9,7 @@
 template <>
 uint32_t L1CachePolicyHelper<IGFX_CRI>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = HwMapper<IGFX_CRI>::GfxFamily;
-    if (isDebuggerActive) {
-        return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
-    }
-    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
 }
 
 template struct L1CachePolicyHelper<IGFX_CRI>;
