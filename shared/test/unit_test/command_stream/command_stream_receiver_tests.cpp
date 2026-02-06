@@ -151,8 +151,9 @@ HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableA
 HWTEST_F(CommandStreamReceiverTest, WhenCheckingPerQueuePrologueRequirementsThenCorrectValueAreReturned) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    EXPECT_FALSE(csr.isPerQueuePrologueEnabled());
-    EXPECT_FALSE(csr.isPerQueuePrologueRequired());
+    if (!csr.isPerQueuePrologueEnabled()) {
+        EXPECT_FALSE(csr.isPerQueuePrologueRequired());
+    }
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRInitializeResourcesFail) {

@@ -2176,7 +2176,11 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
         EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
     }
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
-    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    if (ultCsr->isPerQueuePrologueEnabled()) {
+        EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    } else {
+        EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    }
 }
 
 HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsXeHpcCore) {
