@@ -19,6 +19,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/driver_model_type.h"
@@ -119,7 +120,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
     uint32_t index = 0;
     uint32_t commandQueueGroupOrdinal = desc->commandQueueGroupOrdinal;
     NEO::SynchronizedDispatchMode syncDispatchMode = NEO::SynchronizedDispatchMode::disabled;
-    bool copyOffloadHint = false;
+    bool copyOffloadHint = NEO::isValueSet(desc->flags, ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT);
     adjustCommandQueueDesc(commandQueueGroupOrdinal, index);
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueGroupOrdinal);

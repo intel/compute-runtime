@@ -531,13 +531,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
     }
 }
 
-HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListThenAcceptOffloadHint) {
+HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListThenAcceptOffloadHintExtStruct) {
     zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
     copyOffloadDesc.copyOffloadEnabled = true;
 
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.pNext = &copyOffloadDesc;
-    ze_command_list_handle_t hCmdList;
+    ze_command_list_handle_t hCmdList{};
 
     {
         NEO::debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
@@ -570,6 +570,50 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
         NEO::debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
         cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+
+        EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+
+        zeCommandListDestroy(hCmdList);
+    }
+}
+
+HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListThenAcceptOffloadHintFlag) {
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    ze_command_list_handle_t hCmdList{};
+
+    {
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER | ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+
+        if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
+            EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+        } else {
+            EXPECT_EQ(nonDualStreamMode, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+        }
+
+        zeCommandListDestroy(hCmdList);
+    }
+
+    {
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+        bool supported = device->getL0GfxCoreHelper().isDefaultCmdListWithCopyOffloadSupported(device->getProductHelper().useAdditionalBlitProperties());
+
+        EXPECT_EQ(!supported, CopyOffloadModes::disabled == CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+
+        zeCommandListDestroy(hCmdList);
+    }
+
+    {
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER | ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
