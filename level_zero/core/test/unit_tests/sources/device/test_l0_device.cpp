@@ -60,6 +60,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/driver_experimental/zex_common.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
 #include "gtest/gtest.h"
@@ -6164,6 +6165,10 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForBindlessImageExtensionFunct
 
 TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStringThenReturnCorrectValue) {
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
+}
+
+TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelMemMapDeviceMemToHostThenReturnCorrectValue) {
+    EXPECT_EQ(&zeIntelMemMapDeviceMemToHost, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelMemMapDeviceMemToHost"));
 }
 
 template <bool blockLoad, bool blockStore>
