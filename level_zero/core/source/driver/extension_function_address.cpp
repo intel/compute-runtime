@@ -143,6 +143,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
     RETURN_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
     RETURN_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
 
     // Sysman
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetSupportedCategoriesExp);

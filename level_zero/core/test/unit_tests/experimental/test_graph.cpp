@@ -2033,5 +2033,70 @@ TEST_F(GraphTestCaptureRestrictions, GivenHostSynchronizeWhenCapturingCmdlistThe
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 }
 
+TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockCommandList cmdlist;
+    MockGraph graph{&ctx, true};
+    ze_graph_handle_t queryResult = {};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListGetGraphExp(nullptr, &queryResult)) << "Empty cmdlist is invalid";
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListGetGraphExp(&cmdlist, &queryResult)) << "Non recording cmdlist is invalid";
+    cmdlist.setCaptureTarget(&graph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListGetGraphExp(&cmdlist, &queryResult));
+    EXPECT_EQ(&graph, queryResult) << "Recording cmdlist should return target graph";
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListGetGraphExp(&cmdlist, nullptr)) << "Return parameter cannot be null";
+    cmdlist.setCaptureTarget(nullptr);
+}
+
+TEST(GraphTestZeCommandListGetGraphExp, GivenValidParametersThenReturnsUnderlyingGraph) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockCommandList cmdlist;
+    MockGraph graph{&ctx, true};
+    ze_graph_handle_t queryResult = {};
+
+    cmdlist.setCaptureTarget(&graph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListGetGraphExp(&cmdlist, &queryResult));
+    EXPECT_EQ(&graph, queryResult) << "Recording cmdlist should return target graph";
+    cmdlist.setCaptureTarget(nullptr);
+}
+
+TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockCommandList cmdlist;
+    MockGraph graph{&ctx, true};
+    ze_module_program_exp_desc_t progExp = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC, nullptr};
+
+    zex_mem_graph_free_callback_fn_t clb = +[](void *) {};
+    uint64_t userData = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeGraphSetDestructionCallbackExp(nullptr, clb, nullptr, nullptr)) << "Graph handle cannot be null";
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeGraphSetDestructionCallbackExp(&graph, nullptr, nullptr, nullptr)) << "Callback cannot be null";
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeGraphSetDestructionCallbackExp(&graph, clb, nullptr, &progExp)) << "Pnext extensions are not supported";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clb, nullptr, nullptr)) << "User data can be null";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clb, &userData, nullptr)) << "Valid callback+user data is supported";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clb, &userData, nullptr)) << "Multiple callbacks are allowed";
+}
+
+TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesThemInOrderDuringGraphTearDown) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockCommandList cmdlist;
+
+    using UserDataT = uint64_t;
+    UserDataT userData = 0U;
+    zex_mem_graph_free_callback_fn_t clbMul2 = +[](void *p) { reinterpret_cast<UserDataT *>(p)[0] *= 2; };
+    zex_mem_graph_free_callback_fn_t clbAdd1 = +[](void *p) { reinterpret_cast<UserDataT *>(p)[0] += 1; };
+    {
+        MockGraph graph{&ctx, true};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clbAdd1, &userData, nullptr)); // 0+1
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clbMul2, &userData, nullptr)); // 1*2
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeGraphSetDestructionCallbackExp(&graph, clbAdd1, &userData, nullptr)); // 2+1
+        EXPECT_EQ(0U, userData);
+    }
+    EXPECT_EQ(3U, userData);
+}
+
 } // namespace ult
 } // namespace L0

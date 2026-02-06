@@ -30,6 +30,8 @@ struct _ze_graph_handle_t {
 struct _ze_executable_graph_handle_t {
 };
 
+typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
+
 namespace L0 {
 
 inline std::atomic<bool> processUsesGraphs{false};
@@ -262,6 +264,15 @@ struct Graph : _ze_graph_handle_t {
         return multiEngineGraph;
     }
 
+    ze_result_t addDestructorCallback(zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
+        if (pNext) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        std::lock_guard lock(destructorCallbacksMutex);
+        destructorCallbacks.push_back({pfnCallback, pUserData});
+        return ZE_RESULT_SUCCESS;
+    }
+
   protected:
     void unregisterSignallingEvents();
 
@@ -285,6 +296,13 @@ struct Graph : _ze_graph_handle_t {
     bool multiEngineGraph = false;
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
+
+    struct DestructorCallbackEntry {
+        zex_mem_graph_free_callback_fn_t pfnCallback;
+        void *pUserData;
+    };
+    std::mutex destructorCallbacksMutex;
+    std::vector<DestructorCallbackEntry> destructorCallbacks;
 };
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);

@@ -38,6 +38,10 @@ Graph::~Graph() {
             delete sg;
         }
     }
+
+    for (const auto &clb : this->destructorCallbacks) {
+        clb.pfnCallback(clb.pUserData);
+    }
 }
 
 void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {

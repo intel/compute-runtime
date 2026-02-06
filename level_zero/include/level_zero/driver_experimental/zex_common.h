@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,16 @@
 
 #if defined(__cplusplus)
 extern "C" {
+#endif
+
+#if defined(_WIN32)
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK __stdcall
+#endif
+#else
+#if !defined(ZE_CALLBACK)
+#define ZE_CALLBACK
+#endif
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

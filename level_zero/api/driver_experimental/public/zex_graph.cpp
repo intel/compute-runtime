@@ -190,6 +190,15 @@ ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExp(ze_command_list_han
     return cmdList->getCaptureTarget() ? ZE_RESULT_QUERY_TRUE : ZE_RESULT_QUERY_FALSE;
 }
 
+ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if ((nullptr == cmdList) || (nullptr == phGraph) || (nullptr == cmdList->getCaptureTarget())) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    *phGraph = cmdList->getCaptureTarget();
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
     auto graph = L0::Graph::fromHandle(hGraph);
     if (nullptr == graph) {
@@ -237,6 +246,14 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const ch
     return exporter.exportToFile(*graph, filePath);
 }
 
+ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
+    if ((nullptr == hGraph) || (nullptr == pfnCallback)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto *graph = L0::Graph::fromHandle(hGraph);
+    return graph->addDestructorCallback(pfnCallback, pUserData, pNext);
+}
+
 } // namespace L0
 
 #if defined(__cplusplus)
@@ -268,6 +285,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendGraphExp(ze_command_list_
     return L0::zeCommandListAppendGraphExp(hCommandList, hGraph, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph) {
+    return L0::zeCommandListGetGraphExp(hCommandList, phGraph);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDestroyExp(ze_graph_handle_t hGraph) {
     return L0::zeGraphDestroyExp(hGraph);
 }
@@ -286,6 +307,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) 
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {
     return L0::zeGraphDumpContentsExp(hGraph, filePath, pNext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
+    return L0::zeGraphSetDestructionCallbackExp(hGraph, pfnCallback, pUserData, pNext);
 }
 
 #if defined(__cplusplus)
