@@ -60,12 +60,11 @@ bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t f
     auto ioctlHelper = drm->getIoctlHelper();
 
     int ret = ioctlHelper->ioctl(DrmIoctl::syncObjFdToHandle, &args);
-    if (ret != 0) {
-        return false;
-    }
-
     if (fd > 0) {
         SysCalls::close(fd);
+    }
+    if (ret != 0) {
+        return false;
     }
 
     this->syncHandle = args.handle;

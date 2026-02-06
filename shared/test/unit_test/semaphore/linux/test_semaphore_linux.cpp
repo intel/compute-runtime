@@ -215,16 +215,15 @@ TEST_F(DrmExternalSemaphoreTest, givenTimelineSemaphoreFdWhenImportingThenFdIsCl
     EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
 }
 
-TEST_F(DrmExternalSemaphoreTest, givenImportFailsWhenCreatingExternalSemaphoreThenFdIsNotClosed) {
-    // Setup: Make syncObjFdToHandle fail
+TEST_F(DrmExternalSemaphoreTest, givenImportFailsWhenCreatingExternalSemaphoreThenFdIsClosed) {
     auto mockDrm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     mockDrm->failOnSyncObjFdToHandle = true;
 
     VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
 
     const int testFd = 77;
 
-    // Exercise: Try to create external semaphore (should fail)
     auto externalSemaphore = ExternalSemaphore::create(
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
         ExternalSemaphore::Type::OpaqueFd,
@@ -234,8 +233,31 @@ TEST_F(DrmExternalSemaphoreTest, givenImportFailsWhenCreatingExternalSemaphoreTh
 
     EXPECT_EQ(externalSemaphore, nullptr);
 
-    // Verify: FD should NOT be closed on failure - caller retains ownership
-    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenIoctlFailureWithNonZeroFdThenFdIsClosedBeforeReturning) {
+    auto mockDrm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    mockDrm->failOnSyncObjFdToHandle = true;
+
+    for (int i = 0; i < 10; i++) {
+        VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+        VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+        const int testFd = 100 + i;
+
+        auto externalSemaphore = ExternalSemaphore::create(
+            executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+            ExternalSemaphore::Type::OpaqueFd,
+            nullptr,
+            testFd,
+            nullptr);
+
+        EXPECT_EQ(externalSemaphore, nullptr);
+        EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+        EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    }
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenValidSemaphoreWhenDestroyedThenSyncHandleIsDestroyed) {
