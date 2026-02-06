@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ if(NOT WIN32)
 endif()
 
 set(NEO_SHARED_DLLS
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_memory_manager_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp

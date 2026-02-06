@@ -16,6 +16,8 @@ struct HardwareInfo;
 
 bool requiresOpenClCFeatures(const std::string &compileOptions);
 bool requiresAdditionalExtensions(const std::string &compileOptions);
+
+bool requiresL1PolicyMissmatchCheck();
 bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *currentCachePolicy);
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions);

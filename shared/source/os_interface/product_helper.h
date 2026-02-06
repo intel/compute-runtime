@@ -136,6 +136,7 @@ class ProductHelper {
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
     virtual bool isKmdMigrationSupported() const = 0;
+    virtual bool isL1PolicyMissmatchCheckNeeded() const = 0;
     virtual bool isDisableScratchPagesSupported() const = 0;
     virtual bool isDisableScratchPagesRequiredForDebugger() const = 0;
     virtual bool areSecondaryContextsSupported() const = 0;
