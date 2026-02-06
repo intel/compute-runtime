@@ -234,6 +234,7 @@ class IoctlHelperXe : public IoctlHelper {
     };
 
     std::unique_ptr<EuDebugInterface> euDebugInterface;
+    bool enableDeferBacking = false;
 };
 
 template <typename... XeLogArgs>

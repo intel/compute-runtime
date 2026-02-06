@@ -36,6 +36,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::localMemorySupported;
     using BaseClass::mapPhysicalDeviceMemoryToVirtualMemory;
     using BaseClass::mapPhysicalHostMemoryToVirtualMemory;
+    using BaseClass::primaryEngines;
     using BaseClass::supportsMultiStorageResources;
     using BaseClass::unMapPhysicalDeviceMemoryFromVirtualMemory;
     using BaseClass::unMapPhysicalHostMemoryFromVirtualMemory;

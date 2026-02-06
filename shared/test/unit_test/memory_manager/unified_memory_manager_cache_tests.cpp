@@ -92,6 +92,8 @@ TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTr
         }
     }
     EXPECT_EQ(data1->device, addr1);
+
+    tracker.allocations.clear();
 }
 
 using SvmAllocationCacheSimpleTest = ::testing::Test;
