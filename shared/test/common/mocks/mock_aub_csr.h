@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,10 +34,18 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion;
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
 
+    MockAubCsr(const std::string &fileName,
+               bool standalone,
+               ExecutionEnvironment &executionEnvironment,
+               uint32_t rootDeviceIndex,
+               const DeviceBitfield deviceBitfield) : AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield) {
+        writeMemoryWithAubManagerCalled = std::make_unique<bool>(false);
+    }
+
     MockAubCsr(ExecutionEnvironment &executionEnvironment,
                uint32_t rootDeviceIndex,
-               const DeviceBitfield deviceBitfield)
-        : AUBCommandStreamReceiverHw<GfxFamily>("", true, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+               const DeviceBitfield deviceBitfield) : MockAubCsr<GfxFamily>("", false, executionEnvironment, rootDeviceIndex, deviceBitfield) {
+    }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
@@ -88,9 +96,9 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         batchBufferGpuAddressPassed = batchBufferGpuAddress;
     }
 
-    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const override {
         CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
-        writeMemoryWithAubManagerCalled = true;
+        *writeMemoryWithAubManagerCalled = true;
     }
 
     void pollForCompletion(bool skipTaskCountCheck) override {
@@ -143,7 +151,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
     bool writeMemoryGfxAllocCalled = false;
-    bool writeMemoryWithAubManagerCalled = false;
+    std::unique_ptr<bool> writeMemoryWithAubManagerCalled;
     bool writeMMIOCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;

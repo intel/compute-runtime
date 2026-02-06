@@ -72,7 +72,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
-    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const override {
         uint64_t gpuAddress;
         void *cpuAddress;
         size_t allocSize;
@@ -144,6 +144,25 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
             bank = GraphicsAllocation::defaultBank;
         }
         return graphicsAllocation.isTbxWritable(bank);
+    }
+
+    void uploadRingAndCommandBuffers(GraphicsAllocation &ringBufferAllocation, uint64_t ringBufferGpuVa, size_t ringBufferSize, const ResidencyContainer *allocationsForResidency) const {
+        writeMemoryWithAubManager(ringBufferAllocation, true, ptrDiff(ringBufferGpuVa, ringBufferAllocation.getGpuAddress()), ringBufferSize);
+        if (allocationsForResidency) {
+            for (auto &allocation : *allocationsForResidency) {
+                // update command buffer whose BB START was modified to point to ring buffer semaphore
+                if (allocation->getAllocationType() == AllocationType::commandBuffer) {
+                    writeMemoryWithAubManager(*allocation, false, 0, 0);
+                }
+            }
+        }
+    }
+
+    void submit(GraphicsAllocation &ringBufferAllocation, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize,
+                uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead, const ResidencyContainer *allocationsForResidency) const {
+        uploadRingAndCommandBuffers(ringBufferAllocation, batchBufferGpuAddress, batchBufferSize, allocationsForResidency);
+        hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize,
+                                          memoryBank, entryBits, overrideRingHead);
     }
 };
 } // namespace NEO

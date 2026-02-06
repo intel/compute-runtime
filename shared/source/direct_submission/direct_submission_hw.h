@@ -117,7 +117,7 @@ class DirectSubmissionHw {
     MOCKABLE_VIRTUAL bool makeResourcesResident(DirectSubmissionAllocations &allocations);
     virtual bool allocateOsResources();
     virtual bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) = 0;
-    virtual bool handleResidency() = 0;
+    virtual bool handleResidency(const ResidencyContainer *allocationsForResidency) = 0;
     virtual void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency){};
     virtual void handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency){};
     void handleNewResourcesSubmission();
@@ -135,7 +135,7 @@ class DirectSubmissionHw {
     virtual bool dispatchMonitorFenceRequired(bool requireMonitorFence);
     virtual void getTagAddressValue(TagData &tagData) = 0;
     virtual void getTagAddressValueForRingSwitch(TagData &tagData) = 0;
-    void unblockGpu();
+    virtual void unblockGpu();
     bool submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency);
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
 

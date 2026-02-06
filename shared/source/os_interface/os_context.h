@@ -54,7 +54,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isInternalEngine() const { return engineUsage == EngineUsage::internal; }
     bool isCooperativeEngine() const { return engineUsage == EngineUsage::cooperative; }
     bool isRootDevice() const { return rootDevice; }
-    virtual bool isDirectSubmissionSupported() const { return false; }
+    virtual bool isDirectSubmissionSupported() const { return directSubmissionSupported; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() const { return directSubmissionActive; }
@@ -136,6 +136,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     std::optional<uint32_t> priorityLevel = std::nullopt;
     const bool rootDevice = false;
     bool defaultContext = false;
+    bool directSubmissionSupported = false;
     bool directSubmissionActive = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;

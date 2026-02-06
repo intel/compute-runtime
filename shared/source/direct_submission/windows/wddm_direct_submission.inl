@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, si
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency(const ResidencyContainer *allocationsForResidency) {
     wddm->waitOnPagingFenceFromCpu(this->lastSubmittedThrottle == QueueThrottle::LOW);
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS residency wait exit\n");
     return true;

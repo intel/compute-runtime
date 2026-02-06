@@ -514,6 +514,7 @@ OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *p
     osContext->incRefInternal();
 
     osContext->setPrimaryContext(primaryContext);
+    osContext->adjustSettings(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper());
 
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 

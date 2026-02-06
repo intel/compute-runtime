@@ -224,6 +224,24 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         }
     }
 
+    if (this->directSubmission.get()) {
+
+        batchBuffer.allocationsForResidency = &allocationsForResidency;
+
+        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        if (ret == false) {
+            return SubmissionStatus::failed;
+        }
+        return SubmissionStatus::success;
+    }
+    if (this->blitterDirectSubmission.get()) {
+        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        if (ret == false) {
+            return SubmissionStatus::failed;
+        }
+        return SubmissionStatus::success;
+    }
+
     submitBatchBufferTbx(
         batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer,
         this->getMemoryBank(batchBuffer.commandBufferAllocation),
@@ -247,7 +265,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBufferTbx(uint64_t batchB
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(bool skipTaskCountCheck) {
-    if (hardwareContextController) {
+    if (hardwareContextController && this->pollForCompletionEnabled) {
         hardwareContextController->pollForCompletion();
     }
 }

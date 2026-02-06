@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -622,7 +622,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     EXPECT_TRUE(mockHardwareContext->submitCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 
-    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
+    EXPECT_TRUE(*tbxCsr.writeMemoryWithAubManagerCalled);
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
@@ -671,7 +671,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFl
 
     tbxCsr.flush(batchBuffer, allocationsForResidency);
 
-    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
+    EXPECT_TRUE(*tbxCsr.writeMemoryWithAubManagerCalled);
     EXPECT_EQ(1u, batchBuffer.commandBufferAllocation->getResidencyTaskCount(tbxCsr.getOsContext().getContextId()));
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -704,7 +704,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     ResidencyContainer allocationsForResidency = {&allocation};
     tbxCsr.processResidency(allocationsForResidency, 0u);
 
-    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
+    EXPECT_TRUE(*tbxCsr.writeMemoryWithAubManagerCalled);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenDownloadAllocationIsCalledThenItShouldCallTheExpectedHwContextFunctions) {

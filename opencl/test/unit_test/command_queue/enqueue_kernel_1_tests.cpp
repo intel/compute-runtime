@@ -50,13 +50,16 @@ template <template <typename> class CsrType>
 class EnqueueKernelTestT
     : public EnqueueKernelTest {
   public:
-    void SetUp() override {}
+    void SetUp() override {
+        debugManager.flags.EnableDirectSubmission.set(0);
+    }
     void TearDown() override {}
 
     template <typename FamilyType>
     void setUpT() {
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<CsrType<FamilyType>>();
+        debugManager.flags.EnableDirectSubmission.set(0);
         EnqueueKernelTest::SetUp();
     }
 
@@ -64,6 +67,7 @@ class EnqueueKernelTestT
     void tearDownT() {
         EnqueueKernelTest::TearDown();
     }
+    DebugManagerStateRestore stateRestore;
 };
 
 typedef EnqueueKernelTestT<MockCsrHw2> EnqueueKernelTestWithMockCsrHw2;
@@ -918,6 +922,8 @@ HWTEST_F(EnqueueKernelTest, givenGpuHangAndBlockingCallAndEnqueueWithGlobalWorkS
 }
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueKernelIsCalledThenKernelIsRecorded) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableDirectSubmission.set(0);
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;

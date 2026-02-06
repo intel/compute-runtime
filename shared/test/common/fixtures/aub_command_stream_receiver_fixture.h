@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
+#include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
@@ -44,6 +45,8 @@ struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixt
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
         executionEnvironment->initializeMemoryManager();
+        auto memoryOperationsHandler = new NEO::MockAubMemoryOperationsHandler(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager());
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(memoryOperationsHandler);
 
         auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex, deviceBitfield);
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),

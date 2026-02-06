@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     size_t size = 0x1000;
     EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
-    EXPECT_TRUE(drmDirectSubmission.handleResidency());
+    EXPECT_TRUE(drmDirectSubmission.handleResidency(nullptr));
 
     EXPECT_NE(0ull, drmDirectSubmission.switchRingBuffers(nullptr));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -109,6 +110,19 @@ CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulate
       releaseHelper(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper()) {
     this->useNewResourceImplicitFlush = false;
     this->useGpuIdleImplicitFlush = false;
+    const auto &capabilityTable = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable;
+
+    bool anyDirectSubmissionEngineSupported = false;
+    for (auto &engine : capabilityTable.directSubmissionEngines.data) {
+        if (engine.engineSupported) {
+            anyDirectSubmissionEngineSupported = true;
+            break;
+        }
+    }
+    this->pollForCompletionEnabled = !((debugManager.flags.EnableDirectSubmission.get() > 0 ||
+                                        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().isDirectSubmissionSupported()) &&
+                                       debugManager.flags.EnableDirectSubmissionInSimulationMode.get() > 0 &&
+                                       anyDirectSubmissionEngineSupported);
 }
 template <typename GfxFamily>
 CommandStreamReceiverSimulatedCommonHw<GfxFamily>::~CommandStreamReceiverSimulatedCommonHw() {

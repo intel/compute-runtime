@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     if (!allocationsForResidency) {
-        this->handleResidency();
+        this->handleResidency(nullptr);
     } else {
         this->lastUllsLightExecTimestamp = std::chrono::steady_clock::now();
         this->boHandleForExec = bb->peekHandle();
@@ -210,7 +210,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency(const ResidencyContainer *allocationsForResidency) {
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
     osContextLinux->waitForPagingFence();
     return true;

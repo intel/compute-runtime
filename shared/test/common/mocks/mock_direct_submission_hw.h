@@ -140,7 +140,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         return submitReturn;
     }
 
-    bool handleResidency() override {
+    bool handleResidency(const ResidencyContainer *allocationsForResidency) override {
         handleResidencyCount++;
         return handleResidencyReturn;
     }

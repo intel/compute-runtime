@@ -409,8 +409,11 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     csr.expectedGa = workPartitionAllocation;
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(2u, csr.activePartitionsConfig);
+    if (!csr.isDirectSubmissionEnabled()) {
+        EXPECT_EQ(2u, csr.activePartitionsConfig);
+    } else {
+        EXPECT_EQ(1u, csr.activePartitionsConfig);
+    }
     ASSERT_NE(nullptr, workPartitionAllocation);
     EXPECT_TRUE(csr.expectedGAWasMadeResident);
 

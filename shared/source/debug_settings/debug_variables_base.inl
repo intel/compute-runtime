@@ -483,6 +483,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredWorkgroupCountPerSubslice, -1, 
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionInSimulationMode, 0, "0: disabled. 1: enable. Enables direct submission for any of simulation modes")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")

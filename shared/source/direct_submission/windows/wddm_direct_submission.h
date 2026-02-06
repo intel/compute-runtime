@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) override;
 
-    bool handleResidency() override;
+    bool handleResidency(const ResidencyContainer *allocationsForResidency) override;
     void handleCompletionFence(uint64_t completionValue, MonitoredFence &fence);
     void ensureRingCompletion() override;
     void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override;

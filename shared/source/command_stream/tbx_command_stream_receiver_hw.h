@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void pollForCompletion(bool skipTaskCountCheck) override;
     void pollForAubCompletion() override {
+        if (!this->pollForCompletionEnabled) {
+            return;
+        }
         if (getType() == CommandStreamReceiverType::tbxWithAub) {
             pollForCompletion(true);
         }

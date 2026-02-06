@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,12 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     void pollForCompletion(bool skipTaskCountCheck) override;
     void pollForCompletionImpl() override;
-    void pollForAubCompletion() override { pollForCompletion(true); };
+    void pollForAubCompletion() override {
+        if (!this->pollForCompletionEnabled) {
+            return;
+        }
+        pollForCompletion(true);
+    };
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     uint32_t getDumpHandle();

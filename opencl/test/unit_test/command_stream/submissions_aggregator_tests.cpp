@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -554,6 +555,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
 
     template <typename FamilyType>
     void setUpT() {
+        debugManager.flags.EnableDirectSubmission.set(0);
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MockCsrHw2<FamilyType>>();
 
@@ -571,6 +573,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
 
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore stateRestore;
 };
 
 HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecordedThenAssignFlushStampObjFromCmdQueue) {

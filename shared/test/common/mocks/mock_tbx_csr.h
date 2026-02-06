@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     using TbxCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager;
+    using CommandStreamReceiver::latestFlushedTaskCount;
+
     MockTbxCsr(ExecutionEnvironment &executionEnvironment,
                uint32_t rootDeviceIndex,
                const DeviceBitfield deviceBitfield)
@@ -29,6 +31,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
+        writeMemoryWithAubManagerCalled = std::make_unique<bool>(false);
     }
     MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : MockTbxCsr<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
@@ -42,9 +45,9 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         initializeEngineCalled = true;
     }
 
-    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const override {
         CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
-        writeMemoryWithAubManagerCalled = true;
+        *writeMemoryWithAubManagerCalled = true;
     }
 
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {
@@ -87,7 +90,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
 
     size_t writeMemoryChunkCallCount = 0u;
     bool initializeEngineCalled = false;
-    bool writeMemoryWithAubManagerCalled = false;
+    std::unique_ptr<bool> writeMemoryWithAubManagerCalled;
     bool writeMemoryCalled = false;
     bool writeMemoryGfxAllocCalled = false;
     bool submitBatchBufferCalled = false;

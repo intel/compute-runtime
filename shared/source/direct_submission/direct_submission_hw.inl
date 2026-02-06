@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
@@ -175,7 +176,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
         }
     }
 
-    handleResidency();
+    handleResidency(nullptr);
     ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
     ringCommandStream.replaceGraphicsAllocation(this->ringBuffers[0].ringBuffer);
 
@@ -640,8 +641,12 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool ne
         return this->ringStart;
     } else {
         if (needWait) {
-            handleResidency();
+            handleResidency(nullptr);
         }
+        if (!this->csr.isHardwareMode()) {
+            handleResidency(allocationsForResidency);
+        }
+
         this->unblockGpu();
         return true;
     }

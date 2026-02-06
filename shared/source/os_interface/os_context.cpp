@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineD
 
 void OsContext::adjustSettings(const ProductHelper &productHelper) {
     initializeInternalEngineImmediately = productHelper.initializeInternalEngineImmediately();
+    directSubmissionSupported = productHelper.isDirectSubmissionSupported();
 }
 
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
@@ -71,7 +72,7 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
     bool enableDirectSubmission = this->isDirectSubmissionSupported() &&
                                   this->getUmdPowerHintValue() < NEO::OsContext::getUmdPowerHintMax();
 
-    if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
+    if (debugManager.flags.SetCommandStreamReceiver.get() > 0 && !debugManager.flags.EnableDirectSubmissionInSimulationMode.get()) {
         enableDirectSubmission = false;
     }
 

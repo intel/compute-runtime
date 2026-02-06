@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -355,7 +355,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     EXPECT_FALSE(mockHardwareContext->writeAndSubmitCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 
-    EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
+    EXPECT_TRUE(*aubCsr.writeMemoryWithAubManagerCalled);
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
@@ -391,7 +391,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
     ResidencyContainer allocationsForResidency = {&allocation};
     aubCsr.processResidency(allocationsForResidency, 0u);
 
-    EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
+    EXPECT_TRUE(*aubCsr.writeMemoryWithAubManagerCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {

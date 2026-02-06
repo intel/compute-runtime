@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -296,7 +296,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandleResidencyThenExpectWddmWai
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     auto expectedMakeResidentCalled = wddm->makeResidentResult.called + 1;
 
-    wddmDirectSubmission.handleResidency();
+    wddmDirectSubmission.handleResidency(nullptr);
 
     EXPECT_EQ(expectedMakeResidentCalled, wddm->waitOnPagingFenceFromCpuResult.called);
 }
@@ -718,7 +718,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencyT
     EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 
-    bool ret = wddmDirectSubmission.handleResidency();
+    bool ret = wddmDirectSubmission.handleResidency(nullptr);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);

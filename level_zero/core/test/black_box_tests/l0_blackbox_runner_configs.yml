@@ -174,7 +174,11 @@ zello_multidev:
 
 zello_printf:
   dg2:
+  - --verbose
+  - env:EnableDirectSubmissionForSimulationMode=1 --verbose
   pvc.b0:
+  - --verbose
+  - env:EnableDirectSubmissionForSimulationMode=1 --verbose
 
 zello_p2p_copy:
   dg2:

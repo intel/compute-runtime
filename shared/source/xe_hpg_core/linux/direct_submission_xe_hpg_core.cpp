@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.inl"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.inl"
 #include "shared/source/direct_submission/linux/drm_direct_submission.inl"
+#include "shared/source/direct_submission/os_agnostic_direct_submission.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
@@ -28,4 +29,7 @@ template class DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>;
 
 template class DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>;
 template class DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>;
+
+template class OsAgnosticDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>;
+template class OsAgnosticDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>;
 } // namespace NEO

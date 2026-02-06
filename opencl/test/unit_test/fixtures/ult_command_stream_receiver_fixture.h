@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -226,6 +227,7 @@ struct UltCommandStreamReceiverTestWithCsrT
         environment.setCsrType<CsrType<FamilyType>>();
         beforeDefStateFlag = debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get();
         debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+        debugManager.flags.EnableDirectSubmission.set(0);
 
         UltCommandStreamReceiverTest::SetUp();
     }
@@ -238,5 +240,6 @@ struct UltCommandStreamReceiverTestWithCsrT
 
   private:
     int32_t beforeDefStateFlag;
+    DebugManagerStateRestore stateRestore;
 };
 } // namespace NEO
