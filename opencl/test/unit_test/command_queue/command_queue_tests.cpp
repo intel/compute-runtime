@@ -631,6 +631,7 @@ struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
         CommandQueueMemoryDevice::tearDown();
     }
     std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore restorer;
 };
 
 TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsReturned) {
@@ -715,6 +716,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToC
 HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -755,6 +757,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 }
 
 HWTEST_P(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredForReuse) {
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -778,6 +781,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredFor
 }
 
 HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapThenNewAllocationIsAcquiredWithoutStoring) {
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -848,6 +852,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhen
 HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -885,7 +890,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCal
     EXPECT_EQ(expectedAllocationType, indirectHeapAllocation->getAllocationType());
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
+HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -894,11 +899,11 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledT
     EXPECT_NE(nullptr, indirectHeap);
     EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
 
-    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
-    delete indirectHeap;
+    auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.indirectHeap[this->GetParam()] = indirectHeap;
 }
 
-TEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryIsCalledThenHeapIsCreatedWithProperSize) {
+HWTEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryIsCalledThenHeapIsCreatedWithProperSize) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDefaultHeapSize.set(64 * MemoryConstants::kiloByte);
 
@@ -911,11 +916,11 @@ TEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryI
     EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
     EXPECT_EQ(indirectHeap->getAvailableSpace(), 64 * MemoryConstants::megaByte);
 
-    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
-    delete indirectHeap;
+    auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.indirectHeap[IndirectHeap::Type::indirectObject] = indirectHeap;
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
+HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -926,7 +931,9 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledW
     EXPECT_EQ(&heap, indirectHeap);
     EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
 
-    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
+    auto allocation = indirectHeap->getGraphicsAllocation();
+    auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.indirectHeap[this->GetParam()] = new IndirectHeap(allocation);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -3398,6 +3405,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
 
         clReleaseCommandQueue(commandQueueTestValue.commandQueueObj);
     }
+    platformsImpl->clear();
 }
 
 TEST_F(MultiTileFixture, givenDefaultContextWithRootDeviceWhenQueueIsCreatedThenQueueIsMultiEngine) {
@@ -3451,6 +3459,7 @@ TEST_F(MultiTileFixture, givenNotDefaultContextWithRootDeviceAndTileIdMaskWhenQu
 }
 
 HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndBcsEnqueueNotPreferredThenOverrideIfConditionsMet) {
+    DebugManagerStateRestore restorer;
     auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
     auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
 
@@ -3522,6 +3531,7 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenDebugFlagSetThenBcsAlway
 }
 
 HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenWddmOnLinuxThenBcsAlwaysPreferred) {
+    DebugManagerStateRestore restorer;
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};

@@ -583,6 +583,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
     commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->setDevice(this);
 
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
         if (!commandStreamReceiver->initializeResources(false, this->getPreemptionMode())) {
@@ -661,6 +662,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     osContext->incRefInternal();
     commandStreamReceiver->setupContext(*osContext);
     commandStreamReceiver->setPrimaryCsr(primaryCsr);
+    commandStreamReceiver->setDevice(getRootDevice());
 
     DEBUG_BREAK_IF(osContext->getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 

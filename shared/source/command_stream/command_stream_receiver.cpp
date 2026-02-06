@@ -114,11 +114,9 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 
     for (int i = 0; i < IndirectHeap::Type::numTypes; ++i) {
         if (indirectHeap[i] != nullptr) {
-            auto allocation = indirectHeap[i]->getGraphicsAllocation();
-            if (allocation != nullptr) {
-                internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-            }
+            releaseIndirectHeap(static_cast<IndirectHeap::Type>(i));
             delete indirectHeap[i];
+            indirectHeap[i] = nullptr;
         }
     }
     cleanupResources();
@@ -805,7 +803,9 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
     }
 
     if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
-        internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        releaseHeapAllocation(heapMemory);
+        heap->replaceBuffer(nullptr, 0);
+        heap->replaceGraphicsAllocation(nullptr);
         heapMemory = nullptr;
         this->heapStorageRequiresRecyclingTag = true;
     }
@@ -820,10 +820,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
 void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;
-    auto finalHeapSize = HeapSize::getHeapSize(HeapSize::getDefaultHeapSize(heapType));
-    if (IndirectHeap::Type::surfaceState == heapType) {
-        finalHeapSize = defaultSshSize;
-    }
+    auto defaultHeapSize = HeapSize::getHeapSize(HeapSize::getDefaultHeapSize(heapType));
     bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType ? canUse4GbHeaps() : false;
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
@@ -832,23 +829,40 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     minRequiredSize += reservedSize;
 
-    finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
+    size_t allocationSize;
+    if (IndirectHeap::Type::surfaceState == heapType) {
+        DEBUG_BREAK_IF(minRequiredSize > defaultSshSize - MemoryConstants::pageSize);
+        allocationSize = defaultSshSize;
+    } else {
+        allocationSize = alignUp(std::max(defaultHeapSize, minRequiredSize), MemoryConstants::pageSize);
+    }
+
     auto allocationType = AllocationType::linearStream;
     if (requireInternalHeap) {
         allocationType = AllocationType::internalHeap;
     }
-    auto heapMemory = internalAllocationStorage->obtainReusableAllocation(finalHeapSize, allocationType).release();
 
+    GraphicsAllocation *heapMemory = nullptr;
+    if (allocationType == AllocationType::linearStream && device) {
+        auto enablePoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
+        if ((enablePoolAllocator == 1) ||
+            (enablePoolAllocator == -1 && device->getProductHelper().is2MBLocalMemAlignmentEnabled())) {
+            heapMemory = device->getLinearStreamPoolAllocator().allocate(allocationSize);
+        }
+    }
     if (!heapMemory) {
-        heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, true, finalHeapSize, allocationType,
+        heapMemory = internalAllocationStorage->obtainReusableAllocation(allocationSize, allocationType).release();
+    }
+    if (!heapMemory) {
+        heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, true, allocationSize, allocationType,
                                                                                isMultiOsContextCapable(), false, osContext->getDeviceBitfield()});
-    } else {
-        finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }
 
+    size_t finalHeapSize;
     if (IndirectHeap::Type::surfaceState == heapType) {
-        DEBUG_BREAK_IF(minRequiredSize > defaultSshSize - MemoryConstants::pageSize);
         finalHeapSize = defaultSshSize - MemoryConstants::pageSize;
+    } else {
+        finalHeapSize = heapMemory->getUnderlyingBufferSize();
     }
 
     if (indirectHeap) {
@@ -868,11 +882,28 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
     if (heap) {
         auto heapMemory = heap->getGraphicsAllocation();
         if (heapMemory != nullptr) {
-            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+            releaseHeapAllocation(heapMemory);
+            heap->replaceBuffer(nullptr, 0);
+            heap->replaceGraphicsAllocation(nullptr);
         }
-        heap->replaceBuffer(nullptr, 0);
-        heap->replaceGraphicsAllocation(nullptr);
     }
+}
+
+void CommandStreamReceiver::releaseHeapAllocation(GraphicsAllocation *heapMemory) {
+    if (!heapMemory->isView()) {
+        internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        return;
+    }
+
+    if (device) {
+        auto *parent = heapMemory->getParentAllocation();
+        if (parent && device->getLinearStreamPoolAllocator().isPoolBuffer(parent)) {
+            device->getLinearStreamPoolAllocator().free(heapMemory);
+            return;
+        }
+    }
+
+    delete heapMemory;
 }
 
 void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {

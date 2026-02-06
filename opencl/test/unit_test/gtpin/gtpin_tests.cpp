@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,7 +224,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     gtpin::ocl::gtpin_events_t gtpinCallbacks;
     MockMemoryManagerWithFailures *memoryManager = nullptr;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
-    DebugManagerStateRestore restore;
+    DebugManagerStateRestore restorer;
     inline static const char *sampleKernel = "example_kernel(){}";
     inline static size_t sampleKernelSize = std::strlen(sampleKernel) + 1;
     inline static const char *sampleKernelSrcs[1] = {sampleKernel};
@@ -442,7 +442,6 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
 
 TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFails) {
     [[maybe_unused]] auto cmdQ = pContext->getSpecialQueue(0);
-    DebugManagerStateRestore restorer;
     for (auto &allocationInUSMShared : ::testing::Bool()) {
         debugManager.flags.GTPinAllocateBufferInSharedMemory.set(allocationInUSMShared);
         InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
@@ -2069,6 +2068,7 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
     void setUp() {
         debugManager.flags.EnableLocalMemory.set(true);
         debugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
+        debugManager.flags.CreateMultipleRootDevices.set(1);
         GTPinFixture::setUpImpl();
     }
     void tearDown() {
@@ -2158,7 +2158,6 @@ TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuffe
 }
 
 TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedInSingleStorageThenAllocateBufferWithoutCpuAllocation) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {

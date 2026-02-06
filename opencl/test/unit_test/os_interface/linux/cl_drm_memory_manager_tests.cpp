@@ -652,4 +652,5 @@ TEST(MultiDeviceDrmMemoryManagerTest, givenMultipleRootDeviceWhenMemoryManagerGe
         EXPECT_EQ(i, drmMemoryManager.getRootDeviceIndex(drmFromRootDevice));
     }
     EXPECT_EQ(CommonConstants::unspecifiedDeviceIndex, drmMemoryManager.getRootDeviceIndex(nullptr));
+    platformsImpl->clear();
 }

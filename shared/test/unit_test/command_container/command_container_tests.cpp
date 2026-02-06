@@ -1685,9 +1685,6 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto &productHelper = pDevice->getProductHelper();
-    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
-
     cmdContainer->fillReusableAllocationLists();
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
     auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
@@ -1696,6 +1693,10 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     cmdContainer->getIndirectHeap(HeapType::surfaceState)->getSpace(cmdContainer->getIndirectHeap(HeapType::surfaceState)->getMaxAvailableSpace());
     auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);
 
+    auto &productHelper = pDevice->getProductHelper();
+    auto enableLinearStreamPoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
+    bool usePoolAllocator = (enableLinearStreamPoolAllocator == 1) ||
+                            (enableLinearStreamPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
     if (usePoolAllocator) {
         EXPECT_TRUE(heap->getGraphicsAllocation()->isView());
         EXPECT_NE(heap->getGraphicsAllocation(), reusableAlloc);
@@ -2008,9 +2009,6 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
 
     auto internalStorage = pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
 
-    auto &productHelper = pDevice->getProductHelper();
-    bool usePoolAllocator = productHelper.is2MBLocalMemAlignmentEnabled();
-
     auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
                                                                          iohOldAllocation->getAllocationType())
                                    .release();
@@ -2034,6 +2032,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
     cmdContainer.reset();
     EXPECT_EQ(0u, deallocationList.size());
 
+    auto &productHelper = pDevice->getProductHelper();
+    auto enableLinearStreamPoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
+    bool usePoolAllocator = (enableLinearStreamPoolAllocator == 1) ||
+                            (enableLinearStreamPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
     if (usePoolAllocator) {
         auto sshReusedAllocation = internalStorage->obtainReusableAllocation(sshOldBufferSize, sshOldAllocType).release();
         EXPECT_EQ(nullptr, sshReusedAllocation);

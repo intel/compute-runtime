@@ -736,8 +736,8 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
     csr.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
     EXPECT_NE(nullptr, dsh);
     ASSERT_NE(nullptr, dsh->getGraphicsAllocation());
-    csr.getMemoryManager()->freeGraphicsMemory(dsh->getGraphicsAllocation());
-    delete dsh;
+
+    csr.indirectHeap[IndirectHeap::Type::dynamicState] = dsh;
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenSurfaceStateHeapTypeWhenAllocateHeapMemoryIsCalledThenSSHHasInitialSpaceReserevedForBindlessOffsets) {
@@ -750,8 +750,7 @@ HWTEST_F(CommandStreamReceiverTest, givenSurfaceStateHeapTypeWhenAllocateHeapMem
     auto sshReservedSize = UnitTestHelper<FamilyType>::getDefaultSshUsage();
     EXPECT_EQ(sshReservedSize, ssh->getUsed());
 
-    csr.getMemoryManager()->freeGraphicsMemory(ssh->getGraphicsAllocation());
-    delete ssh;
+    csr.indirectHeap[IndirectHeap::Type::surfaceState] = ssh;
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -202,6 +202,7 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
 
 TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAllocationsAreStoredInInternalStorageForReuse) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr, false);

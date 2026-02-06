@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class InternalAllocationStorage {
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse() { return allocationLists[REUSABLE_ALLOCATION]; }
     AllocationsList &getDeferredAllocations() { return allocationLists[DEFERRED_DEALLOCATION]; }
+    CommandStreamReceiver &getCommandStreamReceiver() { return commandStreamReceiver; }
     DeviceBitfield getDeviceBitfield() const;
 
   protected:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -76,6 +77,7 @@ struct InternalsEventTest
     void SetUp() override {
         ClDeviceFixture::setUp();
         mockContext = new MockContext(pClDevice);
+        debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     }
 
     void TearDown() override {
@@ -84,6 +86,7 @@ struct InternalsEventTest
     }
 
     MockContext *mockContext = nullptr;
+    DebugManagerStateRestore restorer;
 };
 
 struct InternalsEventTestWithMockCsr

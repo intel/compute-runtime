@@ -110,6 +110,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
     osContext->setContextGroupCount(useContextGroup ? gfxCoreHelper.getContextGroupContextsCount() : 0);
     osContext->setIsPrimaryEngine(isPrimaryEngine);
 
+    rootCommandStreamReceiver->setDevice(this);
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeResources(false, preemptionMode);
     rootCommandStreamReceiver->initializeTagAllocation();

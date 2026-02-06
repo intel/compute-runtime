@@ -78,8 +78,11 @@ HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenGettingFenc
 using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
 
 TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphicsAllocationsThenTheyHaveCorrectRootDeviceIndex) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     auto commandStreamReceiver = &device1->getGpgpuCommandStreamReceiver();
 
+    auto originalLocalMemorySupported = mockMemoryManager->localMemorySupported[1];
     mockMemoryManager->localMemorySupported[1] = false;
 
     ASSERT_NE(nullptr, commandStreamReceiver);
@@ -135,4 +138,6 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
     EXPECT_EQ(1u, surface.getAllocation()->getHostPtrTaskCountAssignment());
     surface.getAllocation()->decrementHostPtrTaskCountAssignment();
+
+    mockMemoryManager->localMemorySupported[1] = originalLocalMemorySupported;
 }

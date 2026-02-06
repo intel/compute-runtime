@@ -280,6 +280,7 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
 struct CrossDeviceDependenciesTests : public ::testing::Test {
 
     void SetUp() override {
+        debugRestorer.reset(new DebugManagerStateRestore());
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
@@ -296,8 +297,10 @@ struct CrossDeviceDependenciesTests : public ::testing::Test {
     }
 
     void TearDown() override {
+        debugRestorer.reset();
     }
 
+    std::unique_ptr<DebugManagerStateRestore> debugRestorer;
     std::unique_ptr<UltClDeviceFactory> deviceFactory;
     std::unique_ptr<MockContext> context;
 

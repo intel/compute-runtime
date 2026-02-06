@@ -289,7 +289,10 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
     virtual uint32_t getPreferredTagPoolSize() const;
     virtual void fillReusableAllocationsList();
+    void releaseHeapAllocation(GraphicsAllocation *heapMemory);
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
+    void setDevice(Device *device) { this->device = device; }
+    Device *getDevice() const { return this->device; }
     OsContext &getOsContext() const { return *osContext; }
     uint8_t getUmdPowerHintValue() const;
     bool initializeResources(bool allocateInterrupt, const PreemptionMode preemptionMode);
@@ -678,6 +681,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
+    Device *device = nullptr;
     CommandStreamReceiver *primaryCsr = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
 
