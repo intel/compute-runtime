@@ -38,6 +38,15 @@ struct PipeControlArgs {
     bool commandCacheInvalidateEnable = false;
     bool isL1InvalidateRequired = false;
     bool isL1FlushRequired = false;
+
+    bool isDrainAllQueuesRequired() const {
+        return instructionCacheInvalidateEnable ||
+               stateCacheInvalidationEnable ||
+               textureCacheInvalidationEnable ||
+               constantCacheInvalidationEnable ||
+               hdcPipelineFlush ||
+               unTypedDataPortCacheFlush;
+    }
 };
 
 } // namespace NEO

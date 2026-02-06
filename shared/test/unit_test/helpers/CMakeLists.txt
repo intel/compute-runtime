@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -86,6 +86,12 @@ if(TESTS_XE2_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_xe2_and_later.cpp
+  )
+endif()
+
+if(TESTS_XE3P_AND_LATER)
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_xe3p_and_later.cpp
   )
 endif()
 
