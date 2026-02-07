@@ -161,6 +161,7 @@ class IoctlHelper {
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
     virtual int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) = 0;
+    virtual int getVmFaults(uint32_t vmId, std::vector<ResetStatsFault> &faults) { return -1; }
     virtual bool isEuStallSupported() = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
