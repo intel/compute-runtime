@@ -66,10 +66,10 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, whenApplyAdditionalCompressionS
     gmmResourceParams->Flags.Info.NotCompressed = 0;
 
     auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, true, true);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, true);
     EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false, true);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false);
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
 }
 

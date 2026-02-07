@@ -12,12 +12,12 @@
 namespace NEO {
 
 template <>
-void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed, bool isBuffer) const {
+void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
     gmmResourceParams->Flags.Info.NotCompressed = isNotCompressed;
     if (!isNotCompressed) {
         gmmResourceParams->Flags.Info.Cacheable = 0;
-        gmm.applyExtraAuxInitFlag(isBuffer);
+        gmm.applyExtraAuxInitFlag();
     }
 
     PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,

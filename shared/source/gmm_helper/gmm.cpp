@@ -205,7 +205,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
                  "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
                  resourceParams->Flags.Gpu.CCS, resourceParams->Flags.Gpu.UnifiedAuxSurface, resourceParams->Flags.Info.RenderCompressed);
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled, true);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }
 
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
@@ -257,7 +257,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
                  "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
                  resourceParams->Flags.Gpu.CCS, resourceParams->Flags.Gpu.UnifiedAuxSurface, resourceParams->Flags.Info.RenderCompressed);
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled, false);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }
 
 void Gmm::queryImageParams(ImageInfo &imgInfo) {

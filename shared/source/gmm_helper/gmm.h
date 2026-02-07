@@ -53,7 +53,7 @@ class Gmm {
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
     void applyAuxFlagsForBuffer(bool preferCompression);
-    void applyExtraAuxInitFlag(bool isBuffer);
+    void applyExtraAuxInitFlag();
     void applyMemoryFlags(const StorageInfo &storageInfo);
     void applyAppResource(const StorageInfo &storageInfo);
 

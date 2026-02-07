@@ -13,4 +13,4 @@ using namespace NEO;
 void Gmm::applyExtraMemoryFlags(const StorageInfo &storageInfo) {}
 bool Gmm::extraMemoryFlagsRequired() { return false; }
 void Gmm::applyAppResource(const StorageInfo &storageInfo) {}
-void Gmm::applyExtraAuxInitFlag(bool isBuffer) {}
+void Gmm::applyExtraAuxInitFlag() {}
