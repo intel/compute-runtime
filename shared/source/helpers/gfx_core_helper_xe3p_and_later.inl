@@ -312,10 +312,6 @@ inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(voi
         pipeControl.setUnTypedDataPortCacheFlush(false);
         pipeControl.setCompressionControlSurfaceCcsFlush(false);
     }
-
-    if (args.isDrainAllQueuesRequired()) {
-        pipeControl.setQueueDrainMode(false);
-    }
     if (debugManager.flags.PcQueueDrainMode.get() != -1) {
         pipeControl.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
     }
