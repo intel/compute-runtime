@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -841,6 +841,24 @@ if(NOT MSVC)
     else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wimplicit-fallthrough=4")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type") # Added for gtest
+    endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+      # Disable specific warnings due to GCC bug for versions >= 12
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111073
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-stringop-overflow")
+    endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+      # Disable specific warnings due to GCC bug for version 12
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-restrict")
+      endif()
+      # Disable specific warnings due to GCC bug for versions >= 12
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105616
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
+      endif()
     endif()
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Werror=vla")
