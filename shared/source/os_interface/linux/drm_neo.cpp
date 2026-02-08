@@ -1282,12 +1282,13 @@ bool Drm::queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData
 }
 
 void Drm::queryPageFaultSupport() {
-    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    if (!productHelper.isPageFaultSupported()) {
-        return;
+    if (!pageFaultSupported) {
+        const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        if (!productHelper.isPageFaultSupported()) {
+            return;
+        }
+        pageFaultSupported = this->ioctlHelper->isPageFaultSupported();
     }
-
-    pageFaultSupported = this->ioctlHelper->isPageFaultSupported();
 }
 
 bool Drm::hasPageFaultSupport() const {

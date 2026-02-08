@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ class DrmMock : public Drm {
     using Drm::queryAndSetVmBindPatIndexProgrammingSupport;
     using Drm::queryDeviceIdAndRevision;
     using Drm::requirePerContextVM;
+    using Drm::setPageFaultSupported;
     using Drm::setPairAvailable;
     using Drm::setSharedSystemAllocEnable;
     using Drm::setupIoctlHelper;

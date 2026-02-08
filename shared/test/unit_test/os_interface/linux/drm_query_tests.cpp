@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,13 +27,14 @@ TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
     EXPECT_FALSE(drm.isDebugAttachAvailable());
 }
 
-TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalse) {
+TEST(DrmQueryTest, WhenSetPageFaultSupportedThenCallingQueryPageFaultSupportThenReturnsTrue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
+    drm.setPageFaultSupported(true);
     drm.queryPageFaultSupport();
 
-    EXPECT_FALSE(drm.hasPageFaultSupport());
+    EXPECT_TRUE(drm.hasPageFaultSupport());
 }
 
 TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledThenReturnFalse) {
