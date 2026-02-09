@@ -1243,6 +1243,145 @@ bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
     return validRet;
 }
 
+enum TestWrappedMultipleEnginesForkPolicy {
+    pairEnginesFirst,
+    sequence,
+    max
+};
+
+bool testWrappedMultipleEngines(GraphApi &graphApi,
+                                ze_context_handle_t &context,
+                                ze_device_handle_t &device,
+                                TestKernelsContainer &testKernels,
+                                bool aubMode,
+                                const GraphDumpSettings &dumpSettings,
+                                uint32_t enginesCount,
+                                uint32_t pairCount,
+                                TestWrappedMultipleEnginesForkPolicy forkPolicy) {
+    using ElemType = uint32_t;
+    bool validRet = true;
+
+    constexpr size_t allocSize = 4096;
+    constexpr size_t elemCount = allocSize / sizeof(ElemType);
+
+    const uint32_t kernelsPerPair = 4;
+
+    ElemType initialValue = 1;
+    ElemType addValue = 5;
+
+    ElemType expectedValue = initialValue + (kernelsPerPair * addValue) * pairCount;
+
+    ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
+
+    uint32_t sequenceCount = kernelsPerPair * pairCount;
+    uint32_t queueCount = enginesCount + pairCount;
+
+    std::vector<ze_command_list_handle_t> cmdListCreated(queueCount);
+    std::vector<ze_command_list_handle_t> cmdListSequence(sequenceCount);
+
+    for (uint32_t i = 0; i < queueCount; i++) {
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListCreated[i]);
+    }
+
+    std::string forkPolicyString;
+    if (forkPolicy == TestWrappedMultipleEnginesForkPolicy::pairEnginesFirst) {
+        forkPolicyString = "_pairEngines";
+        // this sequence goes engine 0 -> fork engine 0 + wrapped -> fork engine 1 -> fork engine 1 + wrapped
+        // join from engine pair MAX + wrappped -> join engine pair MAX -> join engine pair MAX-1 + wrapped -> join engine pair MAX-1
+
+        for (uint32_t i = 0; i < pairCount; i++) {
+            cmdListSequence[2 * i] = cmdListCreated[i];
+            cmdListSequence[2 * i + 1] = cmdListCreated[i + enginesCount];
+
+            cmdListSequence[sequenceCount - 1 - 2 * i] = cmdListCreated[i];
+            cmdListSequence[sequenceCount - 2 - 2 * i] = cmdListCreated[i + enginesCount];
+        }
+    } else {
+        forkPolicyString = "_sequence";
+        // sequence engine 0 -> fork engine 1 -> ... -> fork engine 0 + wrapped -> fork engine 1 + wrapped
+        // join engine pair MAX + wrapped -> join engine MAX-1 + wrapped -> ... -> join engine pair MAX
+
+        for (uint32_t i = 0; i < pairCount; i++) {
+            cmdListSequence[i] = cmdListCreated[i];
+            cmdListSequence[i + pairCount] = cmdListCreated[i + enginesCount];
+
+            cmdListSequence[sequenceCount - 1 - i] = cmdListCreated[i];
+            cmdListSequence[sequenceCount - sequenceCount / kernelsPerPair - 1 - i] = cmdListCreated[i + enginesCount];
+        }
+    }
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = sequenceCount;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    std::vector<ze_event_handle_t> events(sequenceCount);
+
+    for (uint32_t i = 0; i < sequenceCount; i++) {
+        eventDesc.index = i;
+        SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &events[i]));
+    }
+
+    void *zeBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<ElemType *>(zeBuffer)[i] = initialValue;
+    }
+
+    uint32_t groupSizeX = 64;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddConstant, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 0, sizeof(zeBuffer), &zeBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 1, sizeof(addValue), &addValue));
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListSequence[0], virtualGraph, nullptr));
+
+    ze_event_handle_t signalEvent = nullptr, waitEvent = nullptr;
+    uint32_t numWaitEvents = 0;
+    for (uint32_t i = 0; i < sequenceCount; i++) {
+        signalEvent = events[i];
+        numWaitEvents = waitEvent != nullptr ? 1 : 0;
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListSequence[i], kernelAddConstant, &groupCount, signalEvent, numWaitEvents, &waitEvent));
+        waitEvent = signalEvent;
+    }
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListSequence[0], nullptr, nullptr));
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    // Dispatch and wait
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListSequence[0], physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListSequence[0], std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, zeBuffer, elemCount);
+    }
+
+    std::stringstream ss;
+    ss << __func__ << forkPolicyString;
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
+    for (uint32_t i = 0; i < queueCount; i++) {
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCreated[i]));
+    }
+    for (uint32_t i = 0; i < sequenceCount; i++) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(events[i]));
+    }
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
@@ -1254,6 +1393,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMultiLevelGraph = 7u;
     constexpr uint32_t bitNumberTestMultiJoinGraph = 8u;
     constexpr uint32_t bitNumberTestMultiExecForkedGraph = 9u;
+    constexpr uint32_t bitNumberTestWrappedMultipleEngines = 10u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
@@ -1421,6 +1561,38 @@ int main(int argc, char *argv[]) {
         casePass = testForkedGraphMultipleExecutionEventSync(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, executionCount);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+    }
+
+    if (testMask.test(bitNumberTestWrappedMultipleEngines)) {
+        uint32_t pairCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-p", "--pair_count", 3u);
+        auto forkPolicy = static_cast<TestWrappedMultipleEnginesForkPolicy>(
+            LevelZeroBlackBoxTests::getParamValue(argc, argv, "-f", "--fork_policy", TestWrappedMultipleEnginesForkPolicy::max));
+        uint32_t engineCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--engine_count", 60u);
+
+        auto testTitle = "Wrapped Multiple Engines";
+        auto getCaseName = [&testTitle](uint32_t engineCount, uint32_t pairCount, TestWrappedMultipleEnginesForkPolicy forkPolicy) -> std::string {
+            std::ostringstream caseName;
+            caseName << testTitle << std::endl;
+            caseName << "engine count: " << engineCount << " pair count: " << pairCount;
+            caseName << " forkPolicy: " << forkPolicy;
+            return caseName.str();
+        };
+
+        std::vector<TestWrappedMultipleEnginesForkPolicy> forkPolicyValues = {TestWrappedMultipleEnginesForkPolicy::pairEnginesFirst, TestWrappedMultipleEnginesForkPolicy::sequence};
+        size_t forkPolicyValuesSize = forkPolicyValues.size();
+
+        if (forkPolicy < TestWrappedMultipleEnginesForkPolicy::max) {
+            forkPolicyValues[0] = forkPolicy;
+            forkPolicyValuesSize = 1;
+        }
+
+        for (size_t i = 0; i < forkPolicyValuesSize; i++) {
+            auto currentForkPolicy = forkPolicyValues[i];
+            currentTest = getCaseName(engineCount, pairCount, currentForkPolicy);
+            casePass = testWrappedMultipleEngines(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
     }
 
     for (auto kernel : kernelsMap) {
