@@ -130,6 +130,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
         programActivePartitionConfig(commandStreamCSR);
     }
 
+    if (isPerQueuePrologueEnabled()) {
+        programEnginePrologue(commandStreamCSR);
+    }
+
     const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()), useSemaphore64bCmd);
     TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, useSemaphore64bCmd);
@@ -181,6 +185,10 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamHeaplessSi
 
     if (this->isProgramActivePartitionConfigRequired()) {
         size += this->getCmdSizeForActivePartitionConfig();
+    }
+
+    if (this->isPerQueuePrologueEnabled()) {
+        size += getCmdSizeForPrologue();
     }
 
     return size;
