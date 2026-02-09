@@ -12,20 +12,20 @@
 
 namespace NEO {
 uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) {
-    auto resourceInfo = pMapGpuVa->resourceInfoHandle;
-    auto gmmResource = resourceInfo->peekGmmResourceInfo();
-    if (gmmResource->IsResourceMappedCompressible() && !resourceInfo->isResourceDenyCompressionEnabled()) {
-        GMM_MAPGPUVIRTUALADDRESS gmmMapAddress = {pMapGpuVa->mapGpuVirtualAddressParams, 1, &gmmResource, pMapGpuVa->outVirtualAddress};
+    auto gmmResourceFlags = pMapGpuVa->resourceInfoHandle->getResourceFlags()->Info;
+    if ((gmmResourceFlags.MediaCompressed || gmmResourceFlags.RenderCompressed) && !pMapGpuVa->resourceInfoHandle->isResourceDenyCompressionEnabled()) {
+        auto gmmResourceInfo = pMapGpuVa->resourceInfoHandle->peekGmmResourceInfo();
+        GMM_MAPGPUVIRTUALADDRESS gmmMapAddress = {pMapGpuVa->mapGpuVirtualAddressParams, 1, &gmmResourceInfo, pMapGpuVa->outVirtualAddress};
         return clientContext->MapGpuVirtualAddress(&gmmMapAddress);
     } else {
         return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
     }
 }
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
-    auto resourceInfo = pFreeGpuVa->resourceInfoHandle;
-    auto gmmResource = resourceInfo->peekGmmResourceInfo();
-    if (gmmResource->IsResourceMappedCompressible() && !resourceInfo->isResourceDenyCompressionEnabled()) {
-        GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResource};
+    auto gmmResourceFlags = pFreeGpuVa->resourceInfoHandle->getResourceFlags()->Info;
+    if ((gmmResourceFlags.MediaCompressed || gmmResourceFlags.RenderCompressed) && !pFreeGpuVa->resourceInfoHandle->isResourceDenyCompressionEnabled()) {
+        auto gmmResourceInfo = pFreeGpuVa->resourceInfoHandle->peekGmmResourceInfo();
+        GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResourceInfo};
         return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
     } else {
         return 0;
