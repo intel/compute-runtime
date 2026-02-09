@@ -1507,6 +1507,77 @@ TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThrea
     EXPECT_EQ(0u, sessionMock->readStateSaveAreaHeaderCalled);
 }
 
+struct DebugSessionSr5ExceptionReasonTest : public ::testing::Test {
+    struct MockDebugSessionForTest : public MockDebugSession {
+        EuThread::ThreadId mockThreadId;
+        static const uint64_t mockMemHandle = 0x34792;
+
+        MockDebugSessionForTest(L0::Device *device) : MockDebugSession(zet_debug_config_t{.pid = 0x1234}, device),
+                                                      mockThreadId(0, 0, 0, 0, 1) {
+            allThreads[mockThreadId]->stopThread(mockMemHandle);
+            newlyStoppedThreads.push_back(mockThreadId);
+        }
+
+        uint32_t mockSr5Value = 0;
+        ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+            EXPECT_EQ(thread, mockThreadId);
+            EXPECT_EQ(start, 0u);
+            EXPECT_EQ(count, 1u);
+            switch (type) {
+            case ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU:
+                reinterpret_cast<uint32_t *>(pRegisterValues)[1] = 0;
+                return ZE_RESULT_SUCCESS;
+            case ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU:
+                reinterpret_cast<uint32_t *>(pRegisterValues)[0] = mockSr5Value;
+                return ZE_RESULT_SUCCESS;
+            default:
+                EXPECT_TRUE(false);
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+        }
+    };
+
+    NEO::MockDevice *neoDevice;
+    MockDeviceImp mockDevice;
+    MockDebugSessionForTest session;
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreads;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    DebugSessionSr5ExceptionReasonTest() : neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0)),
+                                           mockDevice(neoDevice),
+                                           session(&mockDevice) {}
+};
+
+TEST_F(DebugSessionSr5ExceptionReasonTest, whenSr5DoesNotContainExceptionReasonThenTheThreadMayBeResumed) {
+    session.fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(resumeThreads.size(), 1u);
+    EXPECT_EQ(resumeThreads[0], session.mockThreadId);
+    EXPECT_EQ(stoppedThreads.size(), 0u);
+    EXPECT_EQ(interruptedThreads.size(), 0u);
+}
+
+TEST_F(DebugSessionSr5ExceptionReasonTest, whenSr5DoesContainExceptionReasonThenTheThreadIsReported) {
+    reinterpret_cast<NEO::StateSaveAreaHeader *>(session.stateSaveAreaHeader.data())->versionHeader.version.major = 5;
+    session.mockSr5Value = 1 << 3;
+    session.fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(resumeThreads.size(), 0u);
+    EXPECT_EQ(stoppedThreads.size(), 1u);
+    EXPECT_EQ(stoppedThreads[0], session.mockThreadId);
+    EXPECT_EQ(interruptedThreads.size(), 0u);
+}
+
+TEST_F(DebugSessionSr5ExceptionReasonTest, givenSsahNotAvailableThenSr5DoesNotContainExceptionReason) {
+    session.getStateSaveAreaHeaderRetValue = nullptr;
+    session.mockSr5Value = 1 << 3;
+    session.fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+    EXPECT_EQ(resumeThreads.size(), 1u);
+    EXPECT_EQ(resumeThreads[0], session.mockThreadId);
+    EXPECT_EQ(stoppedThreads.size(), 0u);
+    EXPECT_EQ(interruptedThreads.size(), 0u);
+}
+
 TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsCalledThenThreadsResumed) {
     class InternalMockDebugSession : public MockDebugSession {
       public:
@@ -1573,6 +1644,10 @@ TEST(DebugSessionTest, givenCr0RegisterWhenIsFEOrFEHOnlyExceptionReasonThenTrueR
     cr0[1] = (1 << 28);
     EXPECT_FALSE(sessionMock->isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0));
     cr0[1] = (1 << 23);
+    EXPECT_FALSE(sessionMock->isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0));
+    cr0[1] = (1 << 22);
+    EXPECT_FALSE(sessionMock->isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0));
+    cr0[1] = (1 << 21);
     EXPECT_FALSE(sessionMock->isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0));
 }
 

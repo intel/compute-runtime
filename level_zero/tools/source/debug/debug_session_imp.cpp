@@ -883,7 +883,7 @@ void DebugSessionImp::generateEventsAndResumeStoppedThreads() {
 }
 
 bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) {
-    const uint32_t cr0ExceptionBitmask = 0xFC810000;
+    const uint32_t cr0ExceptionBitmask = 0xFCE10000;
     const uint32_t cr0ForcedExceptionBitmask = 0x44000000;
 
     return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExceptionBitmask)) == 0);
@@ -895,6 +895,17 @@ bool DebugSessionImp::isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0) {
     } else {
         return false;
     }
+}
+
+bool DebugSessionImp::doesSr5ContainExceptionReason(const EuThread::ThreadId &threadId) {
+    const auto &ssah = getStateSaveAreaHeader();
+    if (ssah && ssah->versionHeader.version.major >= 5) {
+        const auto size = getRegisterSize(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU);
+        std::vector<uint32_t> sr5(std::max<size_t>(1u, size / sizeof(sr5[0])));
+        readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, 0, 1, sr5.data());
+        return (sr5[0] >> 3) & 1;
+    }
+    return false;
 }
 
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport, std::vector<EuThread::ThreadId> &interruptedThreads) {
@@ -922,7 +933,8 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
                     writeRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
                 }
             }
-            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
+
+            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get()) && !doesSr5ContainExceptionReason(newlyStopped)) {
                 bool threadWasInterrupted = false;
 
                 for (auto &request : pendingInterrupts) {

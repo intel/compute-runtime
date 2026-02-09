@@ -174,6 +174,7 @@ struct DebugSessionImp : DebugSession {
 
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
     MOCKABLE_VIRTUAL bool isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0);
+    bool doesSr5ContainExceptionReason(const EuThread::ThreadId &threadId);
 
     void sendInterrupts();
     MOCKABLE_VIRTUAL void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle, const void *stateSaveArea);
