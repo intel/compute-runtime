@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
-    return false;
+    return true;
 }
 
 template <>
