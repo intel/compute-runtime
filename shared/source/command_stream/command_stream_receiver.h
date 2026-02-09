@@ -485,6 +485,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     PreemptionMode getPreemptionMode() const {
+        if (primaryCsr) {
+            return primaryCsr->getPreemptionMode();
+        }
         return lastPreemptionMode;
     }
 
