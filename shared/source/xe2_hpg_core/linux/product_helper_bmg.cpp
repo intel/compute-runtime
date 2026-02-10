@@ -36,6 +36,14 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDeferBackingEnabled() const {
+    if (debugManager.flags.EnableDeferBacking.get() != -1) {
+        return debugManager.flags.EnableDeferBacking.get();
+    }
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     return false;
 }

@@ -215,3 +215,13 @@ BMGTEST_F(BmgProductHelperLinux, givenBoundaryEuCountWhenGetDeviceMemoryMaxBandW
     expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
     EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
 }
+
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToZeroThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
+}
