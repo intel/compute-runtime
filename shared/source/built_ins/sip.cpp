@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,11 +266,19 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     std::vector<char> stateSaveAreaHeader;
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
 
-    auto ret = device.getSipExternalLibInterface()->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
+    SipExternalLib *sipLib = device.getSipExternalLibInterface();
+    UNRECOVERABLE_IF(!sipLib);
+    auto ret = sipLib->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
     if (ret != 0) {
         return false;
     }
-    UNRECOVERABLE_IF(sipBinary.size() == 0);
+    if (sipBinary.empty()) {
+        UNRECOVERABLE_IF(true);
+    }
+    if (!sipLib->createRegisterDescriptorMap()) {
+        PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to create register descriptor map\n", "");
+        return false;
+    }
 
     const auto allocType = AllocationType::kernelIsaInternal;
     AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
@@ -310,6 +318,9 @@ void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
                                        ? SipClassType::hexadecimalHeaderFile
                                        : SipClassType::builtins;
         }
+        if (gfxCoreHelper.getSipBinaryFromExternalLib() && device.getSipExternalLibInterface() != nullptr) {
+            SipKernel::classType = SipClassType::externalLib;
+        }
     } else {
         SipKernel::classType = SipClassType::rawBinaryFromFile;
     }
@@ -340,13 +351,17 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
     case SipClassType::hexadecimalHeaderFile:
-        return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
+    case SipClassType::externalLib: {
+        auto ptr = device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
+        UNRECOVERABLE_IF(!ptr);
+        return *ptr;
+    }
     default:
         return device.getBuiltIns()->getSipKernel(sipType, device);
     }
 }
 
-const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
+const SipKernel *SipKernel::getDebugSipKernelPtr(Device &device) {
     SipKernelType debugSipType;
     auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
@@ -358,10 +373,17 @@ const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
-        return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
+    case SipClassType::externalLib:
+        return device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
     default:
-        return device.getBuiltIns()->getSipKernel(debugSipType, device);
+        return &device.getBuiltIns()->getSipKernel(debugSipType, device);
     }
+}
+
+const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
+    const SipKernel *ptr = getDebugSipKernelPtr(device);
+    UNRECOVERABLE_IF(!ptr);
+    return *ptr;
 }
 
 const SipKernel &SipKernel::getDebugSipKernel(Device &device, OsContext *context) {
@@ -376,7 +398,11 @@ const SipKernel &SipKernel::getDebugSipKernel(Device &device, OsContext *context
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
-        return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
+    case SipClassType::externalLib: {
+        auto ptr = device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
+        UNRECOVERABLE_IF(!ptr);
+        return *ptr;
+    }
     default:
         return device.getBuiltIns()->getSipKernel(device, context);
     }

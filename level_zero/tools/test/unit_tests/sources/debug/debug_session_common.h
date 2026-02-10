@@ -35,6 +35,7 @@ struct DebugApiFixture : public DeviceFixture {
     }
     void setUpV5Header(MockSipExternalLib *sipExternalLib) {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
+        sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->sipExternalLib.reset(sipExternalLib);
     }
     void setUpV3HeaderWithoutHeapless() {

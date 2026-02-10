@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
+
 #include "level_zero/tools/source/debug/eu_thread.h"
 
 namespace NEO {
@@ -30,6 +32,7 @@ struct DebugSessionRegistersAccess {
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
     std::unique_ptr<MockDebugSession> session;
     std::unique_ptr<MockDeviceImp> mockDevice;
+    MockSipExternalLib sipLib;
     NEO::MockDevice *neoDevice = nullptr;
 };
 

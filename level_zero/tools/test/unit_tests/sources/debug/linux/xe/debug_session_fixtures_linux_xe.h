@@ -168,6 +168,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::fifoPollInterval;
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::interruptTimeout;
+    using L0::DebugSessionImp::openSipWrapper;
     using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
@@ -362,6 +363,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     void setCurrentInterfaceType(EuDebugInterfaceType newType) {
         auto mockEuDebugInterface = static_cast<MockEuDebugInterface *>(euDebugInterface.get());
         mockEuDebugInterface->setCurrentInterfaceType(newType);
+    }
+
+    std::optional<bool> forceOpenSipWrapperResult;
+    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override {
+        return forceOpenSipWrapperResult.has_value() ? forceOpenSipWrapperResult.value() : DebugSessionImp::openSipWrapper(neoDevice, contextHandle, gpuVa);
     }
 
     uint32_t readSystemRoutineIdentCallCount = 0;

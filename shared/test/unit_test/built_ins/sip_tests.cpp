@@ -509,7 +509,6 @@ TEST_F(StateSaveAreaSipTest, givenNotsupportedStateSaveAreaHeaderVersionWhenGetS
 TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessDebugSip.set(1);
-
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
@@ -604,6 +603,8 @@ TEST(DebugSip, givenDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
 }
 
 TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(0);
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
@@ -1041,7 +1042,7 @@ TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueAndDeb
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     auto lib = new MockSipExternalLib();
     lib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
-    lib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{0x5, 0x6, 0x7, 0x8};
+    lib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};
     lib->getSipKernelBinaryRetValue = 0;
     lib->getStateSaveAreaSizeRetValue = 17381;
     pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(lib);

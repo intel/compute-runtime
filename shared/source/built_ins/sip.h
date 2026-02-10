@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
 
     static const SipKernel &getSipKernel(Device &device, OsContext *context);
     static const SipKernel &getDebugSipKernel(Device &device);
+    static const SipKernel *getDebugSipKernelPtr(Device &device);
     static const SipKernel &getDebugSipKernel(Device &device, OsContext *context);
     static SipKernelType getSipKernelType(Device &device);
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);

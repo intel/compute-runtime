@@ -1604,29 +1604,16 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
 
-    auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
+    const NEO::SipKernel *sipKernel = NEO::SipKernel::getDebugSipKernelPtr(*device->getNEODevice());
+    if (!sipKernel) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    auto &stateSaveAreaHeader = sipKernel->getStateSaveAreaHeader();
 
     if (stateSaveAreaHeader.size() == 0) {
         *pCount = 0;
         return ZE_RESULT_SUCCESS;
-    }
-
-    auto *sipLibInterface = device->getNEODevice()->getSipExternalLibInterface();
-
-    if (sipLibInterface) {
-        std::vector<char> sipBinary;
-        std::vector<char> stateSaveAreaHeader;
-
-        auto ret = sipLibInterface->getSipKernelBinary(*device->getNEODevice(), NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader);
-        if (ret != 0) {
-            PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to get SIP kernel binary\n", "");
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-
-        if (!sipLibInterface->createRegisterDescriptorMap()) {
-            PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to create register descriptor map\n", "");
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
     }
 
     uint32_t totalRegsetNum = 0;

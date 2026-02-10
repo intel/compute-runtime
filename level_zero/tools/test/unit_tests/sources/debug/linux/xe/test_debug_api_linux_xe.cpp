@@ -1620,6 +1620,7 @@ TEST_P(DebugApiLinuxTestXeMetadataOpEventTest, GivenVmBindOpMetadataEventForMeta
 
     auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
     ASSERT_NE(nullptr, session);
+    session->forceOpenSipWrapperResult = true;
 
     auto handler = new MockIoctlHandlerXe;
     session->ioctlHandler.reset(handler);

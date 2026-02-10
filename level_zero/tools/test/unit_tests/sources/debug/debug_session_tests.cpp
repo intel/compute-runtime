@@ -3443,6 +3443,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
     static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
     mockSipLib.mockRegsetDescMap[SipRegisterType::eGRF] = &testRegsetDesc;
     mockNeoDevice->mockSipLib = &mockSipLib;
+    mockSipLib.getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
 
     // Create a mock L0 device wrapper
     auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
@@ -5659,7 +5660,12 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidPar
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesBinaryRetrievalFailsThenErrorUnknownReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     auto neoDevice = mockDevice->getNEODevice();
+    if (!neoDevice->getGfxCoreHelper().getSipBinaryFromExternalLib()) {
+        GTEST_SKIP();
+    }
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
 
@@ -5675,8 +5681,14 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesCreateMapFailsThenErrorUnknownReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     auto neoDevice = mockDevice->getNEODevice();
+    if (!neoDevice->getGfxCoreHelper().getSipBinaryFromExternalLib()) {
+        GTEST_SKIP();
+    }
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+
     auto originalSipLib = rootEnv.sipExternalLib.release();
     auto mockSipLib = new MockSipExternalLib();
     rootEnv.sipExternalLib.reset(mockSipLib);
@@ -5696,7 +5708,8 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhen
     class MockSipExternalLibMinimal : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
-            stateSaveAreaHeader.resize(sizeof(SIP::intelgt_state_save_area_V3));
+            retBinary = {5, 6, 7, 8};
+            stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
             return 0;
         }
     };
@@ -5915,6 +5928,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropert
     class MockSipExternalLibForV5 : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            retBinary = {'t', 's', 's', 'a', 'r', 'e', 'a'};
             // Create a proper StateSaveAreaHeader with version 5
             stateSaveAreaHeader.resize(sizeof(NEO::StateSaveAreaHeader));
             auto pHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
