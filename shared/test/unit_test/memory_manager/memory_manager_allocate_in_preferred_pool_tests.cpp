@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1291,3 +1291,83 @@ INSTANTIATE_TEST_SUITE_P(OptionallyForceTo48Bit,
                          ::testing::Combine(
                              ::testing::ValuesIn(allocationsOptionallyForcedTo48Bit),
                              ::testing::Bool()));
+
+TEST(MemoryManagerTest, givenPreferredPoolAllocationInLocalMemoryThenQualifiedFor2MBPagesDependsOnAlignmentAndProductHelper) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGaAligned(nullptr, MemoryConstants::pageSize2M, MemoryConstants::pageSize2M);
+    mockGaAligned.overrideMemoryPool(MemoryPool::localMemory);
+
+    memoryManager.mockGa = &mockGaAligned;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGaAligned);
+    EXPECT_TRUE(allocation->qualifiesFor2MBPages());
+}
+
+TEST(MemoryManagerTest, givenPreferredPoolAllocationInLocalMemoryWithUnalignedAddressThenNotQualifiedFor2MBPages) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGaUnaligned(nullptr, MemoryConstants::pageSize64k + 1, MemoryConstants::pageSize64k);
+    mockGaUnaligned.overrideMemoryPool(MemoryPool::localMemory);
+
+    memoryManager.mockGa = &mockGaUnaligned;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGaUnaligned);
+    EXPECT_FALSE(allocation->qualifiesFor2MBPages());
+}
+
+TEST(MemoryManagerTest, givenPreferredPoolAllocationInLocalMemoryWhen2MBAlignmentDisabledThenNotQualifiedFor2MBPages) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGa(nullptr, MemoryConstants::pageSize2M, MemoryConstants::pageSize2M);
+    mockGa.overrideMemoryPool(MemoryPool::localMemory);
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_FALSE(allocation->qualifiesFor2MBPages());
+}
+
+TEST(MemoryManagerTest, givenPreferredPoolAllocationInSystemMemoryThenNotQualifiedFor2MBPages) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGa(nullptr, MemoryConstants::pageSize2M, MemoryConstants::pageSize2M);
+    mockGa.overrideMemoryPool(MemoryPool::system4KBPages);
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_FALSE(allocation->qualifiesFor2MBPages());
+}

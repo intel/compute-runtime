@@ -311,25 +311,19 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
     }
 }
 
-TEST(GraphicsAllocationTest, givenLocalMemoryAllocationWithSizeGreaterOrEqualTo2MBThenUsedPageSizeIs2MB) {
-    MockGraphicsAllocation graphicsAllocation(nullptr, MemoryConstants::pageSize2M);
+TEST(GraphicsAllocationTest, givenLocalMemoryAllocationWhenQualifiedFor2MBPagesThenUsedPageSizeIs2MB) {
+    MockGraphicsAllocation graphicsAllocation(nullptr, MemoryConstants::pageSize);
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
+    graphicsAllocation.setQualifiesFor2MBPages(true);
 
     EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize2M), graphicsAllocation.getUsedPageSize());
 }
 
-TEST(GraphicsAllocationTest, givenLocalMemoryAllocationWithSizeSmallerThan2MBThenUsedPageSizeIs64KB) {
-    MockGraphicsAllocation graphicsAllocation(nullptr, MemoryConstants::pageSize2M - 1);
-    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
-
-    EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation.getUsedPageSize());
-}
-
-TEST(GraphicsAllocationTest, givenLocalMemoryAllocationWithSizeMuchLargerThan2MBThenUsedPageSizeIs2MB) {
+TEST(GraphicsAllocationTest, givenLocalMemoryAllocationWhenNotQualifiedFor2MBPagesThenUsedPageSizeIs64KB) {
     MockGraphicsAllocation graphicsAllocation(nullptr, 10 * MemoryConstants::pageSize2M);
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
-    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize2M), graphicsAllocation.getUsedPageSize());
+    EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation.getUsedPageSize());
 }
 
 TEST(GraphicsAllocationTest, givenSystem64KBPagesAllocationWithSizeGreaterOrEqualTo2MBThenUsedPageSizeIs64KB) {

@@ -186,6 +186,7 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
     parentAllocation->setUncacheable(true);
     parentAllocation->set32BitAllocation(true);
     parentAllocation->setLockedMemory(true);
+    parentAllocation->setQualifiesFor2MBPages(true);
     parentAllocation->storageInfo.memoryBanks = 0x3u;
     parentAllocation->resizeGmms(2);
     parentAllocation->setGmm(gmm1, 0);
@@ -204,6 +205,7 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
     EXPECT_EQ(parentAllocation->isUncacheable(), view->isUncacheable());
     EXPECT_EQ(parentAllocation->is32BitAllocation(), view->is32BitAllocation());
     EXPECT_EQ(parentAllocation->isLockedMemory(), view->isLockedMemory());
+    EXPECT_EQ(parentAllocation->qualifiesFor2MBPages(), view->qualifiesFor2MBPages());
 
     EXPECT_EQ(parentAllocation->peekSharedHandle(), view->peekSharedHandle());
 

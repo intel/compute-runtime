@@ -68,7 +68,8 @@ GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offset
       usageInfos(parent->usageInfos.size()),
       residency(parent->residency.resident.size()),
       parentAllocation(parent),
-      offsetInParent(offsetInParentAllocation) {
+      offsetInParent(offsetInParentAllocation),
+      qualifiedFor2MBPages(parent->qualifiedFor2MBPages) {
     this->storageInfo = parent->storageInfo;
     for (uint32_t i = 0; i < parent->getNumGmms(); i++) {
         this->gmms.push_back(parent->getGmm(i));
@@ -92,7 +93,7 @@ std::string GraphicsAllocation::getPatIndexInfoString(const ProductHelper &) con
 uint32_t GraphicsAllocation::getUsedPageSize() const {
     switch (this->memoryPool) {
     case MemoryPool::localMemory:
-        if (this->size >= MemoryConstants::pageSize2M) {
+        if (this->qualifiedFor2MBPages) {
             return static_cast<uint32_t>(MemoryConstants::pageSize2M);
         }
         return MemoryConstants::pageSize64k;

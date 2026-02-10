@@ -828,6 +828,12 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         allocation->setAsReadOnly();
     }
 
+    allocation->setQualifiesFor2MBPages(
+        allocation->isAllocatedInLocalMemoryPool() &&
+        productHelper.is2MBLocalMemAlignmentEnabled() &&
+        isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2M) &&
+        isAligned(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize2M));
+
     logAllocation(fileLoggerInstance(), allocation, this);
     registerAllocationInOs(allocation);
     return allocation;

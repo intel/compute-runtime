@@ -391,6 +391,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     uint32_t getUsedPageSize() const;
 
+    bool qualifiesFor2MBPages() const { return qualifiedFor2MBPages; }
+    void setQualifiesFor2MBPages(bool value) { qualifiedFor2MBPages = value; }
+
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::localMemory); }
     bool isAllocationLockable() const;
 
@@ -567,6 +570,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool cantBeReadOnly = false;
     bool explicitlyMadeResident = false;
     bool isImported = false;
+    bool qualifiedFor2MBPages = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);
