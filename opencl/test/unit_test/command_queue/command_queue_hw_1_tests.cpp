@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"

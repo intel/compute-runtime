@@ -14,9 +14,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
-#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
@@ -36,7 +34,10 @@ class ExecutionEnvironment;
 class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
+class GraphicsAllocation;
+class ISAPoolAllocator;
 class OSTime;
+class PerformanceCounters;
 class ProductHelper;
 class ReleaseHelper;
 class SipExternalLib;
@@ -183,7 +184,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
 
-    static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
+    using CreatePerformanceCountersFunc = std::unique_ptr<PerformanceCounters> (*)(Device *device);
+    static CreatePerformanceCountersFunc createPerformanceCountersFunc;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
     RTDispatchGlobalsInfo *getRTDispatchGlobals(uint32_t maxBvhLevels);
@@ -205,7 +207,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL ReleaseHelper *getReleaseHelper() const;
     MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
-        return isaPoolAllocator;
+        return *isaPoolAllocator;
     }
     LinearStreamPoolAllocator &getLinearStreamPoolAllocator() {
         return linearStreamPoolAllocator;
@@ -376,7 +378,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
 
-    ISAPoolAllocator isaPoolAllocator;
+    std::unique_ptr<ISAPoolAllocator> isaPoolAllocator;
     LinearStreamPoolAllocator linearStreamPoolAllocator;
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;

@@ -22,6 +22,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

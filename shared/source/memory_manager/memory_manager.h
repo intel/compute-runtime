@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "shared/source/device/sub_device.h"
+
+#include "shared/source/device/sub_device_ids_vec.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"

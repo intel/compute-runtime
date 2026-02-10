@@ -43,6 +43,7 @@
 #include <regex>
 #endif
 
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 
 namespace NEO {
