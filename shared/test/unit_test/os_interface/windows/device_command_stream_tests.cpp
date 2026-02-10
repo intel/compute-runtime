@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,13 +245,14 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenP
     capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
+    auto priority = csr->getOsContext().hasPriorityLevel() ? std::to_string(csr->getOsContext().getPriorityLevel()) : "std::nullopt";
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
     std::ostringstream expectedValue;
     expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
-                  << " (" << engineType << ", " << engineUsage << ")\n";
+                  << " (" << engineType << ", " << engineUsage << "), Priority: " << priority << "\n";
 
     auto osContextWin = static_cast<OsContextWin *>(&csr->getOsContext());
 

@@ -53,11 +53,12 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
 bool OsContext::ensureContextInitialized(bool allocateInterrupt) {
     std::call_once(contextInitializedFlag, [this, allocateInterrupt] {
         PRINT_STRING(debugManager.flags.PrintOsContextInitializations.get(), stdout,
-                     "OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d\n",
+                     "OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d priorityLevel=%s\n",
                      contextId,
                      EngineHelpers::engineUsageToString(engineUsage).c_str(),
                      EngineHelpers::engineTypeToString(engineType).c_str(),
-                     static_cast<int>(rootDevice));
+                     static_cast<int>(rootDevice),
+                     hasPriorityLevel() ? std::to_string(getPriorityLevel()).c_str() : "std::nullopt");
 
         if (!initializeContext(allocateInterrupt)) {
             contextInitialized = false;

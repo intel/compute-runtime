@@ -1211,13 +1211,14 @@ bool CommandStreamReceiver::needsPageTableManager() const {
 
 void CommandStreamReceiver::printDeviceIndex() {
     PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
-                 "%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
+                 "%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s), Priority: %s\n",
                  SysCalls::getProcessId(),
                  this->getRootDeviceIndex(),
                  this->osContext->getDeviceBitfield().to_ulong(),
                  this->osContext->getEngineType(),
                  EngineHelpers::engineTypeToString(this->osContext->getEngineType()).c_str(),
-                 EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str());
+                 EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str(),
+                 this->osContext->hasPriorityLevel() ? std::to_string(this->osContext->getPriorityLevel()).c_str() : "std::nullopt");
 }
 
 void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation) {

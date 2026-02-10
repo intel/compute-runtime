@@ -229,7 +229,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
-                  << " (" << engineType << ", " << engineUsage << ")\n";
+                  << " (" << engineType << ", " << engineUsage << "), Priority: std::nullopt\n";
     EXPECT_TRUE(hasSubstr(capture.getCapturedStdout(), expectedValue.str()));
 }
 

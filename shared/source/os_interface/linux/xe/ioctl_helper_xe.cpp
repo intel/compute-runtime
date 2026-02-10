@@ -2014,6 +2014,9 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
         ext[extIndexInOut].value = getPriorityValue(osContext);
+
+        PRINT_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY Context priority value = %d\n", static_cast<int>(ext[extIndexInOut].value));
+
         XELOG(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
         extIndexInOut++;
     }

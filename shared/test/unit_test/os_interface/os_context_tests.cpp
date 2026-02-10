@@ -364,6 +364,6 @@ TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWh
 
     capture.captureStdout();
     osContext->ensureContextInitialized(false);
-    std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0\n";
+    std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0 priorityLevel=std::nullopt\n";
     EXPECT_EQ(expectedMessage, capture.getCapturedStdout());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -474,7 +474,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
-                  << " (" << engineType << ", " << engineUsage << ")\n";
+                  << " (" << engineType << ", " << engineUsage << "), Priority: std::nullopt\n";
     auto &drmContextIds = static_cast<const OsContextLinux *>(&csr->getOsContext())->getDrmContextIds();
     for (uint32_t contextIndex = 0; contextIndex < drmContextIds.size(); contextIndex++) {
         expectedValue << SysCalls::getProcessId() << ": Drm Submission of contextIndex: " << contextIndex << ", with context id " << drmContextIds[contextIndex] << "\n";
