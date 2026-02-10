@@ -74,7 +74,6 @@ class ProductHelperHw : public ProductHelper {
     bool isL1PolicyMissmatchCheckNeeded() const override;
     bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const override;
     bool isKmdMigrationSupported() const override;
-    bool isDeferBackingEnabled() const override;
     bool isDisableScratchPagesSupported() const override;
     bool isDisableScratchPagesRequiredForDebugger() const override;
     bool areSecondaryContextsSupported() const override;

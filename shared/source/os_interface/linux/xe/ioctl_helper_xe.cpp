@@ -275,8 +275,9 @@ bool IoctlHelperXe::initialize() {
         }
     }
 
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    enableDeferBacking = productHelper.isDeferBackingEnabled();
+    if (debugManager.flags.EnableDeferBacking.get() != -1) {
+        enableDeferBacking = debugManager.flags.EnableDeferBacking.get();
+    }
 
     return true;
 }

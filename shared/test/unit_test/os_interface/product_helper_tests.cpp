@@ -467,16 +467,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupported
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IsNotBMG) {
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToOneThenReturnTrue, IsNotBMG) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(1);
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedThenReturnFalse, IsAtMostXeHpgCore) {
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }
