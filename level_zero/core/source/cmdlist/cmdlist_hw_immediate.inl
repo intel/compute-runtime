@@ -29,7 +29,6 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
-#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
@@ -672,8 +671,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     ze_result_t ret;
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
-    CachedHostPtrAllocs cachedAllocs;
-    this->obtainAllocData(cpuMemCopyInfo, cachedAllocs, isCopyOffloadEnabled());
+    this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled());
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
         ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
         if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
@@ -689,7 +687,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto splitCall = [&](CommandListCoreFamily<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
             memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
             auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
-            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
+            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams, &cpuMemCopyInfo.dstAllocInfo, &cpuMemCopyInfo.srcAllocInfo);
         };
 
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
@@ -699,7 +697,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
-                                                                     numWaitEvents, phWaitEvents, memoryCopyParams, cachedAllocs);
+                                                                     numWaitEvents, phWaitEvents, memoryCopyParams, &cpuMemCopyInfo.dstAllocInfo, &cpuMemCopyInfo.srcAllocInfo);
     }
 
     copyOffloadFlush |= memoryCopyParams.copyOffloadAllowed;
@@ -1360,8 +1358,8 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return false;
     }
 
-    if (((cpuMemCopyInfo.srcAllocData != nullptr) && (cpuMemCopyInfo.srcAllocData->isImportedAllocation)) ||
-        ((cpuMemCopyInfo.dstAllocData != nullptr) && (cpuMemCopyInfo.dstAllocData->isImportedAllocation))) {
+    if (((cpuMemCopyInfo.srcAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.srcAllocInfo.svmAlloc->isImportedAllocation)) ||
+        ((cpuMemCopyInfo.dstAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.dstAllocInfo.svmAlloc->isImportedAllocation))) {
         return false;
     }
 
@@ -1431,12 +1429,12 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     bool lockingFailed = false;
-    auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocData, const_cast<void *>(cpuMemCopyInfo.srcPtr), lockingFailed);
+    auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocInfo.svmAlloc, const_cast<void *>(cpuMemCopyInfo.srcPtr), lockingFailed);
     if (lockingFailed) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    auto dstLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.dstAllocData, const_cast<void *>(cpuMemCopyInfo.dstPtr), lockingFailed);
+    auto dstLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.dstAllocInfo.svmAlloc, const_cast<void *>(cpuMemCopyInfo.dstPtr), lockingFailed);
     if (lockingFailed) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -1535,15 +1533,15 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo) {
-    const bool srcHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.srcAllocData) || cpuMemCopyInfo.srcIsImportedHostPtr;
-    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData);
-    const bool srcSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.srcAllocData);
-    const bool srcHostNonUSM = (cpuMemCopyInfo.srcAllocData == nullptr) && !cpuMemCopyInfo.srcIsImportedHostPtr;
+    const bool srcHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.srcAllocInfo.svmAlloc) || cpuMemCopyInfo.srcIsImportedHostPtr;
+    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    const bool srcSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    const bool srcHostNonUSM = (cpuMemCopyInfo.srcAllocInfo.svmAlloc == nullptr) && !cpuMemCopyInfo.srcIsImportedHostPtr;
 
-    const bool dstHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.dstAllocData) || cpuMemCopyInfo.dstIsImportedHostPtr;
-    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData);
-    const bool dstSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.dstAllocData);
-    const bool dstHostNonUSM = (cpuMemCopyInfo.dstAllocData == nullptr) && !cpuMemCopyInfo.dstIsImportedHostPtr;
+    const bool dstHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.dstAllocInfo.svmAlloc) || cpuMemCopyInfo.dstIsImportedHostPtr;
+    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    const bool dstSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    const bool dstHostNonUSM = (cpuMemCopyInfo.dstAllocInfo.svmAlloc == nullptr) && !cpuMemCopyInfo.dstIsImportedHostPtr;
 
     if (srcHostNonUSM && dstHostUSM) {
         return TransferType::hostNonUsmToHostUsm;
@@ -1880,24 +1878,24 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::stagingStatusToL0(con
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemcpyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
     auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
     memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled() && this->isCopyOffloadForFillOrStagingPreferred();
 
     Event *event = Event::fromHandle(hSignalEvent);
-    auto isRead = cpuMemcpyInfo.dstAllocData == nullptr;
+    auto isRead = cpuMemCopyInfo.dstAllocInfo.svmAlloc == nullptr;
 
     NEO::ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, void *usmBuffer, size_t chunkSize) -> int32_t {
         checkAvailableSpace(0, relaxedOrdering, commonImmediateCommandSize, false);
         auto chunkSrc = stagingBuffer;
         auto chunkDst = usmBuffer;
-        auto isFirstTransfer = (chunkDst == cpuMemcpyInfo.dstPtr);
-        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.size);
+        auto isFirstTransfer = (chunkDst == cpuMemCopyInfo.dstPtr);
+        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size);
         if (isRead) {
             std::swap(chunkSrc, chunkDst);
-            isFirstTransfer = (chunkSrc == cpuMemcpyInfo.srcPtr);
-            isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size);
+            isFirstTransfer = (chunkSrc == cpuMemCopyInfo.srcPtr);
+            isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size);
         }
 
         if (isFirstTransfer) {
@@ -1927,7 +1925,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
+    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1945,19 +1943,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemcpyInfo, bool hasDependencies) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies) {
     if (this->useAdditionalBlitProperties) {
         return false;
     }
     if (this->isSharedSystemEnabled()) {
         return false;
     }
-    if (cpuMemcpyInfo.dstIsImportedHostPtr || cpuMemcpyInfo.srcIsImportedHostPtr) {
+    if (cpuMemCopyInfo.dstIsImportedHostPtr || cpuMemCopyInfo.srcIsImportedHostPtr) {
         return false;
     }
     auto neoDevice = this->getDevice()->getNEODevice();
     auto driver = this->getDevice()->getDriverHandle();
-    return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size, hasDependencies);
+    return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1993,29 +1991,31 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::handleRelaxedOrderingSignali
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, CachedHostPtrAllocs &cachedAllocs, bool copyOffload) {
-    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(cpuMemCopyInfo.srcPtr), cpuMemCopyInfo.size, cpuMemCopyInfo.srcAllocData);
-    this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocData);
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload) {
+    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(cpuMemCopyInfo.srcPtr), cpuMemCopyInfo.size, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
 
-    if (cpuMemCopyInfo.srcAllocData == nullptr) {
+    if (cpuMemCopyInfo.srcAllocInfo.svmAlloc == nullptr) {
         auto hostAlloc = this->device->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->device->getRootDeviceIndex());
         if (hostAlloc != nullptr) {
             cpuMemCopyInfo.srcIsImportedHostPtr = true;
+            cpuMemCopyInfo.srcAllocInfo.importedHostAlloc = hostAlloc;
         } else {
             auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, copyOffload);
             cpuMemCopyInfo.srcIsImportedHostPtr = cachedAlloc != nullptr;
-            cachedAllocs.srcAlloc = cachedAlloc;
+            cpuMemCopyInfo.srcAllocInfo.cachedHostAlloc = cachedAlloc;
         }
     }
 
-    if (cpuMemCopyInfo.dstAllocData == nullptr) {
+    if (cpuMemCopyInfo.dstAllocInfo.svmAlloc == nullptr) {
         auto hostAlloc = this->device->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->device->getRootDeviceIndex());
         if (hostAlloc != nullptr) {
             cpuMemCopyInfo.dstIsImportedHostPtr = true;
+            cpuMemCopyInfo.dstAllocInfo.importedHostAlloc = hostAlloc;
         } else {
             auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, copyOffload);
             cpuMemCopyInfo.dstIsImportedHostPtr = cachedAlloc != nullptr;
-            cachedAllocs.dstAlloc = cachedAlloc;
+            cpuMemCopyInfo.dstAllocInfo.cachedHostAlloc = cachedAlloc;
         }
     }
 }

@@ -221,7 +221,7 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrTh
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = reinterpret_cast<void *>(0x1234);
     AlignedAllocationData outData = {};
-    outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false);
+    outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false, nullptr);
     EXPECT_EQ(nullptr, outData.alloc);
 }
 
@@ -286,7 +286,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGettingAlignedAl
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, startMemory, cmdListHostPtrSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, startMemory, cmdListHostPtrSize, false, false, nullptr);
     ASSERT_NE(nullptr, outData.alloc);
     auto firstAlloc = outData.alloc;
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
@@ -301,7 +301,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGettingAlignedAl
     expectedGpuAddress = ptrOffset(expectedGpuAddress, alignedOffset);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
-    outData = commandList->getAlignedAllocationData(device, false, offsetMemory, 4u, false, false);
+    outData = commandList->getAlignedAllocationData(device, false, offsetMemory, 4u, false, false, nullptr);
     ASSERT_NE(nullptr, outData.alloc);
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
@@ -327,7 +327,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenRemoveHostPtrAll
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false, nullptr);
     ASSERT_NE(nullptr, outData.alloc);
 
     for (const auto &engine : engines) {
@@ -1290,8 +1290,8 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithinD
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false);
-    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false);
+    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false, nullptr);
+    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false, nullptr);
     EXPECT_NE(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
@@ -1304,8 +1304,8 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithinD
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false);
-    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false);
+    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false, nullptr);
+    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false, nullptr);
     EXPECT_EQ(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();

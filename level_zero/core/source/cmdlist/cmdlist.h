@@ -60,7 +60,7 @@ struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
 struct CmdListHostFunctionParameters;
-struct CachedHostPtrAllocs;
+struct MemAllocInfo;
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;

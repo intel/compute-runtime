@@ -737,8 +737,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                           uint32_t sizePerHwThread),
                          (kernel, sizePerHwThread));
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload);
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, bufferAllocInfo);
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,

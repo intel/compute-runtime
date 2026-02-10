@@ -799,7 +799,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingA
     size_t offsetSize = 20;
     void *offsetPointer = ptrOffset(importPointer, allocOffset);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, importPointer, importSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, importPointer, importSize, false, false, nullptr);
     auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
     auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
@@ -808,7 +808,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingA
     EXPECT_EQ(hostAllocation, outData.alloc);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocationData(device, false, offsetPointer, offsetSize, false, false);
+    outData = commandList->getAlignedAllocationData(device, false, offsetPointer, offsetSize, false, false, nullptr);
     expectedOffset += allocOffset;
     EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -833,7 +833,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingP
     auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, offsetPointer, pointerSize, false, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, offsetPointer, pointerSize, false, false, nullptr);
     auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
     EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);

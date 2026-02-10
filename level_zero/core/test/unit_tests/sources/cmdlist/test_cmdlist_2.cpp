@@ -45,12 +45,11 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     MockCommandListHw() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
     MockCommandListHw(bool failOnFirst) : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(), failOnFirstCopy(failOnFirst) {}
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        return getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, nullptr);
-    }
-
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc) override {
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
         getAlignedAllocationCalledTimes++;
+        if (buffer && returnBaseAllocationStruct) {
+            return WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, hostCopyAllowed, copyOffload, bufferAllocInfo);
+        }
         if (buffer && returnMockAllocationStruct) {
             auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(buffer, sizeof(uint32_t)));
             auto offset = reinterpret_cast<uintptr_t>(buffer) - alignedPtr;
@@ -218,6 +217,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     bool useEvents = false;
     bool failAlignedAlloc = false;
     bool returnMockAllocationStruct = false;
+    bool returnBaseAllocationStruct = false;
 };
 
 HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullDstPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError) {
@@ -358,13 +358,31 @@ HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemory
 HWTEST_F(CommandListAppend, givenCommandListWhenAppendMemoryCopyWithCachedHostPtrAllocsThenBlitSucceeds) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.returnBaseAllocationStruct = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
     MockGraphicsAllocation srcAlloc;
     MockGraphicsAllocation dstAlloc;
-    CachedHostPtrAllocs cachedAllocs(&srcAlloc, &dstAlloc);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, copyParams, cachedAllocs));
+
+    L0::MemAllocInfo srcAllocInfo{};
+    srcAllocInfo.cachedHostAlloc = &srcAlloc;
+    L0::MemAllocInfo dstAllocInfo{};
+    dstAllocInfo.cachedHostAlloc = &dstAlloc;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, copyParams, &dstAllocInfo, &srcAllocInfo));
+    EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
+    EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenAppendMemoryCopyWithExternalHostPtrsThenBlitSucceeds) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.returnBaseAllocationStruct = true;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 0, nullptr, copyParams, nullptr, nullptr));
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
 }
@@ -1595,11 +1613,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
   public:
     MockCommandListForRegionSize() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
-        return getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, nullptr);
-    }
-
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, NEO::GraphicsAllocation *cachedAlloc) override {
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
         return {nullptr, 0, 0, &mockAllocationPtr, true};
     }
 

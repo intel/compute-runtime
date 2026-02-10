@@ -14,19 +14,17 @@
 
 namespace NEO {
 class GraphicsAllocation;
-}
+struct SvmAllocationData;
+} // namespace NEO
 
 namespace L0 {
 
-// Caches host pointer allocations found during obtainAllocData
+// Caches allocations found during obtainAllocData
 // to avoid redundant lookups in getAlignedAllocationData
-struct CachedHostPtrAllocs {
-    NEO::GraphicsAllocation *srcAlloc{nullptr};
-    NEO::GraphicsAllocation *dstAlloc{nullptr};
-
-    CachedHostPtrAllocs() = default;
-    CachedHostPtrAllocs(NEO::GraphicsAllocation *src, NEO::GraphicsAllocation *dst)
-        : srcAlloc(src), dstAlloc(dst) {}
+struct MemAllocInfo {
+    NEO::SvmAllocationData *svmAlloc{nullptr};
+    NEO::GraphicsAllocation *importedHostAlloc{nullptr};
+    NEO::GraphicsAllocation *cachedHostAlloc{nullptr};
 };
 
 struct CmdListMemoryCopyParams {

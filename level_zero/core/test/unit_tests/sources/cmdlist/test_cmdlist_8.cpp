@@ -82,89 +82,88 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
 
     std::array<size_t, 4> sizes = {1, 256, 4096, sz};
     for (size_t i = 0; i < sizes.size(); i++) {
-        CachedHostPtrAllocs cachedAllocs;
 
         CpuMemCopyInfo copyInfoDeviceUsmToHostUsm(hostPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm, false);
+        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoDeviceUsmToHostImported(importedPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostImported.srcAllocData);
-        EXPECT_EQ(nullptr, copyInfoDeviceUsmToHostImported.dstAllocData);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported, false);
+        EXPECT_NE(nullptr, copyInfoDeviceUsmToHostImported.srcAllocInfo.svmAlloc);
+        EXPECT_EQ(nullptr, copyInfoDeviceUsmToHostImported.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostImported, 0, nullptr));
         EXPECT_TRUE(copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm, false);
+        EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostImportedToDeviceUsm(devicePtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm, cachedAllocs, false);
-        EXPECT_EQ(nullptr, copyInfoHostImportedToDeviceUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostImportedToDeviceUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm, false);
+        EXPECT_EQ(nullptr, copyInfoHostImportedToDeviceUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostImportedToDeviceUsm.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToDeviceUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToDeviceUsm, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm, false);
+        EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostImported(importedPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocData);
-        EXPECT_FALSE(device->getDriverHandle()->findAllocationDataForRange(importedPtr, sizes[i], copyInfoSharedUsmToHostImported.dstAllocData));
-        EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocData);
-        EXPECT_EQ(nullptr, copyInfoSharedUsmToHostImported.dstAllocData);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported, false);
+        EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc);
+        EXPECT_FALSE(device->getDriverHandle()->findAllocationDataForRange(importedPtr, sizes[i], copyInfoSharedUsmToHostImported.dstAllocInfo.svmAlloc));
+        EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc);
+        EXPECT_EQ(nullptr, copyInfoSharedUsmToHostImported.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostImported, 0, nullptr));
         EXPECT_TRUE(copyInfoSharedUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm, false);
+        EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostImportedToSharedUsm(sharedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm, cachedAllocs, false);
-        EXPECT_EQ(nullptr, copyInfoHostImportedToSharedUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostImportedToSharedUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm, false);
+        EXPECT_EQ(nullptr, copyInfoHostImportedToSharedUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostImportedToSharedUsm.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToSharedUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToSharedUsm, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm, cachedAllocs, false);
-        EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.srcAllocData));
-        EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.dstAllocData));
-        EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm, false);
+        EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.srcAllocInfo.svmAlloc));
+        EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.dstAllocInfo.svmAlloc));
+        EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostUsmToHostImported(importedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostImported, cachedAllocs, false);
-        EXPECT_NE(nullptr, copyInfoHostUsmToHostImported.srcAllocData);
-        EXPECT_EQ(nullptr, copyInfoHostUsmToHostImported.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostImported, false);
+        EXPECT_NE(nullptr, copyInfoHostUsmToHostImported.srcAllocInfo.svmAlloc);
+        EXPECT_EQ(nullptr, copyInfoHostUsmToHostImported.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostImported, 0, nullptr));
         EXPECT_TRUE(copyInfoHostUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm, cachedAllocs, false);
-        EXPECT_EQ(nullptr, copyInfoHostImportedToHostUsm.srcAllocData);
-        EXPECT_NE(nullptr, copyInfoHostImportedToHostUsm.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm, false);
+        EXPECT_EQ(nullptr, copyInfoHostImportedToHostUsm.srcAllocInfo.svmAlloc);
+        EXPECT_NE(nullptr, copyInfoHostImportedToHostUsm.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostUsm, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToHostUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostImported, cachedAllocs, false);
-        EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.srcAllocData);
-        EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.dstAllocData);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostImported, false);
+        EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.srcAllocInfo.svmAlloc);
+        EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.dstAllocInfo.svmAlloc);
 
         EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostImported, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToHostImported.srcIsImportedHostPtr);
@@ -183,9 +182,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -198,9 +197,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(nonUsmHostPtr, devicePtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_FALSE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -213,9 +212,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -228,9 +227,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -271,9 +270,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -325,9 +324,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     EXPECT_NE(nullptr, ipcDevicePtr);
 
     CpuMemCopyInfo cpuMemCopyInfo(hostPtr, ipcDevicePtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(ipcDevicePtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(ipcDevicePtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
     EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 
@@ -353,9 +352,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     EXPECT_NE(nullptr, ipcDevicePtr);
 
     CpuMemCopyInfo cpuMemCopyInfo(ipcDevicePtr, hostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(ipcDevicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(ipcDevicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
     EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 
@@ -370,12 +369,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMD
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     EXPECT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     EXPECT_TRUE(dstFound);
-    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData));
-    EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData));
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocInfo.svmAlloc));
+    EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocInfo.svmAlloc));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMHostAllocThenReturnCorrectValue) {
@@ -470,9 +469,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrV
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
@@ -484,9 +483,9 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenPreferCopyThro
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_FALSE(srcFound);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
 
     cmdList.copyThroughLockedPtrEnabled = false;
@@ -538,143 +537,143 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTyp
 
     notSpecifiedAllocData->memoryType = InternalMemoryType::notSpecified;
     CpuMemCopyInfo copyInfoHostNonUsmToNotSpecified(hostPtr2, nonUsmHostPtr, 1024);
-    copyInfoHostNonUsmToNotSpecified.dstAllocData = notSpecifiedAllocData;
-    copyInfoHostNonUsmToNotSpecified.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToNotSpecified.dstAllocInfo.svmAlloc = notSpecifiedAllocData;
+    copyInfoHostNonUsmToNotSpecified.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::unknown, cmdList.getTransferType(copyInfoHostNonUsmToNotSpecified));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostUsm(hostPtr, nonUsmHostPtr, 1024);
-    copyInfoHostNonUsmToHostUsm.dstAllocData = hostUSMAllocData;
-    copyInfoHostNonUsmToHostUsm.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToHostUsm.dstAllocInfo.svmAlloc = hostUSMAllocData;
+    copyInfoHostNonUsmToHostUsm.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::hostNonUsmToHostUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToDeviceUsm(devicePtr, nonUsmHostPtr, 1024);
-    copyInfoHostNonUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
-    copyInfoHostNonUsmToDeviceUsm.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToDeviceUsm.dstAllocInfo.svmAlloc = deviceUSMAllocData;
+    copyInfoHostNonUsmToDeviceUsm.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::hostNonUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostNonUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToSharedUsm(sharedPtr, nonUsmHostPtr, 1024);
-    copyInfoHostNonUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
-    copyInfoHostNonUsmToSharedUsm.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToSharedUsm.dstAllocInfo.svmAlloc = sharedUSMAllocData;
+    copyInfoHostNonUsmToSharedUsm.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::hostNonUsmToSharedUsm, cmdList.getTransferType(copyInfoHostNonUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostNonUsm(nonUsmHostPtr, nonUsmHostPtr, 1024);
-    copyInfoHostNonUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
-    copyInfoHostNonUsmToHostNonUsm.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToHostNonUsm.dstAllocInfo.svmAlloc = hostNonUSMAllocData;
+    copyInfoHostNonUsmToHostNonUsm.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::hostNonUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostImported(importedPtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToHostImported.dstIsImportedHostPtr = true;
-    copyInfoHostNonUsmToHostImported.dstAllocData = nullptr;
-    copyInfoHostNonUsmToHostImported.srcAllocData = hostNonUSMAllocData;
+    copyInfoHostNonUsmToHostImported.dstAllocInfo.svmAlloc = nullptr;
+    copyInfoHostNonUsmToHostImported.srcAllocInfo.svmAlloc = hostNonUSMAllocData;
     EXPECT_EQ(TransferType::hostNonUsmToHostUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostImported));
 
     CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, 1024);
-    copyInfoHostImportedToHostUsm.dstAllocData = hostUSMAllocData;
+    copyInfoHostImportedToHostUsm.dstAllocInfo.svmAlloc = hostUSMAllocData;
     copyInfoHostImportedToHostUsm.srcIsImportedHostPtr = true;
-    copyInfoHostImportedToHostUsm.srcAllocData = nullptr;
+    copyInfoHostImportedToHostUsm.srcAllocInfo.svmAlloc = nullptr;
     EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostImportedToHostUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToDeviceUsm(devicePtr, importedPtr, 1024);
-    copyInfoHostImportedToDeviceUsm.dstAllocData = deviceUSMAllocData;
+    copyInfoHostImportedToDeviceUsm.dstAllocInfo.svmAlloc = deviceUSMAllocData;
     copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr = true;
-    copyInfoHostImportedToDeviceUsm.srcAllocData = nullptr;
+    copyInfoHostImportedToDeviceUsm.srcAllocInfo.svmAlloc = nullptr;
     EXPECT_EQ(TransferType::hostUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostImportedToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToSharedUsm(sharedPtr, importedPtr, 1024);
-    copyInfoHostImportedToSharedUsm.dstAllocData = sharedUSMAllocData;
+    copyInfoHostImportedToSharedUsm.dstAllocInfo.svmAlloc = sharedUSMAllocData;
     copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr = true;
-    copyInfoHostImportedToSharedUsm.srcAllocData = nullptr;
+    copyInfoHostImportedToSharedUsm.srcAllocInfo.svmAlloc = nullptr;
     EXPECT_EQ(TransferType::hostUsmToSharedUsm, cmdList.getTransferType(copyInfoHostImportedToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToHostNonUsm(nonUsmHostPtr, importedPtr, 1024);
-    copyInfoHostImportedToHostNonUsm.dstAllocData = hostNonUSMAllocData;
+    copyInfoHostImportedToHostNonUsm.dstAllocInfo.svmAlloc = hostNonUSMAllocData;
     copyInfoHostImportedToHostNonUsm.srcIsImportedHostPtr = true;
-    copyInfoHostImportedToHostNonUsm.srcAllocData = nullptr;
+    copyInfoHostImportedToHostNonUsm.srcAllocInfo.svmAlloc = nullptr;
     EXPECT_EQ(TransferType::hostUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostImportedToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, 1024);
     copyInfoHostImportedToHostImported.dstIsImportedHostPtr = true;
-    copyInfoHostImportedToHostImported.dstAllocData = nullptr;
+    copyInfoHostImportedToHostImported.dstAllocInfo.svmAlloc = nullptr;
     copyInfoHostImportedToHostImported.srcIsImportedHostPtr = true;
-    copyInfoHostImportedToHostImported.srcAllocData = nullptr;
+    copyInfoHostImportedToHostImported.srcAllocInfo.svmAlloc = nullptr;
     EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostImportedToHostImported));
 
     CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, 1024);
-    copyInfoHostUsmToHostUsm.dstAllocData = hostUSMAllocData;
-    copyInfoHostUsmToHostUsm.srcAllocData = hostUSMAllocData;
+    copyInfoHostUsmToHostUsm.dstAllocInfo.svmAlloc = hostUSMAllocData;
+    copyInfoHostUsmToHostUsm.srcAllocInfo.svmAlloc = hostUSMAllocData;
     EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, 1024);
-    copyInfoHostUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
-    copyInfoHostUsmToDeviceUsm.srcAllocData = hostUSMAllocData;
+    copyInfoHostUsmToDeviceUsm.dstAllocInfo.svmAlloc = deviceUSMAllocData;
+    copyInfoHostUsmToDeviceUsm.srcAllocInfo.svmAlloc = hostUSMAllocData;
     EXPECT_EQ(TransferType::hostUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, 1024);
-    copyInfoHostUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
-    copyInfoHostUsmToSharedUsm.srcAllocData = hostUSMAllocData;
+    copyInfoHostUsmToSharedUsm.dstAllocInfo.svmAlloc = sharedUSMAllocData;
+    copyInfoHostUsmToSharedUsm.srcAllocInfo.svmAlloc = hostUSMAllocData;
     EXPECT_EQ(TransferType::hostUsmToSharedUsm, cmdList.getTransferType(copyInfoHostUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToHostNonUsm(nonUsmHostPtr, hostPtr, 1024);
-    copyInfoHostUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
-    copyInfoHostUsmToHostNonUsm.srcAllocData = hostUSMAllocData;
+    copyInfoHostUsmToHostNonUsm.dstAllocInfo.svmAlloc = hostNonUSMAllocData;
+    copyInfoHostUsmToHostNonUsm.srcAllocInfo.svmAlloc = hostUSMAllocData;
     EXPECT_EQ(TransferType::hostUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToHostImported(importedPtr, hostPtr, 1024);
     copyInfoHostUsmToHostImported.dstIsImportedHostPtr = true;
-    copyInfoHostUsmToHostImported.dstAllocData = nullptr;
-    copyInfoHostUsmToHostImported.srcAllocData = hostUSMAllocData;
+    copyInfoHostUsmToHostImported.dstAllocInfo.svmAlloc = nullptr;
+    copyInfoHostUsmToHostImported.srcAllocInfo.svmAlloc = hostUSMAllocData;
     EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostUsmToHostImported));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostUsm(hostPtr, devicePtr, 1024);
-    copyInfoDeviceUsmToHostUsm.dstAllocData = hostUSMAllocData;
-    copyInfoDeviceUsmToHostUsm.srcAllocData = deviceUSMAllocData;
+    copyInfoDeviceUsmToHostUsm.dstAllocInfo.svmAlloc = hostUSMAllocData;
+    copyInfoDeviceUsmToHostUsm.srcAllocInfo.svmAlloc = deviceUSMAllocData;
     EXPECT_EQ(TransferType::deviceUsmToHostUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToDeviceUsm(devicePtr, devicePtr, 1024);
-    copyInfoDeviceUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
-    copyInfoDeviceUsmToDeviceUsm.srcAllocData = deviceUSMAllocData;
+    copyInfoDeviceUsmToDeviceUsm.dstAllocInfo.svmAlloc = deviceUSMAllocData;
+    copyInfoDeviceUsmToDeviceUsm.srcAllocInfo.svmAlloc = deviceUSMAllocData;
     EXPECT_EQ(TransferType::deviceUsmToDeviceUsm, cmdList.getTransferType(copyInfoDeviceUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToSharedUsm(sharedPtr, devicePtr, 1024);
-    copyInfoDeviceUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
-    copyInfoDeviceUsmToSharedUsm.srcAllocData = deviceUSMAllocData;
+    copyInfoDeviceUsmToSharedUsm.dstAllocInfo.svmAlloc = sharedUSMAllocData;
+    copyInfoDeviceUsmToSharedUsm.srcAllocInfo.svmAlloc = deviceUSMAllocData;
     EXPECT_EQ(TransferType::deviceUsmToSharedUsm, cmdList.getTransferType(copyInfoDeviceUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostNonUsm(nonUsmHostPtr, devicePtr, 1024);
-    copyInfoDeviceUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
-    copyInfoDeviceUsmToHostNonUsm.srcAllocData = deviceUSMAllocData;
+    copyInfoDeviceUsmToHostNonUsm.dstAllocInfo.svmAlloc = hostNonUSMAllocData;
+    copyInfoDeviceUsmToHostNonUsm.srcAllocInfo.svmAlloc = deviceUSMAllocData;
     EXPECT_EQ(TransferType::deviceUsmToHostNonUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostImported(importedPtr, devicePtr, 1024);
     copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr = true;
-    copyInfoDeviceUsmToHostImported.dstAllocData = nullptr;
-    copyInfoDeviceUsmToHostImported.srcAllocData = deviceUSMAllocData;
+    copyInfoDeviceUsmToHostImported.dstAllocInfo.svmAlloc = nullptr;
+    copyInfoDeviceUsmToHostImported.srcAllocInfo.svmAlloc = deviceUSMAllocData;
     EXPECT_EQ(TransferType::deviceUsmToHostUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostImported));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, 1024);
-    copyInfoSharedUsmToHostUsm.dstAllocData = hostUSMAllocData;
-    copyInfoSharedUsmToHostUsm.srcAllocData = sharedUSMAllocData;
+    copyInfoSharedUsmToHostUsm.dstAllocInfo.svmAlloc = hostUSMAllocData;
+    copyInfoSharedUsmToHostUsm.srcAllocInfo.svmAlloc = sharedUSMAllocData;
     EXPECT_EQ(TransferType::sharedUsmToHostUsm, cmdList.getTransferType(copyInfoSharedUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToDeviceUsm(devicePtr, sharedPtr, 1024);
-    copyInfoSharedUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
-    copyInfoSharedUsmToDeviceUsm.srcAllocData = sharedUSMAllocData;
+    copyInfoSharedUsmToDeviceUsm.dstAllocInfo.svmAlloc = deviceUSMAllocData;
+    copyInfoSharedUsmToDeviceUsm.srcAllocInfo.svmAlloc = sharedUSMAllocData;
     EXPECT_EQ(TransferType::sharedUsmToDeviceUsm, cmdList.getTransferType(copyInfoSharedUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToSharedUsm(sharedPtr, sharedPtr, 1024);
-    copyInfoSharedUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
-    copyInfoSharedUsmToSharedUsm.srcAllocData = sharedUSMAllocData;
+    copyInfoSharedUsmToSharedUsm.dstAllocInfo.svmAlloc = sharedUSMAllocData;
+    copyInfoSharedUsmToSharedUsm.srcAllocInfo.svmAlloc = sharedUSMAllocData;
     EXPECT_EQ(TransferType::sharedUsmToSharedUsm, cmdList.getTransferType(copyInfoSharedUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostNonUsm(nonUsmHostPtr, sharedPtr, 1024);
-    copyInfoSharedUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
-    copyInfoSharedUsmToHostNonUsm.srcAllocData = sharedUSMAllocData;
+    copyInfoSharedUsmToHostNonUsm.dstAllocInfo.svmAlloc = hostNonUSMAllocData;
+    copyInfoSharedUsmToHostNonUsm.srcAllocInfo.svmAlloc = sharedUSMAllocData;
     EXPECT_EQ(TransferType::sharedUsmToHostNonUsm, cmdList.getTransferType(copyInfoSharedUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostImported(importedPtr, sharedPtr, 1024);
     copyInfoSharedUsmToHostImported.dstIsImportedHostPtr = true;
-    copyInfoSharedUsmToHostImported.dstAllocData = nullptr;
-    copyInfoSharedUsmToHostImported.srcAllocData = sharedUSMAllocData;
+    copyInfoSharedUsmToHostImported.dstAllocInfo.svmAlloc = nullptr;
+    copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc = sharedUSMAllocData;
     EXPECT_EQ(TransferType::sharedUsmToHostUsm, cmdList.getTransferType(copyInfoSharedUsmToHostImported));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getDriverHandle()->releaseImportedPointer(importedPtr));
@@ -1370,8 +1369,8 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingC
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 1024);
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound != dstFound);
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
@@ -1381,7 +1380,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingC
     returnValue = cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 
-    std::swap(cpuMemCopyInfo.srcAllocData, cpuMemCopyInfo.dstAllocData);
+    std::swap(cpuMemCopyInfo.srcAllocInfo.svmAlloc, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     returnValue = cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 }

@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 
 #include <atomic>
 #include <functional>
@@ -35,8 +36,8 @@ struct CpuMemCopyInfo {
     void *const dstPtr;
     void *const srcPtr;
     const size_t size;
-    NEO::SvmAllocationData *dstAllocData{nullptr};
-    NEO::SvmAllocationData *srcAllocData{nullptr};
+    MemAllocInfo dstAllocInfo{};
+    MemAllocInfo srcAllocInfo{};
     bool dstIsImportedHostPtr = false;
     bool srcIsImportedHostPtr = false;
 
@@ -256,12 +257,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
-    bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemcpyInfo, bool hasDependencies);
-    MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemcpyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
+    bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies);
+    MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
     void tryResetKernelWithAssertFlag();
-    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, CachedHostPtrAllocs &cachedAllocs, bool copyOffload);
+    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
