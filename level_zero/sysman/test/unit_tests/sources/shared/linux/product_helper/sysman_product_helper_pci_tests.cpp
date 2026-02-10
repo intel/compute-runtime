@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ const std::string telem2NodePath("/sys/class/intel_pmt/telem2");
 const std::string telem3NodePath("/sys/class/intel_pmt/telem3");
 const std::string telem4NodePath("/sys/class/intel_pmt/telem4");
 
-const std::string mockValidGuid("0x5e2f8210");
+std::string mockValidGuid("0x5e2f8210");
 const std::string telem3OffsetString = "10";
 const std::string telem3GuidFile = "/sys/class/intel_pmt/telem3/guid";
 const std::string telem3OffsetFile = "/sys/class/intel_pmt/telem3/offset";
@@ -39,6 +39,11 @@ constexpr uint64_t mockTxPacketCounterLsbOffset = telem3OffsetValue + 304;
 constexpr uint64_t mockTxPacketCounterMsbOffset = telem3OffsetValue + 300;
 constexpr uint64_t mockTimestampLsbOffset = telem3OffsetValue + 368;
 constexpr uint64_t mockTimestampMsbOffset = telem3OffsetValue + 372;
+constexpr uint64_t mockRxCounterOffset = telem3OffsetValue + 520;
+constexpr uint64_t mockTxCounterOffset = telem3OffsetValue + 528;
+constexpr uint64_t mockRxPacketCounterOffset = telem3OffsetValue + 536;
+constexpr uint64_t mockTxPacketCounterOffset = telem3OffsetValue + 544;
+constexpr uint64_t mockTimestampOffset = telem3OffsetValue + 664;
 
 constexpr uint32_t mockRxCounterLsb = 0xA2u;
 constexpr uint32_t mockRxCounterMsb = 0xF5u;
@@ -113,6 +118,31 @@ static ssize_t mockPreadSuccess(int fd, void *buf, size_t count, off_t offset) {
         case mockTimestampMsbOffset:
             memcpy(buf, &mockTimestampMsb, count);
             break;
+        case mockRxCounterOffset: {
+            uint64_t rxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
+            memcpy(buf, &rxCounter, count);
+            break;
+        }
+        case mockTxCounterOffset: {
+            uint64_t txCounter = packInto64Bit(mockTxCounterMsb, mockTxCounterLsb);
+            memcpy(buf, &txCounter, count);
+            break;
+        }
+        case mockRxPacketCounterOffset: {
+            uint64_t rxPacketCounter = packInto64Bit(mockRxPacketCounterMsb, mockRxPacketCounterLsb);
+            memcpy(buf, &rxPacketCounter, count);
+            break;
+        }
+        case mockTxPacketCounterOffset: {
+            uint64_t txPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
+            memcpy(buf, &txPacketCounter, count);
+            break;
+        }
+        case mockTimestampOffset: {
+            uint64_t timeStamp = packInto64Bit(mockTimestampMsb, mockTimestampLsb);
+            memcpy(buf, &timeStamp, count);
+            break;
+        }
         }
     }
     return count;
@@ -124,7 +154,21 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndTelemNodesAreNotAvailableThenCallFails, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_pci_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+}
+
 HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndReadGuidFromPmtUtilFailsThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_pci_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndReadGuidFromPmtUtilFailsThenCallFails, IsCRI) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -147,7 +191,39 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndGuidIsNotPresentInGuidToKeyOffsetMapThenCallFails, IsCRI) {
+    static std::string dummyGuid("dummyGuid");
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
+            memcpy(buf, dummyGuid.data(), count);
+        }
+        return count;
+    });
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_pci_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+}
+
 HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndTelemFileIsNotAvailableThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::string strPathName(pathname);
+        if (strPathName == telem3TelemFile) {
+            return -1;
+        }
+        return (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) ? telem3FileAndFdMap.at(strPathName) : -1;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_pci_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndTelemFileIsNotAvailableThenCallFails, IsCRI) {
+    mockValidGuid = "0x5e2fa230"; // Guid present in guidToKeyOffsetMap for CRI
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -268,13 +344,84 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenValidDeviceHandleWhenDeviceGetPciProp
     EXPECT_FALSE(properties.haveReplayCounters);
 }
 
-HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledThenCallFails, IsNotBMG) {
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndReadValueFromPmtUtilFailsThenCallFails, IsCRI) {
+    static int readFailCount = 1;
+    mockValidGuid = "0x5e2fa230"; // Guid present in guidToKeyOffsetMap for CRI
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
+            memcpy(buf, mockValidGuid.data(), count);
+        } else if (fd == telem3FileAndFdMap.at(telem3OffsetFile)) {
+            memcpy(buf, telem3OffsetString.data(), count);
+        } else if (fd == telem3FileAndFdMap.at(telem3TelemFile)) {
+            switch (offset) {
+            case mockRxCounterOffset:
+                count = (readFailCount == 1) ? -1 : sizeof(uint64_t);
+                break;
+            case mockTxCounterOffset:
+                count = (readFailCount == 2) ? -1 : sizeof(uint64_t);
+                break;
+            case mockRxPacketCounterOffset:
+                count = (readFailCount == 3) ? -1 : sizeof(uint64_t);
+                break;
+            case mockTxPacketCounterOffset:
+                count = (readFailCount == 4) ? -1 : sizeof(uint64_t);
+                break;
+            case mockTimestampOffset:
+                count = (readFailCount == 5) ? -1 : sizeof(uint64_t);
+                break;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_pci_stats_t stats = {};
+    while (readFailCount <= 5) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+        readFailCount++;
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetPciStatsIsCalledThenCallSucceeds, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
+
+    zes_pci_stats_t stats = {};
+    mockValidGuid = "0x5e2fa230"; // Guid present in guidToKeyOffsetMap for CRI
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats));
+
+    uint64_t mockRxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
+    EXPECT_EQ(mockRxCounter, stats.rxCounter);
+
+    uint64_t mockTxCounter = packInto64Bit(mockTxCounterMsb, mockTxCounterLsb);
+    EXPECT_EQ(mockTxCounter, stats.txCounter);
+
+    uint64_t mockRxPacketCounter = packInto64Bit(mockRxPacketCounterMsb, mockRxPacketCounterLsb);
+    uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
+    EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
+
+    uint64_t mockFinalTimestamp = packInto64Bit(mockTimestampMsb, mockTimestampLsb) * milliSecsToMicroSecs;
+    EXPECT_EQ(mockFinalTimestamp, stats.timestamp);
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenValidDeviceHandleWhenDeviceGetPciPropertiesIsCalledThenCallSucceeds, IsCRI) {
+    zes_pci_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_TRUE(properties.haveBandwidthCounters);
+    EXPECT_TRUE(properties.havePacketCounters);
+    EXPECT_FALSE(properties.haveReplayCounters);
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledThenCallFails, IsNotCriOrBmg) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_pci_stats_t stats;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
-HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciPropertiesIsCalledThenCallFails, IsNotBMG) {
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciPropertiesIsCalledThenCallFails, IsNotCriOrBmg) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
     zes_pci_properties_t properties = {};

@@ -34,7 +34,12 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"GPU_BOARD_TEMPERATURE", 176},
       {"VRAM_BANDWIDTH", 56}}},
     {"0x5e2fa230",
-     {{"MEMSS0_PERF_CTR_MB0_CFI_NUM_READ_REQ", 688},
+     {{"PCIE_RECEIVE_BYTES", 520},
+      {"PCIE_TRANSMIT_BYTES", 528},
+      {"PCIE_RECEIVE_PACKETS", 536},
+      {"PCIE_TRANSMIT_PACKETS", 544},
+      {"LPDDR_TELEM_CAPTURE_TIMESTAMP", 664},
+      {"MEMSS0_PERF_CTR_MB0_CFI_NUM_READ_REQ", 688},
       {"MEMSS1_PERF_CTR_MB0_CFI_NUM_READ_REQ", 768},
       {"MEMSS2_PERF_CTR_MB0_CFI_NUM_READ_REQ", 848},
       {"MEMSS3_PERF_CTR_MB0_CFI_NUM_READ_REQ", 928},
@@ -396,6 +401,95 @@ static zes_intel_freq_throttle_detailed_reason_exp_flags_t getDetailedThrottleRe
 
     return detailedThrottleReasons;
 }
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properties_t *pProperties) {
+    pProperties->haveBandwidthCounters = true;
+    pProperties->havePacketCounters = true;
+    pProperties->haveReplayCounters = false;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
+    constexpr int32_t maxPcieGenSupported = 5;
+    return maxPcieGenSupported;
+}
+
+static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemNodeDir) {
+    uint64_t rxCounter = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_BYTES", 0, rxCounter)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t txCounter = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_BYTES", 0, txCounter)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t rxPacketCounter = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_PACKETS", 0, rxPacketCounter)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t txPacketCounter = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_PACKETS", 0, txPacketCounter)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t timeStamp = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "LPDDR_TELEM_CAPTURE_TIMESTAMP", 0, timeStamp)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    pStats->speed.gen = -1;
+    pStats->speed.width = -1;
+    pStats->speed.maxBandwidth = -1;
+    pStats->replayCounter = 0;
+    pStats->rxCounter = rxCounter;
+    pStats->txCounter = txCounter;
+    pStats->packetCounter = rxPacketCounter + txPacketCounter;
+    pStats->timestamp = timeStamp * milliSecsToMicroSecs;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    for (auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        result = getPciStatsValues(pStats, keyOffsetMapIterator->second, telemNodeDir);
+        if (result == ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+
+    return result;
+};
 
 template <>
 zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) {
