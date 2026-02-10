@@ -48,10 +48,6 @@ bool isOclVersionBelow12(const std::string &compileOptions) {
 }
 
 bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *currentCachePolicy) {
-    if (!requiresL1PolicyMissmatchCheck()) {
-        return false;
-    }
-
     if (currentCachePolicy) {
         auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
         if (currentCachePolicyIter == std::string::npos) {
@@ -60,8 +56,8 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *current
             auto cachePolicyIter = buildOptions.find(cachePolicyPrefix);
             if (cachePolicyIter != std::string::npos) {
                 buildOptions.replace(cachePolicyIter, strlen(currentCachePolicy), currentCachePolicy);
+                return true;
             }
-            return true;
         }
     }
     return false;

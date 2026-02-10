@@ -369,8 +369,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
 
         bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
         rebuild |= !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
-        rebuild |= device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded() &&
-                   NEO::checkAndReplaceL1CachePolicy(this->options, device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(device->getNEODevice()->getDebugger()));
+        rebuild |= NEO::checkAndReplaceL1CachePolicy(this->options, device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(device->getNEODevice()->getDebugger()));
 
         if (rebuild && irBinarySize == 0) {
             driverHandle->clearErrorDescription();
