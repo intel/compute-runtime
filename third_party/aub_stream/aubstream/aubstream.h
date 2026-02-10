@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,9 +73,25 @@ constexpr uint32_t address = 1;
 } // namespace clearColorType
 
 using MMIOPair = std::pair<uint32_t, uint32_t>;
+struct MaskedMMIOWrite {
+    uint32_t offset;
+    uint32_t value;
+    uint32_t mask;
+
+    // Default constructor and constructor for direct initialization
+    MaskedMMIOWrite(uint32_t offset = 0, uint32_t value = 0, uint32_t mask = 0xFFFFFFFFu)
+        : offset(offset), value(value), mask(mask) {}
+
+    // Implicit conversion from MMIOPair (mask defaults to 0xFFFFFFFF)
+    MaskedMMIOWrite(const MMIOPair &pair)
+        : offset(pair.first), value(pair.second), mask(0xFFFFFFFFu) {}
+};
+
 using MMIOList = std::vector<MMIOPair>;
+using MaskedMMIOList = std::vector<MaskedMMIOWrite>;
 
 extern "C" void injectMMIOList(MMIOList mmioList);
+extern "C" void injectMaskedMMIOList(MaskedMMIOList maskedMmioList);
 extern "C" void setTbxServerPort(uint16_t port);
 extern "C" void setTbxServerIp(std::string server);
 extern "C" void setTbxFrontdoorMode(bool frontdoor);
