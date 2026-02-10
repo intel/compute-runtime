@@ -2902,7 +2902,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
 
     NEO::Device *neoDevice = device->getNEODevice();
-    bool sharedSystemEnabled = neoDevice->areSharedSystemAllocationsAllowed();
+    bool sharedSystemEnabled = isSharedSystemEnabled();
 
     if (this->maxFillPatternSizeForCopyEngine < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
@@ -2934,9 +2934,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
                 uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
                 gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr);
             }
-            if ((gpuAllocation == nullptr) && (sharedSystemEnabled == false)) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
         }
 
         uint32_t patternToCommand[4] = {};
@@ -2951,11 +2948,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
             blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, 0, size, patternToCommand, patternSize, offset);
             size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, neoDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
             useAdditionalTimestamp = nBlits > 1;
-        } else if (sharedSystemEnabled == true) {
+        } else if (sharedSystemEnabled) {
             if (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1) {
                 appendMemAdvise(device, ptr, size, static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
             }
             blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(ptr), size, patternToCommand, patternSize, 0ul);
+        } else if (neoDevice->areSharedSystemAllocationsAllowed()) {
+            gpuAllocation = getHostPtrAlloc(ptr, size, false, false);
+
+            commandContainer.addToResidencyContainer(gpuAllocation);
+
+            blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, 0, size, patternToCommand, patternSize, 0ul);
+            size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, neoDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+            useAdditionalTimestamp = nBlits > 1;
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
