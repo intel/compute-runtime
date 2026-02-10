@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,6 @@ set(NEO_SHARED_aub_tests_configurations
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
     ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp

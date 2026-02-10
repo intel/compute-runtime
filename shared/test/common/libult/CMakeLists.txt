@@ -96,7 +96,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper_hash_value.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_filename_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp

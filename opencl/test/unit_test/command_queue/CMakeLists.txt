@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -49,7 +49,6 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_two_ooq_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_two_walker_ioq_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_two_walker_ooq_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_map_buffer_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_map_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_map_image_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_marker_tests.cpp
