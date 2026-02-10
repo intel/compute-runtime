@@ -22,7 +22,7 @@ bool TbxPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) 
             std::unique_lock<RecursiveSpinLock> lock{mtx};
             auto allocPtr = getFaultData(memoryData, ptr, handleFault);
             if (allocPtr != nullptr) {
-                auto faultData = memoryData[allocPtr];
+                auto &faultData = memoryData[allocPtr];
                 if (faultData.domain == CpuPageFaultManager::AllocationDomain::gpu) {
                     this->allowCPUMemoryAccess(allocPtr, faultData.size);
                 }
