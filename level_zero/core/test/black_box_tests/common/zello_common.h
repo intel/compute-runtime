@@ -387,6 +387,7 @@ struct CommandHandler {
 using TestBitMask = std::bitset<32>;
 
 TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue);
+TestBitMask getTestSubmask(int argc, char *argv[], uint32_t defaultValue);
 
 void printGroupCount(ze_group_count_t &groupCount);
 

@@ -749,6 +749,20 @@ TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
     return bitValue;
 }
 
+TestBitMask getTestSubmask(int argc, char *argv[], uint32_t defaultValue) {
+    uint32_t value = getParamValue(argc, argv, "-s", "-submask", defaultValue);
+    std::cout << "Subtest mask ";
+    if (value != defaultValue) {
+        std::cout << "override ";
+    } else {
+        std::cout << "default ";
+    }
+    TestBitMask bitValue(value);
+    std::cout << "value 0b" << bitValue << std::endl;
+
+    return bitValue;
+}
+
 void printGroupCount(ze_group_count_t &groupCount) {
     if (verbose) {
         std::cout << "Number of groups : (" << groupCount.groupCountX << ", "

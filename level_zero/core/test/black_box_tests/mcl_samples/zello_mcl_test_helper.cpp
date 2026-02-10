@@ -986,18 +986,4 @@ void printFailedCases() {
     }
 }
 
-LevelZeroBlackBoxTests::TestBitMask getTestSubmask(int argc, char *argv[], uint32_t defaultValue) {
-    uint32_t value = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-s", "-submask", defaultValue);
-    std::cout << "Subtest mask ";
-    if (value != defaultValue) {
-        std::cout << "override ";
-    } else {
-        std::cout << "default ";
-    }
-    LevelZeroBlackBoxTests::TestBitMask bitValue(value);
-    std::cout << "value 0b" << bitValue << std::endl;
-
-    return bitValue;
-}
-
 } // namespace MclTests

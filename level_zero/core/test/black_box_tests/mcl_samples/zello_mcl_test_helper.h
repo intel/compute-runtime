@@ -245,7 +245,6 @@ void prepareOutputSlmKernelTwoArgs(std::vector<uint32_t> &data, uint32_t groupSi
 
 void addFailedCase(bool caseResult, const std::string &caseName, uint32_t testNumber);
 void printFailedCases();
-LevelZeroBlackBoxTests::TestBitMask getTestSubmask(int argc, char *argv[], uint32_t defaultValue);
 
 namespace Kernels {
 extern const char *sources;

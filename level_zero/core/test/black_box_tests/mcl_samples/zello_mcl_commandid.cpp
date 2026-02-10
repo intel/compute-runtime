@@ -5699,7 +5699,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t excludedTestsFromDefault = (1u << bitNumberTestExperimental) | (1u << bitNumberTestCbSignalIncrementEvent);
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max() & ~excludedTestsFromDefault;
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
-    LevelZeroBlackBoxTests::TestBitMask testSubMask = MclTests::getTestSubmask(argc, argv, std::numeric_limits<uint32_t>::max());
+    LevelZeroBlackBoxTests::TestBitMask testSubMask = LevelZeroBlackBoxTests::getTestSubmask(argc, argv, std::numeric_limits<uint32_t>::max());
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     bool limitedValuesSet = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-l", "--limited");

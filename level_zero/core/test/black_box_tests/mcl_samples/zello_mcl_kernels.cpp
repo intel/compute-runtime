@@ -4100,7 +4100,7 @@ int main(int argc, char *argv[]) {
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max() & ~(1u << bitNumberMixingGlobalBarrierKernels);
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
-    LevelZeroBlackBoxTests::TestBitMask testSubMask = MclTests::getTestSubmask(argc, argv, std::numeric_limits<uint32_t>::max());
+    LevelZeroBlackBoxTests::TestBitMask testSubMask = LevelZeroBlackBoxTests::getTestSubmask(argc, argv, std::numeric_limits<uint32_t>::max());
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     LevelZeroBlackBoxTests::getErrorMax(argc, argv);
