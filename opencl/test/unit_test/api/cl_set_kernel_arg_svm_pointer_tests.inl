@@ -427,7 +427,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenAllocIdCacheHi
         auto devicePoolsManager = static_cast<MockUsmMemAllocPoolsFacade *>(&pContext->getDeviceMemAllocPoolsManager());
 
         auto expectedAllocationsCounter = 1u;
-        expectedAllocationsCounter += pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInitialized() ? 1u : 0u;
+        expectedAllocationsCounter += pContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().isInitialized() ? 1u : 0u;
         expectedAllocationsCounter += devicePoolsManager->poolManager ? 3u : 0u;
         expectedAllocationsCounter += devicePoolsManager->pool ? 1u : 0u;
 

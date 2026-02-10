@@ -714,7 +714,7 @@ TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     auto platform = static_cast<MockPlatform *>(device->getPlatform());
     for (auto enablePoolManager : {false, true}) {
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         platform->usmPoolInitialized = false;
         mockContext->getDeviceMemAllocPoolsManager().cleanup();
         mockContext->usmPoolInitialized = false;
@@ -781,7 +781,7 @@ TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     auto platform = static_cast<MockPlatform *>(device->getPlatform());
     for (auto enablePoolManager : {false, true}) {
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         platform->usmPoolInitialized = false;
         mockContext->getDeviceMemAllocPoolsManager().cleanup();
         mockContext->usmPoolInitialized = false;

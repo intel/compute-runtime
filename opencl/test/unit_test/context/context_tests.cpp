@@ -809,37 +809,6 @@ TEST_F(ContextUsmPoolParamsTest, whenGettingUsmPoolParamsThenReturnCorrectValues
     EXPECT_TRUE(compareUsmPoolParams(expectedPoolParams, UsmPoolParams::getUsmPoolParams(context->getDevice(0)->getGfxCoreHelper())));
 }
 
-TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedWithCorrectParams) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
-
-    mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
-    mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-
-    cl_device_id devices[] = {device};
-    context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    auto platform = context->getDevice(0)->getPlatform();
-    EXPECT_NE(nullptr, platform);
-
-    context->initializeDeviceUsmAllocationPool();
-    platform->initializeHostUsmAllocationPool();
-
-    EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
-    EXPECT_TRUE(context->getDeviceMemAllocPoolsManager().isInitialized());
-
-    {
-        auto mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&platform->getHostMemAllocPool());
-        const UsmPoolParams givenUsmHostPoolParams{
-            .poolSize = mockHostUsmMemAllocPool->poolInfo.poolSize,
-            .minServicedSize = mockHostUsmMemAllocPool->poolInfo.minServicedSize,
-            .maxServicedSize = mockHostUsmMemAllocPool->poolInfo.maxServicedSize};
-        const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmPoolParams(context->getDevice(0)->getGfxCoreHelper());
-
-        EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, givenUsmHostPoolParams));
-    }
-}
-
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedOnlyWithHwCsr) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmAllocationPoolManager.set(0);
@@ -856,15 +825,15 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
         auto platform = static_cast<MockPlatform *>(context->getDevice(0)->getPlatform());
         EXPECT_NE(nullptr, platform);
-        EXPECT_FALSE(platform->getHostMemAllocPool().isInitialized());
+        EXPECT_FALSE(platform->getHostMemAllocPoolManager().isInitialized());
         EXPECT_FALSE(context->getDeviceMemAllocPoolsManager().isInitialized());
         context->initializeDeviceUsmAllocationPool();
         platform->initializeHostUsmAllocationPool();
 
-        EXPECT_EQ(DeviceFactory::isHwModeSelected(), platform->getHostMemAllocPool().isInitialized());
+        EXPECT_EQ(DeviceFactory::isHwModeSelected(), platform->getHostMemAllocPoolManager().isInitialized());
         EXPECT_EQ(DeviceFactory::isHwModeSelected(), context->getDeviceMemAllocPoolsManager().isInitialized());
         context->getDeviceMemAllocPoolsManager().cleanup();
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         context->usmPoolInitialized = false;
         platform->usmPoolInitialized = false;
     }

@@ -55,10 +55,10 @@ TEST_F(UsmPoolTestWithSingleDevice, givenCreatedContextWhenCheckingUsmPoolsThenP
     EXPECT_EQ(nullptr, mockDeviceMemPoolsFacade->poolManager);
     EXPECT_EQ(nullptr, mockDeviceMemPoolsFacade->pool);
 
-    MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&mockContext->getDevice(0u)->getPlatform()->getHostMemAllocPool());
-    EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(0u, mockHostUsmMemAllocPool->poolInfo.poolSize);
-    EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
+    MockUsmMemAllocPoolsFacade *mockHostUsmManager = static_cast<MockUsmMemAllocPoolsFacade *>(&mockContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager());
+    EXPECT_FALSE(mockHostUsmManager->isInitialized());
+    EXPECT_EQ(nullptr, mockDeviceMemPoolsFacade->poolManager);
+    EXPECT_EQ(nullptr, mockHostUsmManager->pool);
 }
 
 TEST_F(UsmPoolTestWithSingleDevice, givenEnabledDebugFlagsAndUsmPoolsNotSupportedWhenCreatingAllocationsThenPoolsAreInitialized) {
@@ -72,7 +72,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenEnabledDebugFlagsAndUsmPoolsNotSupporte
     auto platform = static_cast<MockPlatform *>(device->getPlatform());
     for (auto enablePoolManager : {false, true}) {
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         platform->usmPoolInitialized = false;
         mockContext->getDeviceMemAllocPoolsManager().cleanup();
         mockContext->usmPoolInitialized = false;
@@ -91,20 +91,20 @@ TEST_F(UsmPoolTestWithSingleDevice, givenEnabledDebugFlagsAndUsmPoolsNotSupporte
         if (enablePoolManager) {
             EXPECT_NE(nullptr, mockDeviceMemPoolsFacade->poolManager);
 
-            EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
+            EXPECT_TRUE(platform->getHostMemAllocPoolManager().isInitialized());
             EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
         } else {
             EXPECT_NE(nullptr, mockDeviceMemPoolsFacade->pool);
 
-            EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
+            EXPECT_TRUE(platform->getHostMemAllocPoolManager().isInitialized());
             EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
 
             MockUsmMemAllocPool *mockDeviceUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockDeviceMemPoolsFacade->pool.get());
             EXPECT_EQ(1 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolInfo.poolSize);
             EXPECT_NE(nullptr, mockDeviceUsmMemAllocPool->pool);
             EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mockDeviceUsmMemAllocPool->poolMemoryType);
-
-            MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&platform->getHostMemAllocPool());
+            auto mockUsmHostFacade = static_cast<MockUsmMemAllocPoolsFacade *>(&platform->getHostMemAllocPoolManager());
+            MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockUsmHostFacade->pool.get());
             EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolInfo.poolSize);
             EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
             EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
@@ -132,7 +132,8 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsSupportedWhenCreatingAllocation
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
     MockUsmMemAllocPool *mockDeviceUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockDeviceMemPoolsFacade->pool.get());
-    MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&device->getPlatform()->getHostMemAllocPool());
+    auto mockUsmHostFacade = static_cast<MockUsmMemAllocPoolsFacade *>(&device->getPlatform()->getHostMemAllocPoolManager());
+    MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockUsmHostFacade->pool.get());
     EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockDeviceUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockHostUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
@@ -157,7 +158,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsSupportedAndDisabledByDebugFlag
     clMemFreeINTEL(mockContext.get(), hostAlloc);
 
     EXPECT_FALSE(mockContext->getDeviceMemAllocPoolsManager().isInitialized());
-    EXPECT_FALSE(mockContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInitialized());
+    EXPECT_FALSE(mockContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().isInitialized());
 }
 
 using UsmPoolTestWithMultipleDevice = UsmPoolTest<2>;
@@ -174,7 +175,7 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenUsmPoolsSupportedAndMultiDeviceContex
     for (auto enablePoolManager : {false, true}) {
         DebugManagerStateRestore restorer;
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         platform->usmPoolInitialized = false;
         mockContext->getDeviceMemAllocPoolsManager().cleanup();
         mockContext->usmPoolInitialized = false;
@@ -191,7 +192,7 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenUsmPoolsSupportedAndMultiDeviceContex
         EXPECT_EQ(CL_SUCCESS, retVal);
         clMemFreeINTEL(mockContext.get(), hostAlloc);
 
-        EXPECT_TRUE(platform->getHostMemAllocPool().isInitialized());
+        EXPECT_TRUE(platform->getHostMemAllocPoolManager().isInitialized());
         EXPECT_FALSE(mockContext->getDeviceMemAllocPoolsManager().isInitialized());
 
         mockContext->devices.pop_back();
@@ -206,7 +207,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenTwoContextsWhenHostAllocationIsFreedInF
     auto platform = static_cast<MockPlatform *>(device->getPlatform());
     for (auto enablePoolManager : {false, true}) {
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPool().cleanup();
+        platform->getHostMemAllocPoolManager().cleanup();
         platform->usmPoolInitialized = false;
 
         cl_int retVal = CL_SUCCESS;
@@ -214,8 +215,13 @@ TEST_F(UsmPoolTestWithSingleDevice, givenTwoContextsWhenHostAllocationIsFreedInF
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, pooledHostAlloc1);
 
-        MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&platform->getHostMemAllocPool());
-        EXPECT_GT(mockHostUsmMemAllocPool->poolInfo.poolSize, 0u);
+        auto mockUsmHostFacade = static_cast<MockUsmMemAllocPoolsFacade *>(&platform->getHostMemAllocPoolManager());
+        if (!enablePoolManager) {
+            MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockUsmHostFacade->pool.get());
+            EXPECT_GT(mockHostUsmMemAllocPool->poolInfo.poolSize, 0u);
+        } else {
+            EXPECT_NE(nullptr, mockUsmHostFacade->getPoolContainingAlloc(pooledHostAlloc1));
+        }
 
         clMemFreeINTEL(mockContext.get(), pooledHostAlloc1);
 

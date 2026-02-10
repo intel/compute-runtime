@@ -48,7 +48,7 @@ Platform::~Platform() {
 
     if (isInitialized()) {
         svmAllocsManager->cleanupUSMAllocCaches();
-        usmHostMemAllocPool.cleanup();
+        usmHostMemAllocPoolsManager.cleanup();
         delete stagingBufferManager;
     }
     devicesCleanup(false);
@@ -286,8 +286,8 @@ StagingBufferManager *Platform::getStagingBufferManager() const {
     return this->stagingBufferManager;
 }
 
-UsmMemAllocPool &Platform::getHostMemAllocPool() {
-    return this->usmHostMemAllocPool;
+UsmMemAllocPoolsFacade &Platform::getHostMemAllocPoolManager() {
+    return this->usmHostMemAllocPoolsManager;
 }
 
 void Platform::incActiveContextCount() {
@@ -320,15 +320,10 @@ void Platform::initializeHostUsmAllocationPool() {
         usmHostAllocPoolingEnabled &= device->getProductHelper().isHostUsmPoolAllocatorSupported() && DeviceFactory::isHwModeSelected();
     }
 
-    auto usmHostPoolParams = UsmPoolParams::getUsmPoolParams(this->clDevices[0]->getGfxCoreHelper());
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         usmHostAllocPoolingEnabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
-        usmHostPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
     if (usmHostAllocPoolingEnabled) {
-        RootDeviceIndicesContainer rootDeviceIndices;
-        std::map<uint32_t, DeviceBitfield> deviceBitfields;
-
         for (auto &device : this->clDevices) {
             rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
         }
@@ -345,7 +340,8 @@ void Platform::initializeHostUsmAllocationPool() {
 
         UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                  rootDeviceIndices, deviceBitfields);
-        this->usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmHostPoolParams.poolSize, usmHostPoolParams.minServicedSize, usmHostPoolParams.maxServicedSize);
+        auto &device = this->clDevices[0]->getDevice();
+        this->usmHostMemAllocPoolsManager.initialize(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, &device, svmMemoryManager);
     }
     this->usmPoolInitialized = true;
 }

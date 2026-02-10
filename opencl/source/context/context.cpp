@@ -125,8 +125,7 @@ cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
             memoryType = svmEntry->memoryType;
             UsmMemAllocPool *pool = nullptr;
             if (memoryType == InternalMemoryType::hostUnifiedMemory) {
-                UsmMemAllocPool *hostAllocPool = &this->getDevice(0u)->getPlatform()->getHostMemAllocPool();
-                pool = hostAllocPool->isInPool(ptr) ? hostAllocPool : nullptr;
+                pool = this->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().getPoolContainingAlloc(ptr);
             } else if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
                 pool = this->getDeviceMemAllocPoolsManager().getPoolContainingAlloc(ptr);
             }

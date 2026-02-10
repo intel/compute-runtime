@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     SVMAllocsManager *getSVMAllocsManager() const;
     StagingBufferManager *getStagingBufferManager() const;
-    UsmMemAllocPool &getHostMemAllocPool();
+    UsmMemAllocPoolsFacade &getHostMemAllocPoolManager();
     void initializeHostUsmAllocationPool();
 
     void incActiveContextCount();
@@ -87,7 +87,9 @@ class Platform : public BaseObject<_cl_platform_id> {
     SVMAllocsManager *svmAllocsManager = nullptr;
     StagingBufferManager *stagingBufferManager = nullptr;
     int32_t activeContextCount = 0;
-    UsmMemAllocPool usmHostMemAllocPool;
+    UsmMemAllocPoolsFacade usmHostMemAllocPoolsManager;
+    RootDeviceIndicesContainer rootDeviceIndices;
+    std::map<uint32_t, DeviceBitfield> deviceBitfields;
     bool usmPoolInitialized = false;
 };
 
