@@ -268,7 +268,8 @@ cl_int Program::createProgramFromBinary(
                 }
             } else {
                 rebuild |= flagRebuild;
-                rebuild |= checkAndReplaceL1CachePolicy(this->options, clDevice.getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(clDevice.getDebugger()));
+                rebuild |= clDevice.getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded() &&
+                           checkAndReplaceL1CachePolicy(this->options, singleDeviceBinary.generatorFeatureVersions.version, clDevice.getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(clDevice.getDebugger()));
             }
 
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {

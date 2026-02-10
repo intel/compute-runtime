@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,6 +138,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             if (DecodeError::success != decodeError) {
                 return false;
             }
+            generatorFeatures.version = receivedZeInfoVersion;
             decodeError = ZeInfo::validateZeInfoVersion(receivedZeInfoVersion, outErrReason, outWarning);
             if (DecodeError::success != decodeError) {
                 return false;

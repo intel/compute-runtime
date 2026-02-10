@@ -33,6 +33,10 @@ struct UltHwConfig {
 
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
+
+    bool recompileKernelsWhenL1PolicyMissmatch = false;
+
+    char padding[7];
 };
 
 extern UltHwConfig ultHwConfig;

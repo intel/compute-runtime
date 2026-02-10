@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
@@ -79,6 +80,7 @@ struct GeneratorFeatureVersions {
     using VersionT = uint32_t;
     VersionT indirectMemoryAccessDetection = 0u;
     VersionT indirectAccessBuffer = 0u;
+    Zebin::ZeInfo::Types::Version version = {};
 };
 
 struct SingleDeviceBinary {

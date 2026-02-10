@@ -77,6 +77,11 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isL1PolicyMissmatchCheckNeeded() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
 }

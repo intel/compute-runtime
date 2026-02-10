@@ -47,7 +47,16 @@ bool isOclVersionBelow12(const std::string &compileOptions) {
     return majorVersion == 1 && minorVersion < 2;
 }
 
-bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *currentCachePolicy) {
+bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo::Types::Version version, const char *currentCachePolicy) {
+    if (!requiresL1PolicyMissmatchCheck()) {
+        return false;
+    }
+
+    // After 1.60 all binaries should have WB cache policy
+    if (version.major >= 1 && version.minor > 60) {
+        return false;
+    }
+
     if (currentCachePolicy) {
         auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
         if (currentCachePolicyIter == std::string::npos) {
@@ -56,8 +65,8 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, const char *current
             auto cachePolicyIter = buildOptions.find(cachePolicyPrefix);
             if (cachePolicyIter != std::string::npos) {
                 buildOptions.replace(cachePolicyIter, strlen(currentCachePolicy), currentCachePolicy);
-                return true;
             }
+            return true;
         }
     }
     return false;
