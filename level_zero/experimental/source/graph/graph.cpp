@@ -564,13 +564,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
     }
     UNRECOVERABLE_IF(nullptr == executionTarget);
     if (this->empty()) {
-        if (numWaitEvents) {
-            executionTarget->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, false, false, false);
-        }
-        if (nullptr == hSignalEvent) {
-            return ZE_RESULT_SUCCESS;
-        }
-        executionTarget->appendSignalEvent(hSignalEvent, false);
+        return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
     } else {
         UNRECOVERABLE_IF(this->orderedCommands->empty())
         auto segmentIt = this->getOrderedCommands()->begin();

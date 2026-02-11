@@ -1507,7 +1507,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(immCmdListHandleMultiEngine));
 }
 
-TEST_F(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {
+TEST_F(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenAppendBarrierHandlingEvents) {
     GraphsCleanupGuard graphCleanup;
     Mock<Event> signalEvents[2];
     Mock<Event> waitEvents[3];
@@ -1520,26 +1520,22 @@ TEST_F(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThe
     auto res = graph.execute(&cmdlist, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
-    EXPECT_EQ(0U, cmdlist.appendWaitOnEventsCalled);
-    EXPECT_EQ(0U, cmdlist.appendSignalEventCalled);
+    EXPECT_EQ(1u, cmdlist.appendBarrierCalled);
 
     res = graph.execute(&cmdlist, nullptr, signalEvents[0].toHandle(), 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
-    EXPECT_EQ(0U, cmdlist.appendWaitOnEventsCalled);
-    EXPECT_EQ(1U, cmdlist.appendSignalEventCalled);
+    EXPECT_EQ(2u, cmdlist.appendBarrierCalled);
 
     res = graph.execute(&cmdlist, nullptr, signalEvents[0].toHandle(), 2, waitEventsList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
-    EXPECT_EQ(1U, cmdlist.appendWaitOnEventsCalled);
-    EXPECT_EQ(2U, cmdlist.appendSignalEventCalled);
+    EXPECT_EQ(3u, cmdlist.appendBarrierCalled);
 
     res = graph.execute(&cmdlist, nullptr, nullptr, 3, waitEventsList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
-    EXPECT_EQ(2U, cmdlist.appendWaitOnEventsCalled);
-    EXPECT_EQ(2U, cmdlist.appendSignalEventCalled);
+    EXPECT_EQ(4u, cmdlist.appendBarrierCalled);
 }
 
 TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppendIt) {
