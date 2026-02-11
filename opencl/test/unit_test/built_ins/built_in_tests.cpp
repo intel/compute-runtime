@@ -1089,7 +1089,7 @@ TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParam
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
 
     size_t size = 1024 * 1024 * 1024;
-    void *systemPtr = malloc(size);
+    void *systemPtr = &size;
 
     MockBuffer srcBuffer;
     srcBuffer.size = 4; // pattern size
@@ -1107,8 +1107,6 @@ TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParam
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
-
-    free(systemPtr);
 }
 
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
