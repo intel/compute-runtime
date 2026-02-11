@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,6 +121,9 @@ bool CpuPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) 
 
 void CpuPageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr) {
     this->gpuDomainHandler = gpuHandlerFuncPtr;
+}
+
+void CpuPageFaultManager::endHostFunctionScope() {
 }
 
 void CpuPageFaultManager::transferAndUnprotectMemory(CpuPageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {

@@ -20,7 +20,9 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/fixtures/tbx_command_stream_fixture.h"
@@ -1301,9 +1303,21 @@ class MockTbxCsrForPageFaultTests : public MockTbxCsr<FamilyType> {
         return this->tbxFaultManager.get();
     }
 
+    bool writeMemory(GraphicsAllocation &graphicsAllocation) override {
+        writeCalled = true;
+        latestWrittenAllocation = &graphicsAllocation;
+        if (skipBaseClassWrite) {
+            return true;
+        }
+        return MockTbxCsr<FamilyType>::writeMemory(graphicsAllocation);
+    }
+
     using MockTbxCsr<FamilyType>::isAllocTbxFaultable;
 
     std::unique_ptr<TbxPageFaultManager> tbxFaultManager = TbxPageFaultManager::create();
+    GraphicsAllocation *latestWrittenAllocation = nullptr;
+    bool writeCalled = false;
+    bool skipBaseClassWrite = false;
 };
 
 HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShouldBeDownloadedAndWritable) {
@@ -1359,6 +1373,57 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShou
     tbxCsr->tbxFaultManager->removeAllocation(gfxAlloc1);
 
     memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+class MockTbxPageFaultManager : public TbxPageFaultManager {
+  public:
+    using TbxPageFaultManager::memoryDataTbx;
+    using TbxPageFaultManager::TbxPageFaultManager;
+};
+
+HWTEST_F(TbxCommandStreamTests, givenTbxPageFaultManagerWithHostBufferWhenEndHostFunctionScopeIsCalledWithDownloadedAllocationThenWriteMemoryIsCalledCorrectly) {
+
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    auto pageFaultManager = std::make_unique<MockPageFaultManagerImpl<MockTbxPageFaultManager>>();
+
+    NEO::GraphicsAllocation *alloc = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    pageFaultManager->endHostFunctionScope();
+
+    void *ptr = alloc->getDriverAllocatedCpuPtr();
+
+    tbxCsr->skipBaseClassWrite = true;
+
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+    pageFaultManager->insertAllocation(tbxCsr.get(), alloc, allBanks, ptr, alloc->getUnderlyingBufferSize());
+
+    pageFaultManager->endHostFunctionScope();
+    EXPECT_FALSE(tbxCsr->writeCalled);
+    EXPECT_NE(tbxCsr->latestWrittenAllocation, alloc);
+
+    pageFaultManager->memoryDataTbx[ptr].hasBeenDownloaded = true;
+    pageFaultManager->endHostFunctionScope();
+
+    EXPECT_TRUE(tbxCsr->writeCalled);
+    EXPECT_EQ(tbxCsr->latestWrittenAllocation, alloc);
+
+    pageFaultManager->removeAllocation(alloc);
+
+    memoryManager->freeGraphicsMemory(alloc);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxWithModeWhenHostBufferNotWritableAndProtectedThenDownloadShouldNotCrash) {

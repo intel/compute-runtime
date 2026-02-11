@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class TbxPageFaultManager : public virtual CpuPageFaultManager {
 
     using CpuPageFaultManager::checkFaultHandlerFromPageFaultManager;
     bool verifyAndHandlePageFault(void *ptr, bool handlePageFault) override;
+    void endHostFunctionScope() override;
 
   protected:
     void handlePageFault(void *ptr, PageFaultDataTbx &faultData);

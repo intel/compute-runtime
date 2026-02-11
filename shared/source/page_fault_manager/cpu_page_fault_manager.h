@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,7 @@ class CpuPageFaultManager : public NonCopyableClass {
     void setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr);
 
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
+    virtual void endHostFunctionScope();
 
   protected:
     virtual void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) = 0;

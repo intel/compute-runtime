@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,19 @@ void TbxPageFaultManager::insertAllocation(CommandStreamReceiver *csr, GraphicsA
     auto &faultData = this->memoryDataTbx[ptr];
     faultData.hasBeenDownloaded = false;
     this->protectCPUMemoryAccess(ptr, size);
+}
+
+void TbxPageFaultManager::endHostFunctionScope() {
+    std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
+
+    for (auto &[ptr, faultData] : memoryDataTbx) {
+        if (faultData.hasBeenDownloaded) {
+            constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+            faultData.gfxAllocation->setTbxWritable(true, allBanks);
+            faultData.csr->writeMemory(*faultData.gfxAllocation);
+            faultData.gfxAllocation->setTbxWritable(false, allBanks);
+        }
+    }
 }
 
 } // namespace NEO

@@ -14,6 +14,8 @@
 #include "shared/source/host_function/host_function_scheduler.h"
 #include "shared/source/host_function/host_function_worker_counting_semaphore.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 namespace NEO {
 HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
@@ -94,6 +96,12 @@ void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
 
     if (isTbx) {
         auto lock = csr->obtainHostAllocationLock();
+
+        auto pageFaultManager = csr->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager) {
+            pageFaultManager->endHostFunctionScope();
+        }
+
         setAsCompleted();
         updateTbxData();
 
