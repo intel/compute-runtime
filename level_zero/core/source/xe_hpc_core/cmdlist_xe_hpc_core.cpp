@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,8 @@ bool CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>::isRelaxedOrderingDispatch
 
         bool skipTaskCountCheck = (csrTaskCount - queueTaskCount == 1) && csr->isLatestFlushIsTaskCountUpdateOnly();
 
-        if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get() != -1) {
-            relaxedOrderingCounterThreshold = static_cast<uint32_t>(NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get());
+        if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicThreshold.get() != -1) {
+            relaxedOrderingCounterThreshold = static_cast<uint32_t>(NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicThreshold.get());
         }
 
         if (queueTaskCount == csrTaskCount || skipTaskCountCheck) {

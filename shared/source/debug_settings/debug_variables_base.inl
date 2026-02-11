@@ -512,7 +512,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingForBcs, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingQueueSizeLimit, -1, "-1: default, >0: Max gpu queue size. If limit is reached, scheduler wont consume new work")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingMinNumberOfClients, -1, "-1: default, >0: Enables RelaxedOrdering mode only if specified number of clients is assigned to given CSR.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingCounterHeuristic, -1, "-1: default, 0: disabled, 1: enabled. If set use counter based heuristic to allow for relaxed ordering dispatch")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingCounterHeuristicTreshold, -1, "-1: default, >0: limit number of append calls to disable relaxed ordering dispatch")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingCounterHeuristicThreshold, -1, "-1: default, >0: limit number of append calls to disable relaxed ordering dispatch")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPrintSemaphoreUsage, -1, "-1: default, 0: disabled, 1: enabled. If set, print DirectSubmission semaphore programming and unlocking")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSwitchSemaphoreMode, -1, "-1: default, 1: enable switch on unsuccessful, 0: disable switch on unsuccessful")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")

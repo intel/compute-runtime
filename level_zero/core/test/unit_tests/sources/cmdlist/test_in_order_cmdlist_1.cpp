@@ -2396,7 +2396,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
     immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     verifyFlags(false, immCmdList0, ultCsr->getDirectSubmissionRelaxedOrderingQueueDepth() + 1);
 
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicThreshold.set(1);
 
     // Back to queue1. Reset to 0 - new queue
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
