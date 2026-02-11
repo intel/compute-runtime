@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ struct ZeInfoSections {
     UniqueNode version;
     UniqueNode globalHostAccessTable;
     UniqueNode functions;
+    UniqueNode requiredLibs;
 };
 
 struct ZeInfoKernelSections {
@@ -137,6 +138,8 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
 
 void generateSSHWithBindingTable(KernelDescriptor &dst);
 void generateDSH(KernelDescriptor &dst, uint32_t samplerStateSize, uint32_t samplerBorderColorStateSize);
+
+DecodeError decodeZeInfoRequiredLibs(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
 
 inline bool isAtLeastZeInfoVersion(const Types::Version &srcVersion, const Types::Version &expectedVersion) {
     return srcVersion.minor >= expectedVersion.minor;

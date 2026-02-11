@@ -33,6 +33,14 @@ void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst) {
     dst.kernelMiscInfoPos = metadata.str().find(ZeInfo::Tags::kernelMiscInfo.str());
 }
 
+bool isRequiredLibsTagAfterKernelMiscInfoTag(ConstStringRef metadata, NEO::ProgramInfo &dst) {
+    auto requiredLibsPos = metadata.str().find(ZeInfo::Tags::requiredLibs.str());
+    if (std::string::npos == requiredLibsPos || std::string::npos == dst.kernelMiscInfoPos) {
+        return false;
+    }
+    return (dst.kernelMiscInfoPos < requiredLibsPos);
+}
+
 template bool isZebin<Elf::EI_CLASS_32>(ArrayRef<const uint8_t> binary);
 template bool isZebin<Elf::EI_CLASS_64>(ArrayRef<const uint8_t> binary);
 template <Elf::ElfIdentifierClass numBits>
@@ -438,8 +446,10 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
     logStr.append(zeinfo.str());
     logStr.append("=== ZEInfo logging end ===\n");
     DBG_LOG(LogZEInfo, logStr.c_str());
+
     setKernelMiscInfoPosition(zeinfo, dst);
-    if (std::string::npos != dst.kernelMiscInfoPos) {
+    const bool keepKernelMiscInfo = isRequiredLibsTagAfterKernelMiscInfoTag(zeinfo, dst);
+    if ((not keepKernelMiscInfo) && std::string::npos != dst.kernelMiscInfoPos) {
         zeinfo = zeinfo.substr(static_cast<size_t>(0), dst.kernelMiscInfoPos);
     }
 

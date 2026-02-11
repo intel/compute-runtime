@@ -4594,6 +4594,37 @@ TEST(DecodeZebinTest, givenGtpinInfoSectionsWhenDecodingZebinThenProperlySetIgcI
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo2->igcInfoForGtpin), mockGtpinData2.data(), mockGtpinData2.size()));
 }
 
+TEST(DecodeZebinTest, givenRequiredLibsSectionFollowingKernelMiscInfoSectionWhenDecodingZebinThenZeInfoNotTruncatedAndLibsDecoded) {
+    std::string errors, warnings;
+
+    static constexpr auto zeInfoWithMiscInfoAndReqLibs = R"===(
+kernels :
+  - name :    valid_empty_kernel
+    execution_env :
+      simd_size  : 32
+      grf_count : 128
+kernels_misc_info :
+  - name :     example_misc_info
+required_libs :
+  - libFoo.1.2.3
+  - libBar.9.8.7
+  )===";
+
+    auto zeInfoStr = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'" + zeInfoWithMiscInfoAndReqLibs};
+    ZebinTestData::ValidEmptyProgram zebin(zeInfoStr);
+    const auto expectedMiscInfoPos = zeInfoStr.find(ZeInfo::Tags::kernelMiscInfo.str());
+
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+
+    NEO::ProgramInfo programInfo;
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_EQ(2, std::ssize(programInfo.requiredLibs));
+    EXPECT_STREQ("libFoo.1.2.3", programInfo.requiredLibs[0].c_str());
+    EXPECT_STREQ("libBar.9.8.7", programInfo.requiredLibs[1].c_str());
+    EXPECT_EQ(expectedMiscInfoPos, programInfo.kernelMiscInfoPos);
+}
+
 TEST(DecodeZebinTest, givenTextSectionThenTreatItAsExternalFunctions) {
     std::string errors, warnings;
     ZebinTestData::ValidEmptyProgram zebin;

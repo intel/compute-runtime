@@ -206,6 +206,7 @@ struct ModuleImp : public Module {
     bool populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping);
     ze_result_t setIsaGraphicsAllocations();
     void transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NEO::Linker::PatchableSegments *isaSegmentsForPatching);
+    MOCKABLE_VIRTUAL bool linkInternalRequiredLibsModule();
     std::pair<const void *, size_t> getKernelHeapPointerAndSize(const std::unique_ptr<KernelImmutableData> &kernelImmData, const NEO::Linker::PatchableSegments *isaSegmentsForPatching);
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateKernelsIsaMemory(size_t size);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();

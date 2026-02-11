@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,16 @@ enum class AppendElfAdditionalSection {
 template <NEO::Elf::ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct ValidEmptyProgram {
     static constexpr char kernelName[19] = "valid_empty_kernel";
+    static constexpr auto defaultZeInfo = R"===(
+kernels :
+  - name :    valid_empty_kernel
+    execution_env :
+      simd_size  : 32
+      grf_count : 128
+  )===";
 
     ValidEmptyProgram();
+    ValidEmptyProgram(const std::string &zeInfo);
     void recalcPtr();
     NEO::Elf::ElfSectionHeader<numBits> &appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
     void removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel);

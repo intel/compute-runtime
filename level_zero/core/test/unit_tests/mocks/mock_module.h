@@ -20,6 +20,9 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
+#include <iterator>
+
 namespace NEO {
 class GraphicsAllocation;
 } // namespace NEO
@@ -80,6 +83,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmData;
+    using BaseClass::linkInternalRequiredLibsModule;
     using BaseClass::setIsaGraphicsAllocations;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
@@ -95,6 +99,20 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
 
     std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalVarBuffer = nullptr;
     std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalConstBuffer = nullptr;
+
+    ze_result_t performDynamicLink(uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog) override {
+        ++performDynamicLinkCalled;
+        performDynamicLinkRecordedPhModules.reserve(numModules);
+        std::copy(phModules, phModules + numModules, std::back_inserter(performDynamicLinkRecordedPhModules));
+        if (performDynamicLinkCallBase) {
+            return BaseClass::performDynamicLink(numModules, phModules, phLinkLog);
+        }
+        return performDynamicLinkResult;
+    }
+    int performDynamicLinkCalled = 0;
+    std::vector<ze_module_handle_t> performDynamicLinkRecordedPhModules = {};
+    bool performDynamicLinkCallBase = true;
+    ze_result_t performDynamicLinkResult = ZE_RESULT_SUCCESS;
 };
 
 using Module = WhiteBox<::L0::Module>;
@@ -119,6 +137,7 @@ struct Mock<Module> : public Module {
     ADDMETHOD(initializeTranslationUnit, ze_result_t, true, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, NEO::Device *neoDevice), (desc, neoDevice));
     ADDMETHOD_NOBASE_VOIDRETURN(updateBuildLog, (NEO::Device * neoDevice));
     ADDMETHOD(allocateKernelsIsaMemory, NEO::GraphicsAllocation *, true, nullptr, (size_t isaSize), (isaSize));
+    ADDMETHOD(linkInternalRequiredLibsModule, bool, false, true, (), ());
 };
 
 struct MockModule : public L0::ModuleImp {

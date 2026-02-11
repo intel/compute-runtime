@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -18,10 +19,12 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
+#include <array>
 #include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <span>
 #include <unordered_map>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
@@ -64,6 +67,8 @@ class DriverHandle;
 struct ExecutionEnvironment;
 struct FabricVertex;
 struct Image;
+struct Module;
+struct ModuleBuildLog;
 struct SysmanDevice;
 enum class ModuleType;
 
@@ -225,6 +230,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     void releaseResources();
 
+    Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);
+
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;
 
@@ -268,7 +275,17 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
+    MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);
+    MOCKABLE_VIRTUAL std::span<const std::string_view> getRequiredLibBinaryOptionalSearchPaths();
+    MOCKABLE_VIRTUAL std::span<const std::string_view> getRequiredLibBinaryDefaultSearchPaths() const;
+    bool getRequiredLibDirPath(const std::string &libName, std::string &outPath);
+    MOCKABLE_VIRTUAL NEO::BuiltinResourceT getBufferFromFile(const std::string &dirPath, const std::string &fileName) const;
+    MOCKABLE_VIRTUAL Module *doCreateRequiredLibModule(NEO::BuiltinResourceT &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
+
+    std::vector<std::string_view> requiredLibsOptionalSearchPaths;
+    std::unordered_map<std::string, Module *> requiredLibsRegistry;
+    std::mutex requiredLibsRegistryMutex;
 
     SysmanDevice *pSysmanDevice = nullptr;
     std::unique_ptr<DebugSession> debugSession;

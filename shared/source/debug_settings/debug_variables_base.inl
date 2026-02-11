@@ -730,6 +730,7 @@ DECLARE_DEBUG_VARIABLE(bool, IgnoreZebinUnknownAttributes, false, "enable to tre
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerInputType, std::string("unk"), "unk: default (N/A), input type for finalizer")
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerLibraryName, std::string("unk"), "Library name for finalizer")
 DECLARE_DEBUG_VARIABLE(std::string, IgcLibraryName, std::string("unk"), "Library name for igc")
+DECLARE_DEBUG_VARIABLE(std::string, RequiredLibsBinarySearchPath, std::string("none"), "Custom filesystem location to search the required-libs binary")
 DECLARE_DEBUG_SCOPED_V(int32_t, UseIgcAsFcl, 0, S_RT | S_OCLOC, "0: platform default, 1: force use IGC, 2: force use FCL")
 DECLARE_DEBUG_VARIABLE(bool, EnableGlobalTimestampViaSubmission, 0, "0: OS Interface, 1: Submission. This flag sets the type of method to get timestamp for getGlobalTimestamps");
 

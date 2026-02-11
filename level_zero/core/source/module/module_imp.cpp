@@ -646,6 +646,8 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     linkageSuccessful &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
     this->updateBuildLog(neoDevice);
 
+    linkageSuccessful &= linkInternalRequiredLibsModule();
+
     if ((this->isFullyLinked && this->type == ModuleType::user) ||
         ((this->sharedIsaAllocation || this->kernelsIsaParentRegion) && this->type == ModuleType::builtin)) {
         this->transferIsaSegmentsToAllocation(neoDevice, nullptr);
@@ -1412,6 +1414,34 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
                      this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
     }
+}
+
+bool ModuleImp::linkInternalRequiredLibsModule() {
+    if (translationUnit->programInfo.requiredLibs.empty()) {
+        return true;
+    }
+
+    auto hModules = StackVec<ze_module_handle_t, 4>{this->toHandle()};
+    for (const auto &libName : translationUnit->programInfo.requiredLibs) {
+        auto libModule = this->device->getRequiredLibModule(libName, moduleBuildLog);
+        hModules.push_back(libModule->toHandle());
+    }
+    ze_module_build_log_handle_t hLinkLog = {};
+    DEBUG_BREAK_IF(hModules.size() > std::numeric_limits<uint32_t>::max());
+    auto ret = performDynamicLink(static_cast<uint32_t>(hModules.size()), hModules.data(), moduleBuildLog ? &hLinkLog : nullptr);
+    if (hLinkLog) {
+        UNRECOVERABLE_IF(nullptr == this->moduleBuildLog);
+        auto linkLogInternal = ModuleBuildLog::fromHandle(hLinkLog);
+        append(*this->moduleBuildLog, *linkLogInternal);
+        linkLogInternal->destroy();
+    }
+
+    if (ret != ZE_RESULT_SUCCESS) {
+        this->isFullyLinked = false;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Linking required_libs failed\n");
+        return false;
+    }
+    return true;
 }
 
 ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) {

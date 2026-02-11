@@ -18,13 +18,18 @@ namespace ult {
 struct Device : public ::L0::Device {
     using Base = L0::Device;
     using Base::adjustCommandQueueDesc;
+    using Base::createRequiredLibModule;
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;
     using Base::freeMemoryAllocation;
+    using Base::getRequiredLibBinaryOptionalSearchPaths;
+    using Base::getRequiredLibDirPath;
     using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
     using Base::inOrderTimestampAllocator;
     using Base::queryPeerAccess;
+    using Base::requiredLibsOptionalSearchPaths;
+    using Base::requiredLibsRegistry;
     using Base::resourcesReleased;
     using Base::subDeviceCopyEngineGroups;
     using Base::syncDispatchTokenAllocation;
@@ -33,6 +38,8 @@ struct Device : public ::L0::Device {
 };
 
 struct MockDevice : public Device {
+    using BaseClass = Device;
+
     MockDevice() : Device() {
         resourcesReleased = true; // Prevent releaseResources() from being called
     }
@@ -105,6 +112,10 @@ struct MockDevice : public Device {
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
     ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
     ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
+    ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltinResourceT, std::vector<char>{'X'}, (const std::string &dirPath, const std::string &fileName))
+    ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltinResourceT & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))
+    ADDMETHOD(getRequiredLibBinaryOptionalSearchPaths, std::span<const std::string_view>, false, {}, (), ())
+    ADDMETHOD_CONST_NOBASE(getRequiredLibBinaryDefaultSearchPaths, std::span<const std::string_view>, {}, ())
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -120,25 +131,27 @@ struct MockDevice : public Device {
 };
 
 struct MockDeviceImp : public L0::Device {
-    using Base = L0::Device;
-    using Base::adjustCommandQueueDesc;
-    using Base::debugSession;
-    using Base::deviceInOrderCounterAllocator;
-    using Base::freeMemoryAllocation;
-    using Base::getNEODevice;
-    using Base::hostInOrderCounterAllocator;
-    using Base::implicitScalingCapable;
-    using Base::inOrderTimestampAllocator;
-    using Base::neoDevice;
-    using Base::queryPeerAccess;
-    using Base::subDeviceCopyEngineGroups;
-    using Base::syncDispatchTokenAllocation;
+    using BaseClass = L0::Device;
+    using BaseClass::adjustCommandQueueDesc;
+    using BaseClass::debugSession;
+    using BaseClass::deviceInOrderCounterAllocator;
+    using BaseClass::freeMemoryAllocation;
+    using BaseClass::getNEODevice;
+    using BaseClass::hostInOrderCounterAllocator;
+    using BaseClass::implicitScalingCapable;
+    using BaseClass::inOrderTimestampAllocator;
+    using BaseClass::neoDevice;
+    using BaseClass::queryPeerAccess;
+    using BaseClass::subDeviceCopyEngineGroups;
+    using BaseClass::syncDispatchTokenAllocation;
 
     MockDeviceImp(NEO::Device *device) {
         device->incRefInternal();
-        Base::neoDevice = device;
-        Base::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
+        BaseClass::neoDevice = device;
+        BaseClass::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     }
+
+    ADDMETHOD(createRequiredLibModule, ::L0::Module *, true, nullptr, (const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result), (libName, buildLog, result));
 };
 
 } // namespace ult

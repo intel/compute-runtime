@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,17 +22,22 @@ template struct ValidEmptyProgram<ElfIdentifierClass::EI_CLASS_64>;
 
 template ValidEmptyProgram<ElfIdentifierClass::EI_CLASS_32>::ValidEmptyProgram();
 template ValidEmptyProgram<ElfIdentifierClass::EI_CLASS_64>::ValidEmptyProgram();
+template ValidEmptyProgram<ElfIdentifierClass::EI_CLASS_32>::ValidEmptyProgram(const std::string &zeInfo);
+template ValidEmptyProgram<ElfIdentifierClass::EI_CLASS_64>::ValidEmptyProgram(const std::string &zeInfo);
+
 template <ElfIdentifierClass numBits>
-ValidEmptyProgram<numBits>::ValidEmptyProgram() {
+ValidEmptyProgram<numBits>::ValidEmptyProgram(const std::string &zeInfo) {
     NEO::Elf::ElfEncoder<numBits> enc;
     enc.getElfFileHeader().type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
     enc.getElfFileHeader().machine = productFamily;
-    auto zeInfo = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'" + "\nkernels : \n  - name : " + kernelName + "\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n"};
     enc.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfo);
     enc.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "valid_empty_kernel", zeInfo);
     storage = enc.encode();
     recalcPtr();
 }
+
+template <ElfIdentifierClass numBits>
+ValidEmptyProgram<numBits>::ValidEmptyProgram() : ValidEmptyProgram(std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'" + defaultZeInfo}) {}
 
 template <ElfIdentifierClass numBits>
 void ValidEmptyProgram<numBits>::recalcPtr() {

@@ -5196,6 +5196,98 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolFro
 }
 
 using ModuleTests = Test<DeviceFixture>;
+TEST_F(ModuleTests, givenModuleWhenItIsInitializedThenLinkingInternalRequiredLibsIsAttempted) {
+    auto module = std::make_unique<Mock<Module>>(device, nullptr, ModuleType::user);
+    module->initializeTranslationUnitCallBase = false;
+    module->initializeTranslationUnitResult = ZE_RESULT_SUCCESS;
+    module->linkInternalRequiredLibsModuleCallBase = false;
+    module->linkInternalRequiredLibsModuleCalled = 0U;
+
+    auto fakeBin = std::array<uint8_t, 8>();
+    ze_module_desc_t moduleDesc = {
+        .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
+        .pNext = nullptr,
+        .format = ZE_MODULE_FORMAT_NATIVE,
+        .inputSize = fakeBin.size(),
+        .pInputModule = fakeBin.data(),
+        .pBuildFlags = "",
+        .pConstants = nullptr};
+    module->initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(1U, module->linkInternalRequiredLibsModuleCalled);
+}
+
+TEST_F(ModuleTests, givenRequirementsInProgramInfoWhenLinkingAModuleItsRequiredLibsModulesAreCreatedAndDynamicallyLinked) {
+    auto mockDevice = MockDeviceImp(neoDevice);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(&mockDevice, nullptr, ModuleType::user);
+    auto libModule = std::make_unique<MockModule>(&mockDevice, nullptr, ModuleType::user);
+    mockDevice.createRequiredLibModuleCallBase = false;
+    mockDevice.createRequiredLibModuleResult = libModule.get();
+
+    module->translationUnit->programInfo.requiredLibs.push_back("libFoo");
+    module->translationUnit->programInfo.requiredLibs.push_back("libBar");
+    module->performDynamicLinkCallBase = false;
+    module->performDynamicLinkCalled = 0;
+
+    bool ret = module->linkInternalRequiredLibsModule();
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2U, mockDevice.createRequiredLibModuleCalled);
+    EXPECT_EQ(1, module->performDynamicLinkCalled);
+    EXPECT_EQ(3U, module->performDynamicLinkRecordedPhModules.size());
+    EXPECT_EQ(module->toHandle(), module->performDynamicLinkRecordedPhModules[0]);
+    EXPECT_EQ(libModule->toHandle(), module->performDynamicLinkRecordedPhModules[1]);
+    // returned module pointer is the same to avoid complicating mock's implementation
+    EXPECT_EQ(libModule->toHandle(), module->performDynamicLinkRecordedPhModules[2]);
+}
+
+TEST_F(ModuleTests, givenRequirementsInProgramInfoWhenDynamicLinkingFailsThenFunctionReturnsFalse) {
+    auto mockDevice = MockDeviceImp(neoDevice);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(&mockDevice, nullptr, ModuleType::user);
+    auto libModule = std::make_unique<MockModule>(&mockDevice, nullptr, ModuleType::user);
+    mockDevice.createRequiredLibModuleCallBase = false;
+    mockDevice.createRequiredLibModuleResult = libModule.get();
+
+    module->translationUnit->programInfo.requiredLibs.push_back("libFoo");
+    module->performDynamicLinkCallBase = false;
+    module->performDynamicLinkCalled = 0;
+    module->performDynamicLinkResult = ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
+
+    bool ret = module->linkInternalRequiredLibsModule();
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(1, module->performDynamicLinkCalled);
+    EXPECT_EQ(1U, mockDevice.createRequiredLibModuleCalled);
+    EXPECT_FALSE(module->isFullyLinked);
+}
+
+TEST_F(ModuleTests, givenNoRequiredLibsInProgramInfoWhenLinkingFunctionCalledThenItReturnsEarly) {
+    auto mockDevice = MockDeviceImp(neoDevice);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(&mockDevice, nullptr, ModuleType::user);
+    mockDevice.createRequiredLibModuleCallBase = false;
+    mockDevice.createRequiredLibModuleResult = nullptr;
+
+    module->translationUnit->programInfo.requiredLibs.clear();
+    module->performDynamicLinkCallBase = false;
+    module->performDynamicLinkCalled = 0;
+
+    bool ret = module->linkInternalRequiredLibsModule();
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0U, mockDevice.createRequiredLibModuleCalled);
+    EXPECT_EQ(0, module->performDynamicLinkCalled);
+}
+
+TEST_F(ModuleTests, givenRequiredLibsRegistryWhenLibModuleCreatedThenItIsReusableForTheSameDeviceInstance) {
+    auto mockDevice = MockDeviceImp(neoDevice);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(&mockDevice, nullptr, ModuleType::user);
+    auto libModule = std::make_unique<MockModule>(&mockDevice, nullptr, ModuleType::user);
+    mockDevice.createRequiredLibModuleCallBase = false;
+    mockDevice.createRequiredLibModuleResult = libModule.get();
+
+    auto pModule1 = mockDevice.getRequiredLibModule("libFoo", nullptr);
+    EXPECT_EQ(libModule.get(), pModule1);
+    auto pModule2 = mockDevice.getRequiredLibModule("libFoo", nullptr);
+    EXPECT_EQ(libModule.get(), pModule2);
+    EXPECT_EQ(1U, mockDevice.createRequiredLibModuleCalled);
+}
+
 TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTbxAndAub) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::user);
 

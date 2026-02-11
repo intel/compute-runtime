@@ -75,6 +75,10 @@ DecodeError extractZeInfoSections(const Yaml::YamlParser &parser, ZeInfoSections
             outZeInfoSections.globalHostAccessTable.push_back(&globalScopeNd);
         } else if (Tags::functions == key) {
             outZeInfoSections.functions.push_back(&globalScopeNd);
+        } else if (Tags::requiredLibs == key) {
+            outZeInfoSections.requiredLibs.push_back(&globalScopeNd);
+        } else if (Tags::kernelMiscInfo == key) {
+            // correct case but nothing to be done
         } else {
             std::ostringstream entryStream;
 
@@ -124,6 +128,7 @@ bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::stri
     valid &= validateCountAtMost(zeInfoSections.version, 1U, outErrReason, "version", context);
     valid &= validateCountAtMost(zeInfoSections.globalHostAccessTable, 1U, outErrReason, "global host access table", context);
     valid &= validateCountAtMost(zeInfoSections.functions, 1U, outErrReason, "functions", context);
+    valid &= validateCountAtMost(zeInfoSections.requiredLibs, 1U, outErrReason, "required libs", context);
     return valid;
 }
 
@@ -470,6 +475,11 @@ DecodeError decodeZeInfo(ProgramInfo &dst, ConstStringRef zeInfo, std::string &o
     }
 
     zeInfoDecodeError = decodeZeInfoKernels(dst, yamlParser, zeInfoSections, outErrReason, outWarning, zeInfoVersion);
+    if (DecodeError::success != zeInfoDecodeError) {
+        return zeInfoDecodeError;
+    }
+
+    zeInfoDecodeError = decodeZeInfoRequiredLibs(dst, yamlParser, zeInfoSections, outErrReason, outWarning);
     if (DecodeError::success != zeInfoDecodeError) {
         return zeInfoDecodeError;
     }
@@ -1812,6 +1822,17 @@ void generateDSH(KernelDescriptor &dst, uint32_t samplerStateSize, uint32_t samp
     auto dshSizeAligned = samplerBorderColorStateSize > 0 ? alignUp(dshSize, samplerBorderColorStateSize) : dshSize;
 
     dst.generatedDsh.resize(dshSizeAligned, 0U);
+}
+
+DecodeError decodeZeInfoRequiredLibs(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning) {
+    if (not zeInfoSections.requiredLibs.empty()) {
+        std::vector<std::string> reqLibs;
+        for (const auto &reqLibNd : parser.createChildrenRange(*zeInfoSections.requiredLibs[0])) {
+            reqLibs.push_back(parser.readValue(reqLibNd).str());
+        }
+        dst.requiredLibs = std::move(reqLibs);
+    }
+    return DecodeError::success;
 }
 
 } // namespace NEO::Zebin::ZeInfo

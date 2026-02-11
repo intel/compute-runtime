@@ -8,6 +8,7 @@
 #include "level_zero/core/source/device/device.h"
 
 #include "shared/source/assert_handler/assert_handler.h"
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
@@ -24,10 +25,12 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/fill_pattern_tag_node.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/host_function/host_function_allocator.h"
@@ -41,6 +44,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -69,7 +73,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <numeric>
+#include <ranges>
+#include <string_view>
+#include <unordered_map>
 
 namespace L0 {
 
@@ -1662,6 +1670,126 @@ void Device::releaseResources() {
     neoDevice = nullptr;
 
     resourcesReleased = true;
+}
+
+Module *Device::getRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog) {
+    std::scoped_lock lock(requiredLibsRegistryMutex);
+
+    if (not requiredLibsRegistry.contains(libName)) {
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        auto module = createRequiredLibModule(libName, nullptr, result);
+        if (result != ZE_RESULT_SUCCESS) {
+            append(buildLog, std::string("Failed to load dependency (" + libName + ")\n"));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Creating a module from the binary: %s failed\n", libName.data());
+            return nullptr;
+        }
+        requiredLibsRegistry[libName] = module;
+    }
+    DEBUG_BREAK_IF(nullptr == requiredLibsRegistry[libName]);
+    return requiredLibsRegistry[libName];
+}
+
+Module *Device::createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result) {
+    std::string reqLibBinaryDirPath;
+    if (not getRequiredLibDirPath(libName, reqLibBinaryDirPath)) {
+        result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        return nullptr;
+    }
+
+    auto reqLibBuff = getBufferFromFile(reqLibBinaryDirPath, libName);
+
+    return doCreateRequiredLibModule(reqLibBuff, buildLog, result);
+}
+
+bool Device::getRequiredLibDirPath(const std::string &libName, std::string &outDirPath) {
+
+    if (const auto customPathStr = NEO::debugManager.flags.RequiredLibsBinarySearchPath.get(); customPathStr != "none") {
+        if (not fileExists(NEO::joinPath(customPathStr, libName))) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "The binary: %s not found in: %s\n", libName.c_str(), customPathStr.c_str());
+            return false;
+        }
+        outDirPath = customPathStr;
+        return true;
+    } else {
+        auto findLibInPaths = [&libName](auto &&paths) {
+            return std::ranges::find_if(paths, [libName](const auto dirPath) {
+                return fileExists(NEO::joinPath(std::string{dirPath}, libName));
+            });
+        };
+
+        auto optionalSearchPaths = getRequiredLibBinaryOptionalSearchPaths();
+        if (not optionalSearchPaths.empty()) {
+            auto pathIt = findLibInPaths(optionalSearchPaths);
+            if (pathIt != optionalSearchPaths.end()) {
+                outDirPath = std::string(*pathIt);
+                return true;
+            }
+        }
+
+        auto defaultSearchPaths = getRequiredLibBinaryDefaultSearchPaths();
+        auto pathIt = findLibInPaths(defaultSearchPaths);
+        if (pathIt == defaultSearchPaths.end()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "The binary: %s not found in standard locations\n", libName.c_str());
+            return false;
+        }
+        outDirPath = std::string(*pathIt);
+        return true;
+    }
+}
+
+std::span<const std::string_view> Device::getRequiredLibBinaryOptionalSearchPaths() {
+    if (getOsInterface()->getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+        return {};
+    }
+
+    if (not requiredLibsOptionalSearchPaths.empty()) {
+        return requiredLibsOptionalSearchPaths;
+    }
+
+    const char *ldPathsStr = NEO::IoFunctions::getEnvironmentVariable("LD_LIBRARY_PATH");
+    if (nullptr == ldPathsStr) {
+        return {};
+    }
+    auto ldPathsView = std::string_view(ldPathsStr);
+    if (ldPathsView.empty()) {
+        return {};
+    }
+
+    requiredLibsOptionalSearchPaths.reserve(std::ranges::count(ldPathsView, ':') + 1);
+    std::ranges::for_each(
+        ldPathsView | std::views::split(':'),
+        [&](auto &&sv) { requiredLibsOptionalSearchPaths.push_back(sv); },
+        [](auto &&rng) { return std::string_view(&*rng.begin(), std::ranges::distance(rng)); });
+
+    return requiredLibsOptionalSearchPaths;
+}
+
+std::span<const std::string_view> Device::getRequiredLibBinaryDefaultSearchPaths() const {
+    using namespace std::string_view_literals;
+    static constexpr auto fixedPaths = std::to_array({"/lib"sv,
+                                                      "/lib64"sv,
+                                                      "/lib/x86_64-linux-gnu"sv,
+                                                      "/usr/lib"sv,
+                                                      "/usr/lib64"sv,
+                                                      "/usr/lib/x86_64-linux-gnu"sv,
+                                                      "/usr/local/lib"sv});
+    return fixedPaths;
+}
+
+NEO::BuiltinResourceT Device::getBufferFromFile(const std::string &dirPath, const std::string &fileName) const {
+    return NEO::FileStorage(dirPath).load(fileName);
+}
+
+Module *Device::doCreateRequiredLibModule(NEO::BuiltinResourceT &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result) {
+    ze_module_desc_t moduleDesc = {
+        .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
+        .pNext = nullptr,
+        .format = ZE_MODULE_FORMAT_NATIVE,
+        .inputSize = reqLibBuff.size(),
+        .pInputModule = reinterpret_cast<uint8_t *>(reqLibBuff.data()),
+        .pBuildFlags = nullptr,
+        .pConstants = nullptr};
+    return Module::create(this, &moduleDesc, buildLog, ModuleType::user, &result);
 }
 
 Device::~Device() {

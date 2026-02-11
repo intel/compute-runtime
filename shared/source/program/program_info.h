@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ struct ProgramInfo : NEO::NonCopyableClass {
 
     std::vector<ExternalFunctionInfo> externalFunctions;
     std::vector<KernelInfo *> kernelInfos;
+    std::vector<std::string> requiredLibs;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
     uint32_t indirectDetectionVersion = 0U;

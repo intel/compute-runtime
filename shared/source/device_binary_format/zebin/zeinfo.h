@@ -23,6 +23,7 @@ inline constexpr ConstStringRef kernels("kernels");
 inline constexpr ConstStringRef version("version");
 inline constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
 inline constexpr ConstStringRef functions("functions");
+inline constexpr ConstStringRef requiredLibs("required_libs");
 inline constexpr ConstStringRef kernelMiscInfo("kernels_misc_info");
 
 namespace Kernel {
