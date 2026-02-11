@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
+GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(aub_stream::EngineType engineType, bool useAdditionalEngine) {
     if (EngineHelpers::isCcs(engineType)) {
         if (debugManager.flags.NodeOrdinalOverrideForCCS.get() != -1) {
             return static_cast<GPUNODE_ORDINAL>(debugManager.flags.NodeOrdinalOverrideForCCS.get());

@@ -891,7 +891,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingCont
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-    UINT expected = WddmEngineMapper::engineNodeMap(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0].first);
+    UINT expected = WddmEngineMapper::engineNodeMap(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0].first, false);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 

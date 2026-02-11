@@ -271,6 +271,7 @@ class Wddm : public DriverModel {
     bool getReadOnlyFlagValue(const void *cpuPtr) const;
     bool isReadOnlyFlagFallbackSupported() const;
     bool isReadOnlyFlagFallbackAvailable(const D3DKMT_CREATEALLOCATION &createAllocation) const;
+    void setAdditionalEngines();
 
     WddmResidencyController residencyController;
 
@@ -328,5 +329,6 @@ class Wddm : public DriverModel {
     bool platformSupportsEvictIfNecessary = false;
     bool instrumentationEnabled = false;
     bool checkDeviceState = false;
+    bool useAdditionalEngine = false;
 };
 } // namespace NEO

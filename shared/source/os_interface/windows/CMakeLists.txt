@@ -53,7 +53,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_apply_additional_map_gpu_va_fields.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}wddm_engine_mapper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/d3dkmthk_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dxgi_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp

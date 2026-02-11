@@ -167,6 +167,7 @@ bool Wddm::init() {
 
     setProcessPowerThrottling();
     setThreadPriority();
+    setAdditionalEngines();
 
     return configureDeviceAddressSpace();
 }
@@ -1065,7 +1066,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
         createContext.PrivateDriverDataSize = sizeof(privateData);
         createContext.pPrivateDriverData = &privateData;
     }
-    createContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType());
+    createContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType(), this->useAdditionalEngine);
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
         createContext.ClientHint = D3DKMT_CLIENTHINT_ONEAPI_LEVEL0;
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 
 class WddmEngineMapper {
   public:
-    static GPUNODE_ORDINAL engineNodeMap(aub_stream::EngineType engineType);
+    static GPUNODE_ORDINAL engineNodeMap(aub_stream::EngineType engineType, bool useAdditionalEngine);
 };
 
 } // namespace NEO

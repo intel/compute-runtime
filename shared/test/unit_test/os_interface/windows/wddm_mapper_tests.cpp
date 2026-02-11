@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,13 @@
 using namespace NEO;
 
 TEST(WddmMapperTests, givenRcsEngineTypeWhenAskedForNodeOrdinalThenReturn3d) {
-    GPUNODE_ORDINAL gpuNodeBcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS);
-    GPUNODE_ORDINAL gpuNodeRcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
-    GPUNODE_ORDINAL gpuNodeCcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS);
-    GPUNODE_ORDINAL gpuNodeCcs1 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS1);
-    GPUNODE_ORDINAL gpuNodeCcs2 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS2);
-    GPUNODE_ORDINAL gpuNodeCcs3 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS3);
-    GPUNODE_ORDINAL gpuNodeCccs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCCS);
+    GPUNODE_ORDINAL gpuNodeBcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS, false);
+    GPUNODE_ORDINAL gpuNodeRcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS, false);
+    GPUNODE_ORDINAL gpuNodeCcs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS, false);
+    GPUNODE_ORDINAL gpuNodeCcs1 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS1, false);
+    GPUNODE_ORDINAL gpuNodeCcs2 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS2, false);
+    GPUNODE_ORDINAL gpuNodeCcs3 = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS3, false);
+    GPUNODE_ORDINAL gpuNodeCccs = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCCS, false);
 
     GPUNODE_ORDINAL expectedBcs = GPUNODE_BLT;
     GPUNODE_ORDINAL expectedRcs = GPUNODE_3D;
@@ -38,10 +38,10 @@ TEST(WddmMapperTests, givenLinkCopyEngineWhenMapperCalledThenReturnDefaultBltEng
                                                                    aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8}};
 
     for (auto engine : bcsLinkEngines) {
-        EXPECT_EQ(GPUNODE_BLT, WddmEngineMapper::engineNodeMap(engine));
+        EXPECT_EQ(GPUNODE_BLT, WddmEngineMapper::engineNodeMap(engine, false));
     }
 }
 
 TEST(WddmMapperTests, givenNotSupportedEngineWhenAskedForNodeThenAbort) {
-    EXPECT_THROW(WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_VCS), std::exception);
+    EXPECT_THROW(WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_VCS, false), std::exception);
 }

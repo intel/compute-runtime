@@ -68,10 +68,12 @@ class WddmMock : public Wddm {
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
     using Wddm::segmentId;
+    using Wddm::setAdditionalEngines;
     using Wddm::setNewResourceBoundToPageTable;
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
+    using Wddm::useAdditionalEngine;
     using Wddm::wddmInterface;
 
     WddmMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}

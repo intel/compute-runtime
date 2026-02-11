@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,10 @@ using AILTests = ::testing::Test;
 TEST(AILTests, WhenCallingApplyOpenvinoCompatibilityWaIfNeededIsCalledThenReturnFalse) {
     HardwareInfo hwInfo = {};
     EXPECT_FALSE(NEO::applyOpenVinoCompatibilityWaIfNeeded(hwInfo));
+}
+
+TEST(AILTests, whenIsOpenVinoDetectedIsCalledThenFalseIsReturned) {
+    EXPECT_FALSE(NEO::isOpenVinoDetected());
 }
 
 } // namespace NEO

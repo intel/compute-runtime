@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,6 +81,16 @@ class MockAILConfiguration : public AILConfiguration {
         getMicrosecondResolutionCalledTimes++;
         return mockMicrosecondResolution;
     }
+
+    void checkIfOpenVinoDetected() override {
+        isOpenVinoDetected = false;
+    }
+
+    bool getOpenVinoDetected() override {
+        return isOpenVinoDetected;
+    }
+
+    bool isOpenVinoDetected = false;
     uint32_t getMicrosecondResolutionCalledTimes = 0u;
     uint32_t mockMicrosecondResolution = 1000u;
 

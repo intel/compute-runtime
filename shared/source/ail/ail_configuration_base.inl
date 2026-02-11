@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/ail/ail_ov_comp_wa.h"
 
 #include <string>
 
@@ -84,6 +85,16 @@ inline bool AILConfigurationHw<product>::isAdjustMicrosecondResolutionRequired()
 template <PRODUCT_FAMILY product>
 inline uint32_t AILConfigurationHw<product>::getMicrosecondResolution() {
     return microsecondAdjustment;
+}
+
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::getOpenVinoDetected() {
+    return this->openVinoDetected;
+}
+
+template <PRODUCT_FAMILY product>
+inline void AILConfigurationHw<product>::checkIfOpenVinoDetected() {
+    this->openVinoDetected = isOpenVinoDetected();
 }
 
 } // namespace NEO
