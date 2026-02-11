@@ -74,7 +74,7 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddre
 template <typename GfxFamily, typename Dispatcher>
 void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::unblockGpu() {
     DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu();
-    const_cast<CommandStreamReceiver &>(this->csr).writeMemory(*this->semaphores, true, offsetof(RingSemaphoreData, queueWorkCount), sizeof(RingSemaphoreData::queueWorkCount));
+    const_cast<CommandStreamReceiver &>(this->csr).writeMemory(*this->semaphores, true, offsetof(RingSemaphoreData, queueWorkCount), sizeof(this->semaphoreData->queueWorkCount));
 }
 
 template <typename GfxFamily, typename Dispatcher>
