@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,16 +12,14 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface20.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
@@ -30,6 +28,10 @@
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <memory>
+#include <new>
+#include <vector>
 
 namespace NEO {
 struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
@@ -187,16 +189,7 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
 };
 
 struct WddmInstrumentationGmmFixture : DeviceFixture {
-    void setUp() {
-        DeviceFixture::setUp();
-        executionEnvironment = pDevice->getExecutionEnvironment();
-        auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-        gmmMem = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
-        wddm->gmmMemory.reset(gmmMem);
-        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-    }
+    void setUp();
     void tearDown() {
         DeviceFixture::tearDown();
     }

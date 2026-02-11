@@ -249,6 +249,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   list(APPEND neo_libult_SRCS
        ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_fixture.cpp
   )
 endif()
 
