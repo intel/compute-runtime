@@ -275,10 +275,6 @@ bool IoctlHelperXe::initialize() {
         }
     }
 
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        enableDeferBacking = debugManager.flags.EnableDeferBacking.get();
-    }
-
     return true;
 }
 
@@ -645,7 +641,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (enableDeferBacking) {
+    if (this->isDeferBackingEnabled()) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -691,7 +687,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (enableDeferBacking) {
+    if (this->isDeferBackingEnabled()) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -1885,7 +1881,15 @@ bool IoctlHelperXe::isImmediateVmBindRequired() const {
 }
 
 bool IoctlHelperXe::makeResidentBeforeLockNeeded() const {
-    return enableDeferBacking;
+    return this->isDeferBackingEnabled();
+}
+
+bool IoctlHelperXe::isDeferBackingEnabled() const {
+    std::call_once(checkDeferBackingOnce, [this]() {
+        const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+        deferBackingEnabled = productHelper.isDeferBackingEnabled();
+    });
+    return deferBackingEnabled;
 }
 
 void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {

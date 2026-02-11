@@ -139,6 +139,9 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExt
 }
 
 TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExtWithOnlySystemRegionAndCoherencyThenWriteBackCPUCachingIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+
     MemRegionsVec memRegions = {systemMemory};
     bool isCoherent = true;
 

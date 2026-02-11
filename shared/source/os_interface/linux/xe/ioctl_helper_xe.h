@@ -151,6 +151,7 @@ class IoctlHelperXe : public IoctlHelper {
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
 
+    bool isDeferBackingEnabled() const;
     virtual const char *xeGetClassName(int className) const;
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetAdviseOperationName(int adviseOperation);
@@ -199,6 +200,8 @@ class IoctlHelperXe : public IoctlHelper {
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
     std::mutex gemCloseLock;
+    mutable std::once_flag checkDeferBackingOnce;
+    mutable bool deferBackingEnabled = false;
     std::vector<BindInfo> bindInfo;
     std::vector<uint32_t> hwconfig;
     std::vector<XeDrm::drm_xe_engine_class_instance> contextParamEngine;
@@ -234,7 +237,6 @@ class IoctlHelperXe : public IoctlHelper {
     };
 
     std::unique_ptr<EuDebugInterface> euDebugInterface;
-    bool enableDeferBacking = false;
 };
 
 template <typename... XeLogArgs>
