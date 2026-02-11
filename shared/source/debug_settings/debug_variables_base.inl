@@ -342,6 +342,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SkipImplicitInOrderDependencies, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnablePageFaultException, true, "Enable page fault exception bit in StateComputeMode, 0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnableOutOfBoundariesInTranslationException, true, "Enable Out of Boundaries in Translation Exception,  0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
+DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 100ms. >=0: override time in ms to wait for sip fifo entry to become valid")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

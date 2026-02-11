@@ -2120,7 +2120,11 @@ void DebugSessionImp::getNotStoppedThreads(const std::vector<EuThread::ThreadId>
 }
 
 ze_result_t DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node) {
-    constexpr uint32_t failsafeTimeoutMax = 100, failsafeTimeoutWait = 50;
+    constexpr uint32_t failsafeTimeoutWait = 50;
+    uint32_t failsafeTimeoutMax = 100;
+    if (NEO::debugManager.flags.sipFifoValidNodeMaxTimeoutMs.get() != -1) {
+        failsafeTimeoutMax = static_cast<uint32_t>(NEO::debugManager.flags.sipFifoValidNodeMaxTimeoutMs.get());
+    }
     uint32_t timeCount = 0;
     while (!node.valid && (timeCount < failsafeTimeoutMax)) {
         auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&node), sizeof(SIP::fifo_node), gpuVa);

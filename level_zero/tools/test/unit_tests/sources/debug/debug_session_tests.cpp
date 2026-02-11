@@ -2789,6 +2789,23 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
 }
 
+TEST_F(DebugSessionTest, GivenSwFifoisValidNodeCalledThenDebugVariableTimeoutIsRespected) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.sipFifoValidNodeMaxTimeoutMs.set(200);
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp mockDevice(neoDevice);
+    auto session = std::make_unique<MockDebugSession>(config, &mockDevice);
+
+    // Declare node whose valid field is 0
+    SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
+    session->readGpuMemoryCallCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_EQ(4u, session->readGpuMemoryCallCount);
+}
+
 TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsDumped) {
     static constexpr const char *filePath = "test_dump_file.bin";
     DebugManagerStateRestore restorer;
