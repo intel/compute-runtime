@@ -39,8 +39,10 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -273,7 +275,18 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
 
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, alignment);
     constexpr static auto allocationType = AllocationType::commandBuffer;
-    auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
+
+    GraphicsAllocation *allocation = nullptr;
+
+    if (this->device && CommandBufferPoolAllocator::isEnabled(getProductHelper())) {
+        auto ctx = createDeferredFreeContext();
+        auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
+        allocation = poolAllocator.allocate(allocationSize, &ctx);
+    }
+
+    if (allocation == nullptr) {
+        allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
+    }
     if (allocation == nullptr) {
         const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, allocationSize, allocationType,
                                                                      isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
@@ -281,8 +294,8 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     }
     DEBUG_BREAK_IF(allocation == nullptr);
 
-    if (commandStream.getGraphicsAllocation() != nullptr) {
-        getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    if (auto oldAllocation = commandStream.getGraphicsAllocation(); oldAllocation != nullptr) {
+        releaseCommandBufferAllocation(oldAllocation);
         this->ucResourceRequiresTagUpdate = true;
     }
 
@@ -309,21 +322,31 @@ void CommandStreamReceiver::preallocateInternalHeap() {
 }
 
 void CommandStreamReceiver::fillReusableAllocationsList() {
-    auto &gfxCoreHelper = getGfxCoreHelper();
-    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
-    for (auto i = 0u; i < amountToFill; i++) {
-        preallocateCommandBuffer();
+    auto &productHelper = getProductHelper();
+
+    if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
+        auto &gfxCoreHelper = getGfxCoreHelper();
+        auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
+        for (auto i = 0u; i < amountToFill; i++) {
+            preallocateCommandBuffer();
+        }
     }
 
     const bool isBcs = EngineHelpers::isBcs(this->osContext->getEngineType());
-    auto internalHeapsToFill = isBcs ? 0u : getProductHelper().getInternalHeapsPreallocated();
+    auto internalHeapsToFill = isBcs ? 0u : productHelper.getInternalHeapsPreallocated();
     for (auto i = 0u; i < internalHeapsToFill; i++) {
         preallocateInternalHeap();
     }
 }
 
 void CommandStreamReceiver::requestPreallocation() {
-    auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    auto &productHelper = getProductHelper();
+
+    if (CommandBufferPoolAllocator::isEnabled(productHelper)) {
+        return;
+    }
+
+    auto preallocationsPerQueue = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
     if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
         preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }
@@ -340,7 +363,13 @@ void CommandStreamReceiver::requestPreallocation() {
 }
 
 void CommandStreamReceiver::releasePreallocationRequest() {
-    auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    auto &productHelper = getProductHelper();
+
+    if (CommandBufferPoolAllocator::isEnabled(productHelper)) {
+        return;
+    }
+
+    auto preallocationsPerQueue = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
     if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
         preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }
@@ -427,7 +456,19 @@ void CommandStreamReceiver::cleanupResources() {
     }
 
     if (commandStream.getCpuBase()) {
-        getMemoryManager()->freeGraphicsMemory(commandStream.getGraphicsAllocation());
+        auto *csAllocation = commandStream.getGraphicsAllocation();
+        bool freedToPool = false;
+        if (this->device && csAllocation && csAllocation->getParentAllocation()) {
+            auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
+            if (poolAllocator.isPoolBuffer(csAllocation->getParentAllocation())) {
+                DEBUG_BREAK_IF(!csAllocation->isView());
+                poolAllocator.free(csAllocation);
+                freedToPool = true;
+            }
+        }
+        if (!freedToPool) {
+            getMemoryManager()->freeGraphicsMemory(csAllocation);
+        }
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);
     }
@@ -906,6 +947,21 @@ void CommandStreamReceiver::releaseHeapAllocation(GraphicsAllocation *heapMemory
     delete heapMemory;
 }
 
+void CommandStreamReceiver::releaseCommandBufferAllocation(GraphicsAllocation *commandBufferMemory) {
+    if (commandBufferMemory->isView()) {
+        if (device) {
+            auto &poolAllocator = device->getCommandBufferPoolAllocator();
+            auto parent = commandBufferMemory->getParentAllocation();
+            if (parent && poolAllocator.isPoolBuffer(parent)) {
+                poolAllocator.free(commandBufferMemory, peekTaskCount(), osContext->getContextId());
+                return;
+            }
+        }
+    }
+
+    internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBufferMemory), REUSABLE_ALLOCATION);
+}
+
 void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
     auto self = reinterpret_cast<CommandStreamReceiver *>(arg);
 
@@ -1361,4 +1417,14 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
 void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {}
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
+
+DeferredFreeContext CommandStreamReceiver::createDeferredFreeContext() const {
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = getTagAddress();
+    ctx.ucTagAddress = getUcTagAddress();
+    ctx.contextId = getOsContext().getContextId();
+    ctx.partitionCount = getActivePartitions();
+    ctx.tagOffset = getImmWritePostSyncWriteOffset();
+    return ctx;
+}
 } // namespace NEO

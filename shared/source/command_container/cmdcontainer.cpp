@@ -511,8 +511,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory
     if (!forceHostMemory) {
         auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        if (auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
-            (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
+        if (CommandBufferPoolAllocator::isEnabled(productHelper)) {
             auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
             auto commandBufferAllocation = poolAllocator.allocate(alignedSize);
             if (commandBufferAllocation) {
@@ -553,13 +552,8 @@ void CommandContainer::fillReusableAllocationLists() {
 
     auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    bool poolAllocatorEnabled = false;
-    if (auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
-        (forceEnable == 1) || (forceEnable == -1 && productHelper.is2MBLocalMemAlignmentEnabled())) {
-        poolAllocatorEnabled = true;
-    }
 
-    if (!poolAllocatorEnabled) {
+    if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
         for (auto i = 0u; i < amountToFill; i++) {
             auto allocToReuse = obtainNextCommandBufferAllocation();
             this->immediateReusableAllocationList->pushTailOne(*allocToReuse);

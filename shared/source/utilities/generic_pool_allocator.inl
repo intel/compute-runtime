@@ -7,6 +7,8 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -175,11 +177,20 @@ GenericViewPoolAllocator<Traits>::GenericViewPoolAllocator(Device *device) : dev
 
 template <PoolTraits Traits>
 GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size) {
+    return allocate(size, nullptr);
+}
+
+template <PoolTraits Traits>
+GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size, const DeferredFreeContext *ctx) {
     if (size > Traits::maxAllocationSize) {
         return nullptr;
     }
 
     std::lock_guard<std::mutex> lock(allocatorMtx);
+
+    if (ctx) {
+        processDeferredFreesUnlocked(ctx);
+    }
 
     if (this->bufferPools.empty()) {
         this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
@@ -210,10 +221,101 @@ void GenericViewPoolAllocator<Traits>::free(GraphicsAllocation *allocation) {
     device->getMemoryManager()->removeAllocationFromDownloadAllocationsInCsr(allocation);
 
     std::unique_lock lock(allocatorMtx);
+    DEBUG_BREAK_IF(!this->isPoolBuffer(allocation->getParentAllocation()));
     this->tryFreeFromPoolBuffer(allocation->getParentAllocation(),
                                 allocation->getOffsetInParent(),
                                 allocation->getUnderlyingBufferSize());
     delete allocation;
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::free(GraphicsAllocation *allocation, TaskCountType taskCount, uint32_t contextId) {
+    if (!allocation || !allocation->isView()) {
+        return;
+    }
+
+    device->getMemoryManager()->removeAllocationFromDownloadAllocationsInCsr(allocation);
+
+    DeferredChunk chunk{};
+    chunk.parent = allocation->getParentAllocation();
+    chunk.view = allocation;
+    chunk.offset = allocation->getOffsetInParent();
+    chunk.size = allocation->getUnderlyingBufferSize();
+    chunk.taskCount = taskCount;
+    chunk.contextId = contextId;
+
+    std::unique_lock lock(allocatorMtx);
+    DEBUG_BREAK_IF(!this->isPoolBuffer(chunk.parent));
+    this->deferredChunks.push_back(chunk);
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::processDeferredFrees(const DeferredFreeContext *ctx) {
+    std::lock_guard<std::mutex> lock(allocatorMtx);
+    processDeferredFreesUnlocked(ctx);
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::processDeferredFreesUnlocked(const DeferredFreeContext *ctx) {
+    if (!ctx || this->deferredChunks.empty()) {
+        return;
+    }
+
+    std::erase_if(this->deferredChunks, [this, ctx](const DeferredChunk &chunk) {
+        if (chunk.contextId == ctx->contextId && isChunkReady(chunk, ctx)) {
+            returnChunkToPool(chunk);
+            delete chunk.view;
+            return true;
+        }
+        return false;
+    });
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::releasePools() {
+    std::lock_guard<std::mutex> lock(allocatorMtx);
+
+    auto currentMM = this->device->getMemoryManager();
+    for (auto &pool : this->bufferPools) {
+        pool.memoryManager = currentMM;
+    }
+
+    for (const auto &chunk : this->deferredChunks) {
+        returnChunkToPool(chunk);
+        delete chunk.view;
+    }
+    this->deferredChunks.clear();
+
+    this->drain();
+    AbstractBuffersAllocator<GenericViewPool<Traits>, GraphicsAllocation>::releasePools();
+}
+
+template <PoolTraits Traits>
+bool GenericViewPoolAllocator<Traits>::isChunkReady(const DeferredChunk &chunk, const DeferredFreeContext *ctx) const {
+    if (!ctx || !ctx->tagAddress) {
+        return false;
+    }
+
+    auto checkTagAddress = [&chunk, ctx](volatile TagAddressType *tagAddr) -> bool {
+        for (uint32_t i = 0; i < ctx->partitionCount; i++) {
+            if (*tagAddr < chunk.taskCount) {
+                return false;
+            }
+            tagAddr = ptrOffset(tagAddr, ctx->tagOffset);
+        }
+        return true;
+    };
+
+    if (ctx->ucTagAddress && checkTagAddress(ctx->ucTagAddress)) {
+        return true;
+    }
+
+    return checkTagAddress(ctx->tagAddress);
+}
+
+template <PoolTraits Traits>
+void GenericViewPoolAllocator<Traits>::returnChunkToPool(const DeferredChunk &chunk) {
+    this->tryFreeFromPoolBuffer(chunk.parent, chunk.offset, chunk.size);
 }
 
 template <PoolTraits Traits>

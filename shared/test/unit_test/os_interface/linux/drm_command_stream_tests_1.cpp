@@ -594,6 +594,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     }
 
     int ioctlUserPtrCnt = 3;
+    ioctlUserPtrCnt -= testedCsr->commandStream.getGraphicsAllocation()->isView() ? 1 : 0;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
 
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.total);
@@ -680,6 +681,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
     int ioctlExecCnt = 1;
     int ioctlUserPtrCnt = 2;
+    ioctlUserPtrCnt -= submittedCommandBuffer.getGraphicsAllocation()->isView() ? 1 : 0;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
     EXPECT_EQ(ioctlExecCnt, this->mock->ioctlCnt.execbuffer2);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.gemUserptr);
@@ -951,6 +953,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     EXPECT_EQ(csr->getResidencyAllocations().size(), 0u);
     EXPECT_FALSE(static_cast<DrmMemoryOperationsHandlerDefault *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit());
 
+    device->getCommandBufferPoolAllocator().releasePools();
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);

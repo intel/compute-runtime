@@ -36,6 +36,7 @@
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -154,8 +155,8 @@ CommandQueue::~CommandQueue() {
 
     if (device) {
         if (commandStream) {
-            auto storageForAllocation = gpgpuEngine->commandStreamReceiver->getInternalAllocationStorage();
-            storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+            auto cmdStreamAllocation = commandStream->getGraphicsAllocation();
+            gpgpuEngine->commandStreamReceiver->releaseCommandBufferAllocation(cmdStreamAllocation);
         }
         delete commandStream;
 

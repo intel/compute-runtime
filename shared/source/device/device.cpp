@@ -87,7 +87,6 @@ Device::~Device() {
     deviceTimestampPoolAllocator.releasePools();
     globalSurfacePoolAllocator.releasePools();
     constantSurfacePoolAllocator.releasePools();
-    commandBufferPoolAllocator.releasePools();
     if (deviceUsmMemAllocPoolsManager) {
         deviceUsmMemAllocPoolsManager->cleanup();
     }
@@ -105,6 +104,7 @@ Device::~Device() {
     secondaryCsrs.clear();
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
+    commandBufferPoolAllocator.releasePools();
     executionEnvironment->memoryManager->waitForDeletions();
 
     executionEnvironment->decRefInternal();

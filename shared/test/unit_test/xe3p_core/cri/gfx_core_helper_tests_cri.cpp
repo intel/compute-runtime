@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenSingleTileCsrWhenAllocatingCsrSpecificAllo
     const uint32_t numDevices = 4u;
     debugManager.flags.CreateMultipleSubDevices.set(numDevices);
     debugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     setUpImpl();
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};

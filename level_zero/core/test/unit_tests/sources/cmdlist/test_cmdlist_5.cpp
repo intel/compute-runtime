@@ -878,6 +878,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
 
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
 
     static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
     ze_command_queue_desc_t desc = {};
@@ -932,6 +933,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
 
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
 
     static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
     ze_command_queue_desc_t desc = {};

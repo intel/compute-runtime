@@ -7,8 +7,10 @@
 
 #include "shared/source/utilities/pool_allocator_traits.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -55,6 +57,14 @@ AllocationProperties LinearStreamPoolTraits::createAllocationProperties(Device *
                                 (device->getNumGenericSubDevices() > 1u), // multiOsContextCapable
                                 false,
                                 device->getDeviceBitfield()};
+}
+
+bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
+    auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
+    if (forceEnable != -1) {
+        return forceEnable == 1;
+    }
+    return productHelper.is2MBLocalMemAlignmentEnabled();
 }
 
 } // namespace NEO

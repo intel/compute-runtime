@@ -101,8 +101,12 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(0u, commandStream.getMaxAvailableSpace() % MemoryConstants::pageSize);
     EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
-    mockMemoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
-
+    auto newAllocation = commandStream.getGraphicsAllocation();
+    if (newAllocation->isView()) {
+        device1->getDevice().getCommandBufferPoolAllocator().free(newAllocation);
+    } else {
+        mockMemoryManager->freeGraphicsMemory(newAllocation);
+    }
     // Debug surface
     auto debugSurface = commandStreamReceiver->allocateDebugSurface(MemoryConstants::pageSize);
     ASSERT_NE(nullptr, debugSurface);

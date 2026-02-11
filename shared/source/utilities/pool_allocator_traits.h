@@ -15,6 +15,7 @@
 namespace NEO {
 
 class Device;
+class ProductHelper;
 
 template <typename T>
 concept PoolTraits = requires(Device *d, size_t s) {
@@ -59,6 +60,7 @@ struct CommandBufferPoolTraits {
     static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
 
     static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+    static bool isEnabled(const ProductHelper &productHelper);
 };
 
 struct LinearStreamPoolTraits {

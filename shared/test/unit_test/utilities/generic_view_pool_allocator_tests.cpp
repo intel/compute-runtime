@@ -50,6 +50,7 @@ template <typename Traits>
 class MockGenericViewPoolAllocator : public GenericViewPoolAllocator<Traits> {
   public:
     using GenericViewPoolAllocator<Traits>::bufferPools;
+    using GenericViewPoolAllocator<Traits>::deferredChunks;
 
     MockGenericViewPoolAllocator(Device *device) : GenericViewPoolAllocator<Traits>(device) {}
 };
@@ -415,4 +416,312 @@ TEST_F(GenericViewPoolAllocatorTest, givenPoolWhenMainStorageAllocationFailsThen
     }
 
     pDevice->executionEnvironment->memoryManager = std::move(originalMemoryManager);
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenAllocatorWhenFreeWithTaskCountThenChunkIsDeferredNotImmediatelyReturned) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+    auto parentAllocation = allocation1->getParentAllocation();
+    auto offset = allocation1->getOffsetInParent();
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+    EXPECT_EQ(parentAllocation, allocator.deferredChunks[0].parent);
+    EXPECT_EQ(offset, allocator.deferredChunks[0].offset);
+    EXPECT_EQ(requestSize, allocator.deferredChunks[0].size);
+    EXPECT_EQ(taskCount, allocator.deferredChunks[0].taskCount);
+    EXPECT_EQ(contextId, allocator.deferredChunks[0].contextId);
+
+    allocator.releasePools();
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunkWhenProcessDeferredFreesWithCompletedTaskCountThenChunkReturnedToPool) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    TagAddressType completedTaskCount = taskCount + 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &completedTaskCount;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+
+    auto allocation2 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation2);
+
+    allocator.free(allocation2);
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunkWhenProcessDeferredFreesWithExactTaskCountThenChunkReturnedToPool) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    TagAddressType exactTaskCount = taskCount;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &exactTaskCount;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunkWhenProcessDeferredFreesWithIncompleteTaskCountThenChunkRemains) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 10u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    TagAddressType incompleteTaskCount = taskCount - 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &incompleteTaskCount;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    allocator.releasePools();
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunksFromDifferentContextsWhenProcessDeferredFreesThenOnlyMatchingContextProcessed) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    auto allocation2 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+    ASSERT_NE(nullptr, allocation2);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId0 = 0u;
+    constexpr uint32_t contextId1 = 1u;
+
+    allocator.free(allocation1, taskCount, contextId0);
+    allocator.free(allocation2, taskCount, contextId1);
+
+    EXPECT_EQ(2u, allocator.deferredChunks.size());
+
+    TagAddressType completedTaskCount = taskCount + 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &completedTaskCount;
+    ctx.contextId = contextId0;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+    EXPECT_EQ(contextId1, allocator.deferredChunks[0].contextId);
+
+    allocator.releasePools();
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunksWhenReleasePoolsThenAllChunksReturnedRegardlessOfTaskCount) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    auto allocation2 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+    ASSERT_NE(nullptr, allocation2);
+
+    constexpr TaskCountType highTaskCount = 1000u;
+    allocator.free(allocation1, highTaskCount, 0u);
+    allocator.free(allocation2, highTaskCount, 1u);
+
+    EXPECT_EQ(2u, allocator.deferredChunks.size());
+
+    allocator.releasePools();
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenAllocatorWhenAllocateWithContextThenProcessesDeferredFreesFirst) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    TagAddressType completedTaskCount = taskCount + 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &completedTaskCount;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    auto allocation2 = allocator.allocate(requestSize, &ctx);
+    ASSERT_NE(nullptr, allocation2);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+
+    allocator.free(allocation2);
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenMultiPartitionContextWhenProcessDeferredFreesThenChecksAllPartitions) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    TagAddressType tagValues[2] = {taskCount + 1, taskCount - 1};
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &tagValues[0];
+    ctx.contextId = contextId;
+    ctx.partitionCount = 2;
+    ctx.tagOffset = sizeof(TagAddressType);
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    tagValues[1] = taskCount + 1;
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenUncachedTagAddressWhenProcessDeferredFreesThenPrefersUncachedCheck) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    TagAddressType cachedTag = taskCount - 1;
+    TagAddressType uncachedTag = taskCount + 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &cachedTag;
+    ctx.ucTagAddress = &uncachedTag;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenUncachedTagNotReadyWhenProcessDeferredFreesThenFallsBackToCachedTagAddress) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    constexpr TaskCountType taskCount = 5u;
+    constexpr uint32_t contextId = 0u;
+    allocator.free(allocation1, taskCount, contextId);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    TagAddressType cachedTag = taskCount + 1;
+    TagAddressType uncachedTag = taskCount - 1;
+    DeferredFreeContext ctx{};
+    ctx.tagAddress = &cachedTag;
+    ctx.ucTagAddress = &uncachedTag;
+    ctx.contextId = contextId;
+    ctx.partitionCount = 1;
+
+    allocator.processDeferredFrees(&ctx);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenNullContextWhenProcessDeferredFreesThenDoesNotProcessChunks) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    constexpr size_t requestSize = MemoryConstants::pageSize;
+
+    auto allocation1 = allocator.allocate(requestSize);
+    ASSERT_NE(nullptr, allocation1);
+
+    allocator.free(allocation1, 5u, 0u);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    allocator.processDeferredFrees(nullptr);
+
+    EXPECT_EQ(1u, allocator.deferredChunks.size());
+
+    allocator.releasePools();
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenAllocatorWhenFreeWithTaskCountOnNullAllocationThenDoesNotCrash) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+    allocator.free(nullptr, 5u, 0u);
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenAllocatorWhenFreeWithTaskCountOnNonViewAllocationThenDoesNotDefer) {
+    MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+
+    AllocationProperties allocProperties = {pDevice->getRootDeviceIndex(),
+                                            true,
+                                            MemoryConstants::pageSize,
+                                            MockViewPoolTraits::allocationType,
+                                            false,
+                                            false,
+                                            pDevice->getDeviceBitfield()};
+
+    auto nonViewAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProperties);
+    ASSERT_NE(nullptr, nonViewAllocation);
+    EXPECT_FALSE(nonViewAllocation->isView());
+
+    allocator.free(nonViewAllocation, 5u, 0u);
+
+    EXPECT_EQ(0u, allocator.deferredChunks.size());
+
+    // Allocator does no-op on non-view allocation
+    pDevice->getMemoryManager()->freeGraphicsMemory(nonViewAllocation); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 }

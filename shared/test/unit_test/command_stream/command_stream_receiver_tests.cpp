@@ -29,6 +29,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -195,6 +196,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagsDisabledWhenCallFillReusableAlloca
 HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
@@ -242,6 +244,9 @@ HWTEST_F(CommandStreamReceiverTest, givenBcsEngineTypeWhenCallFillReusableAlloca
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenPreallocateCommandBufferCorrectly) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
@@ -281,6 +286,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequ
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledThenAllocateCommandBufferIfNeeded) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
@@ -301,8 +307,19 @@ HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreall
     EXPECT_EQ(2u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenReleasePreallocationRequestThenReturnsEarlyWithoutModifyingState) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    commandStreamReceiver->releasePreallocationRequest();
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledButAllocationFailedThenRequestIsIgnored) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
@@ -2108,6 +2125,8 @@ HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCall
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocate) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
@@ -2117,6 +2136,8 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocateAndAlignSizeTo64kb) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
@@ -2137,6 +2158,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEns
 TEST_F(CommandStreamReceiverTest, givenForceCommandBufferAlignmentWhenEnsureCommandBufferAllocationThenItHasProperAlignment) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceCommandBufferAlignment.set(2048);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
 
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
@@ -2149,6 +2171,8 @@ TEST_F(CommandStreamReceiverTest, givenForceCommandBufferAlignmentWhenEnsureComm
 }
 
 TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsureCommandBufferAllocationThenSizesOfAllocationAndCommandBufferAreCorrect) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
@@ -2161,6 +2185,8 @@ TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsure
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoAllocationsForReuseWhenCallingEnsureCommandBufferAllocationThenAllocateMemoryFromMemoryManager) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     LinearStream commandStream;
 
     EXPECT_TRUE(internalAllocationStorage->getAllocationsForReuse().peekIsEmpty());
@@ -2171,6 +2197,8 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoAllocations
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsForReuseWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
@@ -2185,6 +2213,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsFo
 
 HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndEarlyPreallocatedAllocationInReuseListWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
     DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
@@ -2203,6 +2232,8 @@ HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndEarlyPreall
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReusableAllocationWhenCallingEnsureCommandBufferAllocationThenObtainAllocationMemoryManager) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
@@ -6545,4 +6576,167 @@ HWTEST_F(CommandStreamReceiverHostFunctionHwTest, givenHostFunctionWhenSignalHos
 
     ASSERT_EQ(1u, csr.createHostFunctionWorkerCounter);
     EXPECT_EQ(10u, csr.signalHostFunctionWorkerCounter);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenGetCSThenAllocationIsViewFromPool) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &cs = csr.getCS();
+    cs.getSpace(cs.getAvailableSpace());
+
+    csr.getCS();
+    auto *allocation = cs.getGraphicsAllocation();
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(allocation->isView());
+    auto *parent = allocation->getParentAllocation();
+    ASSERT_NE(nullptr, parent);
+    EXPECT_TRUE(pDevice->getCommandBufferPoolAllocator().isPoolBuffer(parent));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPoolViewWhenReleaseCommandBufferAllocationThenDeferredInPoolNotReuseList) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &poolAllocator = pDevice->getCommandBufferPoolAllocator();
+    auto *poolView = poolAllocator.allocate(MemoryConstants::pageSize64k);
+
+    ASSERT_NE(nullptr, poolView);
+    ASSERT_TRUE(poolView->isView());
+
+    csr.releaseCommandBufferAllocation(poolView);
+
+    EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNonViewAllocationWhenReleaseCommandBufferAllocationThenStoredInReuseList) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto *memManager = csr.getMemoryManager();
+    auto *regularAllocation = memManager->allocateGraphicsMemoryWithProperties(
+        MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::commandBuffer});
+
+    ASSERT_NE(nullptr, regularAllocation);
+    ASSERT_FALSE(regularAllocation->isView());
+
+    csr.releaseCommandBufferAllocation(regularAllocation);
+
+    EXPECT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenViewWithNonPoolParentWhenReleaseCommandBufferAllocationThenStoredInReuseList) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto *memManager = csr.getMemoryManager();
+    auto *parentAllocation = memManager->allocateGraphicsMemoryWithProperties(
+        MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::commandBuffer});
+
+    ASSERT_NE(nullptr, parentAllocation);
+
+    auto *viewAllocation = parentAllocation->createView(0u, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, viewAllocation);
+    ASSERT_TRUE(viewAllocation->isView());
+    ASSERT_EQ(parentAllocation, viewAllocation->getParentAllocation());
+    EXPECT_FALSE(pDevice->getCommandBufferPoolAllocator().isPoolBuffer(parentAllocation));
+
+    csr.releaseCommandBufferAllocation(viewAllocation);
+
+    auto &reuseList = csr.getAllocationsForReuse();
+    EXPECT_FALSE(reuseList.peekIsEmpty());
+
+    // Remove view from reuse list before teardown to prevent use-after-free -
+    // view delegates getTaskCount to parent which would be freed during device destruction
+    auto removedAllocation = reuseList.removeOne(*reuseList.peekHead());
+    ASSERT_NE(nullptr, removedAllocation);
+    removedAllocation.reset();
+
+    memManager->freeGraphicsMemory(parentAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenCommandBufferExhaustedThenOldViewDeferredAndNewAllocatedFromPool) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &cs = csr.getCS();
+    cs.getSpace(cs.getAvailableSpace());
+
+    csr.getCS();
+    auto *firstAllocation = cs.getGraphicsAllocation();
+
+    ASSERT_NE(nullptr, firstAllocation);
+    ASSERT_TRUE(firstAllocation->isView());
+
+    cs.getSpace(cs.getAvailableSpace());
+
+    csr.getCS();
+    auto *secondAllocation = cs.getGraphicsAllocation();
+
+    ASSERT_NE(nullptr, secondAllocation);
+    EXPECT_TRUE(secondAllocation->isView());
+    auto *parent = secondAllocation->getParentAllocation();
+    ASSERT_NE(nullptr, parent);
+    EXPECT_TRUE(pDevice->getCommandBufferPoolAllocator().isPoolBuffer(parent));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCreateDeferredFreeContextThenFieldsMatchCsrState) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto ctx = csr.createDeferredFreeContext();
+
+    EXPECT_EQ(csr.getTagAddress(), ctx.tagAddress);
+    EXPECT_EQ(csr.getUcTagAddress(), ctx.ucTagAddress);
+    EXPECT_EQ(csr.getOsContext().getContextId(), ctx.contextId);
+    EXPECT_EQ(csr.getActivePartitions(), ctx.partitionCount);
+    EXPECT_EQ(csr.getImmWritePostSyncWriteOffset(), ctx.tagOffset);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPoolViewInCommandStreamWhenCleanupResourcesThenViewReturnedToPoolAndStreamNulled) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &cs = csr.getCS();
+    cs.getSpace(cs.getAvailableSpace());
+
+    csr.getCS();
+    auto *allocation = cs.getGraphicsAllocation();
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_TRUE(allocation->isView());
+    ASSERT_NE(nullptr, allocation->getParentAllocation());
+    ASSERT_TRUE(pDevice->getCommandBufferPoolAllocator().isPoolBuffer(allocation->getParentAllocation()));
+
+    csr.cleanupResources();
+
+    EXPECT_EQ(nullptr, cs.getGraphicsAllocation());
+    EXPECT_EQ(nullptr, cs.getCpuBase());
+
+    auto &poolAllocator = pDevice->getCommandBufferPoolAllocator();
+    auto *newAlloc = poolAllocator.allocate(MemoryConstants::pageSize64k);
+    ASSERT_NE(nullptr, newAlloc);
+    poolAllocator.free(newAlloc);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenRequestedSizeExceedsPoolMaxThenFallsBackToMemoryManager) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &cs = csr.getCS();
+    cs.getSpace(cs.getAvailableSpace());
+
+    constexpr size_t largeSize = 3 * MemoryConstants::megaByte;
+    csr.getCS(largeSize);
+    auto *allocation = cs.getGraphicsAllocation();
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->isView());
+    EXPECT_EQ(AllocationType::commandBuffer, allocation->getAllocationType());
 }

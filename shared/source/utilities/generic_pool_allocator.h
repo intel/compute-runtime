@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
@@ -14,11 +15,30 @@
 
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace NEO {
 
 class Device;
 class GraphicsAllocation;
+class ProductHelper;
+
+struct DeferredFreeContext {
+    volatile TagAddressType *tagAddress = nullptr;
+    volatile TagAddressType *ucTagAddress = nullptr;
+    uint32_t contextId = 0;
+    uint32_t tagOffset = 0;
+    uint32_t partitionCount = 1;
+};
+
+struct DeferredChunk {
+    GraphicsAllocation *parent = nullptr;
+    GraphicsAllocation *view = nullptr;
+    size_t offset = 0;
+    size_t size = 0;
+    TaskCountType taskCount = 0;
+    uint32_t contextId = 0;
+};
 
 template <PoolTraits Traits>
 class GenericPool : public AbstractBuffersPool<GenericPool<Traits>, GraphicsAllocation> {
@@ -92,16 +112,33 @@ class GenericViewPoolAllocator : public AbstractBuffersAllocator<GenericViewPool
     explicit GenericViewPoolAllocator(Device *device);
 
     [[nodiscard]] GraphicsAllocation *allocate(size_t size);
+    [[nodiscard]] GraphicsAllocation *allocate(size_t size, const DeferredFreeContext *ctx);
     void free(GraphicsAllocation *allocation);
+    void free(GraphicsAllocation *allocation, TaskCountType taskCount, uint32_t contextId);
+
+    void processDeferredFrees(const DeferredFreeContext *ctx);
+    void releasePools();
 
     size_t getDefaultPoolSize() const { return Traits::defaultPoolSize; }
 
-  private:
+    static bool isEnabled(const ProductHelper &productHelper) {
+        if constexpr (requires { Traits::isEnabled(productHelper); }) {
+            return Traits::isEnabled(productHelper);
+        }
+        return true;
+    }
+
+  protected:
     GraphicsAllocation *allocateFromPools(size_t size);
     size_t alignToPoolSize(size_t size) const;
 
+    void processDeferredFreesUnlocked(const DeferredFreeContext *ctx);
+    bool isChunkReady(const DeferredChunk &chunk, const DeferredFreeContext *ctx) const;
+    void returnChunkToPool(const DeferredChunk &chunk);
+
     Device *device = nullptr;
     std::mutex allocatorMtx;
+    std::vector<DeferredChunk> deferredChunks;
 };
 
 } // namespace NEO

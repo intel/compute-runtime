@@ -10,7 +10,12 @@ template <typename ObjectT>
 void KernelOperation::ResourceCleaner::operator()(ObjectT *object) {
     auto *allocation = object->getGraphicsAllocation();
     auto &commandStreamReceiver = storageForAllocations->getCommandStreamReceiver();
-    commandStreamReceiver.releaseHeapAllocation(allocation);
+    if (allocation->getAllocationType() == AllocationType::commandBuffer) {
+        commandStreamReceiver.releaseCommandBufferAllocation(allocation);
+    } else {
+        commandStreamReceiver.releaseHeapAllocation(allocation);
+    }
     delete object;
 }
+
 } // namespace NEO

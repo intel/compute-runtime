@@ -257,10 +257,14 @@ TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitiali
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    mockMemoryManager->failInAllocateWithSizeAndAlignment = true;
+
     CommandContainer cmdContainer;
-    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     EXPECT_EQ(CommandContainer::ErrorCode::outOfDeviceMemory, status);
+
+    mockMemoryManager->failInAllocateWithSizeAndAlignment = false;
 }
 
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenAllocateSecondaryCmdStreamFailsDuringInitializeThenErrorIsReturned) {

@@ -124,6 +124,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     const_cast<EngineControlContainer &>(memoryManager->getRegisteredEngines(rootDeviceIndex)).emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
+    newCsr->setDevice(this);
     osContext->ensureContextInitialized(false);
     commandStreamReceivers[engineIndex].reset(newCsr);
     commandStreamReceivers[engineIndex]->initializeTagAllocation();

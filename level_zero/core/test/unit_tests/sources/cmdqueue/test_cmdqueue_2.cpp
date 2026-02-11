@@ -632,6 +632,9 @@ struct CommandQueueCreateNegativeTest : public ::testing::Test {
 };
 
 TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQueueCreateThenAppropriateValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+
     const ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
@@ -707,9 +710,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
 
     auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    auto enableCommandBufferPoolAllocator = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
-    bool usePoolAllocator = (enableCommandBufferPoolAllocator == 1) ||
-                            (enableCommandBufferPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
+    bool usePoolAllocator = CommandBufferPoolAllocator::isEnabled(productHelper);
 
     uint32_t cmdBufferAllocationsFound = 0;
     for (auto &allocationProperties : memoryManager->storedAllocationProperties) {
@@ -721,8 +722,9 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     }
 
     if (usePoolAllocator) {
-        // Pool allocator creates main large allocations, views are sub-allocated from it
-        EXPECT_GE(cmdBufferAllocationsFound, 1u);
+        // Pool parent was already allocated during device initialization (before storedAllocationProperties was cleared).
+        // CommandQueue::create only sub-allocates chunks from the existing pool.
+        EXPECT_EQ(0u, cmdBufferAllocationsFound);
     } else {
         EXPECT_EQ(static_cast<uint32_t>(CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
     }
@@ -742,9 +744,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
 
     auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    auto enableCommandBufferPoolAllocator = NEO::debugManager.flags.EnableCommandBufferPoolAllocator.get();
-    bool usePoolAllocator = (enableCommandBufferPoolAllocator == 1) ||
-                            (enableCommandBufferPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
+    bool usePoolAllocator = CommandBufferPoolAllocator::isEnabled(productHelper);
 
     commandQueue->destroy();
 

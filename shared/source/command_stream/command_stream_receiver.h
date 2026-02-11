@@ -71,6 +71,7 @@ class ReleaseHelper;
 class HostFunctionWorker;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
+struct DeferredFreeContext;
 class SharedPoolAllocation;
 
 template <typename TSize, uint32_t packetCount>
@@ -290,6 +291,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual uint32_t getPreferredTagPoolSize() const;
     virtual void fillReusableAllocationsList();
     void releaseHeapAllocation(GraphicsAllocation *heapMemory);
+    void releaseCommandBufferAllocation(GraphicsAllocation *commandBufferMemory);
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     void setDevice(Device *device) { this->device = device; }
     Device *getDevice() const { return this->device; }
@@ -551,6 +553,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void preallocateAllocation(AllocationType type, size_t size);
     void preallocateCommandBuffer();
     void preallocateInternalHeap();
+
+    DeferredFreeContext createDeferredFreeContext() const;
 
     bool isInitialized() const {
         return this->resourcesInitialized;

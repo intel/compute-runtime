@@ -554,6 +554,7 @@ TEST_F(CommandQueueCommandStreamTest, WhenGettingCommandStreamWithNewSizeThenMax
 TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForCommandStreamThenReturnsAllocationFromReusablePool) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -576,6 +577,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusableList) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     const auto &commandStream = cmdQ->getCS(100);
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
@@ -590,6 +592,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
 TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsStoredForReuse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -957,11 +960,19 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
     auto commandStreamGraphicsAllocation = commandQ->getCS(0).getGraphicsAllocation();
+    auto isPoolView = commandStreamGraphicsAllocation->isView();
+    auto parentAllocation = commandStreamGraphicsAllocation->getParentAllocation();
     commandQ.reset(new MockCommandQueue(&context, device.get(), 0, false));
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     auto commandStreamGraphicsAllocation2 = commandQ->getCS(0).getGraphicsAllocation();
-    EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
+    if (isPoolView) {
+        // Pool views are new objects each time, verify both use the same pool parent
+        EXPECT_TRUE(commandStreamGraphicsAllocation2->isView());
+        EXPECT_EQ(parentAllocation, commandStreamGraphicsAllocation2->getParentAllocation());
+    } else {
+        EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
+    }
 }
 
 HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingCommandQueueThenReturnSuccess) {
@@ -1057,12 +1068,14 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
 }
 
 HWTEST_F(CommandQueueTests, givenPreallocationsPerQueueWhenInitializeGpgpuCalledThenCSRRequestPreallocationIsCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
 
     EXPECT_EQ(0u, commandStreamReceiver.requestedPreallocationsAmount);
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -335,6 +335,9 @@ HWTEST_TEMPLATED_F(EnqueueHandlerTestWithMockCsrBase, givenLocalWorkgroupSizeGre
 }
 
 HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProcessEvictionOnCsrIsNotCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+
     int32_t tag;
     auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(csr);

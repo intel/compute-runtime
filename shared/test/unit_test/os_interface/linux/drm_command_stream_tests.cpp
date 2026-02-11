@@ -624,7 +624,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucc
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
+    csr->releaseCommandBufferAllocation(commandBuffer);
 
     auto commandBuffer2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer2);

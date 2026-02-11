@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -1295,6 +1296,10 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
     virtualEvent->submitCommand(false);
 
     uint32_t expectedLockCounter = csr->getClearColorAllocation() ? 5u : 4u;
+    if (CommandBufferPoolAllocator::isEnabled(pDevice->getProductHelper())) {
+        // requestPreallocation is a no-op with pool allocator, skipping one CSR lock
+        expectedLockCounter -= 1u;
+    }
     expectedLockCounter += (pDevice->getUltCommandStreamReceiver<FamilyType>().heaplessStateInitialized ? 1 : 0);
 
     EXPECT_EQ(expectedLockCounter, pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter);

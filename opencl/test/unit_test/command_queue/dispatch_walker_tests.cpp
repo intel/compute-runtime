@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -819,6 +819,7 @@ HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenComm
 HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerIsCalledThenCommandStreamObtainsReusableAllocation) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, &kernel);
