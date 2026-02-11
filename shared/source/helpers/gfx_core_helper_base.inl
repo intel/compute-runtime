@@ -933,4 +933,8 @@ bool GfxCoreHelperHw<Family>::isWalkerPostSyncSkipEnabled(bool isBarrierUsedForI
     return false;
 }
 
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::setBarrierRequiredFields(void *barrierCmd, PipeControlArgs &args) {
+}
+
 } // namespace NEO
