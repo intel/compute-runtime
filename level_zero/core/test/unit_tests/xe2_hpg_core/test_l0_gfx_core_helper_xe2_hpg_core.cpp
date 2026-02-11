@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,7 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperFor
 }
 
 #pragma pack(1)
-typedef struct StallSumIpDataXeCore {
+typedef struct StallSumIpDataXe2Core {
     uint64_t tdrCount;
     uint64_t otherCount;
     uint64_t controlCount;
@@ -158,14 +158,14 @@ typedef struct StallSumIpDataXeCore {
     uint64_t syncCount;
     uint64_t instFetchCount;
     uint64_t activeCount;
-} StallSumIpDataXeCore_t;
+} StallSumIpDataXe2Core_t;
 #pragma pack()
 
-XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperForDeletingIpSamplingEntryWithThenMapRemainstheSameSize) {
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperForDeletingValidMapIpSamplingEntryThenMapRemainstheSameSize) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;
 
-    StallSumIpDataXeCore *stallSumData = new StallSumIpDataXeCore;
+    StallSumIpDataXe2Core *stallSumData = new StallSumIpDataXe2Core;
     stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, stallSumData));
     std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
     l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
@@ -207,7 +207,7 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenL0HelperCanAddIPsFr
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     std::map<uint64_t, void *> stallSourceIpDataMap;
-    StallSumIpDataXeCore_t *stallSumData = new StallSumIpDataXeCore_t;
+    StallSumIpDataXe2Core_t *stallSumData = new StallSumIpDataXe2Core_t;
     stallSourceIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, stallSumData));
 
     std::map<uint64_t, void *> stallSumIpDataMap;
@@ -231,6 +231,62 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperFor
 XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperForGetOaTimestampValidBitsThenCorrectValueIsReturned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(56u, l0GfxCoreHelper.getOaTimestampValidBits());
+}
+
+struct OutputReportMetrics {
+    const char *metricName;
+    uint64_t value;
+};
+
+std::vector<OutputReportMetrics> expectedOutputMetricsXe2 = {
+    // IP goes first, but is not in the raw report, so it is not included in this mapping
+    {"Active", 1},
+    {"PSDepStall", 2}, // HW spec calls it tdr count
+    {"ControlStall", 3},
+    {"PipeStall", 4},
+    {"SendStall", 5},
+    {"DistStall", 6},
+    {"SbidStall", 7},
+    {"SyncStall", 8},
+    {"InstrFetchStall", 9},
+    {"OtherStall", 10}};
+
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenGetIpSamplingReportMetricsIsCalledThenOrderOfMetricsIsCorrect) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> metrics{};
+    metrics = l0GfxCoreHelper.getStallSamplingReportMetrics();
+    EXPECT_EQ(expectedOutputMetricsXe2.size(), metrics.size());
+    for (size_t i = 0; i < expectedOutputMetricsXe2.size(); i++) {
+        EXPECT_STREQ(expectedOutputMetricsXe2[i].metricName, metrics[i].first);
+    }
+}
+
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenStallSumIpDataToTypedValuesIsCalledThenValuesAreCorrectlyConverted) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    uint64_t ip = 10ull;
+
+    StallSumIpDataXe2Core reportData = {
+        expectedOutputMetricsXe2[1].value, // tdrCount
+        expectedOutputMetricsXe2[9].value, // otherCount
+        expectedOutputMetricsXe2[2].value, // controlCount
+        expectedOutputMetricsXe2[3].value, // pipeStallCount
+        expectedOutputMetricsXe2[4].value, // sendCount
+        expectedOutputMetricsXe2[5].value, // distAccCount
+        expectedOutputMetricsXe2[6].value, // sbidCount
+        expectedOutputMetricsXe2[7].value, // syncStallCount
+        expectedOutputMetricsXe2[8].value, // instrFetchStallCount
+        expectedOutputMetricsXe2[0].value  // activeCount
+    };
+
+    void *sumIpData = reinterpret_cast<void *>(&reportData);
+    std::vector<zet_typed_value_t> ipDataValues{};
+    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
+    EXPECT_EQ(11u, ipDataValues.size());
+    // IP goes first
+    EXPECT_EQ(ip, ipDataValues[0].value.ui64);
+    for (uint64_t i = 0; i < static_cast<uint64_t>(expectedOutputMetricsXe2.size()); i++) {
+        EXPECT_EQ(expectedOutputMetricsXe2[i].value, ipDataValues[i + 1].value.ui64);
+    }
 }
 
 XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {

@@ -687,7 +687,7 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForC
     EXPECT_TRUE(productHelper.isCooperativeEngineSupported(*defaultHwInfo));
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnFalse) {
+XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }

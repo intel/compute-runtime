@@ -1050,7 +1050,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, whenGetEnginesCalled
     EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }
 
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnFalse) {
+XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }

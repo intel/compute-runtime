@@ -742,7 +742,7 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForCooperat
     EXPECT_FALSE(productHelper.isCooperativeEngineSupported(*defaultHwInfo));
 }
 
-XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnFalse) {
+XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }

@@ -95,4 +95,9 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported()
     return this->isDcFlushAllowed();
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 } // namespace NEO

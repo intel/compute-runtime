@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,13 +224,21 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxKer
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXep3WhenWhenCheckingL0HelperForGetIpSamplingIpMaskThenThenCorrectValueIsReturned) {
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenCheckingL0HelperForGetIpSamplingIpMaskThenThenCorrectValueIsReturned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(0x1fffffffffffffffull, l0GfxCoreHelper.getIpSamplingIpMask());
 }
 
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenCheckingL0HelperForDeletingIpSamplingMapWithNullValuesThenMapRemainstheSameSize) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, nullptr));
+    l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
+    EXPECT_NE(0u, stallSumIpDataMap.size());
+}
+
 #pragma pack(1)
-typedef struct StallSumIpDataXeCore {
+typedef struct StallSumIpDataXe3pCore {
     uint64_t tdrCount;
     uint64_t otherCount;
     uint64_t controlCount;
@@ -241,10 +249,25 @@ typedef struct StallSumIpDataXeCore {
     uint64_t syncCount;
     uint64_t instFetchCount;
     uint64_t activeCount;
-} StallSumIpDataXeCore_t;
+} StallSumIpDataXe3pCore_t;
 #pragma pack()
 
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenL0GfxCoreHelperWhenL0HelperCanAddIPsFromDataThenSuccess) {
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenCheckingL0HelperForDeletingValidMapIpSamplingEntryThenMapRemainstheSameSize) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+
+    StallSumIpDataXe3pCore *stallSumData = new StallSumIpDataXe3pCore;
+    stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, stallSumData));
+    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
+    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
+    EXPECT_EQ(1u, stallSumIpDataMap.size());
+
+    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it); // if entry not found it is skipped
+    EXPECT_EQ(1u, stallSumIpDataMap.size());
+    stallSumIpDataMap.clear();
+}
+
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenL0HelperCanAddIPsFromDataThenSuccess) {
 
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;
@@ -270,12 +293,12 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenL0GfxCoreHelperWhenL0HelperCanAddI
     stallSumIpDataMap.clear();
 }
 
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenL0GfxCoreHelperWhenL0HelperCanAddIPsFromMapThenSuccess) {
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenL0HelperCanAddIPsFromMapThenSuccess) {
 
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     std::map<uint64_t, void *> stallSourceIpDataMap;
-    StallSumIpDataXeCore_t *stallSumData = new StallSumIpDataXeCore_t;
+    StallSumIpDataXe3pCore_t *stallSumData = new StallSumIpDataXe3pCore_t;
     stallSourceIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, stallSumData));
 
     std::map<uint64_t, void *> stallSumIpDataMap;
@@ -289,6 +312,62 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenL0GfxCoreHelperWhenL0HelperCanAddI
     stallSourceIpDataMap.clear();
     l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
     stallSumIpDataMap.clear();
+}
+
+struct OutputReportMetrics {
+    const char *metricName;
+    uint64_t value;
+};
+
+std::vector<OutputReportMetrics> expectedOutputMetricsXe3p = {
+    // IP goes first, but is not in the raw report, so it is not included in this mapping
+    {"Active", 1},
+    {"PSDepStall", 2}, // HW spec calls it tdr count
+    {"ControlStall", 3},
+    {"PipeStall", 4},
+    {"SendStall", 5},
+    {"DistStall", 6},
+    {"SbidStall", 7},
+    {"SyncStall", 8},
+    {"InstrFetchStall", 9},
+    {"OtherStall", 10}};
+
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenGetIpSamplingReportMetricsIsCalledThenOrderOfMetricsIsCorrect) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> metrics{};
+    metrics = l0GfxCoreHelper.getStallSamplingReportMetrics();
+    EXPECT_EQ(expectedOutputMetricsXe3p.size(), metrics.size());
+    for (size_t i = 0; i < expectedOutputMetricsXe3p.size(); i++) {
+        EXPECT_STREQ(expectedOutputMetricsXe3p[i].metricName, metrics[i].first);
+    }
+}
+
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenStallSumIpDataToTypedValuesIsCalledThenValuesAreCorrectlyConverted) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    uint64_t ip = 10ull;
+
+    StallSumIpDataXe3pCore reportData = {
+        expectedOutputMetricsXe3p[1].value, // tdrCount
+        expectedOutputMetricsXe3p[9].value, // otherCount
+        expectedOutputMetricsXe3p[2].value, // controlCount
+        expectedOutputMetricsXe3p[3].value, // pipeStallCount
+        expectedOutputMetricsXe3p[4].value, // sendCount
+        expectedOutputMetricsXe3p[5].value, // distAccCount
+        expectedOutputMetricsXe3p[6].value, // sbidCount
+        expectedOutputMetricsXe3p[7].value, // syncStallCount
+        expectedOutputMetricsXe3p[8].value, // instrFetchStallCount
+        expectedOutputMetricsXe3p[0].value  // activeCount
+    };
+
+    void *sumIpData = reinterpret_cast<void *>(&reportData);
+    std::vector<zet_typed_value_t> ipDataValues{};
+    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
+    EXPECT_EQ(11u, ipDataValues.size());
+    // IP goes first
+    EXPECT_EQ(ip, ipDataValues[0].value.ui64);
+    for (uint64_t i = 0; i < static_cast<uint64_t>(expectedOutputMetricsXe3p.size()); i++) {
+        EXPECT_EQ(expectedOutputMetricsXe3p[i].value, ipDataValues[i + 1].value.ui64);
+    }
 }
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {

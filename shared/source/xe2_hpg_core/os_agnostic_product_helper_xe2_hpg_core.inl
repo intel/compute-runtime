@@ -41,11 +41,6 @@ bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInf
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
 

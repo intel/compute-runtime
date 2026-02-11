@@ -62,11 +62,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }

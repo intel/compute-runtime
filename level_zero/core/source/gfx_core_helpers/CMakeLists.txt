@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -54,13 +54,26 @@ if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE2_HPG_CORE)
   )
 endif()
 
+if(SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)
+  target_sources(${L0_STATIC_LIB_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe2_hpg_xe3.inl
+  )
+endif()
+
 if(SUPPORT_XE2_AND_LATER)
   target_sources(${L0_STATIC_LIB_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe2_hpg_and_later.inl
   )
 endif()
+
 if(SUPPORT_XE3_AND_LATER)
   target_sources(${L0_STATIC_LIB_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe3_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  target_sources(${L0_STATIC_LIB_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe3p_and_later.inl
   )
 endif()
