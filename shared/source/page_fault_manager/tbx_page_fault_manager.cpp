@@ -57,10 +57,11 @@ void TbxPageFaultManager::removeAllocation(GraphicsAllocation *alloc) {
     std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
     for (auto &data : memoryDataTbx) {
         auto allocPtr = data.first;
-        auto faultData = data.second;
+        auto &faultData = data.second;
         if (faultData.gfxAllocation == alloc) {
+            auto size = faultData.size;
             memoryDataTbx.erase(allocPtr);
-            this->allowCPUMemoryAccess(allocPtr, faultData.size);
+            this->allowCPUMemoryAccess(allocPtr, size);
             return;
         }
     }
