@@ -227,6 +227,70 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenExecuteCommandList
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCmdQueueForBcsSplitOrdering : public MockCommandQueueHw<gfxCoreFamily> {
+    using MockCommandQueueHw<gfxCoreFamily>::MockCommandQueueHw;
+
+    bool bcsSplitAlreadyDispatchedAtMigrationTime = false;
+    uint32_t makeResidentAndMigrateCallCount = 0;
+    BcsSplit *bcsSplitPtr = nullptr;
+
+    void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override {
+        if (bcsSplitPtr) {
+            for (auto &cmdList : bcsSplitPtr->cmdLists) {
+                if (static_cast<WhiteBox<CommandList> *>(cmdList)->cmdQImmediate->getTaskCount() != 0) {
+                    bcsSplitAlreadyDispatchedAtMigrationTime = true;
+                    break;
+                }
+            }
+        }
+        makeResidentAndMigrateCallCount++;
+        MockCommandQueueHw<gfxCoreFamily>::makeResidentAndMigrate(performMigration, residencyContainer);
+    }
+};
+
+HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenExecuteCalledThenMigrationIsPerformedBeforeDispatchingBcsSplit, IsAtLeastXeHpcCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    auto cmdList = createBcsSplitRegularCmdList<FamilyType::gfxCoreFamily>();
+
+    auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
+
+    constexpr size_t totalSize = 32 * MemoryConstants::megaByte;
+    constexpr size_t perEngineMaxSize = 8 * MemoryConstants::megaByte;
+
+    cmdList->getRegularCmdListsForSplit(totalSize, perEngineMaxSize, bcsSplit->cmdLists.size());
+
+    cmdList->close();
+
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    auto mockCmdQ = makeZeUniquePtr<MockCmdQueueForBcsSplitOrdering<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    mockCmdQ->initialize(false, false, false);
+    mockCmdQ->bcsSplitPtr = bcsSplit;
+
+    auto handle = cmdList->toHandle();
+
+    for (auto i = 0u; i < cmdList->subCmdListsForRecordedBcsSplit.size(); i++) {
+        EXPECT_EQ(0u, static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[i])->cmdQImmediate->getTaskCount());
+    }
+
+    mockCmdQ->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
+
+    EXPECT_GT(mockCmdQ->makeResidentAndMigrateCallCount, 0u);
+
+    for (auto i = 0u; i < cmdList->subCmdListsForRecordedBcsSplit.size(); i++) {
+        EXPECT_NE(0u, static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[i])->cmdQImmediate->getTaskCount());
+    }
+
+    EXPECT_FALSE(mockCmdQ->bcsSplitAlreadyDispatchedAtMigrationTime);
+}
+
 HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenResetCalledThenDestroyRecordedBcsSplitResourcesIsCalled, IsAtLeastXeHpcCore) {
     if (!device->getProductHelper().useAdditionalBlitProperties()) {
         GTEST_SKIP();

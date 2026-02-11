@@ -691,8 +691,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
 
             ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
-
-            commandList->dispatchRecordedBcsSplit();
         } else {
             ctx.taskCountUpdateFenceRequired |= commandList->isTaskCountUpdateFenceRequired();
         }
@@ -705,6 +703,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         makeResidentAndMigrate(ctx.isMigrationRequested, commandList->getCmdContainer().getResidencyContainer());
+        commandList->dispatchRecordedBcsSplit();
     }
 
     if (parentImmediateCommandlistLinearStream) {
