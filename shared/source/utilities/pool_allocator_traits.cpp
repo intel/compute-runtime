@@ -67,4 +67,12 @@ bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
     return productHelper.is2MBLocalMemAlignmentEnabled();
 }
 
+bool LinearStreamPoolTraits::isEnabled(const ProductHelper &productHelper) {
+    auto forceEnable = debugManager.flags.EnableLinearStreamPoolAllocator.get();
+    if (forceEnable != -1) {
+        return forceEnable == 1;
+    }
+    return productHelper.is2MBLocalMemAlignmentEnabled();
+}
+
 } // namespace NEO

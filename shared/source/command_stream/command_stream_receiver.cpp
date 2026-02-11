@@ -885,10 +885,10 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     GraphicsAllocation *heapMemory = nullptr;
     if (allocationType == AllocationType::linearStream && device) {
-        auto enablePoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
-        if ((enablePoolAllocator == 1) ||
-            (enablePoolAllocator == -1 && device->getProductHelper().is2MBLocalMemAlignmentEnabled())) {
-            heapMemory = device->getLinearStreamPoolAllocator().allocate(allocationSize);
+        if (LinearStreamPoolAllocator::isEnabled(device->getProductHelper())) {
+            auto ctx = createDeferredFreeContext();
+            auto &poolAllocator = device->getLinearStreamPoolAllocator();
+            heapMemory = poolAllocator.allocate(allocationSize, &ctx);
         }
     }
     if (!heapMemory) {
@@ -939,7 +939,7 @@ void CommandStreamReceiver::releaseHeapAllocation(GraphicsAllocation *heapMemory
     if (device) {
         auto *parent = heapMemory->getParentAllocation();
         if (parent && device->getLinearStreamPoolAllocator().isPoolBuffer(parent)) {
-            device->getLinearStreamPoolAllocator().free(heapMemory);
+            device->getLinearStreamPoolAllocator().free(heapMemory, peekTaskCount(), osContext->getContextId());
             return;
         }
     }

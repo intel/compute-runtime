@@ -70,6 +70,7 @@ struct LinearStreamPoolTraits {
     static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
 
     static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+    static bool isEnabled(const ProductHelper &productHelper);
 };
 
 } // namespace NEO

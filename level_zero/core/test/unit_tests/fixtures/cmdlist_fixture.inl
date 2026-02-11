@@ -1520,6 +1520,10 @@ template <typename FamilyType>
 void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperation operation) {
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
+    // Start with clean tag state for testing deferred free mechanism
+    *ultCsr.tagAddress = 0;
+    *ultCsr.ucTagAddress = 0;
+
     const ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     auto result = ZE_RESULT_SUCCESS;
@@ -1540,7 +1544,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
     auto sshFirstCmdList = cmdContainer.getSurfaceStateHeapReserve().indirectHeapReservation;
     auto sshCoexistingCmdList = cmdContainerCoexisting.getSurfaceStateHeapReserve().indirectHeapReservation;
 
-    void *firstSshCpuPointer = sshFirstCmdList->getCpuBase();
+    auto firstSshGpuPointer = sshFirstCmdList->getGpuBase();
 
     EXPECT_EQ(sshFirstCmdList->getCpuBase(), sshCoexistingCmdList->getCpuBase());
 
@@ -1548,6 +1552,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     EXPECT_EQ(csrSshHeap->getCpuBase(), sshFirstCmdList->getCpuBase());
 
+    // Exhaust the current heap to trigger new allocation
     csrSshHeap->getSpace(csrSshHeap->getAvailableSpace());
 
     result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -1555,7 +1560,12 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     validateDispatchFlags(false, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
 
-    EXPECT_NE(firstSshCpuPointer, sshFirstCmdList->getCpuBase());
+    // Verify new heap was allocated with different GPU address
+    EXPECT_NE(firstSshGpuPointer, sshFirstCmdList->getGpuBase());
+
+    // Advance tags to allow deferred allocations to be processed
+    *ultCsr.tagAddress = ultCsr.peekTaskCount();
+    *ultCsr.ucTagAddress = ultCsr.peekTaskCount();
 
     result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

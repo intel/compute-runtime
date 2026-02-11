@@ -35,18 +35,15 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
     }
 
     GraphicsAllocation *heapAllocation = nullptr;
-
     if (allocationType == AllocationType::linearStream && device) {
-        auto enablePoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
-        if ((enablePoolAllocator == 1) ||
-            (enablePoolAllocator == -1 && device->getProductHelper().is2MBLocalMemAlignmentEnabled())) {
-            heapAllocation = device->getLinearStreamPoolAllocator().allocate(heapSize);
+        if (LinearStreamPoolAllocator::isEnabled(device->getProductHelper())) {
+            auto &poolAllocator = device->getLinearStreamPoolAllocator();
+            heapAllocation = poolAllocator.allocate(heapSize);
             if (heapAllocation) {
                 return heapAllocation;
             }
         }
     }
-
     auto allocation = this->storageForReuse->obtainReusableAllocation(heapSize, allocationType);
     if (allocation) {
         return allocation.release();
