@@ -175,7 +175,7 @@ template <typename GfxFamily>
 size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                           bool apiSelfCleanup,
                                                           bool usePostSync) {
-    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper());
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
     WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, usePostSync, semaphore64bCmdSupported);
 
     return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, rootDeviceEnvironment));
@@ -192,7 +192,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
-    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper());
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
     WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, gpuAddress > 0, semaphore64bCmdSupported);
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;

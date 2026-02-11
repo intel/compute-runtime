@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
+    EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
     CriHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
@@ -118,6 +119,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
+    EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
     CriHwConfig::setupHardwareInfo(&hwInfo, true, releaseHelper.get());
     EXPECT_TRUE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
@@ -142,6 +144,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
     EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
     EXPECT_FALSE(featureTable.flags.ftrTileY);
+    EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_EQ(maxNBitValue(9), featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
 }

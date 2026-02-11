@@ -97,7 +97,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     }
 
     currentQueueWorkCount = getInitialSemaphoreValue();
-    this->useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
+    this->useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper, *inputParams.rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily, typename Dispatcher>

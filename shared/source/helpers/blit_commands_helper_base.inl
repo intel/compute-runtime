@@ -358,7 +358,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
+    bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper, *rootDeviceEnvironment.getHardwareInfo());
 
     EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
 }

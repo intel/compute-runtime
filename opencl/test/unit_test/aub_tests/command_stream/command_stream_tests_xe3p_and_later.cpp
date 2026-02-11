@@ -66,7 +66,7 @@ HWTEST2_F(CommandStreamTestsXe3pAndLater, given64bDataToCompareWhenUsingIndirect
 
     auto &productHelper = this->device->getProductHelper();
     auto *releaseHelper = this->device->getDevice().getReleaseHelper();
-    const bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper);
+    const bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper, this->device->getHardwareInfo());
 
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0, compareDataGpr0Low, true, false);
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0 + 4, compareDataGpr0High, true, false);

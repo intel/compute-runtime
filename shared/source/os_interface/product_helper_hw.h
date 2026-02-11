@@ -224,7 +224,7 @@ class ProductHelperHw : public ProductHelper {
     bool isScratchSpaceBasePointerInGrf() const override;
     bool scanFullTopologyBitmap() const override;
     bool isMemSetExtendedPayloadSupported() const override;
-    bool isAvailableSemaphore64(const ReleaseHelper *releaseHelper) const override;
+    bool isAvailableSemaphore64(const ReleaseHelper *releaseHelper, const HardwareInfo &hwInfo) const override;
 
     ~ProductHelperHw() override = default;
 

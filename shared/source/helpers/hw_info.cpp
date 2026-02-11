@@ -178,6 +178,7 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Rele
     featureTable->flags.ftrUserModeTranslationTable = true;
 
     featureTable->flags.ftrXe2Compression = releaseHelper.getFtrXe2Compression();
+    featureTable->flags.ftrHwSemaphore64 = releaseHelper.isAvailableSemaphore64();
 
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 

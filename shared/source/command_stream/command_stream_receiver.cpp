@@ -803,7 +803,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
     UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
     auto hostFunctionIdAddress = chunk.cpuPtr;
 
-    auto useSemaphore64bCmd = getProductHelper().isAvailableSemaphore64(getReleaseHelper());
+    auto useSemaphore64bCmd = getProductHelper().isAvailableSemaphore64(getReleaseHelper(), peekHwInfo());
 
     auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,

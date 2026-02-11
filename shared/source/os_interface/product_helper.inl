@@ -1152,10 +1152,15 @@ bool ProductHelperHw<gfxProduct>::isMemSetExtendedPayloadSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *releaseHelper, const HardwareInfo &hwInfo) const {
     if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
         return debugManager.flags.Enable64BitSemaphore.get() == 1;
     }
+
+    if (!hwInfo.featureTable.flags.ftrHwSemaphore64) {
+        return false;
+    }
+
     if (releaseHelper) {
         return releaseHelper->isAvailableSemaphore64();
     }
