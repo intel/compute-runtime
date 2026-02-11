@@ -28,7 +28,6 @@ struct RegularCmdListBcsSplitTests : public InOrderCmdListFixture {
         NEO::debugManager.flags.SplitBcsRequiredEnginesCount.set(numCopyEngines);
         NEO::debugManager.flags.SplitBcsMask.set(0b11110);
         NEO::debugManager.flags.SplitBcsTransferDirectionMask.set(defaultTransferDirection);
-        NEO::debugManager.flags.SplitBcsForRegularCmdList.set(1);
 
         hwInfoBackup = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -132,7 +131,7 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenSplitBcsForRegularCmdListDisabledWhe
 
     cmdList->enableBcsSplit();
 
-    EXPECT_EQ(BcsSplitParams::BcsSplitMode::disabled, cmdList->bcsSplitMode);
+    EXPECT_EQ(BcsSplitParams::BcsSplitMode::recorded, cmdList->bcsSplitMode);
 }
 
 HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenGetRegularCmdListsForSplitWithSmallSizeThenSingleEngineReturned, IsAtLeastXeHpcCore) {

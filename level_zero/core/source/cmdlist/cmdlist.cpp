@@ -572,7 +572,7 @@ void CommandList::enableBcsSplit() {
     if (device->getNEODevice()->isBcsSplitSupported() && !internalUsage && !isBcsSplitEnabled()) {
         if (isImmediateType()) {
             this->bcsSplitMode = getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled()) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
-        } else if (isInOrderExecutionEnabled() && device->getProductHelper().useAdditionalBlitProperties() && (NEO::debugManager.flags.SplitBcsForRegularCmdList.get() == 1)) {
+        } else if (isInOrderExecutionEnabled() && device->getProductHelper().useAdditionalBlitProperties() && (NEO::debugManager.flags.SplitBcsForRegularCmdList.get() != 0)) {
             auto csr = getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver;
             auto isCopyEnabled = isCopyOnly(true);
             bcsSplitMode = getDevice()->bcsSplit->setupDevice(csr, isCopyEnabled) ? BcsSplitParams::BcsSplitMode::recorded : BcsSplitParams::BcsSplitMode::disabled;
