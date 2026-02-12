@@ -1549,6 +1549,8 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType());
 
     UNRECOVERABLE_IF(contextParamEngine.empty());
+    auto priority = getPriorityValue(osContext);
+    osContext.overridePriority(priority);
 
     std::array<drm_xe_ext_set_property, maxContextSetProperties> extProperties{};
     uint32_t extPropertyIndex{0U};
@@ -2013,7 +2015,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
-        ext[extIndexInOut].value = getPriorityValue(osContext);
+        ext[extIndexInOut].value = osContext.getPriorityLevel();
 
         PRINT_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY Context priority value = %d\n", static_cast<int>(ext[extIndexInOut].value));
 

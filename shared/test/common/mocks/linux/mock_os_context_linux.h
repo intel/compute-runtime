@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@ class MockOsContextLinux : public OsContextLinux {
     using OsContextLinux::drmContextIds;
     using OsContextLinux::drmVmIds;
     using OsContextLinux::fenceVal;
+    using OsContextLinux::initializeContext;
+    using OsContextLinux::OsContextLinux;
     using OsContextLinux::ovLoaded;
     using OsContextLinux::pagingFence;
 

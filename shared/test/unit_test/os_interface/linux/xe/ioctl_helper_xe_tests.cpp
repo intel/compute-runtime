@@ -3801,6 +3801,18 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHin
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT), drm->latestExecQueueCreate.flags);
 }
 
+TEST_F(IoctlHelperXeTest, givenContextWithoutPriorityValueWhenInitializingThenPriorityLevelIsSetToDefault) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
+    MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    osContext.initializeContext(false);
+    ASSERT_TRUE(osContext.hasPriorityLevel());
+    EXPECT_EQ(0u, osContext.getPriorityLevel());
+}
+
 TEST_F(IoctlHelperXeTest, whenInitializeIoctlHelperAndLowLatencyNotAvailableThenFlagNotSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
