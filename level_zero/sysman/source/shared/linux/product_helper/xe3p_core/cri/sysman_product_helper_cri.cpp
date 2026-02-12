@@ -26,11 +26,12 @@ constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
-    {"0x1e2fa030",
+    {"0x1e2fa030", // CRI PUNIT rev 0
      {{"VR_TEMPERATURE_0", 200},
       {"VR_TEMPERATURE_1", 204},
       {"VR_TEMPERATURE_2", 208},
       {"VR_TEMPERATURE_3", 212},
+      {"GPU_BOARD_TEMPERATURE", 176},
       {"VRAM_BANDWIDTH", 56}}},
     {"0x5e2fa230",
      {{"MEMSS0_PERF_CTR_MB0_CFI_NUM_READ_REQ", 688},
@@ -269,6 +270,47 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::netlink;
 }
 
+static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
+                                                   std::map<std::string, uint64_t> &keyOffsetMap,
+                                                   std::unordered_map<std::string, std::string> &keyTelemInfoMap) {
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No telemetry nodes found in PCI path, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    keyOffsetMap.clear();
+    keyTelemInfoMap.clear();
+
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (const auto &[key, value] : tempKeyOffsetMap) {
+            keyOffsetMap[key] = value;
+            keyTelemInfoMap[key] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_intel_freq_throttle_detailed_reason_exp_flags_t &pDetailedThrottleReasons) {
 
     const zes_freq_throttle_reason_flags_t powerFlags =
@@ -378,31 +420,25 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 4;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = 2;
 }
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
-    std::string telemDir = "";
-    std::string guid = "";
-    uint64_t telemOffset = 0;
-
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    telemOffset = 0;
-
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
-    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
-    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
-    keyOffsetMap = keyOffsetMapEntry->second;
 
     // Build the key name based on sensor index
     std::string key = "VR_TEMPERATURE_" + std::to_string(sensorIndex);
 
     uint32_t vrTemperature = 0;
-    if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, vrTemperature)) {
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -416,10 +452,49 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(Li
         vrTemperature = vrTemperature & 0xFF; // VR_TEMPERATURE_1/2/3 is reported in U8.0 format
         break;
     default:
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     *pTemperature = static_cast<double>(vrTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    // Both GPU board temperature sensors share the same register
+    std::string key = "GPU_BOARD_TEMPERATURE";
+
+    uint32_t gpuBoardTemperature = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuBoardTemperature)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GPU board temperature value", __FUNCTION__);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    switch (sensorIndex) {
+    case 0:
+        // Index 0: lower 16 bits, temperature in U8.0 format (bits 0-7)
+        gpuBoardTemperature = gpuBoardTemperature & 0xFF;
+        break;
+    case 1:
+        // Index 1: upper 16 bits, temperature in U8.0 format (bits 16-23)
+        gpuBoardTemperature = (gpuBoardTemperature >> 16) & 0xFF;
+        break;
+    default:
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    *pTemperature = static_cast<double>(gpuBoardTemperature);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -486,38 +561,12 @@ template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<uint32_t, std::string> telemNodes;
-    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
-    if (telemNodes.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
 
-    for (const auto &it : telemNodes) {
-        std::string telemNodeDir = it.second;
-
-        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
-            continue;
-        }
-
-        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
-        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
-            continue;
-        }
-
-        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
-        for (const auto &[key, value] : tempKeyOffsetMap) {
-            keyOffsetMap[key] = value;
-            keyTelemInfoMap[key] = telemNodeDir;
-        }
-    }
-
-    if (keyOffsetMap.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     if (ZE_RESULT_SUCCESS != getMemoryBandwidthCounterValues(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
@@ -539,38 +588,12 @@ template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<uint32_t, std::string> telemNodes;
-    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
-    if (telemNodes.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
 
-    for (const auto &it : telemNodes) {
-        std::string telemNodeDir = it.second;
-
-        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
-            continue;
-        }
-
-        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
-        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
-            continue;
-        }
-
-        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
-        for (const auto &[key, value] : tempKeyOffsetMap) {
-            keyOffsetMap[key] = value;
-            keyTelemInfoMap[key] = telemNodeDir;
-        }
-    }
-
-    if (keyOffsetMap.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     uint32_t numOfChannelsPerMsu = 0;

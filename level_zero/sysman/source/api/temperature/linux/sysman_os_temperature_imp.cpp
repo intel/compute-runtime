@@ -41,6 +41,10 @@ ze_result_t LinuxTemperatureImp::getVoltageRegulatorTemperature(double *pTempera
     return pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
 }
 
+ze_result_t LinuxTemperatureImp::getGpuBoardTemperature(double *pTemperature) {
+    return pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
+}
+
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     switch (type) {
@@ -55,6 +59,9 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         break;
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
         result = getVoltageRegulatorTemperature(pTemperature);
+        break;
+    case ZES_TEMP_SENSORS_GPU_BOARD:
+        result = getGpuBoardTemperature(pTemperature);
         break;
     default:
         *pTemperature = 0;
@@ -72,6 +79,7 @@ bool LinuxTemperatureImp::isTempModuleSupported() {
     case ZES_TEMP_SENSORS_GLOBAL:
     case ZES_TEMP_SENSORS_GPU:
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
+    case ZES_TEMP_SENSORS_GPU_BOARD:
         break;
     case ZES_TEMP_SENSORS_MEMORY:
         result &= pSysmanProductHelper->isMemoryMaxTemperatureSupported();
