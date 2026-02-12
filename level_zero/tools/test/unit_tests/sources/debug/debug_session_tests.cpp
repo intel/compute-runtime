@@ -1521,13 +1521,14 @@ struct DebugSessionSr5ExceptionReasonTest : public ::testing::Test {
         uint32_t mockSr5Value = 0;
         ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
             EXPECT_EQ(thread, mockThreadId);
-            EXPECT_EQ(start, 0u);
             EXPECT_EQ(count, 1u);
             switch (type) {
             case ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU:
+                EXPECT_EQ(start, 0u);
                 reinterpret_cast<uint32_t *>(pRegisterValues)[1] = 0;
                 return ZE_RESULT_SUCCESS;
             case ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU:
+                EXPECT_EQ(start, 3u);
                 reinterpret_cast<uint32_t *>(pRegisterValues)[0] = mockSr5Value;
                 return ZE_RESULT_SUCCESS;
             default:

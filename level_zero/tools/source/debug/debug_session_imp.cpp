@@ -902,7 +902,7 @@ bool DebugSessionImp::doesSr5ContainExceptionReason(const EuThread::ThreadId &th
     if (ssah && ssah->versionHeader.version.major >= 5) {
         const auto size = getRegisterSize(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU);
         std::vector<uint32_t> sr5(std::max<size_t>(1u, size / sizeof(sr5[0])));
-        readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, 0, 1, sr5.data());
+        readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, 3, 1, sr5.data());
         return (sr5[0] >> 3) & 1;
     }
     return false;
