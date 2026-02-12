@@ -58,7 +58,7 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledT
 }
 
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
+    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
 
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
@@ -66,4 +66,7 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEn
 }
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
     EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
+}
+NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsCompressionFormatFromGmmRequiredThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isCompressionFormatFromGmmRequired());
 }
