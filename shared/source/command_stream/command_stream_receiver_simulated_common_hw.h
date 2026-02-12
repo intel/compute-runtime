@@ -61,6 +61,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
+    uint32_t getPreferredTagPoolSize() const override { return 1; }
+
     aub_stream::AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContextController> hardwareContextController;
     ReleaseHelper *releaseHelper = nullptr;
