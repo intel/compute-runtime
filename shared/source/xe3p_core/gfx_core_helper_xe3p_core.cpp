@@ -108,19 +108,6 @@ bool GfxCoreHelperHw<Family>::inOrderAtomicSignallingEnabled(const RootDeviceEnv
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
 }
-
-template <>
-void MemorySynchronizationCommands<Family>::setBarrierRequiredFields(void *barrierCmd, PipeControlArgs &args) {
-    constexpr bool drainAllQueuesMode = false;
-    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
-    auto isCacheInvalidated = args.instructionCacheInvalidateEnable || args.stateCacheInvalidationEnable ||
-                              args.textureCacheInvalidationEnable || args.constantCacheInvalidationEnable ||
-                              args.tlbInvalidation;
-    if (isCacheInvalidated) {
-        pipeControl.setQueueDrainMode(drainAllQueuesMode);
-    }
-}
-
 } // namespace NEO
 
 namespace NEO {

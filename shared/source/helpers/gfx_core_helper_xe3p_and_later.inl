@@ -28,9 +28,6 @@ template <>
 uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const;
 
 template <>
-void MemorySynchronizationCommands<Family>::setBarrierRequiredFields(void *barrierCmd, PipeControlArgs &args);
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const {
     if (hpEngineAvailable && (type == EngineGroupType::copy || type == NEO::EngineGroupType::linkedCopy)) {
         return 0;
@@ -304,7 +301,6 @@ inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(voi
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
     pipeControl.setDisableGOSyncWithWalkerPostSync(!args.isWalkerWithProfilingEnqueued);
-    setBarrierRequiredFields(&pipeControl, args);
 
     if (debugManager.flags.FlushAllCaches.get()) {
         pipeControl.setDataportFlush(true);

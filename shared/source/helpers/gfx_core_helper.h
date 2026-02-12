@@ -549,7 +549,6 @@ struct MemorySynchronizationCommands {
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isL1FlushRequiredForBarrier(uint32_t l1CachePolicy);
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
-    static void setBarrierRequiredFields(void *barrierCmd, PipeControlArgs &args);
 
     static void encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress, bool isBcs);
 };
