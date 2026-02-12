@@ -3767,34 +3767,22 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingFlagSetToFalseWhenMak
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHintNotAvailableThenNoFlagIsSet) {
-    class MockLinuxOsContext : public OsContextLinux {
-      public:
-        using OsContextLinux::initializeContext;
-        using OsContextLinux::OsContextLinux;
-    };
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
-    MockLinuxOsContext osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     osContext.initializeContext(false);
     EXPECT_EQ(0u, drm->latestExecQueueCreate.flags);
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHintAvailableThenFlagIsSet) {
-    class MockLinuxOsContext : public OsContextLinux {
-      public:
-        using OsContextLinux::initializeContext;
-        using OsContextLinux::OsContextLinux;
-    };
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
-    MockLinuxOsContext osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     xeIoctlHelper->isLowLatencyHintAvailable = true;
     osContext.initializeContext(false);
