@@ -15,6 +15,9 @@
 #include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
+
+const std::vector<uint32_t> OsContext::emptyIdVector{};
+
 OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
     : rootDeviceIndex(rootDeviceIndex),
       contextId(contextId),

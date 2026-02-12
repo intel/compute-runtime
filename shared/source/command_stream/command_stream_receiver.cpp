@@ -613,6 +613,12 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
         partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
     }
 
+    // Final hang check before returning ready - catches GPU faults that occurred
+    // during fast operations where the periodic hang check was never triggered
+    if (isGpuHangDetected()) {
+        return WaitStatus::gpuHang;
+    }
+
     return WaitStatus::ready;
 }
 

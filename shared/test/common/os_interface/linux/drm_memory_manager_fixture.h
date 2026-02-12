@@ -61,6 +61,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         executionEnvironment->incRefInternal();
         debugManager.flags.DeferOsContextInitialization.set(0);
         debugManager.flags.SetAmountOfReusableAllocations.set(0);
+        debugManager.flags.DisableGpuHangDetection.set(1);
 
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<GfxFamily>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
