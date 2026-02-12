@@ -198,12 +198,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool isNonStallingIoqBarrier = commandType == CL_COMMAND_BARRIER && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
     const bool useSemaphore64bCmd = this->getDevice().getDeviceInfo().semaphore64bCmdSupport;
-
+    auto previousEnqueueSkippedPostSync = false;
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        previousEnqueueSkippedPostSync = this->isWalkerPostSyncSkipEnabled && timestampPacketContainer->peekNodes().empty();
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::gpuKernel &&
                                                                    this->isBarrierForImplicitDependenciesAllowed &&
                                                                    !this->isOOQEnabled() &&
-                                                                   (this->isWalkerPostSyncSkipEnabled || this->taskCount == computeCommandStreamReceiver.peekTaskCount());
+                                                                   (previousEnqueueSkippedPostSync || this->taskCount == computeCommandStreamReceiver.peekTaskCount());
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
                 eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::onCsr);
@@ -223,7 +224,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             } else {
                 nodesCount = multiDispatchInfo.size();
             }
-            canSkipCurrentPostSync = this->isWalkerPostSyncSkipEnabled && !event;
+            canSkipCurrentPostSync = this->isWalkerPostSyncSkipEnabled && !event && computeCommandStreamReceiver.getNumClients() < 2;
         }
 
         if (isCacheFlushForBcsRequired() && enqueueWithBlitAuxTranslation) {
@@ -247,7 +248,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         DEBUG_BREAK_IF(relaxedOrderingForGpgpuAllowed(1)); // IOQ has >=1 dependencies
         PipeControlArgs args;
         args.csStallOnly = true;
-        if (timestampPacketDependencies.previousEnqueueNodes.peekNodes().empty()) {
+        if (previousEnqueueSkippedPostSync) {
             auto l1CachePolicy = device->getProductHelper().getL1CachePolicy(this->device->getDebugger() != nullptr);
             args.isL1FlushRequired = NEO::MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(l1CachePolicy);
             args.isL1InvalidateRequired = !args.isL1FlushRequired;
