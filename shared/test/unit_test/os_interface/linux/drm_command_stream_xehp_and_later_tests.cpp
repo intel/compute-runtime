@@ -24,7 +24,6 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
@@ -38,7 +37,6 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         debugManager.flags.CreateMultipleSubDevices.set(2u);
         debugManager.flags.EnableImplicitScaling.set(1);
         debugManager.flags.EnableForcePin.set(false);
-        debugManager.flags.EnableDirectSubmission.set(0);
 
         executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();

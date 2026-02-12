@@ -433,7 +433,6 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
         return status;
     }
 
-    this->initDirectSubmission();
     if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
         status = this->flushMiFlushDW(true);
     } else {

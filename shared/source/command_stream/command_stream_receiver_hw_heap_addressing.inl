@@ -14,7 +14,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     if (this->latestFlushedTaskCount > 0) {
         return SubmissionStatus::success;
     }
-    this->initDirectSubmission();
+
     auto status = flushTagUpdate();
 
     if (isTbxMode() && (status == SubmissionStatus::success)) {

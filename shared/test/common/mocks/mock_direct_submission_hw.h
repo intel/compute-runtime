@@ -79,7 +79,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::switchRingBuffersAllocations;
     using BaseClass::switchRingBuffersNeeded;
     using BaseClass::systemMemoryFenceAddressSet;
-    using BaseClass::tagAddress;
     using BaseClass::unblockGpu;
     using BaseClass::workPartitionAllocation;
     using typename BaseClass::RingBufferUse;
