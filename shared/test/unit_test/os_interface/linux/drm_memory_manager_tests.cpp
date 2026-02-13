@@ -1381,6 +1381,103 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHan
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandleWithReservedDataThenSucceeds) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    uint64_t handleVal = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+
+    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEF));
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, reservedHandleData);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHandleWithReservedDataThenSucceeds) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    uint64_t handleVal = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+
+    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xCAFEBABE));
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, nullptr, reservedHandleData);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullReservedDataWhenClosingInternalHandleWithReservedDataThenSucceeds) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    uint64_t handleVal = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenClosingInternalHandleWithReservedDataThenCloseInternalHandleIsCalled) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    uint64_t handleVal = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+
+    // Test that closeInternalHandleWithReservedData calls closeInternalHandle
+    // DrmMemoryManager's default implementation should just delegate to closeInternalHandle
+    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xBEEFCAFE));
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, reservedHandleData);
+
+    // If we get here without errors, the test passed
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenObtainReservedHandleDataIsCalledThenNoAction) {
+    // Test that obtainReservedHandleData does nothing in default implementation
+    int testFd = 42;
+    void *reservedHandleData = reinterpret_cast<void *>(0x12345678);
+
+    // This should not crash or throw - it's a no-op in the default implementation
+    memoryManager->obtainReservedHandleData(testFd, reservedHandleData);
+
+    // Test passed if we get here
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrDrmAllocationWhenTryingToRegisterItThenRegisterSharedBoHandleAllocationDoesNothing) {
     ASSERT_TRUE(memoryManager->sharedBoHandles.empty());
 

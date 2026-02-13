@@ -555,7 +555,13 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
             ipcHandleIterator->second->refcnt -= 1;
             if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
                 auto *memoryManager = driverHandle->getMemoryManager();
-                memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
+                void *reservedHandleData = nullptr;
+                if (ipcHandleIterator->second->hasReservedHandleData) {
+                    reservedHandleData = ipcHandleIterator->second->opaqueData.reservedHandleData;
+                    memoryManager->closeInternalHandleWithReservedData(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc, reservedHandleData);
+                } else {
+                    memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
+                }
                 if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
                     this->driverHandle->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
                 }
@@ -779,7 +785,13 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
         IpcHandleTracking *trackIPC = ipcIter->second;
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
-            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            void *reservedHandleData = nullptr;
+            if (trackIPC->hasReservedHandleData) {
+                reservedHandleData = trackIPC->opaqueData.reservedHandleData;
+                driverHandle->getMemoryManager()->closeInternalHandleWithReservedData(handle, trackIPC->handleId, trackIPC->alloc, reservedHandleData);
+            } else {
+                driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            }
             if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
                 this->driverHandle->unregisterIpcHandleWithServer(handle);
             }
@@ -891,13 +903,12 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
+        uint8_t reservedHandleDataStorage[32] = {0};
         void *reservedHandleData = nullptr;
         uint64_t handle = 0;
         if (settings.useOpaqueHandle) {
-            using IpcDataT = IpcOpaqueMemoryData;
-            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
             if (fabricAccessibleHandle) {
-                reservedHandleData = &ipcData.reservedHandleData;
+                reservedHandleData = reservedHandleDataStorage;
             }
         }
         int ret = alloc->createInternalHandle(memoryManager, i, handle, reservedHandleData);
@@ -912,12 +923,12 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
             using IpcDataT = IpcOpaqueMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
             setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
-                                       usmPool, settings.handleType);
+                                       usmPool, settings.handleType, reservedHandleData);
         } else {
             using IpcDataT = IpcMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
             setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
-                                       usmPool, settings.handleType);
+                                       usmPool, settings.handleType, nullptr);
         }
     }
     return ZE_RESULT_SUCCESS;

@@ -72,7 +72,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
 
     // Socket server is an optional fallback mechanism - handle tracking is primary and must always succeed
     // Even if socket server init fails, the handle should still be added to the map
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -107,7 +107,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithNtHandleTypeAndSoc
 
     // ntHandle type skips the socket server code path entirely
     // Socket fallback is only for fdHandle type
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -136,7 +136,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
     // Socket fallback disabled - socket server code path is skipped
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -201,7 +201,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     uint64_t ptrAddress = 0x5000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     EXPECT_EQ(1u, mockDriverHandle.initializeIpcSocketServerCalled);
     EXPECT_EQ(1u, mockDriverHandle.registerIpcHandleWithServerCalled);
@@ -237,7 +237,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     uint64_t ptrAddress = 0x6000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     EXPECT_EQ(1u, mockDriverHandle.initializeIpcSocketServerCalled);
     EXPECT_EQ(1u, mockDriverHandle.registerIpcHandleWithServerCalled);

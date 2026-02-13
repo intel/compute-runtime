@@ -83,6 +83,21 @@ TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithOsAgnosticThenNoChange
     memoryManager.closeInternalHandle(handle, 0u, nullptr);
 }
 
+TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithReservedDataOnBaseClassThenDelegatesToCloseInternalHandle) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint64_t handle = 12345u;
+    void *reservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xABCDEF00));
+
+    // The base MemoryManager implementation should delegate to closeInternalHandle
+    // This test verifies the default implementation works correctly
+    memoryManager.closeInternalHandleWithReservedData(handle, 0u, nullptr, reservedData);
+
+    // Also test with nullptr for reserved data
+    handle = 67890u;
+    memoryManager.closeInternalHandleWithReservedData(handle, 0u, nullptr, nullptr);
+}
+
 TEST(MemoryManagerTest, WhenCallingSetAtomicAccessWithOsAgnosticThenNoChanges) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

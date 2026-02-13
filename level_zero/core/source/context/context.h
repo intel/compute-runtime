@@ -87,6 +87,7 @@ struct IpcHandleTracking {
     uint64_t cacheID = 0;
     struct IpcMemoryData ipcData = {};
     struct IpcOpaqueMemoryData opaqueData = {};
+    bool hasReservedHandleData = false;
 };
 
 struct Context : _ze_context_handle_t {

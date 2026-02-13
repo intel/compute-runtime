@@ -259,10 +259,11 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType) {
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType, void *reservedHandleData) {
         std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
         ipcData = {};
+        bool hasReservedData = reservedHandleData != nullptr;
         if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
             ipcData.handle = handle;
             ipcData.type = type;
@@ -276,6 +277,10 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             } else if (handleType == IpcHandleType::fdHandle) {
                 // For fdHandle, we store the handle as an int
                 ipcData.handle.fd = static_cast<int>(handle);
+            }
+            memset(ipcData.reservedHandleData, 0, sizeof(IpcOpaqueMemoryData::reservedHandleData));
+            if (reservedHandleData) {
+                std::memcpy(ipcData.reservedHandleData, reservedHandleData, sizeof(IpcOpaqueMemoryData::reservedHandleData));
             }
         }
 
@@ -294,6 +299,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             handleTracking->refcnt = 1;
             handleTracking->ptr = ptrAddress;
             handleTracking->handle = handle;
+            handleTracking->hasReservedHandleData = hasReservedData;
             if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
                 handleTracking->ipcData = ipcData;
             } else {

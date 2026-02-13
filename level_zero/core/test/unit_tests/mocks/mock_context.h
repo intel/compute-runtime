@@ -25,6 +25,7 @@ template <>
 struct WhiteBox<::L0::ContextImp> : public ::L0::ContextImp {
     using ::L0::ContextImp::devices;
     using ::L0::ContextImp::numDevices;
+    using ::L0::ContextImp::setIPCHandleData;
 };
 
 template <>

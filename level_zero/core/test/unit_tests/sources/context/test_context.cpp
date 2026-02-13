@@ -29,6 +29,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
+#include "level_zero/core/test/unit_tests/white_box.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_context.h"
 
 #include "gtest/gtest.h"
@@ -3211,7 +3212,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with IpcMemoryData type
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -3274,7 +3275,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with IpcOpaqueMemoryData type
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -3351,7 +3352,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with invalid handle type (maxHandle)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType1);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType1, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -3372,7 +3373,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     opaqueIpcData = {}; // Reset
     L0::IpcHandleType invalidHandleType2 = L0::IpcHandleType::maxHandle;
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType2);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType2, nullptr);
 
     // Verify the handle was added to the IPC handle map
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -3420,7 +3421,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with ntHandle type
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -4695,7 +4696,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithUsmPoolThenPoolOffsetIsSet) {
     // Call setIPCHandleData with a valid USM pool
     // Note: We pass usmPool pointer, but the mock implementation may not fully support offset calculation
     // This test primarily ensures the code path with usmPool != nullptr is executed
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, &mockPool, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, &mockPool, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -4747,7 +4748,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithExistingHandleInMapThenRefCou
     }
 
     // Call setIPCHandleData with the same handle - should increment refcount
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify refcount was incremented
     {
@@ -5311,7 +5312,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleThenSocketS
 
     // Call setIPCHandleData with fdHandle and sockets enabled
     // This should trigger the socket server initialization path (line 302)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5360,7 +5361,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleDisabledThe
 
     // Call setIPCHandleData with opaque handles disabled
     // This should NOT trigger the socket server initialization path (line 302 condition is false)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5409,7 +5410,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSocketServe
 
     // Call setIPCHandleData with ntHandle (not fdHandle)
     // This should NOT trigger the socket server initialization path because handleType != fdHandle
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5449,7 +5450,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocketsEnabled
     // This call should trigger the socket code path decision at line 306
     // Even if socket server initialization fails (which it will without proper setup),
     // the handle should still be added to the map
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5462,6 +5463,306 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocketsEnabled
     driverHandle->getIPCHandleMap().clear();
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenCloseInternalHandleWithReservedDataIsCalled) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 12345;
+    void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEF));
+
+    L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    handleTracking->alloc = &mockAllocation;
+    handleTracking->refcnt = 1;
+    handleTracking->ptr = 0x1000;
+    handleTracking->handle = testHandle;
+    handleTracking->handleId = 0;
+    handleTracking->hasReservedHandleData = true;
+    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
+    handleTracking->ipcData.handle = testHandle;
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
+    }
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    ipcData->handle = testHandle;
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+    }
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataAndMultipleRefCountsThenReservedDataOnlyUsedOnLastRef) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 67890;
+    void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xCAFEBABE));
+
+    L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    handleTracking->alloc = &mockAllocation;
+    handleTracking->refcnt = 2; // Multiple references
+    handleTracking->ptr = 0x2000;
+    handleTracking->handle = testHandle;
+    handleTracking->handleId = 0;
+    handleTracking->hasReservedHandleData = true;
+    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
+    handleTracking->ipcData.handle = testHandle;
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
+    }
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    ipcData->handle = testHandle;
+
+    // First putIpcMemHandle - should decrement refcount but not close handle
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_FALSE(driverHandle->getIPCHandleMap().empty());
+        auto iter = driverHandle->getIPCHandleMap().find(testHandle);
+        ASSERT_NE(iter, driverHandle->getIPCHandleMap().end());
+        EXPECT_EQ(1u, iter->second->refcnt);
+    }
+
+    // Second putIpcMemHandle - should close handle with reserved data
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+    }
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataTrueThenHandleTrackingHasReservedDataIsSet) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 11111;
+    uint64_t ptrAddress = 0x3000;
+    uint8_t type = 1;
+
+    L0::IpcMemoryData ipcData = {};
+    ipcData.handle = testHandle;
+    uint8_t reservedData[32] = {1, 2, 3, 4}; // Example reserved data
+    void *reservedDataPtr = reservedData;
+
+    // Call setIPCHandleData with reserved data set.
+    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, testHandle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, reservedDataPtr);
+
+    // Verify the handle was added to the IPC handle map with hasReservedHandleData set
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    EXPECT_EQ(1u, ipcHandleMap.size());
+
+    auto handleIterator = ipcHandleMap.find(testHandle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_TRUE(handleIterator->second->hasReservedHandleData);
+
+    // Clean up
+    delete handleIterator->second;
+    driverHandle->getIPCHandleMap().clear();
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataFalseThenHandleTrackingHasReservedDataIsNotSet) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 22222;
+    uint64_t ptrAddress = 0x4000;
+    uint8_t type = 1;
+
+    L0::IpcMemoryData ipcData = {};
+    ipcData.handle = testHandle;
+
+    // Call setIPCHandleData with empty reserved data (nullptr) and hasReservedHandleData should be false.
+    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, testHandle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+
+    // Verify the handle was added to the IPC handle map with hasReservedHandleData not set
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    EXPECT_EQ(1u, ipcHandleMap.size());
+
+    auto handleIterator = ipcHandleMap.find(testHandle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_FALSE(handleIterator->second->hasReservedHandleData);
+
+    // Clean up
+    delete handleIterator->second;
+    driverHandle->getIPCHandleMap().clear();
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenHandleTrackingContainsReservedDataAndIsCleared) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 99999;
+    void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xBEEFCAFE));
+
+    L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    handleTracking->alloc = &mockAllocation;
+    handleTracking->refcnt = 1;
+    handleTracking->ptr = 0x5000;
+    handleTracking->handle = testHandle;
+    handleTracking->handleId = 42;
+    handleTracking->hasReservedHandleData = true;
+    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
+    handleTracking->ipcData.handle = testHandle;
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
+    }
+
+    // Verify the handle tracking has reserved data before putIpcMemHandle
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        auto iter = driverHandle->getIPCHandleMap().find(testHandle);
+        ASSERT_NE(iter, driverHandle->getIPCHandleMap().end());
+        EXPECT_TRUE(iter->second->hasReservedHandleData);
+        void *storedReservedData = nullptr;
+        memcpy(&storedReservedData, iter->second->opaqueData.reservedHandleData, sizeof(void *));
+        EXPECT_EQ(testReservedData, storedReservedData);
+    }
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    ipcData->handle = testHandle;
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Verify that closeInternalHandleWithReservedData was called and handle was removed from map
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+    }
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingPutIpcMemHandleWithoutReservedHandleDataThenHandleTrackingReflectsNoReservedData) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint64_t testHandle = 88888;
+
+    L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    handleTracking->alloc = &mockAllocation;
+    handleTracking->refcnt = 1;
+    handleTracking->ptr = 0x6000;
+    handleTracking->handle = testHandle;
+    handleTracking->handleId = 33;
+    handleTracking->hasReservedHandleData = false; // No reserved data
+    handleTracking->ipcData.handle = testHandle;
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
+    }
+
+    // Verify the handle tracking does NOT have reserved data before putIpcMemHandle
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        auto iter = driverHandle->getIPCHandleMap().find(testHandle);
+        ASSERT_NE(iter, driverHandle->getIPCHandleMap().end());
+        EXPECT_FALSE(iter->second->hasReservedHandleData);
+    }
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    ipcData->handle = testHandle;
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Verify that closeInternalHandleWithReservedData was called (with nullptr) and handle was removed from map
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+    }
+
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
