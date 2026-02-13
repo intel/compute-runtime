@@ -57,6 +57,11 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo:
         return false;
     }
 
+    // No ze info in binary
+    if (version.major == 0 && version.minor == 0) {
+        return false;
+    }
+
     if (currentCachePolicy) {
         auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
         if (currentCachePolicyIter == std::string::npos) {

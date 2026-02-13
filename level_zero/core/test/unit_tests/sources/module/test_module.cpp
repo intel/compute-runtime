@@ -3195,6 +3195,11 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     }
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
+    zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
+                        ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 60)), productConfig));
+
     const uint8_t spirvData[30] = {0xd};
     zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
 
@@ -3226,7 +3231,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     }
 }
 
-HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodWithoutCachePolicyAndOldVersionWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
+HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeWithoutCachePolicyAndOldVersionWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
     VariableBackup ultConfigBackup(&ultHwConfig);
     ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
 
@@ -3277,7 +3282,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
 }
 
-HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodWithoutCachePolicyAndNewVersionWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
+HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeWithoutCachePolicyAndNewVersionWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
     VariableBackup ultConfigBackup(&ultHwConfig);
     ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
 
@@ -3297,6 +3302,49 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
     zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
                         ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 61)), productConfig));
+
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    NEO::ConstStringRef buildOptions = "-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2";
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
+                        {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenBinaryWithoutZeInfoVersionWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
+    VariableBackup ultConfigBackup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(1); //"-cl-store-cache-default=2 -cl-load-cache-default=2"
+
+    const auto &compilerProductHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+    bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+
+    auto currentCachePolicy = compilerProductHelper.getCachingPolicyOptions(isDebuggerActive);
+    if (!currentCachePolicy) {
+        GTEST_SKIP();
+    }
+
+    ZebinTestData::ValidEmptyProgram zebin;
 
     const uint8_t spirvData[30] = {0xd};
     zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
