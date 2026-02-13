@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3115,18 +3115,18 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenSetterUsedThenGetterRetu
 
     cmd.setFillWidth(0x1u);
     EXPECT_EQ(0x1u, cmd.getFillWidth());
-    cmd.setFillWidth(0x3ffffu);
-    EXPECT_EQ(0x3ffffu, cmd.getFillWidth());
+    cmd.setFillWidth(0x40000u);
+    EXPECT_EQ(0x40000u, cmd.getFillWidth());
 
     cmd.setFillHeight(0x1u);
     EXPECT_EQ(0x1u, cmd.getFillHeight());
-    cmd.setFillHeight(0x3ffffu);
-    EXPECT_EQ(0x3ffffu, cmd.getFillHeight());
+    cmd.setFillHeight(0x40000u);
+    EXPECT_EQ(0x40000u, cmd.getFillHeight());
 
     cmd.setDestinationPitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
-    cmd.setDestinationPitch(0x3ffffu);
-    EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    cmd.setDestinationPitch(0x40000u);
+    EXPECT_EQ(0x40000u, cmd.getDestinationPitch());
 
     cmd.setDestinationStartAddress(0x0u);                     // patched
     EXPECT_EQ(0x0u, cmd.getDestinationStartAddress());        // patched

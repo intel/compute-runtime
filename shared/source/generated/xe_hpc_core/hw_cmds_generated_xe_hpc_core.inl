@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7324,21 +7324,21 @@ typedef struct tagMEM_SET {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setFillWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff);
+        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
         TheStructure.Common.FillWidth = value - 1;
     }
     inline uint32_t getFillWidth() const {
         return TheStructure.Common.FillWidth + 1;
     }
     inline void setFillHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff);
+        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
         TheStructure.Common.FillHeight = value - 1;
     }
     inline uint32_t getFillHeight() const {
         return TheStructure.Common.FillHeight + 1;
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff);
+        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
