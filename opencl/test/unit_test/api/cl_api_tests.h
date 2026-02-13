@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,11 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
 
@@ -24,6 +25,7 @@
 
 namespace NEO {
 class CommandQueue;
+class MockKernel;
 
 struct ApiFixture {
 

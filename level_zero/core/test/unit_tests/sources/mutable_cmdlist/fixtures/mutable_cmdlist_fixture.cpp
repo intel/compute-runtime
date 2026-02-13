@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"

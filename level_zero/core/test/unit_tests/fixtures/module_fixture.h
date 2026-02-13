@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,21 +9,22 @@
 
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-
-#include "implicit_args.h"
 
 namespace NEO {
 class ExecutionEnvironment;
 struct KernelDescriptor;
 struct KernelInfo;
 } // namespace NEO
+
+namespace ZebinTestData {
+enum class AppendElfAdditionalSection;
+struct ZebinWithL0TestCommonModule;
+} // namespace ZebinTestData
 
 namespace L0 {
 struct Device;
@@ -32,6 +33,9 @@ struct ModuleBuildLog;
 namespace ult {
 
 struct ModuleImmutableDataFixture : public DeviceFixture {
+    ModuleImmutableDataFixture();
+    ~ModuleImmutableDataFixture() override;
+
     struct MockImmutableMemoryManager : public NEO::MockMemoryManager {
         MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment);
         bool copyMemoryToAllocation(NEO::GraphicsAllocation *graphicsAllocation,
@@ -129,6 +133,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 };
 
 struct ModuleFixture : public DeviceFixture {
+    ModuleFixture();
+    ~ModuleFixture() override;
 
     void setUp(bool skipCreatingModules);
     void setUp() { this->setUp(false); }
@@ -150,6 +156,9 @@ struct ModuleFixture : public DeviceFixture {
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
+    MultiDeviceModuleFixture();
+    ~MultiDeviceModuleFixture();
+
     void setUp();
 
     void createModuleFromMockBinary(uint32_t rootDeviceIndex);

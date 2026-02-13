@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "cl_api_tests.h"

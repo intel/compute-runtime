@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,13 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "cl_api_tests.h"
 
-using namespace NEO;
+namespace NEO {
+using namespace iOpenCL;
+} // namespace NEO
 
 struct ClBuildProgramTests : public ApiTests {
     void SetUp() override {

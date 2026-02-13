@@ -11,6 +11,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -21,6 +22,9 @@ namespace L0 {
 struct ModuleBuildLog;
 
 namespace ult {
+
+ModuleImmutableDataFixture::ModuleImmutableDataFixture() = default;
+ModuleImmutableDataFixture::~ModuleImmutableDataFixture() = default;
 
 ModuleImmutableDataFixture::MockImmutableMemoryManager::MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
@@ -135,6 +139,9 @@ void ModuleImmutableDataFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
+ModuleFixture::ModuleFixture() = default;
+ModuleFixture::~ModuleFixture() = default;
+
 void ModuleFixture::setUp(bool skipCreatingModules) {
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
@@ -192,6 +199,9 @@ void ModuleFixture::tearDown() {
     module.reset(nullptr);
     DeviceFixture::tearDown();
 }
+
+MultiDeviceModuleFixture::MultiDeviceModuleFixture() = default;
+MultiDeviceModuleFixture::~MultiDeviceModuleFixture() = default;
 
 void MultiDeviceModuleFixture::setUp() {
     MultiDeviceFixture::setUp();

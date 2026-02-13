@@ -27,6 +27,8 @@
 
 #include "gtest/gtest.h"
 
+extern PRODUCT_FAMILY productFamily;
+
 namespace L0 {
 namespace ult {
 

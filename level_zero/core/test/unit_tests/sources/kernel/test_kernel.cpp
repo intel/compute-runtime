@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -4401,7 +4402,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
@@ -4459,7 +4462,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
@@ -4488,7 +4493,9 @@ TEST_F(BindlessKernelTest, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThre
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
 }
@@ -4550,7 +4557,9 @@ TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImpl
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
     EXPECT_EQ(0u, crossThreadData[1]);
@@ -4652,7 +4661,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
     mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[1]);
     EXPECT_EQ(0u, patchValue2);
@@ -4715,7 +4726,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
     mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
-    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[5]);
     EXPECT_EQ(patchValue2, crossThreadData[6]);
