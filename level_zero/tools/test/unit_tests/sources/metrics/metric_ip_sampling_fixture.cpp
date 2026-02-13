@@ -45,7 +45,6 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
         osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
         std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
         auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-        metricSource.metricCount = platformIpMetricCountXe;
         metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
         auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();

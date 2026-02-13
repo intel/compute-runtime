@@ -100,7 +100,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
             }
             metrics.push_back(IpSamplingMetricImp(*this, metricProperties, metricScopes));
         }
-
+        metricCount = static_cast<uint32_t>(metrics.size());
         cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(*this, subDeviceMetricGroup, metrics);
         return ZE_RESULT_SUCCESS;
     }
