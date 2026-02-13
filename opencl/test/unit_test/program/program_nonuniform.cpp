@@ -38,7 +38,6 @@ class MyMockProgram : public MockProgram {
 
 TEST(ProgramNonUniform, GivenNoBuildOptionsWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
-    pm.createdFrom = Program::CreatedFrom::source;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions(nullptr);
@@ -143,40 +142,6 @@ TEST(ProgramNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformRetu
     program2.setAllowNonUniform(true);
     program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
     EXPECT_TRUE(program.getAllowNonUniform());
-}
-
-TEST(ProgramNonUniform, GivenProgramCreatedFromILWhenUpdatingAllowNonUniformThenNonUniformAllowed) {
-    MyMockProgram pm;
-    pm.createdFrom = Program::CreatedFrom::il;
-    EXPECT_FALSE(pm.getAllowNonUniform());
-    pm.setBuildOptions(nullptr);
-    pm.updateNonUniformFlag();
-    EXPECT_TRUE(pm.getAllowNonUniform());
-}
-
-TEST(ProgramNonUniform, GivenProgramCreatedFromBinaryWhenUpdatingAllowNonUniformThenNonUniformAllowed) {
-    MyMockProgram pm;
-    pm.createdFrom = Program::CreatedFrom::binary;
-    EXPECT_FALSE(pm.getAllowNonUniform());
-    pm.setBuildOptions(nullptr);
-    pm.updateNonUniformFlag();
-    EXPECT_TRUE(pm.getAllowNonUniform());
-}
-
-TEST(ProgramNonUniform, GivenProgramCreatedFromILWithUniformFlagWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
-    MyMockProgram pm;
-    pm.createdFrom = Program::CreatedFrom::il;
-    pm.setBuildOptions("-cl-uniform-work-group-size");
-    pm.updateNonUniformFlag();
-    EXPECT_FALSE(pm.getAllowNonUniform());
-}
-
-TEST(ProgramNonUniform, GivenProgramCreatedFromBinaryWithUniformFlagWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
-    MyMockProgram pm;
-    pm.createdFrom = Program::CreatedFrom::binary;
-    pm.setBuildOptions("-cl-uniform-work-group-size");
-    pm.updateNonUniformFlag();
-    EXPECT_FALSE(pm.getAllowNonUniform());
 }
 
 class ProgramNonUniformTest : public ContextFixture,
