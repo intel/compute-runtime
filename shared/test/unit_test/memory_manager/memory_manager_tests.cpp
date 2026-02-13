@@ -278,6 +278,54 @@ TEST(MemoryManagerTest, givenRegisteredPrimaryAndSecondaryContextsWhenGettingPri
     mockMemoryManager->secondaryEngines[0].clear();
 }
 
+TEST(MemoryManagerTest, givenDefaultEngineWhenCreatingAndRegisteringPrimaryAndSecondaryContextsThenIsDefaultContextIsTrueForRegularOnly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockMemoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    auto defaultEngineType = getChosenEngineType(*defaultHwInfo);
+
+    auto csr0 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    auto csr2 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+
+    auto primaryContext0 = mockMemoryManager->createAndRegisterOsContext(
+        csr0.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({defaultEngineType, EngineUsage::regular}));
+
+    auto primaryContext1 = mockMemoryManager->createAndRegisterOsContext(
+        csr1.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({static_cast<aub_stream::EngineType>(defaultEngineType + 1), EngineUsage::regular}));
+
+    auto secondaryContext0 = mockMemoryManager->createAndRegisterSecondaryOsContext(
+        primaryContext0,
+        csr2.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({defaultEngineType, EngineUsage::regular}));
+
+    auto secondaryContext1 = mockMemoryManager->createAndRegisterSecondaryOsContext(
+        primaryContext1,
+        csr2.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({static_cast<aub_stream::EngineType>(defaultEngineType + 1), EngineUsage::regular}));
+
+    auto secondaryContext2 = mockMemoryManager->createAndRegisterSecondaryOsContext(
+        primaryContext1,
+        csr2.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({static_cast<aub_stream::EngineType>(defaultEngineType), EngineUsage::internal}));
+
+    auto secondaryContext3 = mockMemoryManager->createAndRegisterSecondaryOsContext(
+        primaryContext1,
+        csr2.get(),
+        EngineDescriptorHelper::getDefaultDescriptor({static_cast<aub_stream::EngineType>(defaultEngineType), EngineUsage::lowPriority}));
+
+    EXPECT_TRUE(primaryContext0->isDefaultContext());
+    EXPECT_FALSE(primaryContext1->isDefaultContext());
+    EXPECT_TRUE(secondaryContext0->isDefaultContext());
+    EXPECT_FALSE(secondaryContext1->isDefaultContext());
+    EXPECT_FALSE(secondaryContext2->isDefaultContext());
+    EXPECT_FALSE(secondaryContext3->isDefaultContext());
+
+    mockMemoryManager->secondaryEngines[0].clear();
+}
+
 TEST(MemoryManagerTest, givenSingleDeviceModeWhenGettingDefaultContextThenInternalContextReturnedAsAFallback) {
 
     DebugManagerStateRestore dbgRestorer;
@@ -299,6 +347,8 @@ TEST(MemoryManagerTest, givenSingleDeviceModeWhenGettingDefaultContextThenIntern
         csr1->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr1));
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}, DeviceBitfield(0x1)));
+        osContext->setDefaultContext(false);
+
         auto osContext0 = executionEnvironment->memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, DeviceBitfield(0x1)));
         auto osContext1 = executionEnvironment->memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, DeviceBitfield(0x2)));
 

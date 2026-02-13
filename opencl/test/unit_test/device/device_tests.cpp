@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,7 +155,7 @@ HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
     int defaultCounter = 0;
     const auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
-        if (engine.osContext->isDefaultContext()) {
+        if (engine.osContext->getIsDefaultEngine()) {
             defaultCounter++;
         }
     }

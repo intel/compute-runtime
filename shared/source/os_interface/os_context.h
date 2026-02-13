@@ -56,6 +56,11 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isRootDevice() const { return rootDevice; }
     virtual bool isDirectSubmissionSupported() const { return directSubmissionSupported; }
     bool isDefaultContext() const { return defaultContext; }
+    void setDefaultContextIfApplicable(const aub_stream::EngineType &defaultType) {
+        if (this->engineType == defaultType && !isLowPriority() && !isInternalEngine()) {
+            setDefaultContext(true);
+        }
+    }
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() const { return directSubmissionActive; }
     bool isDebuggableContext() { return debuggableContext; }

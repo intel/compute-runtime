@@ -497,6 +497,11 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
 
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
+    auto hwInfo = peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+
+    osContext->setDefaultContextIfApplicable(defaultEngineType);
+
     allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
     primaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
@@ -517,6 +522,11 @@ OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *p
     osContext->adjustSettings(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper());
 
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
+
+    auto hwInfo = peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+
+    osContext->setDefaultContextIfApplicable(defaultEngineType);
 
     secondaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
     allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
