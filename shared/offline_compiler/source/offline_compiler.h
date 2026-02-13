@@ -146,8 +146,8 @@ All supported acronyms: %s.
         return quiet;
     }
 
-    bool isOnlySpirV() const {
-        return onlySpirV;
+    bool isOnlyIr() const {
+        return onlyIr;
     }
 
     std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName);
@@ -155,7 +155,7 @@ All supported acronyms: %s.
     static bool readOptionsFromFile(std::string &optionsOut, const std::string &file, OclocArgHelper *helper);
 
     ArrayRef<const uint8_t> getPackedDeviceBinaryOutput() {
-        return this->elfBinary;
+        return ArrayRef<const uint8_t>::fromAny(this->genBinary, this->genBinarySize);
     }
 
     static std::string getFileNameTrunk(std::string &filePath);
@@ -195,7 +195,6 @@ All supported acronyms: %s.
     MOCKABLE_VIRTUAL std::string validateInputType(const std::string &input, bool isLlvm, bool isSpirv);
     MOCKABLE_VIRTUAL int buildToIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
-    MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
         auto ext = getFileExtension(intermediateRepresentation);
         return generateFilePath(outputDirectory, fileNameBase, ext.c_str());
@@ -210,7 +209,7 @@ All supported acronyms: %s.
 
     MOCKABLE_VIRTUAL void writeOutAllFiles();
     MOCKABLE_VIRTUAL int createDir(const std::string &path);
-    bool useIgcAsFcl();
+    MOCKABLE_VIRTUAL bool useIgcAsFcl();
     void unifyExcludeIrFlags();
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo{};
@@ -243,7 +242,7 @@ All supported acronyms: %s.
     bool useGenFile = false;
     bool useOptionsSuffix = false;
     bool quiet = false;
-    bool onlySpirV = false;
+    bool onlyIr = false;
     bool useLlvmTxt = false;
 
     IGC::CodeType::CodeType_t inputCodeType = IGC::CodeType::oclC;
@@ -262,8 +261,6 @@ All supported acronyms: %s.
     bool excludeIr = false;
     int loadSpecializationConstants(const std::string &filename);
 
-    std::vector<uint8_t> elfBinary;
-    size_t elfBinarySize = 0;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
     char *irBinary = nullptr;
@@ -282,6 +279,7 @@ All supported acronyms: %s.
     std::unique_ptr<ReleaseHelper> releaseHelper;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
     IGC::CodeType::CodeType_t intermediateRepresentation = IGC::CodeType::undefined;
+    IGC::CodeType::CodeType_t outBinFormat = IGC::CodeType::oclGenBin;
 
     OclocArgHelper *argHelper = nullptr;
     MOCKABLE_VIRTUAL void createTempSourceFileForDebug();

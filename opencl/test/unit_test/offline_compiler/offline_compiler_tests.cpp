@@ -2838,34 +2838,6 @@ TEST_F(OfflineCompilerTests, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRe
     }
 }
 
-TEST_F(OfflineCompilerTests, GivenGenBinaryWhenGenerateElfBinaryThenElfIsLoaded) {
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clCopybufferFilename.c_str(),
-        "-device",
-        gEnvironment->devicePrefix.c_str(),
-        "-allow_caching"};
-
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-
-    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
-    mockOfflineCompiler->interceptCreatedDirs = true;
-    auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto cacheMock = new CompilerCacheMock();
-    cacheMock->loadResult = true;
-    mockOfflineCompiler->cache.reset(cacheMock);
-    mockOfflineCompiler->genBinary = new char[1];
-    mockOfflineCompiler->genBinarySize = sizeof(char);
-    retVal = mockOfflineCompiler->generateElfBinary();
-    EXPECT_TRUE(retVal);
-    EXPECT_FALSE(mockOfflineCompiler->elfBinary.empty());
-    EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->elfBinarySize));
-}
-
 TEST_F(OfflineCompilerTests, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCachedUsingHashBasedOnNonNullIrBinary) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -3269,79 +3241,15 @@ TEST_F(OfflineCompilerTests, GivenKernelWhenNoCharAfterKernelSourceThenBuildWith
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(OfflineCompilerTest, WhenGeneratingElfBinaryThenBinaryIsCreated) {
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-
-    auto retVal = mockOfflineCompiler->generateElfBinary();
-    EXPECT_FALSE(retVal);
-
-    iOpenCL::SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = mockOfflineCompiler->hwInfo.platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(iOpenCL::SProgramBinaryHeader);
-
-    mockOfflineCompiler->storeGenBinary(&binHeader, binSize);
-
-    EXPECT_TRUE(mockOfflineCompiler->elfBinary.empty());
-
-    retVal = mockOfflineCompiler->generateElfBinary();
-    EXPECT_TRUE(retVal);
-
-    EXPECT_FALSE(mockOfflineCompiler->elfBinary.empty());
-}
-
-TEST(OfflineCompilerTest, givenInvalidGenBinarySizeAndNotNullPointerWhenGeneratingElfBinaryThenNothingHappensAndFalseIsReturned) {
-    MockOfflineCompiler mockOfflineCompiler;
-
-    // Destructor of OfflineCompiler will deallocate the memory.
-    mockOfflineCompiler.genBinary = new char[1];
-    mockOfflineCompiler.genBinarySize = 0;
-
-    EXPECT_FALSE(mockOfflineCompiler.generateElfBinary());
-    EXPECT_TRUE(mockOfflineCompiler.elfBinary.empty());
-}
-
-TEST(OfflineCompilerTest, givenNonEmptyOptionsWhenGeneratingElfBinaryThenOptionsSectionIsIncludedInElfAndTrueIsReturned) {
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.options = "-some_option";
-
-    // Destructor of OfflineCompiler will deallocate the memory.
-    mockOfflineCompiler.genBinary = new char[8]{};
-    mockOfflineCompiler.genBinarySize = 8;
-
-    EXPECT_TRUE(mockOfflineCompiler.generateElfBinary());
-    ASSERT_FALSE(mockOfflineCompiler.elfBinary.empty());
-
-    std::string errorReason{};
-    std::string warning{};
-
-    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
-    ASSERT_TRUE(errorReason.empty());
-    ASSERT_TRUE(warning.empty());
-
-    const auto isOptionsSection = [](const auto &section) {
-        return section.header && section.header->type == Elf::SHT_OPENCL_OPTIONS;
-    };
-
-    const auto isAnyOptionsSectionDefined = std::any_of(elf.sectionHeaders.begin(), elf.sectionHeaders.end(), isOptionsSection);
-    EXPECT_TRUE(isAnyOptionsSectionDefined);
-}
-
 TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndNonEmptyOutputFileNameAndNonEmptyElfContentWhenWritingOutAllFilesThenFileWithCorrectNameIsWritten) {
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.uniqueHelper->interceptOutput = true;
 
     mockOfflineCompiler.outputNoSuffix = true;
     mockOfflineCompiler.outputFile = "some_output_filename";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
-
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
     mockOfflineCompiler.writeOutAllFiles();
 
     const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.bin");
@@ -3356,7 +3264,9 @@ TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndOutputFileNameWithExtensionO
 
     mockOfflineCompiler.outputNoSuffix = true;
     mockOfflineCompiler.outputFile = "some_output_filename.out";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     mockOfflineCompiler.writeOutAllFiles();
 
@@ -3376,7 +3286,9 @@ TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndOutputFileNameWithExtensionE
 
     mockOfflineCompiler.outputNoSuffix = true;
     mockOfflineCompiler.outputFile = "some_output_filename.exe";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     mockOfflineCompiler.writeOutAllFiles();
 
@@ -3397,7 +3309,9 @@ TEST(OfflineCompilerTest, givenInputFileNameAndOutputNoSuffixFlagAndEmptyOutputF
 
     mockOfflineCompiler.outputNoSuffix = true;
     mockOfflineCompiler.inputFile = "/home/important_file.spv";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     mockOfflineCompiler.writeOutAllFiles();
 
@@ -3415,7 +3329,9 @@ TEST(OfflineCompilerTest, givenNonEmptyOutputDirectoryWhenWritingOutAllFilesTheD
     mockOfflineCompiler.outputDirectory = "/home/important/compilation";
     mockOfflineCompiler.outputNoSuffix = true;
     mockOfflineCompiler.outputFile = "some_output_filename";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     mockOfflineCompiler.writeOutAllFiles();
 
@@ -3437,7 +3353,9 @@ TEST(OfflineCompilerTest, givenBinaryOutputFileWhenWritingOutAllFilesThenOnlyBin
     mockOfflineCompiler.uniqueHelper->interceptOutput = true;
 
     mockOfflineCompiler.binaryOutputFile = "some_output_filename.bin";
-    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
     mockOfflineCompiler.irBinary = new char[4];
     mockOfflineCompiler.irBinarySize = 4;
 
@@ -3458,12 +3376,14 @@ TEST(OfflineCompilerTest, givenBinaryOutputFileWithSpirvOnlyWhenWritingOutAllFil
     mockOfflineCompiler.uniqueHelper->interceptOutput = true;
 
     mockOfflineCompiler.binaryOutputFile = "some_output_filename.bin";
-    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0};
+    std::vector<char> bin = {49, 50, 51, 52, 53, 54, 55, 56};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
     mockOfflineCompiler.irBinary = new char[4];
     mockOfflineCompiler.irBinarySize = 4;
     uint8_t data[] = {49, 50, 51, 52}; // ASCII codes of "1234"
     memcpy(mockOfflineCompiler.irBinary, data, sizeof(data));
-    mockOfflineCompiler.onlySpirV = true;
+    mockOfflineCompiler.onlyIr = true;
 
     mockOfflineCompiler.writeOutAllFiles();
 
@@ -4571,14 +4491,12 @@ TEST_F(OfflineCompilerTests, givenCompilerWhenBuildSourceCodeFailsThenGenerateEl
     auto expectedError = OCLOC_BUILD_PROGRAM_FAILURE;
     compiler.buildSourceCodeStatus = expectedError;
 
-    EXPECT_EQ(0u, compiler.generateElfBinaryCalled);
     EXPECT_EQ(0u, compiler.writeOutAllFilesCalled);
 
     compiler.inputFile = clCopybufferFilename.c_str();
     auto status = compiler.build();
     EXPECT_EQ(expectedError, status);
 
-    EXPECT_EQ(1u, compiler.generateElfBinaryCalled);
     EXPECT_EQ(1u, compiler.writeOutAllFilesCalled);
 }
 
@@ -4903,8 +4821,7 @@ TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsR
     ocloc.genBinarySize = zebin.storage.size();
     memcpy_s(ocloc.genBinary, ocloc.genBinarySize, zebin.storage.data(), zebin.storage.size());
 
-    ASSERT_EQ(true, ocloc.generateElfBinary());
-    EXPECT_EQ(0, memcmp(zebin.storage.data(), ocloc.elfBinary.data(), zebin.storage.size()));
+    EXPECT_EQ(0, memcmp(zebin.storage.data(), ocloc.genBinary, zebin.storage.size()));
 }
 
 TEST_F(OfflineCompilerTests, givenSpirvInputThenDontGenerateSpirvFile) {

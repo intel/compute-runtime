@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -149,7 +149,7 @@ static auto findAcronymForEnum(const EqComparableT &lhs) {
 TEST(OclocFatBinaryIsSpvOnly, givenSpvOnlyProvidedReturnsTrue) {
     std::vector<std::string> args = {"-spv_only"};
 
-    EXPECT_TRUE(NEO::isSpvOnly(args));
+    EXPECT_TRUE(NEO::isIrOnly(args));
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
@@ -2059,7 +2059,9 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     // Dummy value
-    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<char> bin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
@@ -2101,7 +2103,9 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
-    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<char> bin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
 
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
@@ -2244,7 +2248,9 @@ TEST_F(OclocTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrint
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     // Dummy value
-    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<char> bin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    mockOfflineCompiler.storeBinary(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize,
+                                    bin.data(), bin.size());
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     Ar::ArEncoder ar;

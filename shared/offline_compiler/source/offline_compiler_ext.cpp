@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,10 @@ std::string getOfflineCompilerOptionsExt() {
 
 int OfflineCompiler::parseCommandLineExt(size_t numArgs, const std::vector<std::string> &argv, uint32_t &argIndex) {
     return OCLOC_INVALID_COMMAND_LINE;
+}
+
+bool isIrOnly(const std::vector<std::string> &args) {
+    return std::find(args.begin(), args.end(), "-spv_only") != args.end();
 }
 
 } // namespace NEO

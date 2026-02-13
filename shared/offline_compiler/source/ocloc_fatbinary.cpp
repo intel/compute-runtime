@@ -37,10 +37,6 @@ namespace NEO {
 
 using Position = FormerProductConfigHelper::Position;
 
-bool isSpvOnly(const std::vector<std::string> &args) {
-    return std::find(args.begin(), args.end(), "-spv_only") != args.end();
-}
-
 bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper) {
     auto &prodHelper = *helper->productConfigHelper;
     auto &formerProdHelper = *helper->formerProductConfigHelper;

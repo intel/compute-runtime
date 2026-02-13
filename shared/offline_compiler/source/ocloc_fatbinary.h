@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct ArEncoder;
 }
 class OfflineCompiler;
 
-bool isSpvOnly(const std::vector<std::string> &args);
+bool isIrOnly(const std::vector<std::string> &args);
 bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper);
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
 inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *helper) {

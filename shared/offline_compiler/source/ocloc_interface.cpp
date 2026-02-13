@@ -199,9 +199,9 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     int deviceArgIndex = NEO::getDeviceArgValueIdx(args);
 
     if (NEO::requestedFatBinary(args, argHelper)) {
-        bool onlySpirV = NEO::isSpvOnly(args);
+        bool onlyIr = NEO::isIrOnly(args);
 
-        if (onlySpirV) {
+        if (onlyIr) {
             UNRECOVERABLE_IF(deviceArgIndex < 0);
             std::vector<ConstStringRef> targetProducts = NEO::getTargetProductsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
             ConstStringRef firstDevice = targetProducts.front();

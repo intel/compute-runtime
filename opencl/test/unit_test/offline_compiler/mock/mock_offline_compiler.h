@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::deviceConfig;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::dumpFiles;
-    using OfflineCompiler::elfBinary;
-    using OfflineCompiler::elfBinarySize;
     using OfflineCompiler::elfHash;
     using OfflineCompiler::excludeIr;
     using OfflineCompiler::fclFacade;
@@ -62,14 +60,16 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::irBinarySize;
     using OfflineCompiler::irHash;
     using OfflineCompiler::loadSpecializationConstants;
-    using OfflineCompiler::onlySpirV;
+    using OfflineCompiler::onlyIr;
     using OfflineCompiler::options;
+    using OfflineCompiler::outBinFormat;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
     using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
     using OfflineCompiler::parseCommandLineExt;
     using OfflineCompiler::parseDebugSettings;
+    using OfflineCompiler::pBuildInfo;
     using OfflineCompiler::perDeviceOptions;
     using OfflineCompiler::releaseHelper;
     using OfflineCompiler::revisionId;
@@ -97,8 +97,6 @@ class MockOfflineCompiler : public OfflineCompiler {
 
     int buildSourceCode() override;
 
-    bool generateElfBinary() override;
-
     void writeOutAllFiles() override;
 
     void clearLog();
@@ -111,7 +109,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     bool overrideBuildToIrBinaryStatus = false;
     int buildSourceCodeStatus = 0;
     bool overrideBuildSourceCodeStatus = false;
-    uint32_t generateElfBinaryCalled = 0u;
     uint32_t writeOutAllFilesCalled = 0u;
     std::unique_ptr<MockOclocArgHelper> uniqueHelper;
     MockOclocIgcFacade *mockIgcFacade = nullptr;

@@ -698,7 +698,7 @@ int OfflineCompiler::buildSourceCode() {
 
     UNRECOVERABLE_IF(!igcFacade->isInitialized());
 
-    auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
+    auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, this->outBinFormat);
     auto igcSrc = igcFacade->createConstBuffer(irBinary, irBinarySize);
 
     auto igcOutput = (useSpecConsts && igcSpecConstantsIds && igcSpecConstantsValues)
@@ -798,12 +798,12 @@ int OfflineCompiler::build() {
     }
 
     int retVal = OCLOC_SUCCESS;
-    if (isOnlySpirV()) {
+    if (isOnlyIr()) {
         retVal = buildToIrBinary();
     } else {
         retVal = buildSourceCode();
     }
-    generateElfBinary();
+
     if (dumpFiles) {
         writeOutAllFiles();
     }
@@ -1184,7 +1184,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-v" == currArg) {
             argHelper->setVerbose(true);
         } else if ("-spv_only" == currArg) {
-            onlySpirV = true;
+            onlyIr = true;
         } else if ("-output_no_suffix" == currArg) {
             outputNoSuffix = true;
         } else if ("--help" == currArg) {
@@ -1329,7 +1329,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             retVal |= OCLOC_INVALID_COMMAND_LINE;
         }
 
-        if (deviceName.empty() && (false == onlySpirV)) {
+        if (deviceName.empty() && (false == onlyIr)) {
             argHelper->printf("Error: Device name missing.\n");
             retVal = OCLOC_INVALID_COMMAND_LINE;
         }
@@ -1639,71 +1639,6 @@ void OfflineCompiler::storeBinary(
     memcpy_s(pDst, dstSize, pSrc, srcSize);
 }
 
-bool OfflineCompiler::generateElfBinary() {
-    if (!genBinary || !genBinarySize) {
-        return false;
-    }
-
-    // return "as is" if zebin format
-    if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize))) {
-        this->elfBinary = std::vector<uint8_t>(genBinary, genBinary + genBinarySize);
-        return true;
-    }
-
-    if (allowCaching) {
-        const std::string igcRevision = igcFacade->getIgcRevision();
-        const auto igcLibSize = igcFacade->getIgcLibSize();
-        const auto igcLibMTime = igcFacade->getIgcLibMTime();
-        elfHash = cache->getCachedFileName(getHardwareInfo(),
-                                           genHash,
-                                           options,
-                                           internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-        auto loadedData = cache->loadCachedBinary(elfHash, elfBinarySize);
-        elfBinary.assign(loadedData.get(), loadedData.get() + elfBinarySize);
-        if (!elfBinary.empty()) {
-            return true;
-        }
-    }
-
-    SingleDeviceBinary binary = {};
-    binary.buildOptions = this->options;
-    binary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary), this->irBinarySize);
-    binary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->genBinary), this->genBinarySize);
-    binary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->debugDataBinary), this->debugDataBinarySize);
-    std::string packErrors;
-    std::string packWarnings;
-
-    using namespace NEO::Elf;
-    ElfEncoder<EI_CLASS_64> elfEncoder;
-    elfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;
-    if (binary.buildOptions.empty() == false) {
-        elfEncoder.appendSection(SHT_OPENCL_OPTIONS, SectionNamesOpenCl::buildOptions,
-                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.buildOptions.data()), binary.buildOptions.size()));
-    }
-
-    if (!binary.intermediateRepresentation.empty() && !excludeIr) {
-        if (this->intermediateRepresentation == IGC::CodeType::spirV) {
-            elfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
-        } else {
-            elfEncoder.appendSection(SHT_OPENCL_LLVM_BINARY, SectionNamesOpenCl::llvmObject, binary.intermediateRepresentation);
-        }
-    }
-
-    if (binary.debugData.empty() == false) {
-        elfEncoder.appendSection(SHT_OPENCL_DEV_DEBUG, SectionNamesOpenCl::deviceDebug, binary.debugData);
-    }
-
-    if (binary.deviceBinary.empty() == false) {
-        elfEncoder.appendSection(SHT_OPENCL_DEV_BINARY, SectionNamesOpenCl::deviceBinary, binary.deviceBinary);
-    }
-
-    this->elfBinary = elfEncoder.encode();
-    if (allowCaching) {
-        cache->cacheBinary(elfHash, reinterpret_cast<char *>(elfBinary.data()), static_cast<uint32_t>(this->elfBinary.size()));
-    }
-    return true;
-}
-
 void OfflineCompiler::createTempSourceFileForDebug() {
     if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo) || CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
         return;
@@ -1768,10 +1703,10 @@ void OfflineCompiler::writeOutAllFiles() {
 
     if (!binaryOutputFile.empty()) {
         std::string outputFile = generateFilePath(outputDirectory, binaryOutputFile, "");
-        if (isOnlySpirV()) {
+        if (isOnlyIr()) {
             argHelper->saveOutput(outputFile, irBinary, irBinarySize);
-        } else if (!elfBinary.empty()) {
-            argHelper->saveOutput(outputFile, elfBinary.data(), elfBinary.size());
+        } else if (genBinary) {
+            argHelper->saveOutput(outputFile, genBinary, genBinarySize);
         }
         return;
     }
@@ -1793,16 +1728,15 @@ void OfflineCompiler::writeOutAllFiles() {
             std::string cpp = parseBinAsCharArray((uint8_t *)genBinary, genBinarySize, fileTrunk);
             argHelper->saveOutput(cppOutputFile, cpp.c_str(), cpp.size());
         }
-    }
 
-    if (!elfBinary.empty()) {
-        std::string elfOutputFile;
+        auto outBinFormatExt = getFileExtension(this->outBinFormat);
+        std::string genOutputFile = generateFilePath(outputDirectory, fileBase, outBinFormatExt.c_str()) + generateOptsSuffix();
         if (outputNoSuffix) {
             // temporary fix for backwards compatibility with oneAPI 2023.1 and older
             // after adding ".bin" extension to name of binary output file
             // if "-output filename" is passed with ".out" or ".exe" extension - do not append ".bin"
             if (outputFile.empty()) {
-                elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
+                genOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
             } else {
                 size_t extPos = fileBase.find_last_of(".", fileBase.size());
                 std::string fileExt = ".bin";
@@ -1812,15 +1746,10 @@ void OfflineCompiler::writeOutAllFiles() {
                         fileExt = "";
                     }
                 }
-                elfOutputFile = generateFilePath(outputDirectory, fileBase, fileExt.c_str());
+                genOutputFile = generateFilePath(outputDirectory, fileBase, fileExt.c_str());
             }
-        } else {
-            elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
         }
-        argHelper->saveOutput(
-            elfOutputFile,
-            elfBinary.data(),
-            elfBinary.size());
+        argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
     }
 
     if (debugDataBinary) {
