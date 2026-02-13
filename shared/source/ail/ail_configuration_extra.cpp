@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,7 @@ std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blen
                                                                           // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
                                                                           {"Adobe Premiere Pro", {AILEnumeration::enableLegacyPlatformName}}};
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::disableDirectSubmission}},
-                                                                             {"aomhost64", {AILEnumeration::disableDirectSubmission}},
-                                                                             {"Zoom", {AILEnumeration::disableDirectSubmission}}};
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMapXeHpgLpg = {};
 
 const std::set<std::string_view> applicationsForceRcsDg2 = {};
 

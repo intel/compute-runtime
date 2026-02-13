@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
 namespace NEO {
 
-extern std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL;
+extern std::map<std::string_view, std::vector<AILEnumeration>> applicationMapXeHpgLpg;
 
 static EnableAIL<gfxProduct> enableAILMTL;
 
@@ -30,8 +30,8 @@ constexpr std::array<std::string_view, 3> applicationsLegacyValidationPathMtl = 
 
 template <>
 void AILConfigurationHw<gfxProduct>::applyExt(HardwareInfo &hwInfo) {
-    auto search = applicationMapMTL.find(processName);
-    if (search != applicationMapMTL.end()) {
+    auto search = applicationMapXeHpgLpg.find(processName);
+    if (search != applicationMapXeHpgLpg.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
             case AILEnumeration::disableDirectSubmission:

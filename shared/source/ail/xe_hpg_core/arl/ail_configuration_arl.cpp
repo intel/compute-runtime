@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/ail/ail_configuration_base.inl"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "aubstream/engine_node.h"
@@ -15,20 +16,23 @@
 
 namespace NEO {
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapARL = {{"svchost", {AILEnumeration::disableDirectSubmission}},
-                                                                             {"aomhost64", {AILEnumeration::disableDirectSubmission}},
-                                                                             {"Zoom", {AILEnumeration::disableDirectSubmission}}};
+extern std::map<std::string_view, std::vector<AILEnumeration>> applicationMapXeHpgLpg;
 
 static EnableAIL<IGFX_ARROWLAKE> enableAILARL;
 
 template <>
 void AILConfigurationHw<IGFX_ARROWLAKE>::applyExt(HardwareInfo &hwInfo) {
-    auto search = applicationMapARL.find(processName);
-    if (search != applicationMapARL.end()) {
+    auto search = applicationMapXeHpgLpg.find(processName);
+    if (search != applicationMapXeHpgLpg.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
             case AILEnumeration::disableDirectSubmission:
                 hwInfo.capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = false;
+                break;
+            case AILEnumeration::directSubmissionControllerConfig:
+                debugManager.flags.DirectSubmissionControllerTimeout.set(1000);
+                debugManager.flags.DirectSubmissionControllerMaxTimeout.set(1000);
+                break;
             default:
                 break;
             }

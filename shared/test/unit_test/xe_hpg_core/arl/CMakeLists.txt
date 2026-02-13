@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,6 @@ if(TESTS_ARL)
   target_sources(neo_shared_tests PRIVATE
                  ${NEO_CORE_tests_xe_hpg_core_arl_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/ail_tests_arl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_aot_config_tests_arl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests_arl.cpp
   )
