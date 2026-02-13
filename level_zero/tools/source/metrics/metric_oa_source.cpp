@@ -327,6 +327,7 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
         char metricGroupName[ZET_MAX_METRIC_GROUP_NAME] = {};
         snprintf(metricGroupName, ZET_MAX_METRIC_GROUP_NAME - 1, "%s%d", metricGroupDesc->namePrefix, numMetricGroupsCreated);
         MetricGroupDescription newDescription(metricGroupName, metricGroupDesc->description);
+        newDescription.extendedInfo = metricGroupDesc->extendedInfo;
         auto status = metricGroupCreateFromMetric(&newDescription, samplingType, metricHandle, &metricGroup);
         if (status != ZE_RESULT_SUCCESS) {
             return status;

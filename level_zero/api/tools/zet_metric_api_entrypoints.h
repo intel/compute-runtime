@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -304,7 +304,7 @@ zetDeviceCreateMetricGroupsFromMetricsExp(
 
     hDevice = toInternalType(hDevice);
     auto device = Device::fromHandle(hDevice);
-    return device->getMetricDeviceContext().createMetricGroupsFromMetrics(metricCount, phMetrics, pMetricGroupNamePrefix, pDescription, pMetricGroupCount, phMetricGroups);
+    return device->getMetricDeviceContext().createMetricGroupsFromMetricsExp(metricCount, phMetrics, pMetricGroupNamePrefix, pDescription, pMetricGroupCount, phMetricGroups);
 }
 
 ze_result_t ZE_APICALL

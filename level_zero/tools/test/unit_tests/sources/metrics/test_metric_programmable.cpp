@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -692,10 +692,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingMetri
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -718,7 +718,7 @@ TEST_F(OaMetricProgrammableTests, givenInvalidMeticWhenMetricGroupIsCreatedThenE
     MockMetric mockMetric(mockMetricSource, mockMetricScopes);
     uint32_t metricGroupCount = 0;
     auto metricHandle = mockMetric.toHandle();
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 0u);
     metricEnumeration->cleanupExtendedMetricInformation();
 }
@@ -732,7 +732,7 @@ TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsIsCalledWhen
     EXPECT_EQ(count, 1u);
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(0, nullptr, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(0, nullptr, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 0u);
 
     metricEnumeration->cleanupExtendedMetricInformation();
@@ -759,10 +759,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenDestroyingMetricsBefo
     size_t errorStringSize = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -797,10 +797,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenFinalizingMetricsThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -841,10 +841,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingMetricsAfterFin
     size_t errorStringSize = 0;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -882,10 +882,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenRemovingAllMetricsAnd
     zet_metric_handle_t metricHandle1{};
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle1));
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupRemoveMetricExp(metricGroupHandle, metricHandle1));
@@ -920,10 +920,10 @@ TEST_F(OaMetricProgrammableTests, givenActivatedValidMetricGroupWhenAddingOrRemo
     size_t errorStringSize = 0;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_GE(metricGroupCount, 2u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[1];
 
@@ -966,10 +966,10 @@ TEST_F(OaMetricProgrammableTests, givenErrorDuingActivationOfMetricsTheActivatio
     size_t errorStringSize = 0;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_GE(metricGroupCount, 2u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -1009,10 +1009,10 @@ TEST_F(OaMetricProgrammableTests, givenUserDefinedMetricGroupWhenAddingMetricsAn
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -1057,10 +1057,10 @@ TEST_F(OaMetricProgrammableTests, givenUserDefinedMetricGroupWhenCreatingWithMet
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 0u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
@@ -1100,10 +1100,10 @@ TEST_F(OaMetricProgrammableTests, givenUserDefinedMetricGroupWhenAddingMetricsWi
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmables[1])->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle2));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle1, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 1u);
     size_t errorStringSize = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetMetricGroupAddMetricExp(metricGroupHandles[0], metricHandle2, &errorStringSize, nullptr));
@@ -1139,10 +1139,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingPreDe
     zet_metric_group_handle_t metricGroupHandle = nullptr;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_GE(metricGroupCount, 2u);
     // Access the query sampling type group
     metricGroupHandle = metricGroupHandles[1];
@@ -1190,10 +1190,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingMetri
     zet_metric_group_handle_t metricGroupHandle = nullptr;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_GE(metricGroupCount, 2u);
 
     metricGroupHandle = metricGroupHandles[1];
@@ -1255,11 +1255,11 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenMetricSetOpenFailsWhe
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2};
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 2u);
     zet_metric_group_handle_t metricGroupHandle{};
     metricGroupCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, &metricGroupHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, &metricGroupHandle));
     EXPECT_EQ(metricGroupCount, 1u);
     size_t errorStringSize = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetMetricGroupAddMetricExp(metricGroupHandle, metricHandles[1], &errorStringSize, nullptr));
@@ -1295,10 +1295,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenMetricGroupActivation
     zet_metric_group_handle_t metricGroupHandle = nullptr;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 2u);
     metricGroupHandle = metricGroupHandles[1];
 
@@ -1349,10 +1349,10 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenDelayedActivatingMetr
     zet_metric_group_handle_t metricGroupHandle = nullptr;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 2u);
     metricGroupHandle = metricGroupHandles[1];
 
@@ -1448,11 +1448,11 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenCreatingLessThanAvail
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2};
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 4u);
     zet_metric_group_handle_t metricGroupHandle{};
     metricGroupCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, &metricGroupHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, &metricGroupHandle));
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupDestroyExp(metricGroupHandle));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle1));
@@ -1468,7 +1468,7 @@ TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetW
     auto deviceContextTest = std::make_unique<MetricDeviceContext>(*device);
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContextTest->createMetricGroupsFromMetrics(0, nullptr, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContextTest->createMetricGroupsFromMetricsExp(0, nullptr, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
@@ -1480,7 +1480,7 @@ TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenUnembarg
 
     uint32_t metricGroupCount = 0;
     auto metricHandle = mockMetric.toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 0u);
 
     metricEnumeration->cleanupExtendedMetricInformation();
@@ -1516,10 +1516,10 @@ TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMultiple
 
     uint32_t metricGroupCount = 0;
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 2u);
     metricGroupHandles.resize(metricGroupCount);
 
@@ -1571,10 +1571,10 @@ TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenFailureO
 
     uint32_t metricGroupCount = 0;
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2, metricHandle3, metricHandle4};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     EXPECT_EQ(metricGroupCount, 0u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle1));
@@ -1657,10 +1657,10 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};
 
     uint32_t metricGroupCount = 0;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     ASSERT_NE(metricGroupCount, 0u);
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     ASSERT_NE(metricGroupCount, 0u);
     zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
 
@@ -1699,13 +1699,13 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
 
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     ASSERT_NE(metricGroupCount, 0u);
     // Allocate more space for the mockMetricTraceSource
     metricGroupCount += 1;
     std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
     mockMetricTraceSource.createMetricGroupsFromMetricsReturn = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
     ASSERT_EQ(metricGroupCount, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
     metricEnumeration->cleanupExtendedMetricInformation();
@@ -1753,7 +1753,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};
     uint32_t metricGroupCount = 0;
     mockMetricTraceSource.createMetricGroupsFromMetricsReturn = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
     EXPECT_EQ(metricGroupCount, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
     metricEnumeration->cleanupExtendedMetricInformation();

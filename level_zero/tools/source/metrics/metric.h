@@ -83,6 +83,7 @@ struct MetricGroupDescription {
 
     char namePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP];
     char description[ZET_MAX_METRIC_GROUP_DESCRIPTION];
+    void *extendedInfo = nullptr;
 };
 class MetricSource {
   public:
@@ -190,11 +191,11 @@ class MetricDeviceContext {
                                           uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup);
 
     bool isProgrammableMetricsEnabled = true;
-    ze_result_t createMetricGroupsFromMetrics(uint32_t metricCount, zet_metric_handle_t *phMetrics,
-                                              const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                              const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                              uint32_t *pMetricGroupCount,
-                                              zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t createMetricGroupsFromMetricsExp(uint32_t metricCount, zet_metric_handle_t *phMetrics,
+                                                 const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
+                                                 const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                 uint32_t *pMetricGroupCount,
+                                                 zet_metric_group_handle_t *phMetricGroups);
     ze_result_t calcOperationCreate(zet_context_handle_t hContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);

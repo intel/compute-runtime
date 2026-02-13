@@ -496,11 +496,11 @@ ze_result_t MetricDeviceContext::metricProgrammableGet(
     return result;
 }
 
-ze_result_t MetricDeviceContext::createMetricGroupsFromMetrics(uint32_t metricCount, zet_metric_handle_t *phMetrics,
-                                                               const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-                                                               const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                                               uint32_t *pMetricGroupCount,
-                                                               zet_metric_group_handle_t *phMetricGroups) {
+ze_result_t MetricDeviceContext::createMetricGroupsFromMetricsExp(uint32_t metricCount, zet_metric_handle_t *phMetrics,
+                                                                  const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
+                                                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                                  uint32_t *pMetricGroupCount,
+                                                                  zet_metric_group_handle_t *phMetricGroups) {
     MetricGroupDescription metricGroupDesc(metricGroupNamePrefix, description);
 
     return createMetricGroupsFromMetricsImp(metricCount, phMetrics, &metricGroupDesc, pMetricGroupCount, phMetricGroups);
