@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -208,6 +208,6 @@ HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMa
 TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
     EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x4000u);
     EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x4000u);
-    EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x1FF80u);
-    EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x1FFC0u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x40000u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x8000u);
 }

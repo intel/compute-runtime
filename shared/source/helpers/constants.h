@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,8 +60,8 @@ inline constexpr size_t chunkThreshold = MemoryConstants::pageSize64k;
 namespace BlitterConstants {
 inline constexpr uint64_t maxBlitWidth = 0x4000;
 inline constexpr uint64_t maxBlitHeight = 0x4000;
-inline constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128
-inline constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cacheline size
+inline constexpr uint64_t maxBlitSetWidth = 0x40000u;
+inline constexpr uint64_t maxBlitSetHeight = 0x8000u;
 
 inline constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {
