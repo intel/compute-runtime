@@ -68,12 +68,21 @@ struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
 
 using KernelHelperMaxWorkGroupsTests = Test<KernelHelperMaxWorkGroupsFixture>;
 
-TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithSimd) {
+TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxWorkGroupsCountThenResultIsAlignedToDss) {
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
 
     uint32_t workGroupSize = static_cast<uint32_t>(lws[0] * lws[1] * lws[2]);
-    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf, *rootDeviceEnvironment) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+    auto hwInfo = *rootDeviceEnvironment->getHardwareInfo();
 
+    auto dssCount = hwInfo.gtSystemInfo.DualSubSliceCount;
+    if (dssCount == 0) {
+        dssCount = hwInfo.gtSystemInfo.SubSliceCount;
+    }
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, grf, *rootDeviceEnvironment);
+    auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+    uint32_t expected = availableThreadCount / numThreadsPerThreadGroup;
+
+    helper.alignThreadGroupCountToDssSize(expected, dssCount, availableThreadCount / dssCount, numThreadsPerThreadGroup);
     expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
@@ -149,12 +158,12 @@ HWTEST_F(KernelHelperMaxWorkGroupsTests, givenBarriersWhenCalculatingMaxWorkGrou
     EXPECT_EQ(raiiFactory.mockGfxCoreHelper->alignThreadGroupCountToDssSizeCalledTimes, 1u);
 }
 
-HWTEST_F(KernelHelperMaxWorkGroupsTests, givenZeroBarriersAndSlmNotUsedWhenCalculatingMaxWorkGroupsCountThenAlignToDssSizeNotCalled) {
+HWTEST_F(KernelHelperMaxWorkGroupsTests, givenZeroBarriersAndSlmNotUsedWhenCalculatingMaxWorkGroupsCountThenAlignToDssSizeCalled) {
     auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>>(*rootDeviceEnvironment);
     numberOfBarriers = 0;
     usedSlm = 0;
     getMaxWorkGroupCount();
-    EXPECT_EQ(raiiFactory.mockGfxCoreHelper->alignThreadGroupCountToDssSizeCalledTimes, 0u);
+    EXPECT_NE(raiiFactory.mockGfxCoreHelper->alignThreadGroupCountToDssSizeCalledTimes, 0u);
 }
 
 HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned, HasDispatchAllSupport) {
