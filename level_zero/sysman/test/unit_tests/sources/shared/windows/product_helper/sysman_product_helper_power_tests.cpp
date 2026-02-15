@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMapToGe
      {"PACKAGE_ENERGY_STATUS_SKU", {34, 1}},
      {"PLATFORM_ENERGY_STATUS", {35, 1}}}};
 
-static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
+static const std::vector<double> indexToXtalClockFrequencyMap = {24, 19.2, 38.4, 25};
 constexpr uint32_t powerHandleDomainCount = 4u;
 
 class SysmanProductHelperPowerTest : public SysmanDeviceFixture {
@@ -140,7 +140,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerEne
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(energyCounter.energy, expectedEnergyCounterValue);
-        EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequecyMap[mockPmtFrequencyIndexVariableBackupValue]));
+        EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequencyMap[mockPmtFrequencyIndexVariableBackupValue]));
     }
 }
 
@@ -217,7 +217,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerEne
         } else {
             EXPECT_EQ(energyCounter.energy, expectedEnergyCounterValueFromOobmsm);
         }
-        EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequecyMap[mockPmtFrequencyIndexVariableBackupValue]));
+        EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequencyMap[mockPmtFrequencyIndexVariableBackupValue]));
     }
 }
 

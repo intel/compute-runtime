@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ constexpr static auto gfxProduct = IGFX_BMG;
 
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
 // This vector defines the predefined value for each integer represented by the index of the vector.
-static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
+static const std::vector<double> indexToXtalClockFrequencyMap = {24, 19.2, 38.4, 25};
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x1e2f8200", // BMG PUNIT rev 1
@@ -1751,7 +1751,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    double timestamp = timestamp64 / indexToXtalClockFrequecyMap[frequency & 0x2];
+    double timestamp = timestamp64 / indexToXtalClockFrequencyMap[frequency & 0x2];
     pEnergy->timestamp = static_cast<uint64_t>(timestamp);
 
     return ZE_RESULT_SUCCESS;

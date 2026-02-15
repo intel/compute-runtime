@@ -22,6 +22,7 @@ const std::string_view telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
 const std::string_view telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 using SysmanXeProductHelperPowerTest = SysmanDevicePowerFixtureXe;
+using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 
 constexpr uint32_t bmgPowerHandleComponentCount = 4u;
 constexpr uint32_t bmgPowerLimitSupportedCount = 3u;
@@ -130,21 +131,21 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenComponentCountZeroWhenEnumerating
     EXPECT_EQ(count, bmgPowerHandleComponentCount);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterForUnknownPowerDomainThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterForUnknownPowerDomainThenFailureIsReturned, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_power_energy_counter_t energyCounter = {};
     auto result = pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_UNKNOWN, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndNoTelemNodesAreAvailableThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndNoTelemNodesAreAvailableThenFailureIsReturned, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_power_energy_counter_t energyCounter = {};
     auto result = pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndReadGuidFailsFromPmtUtilThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndReadGuidFailsFromPmtUtilThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -162,7 +163,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndKeyOffsetMapIsNotAvailableThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndKeyOffsetMapIsNotAvailableThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -185,7 +186,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndReadValueFailsForDifferentKeysThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterAndReadValueFailsForDifferentKeysThenFailureIsReturned, IsBmgOrCri) {
     static int readFailCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -193,8 +194,20 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         constexpr uint64_t telemOffset = 0;
-        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
-        constexpr std::string_view validPunitGuid = "0x1e2f8200";
+        std::string_view validOobmsmGuid = "";
+        std::string_view validPunitGuid = "";
+        size_t xtalReturnCount = 0;
+        ssize_t ret = count;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+            validOobmsmGuid = "0x5e2f8211";
+            validPunitGuid = "0x1e2f8200";
+            xtalReturnCount = sizeof(uint64_t);
+        } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validOobmsmGuid = "0x5e2fa230";
+            validPunitGuid = "0x1e2fa030";
+            xtalReturnCount = sizeof(uint32_t);
+        }
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -202,27 +215,31 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
-        } else if (fd == 7) {
+        } else if (fd == 7) { // telem2 - OOBMSM telem data file
             switch (offset) {
             case 140:
-                count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                ret = (readFailCount == 1) ? -1 : sizeof(uint32_t);
                 break;
             default:
                 break;
             }
-        } else if (fd == 8) {
+        } else if (fd == 8) { // telem3 - PUNIT telem data file
             switch (offset) {
             case 4:
-                count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                ret = (readFailCount == 3) ? -1 : sizeof(uint32_t);
                 break;
+            case 52:
+                ret = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                break;
+            case 1016:
             case 1024:
-                count = (readFailCount == 3) ? -1 : sizeof(uint64_t);
+                ret = (readFailCount == 2) ? -1 : static_cast<ssize_t>(xtalReturnCount);
                 break;
             default:
                 break;
             }
         }
-        return count;
+        return ret;
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -268,6 +285,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 4:
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
+            case 1016:
             case 1024:
                 memcpy(buf, &mockTimestamp, count);
                 break;
@@ -285,7 +303,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     constexpr uint32_t mockEnergyCounter = 0xabcd;
     constexpr uint32_t mockXtalFrequency = 0xef;
     constexpr uint64_t mockTimestamp = 0xabef;
-    constexpr double indexToXtalClockFrequecyMap[4] = {24, 19.2, 38.4, 25};
+    constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
@@ -295,20 +313,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        const uint32_t integerPart = static_cast<uint32_t>(mockEnergyCounter >> 14);
-        const uint32_t decimalBits = static_cast<uint32_t>(mockEnergyCounter & 0x3FFF);
-        const double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
-        const double finalValue = static_cast<double>(integerPart + decimalPart);
-        const uint64_t expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        const uint64_t expectedEnergyCounter = static_cast<uint64_t>(convertU18p14(mockEnergyCounter) * microFactor);
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
 
-        const double timestamp = mockTimestamp / indexToXtalClockFrequecyMap[mockXtalFrequency & 0x2];
+        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x2];
         const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
         EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenAllValidValuesAreReturnedFromPunitPath, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenAllValidValuesAreReturnedFromPunitPath, IsBmgOrCri) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -316,11 +330,23 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
-        constexpr std::string_view validPunitGuid = "0x1e2f8201";
+        std::string_view validOobmsmGuid = "";
+        std::string_view validPunitGuid = "";
         constexpr uint32_t mockEnergyCounter = 0xabcd;
+        constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
         constexpr uint32_t mockXtalFrequency = 0xef;
         constexpr uint64_t mockTimestamp = 0xabef;
+        size_t xtalReturnCount = 0;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+            validOobmsmGuid = "0x5e2f8211";
+            validPunitGuid = "0x1e2f8200";
+            xtalReturnCount = sizeof(uint64_t);
+        } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validOobmsmGuid = "0x5e2fa230";
+            validPunitGuid = "0x1e2fa030";
+            xtalReturnCount = sizeof(uint32_t);
+        }
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -342,14 +368,19 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 4:
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
+            case 1016:
             case 1024:
-                memcpy(buf, &mockTimestamp, count);
+                memcpy(buf, &mockTimestamp, xtalReturnCount);
                 break;
+            case 44:
             case 48:
             case 52:
             case 1628:
             case 1640:
                 memcpy(buf, &mockEnergyCounter, count);
+                break;
+            case 188:
+                memcpy(buf, &mockMemoryEnergyCounter, count);
                 break;
             default:
                 break;
@@ -359,26 +390,39 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     });
 
     constexpr uint32_t mockEnergyCounter = 0xabcd;
+    constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
     constexpr uint32_t mockXtalFrequency = 0xef;
     constexpr uint64_t mockTimestamp = 0xabef;
-    constexpr double indexToXtalClockFrequecyMap[4] = {24, 19.2, 38.4, 25};
+    constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        // Get the power domain for this handle
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+
         zes_power_energy_counter_t energyCounter = {};
         auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        const uint32_t integerPart = static_cast<uint32_t>(mockEnergyCounter >> 14);
-        const uint32_t decimalBits = static_cast<uint32_t>(mockEnergyCounter & 0x3FFF);
-        const double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
-        const double finalValue = static_cast<double>(integerPart + decimalPart);
-        const uint64_t expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        uint64_t expectedEnergyCounter = 0;
+
+        if ((defaultHwInfo->platform.eProductFamily == IGFX_CRI) && (extProperties.domain == ZES_POWER_DOMAIN_MEMORY)) {
+            const double finalValue = convertU18p14((mockMemoryEnergyCounter >> 16) & 0xFFFF) + convertU18p14(mockMemoryEnergyCounter & 0xFFFF);
+            expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        } else {
+            const double finalValue = convertU18p14(mockEnergyCounter);
+            expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
+        }
+
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
 
-        const double timestamp = mockTimestamp / indexToXtalClockFrequecyMap[mockXtalFrequency & 0x2];
+        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x2];
         const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
         EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
     }
@@ -1164,6 +1208,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         constexpr std::string_view validPunitGuid = "0x1e2fa030";
         const uint64_t instantPowerOffset = 128;
         const uint64_t averagePowerOffset = 136;
+        ssize_t ret = count;
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -1172,16 +1217,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 8) {
             switch (offset) {
             case instantPowerOffset:
-                count = (readFailCount == 1) ? -1 : sizeof(uint64_t);
+                ret = (readFailCount == 1) ? -1 : sizeof(uint64_t);
                 break;
             case averagePowerOffset:
-                count = (readFailCount == 2) ? -1 : sizeof(uint64_t);
+                ret = (readFailCount == 2) ? -1 : sizeof(uint64_t);
                 break;
             default:
                 break;
             }
         }
-        return count;
+        return ret;
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

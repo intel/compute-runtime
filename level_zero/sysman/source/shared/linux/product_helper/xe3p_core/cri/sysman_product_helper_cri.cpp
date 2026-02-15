@@ -26,16 +26,26 @@ constexpr static uint32_t busWidthPerChannelInBytes = 2; // 16 bits = 2 bytes
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 
+// XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
+// This vector defines the predefined value for each integer represented by the index of the vector.
+static const std::vector<double> indexToXtalClockFrequencyMap = {24, 19.2, 38.4, 25};
+
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
-    {"0x1e2fa030", // CRI PUNIT Rev 0
-     {{"INSTANTANEOUS_POWER_CONTAINER", 128},
+    {"0x1e2fa030", // CRI PUNIT rev 0
+     {{"ACCUM_PACKAGE_ENERGY", 48},
+      {"ACCUM_PSYS_ENERGY", 52},
       {"AVERAGE_POWER_CONTAINER", 136},
+      {"GPU_BOARD_TEMPERATURE", 176},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 44},
+      {"VCCDDRQ_ENERGY_ACCUMULATOR", 188},
       {"VR_TEMPERATURE_0", 200},
       {"VR_TEMPERATURE_1", 204},
       {"VR_TEMPERATURE_2", 208},
       {"VR_TEMPERATURE_3", 212},
-      {"GPU_BOARD_TEMPERATURE", 176},
-      {"VRAM_BANDWIDTH", 56}}},
+      {"VRAM_BANDWIDTH", 56},
+      {"XTAL_COUNT", 1016},
+      {"XTAL_CLK_FREQUENCY", 4}}},
     {"0x5e2fa230", // CRI OOBMSM Rev 0
      {{"SOC_TOPDIE_TEMPERATURE", 128},
       {"VRAM_TEMPERATURE", 132},
@@ -131,6 +141,11 @@ static ze_result_t getErrorCode(ze_result_t result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return result;
+}
+
+template <>
+const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
+    return &guidToKeyOffsetMap;
 }
 
 static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
@@ -307,6 +322,67 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
     if (!anyLimitSet) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+    const std::unordered_map<zes_power_domain_t, std::string> powerDomainToKeyMap = {
+        {ZES_POWER_DOMAIN_PACKAGE, "ACCUM_PACKAGE_ENERGY"},
+        {ZES_POWER_DOMAIN_CARD, "ACCUM_PSYS_ENERGY"},
+        {ZES_POWER_DOMAIN_GPU, "VCCGT_ENERGY_ACCUMULATOR"},
+        {ZES_POWER_DOMAIN_MEMORY, "VCCDDRQ_ENERGY_ACCUMULATOR"}};
+
+    auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
+    if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power domain not supported for Energy counter, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    uint32_t energyCounter = 0;
+    std::string key = powerDomainToKeyMapIter->second;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Energy Counter calculation
+    double energyInJoules = 0.0;
+    if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
+        energyInJoules = convertU18p14((energyCounter >> 16) & 0xFFFF) + convertU18p14(energyCounter & 0xFFFF);
+    } else {
+        energyInJoules = convertU18p14(energyCounter);
+    }
+
+    // Convert Energy in Joules to MicroJoules
+    pEnergy->energy = static_cast<uint64_t>(energyInJoules * microFactor);
+
+    // Timestamp calculation
+    uint32_t timestampValue = 0;
+    key = "XTAL_COUNT";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint32_t frequency = 0;
+    key = "XTAL_CLK_FREQUENCY";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    double timestamp = timestampValue / indexToXtalClockFrequencyMap[frequency & 0x2];
+    pEnergy->timestamp = static_cast<uint64_t>(timestamp);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -661,11 +737,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysma
 
     *pTemperature = static_cast<double>(gpuBoardTemperature);
     return ZE_RESULT_SUCCESS;
-}
-
-template <>
-const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
-    return &guidToKeyOffsetMap;
 }
 
 template <>
