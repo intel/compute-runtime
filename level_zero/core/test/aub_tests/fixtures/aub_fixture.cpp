@@ -10,6 +10,7 @@
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -54,7 +55,9 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     }
 
     const auto aubCenter = executionEnvironment->rootDeviceEnvironments[0]->aubCenter.get();
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::AubMemoryOperationsHandler>(aubCenter->getAubManager());
+    auto memoryOperationsInterface = std::make_unique<NEO::AubMemoryOperationsHandler>(aubCenter->getAubManager());
+    memoryOperationsInterface->setAddressWidth(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()->getAddressWidth());
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::move(memoryOperationsInterface);
 
     if (debuggingEnabled) {
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

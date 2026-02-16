@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
@@ -46,6 +47,8 @@ struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixt
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
         executionEnvironment->initializeMemoryManager();
         auto memoryOperationsHandler = new NEO::MockAubMemoryOperationsHandler(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager());
+        memoryOperationsHandler->setAddressWidth(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()->getAddressWidth());
+
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(memoryOperationsHandler);
 
         auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex, deviceBitfield);
