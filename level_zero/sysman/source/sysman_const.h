@@ -92,6 +92,14 @@ inline constexpr uint64_t packInto64Bit(uint32_t msb, uint32_t lsb) {
     return ((static_cast<uint64_t>(msb) << 32) | static_cast<uint64_t>(lsb));
 }
 
+inline constexpr double convertU13p3(uint16_t rawValue) {
+    // Convert U13.3 fixed-point format (13 integer bits + 3 fractional bits) to a floating-point value
+    const uint32_t integerPart = rawValue >> 3;
+    const uint32_t fractionalBits = rawValue & 0x7; // 3 bits
+    const double fractionalPart = static_cast<double>(fractionalBits) / (1 << 3);
+    return (static_cast<double>(integerPart) + fractionalPart);
+}
+
 const std::map<std::string_view, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
     {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
     {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},

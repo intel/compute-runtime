@@ -63,6 +63,10 @@ ze_result_t PowerImp::powerSetLimitsExp(const uint32_t limit) {
     return pOsPower->setLimitsExp(limit);
 }
 
+ze_result_t PowerImp::powerGetUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return pOsPower->getPowerUsageExp(pInstantPower, pAveragePower);
+}
+
 ze_result_t PowerImp::powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) {
     return pOsPower->getEnergyThreshold(pThreshold);
 }

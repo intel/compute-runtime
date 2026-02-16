@@ -371,6 +371,10 @@ ze_result_t LinuxPowerImp::setLimitsExp(const uint32_t limit) {
     return pSysmanProductHelper->setLimitsExp(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, powerDomain, limit);
 }
 
+ze_result_t LinuxPowerImp::getPowerUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, powerDomain, pInstantPower, pAveragePower);
+}
+
 bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
     std::string intelGraphicsHwmonName = pSysmanKmdInterface->getHwmonName(subdeviceId, isSubdevice);
     if (name == intelGraphicsHwmonName) {

@@ -83,6 +83,16 @@ ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(zes_pwr_handle_t hPower, const 
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetUsageExp(pInstantPower, pAveragePower);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -113,6 +123,10 @@ ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(zes_pwr_handle_t hPower, uint32
 
 ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(zes_pwr_handle_t hPower, const uint32_t limit) {
     return L0::zesIntelPowerSetLimitsExp(hPower, limit);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return L0::zesIntelDeviceGetPowerUsageExp(hPower, pInstantPower, pAveragePower);
 }
 
 } // extern "C"

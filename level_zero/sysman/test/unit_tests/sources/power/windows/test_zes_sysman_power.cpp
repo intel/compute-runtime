@@ -665,6 +665,17 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingSetPowerLimitsE
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerUsageExpThenUnsupportedFeatureErrorIsReturned) {
+    init(false); // Disable Set calls
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        uint32_t instantPower = 0u;
+        uint32_t averagePower = 0u;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerUsageExp(handle, &instantPower, &averagePower));
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

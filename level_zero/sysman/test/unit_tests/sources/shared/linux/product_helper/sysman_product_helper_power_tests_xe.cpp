@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power_xe.h"
 
@@ -21,7 +22,7 @@ const std::string_view telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
 const std::string_view telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 using SysmanXeProductHelperPowerTest = SysmanDevicePowerFixtureXe;
-using IsNotCRI = IsNoneProducts<IGFX_CRI>;
+
 constexpr uint32_t bmgPowerHandleComponentCount = 4u;
 constexpr uint32_t bmgPowerLimitSupportedCount = 3u;
 
@@ -1085,6 +1086,184 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
             uint32_t limit = 0;
             // When error is NOT ZE_RESULT_ERROR_NOT_AVAILABLE, getErrorCode should return the error as-is
             EXPECT_EQ(errorCode, pPowerImp->getLimitsExp(&limit));
+        }
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageExpThenUnsupportedFeatureIsReturned, IsNotCRI) {
+    auto handles = getPowerHandles();
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        uint32_t instantPower = 0u;
+        uint32_t averagePower = 0u;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerUsageExp(handle, &instantPower, &averagePower));
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageExpAndNoTelemDataFoundThenUnsupportedFeatureIsReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+    auto result = pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageExpAndReadGuidFailsFromPmtUtilThenFailureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == 5 || fd == 6) {
+            count = -1;
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+    auto result = pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageExpAndKeyOffsetMapIsNotAvailableThenFailureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view dummyGuid = "0xABCDEF";
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5 || fd == 6) {
+            memcpy(buf, dummyGuid.data(), count);
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+    auto result = pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageExpAndReadValueFailsForDifferentKeysThenFailureIsReturned, IsCRI) {
+    static int readFailCount = 1;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validPunitGuid = "0x1e2fa030";
+        const uint64_t instantPowerOffset = 128;
+        const uint64_t averagePowerOffset = 136;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        } else if (fd == 8) {
+            switch (offset) {
+            case instantPowerOffset:
+                count = (readFailCount == 1) ? -1 : sizeof(uint64_t);
+                break;
+            case averagePowerOffset:
+                count = (readFailCount == 2) ? -1 : sizeof(uint64_t);
+                break;
+            default:
+                break;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+    for (readFailCount = 1; readFailCount <= 2; readFailCount++) {
+        auto result = pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageExpThenProperValuesAreReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validPunitGuid = "0x1e2fa030";
+        constexpr uint64_t instantPowerOffset = 128;
+        constexpr uint64_t averagePowerOffset = 136;
+        constexpr uint64_t instantPower = 0x5678ABCD12344321;
+        constexpr uint64_t averagePower = 0x8765DCBA43211234;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        } else if (fd == 8) {
+            switch (offset) {
+            case instantPowerOffset:
+                memcpy(buf, &instantPower, count);
+                break;
+            case averagePowerOffset:
+                memcpy(buf, &averagePower, count);
+                break;
+            default:
+                break;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+
+    constexpr uint64_t instantPowerValue = 0x5678ABCD12344321;
+    constexpr uint64_t averagePowerValue = 0x8765DCBA43211234;
+    uint32_t expectedInstantPower = 0u;
+    uint32_t expectedAveragePower = 0u;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_MEMORY, ZES_POWER_DOMAIN_GPU};
+
+    for (const auto &powerDomain : powerDomains) {
+        auto result = pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, powerDomain, &instantPower, &averagePower);
+
+        switch (powerDomain) {
+        case ZES_POWER_DOMAIN_CARD:
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            expectedInstantPower = static_cast<uint32_t>(convertU13p3((instantPowerValue >> 32) & 0xFFFF) * milliFactor);
+            expectedAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
+            EXPECT_EQ(instantPower, expectedInstantPower);
+            EXPECT_EQ(averagePower, expectedAveragePower);
+            break;
+        case ZES_POWER_DOMAIN_PACKAGE:
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            expectedInstantPower = static_cast<uint32_t>(convertU13p3(instantPowerValue & 0xFFFF) * milliFactor);
+            expectedAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
+            EXPECT_EQ(instantPower, expectedInstantPower);
+            EXPECT_EQ(averagePower, expectedAveragePower);
+            break;
+        case ZES_POWER_DOMAIN_MEMORY:
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            expectedInstantPower = static_cast<uint32_t>((convertU13p3((instantPowerValue >> 16) & 0xFFFF) + convertU13p3((instantPowerValue >> 48) & 0xFFFF)) * milliFactor);
+            expectedAveragePower = static_cast<uint32_t>((convertU13p3((averagePowerValue >> 16) & 0xFFFF) + convertU13p3((averagePowerValue >> 48) & 0xFFFF)) * milliFactor);
+            EXPECT_EQ(instantPower, expectedInstantPower);
+            EXPECT_EQ(averagePower, expectedAveragePower);
+            break;
+        default:
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+            break;
         }
     }
 }

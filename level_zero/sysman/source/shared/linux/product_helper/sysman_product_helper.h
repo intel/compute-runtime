@@ -89,6 +89,7 @@ class SysmanProductHelper {
     virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subDeviceId) = 0;
     virtual ze_result_t getLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) = 0;
     virtual ze_result_t setLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) = 0;
+    virtual ze_result_t getPowerUsageExp(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     // standby
     virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;

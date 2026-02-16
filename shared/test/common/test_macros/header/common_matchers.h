@@ -210,6 +210,7 @@ using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 using IsPTL = IsProduct<IGFX_PTL>;
 using IsNVLS = IsProduct<IGFX_NVL_XE3G>;
 using IsCRI = IsProduct<IGFX_CRI>;
+using IsNotCRI = IsNotWithinProducts<IGFX_CRI, IGFX_CRI>;
 
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;

@@ -29,6 +29,7 @@ class OsPower {
     virtual ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) = 0;
     virtual ze_result_t getLimitsExp(uint32_t *pLimit) = 0;
     virtual ze_result_t setLimitsExp(const uint32_t limit) = 0;
+    virtual ze_result_t getPowerUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);

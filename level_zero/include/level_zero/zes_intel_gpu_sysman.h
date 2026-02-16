@@ -70,6 +70,44 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
     int32_t maxPciGenSupported;          ///< [out] Returns the max supported PCIe generation of the device. -1 indicated the information is not available
 } zes_intel_pci_link_speed_downgrade_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME
+/// @brief PCI link speed update extension name
+#define ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME "ZES_intel_experimental_pci_link_speed_update"
+#endif // ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief PCI link speed update extension Version(s)
+typedef enum _zes_intel_pci_link_speed_update_exp_version_t {
+    ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_link_speed_update_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Update PCIe Link Speed
+///
+/// @details
+///     - This function allows updating the PCIe link speed by downgrading or upgrading.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET
+///     - ::ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pendingAction`
 ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
     zes_device_handle_t hDevice,       ///< [in] handle of the device
     ze_bool_t downgradeUpgrade,        ///< [in] boolean value to decide whether to perform PCIe downgrade(true) or upgrade(false)
@@ -195,6 +233,20 @@ typedef struct _zes_intel_ras_state_exp_t {
 } zes_intel_ras_state_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_NAME
+/// @brief RAS get supported categories extension name
+#define ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_NAME "ZES_intel_experimental_ras_get_supported_categories"
+#endif // ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS get supported categories extension Version(s)
+typedef enum _zes_intel_ras_get_supported_categories_exp_version_t {
+    ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_get_supported_categories_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief RAS Get Supported Driver Experimental Extension Error Categories
 ///
 /// @details
@@ -223,6 +275,20 @@ ze_result_t ZE_APICALL zesIntelRasGetSupportedCategoriesExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_RAS_GET_CONFIG_EXP_NAME
+/// @brief RAS get config extension name
+#define ZES_INTEL_RAS_GET_CONFIG_EXP_NAME "ZES_intel_experimental_ras_get_config"
+#endif // ZES_INTEL_RAS_GET_CONFIG_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS get config extension Version(s)
+typedef enum _zes_intel_ras_get_config_exp_version_t {
+    ZES_INTEL_RAS_GET_CONFIG_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_GET_CONFIG_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_GET_CONFIG_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_get_config_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief RAS Get Driver Experimental Extension Config
 ///
 /// @details
@@ -241,6 +307,20 @@ ze_result_t ZE_APICALL zesIntelRasGetConfigExp(
     const uint32_t count,               ///< [in] Number of elements in the pConfig array.
     zes_intel_ras_config_exp_t *pConfig ///< [in][out] Array of RAS configurations to get.
 );
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_RAS_SET_CONFIG_EXP_NAME
+/// @brief RAS set config extension name
+#define ZES_INTEL_RAS_SET_CONFIG_EXP_NAME "ZES_intel_experimental_ras_set_config"
+#endif // ZES_INTEL_RAS_SET_CONFIG_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS set config extension Version(s)
+typedef enum _zes_intel_ras_set_config_exp_version_t {
+    ZES_INTEL_RAS_SET_CONFIG_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_SET_CONFIG_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_SET_CONFIG_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_set_config_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief RAS Set Driver Experimental Extension Config
@@ -263,6 +343,20 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_RAS_GET_STATE_EXP_NAME
+/// @brief RAS get state extension name
+#define ZES_INTEL_RAS_GET_STATE_EXP_NAME "ZES_intel_experimental_ras_get_state"
+#endif // ZES_INTEL_RAS_GET_STATE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS get state extension Version(s)
+typedef enum _zes_intel_ras_get_state_exp_version_t {
+    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_get_state_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Ras Get Driver Experimental Extension State
 ///
 /// @details
@@ -281,6 +375,20 @@ ze_result_t ZE_APICALL zesIntelRasGetStateExp(
     const uint32_t count,             ///< [in] Number of elements in the pState array.
     zes_intel_ras_state_exp_t *pState ///< [in][out] Array of RAS error states.
 );
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_POWER_LIMITS_EXP_NAME
+/// @brief Power limits extension name
+#define ZES_INTEL_POWER_LIMITS_EXP_NAME "ZES_intel_experimental_power_limits"
+#endif // ZES_INTEL_POWER_LIMITS_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Power limits extension Version(s)
+typedef enum _zes_intel_power_limits_exp_version_t {
+    ZES_INTEL_POWER_LIMITS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_POWER_LIMITS_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_POWER_LIMITS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_power_limits_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get Experimental Power Limits
@@ -336,6 +444,48 @@ ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(
 ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(
     zes_pwr_handle_t hPower, ///< [in] Power domain handle instance.
     const uint32_t limit     ///< [in] Limit value in milliwatts to be set for given power domain.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_POWER_USAGE_EXP_NAME
+/// @brief Power usage extension name
+#define ZES_INTEL_POWER_USAGE_EXP_NAME "ZES_intel_experimental_power_usage"
+#endif // ZES_INTEL_POWER_USAGE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Power usage extension Version(s)
+typedef enum _zes_intel_power_usage_exp_version_t {
+    ZES_INTEL_POWER_USAGE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_POWER_USAGE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_POWER_USAGE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_power_usage_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get Experimental Power Usage
+///
+/// @details
+///     - This function returns the different Power usage values associated with the supplied power domain.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET
+///     - ::ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hPower`
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(
+    zes_pwr_handle_t hPower, ///< [in] handle of the power domain
+    uint32_t *pInstantPower, ///< [out] Returns the instant power usage in milliwatts
+    uint32_t *pAveragePower  ///< [out] Returns the average power usage in milliwatts
 );
 
 #define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type

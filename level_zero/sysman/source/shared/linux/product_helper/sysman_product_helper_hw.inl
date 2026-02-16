@@ -378,6 +378,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsageExp(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
     return pSysmanKmdInterface->isStandbyModeControlAvailable();
 }

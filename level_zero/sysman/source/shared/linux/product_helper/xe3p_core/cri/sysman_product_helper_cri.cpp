@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
@@ -26,14 +27,16 @@ constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
-    {"0x1e2fa030", // CRI PUNIT rev 0
-     {{"VR_TEMPERATURE_0", 200},
+    {"0x1e2fa030", // CRI PUNIT Rev 0
+     {{"INSTANTANEOUS_POWER_CONTAINER", 128},
+      {"AVERAGE_POWER_CONTAINER", 136},
+      {"VR_TEMPERATURE_0", 200},
       {"VR_TEMPERATURE_1", 204},
       {"VR_TEMPERATURE_2", 208},
       {"VR_TEMPERATURE_3", 212},
       {"GPU_BOARD_TEMPERATURE", 176},
       {"VRAM_BANDWIDTH", 56}}},
-    {"0x5e2fa230",
+    {"0x5e2fa230", // CRI OOBMSM Rev 0
      {{"PCIE_RECEIVE_BYTES", 520},
       {"PCIE_TRANSMIT_BYTES", 528},
       {"PCIE_RECEIVE_PACKETS", 536},
@@ -126,6 +129,47 @@ static ze_result_t getErrorCode(ze_result_t result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return result;
+}
+
+static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
+                                                   std::map<std::string, uint64_t> &keyOffsetMap,
+                                                   std::unordered_map<std::string, std::string> &keyTelemInfoMap) {
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No telemetry nodes found in PCI path, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    keyOffsetMap.clear();
+    keyTelemInfoMap.clear();
+
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (const auto &[key, value] : tempKeyOffsetMap) {
+            keyOffsetMap[key] = value;
+            keyTelemInfoMap[key] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>
@@ -266,6 +310,69 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
 }
 
 template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsageExp(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    ze_result_t result = buildKeyOffsetMapFromTelemNodes(rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    uint64_t instantaneousPowerValue = 0;
+    std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t averagePowerValue = 0;
+    key = "AVERAGE_POWER_CONTAINER"; // 64-bit container with Average power values at different bit offsets
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Power Values read from PMT are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
+    switch (powerDomain) {
+    case ZES_POWER_DOMAIN_CARD:
+        // bits [32:47] - INSTANTANEOUS_PSYSGPU_POWER
+        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
+        // bits [32:47] - SUSTAINED_PACKAGE_POWER
+        *pAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
+        break;
+    case ZES_POWER_DOMAIN_PACKAGE:
+        // bits [0:15] - INSTANTANEOUS_PACKAGE_POWER
+        *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
+        // bits [0:15] - SUSTAINED_CARD_POWER
+        *pAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
+        break;
+    case ZES_POWER_DOMAIN_MEMORY: {
+        // bits [16:31] INSTANTANEOUS_VRAM_VCCDRQX_POWER + bits [48:63] INSTANTANEOUS_VRAM_VCCDDRQ_POWER
+        double instVccdrqx = convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF);
+        double instVccddrq = convertU13p3((instantaneousPowerValue >> 48) & 0xFFFF);
+        double instTotalWatts = instVccdrqx + instVccddrq;
+        double instMilliWatts = instTotalWatts * milliFactor;
+        *pInstantPower = static_cast<uint32_t>(instMilliWatts);
+
+        // bits [16:31] SUSTAINED_POWER_VCCDDRQX + bits [48:63] SUSTAINED_POWER_VCCDDRQ
+        double avgVccdrqx = convertU13p3((averagePowerValue >> 16) & 0xFFFF);
+        double avgVccddrq = convertU13p3((averagePowerValue >> 48) & 0xFFFF);
+        double avgTotalWatts = avgVccdrqx + avgVccddrq;
+        double avgMilliWatts = avgTotalWatts * milliFactor;
+        *pAveragePower = static_cast<uint32_t>(avgMilliWatts);
+
+        break;
+    }
+    default:
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::netlink;
 }
@@ -273,47 +380,6 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
 template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::netlink;
-}
-
-static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
-                                                   std::map<std::string, uint64_t> &keyOffsetMap,
-                                                   std::unordered_map<std::string, std::string> &keyTelemInfoMap) {
-    std::map<uint32_t, std::string> telemNodes;
-    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
-    if (telemNodes.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No telemetry nodes found in PCI path, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    keyOffsetMap.clear();
-    keyTelemInfoMap.clear();
-
-    for (const auto &it : telemNodes) {
-        std::string telemNodeDir = it.second;
-
-        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
-            continue;
-        }
-
-        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
-        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
-            continue;
-        }
-
-        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
-        for (const auto &[key, value] : tempKeyOffsetMap) {
-            keyOffsetMap[key] = value;
-            keyTelemInfoMap[key] = telemNodeDir;
-        }
-    }
-
-    if (keyOffsetMap.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_intel_freq_throttle_detailed_reason_exp_flags_t &pDetailedThrottleReasons) {
