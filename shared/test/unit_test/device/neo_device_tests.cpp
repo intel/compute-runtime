@@ -3345,3 +3345,27 @@ TEST(DevicePeerAccessInitializationTest, givenMemoryAllocationWhenInitializePeer
     EXPECT_EQ(6u, queryCalled);
     EXPECT_EQ(3u, freeMemoryCalled);
 }
+
+HWTEST2_F(DeviceTests, givenSkipHpBcsInitializationWhenDeviceCreatedThenHpCopyEngineIsNotCreated, IsAtLeastXe3pCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.SkipHpBcsInitialization.set(true);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u));
+    const auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    EXPECT_EQ(hpEngine, aub_stream::EngineType::NUM_ENGINES);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment.release(), 0));
+
+    EXPECT_EQ(nullptr, device->getHpCopyEngine());
+}

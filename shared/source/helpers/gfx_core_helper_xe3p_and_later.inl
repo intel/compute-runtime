@@ -45,7 +45,9 @@ void GfxCoreHelperHw<Family>::adjustCopyEngineRegularContextCount(const size_t e
 template <>
 void GfxCoreHelperHw<Family>::initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) {
     uint32_t hpIndex = 0;
-
+    if (debugManager.flags.SkipHpBcsInitialization.get()) {
+        return;
+    }
     if (areSecondaryContextsSupported()) {
         auto bscCount = static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.size());
         for (uint32_t i = bscCount - 1; i > 0; i--) {
