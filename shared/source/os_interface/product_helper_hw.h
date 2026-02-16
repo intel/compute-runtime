@@ -217,7 +217,6 @@ class ProductHelperHw : public ProductHelper {
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
     uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isInterruptSupported() const override;
-    bool isCompressionFormatFromGmmRequired() const override;
     bool isDeviceCapsReaderSupported() const override;
     bool isMediaContextSupported() const override;
     bool sipUsesSubslicePools() const override;

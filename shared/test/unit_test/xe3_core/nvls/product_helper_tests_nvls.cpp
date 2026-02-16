@@ -67,6 +67,3 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEn
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
     EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }
-NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsCompressionFormatFromGmmRequiredThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isCompressionFormatFromGmmRequired());
-}

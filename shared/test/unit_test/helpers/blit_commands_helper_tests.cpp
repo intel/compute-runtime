@@ -787,10 +787,6 @@ HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionWhenAppendBlitCommandsMe
     properties.srcAllocation = nullptr;
     NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
 
-    if (pDevice->getProductHelper().isCompressionFormatFromGmmRequired()) {
-        auto resourceFormat = mockAllocation.getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        newCompressionFormat = pDevice->getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-    }
     EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
 

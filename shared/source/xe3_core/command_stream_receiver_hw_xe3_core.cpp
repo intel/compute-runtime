@@ -152,10 +152,6 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     if (dstAllocation) {
         if (dstAllocation->isCompressionEnabled()) {
             compressionFormat = 2;
-            if (rootDeviceEnvironment.getProductHelper().isCompressionFormatFromGmmRequired()) {
-                auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-                compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-            }
         }
     }
 
@@ -163,10 +159,6 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         if (srcAllocation) {
             if (srcAllocation->isCompressionEnabled()) {
                 compressionFormat = 2;
-                if (rootDeviceEnvironment.getProductHelper().isCompressionFormatFromGmmRequired()) {
-                    auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-                    compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-                }
             }
         }
     }

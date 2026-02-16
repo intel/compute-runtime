@@ -12,8 +12,5 @@ template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
     return false;
 }
-template <>
-bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
-    return true;
-}
+
 } // namespace NEO

@@ -1117,11 +1117,6 @@ bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceCapsReaderSupported() const {
     return false;
 }
