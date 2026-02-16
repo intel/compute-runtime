@@ -120,7 +120,7 @@ bool GfxCoreHelperHw<Family>::isWalkerPostSyncSkipEnabled(bool isBarrierUsedForI
     if (debugManager.flags.EnableWalkerPostSyncSkip.get() != -1) {
         return debugManager.flags.EnableWalkerPostSyncSkip.get() == 1;
     }
-    if constexpr (std::is_same_v<Family::StallingBarrierType, Family::RESOURCE_BARRIER>) {
+    if constexpr (UsesResourceBarrier<Family>) {
         return isBarrierUsedForImplicitDependency;
     }
     return false;

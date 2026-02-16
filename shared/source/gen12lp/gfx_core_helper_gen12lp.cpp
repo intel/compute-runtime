@@ -228,9 +228,7 @@ EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineTy
 }
 
 template <>
-inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
-    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
-
+inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
 
     if (debugManager.flags.FlushAllCaches.get()) {

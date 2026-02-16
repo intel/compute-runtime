@@ -294,9 +294,7 @@ void MemorySynchronizationCommands<Family>::setBarrierWaFlags(void *barrierCmd) 
 }
 
 template <>
-inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
-    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
-
+inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setDataportFlush(args.hdcPipelineFlush);
     pipeControl.setUnTypedDataPortCacheFlush(args.unTypedDataPortCacheFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
@@ -407,4 +405,5 @@ uint32_t GfxCoreHelperHw<Family>::getDefaultSshSize(const ProductHelper &product
     }
     return defaultSshSize;
 }
+
 } // namespace NEO

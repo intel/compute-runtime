@@ -510,7 +510,6 @@ struct MemorySynchronizationCommands {
     static void setSingleBarrier(void *commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args);
     static void addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args);
     static void setSingleBarrier(void *commandsBuffer, PipeControlArgs &args);
-    static void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args);
 
     static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
     static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
@@ -548,9 +547,19 @@ struct MemorySynchronizationCommands {
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isL1FlushRequiredForBarrier(uint32_t l1CachePolicy);
-    static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
+    static void setPipeControlExtraProperties(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 
     static void encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress, bool isBcs);
 };
+
+template <typename GfxFamily>
+concept UsesResourceBarrier = std::is_same_v<typename GfxFamily::StallingBarrierType, typename GfxFamily::RESOURCE_BARRIER>;
+
+template <class GfxFamily>
+void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args);
+
+template <class GfxFamily>
+void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
+    requires(UsesResourceBarrier<GfxFamily>);
 
 } // namespace NEO

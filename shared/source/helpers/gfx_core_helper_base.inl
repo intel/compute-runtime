@@ -241,15 +241,37 @@ void MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(LinearStream &co
     setSingleBarrier(barrier, postSyncMode, gpuAddress, immediateData, args);
 }
 
-template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
+template <class GfxFamily>
+void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
 
     pipeControl.setCommandStreamerStallEnable(true);
-    setBarrierExtraProperties(&pipeControl, args);
+    MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(pipeControl, args);
     *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = pipeControl;
+}
+
+template <class GfxFamily>
+void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
+    requires(UsesResourceBarrier<GfxFamily>)
+{
+    using RESOURCE_BARRIER = typename GfxFamily::RESOURCE_BARRIER;
+
+    auto resourceBarrier = GfxFamily::cmdInitResourceBarrier;
+    resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
+    resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
+    resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+    auto invalidateL1Cache = args.isL1InvalidateRequired;
+    auto flushL1Cache = args.isL1FlushRequired;
+    auto l1FlushMode = debugManager.flags.ResourceBarrierL1FlushMode.get();
+    if (l1FlushMode != -1) {
+        invalidateL1Cache = (l1FlushMode & 0x1) == 0x1;
+        flushL1Cache = (l1FlushMode & 0x2) == 0x2;
+    }
+    resourceBarrier.setL1DataportCacheInvalidate(invalidateL1Cache);
+    resourceBarrier.setL1DataportUavFlush(flushL1Cache);
+    *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
 }
 
 template <typename GfxFamily>
@@ -257,14 +279,14 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     if (args.csStallOnly) {
-        setStallingBarrier(commandsBuffer, args);
+        setStallingBarrier<GfxFamily>(commandsBuffer, args);
         return;
     }
 
     PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
 
     pipeControl.setCommandStreamerStallEnable(true);
-    setBarrierExtraProperties(&pipeControl, args);
+    setPipeControlExtraProperties(pipeControl, args);
 
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
     pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable);
