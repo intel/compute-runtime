@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -738,6 +738,48 @@ TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefau
     EXPECT_TRUE(pageFaultManager->isAubWritable);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc);
+}
+
+TEST_F(PageFaultManagerTest, givenActiveHostFunctionsWhenMigrateHostFunctionSharedAllocationsIsCalledThenAllAllocationsHaveBeenMigratedToGpu) {
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+    void *alloc = reinterpret_cast<void *>(0x1);
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+
+    EXPECT_FALSE(pageFaultManager->hostFunctionActive);
+    pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
+
+    pageFaultManager->beginHostFunctionContext();
+    EXPECT_TRUE(pageFaultManager->hostFunctionActive);
+    EXPECT_EQ(nullptr, pageFaultManager->hostFunctionAllocationsToMigrate);
+
+    pageFaultManager->moveAllocationToGpuDomain(alloc);
+    pageFaultManager->verifyAndHandlePageFault(alloc, true);
+
+    EXPECT_NE(nullptr, pageFaultManager->hostFunctionAllocationsToMigrate);
+    EXPECT_EQ(1u, pageFaultManager->hostFunctionAllocationsToMigrate->size());
+    EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc);
+    EXPECT_EQ(alloc, pageFaultManager->hostFunctionAllocationsToMigrate->at(0));
+
+    pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
+    EXPECT_NE(nullptr, pageFaultManager->hostFunctionAllocationsToMigrate);
+    EXPECT_EQ(0u, pageFaultManager->hostFunctionAllocationsToMigrate->size());
+
+    void *alloc2 = reinterpret_cast<void *>(0x16);
+    pageFaultManager->insertAllocation(alloc2, 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    pageFaultManager->moveAllocationToGpuDomain(alloc2);
+    pageFaultManager->verifyAndHandlePageFault(alloc2, true);
+
+    EXPECT_NE(nullptr, pageFaultManager->hostFunctionAllocationsToMigrate);
+    EXPECT_EQ(1u, pageFaultManager->hostFunctionAllocationsToMigrate->size());
+    EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc2);
+    EXPECT_EQ(alloc2, pageFaultManager->hostFunctionAllocationsToMigrate->at(0));
+
+    pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
+
+    pageFaultManager->endHostFunctionContext();
+    EXPECT_FALSE(pageFaultManager->hostFunctionActive);
+    EXPECT_EQ(nullptr, pageFaultManager->hostFunctionAllocationsToMigrate);
 }
 
 TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefaultWithHandlePageFaultFalseThenAllocationIsNotMovedToCpuDomain) {

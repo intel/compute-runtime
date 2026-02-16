@@ -123,7 +123,17 @@ void CpuPageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFun
     this->gpuDomainHandler = gpuHandlerFuncPtr;
 }
 
-void CpuPageFaultManager::endHostFunctionScope() {
+void CpuPageFaultManager::beginHostFunctionContext() {
+    hostFunctionActive = true;
+}
+
+void CpuPageFaultManager::endHostFunctionContext() {
+    hostFunctionActive = false;
+    delete hostFunctionAllocationsToMigrate;
+    hostFunctionAllocationsToMigrate = nullptr;
+}
+
+void CpuPageFaultManager::uploadTbxAllocationsDuringHostFunction() {
 }
 
 void CpuPageFaultManager::transferAndUnprotectMemory(CpuPageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
@@ -150,8 +160,28 @@ inline void CpuPageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultD
 
         PRINT_STRING(debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
         pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
+
+        if (hostFunctionActive) {
+            if (hostFunctionAllocationsToMigrate == nullptr) {
+                hostFunctionAllocationsToMigrate = new std::vector<void *>{ptr};
+            } else {
+                hostFunctionAllocationsToMigrate->push_back(ptr);
+            }
+        }
     }
     pageFaultData.domain = AllocationDomain::cpu;
+}
+
+void CpuPageFaultManager::migrateHostFunctionSharedAllocationsToGpuDomain() {
+
+    if (hostFunctionAllocationsToMigrate == nullptr) {
+        return;
+    }
+
+    for (auto ptr : *hostFunctionAllocationsToMigrate) {
+        moveAllocationToGpuDomain(ptr);
+    }
+    hostFunctionAllocationsToMigrate->clear();
 }
 
 void CpuPageFaultManager::selectGpuDomainHandler() {

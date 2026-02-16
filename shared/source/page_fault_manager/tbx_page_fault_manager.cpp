@@ -83,7 +83,7 @@ void TbxPageFaultManager::insertAllocation(CommandStreamReceiver *csr, GraphicsA
     this->protectCPUMemoryAccess(ptr, size);
 }
 
-void TbxPageFaultManager::endHostFunctionScope() {
+void TbxPageFaultManager::uploadTbxAllocationsDuringHostFunction() {
     std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
 
     for (auto &[ptr, faultData] : memoryDataTbx) {

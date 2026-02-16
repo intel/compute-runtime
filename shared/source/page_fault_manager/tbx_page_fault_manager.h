@@ -33,7 +33,7 @@ class TbxPageFaultManager : public virtual CpuPageFaultManager {
 
     using CpuPageFaultManager::checkFaultHandlerFromPageFaultManager;
     bool verifyAndHandlePageFault(void *ptr, bool handlePageFault) override;
-    void endHostFunctionScope() override;
+    void uploadTbxAllocationsDuringHostFunction() override;
 
   protected:
     void handlePageFault(void *ptr, PageFaultDataTbx &faultData);

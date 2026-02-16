@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace NEO {
 struct MemoryProperties;
@@ -59,7 +60,11 @@ class CpuPageFaultManager : public NonCopyableClass {
     void setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr);
 
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
-    virtual void endHostFunctionScope();
+    virtual void uploadTbxAllocationsDuringHostFunction();
+
+    void beginHostFunctionContext();
+    void endHostFunctionContext();
+    void migrateHostFunctionSharedAllocationsToGpuDomain();
 
   protected:
     virtual void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) = 0;
@@ -98,6 +103,9 @@ class CpuPageFaultManager : public NonCopyableClass {
     gpuDomainHandlerType gpuDomainHandler = &transferAndUnprotectMemory;
 
     std::unordered_map<void *, PageFaultData> memoryData;
+    inline static thread_local std::vector<void *> *hostFunctionAllocationsToMigrate = nullptr;
+    inline static thread_local bool hostFunctionActive = false;
+
     RecursiveSpinLock mtx;
 };
 } // namespace NEO

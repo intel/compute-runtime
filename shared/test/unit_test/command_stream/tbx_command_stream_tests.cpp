@@ -1401,7 +1401,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxPageFaultManagerWithHostBufferWhenEndHos
          AllocationType::bufferHostMemory,
          pDevice->getDeviceBitfield()});
 
-    pageFaultManager->endHostFunctionScope();
+    pageFaultManager->uploadTbxAllocationsDuringHostFunction();
 
     void *ptr = alloc->getDriverAllocatedCpuPtr();
 
@@ -1411,12 +1411,12 @@ HWTEST_F(TbxCommandStreamTests, givenTbxPageFaultManagerWithHostBufferWhenEndHos
 
     pageFaultManager->insertAllocation(tbxCsr.get(), alloc, allBanks, ptr, alloc->getUnderlyingBufferSize());
 
-    pageFaultManager->endHostFunctionScope();
+    pageFaultManager->uploadTbxAllocationsDuringHostFunction();
     EXPECT_FALSE(tbxCsr->writeCalled);
     EXPECT_NE(tbxCsr->latestWrittenAllocation, alloc);
 
     pageFaultManager->memoryDataTbx[ptr].hasBeenDownloaded = true;
-    pageFaultManager->endHostFunctionScope();
+    pageFaultManager->uploadTbxAllocationsDuringHostFunction();
 
     EXPECT_TRUE(tbxCsr->writeCalled);
     EXPECT_EQ(tbxCsr->latestWrittenAllocation, alloc);

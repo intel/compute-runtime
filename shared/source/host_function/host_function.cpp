@@ -66,6 +66,11 @@ void HostFunctionStreamer::signalHostFunctionCompletion(const HostFunction &host
 void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction) {
     startInOrderExecution();
     pendingHostFunctions.fetch_sub(1, std::memory_order_acq_rel);
+
+    auto pageFaultManager = csr->getMemoryManager()->getPageFaultManager();
+    if (pageFaultManager) {
+        pageFaultManager->beginHostFunctionContext();
+    }
 }
 
 uint32_t HostFunctionStreamer::getActivePartitions() const {
@@ -94,18 +99,27 @@ void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
         }
     };
 
+    auto pageFaultManager = csr->getMemoryManager()->getPageFaultManager();
+
     if (isTbx) {
         auto lock = csr->obtainHostAllocationLock();
 
-        auto pageFaultManager = csr->getMemoryManager()->getPageFaultManager();
         if (pageFaultManager) {
-            pageFaultManager->endHostFunctionScope();
+            pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
+            pageFaultManager->uploadTbxAllocationsDuringHostFunction();
+            pageFaultManager->endHostFunctionContext();
         }
 
         setAsCompleted();
         updateTbxData();
 
     } else {
+
+        if (pageFaultManager) {
+            pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
+            pageFaultManager->endHostFunctionContext();
+        }
+
         setAsCompleted();
     }
 }

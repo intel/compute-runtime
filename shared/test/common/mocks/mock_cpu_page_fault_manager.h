@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
     using BaseFaultManager::gpuDomainHandler;
     using BaseFaultManager::memoryData;
     using PageFaultData = typename BaseFaultManager::PageFaultData;
+    using BaseFaultManager::hostFunctionActive;
+    using BaseFaultManager::hostFunctionAllocationsToMigrate;
     using BaseFaultManager::selectGpuDomainHandler;
     using BaseFaultManager::transferAndUnprotectMemory;
     using BaseFaultManager::unprotectAndTransferMemory;

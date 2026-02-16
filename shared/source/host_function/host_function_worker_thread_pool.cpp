@@ -81,8 +81,8 @@ void HostFunctionThreadPool::executeHostFunction() noexcept {
     hostFunctions.pop_front();
     lock.unlock();
 
+    streamer->prepareForExecution(hostFunction);
     hostFunction.invoke();
-
     streamer->signalHostFunctionCompletion(hostFunction);
 }
 
