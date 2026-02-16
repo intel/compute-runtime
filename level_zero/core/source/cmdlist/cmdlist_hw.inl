@@ -465,7 +465,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto kernel = Kernel::fromHandle(kernelHandle);
 
-    auto result = validateLaunchParams(*kernel, launchParams);
+    auto result = validateLaunchParams(*kernel, launchParams, threadGroupDimensions);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

@@ -281,7 +281,7 @@ struct CommandList : _ze_command_list_handle_t {
     MOCKABLE_VIRTUAL void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
     void setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const;
 
-    ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams) const;
+    ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) const;
 
     void setAdditionalBlitPropertiesFromMemoryCopyParams(NEO::BlitProperties &blitProperties, const CmdListMemoryCopyParams &memoryCopyParams) const;
 
