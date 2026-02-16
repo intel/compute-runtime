@@ -1058,7 +1058,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendHostFunction(
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 
-    const bool performMigration = true;
+    const bool performMigration = false;
     const bool requireTaskCountUpdate = false;
     const bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, parameters.relaxedOrderingDispatch);
     return flushImmediate(ret, performMigration, stallingCmdsForRelaxedOrdering, parameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, requireTaskCountUpdate, nullptr, nullptr);

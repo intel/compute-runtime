@@ -478,5 +478,31 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     EXPECT_EQ(2u, events[1]->inOrderExecSignalValue);
 }
 
+HWTEST_F(HostFunctionsInOrderCmdListTests, givenImmediateCmdListWhenAppendHostFunctionThenPerformMigrationsIsFalse) {
+
+    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
+      public:
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
+                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
+                                   MutexLock *outerLock,
+                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
+
+            performMigrationSaved = performMigration;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        bool performMigrationSaved = false;
+    };
+
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+    auto result = zeCommandListAppendHostFunction(immCmdList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(immCmdList->performMigrationSaved);
+}
+
 } // namespace ult
 } // namespace L0
