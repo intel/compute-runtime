@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,9 +58,9 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(
         zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
-    // create image_veiw for Y plane
-    ze_image_view_planar_exp_desc_t planeYdesc = {};
-    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    // create image_view for Y plane
+    ze_image_view_planar_ext_desc_t planeYdesc = {};
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeYdesc.planeIndex = 0u; // Y plane
 
     ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -81,8 +81,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
         zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
     // create image_view for UV plane
-    ze_image_view_planar_exp_desc_t planeUVdesc = {};
-    planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    ze_image_view_planar_ext_desc_t planeUVdesc = {};
+    planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeUVdesc.planeIndex = 1u; // UV plane
 
     ze_image_desc_t imageViewDescPlaneUV = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -302,9 +302,9 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(
         zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
-    // create image_veiw for Y plane
-    ze_image_view_planar_exp_desc_t planeYdesc = {};
-    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    // create image_view for Y plane
+    ze_image_view_planar_ext_desc_t planeYdesc = {};
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeYdesc.planeIndex = 0u; // Y plane
 
     ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -329,8 +329,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
         zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
     // create image_view for U plane
-    ze_image_view_planar_exp_desc_t planeUdesc = {};
-    planeUdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    ze_image_view_planar_ext_desc_t planeUdesc = {};
+    planeUdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeUdesc.planeIndex = 1u; // U plane
 
     ze_image_desc_t imageViewDescPlaneU = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -355,8 +355,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
         zeImageViewCreateExt(context, device, &imageViewDescPlaneU, srcImg, &planeUImageView));
 
     // create image_view for V plane
-    ze_image_view_planar_exp_desc_t planeVdesc = {};
-    planeVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    ze_image_view_planar_ext_desc_t planeVdesc = {};
+    planeVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeVdesc.planeIndex = 2u; // V plane
 
     ze_image_desc_t imageViewDescPlaneV = {ZE_STRUCTURE_TYPE_IMAGE_DESC,

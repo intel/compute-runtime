@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,8 +74,8 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithOpaqueFDWhenPrepareLooku
     fdStructure.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
     fdStructure.fd = 1;
     fdStructure.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
-    ze_image_view_planar_exp_desc_t imageView = {};
-    imageView.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    ze_image_view_planar_ext_desc_t imageView = {};
+    imageView.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     imageView.planeIndex = 1u;
 
     imageDesc.pNext = &fdStructure;
@@ -111,8 +111,8 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithDmaBufWhenPrepareLookupT
     fdStructure.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
     fdStructure.fd = 1;
     fdStructure.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    ze_image_view_planar_exp_desc_t imageView = {};
-    imageView.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    ze_image_view_planar_ext_desc_t imageView = {};
+    imageView.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     imageView.planeIndex = 1u;
 
     imageDesc.pNext = &fdStructure;
