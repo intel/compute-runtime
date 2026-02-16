@@ -62,6 +62,8 @@ enum PRODUCT_CONFIG : uint32_t {
     NVL_U_A0 = 0x07814000, // 30.5.0
     NVL_U_A1 = 0x07814001, // 30.5.1
     NVL_U_B0 = 0x07814004, // 30.5.4
+    NVL_P_A0 = 0x08c28000, // 35.10.0
+    NVL_P_B0 = 0x08c28004, // 35.10.4
     CRI_A0 = 0x08c2c000, // 35.11.0
     CONFIG_MAX_PLATFORM
 };
@@ -78,6 +80,7 @@ enum RELEASE : uint32_t {
     XE2_HPG_RELEASE,
     XE2_LPG_RELEASE,
     XE3_LPG_RELEASE,
+    XE3P_LPG_RELEASE,
     XE3P_XPC_RELEASE,
     RELEASE_MAX
 };
@@ -137,6 +140,9 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_XE3_LPG
     {"xe3-lpg", XE3_LPG_RELEASE},
+#endif
+#ifdef SUPPORT_AOT_XE3P_LPG
+    {"xe3p-lpg", XE3P_LPG_RELEASE},
 #endif
 #ifdef SUPPORT_AOT_XE3P_XPC
     {"xe3p-xpc", XE3P_XPC_RELEASE},
@@ -290,6 +296,8 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"nvl-u-a0", NVL_U_A0},
     {"nvl-u-a1", NVL_U_A1},
     {"nvl-u-b0", NVL_U_B0},
+    {"nvl-p-a0", NVL_P_A0},
+    {"nvl-p-b0", NVL_P_B0},
 #endif
 #endif
 #ifdef SUPPORT_AOT_CRI
