@@ -206,8 +206,8 @@ HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMa
 }
 
 TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
-    EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x4000u);
-    EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x4000u);
-    EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x40000u);
-    EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x8000u);
+    EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x40'00u);
+    EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x40'00u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x2'00'00u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x80'00u);
 }
