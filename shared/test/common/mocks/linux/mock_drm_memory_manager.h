@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getBOTypeFromPatIndex;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
+    using DrmMemoryManager::getImportHandleFromReservedHandleData;
     using DrmMemoryManager::getLocalOnlyRequired;
     using DrmMemoryManager::getRootDeviceIndex;
     using DrmMemoryManager::getUserptrAlignment;
@@ -259,6 +260,17 @@ struct MockDrmMemoryManager : DrmMemoryManager {
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
     ADDMETHOD_CONST(emitPinningRequestForBoContainer, SubmissionStatus, true, SubmissionStatus::success, (BufferObject * *bo, uint32_t boCount, uint32_t rootDeviceIndex), (bo, boCount, rootDeviceIndex));
+
+    int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) override {
+        if (getImportHandleFromReservedHandleDataCallBase) {
+            return DrmMemoryManager::getImportHandleFromReservedHandleData(reservedHandleData, rootDeviceIndex);
+        }
+        getImportHandleFromReservedHandleDataCallCount++;
+        return getImportHandleFromReservedHandleDataReturnValue;
+    }
+    bool getImportHandleFromReservedHandleDataCallBase = true; // Default to calling the base class
+    uint32_t getImportHandleFromReservedHandleDataCallCount = 0u;
+    int getImportHandleFromReservedHandleDataReturnValue = -1;
 
     BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                    DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {

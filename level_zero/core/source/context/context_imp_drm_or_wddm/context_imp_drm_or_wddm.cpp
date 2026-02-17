@@ -98,7 +98,8 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                   NEO::AllocationType allocationType,
                                   unsigned int processId,
                                   ze_ipc_memory_flags_t flags,
-                                  uint64_t cacheID) {
+                                  uint64_t cacheID,
+                                  void *reservedHandleData) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
@@ -123,6 +124,15 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
             // Check cache first for opaque handles
             if (tryGetCachedImportHandle(cacheID, importHandle)) {
                 pidfdSuccess = true; // Mark as successful to skip import logic
+            }
+
+            if (!pidfdSuccess && reservedHandleData) {
+                int importHandleFromReserved = -1;
+                importHandleFromReserved = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
+                if (importHandleFromReserved != -1) {
+                    importHandle = static_cast<uint64_t>(importHandleFromReserved);
+                    pidfdSuccess = true;
+                }
             }
 
             // Try pidfd approach first (unless forced to use socket fallback or already cached)
@@ -209,7 +219,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
     }
 }
 
-void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID) {
+void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData) {
     if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
@@ -217,12 +227,18 @@ void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_m
         processId = ipcData->processId;
         poolOffset = ipcData->poolOffset;
         cacheID = ipcData->computeCacheID();
+        uint8_t emptyReservedData[32] = {0};
+        if (std::memcmp(ipcData->reservedHandleData, emptyReservedData, sizeof(emptyReservedData)) != 0) {
+            reservedHandleData = const_cast<void *>(static_cast<const void *>(&ipcData->reservedHandleData));
+        }
     } else {
         const IpcMemoryData *ipcData = reinterpret_cast<const IpcMemoryData *>(ipcHandle.data);
         handle = ipcData->handle;
         type = ipcData->type;
         poolOffset = ipcData->poolOffset;
+        processId = 0;
         cacheID = 0;
+        reservedHandleData = nullptr;
     }
 }
 

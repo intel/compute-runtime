@@ -131,7 +131,8 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
                                    NEO::AllocationType::bufferHostMemory,
                                    0u,
                                    flags,
-                                   0u);
+                                   0u,
+                                   nullptr);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -281,7 +282,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                    NEO::AllocationType::buffer,
                                    0u,
                                    flags,
-                                   0u);
+                                   0u,
+                                   nullptr);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -938,7 +940,9 @@ uint64_t IpcOpaqueMemoryData::computeCacheID() const noexcept {
     uint64_t hash = 0;
 
     ipcHashCombine(hash, normalizeIPCHandle(*this));
-    ipcHashCombine(hash, poolOffset);
+    // Copy values to avoid misaligned reference binding due to #pragma pack(1)
+    uint64_t poolOffsetCopy = poolOffset;
+    ipcHashCombine(hash, poolOffsetCopy);
     ipcHashCombine(hash, static_cast<uint32_t>(processId));
     ipcHashCombine(hash, static_cast<uint8_t>(type));
     ipcHashCombine(hash, memoryType);
@@ -968,8 +972,9 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     unsigned int processId;
     uint64_t poolOffset;
     uint64_t cacheID;
+    void *reservedHandleData = nullptr;
 
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID);
+    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -985,7 +990,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                            allocationType,
                            processId,
                            flags,
-                           cacheID);
+                           cacheID,
+                           reservedHandleData);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1009,8 +1015,9 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         unsigned int processId;
         [[maybe_unused]] uint64_t poolOffset;
         uint64_t cacheID;
+        void *reservedHandleData = nullptr;
 
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID);
+        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData);
 
         if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;

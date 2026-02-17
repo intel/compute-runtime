@@ -93,7 +93,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidHandleThenSuccess
 
     // Test Successfully returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u, nullptr));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullptrIsReturned) {
@@ -105,7 +105,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
 
     // Test Failing returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u));
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u, nullptr));
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndSyscallsReturnSuccessThenValidHandleIsReturned) {
@@ -118,7 +118,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndSyscalls
     uint64_t handle = 57;
 
     // Test Successfully returning fd Handle
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u, nullptr));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -137,7 +137,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
 
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u, nullptr));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -155,10 +155,11 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     });
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u));
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1234u, 0, 0u, nullptr));
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
+
 using ContextSystemBarrierTest = Test<DeviceFixture>;
 TEST_F(ContextSystemBarrierTest, whenCallingSystemBarrierWithNullOsInterfaceThenUnsupportedFeatureErrorIsReturned) {
     auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];

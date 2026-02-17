@@ -208,8 +208,8 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID) override;
-    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData) override;
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData) override;
     uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) override;
 
     bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);

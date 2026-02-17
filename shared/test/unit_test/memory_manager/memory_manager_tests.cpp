@@ -104,6 +104,16 @@ TEST(MemoryManagerTest, WhenCallingSetAtomicAccessWithOsAgnosticThenNoChanges) {
     EXPECT_TRUE(memoryManager.setAtomicAccess(nullptr, 16, AtomicAccessMode::none, 1));
 }
 
+TEST(MemoryManagerTest, whenCallingGetImportHandleFromReservedHandleDataThenDefaultImplementationReturnsFailure) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint8_t reservedHandleData[32] = {};
+
+    int result = memoryManager.getImportHandleFromReservedHandleData(reservedHandleData, 0u);
+
+    EXPECT_EQ(-1, result);
+}
+
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
     MockMemoryManager memoryManager;
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {

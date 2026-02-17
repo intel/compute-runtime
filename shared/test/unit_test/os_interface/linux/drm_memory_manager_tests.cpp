@@ -96,6 +96,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDr
     EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingGetImportHandleFromReservedHandleDataThenDefaultFailureIsReturned) {
+    uint8_t reservedHandleData[32] = {};
+
+    int result = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, rootDeviceIndex);
+
+    EXPECT_EQ(-1, result);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDebugFlagSetWhenUsingMmapFunctionsThenPrintContent) {
     DebugManagerStateRestore dbgState;
     debugManager.flags.PrintMmapAndMunMapCalls.set(1);
@@ -1473,9 +1481,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenObtainReserved
     void *reservedHandleData = reinterpret_cast<void *>(0x12345678);
 
     // This should not crash or throw - it's a no-op in the default implementation
-    memoryManager->obtainReservedHandleData(testFd, reservedHandleData);
-
-    // Test passed if we get here
+    memoryManager->obtainReservedHandleData(testFd, 0u, reservedHandleData);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrDrmAllocationWhenTryingToRegisterItThenRegisterSharedBoHandleAllocationDoesNothing) {

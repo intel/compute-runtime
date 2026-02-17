@@ -282,6 +282,9 @@ class MemoryManager {
     virtual size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) = 0;
     virtual size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
+    virtual int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) {
+        return -1;
+    };
     virtual AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) = 0;
     AddressRange reserveCpuAddressWithZeroBaseRetry(const uint64_t requiredStartAddress, size_t size);
     virtual void freeCpuAddress(AddressRange addressRange) = 0;

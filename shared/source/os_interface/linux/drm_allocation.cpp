@@ -128,7 +128,7 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t han
     if (ret < 0) {
         return -1;
     }
-    static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(ret), reservedHandleData);
+    static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(ret), this->getRootDeviceIndex(), reservedHandleData);
 
     handle = handles[handleId] = ret;
 
