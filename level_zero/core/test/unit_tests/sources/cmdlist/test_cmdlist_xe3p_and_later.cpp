@@ -680,8 +680,8 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDebugFlagAndAtomicSignalingA
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
     size_t offset = cmdStream->getUsed();
-
-    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    auto eventPool = createEvents<FamilyType>(1, false);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size()); // Walker
 
@@ -942,8 +942,8 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDebugFlagAndAtomicSignalingA
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
     size_t offset = cmdStream->getUsed();
-
-    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    auto eventPool = createEvents<FamilyType>(1, false);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size()); // Walker
 

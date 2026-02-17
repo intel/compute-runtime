@@ -1069,3 +1069,81 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenGrfCount512WhenHeaplessModeDisab
         EXPECT_EQ(threadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512, true));
     }
 }
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrierThenResourceBarrierProgrammed) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+    EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+}
+
+struct GfxCoreHelperTestsXe3pCoreResourceBarrier : public GfxCoreHelperTestsXe3pCore,
+                                                   public ::testing::WithParamInterface<uint32_t> {
+};
+
+XE3P_CORETEST_P(GfxCoreHelperTestsXe3pCoreResourceBarrier, givenXe3pCoreWhenSetStallOnlyBarrierWithDebugFlagThenSetL1CacheFlush) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    DebugManagerStateRestore restorer;
+    auto mode = GetParam();
+    debugManager.flags.ResourceBarrierL1FlushMode.set(mode);
+
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
+    EXPECT_NE(nullptr, resourceBarrier);
+    if (mode == 1) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 2) {
+        EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    } else if (mode == 3) {
+        EXPECT_TRUE(resourceBarrier->getL1DataportCacheInvalidate());
+        EXPECT_TRUE(resourceBarrier->getL1DataportUavFlush());
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(GfxCoreHelperTestsXe3pCoreResourceBarrierValues,
+                         GfxCoreHelperTestsXe3pCoreResourceBarrier,
+                         ::testing::Values(1, 2, 3));
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenIsWalkerPostSyncSkipEnabledCalledThenReturnTrue) {
+    DebugManagerStateRestore restorer{};
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(true));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    EXPECT_TRUE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}

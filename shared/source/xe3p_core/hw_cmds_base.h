@@ -126,7 +126,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint64_t;
-    using StallingBarrierType = PIPE_CONTROL;
+    using StallingBarrierType = RESOURCE_BARRIER;
     using MI_SEMAPHORE_WAIT_LEGACY = MI_SEMAPHORE_WAIT;
     using MI_SEMAPHORE_WAIT = MI_SEMAPHORE_WAIT_64;
     static const COMPUTE_WALKER_2 cmdInitGpgpuWalker2;
