@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1020,7 +1020,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
 
     // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
-    if (mockCsr->getHeaplessStateInitEnabled()) {
+    if (mockCsr->getHeaplessStateInitEnabled() && !mockCsr->isPerQueuePrologueEnabled()) {
         EXPECT_EQ(cmdList.end(), itorBatchBufferStartSecond);
     } else {
         EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);

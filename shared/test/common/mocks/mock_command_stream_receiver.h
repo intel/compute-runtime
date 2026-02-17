@@ -383,6 +383,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
     using CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext;
+    using CommandStreamReceiverHw<GfxFamily>::isPerQueuePrologueEnabled;
     using CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;

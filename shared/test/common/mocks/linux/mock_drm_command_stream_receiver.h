@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using BaseClass::drm;
     using BaseClass::exec;
     using BaseClass::execObjectsStorage;
+    using BaseClass::isPerQueuePrologueEnabled;
     using BaseClass::residency;
     using BaseClass::useUserFenceWait;
     using BaseClass::vmBindAvailable;
