@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,11 @@ struct PreferredSlmTestValues {
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    uint32_t threadGroupCount;
     uint32_t preferredSlmAllocationSizePerDss;
     PREFERRED_SLM_ALLOCATION_SIZE expectedValueInIdd;
+
+    static constexpr uint32_t defaultThreadGroupCount = std::numeric_limits<uint16_t>::max();
 };
 
 template <typename FamilyType>
@@ -53,6 +56,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                 NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd,
                                                                              rootDeviceEnvironment,
                                                                              threadsPerThreadGroup,
+                                                                             valueToTest.threadGroupCount,
                                                                              slmTotalSize,
                                                                              slmPolicy);
 

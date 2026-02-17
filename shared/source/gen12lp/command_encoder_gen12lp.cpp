@@ -444,7 +444,7 @@ inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerT
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t threadGroupCount, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>

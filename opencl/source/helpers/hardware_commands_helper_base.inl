@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
     EncodeDispatchKernel<GfxFamily>::setupPreferredSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                           threadsPerThreadGroup, slmTotalSize, SlmPolicy::slmPolicyNone);
+                                                           threadsPerThreadGroup, threadGroupCount, slmTotalSize, SlmPolicy::slmPolicyNone);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));

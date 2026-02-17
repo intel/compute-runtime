@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,11 @@ size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment() {
 template <typename Family>
 uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareInfo &hwInfo) {
     return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
+}
+
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::getThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t threadGroupCount) {
+    return static_cast<uint32_t>(Math::divideAndRoundUp(threadGroupCount, hwInfo.gtSystemInfo.DualSubSliceCount));
 }
 
 template <typename Family>

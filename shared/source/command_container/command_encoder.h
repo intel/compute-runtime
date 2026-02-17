@@ -230,12 +230,13 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
 
     template <typename InterfaceDescriptorType>
     static void setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                      const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
+                                      const uint32_t threadsPerThreadGroup, const uint32_t threadGroupCount, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
     template <typename InterfaceDescriptorType>
     static void setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSize, bool heaplessModeEnabled);
 
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
+    static uint32_t getThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t threadGroupCount);
     static uint32_t alignPreferredSlmSize(uint32_t slmSize);
 
     template <typename InterfaceDescriptorType>

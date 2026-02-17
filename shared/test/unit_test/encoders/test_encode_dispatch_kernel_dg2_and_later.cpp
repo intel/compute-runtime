@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,15 +105,15 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMoc
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesWhenSetPreferredSlmIsCalledThenCorrectValuesAreSet, IsXeHpgCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+        {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+        {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
         // since we can't set 48KB as SLM size for workgroup, we need to ask for 64KB here.
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
+        {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
     };
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
@@ -125,6 +125,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
 
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
     DebugManagerStateRestore stateRestore;
     PREFERRED_SLM_ALLOCATION_SIZE debugOverrideValues[] = {PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB,
                                                            PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB,
@@ -133,9 +134,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
     for (auto debugOverrideValue : debugOverrideValues) {
         debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(debugOverrideValue);
         const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-            {0, debugOverrideValue},
-            {32 * MemoryConstants::kiloByte, debugOverrideValue},
-            {64 * MemoryConstants::kiloByte, debugOverrideValue},
+            {threadGroupCount, 0, debugOverrideValue},
+            {threadGroupCount, 32 * MemoryConstants::kiloByte, debugOverrideValue},
+            {threadGroupCount, 64 * MemoryConstants::kiloByte, debugOverrideValue},
         };
         verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }
@@ -146,6 +147,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
     DebugManagerStateRestore stateRestore;
     PREFERRED_SLM_ALLOCATION_SIZE debugOverrideValues[] = {PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K,
                                                            PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K,
@@ -154,9 +156,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
     for (auto debugOverrideValue : debugOverrideValues) {
         debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(debugOverrideValue);
         const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-            {0, debugOverrideValue},
-            {32 * MemoryConstants::kiloByte, debugOverrideValue},
-            {64 * MemoryConstants::kiloByte, debugOverrideValue},
+            {threadGroupCount, 0, debugOverrideValue},
+            {threadGroupCount, 32 * MemoryConstants::kiloByte, debugOverrideValue},
+            {threadGroupCount, 64 * MemoryConstants::kiloByte, debugOverrideValue},
         };
         verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }
@@ -199,14 +201,15 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenSlmTotalSizeExceedsHardwareLi
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
 
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
+        {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
+        {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
         // SLMSizeInKb holds per-subslice value (32KB total)
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        {threadGroupCount, 96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
     };
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
@@ -227,25 +230,26 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenSlmTotalSizeExceedsHardwareLi
 
     uint32_t actualSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
     bool usesWddmPreXe2Method = (actualSlmSizeKb == hwInfo.gtSystemInfo.SLMSizeInKb / hwInfo.gtSystemInfo.DualSubSliceCount);
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
 
     std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest;
     if (usesWddmPreXe2Method) {
         // On WDDM pre-XE2: SLM size exceeds hardware limit (32KB / 2 DSS = 16KB)
         // Values beyond 16KB should be clamped to the available hardware limit
         valuesToTest = {
-            {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+            {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
         };
     } else {
         // On Linux DRM pre-XE2: SLMSizeInKb holds per-subslice value (32KB total)
         // Values beyond 32KB should be clamped to the available hardware limit
         valuesToTest = {
-            {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+            {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+            {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+            {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
         };
     }
 
@@ -263,16 +267,73 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenWddmOnLinuxAndSlmTotalSizeExc
     reinterpret_cast<MockRootDeviceEnvironment *>(&pDevice->getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = true;
     hwInfo.gtSystemInfo.DualSubSliceCount = 2;
     hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
 
     std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest;
     // WDDM on Linux pre-XE2: SLM size exceeds hardware limit (32KB / 2 DSS = 16KB)
     // Values beyond 16KB should be clamped to the available hardware limit
     valuesToTest = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+        {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
     };
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenSlmPolicyLargeSlmAndThreadGroupCountLowerThanThreadsPerDssCountWhenSetPreferredSlmIsCalledThenLowerSlmSizeIsSet, IsXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.ThreadCount = 1280u;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 16u;
+    hwInfo.gtSystemInfo.SLMSizeInKb = std::numeric_limits<uint32_t>::max();
+    auto threadGroupCount = 64u;
+    auto threadsPerThreadGroup = 32u;
+    uint32_t slmRequiredPerWorkload = 32u * MemoryConstants::kiloByte;
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
+
+    EXPECT_EQ(0u, idd.getPreferredSlmAllocationSize());
+
+    NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd,
+                                                                 rootDeviceEnvironment,
+                                                                 threadsPerThreadGroup,
+                                                                 threadGroupCount,
+                                                                 slmRequiredPerWorkload,
+                                                                 NEO::SlmPolicy::slmPolicyLargeSlm);
+
+    EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB, idd.getPreferredSlmAllocationSize());
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenSlmPolicyLargeSlmAndThreadGroupCountLowerThanThreadsPerDssCountWhenSetPreferredSlmIsCalledThenLowerSlmSizeIsSet, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.ThreadCount = 1280u;
+    hwInfo.gtSystemInfo.SubSliceCount = 16u;
+    hwInfo.gtSystemInfo.SLMSizeInKb = 192u;
+    auto threadGroupCount = 64u;
+    auto threadsPerThreadGroup = 32u;
+    uint32_t slmRequiredPerWorkload = 32u * MemoryConstants::kiloByte;
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
+
+    EXPECT_EQ(0u, idd.getPreferredSlmAllocationSize());
+
+    NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd,
+                                                                 rootDeviceEnvironment,
+                                                                 threadsPerThreadGroup,
+                                                                 threadGroupCount,
+                                                                 slmRequiredPerWorkload,
+                                                                 NEO::SlmPolicy::slmPolicyLargeSlm);
+
+    EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K, idd.getPreferredSlmAllocationSize());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1652,4 +1652,18 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCou
     auto &hwInfo = pDevice->getHardwareInfo();
     auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
     EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadGroupCountPerSubsliceThenUseDualSubSliceAsDenominator, IsAtMostXeCore) {
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto threadGroupCount = 32u;
+    auto expectedValue = static_cast<uint32_t>(Math::divideAndRoundUp(threadGroupCount, hwInfo.gtSystemInfo.DualSubSliceCount));
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadGroupCountPerSubslice(hwInfo, threadGroupCount));
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadGroupCountPerSubsliceThenUseSubSliceAsDenominator, IsAtLeastXe2HpgCore) {
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto threadGroupCount = 32u;
+    auto expectedValue = static_cast<uint32_t>(Math::divideAndRoundUp(threadGroupCount, hwInfo.gtSystemInfo.SubSliceCount));
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadGroupCountPerSubslice(hwInfo, threadGroupCount));
 }

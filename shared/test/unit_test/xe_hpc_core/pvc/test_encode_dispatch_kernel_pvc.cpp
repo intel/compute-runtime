@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,9 +31,10 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenZeroSlmSizeWhenSetAdditionalInfoIsCal
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     uint32_t threadsCount = 1;
     uint32_t slmTotalSize = 0;
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
 
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-    EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsCount, slmTotalSize, SlmPolicy::slmPolicyNone);
+    EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsCount, threadGroupCount, slmTotalSize, SlmPolicy::slmPolicyNone);
     EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB, idd.getPreferredSlmAllocationSize());
 }
 
@@ -117,13 +118,14 @@ using CommandEncodeStatesTestPvc = Test<CommandEncodeStatesFixture>;
 PVCTEST_F(CommandEncodeStatesTestPvc, GivenVariousSlmTotalSizesWhenSetPreferredSlmIsCalledThenCorrectValuesAreSet) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
-        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96KB},
-        {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128KB},
+        {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+        {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+        {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
+        {threadGroupCount, 96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96KB},
+        {threadGroupCount, 128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128KB},
     };
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
