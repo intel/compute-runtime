@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,8 @@ namespace Sysman {
 #define PCI_BRIDGE_CTL_BUS_RESET 0x40 // Secondary bus reset
 
 // Link Capabilities
-#define PCI_EXP_LNKCAP 12 // offset to link capabilities
+#define PCI_EXP_LNKCAP 12     // offset to link capabilities
+#define PCI_EXP_LNK_STATUS 18 // offset to link status
 
 // Resizable BARs
 #define PCI_REBAR_CAP 4                // capability register

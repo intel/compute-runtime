@@ -89,11 +89,11 @@ void LinuxPciImp::getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) {
     }
 
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_SIZE);
-    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
+    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
         return;
     }
 
-    auto linkCapPos = L0::Sysman::LinuxPciImp::getLinkCapabilityPos(configMemory.data());
+    auto linkCapPos = L0::Sysman::LinuxPciImp::getLinkRegisterPos(configMemory.data(), PCI_EXP_LNKCAP);
     if (!linkCapPos) {
         return;
     }
@@ -185,7 +185,7 @@ uint32_t LinuxPciImp::getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar)
     return 0;
 }
 
-uint16_t LinuxPciImp::getLinkCapabilityPos(uint8_t *configMem) {
+uint16_t LinuxPciImp::getLinkRegisterPos(uint8_t *configMem, uint16_t linkRegisterOffset) {
     uint16_t pos = PCI_CAPABILITY_LIST;
     uint8_t id, type = 0;
     uint16_t capRegister = 0;
@@ -213,7 +213,7 @@ uint16_t LinuxPciImp::getLinkCapabilityPos(uint8_t *configMem) {
             // Root Complex Event collector will not implement link capabilities
 
             if ((type != PCI_EXP_TYPE_RC_END) && (type != PCI_EXP_TYPE_RC_EC)) {
-                return pos + PCI_EXP_LNKCAP;
+                return pos + linkRegisterOffset;
             }
         }
 
@@ -230,7 +230,7 @@ bool LinuxPciImp::resizableBarSupported() {
     std::string pciConfigNode = {};
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
-    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
+    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
         return false;
     }
@@ -245,7 +245,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     std::string pciConfigNode = {};
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
-    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
+    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
         return false;
     }
@@ -310,6 +310,49 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     return (currentSize == largestPossibleBarSize);
 }
 
+void LinuxPciImp::getPciLinkSpeed(zes_pci_speed_t &linkSpeed) {
+    double currLinkSpeed = 0;
+    int32_t currLinkWidth = -1;
+
+    auto isIntegratedDevice = pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    if (isIntegratedDevice) {
+        return;
+    }
+
+    std::string pciConfigNode = {};
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isUpstreamPortConnected()) {
+        pSysfsAccess->getRealPath(deviceDir, pciConfigNode);
+        std::string cardBusPath = pLinuxSysmanImp->getPciCardBusDirectoryPath(pciConfigNode);
+        pciConfigNode = cardBusPath + "/config";
+    } else {
+        pSysfsAccess->getRealPath("device/config", pciConfigNode);
+    }
+    std::vector<uint8_t> configMemory(PCI_CFG_SPACE_SIZE);
+    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
+        return;
+    }
+
+    auto linkStatusPos = L0::Sysman::LinuxPciImp::getLinkRegisterPos(configMemory.data(), PCI_EXP_LNK_STATUS);
+    if (!linkStatusPos) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to find link status register in pci config space \n", __FUNCTION__);
+        return;
+    }
+
+    uint16_t linkStatus = L0::Sysman::PciUtil::getWordFromConfig(linkStatusPos, configMemory.data());
+
+    // Extract current link speed (bits 0-3) and width (bits 4-9)
+    currLinkSpeed = convertPciGenToLinkSpeed(bits(linkStatus, 0, 4));
+    currLinkWidth = bits(linkStatus, 4, 6);
+    if (currLinkSpeed > 0 && currLinkWidth > 0) {
+        linkSpeed.gen = convertLinkSpeedToPciGen(currLinkSpeed);
+        linkSpeed.width = currLinkWidth;
+        linkSpeed.maxBandwidth = currLinkSpeed * currLinkWidth;
+    }
+    return;
+}
+
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     state->qualityIssues = 0;
@@ -319,6 +362,7 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     state->speed.gen = -1;
     state->speed.width = -1;
     state->speed.maxBandwidth = -1;
+    getPciLinkSpeed(state->speed);
 
     const void *pNext = state->pNext;
     while (pNext) {
@@ -394,7 +438,7 @@ ze_result_t LinuxPciImp::getStats(zes_pci_stats_t *stats) {
     return pSysmanProductHelper->getPciStats(stats, pLinuxSysmanImp);
 }
 
-bool LinuxPciImp::getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem) {
+bool LinuxPciImp::getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem) {
     if (!pSysfsAccess->isRootUser()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Need to be root to read config space \n", __FUNCTION__);
         return false;

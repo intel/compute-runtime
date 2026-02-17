@@ -32,7 +32,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
-    static uint16_t getLinkCapabilityPos(uint8_t *configMem);
+    static uint16_t getLinkRegisterPos(uint8_t *configMem, uint16_t linkRegisterOffset);
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);
     ~LinuxPciImp() override = default;
@@ -40,7 +40,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
   protected:
     L0::Sysman::SysFsAccessInterface *pSysfsAccess = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    bool getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem);
+    bool getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem);
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
 
   private:
@@ -48,6 +48,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     static const std::string resourceFile;
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
+    void getPciLinkSpeed(zes_pci_speed_t &linkSpeed);
 };
 
 } // namespace Sysman
