@@ -27,7 +27,7 @@ static_assert(std::is_same_v<void(ZE_CALLBACK *)(void *),
 
 using HostFunctionTests = Test<DeviceFixture>;
 
-HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZexCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
+HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -37,7 +37,7 @@ HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZexCommandListAppendHostF
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST_F(HostFunctionTests, givenCopyCommandListWhenZexCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
+HWTEST_F(HostFunctionTests, givenCopyCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
@@ -47,7 +47,7 @@ HWTEST_F(HostFunctionTests, givenCopyCommandListWhenZexCommandListAppendHostFunc
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST_F(HostFunctionTests, givenSynchronousImmediateCommandListWhenZexCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
+HWTEST_F(HostFunctionTests, givenSynchronousImmediateCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
@@ -59,7 +59,7 @@ HWTEST_F(HostFunctionTests, givenSynchronousImmediateCommandListWhenZexCommandLi
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST_F(HostFunctionTests, givenAsynchronousImmediateCommandListWhenZexCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
+HWTEST_F(HostFunctionTests, givenAsynchronousImmediateCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
