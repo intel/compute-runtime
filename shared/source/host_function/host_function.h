@@ -92,7 +92,7 @@ class HostFunctionStreamer {
     bool isInOrderExecutionInProgress() const;
 
     std::mutex hostFunctionsMutex;
-    std::unordered_map<uint64_t, HostFunction> hostFunctions;
+    std::vector<std::pair<uint64_t, HostFunction>> hostFunctions;
     uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
     CommandStreamReceiver *csr = nullptr;
     GraphicsAllocation *allocation = nullptr;

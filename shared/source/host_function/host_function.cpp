@@ -138,18 +138,25 @@ bool HostFunctionStreamer::isInOrderExecutionInProgress() const {
 
 HostFunction HostFunctionStreamer::getHostFunction(uint64_t hostFunctionId) {
     std::unique_lock lock(hostFunctionsMutex);
-    auto node = hostFunctions.extract(hostFunctionId);
-    if (!node) {
-        UNRECOVERABLE_IF(true);
-        return HostFunction{};
-    }
-    return std::move(node.mapped());
+
+    auto it = std::find_if(std::begin(hostFunctions), std::end(hostFunctions), [hostFunctionId](const auto &pair) {
+        return pair.first == hostFunctionId;
+    });
+
+    UNRECOVERABLE_IF(it == hostFunctions.end());
+
+    // swap last with current moved element
+    HostFunction hostFunction = std::move(it->second);
+    *it = std::move(hostFunctions.back());
+    hostFunctions.pop_back();
+
+    return hostFunction;
 }
 
 void HostFunctionStreamer::addHostFunction(uint64_t hostFunctionId, HostFunction &&hostFunction) {
     {
         std::unique_lock lock(hostFunctionsMutex);
-        hostFunctions.emplace(hostFunctionId, std::move(hostFunction));
+        hostFunctions.emplace_back(hostFunctionId, std::move(hostFunction));
     }
     pendingHostFunctions.fetch_add(1, std::memory_order_acq_rel);
 }
