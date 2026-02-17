@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,6 +171,10 @@ constexpr T ffs(T v) {
 
 constexpr size_t divideAndRoundUp(size_t dividend, size_t divisor) {
     return (dividend + divisor - 1) / divisor;
+}
+
+constexpr size_t roundUp(size_t value, size_t divisor) {
+    return ((value + divisor - 1) / divisor) * divisor;
 }
 
 } // namespace Math

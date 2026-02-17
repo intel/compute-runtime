@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,6 +92,16 @@ TEST(getExponentWithLog2, GivenNonZeroWhenGettingLog2ThenLog2IsReturned) {
     EXPECT_EQ(3u,  log2(9u));
     EXPECT_EQ(3u,  log2(10u));
     EXPECT_EQ(10u, log2(1025u));
+    // clang-format on
+}
+
+TEST(RoundUp, GivenNonZeroValueWhenRoundUpCalledThencorrectValueIsReturned) {
+    // clang-format off
+    EXPECT_EQ(5u, Math::roundUp(3u, 5));
+    EXPECT_EQ(6u, Math::roundUp(5u, 3));
+    EXPECT_EQ(9u, Math::roundUp(7u, 9));
+    EXPECT_EQ(8u, Math::roundUp(5u, 4));
+    EXPECT_EQ(28u, Math::roundUp(27u, 7));
     // clang-format on
 }
 
