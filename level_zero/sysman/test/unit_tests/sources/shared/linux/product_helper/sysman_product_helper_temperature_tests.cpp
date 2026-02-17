@@ -7,12 +7,14 @@
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
+using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 using SysmanProductHelperTemperatureTest = SysmanDeviceFixture;
 
 static int mockReadLinkMultiTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
@@ -743,12 +745,12 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidHandleWhenQueryingMemory
     EXPECT_EQ(false, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsMemoryMaxTemperatureSupportedThenTrueIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsMemoryMaxTemperatureSupportedThenTrueIsReturned, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(pSysmanProductHelper->isMemoryMaxTemperatureSupported());
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
@@ -756,7 +758,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadOffsetFailsFromPmtUtilWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadOffsetFailsFromPmtUtilWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -774,7 +776,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadGuidFailsFromPmtUtilWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadGuidFailsFromPmtUtilWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -794,7 +796,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndKeyOffsetMapIsNotAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndKeyOffsetMapIsNotAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -815,13 +817,18 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGpuMaxTemperatureThenValidValueIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGpuMaxTemperatureThenValidValueIsReturned, IsBmgOrCri) {
     static uint32_t gpuMaxTemperature = 10;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
+        std::string validGuid = "";
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid = "0x5e2fa230";
+        } else {
+            validGuid = "0x5e2f8210";
+        }
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -840,7 +847,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(static_cast<double>(gpuMaxTemperature), temperature);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
@@ -848,7 +855,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadOffsetFailsFromPmtUtilWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadOffsetFailsFromPmtUtilWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -866,7 +873,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadGuidFailsFromPmtUtilWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndReadGuidFailsFromPmtUtilWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -886,7 +893,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndKeyOffsetMapIsNotAvailableWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndKeyOffsetMapIsNotAvailableWhenGettingMemoryMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -907,13 +914,18 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingMemoryMaxTemperatureThenValidValueIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingMemoryMaxTemperatureThenValidValueIsReturned, IsBmgOrCri) {
     static uint32_t memoryMaxTemperature = 10;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
+        std::string validGuid = "";
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid = "0x5e2fa230";
+        } else {
+            validGuid = "0x5e2f8210";
+        }
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -932,13 +944,21 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(static_cast<double>(memoryMaxTemperature), temperature);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetGpuMaxTemperatureFailsThenFauilureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetGpuMaxTemperatureFailsThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
-        long gpuMaxTemperatureKeyOffset = 164;
+        std::string validGuid = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid = "0x5e2fa230";
+            gpuMaxTemperatureKeyOffset = 128;
+        } else {
+            validGuid = "0x5e2f8210";
+            gpuMaxTemperatureKeyOffset = 164;
+        }
+
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -958,15 +978,25 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetMemoryMaxTemperatureFailsThenFauilureIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetMemoryMaxTemperatureFailsThenFailureIsReturned, IsBmgOrCri) {
     static uint32_t gpuMaxTemperature = 10;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
-        long gpuMaxTemperatureKeyOffset = 164;
-        long memoryMaxTemperatureKeyOffset = 168;
+        std::string validGuid = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        long memoryMaxTemperatureKeyOffset = 0;
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid = "0x5e2fa230";
+            gpuMaxTemperatureKeyOffset = 128;
+            memoryMaxTemperatureKeyOffset = 132;
+        } else {
+            validGuid = "0x5e2f8210";
+            gpuMaxTemperatureKeyOffset = 164;
+            memoryMaxTemperatureKeyOffset = 168;
+        }
+
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -988,25 +1018,75 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureThenValidValueIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureThenValidValueIsReturned, IsBmgOrCri) {
     static uint32_t gpuMaxTemperature = 10;
     static uint32_t memoryMaxTemperature = 20;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    static uint32_t vrTemperature0 = 150; // 15.0 degC in deci-degree
+    static uint32_t vrTemperature1 = 25;
+    static uint32_t vrTemperature2 = 30;
+    static uint32_t vrTemperature3 = 35;
+    static uint32_t gpuBoardTemperature = 0x001E0028; // Index 0: 0x28 (40 degC), Index 1: 0x1E (30 degC)
+
+    auto readLinkFunc = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? &mockReadLinkMultiTelemetryNodesSuccess : &mockReadLinkSingleTelemetryNodesSuccess;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, readLinkFunc);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        static int guidReadCount = 0;
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
-        long gpuMaxTemperatureKeyOffset = 164;
-        long memoryMaxTemperatureKeyOffset = 168;
+        std::string validGuid1 = "";
+        std::string validGuid2 = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        long memoryMaxTemperatureKeyOffset = 0;
+        long vrTemp0Offset = 0, vrTemp1Offset = 0, vrTemp2Offset = 0, vrTemp3Offset = 0;
+        long gpuBoardTempOffset = 0;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid1 = "0x1e2fa030"; // VR and GPU board temps
+            validGuid2 = "0x5e2fa230"; // SOC and VRAM temps
+            gpuMaxTemperatureKeyOffset = 128;
+            memoryMaxTemperatureKeyOffset = 132;
+            vrTemp0Offset = 200;
+            vrTemp1Offset = 204;
+            vrTemp2Offset = 208;
+            vrTemp3Offset = 212;
+            gpuBoardTempOffset = 176;
+        } else {
+            // BMG has all temperature data in one GUID: 0x5e2f8210
+            validGuid1 = "0x5e2f8210"; // OOBMSM GUID for BMG with GPU and VRAM temps
+            gpuMaxTemperatureKeyOffset = 164;
+            memoryMaxTemperatureKeyOffset = 168;
+        }
+
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
+            // For CRI: Alternate between two GUIDs since data is in different nodes
+            // For BMG: Always return same GUID since all temp data is in one node
+            if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+                if (guidReadCount % 2 == 0) {
+                    memcpy(buf, validGuid1.data(), count);
+                } else {
+                    memcpy(buf, validGuid2.data(), count);
+                }
+                guidReadCount++;
+            } else {
+                memcpy(buf, validGuid1.data(), count); // Always return 0x5e2f8210 for BMG
+            }
         } else if (fd == 6) {
             if (offset == gpuMaxTemperatureKeyOffset) {
                 memcpy(buf, &gpuMaxTemperature, count);
             } else if (offset == memoryMaxTemperatureKeyOffset) {
                 memcpy(buf, &memoryMaxTemperature, count);
+            } else if (offset == vrTemp0Offset) {
+                memcpy(buf, &vrTemperature0, count);
+            } else if (offset == vrTemp1Offset) {
+                memcpy(buf, &vrTemperature1, count);
+            } else if (offset == vrTemp2Offset) {
+                memcpy(buf, &vrTemperature2, count);
+            } else if (offset == vrTemp3Offset) {
+                memcpy(buf, &vrTemperature3, count);
+            } else if (offset == gpuBoardTempOffset) {
+                memcpy(buf, &gpuBoardTemperature, count);
             }
         }
         return count;
@@ -1017,39 +1097,214 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     double temperature = 0;
     ze_result_t result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto expectedValue = std::max(static_cast<double>(gpuMaxTemperature), static_cast<double>(memoryMaxTemperature));
-    EXPECT_EQ(expectedValue, temperature);
+    // BMG only checks GPU and Memory: max(10, 20) = 20
+    // CRI checks GPU, Memory, VR, and Board: max(10, 20, 35, 40) = 40
+    if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+        EXPECT_EQ(40.0, temperature);
+    } else {
+        EXPECT_EQ(20.0, temperature);
+    }
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledThenValidTemperatureValueForEachSensorTypeIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetVoltageRegulatorTemperatureFailsThenFailureIsReturned, IsCRI) {
     static uint32_t gpuMaxTemperature = 10;
     static uint32_t memoryMaxTemperature = 20;
-    static uint32_t validTemperatureHandleCount = 3u;
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        static int guidReadCount = 0;
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2f8210";
-        long gpuMaxTemperatureKeyOffset = 164;
-        long memoryMaxTemperatureKeyOffset = 168;
+        std::string validGuid1 = "";
+        std::string validGuid2 = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        long memoryMaxTemperatureKeyOffset = 0;
+        long vrTemp0Offset = 0;
+
+        validGuid1 = "0x1e2fa030";
+        validGuid2 = "0x5e2fa230";
+        gpuMaxTemperatureKeyOffset = 128;
+        memoryMaxTemperatureKeyOffset = 132;
+        vrTemp0Offset = 200;
+
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
+            if (guidReadCount % 2 == 0) {
+                memcpy(buf, validGuid1.data(), count);
+            } else {
+                memcpy(buf, validGuid2.data(), count);
+            }
+            guidReadCount++;
         } else if (fd == 6) {
             if (offset == gpuMaxTemperatureKeyOffset) {
                 memcpy(buf, &gpuMaxTemperature, count);
             } else if (offset == memoryMaxTemperatureKeyOffset) {
                 memcpy(buf, &memoryMaxTemperature, count);
+            } else if (offset == vrTemp0Offset) {
+                // Fail VR temperature read
+                count = -1;
+            }
+        }
+        return count;
+    });
+
+    uint32_t subdeviceId = 0;
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    double temperature = 0;
+    ze_result_t result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndGetGpuBoardTemperatureFailsThenFailureIsReturned, IsCRI) {
+    static uint32_t gpuMaxTemperature = 10;
+    static uint32_t memoryMaxTemperature = 20;
+    static uint32_t vrTemperature0 = 150;
+    static uint32_t vrTemperature1 = 25;
+    static uint32_t vrTemperature2 = 30;
+    static uint32_t vrTemperature3 = 35;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        static int guidReadCount = 0;
+        uint64_t telemOffset = 0;
+        std::string validGuid1 = "";
+        std::string validGuid2 = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        long memoryMaxTemperatureKeyOffset = 0;
+        long vrTemp0Offset = 0, vrTemp1Offset = 0, vrTemp2Offset = 0, vrTemp3Offset = 0;
+        long gpuBoardTempOffset = 0;
+
+        validGuid1 = "0x1e2fa030";
+        validGuid2 = "0x5e2fa230";
+        gpuMaxTemperatureKeyOffset = 128;
+        memoryMaxTemperatureKeyOffset = 132;
+        vrTemp0Offset = 200;
+        vrTemp1Offset = 204;
+        vrTemp2Offset = 208;
+        vrTemp3Offset = 212;
+        gpuBoardTempOffset = 176;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            if (guidReadCount % 2 == 0) {
+                memcpy(buf, validGuid1.data(), count);
+            } else {
+                memcpy(buf, validGuid2.data(), count);
+            }
+            guidReadCount++;
+        } else if (fd == 6) {
+            if (offset == gpuMaxTemperatureKeyOffset) {
+                memcpy(buf, &gpuMaxTemperature, count);
+            } else if (offset == memoryMaxTemperatureKeyOffset) {
+                memcpy(buf, &memoryMaxTemperature, count);
+            } else if (offset == vrTemp0Offset) {
+                memcpy(buf, &vrTemperature0, count);
+            } else if (offset == vrTemp1Offset) {
+                memcpy(buf, &vrTemperature1, count);
+            } else if (offset == vrTemp2Offset) {
+                memcpy(buf, &vrTemperature2, count);
+            } else if (offset == vrTemp3Offset) {
+                memcpy(buf, &vrTemperature3, count);
+            } else if (offset == gpuBoardTempOffset) {
+                // Fail GPU board temperature read
+                count = -1;
+            }
+        }
+        return count;
+    });
+
+    uint32_t subdeviceId = 0;
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    double temperature = 0;
+    ze_result_t result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledThenValidTemperatureValueForEachSensorTypeIsReturned, IsBmgOrCri) {
+    static uint32_t gpuMaxTemperature = 10;
+    static uint32_t memoryMaxTemperature = 20;
+    static uint32_t vrTemperature0 = 150;
+    static uint32_t vrTemperature1 = 25;
+    static uint32_t vrTemperature2 = 30;
+    static uint32_t vrTemperature3 = 35;
+    static uint32_t gpuBoardTemperature = 0x001E0028;
+    uint32_t validTemperatureHandleCount = 3u;
+
+    auto readLinkFunc = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? &mockReadLinkMultiTelemetryNodesSuccess : &mockReadLinkSingleTelemetryNodesSuccess;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, readLinkFunc);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        static int guidReadCount = 0;
+        uint64_t telemOffset = 0;
+        std::string validGuid1 = "";
+        std::string validGuid2 = "";
+        long gpuMaxTemperatureKeyOffset = 0;
+        long memoryMaxTemperatureKeyOffset = 0;
+        long vrTemp0Offset = 0, vrTemp1Offset = 0, vrTemp2Offset = 0, vrTemp3Offset = 0;
+        long gpuBoardTempOffset = 0;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+            validGuid1 = "0x1e2fa030";
+            validGuid2 = "0x5e2fa230";
+            gpuMaxTemperatureKeyOffset = 128;
+            memoryMaxTemperatureKeyOffset = 132;
+            vrTemp0Offset = 200;
+            vrTemp1Offset = 204;
+            vrTemp2Offset = 208;
+            vrTemp3Offset = 212;
+            gpuBoardTempOffset = 176;
+        } else {
+            // BMG has all temperature data in one GUID: 0x5e2f8210
+            validGuid1 = "0x5e2f8210";
+            validGuid2 = "0x5e2f8210";
+            gpuMaxTemperatureKeyOffset = 164;
+            memoryMaxTemperatureKeyOffset = 168;
+        }
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            // For CRI: Alternate between two GUIDs since data is in different nodes
+            // For BMG: Always return same GUID since all temp data is in one node
+            if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+                if (guidReadCount % 2 == 0) {
+                    memcpy(buf, validGuid1.data(), count);
+                } else {
+                    memcpy(buf, validGuid2.data(), count);
+                }
+                guidReadCount++;
+            } else {
+                memcpy(buf, validGuid1.data(), count); // Always return 0x5e2f8210 for BMG
+            }
+        } else if (fd == 6) {
+            if (offset == gpuMaxTemperatureKeyOffset) {
+                memcpy(buf, &gpuMaxTemperature, count);
+            } else if (offset == memoryMaxTemperatureKeyOffset) {
+                memcpy(buf, &memoryMaxTemperature, count);
+            } else if (offset == vrTemp0Offset) {
+                memcpy(buf, &vrTemperature0, count);
+            } else if (offset == vrTemp1Offset) {
+                memcpy(buf, &vrTemperature1, count);
+            } else if (offset == vrTemp2Offset) {
+                memcpy(buf, &vrTemperature2, count);
+            } else if (offset == vrTemp3Offset) {
+                memcpy(buf, &vrTemperature3, count);
+            } else if (offset == gpuBoardTempOffset) {
+                memcpy(buf, &gpuBoardTemperature, count);
             }
         }
         return count;
     });
 
     uint32_t count = 0;
+    if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+        validTemperatureHandleCount = 9u;
+    }
     ze_result_t result = zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, validTemperatureHandleCount);
@@ -1076,16 +1331,18 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
             EXPECT_EQ(temperature, static_cast<double>(memoryMaxTemperature));
         } else if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            EXPECT_EQ(temperature, static_cast<double>(std::max(gpuMaxTemperature, memoryMaxTemperature)));
+            // BMG: max(gpu=10, mem=20) = 20
+            // CRI: max(gpu=10, mem=20, vr=35, board=40) = 40
+            if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+                EXPECT_EQ(40.0, temperature);
+            } else {
+                EXPECT_EQ(static_cast<double>(std::max(gpuMaxTemperature, memoryMaxTemperature)), temperature);
+            }
         }
     }
 }
 
 // CRI Temperature Tests
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsMemoryMaxTemperatureSupportedThenFalseIsReturned, IsCRI) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(pSysmanProductHelper->isMemoryMaxTemperatureSupported());
-}
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingGuidToKeyOffsetMapThenValidMapIsReturned, IsCRI) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -1467,7 +1724,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     static uint32_t vr1Temperature = 48;
     static uint32_t vr2Temperature = 43;
     static uint32_t vr3Temperature = 50;
-    static uint32_t validTemperatureHandleCount = 8u;
+    static uint32_t validTemperatureHandleCount = 9u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1536,7 +1793,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForGpuBoardThenValidTemperatureValueIsReturned, IsCRI) {
     static uint32_t gpuBoardTempRegister = 0x00370000 | 0x002E; // Board1=55 (0x37), Board0=46 (0x2E)
-    static uint32_t validTemperatureHandleCount = 8u;
+    static uint32_t validTemperatureHandleCount = 9u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);

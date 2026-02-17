@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "level_zero/zes_api.h"
 
 #include <map>
+#include <unordered_map>
 
 namespace L0 {
 namespace Sysman {
@@ -32,9 +33,12 @@ class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
     static bool getTelemData(const std::map<uint32_t, std::string> telemNodesInPciPath, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     static bool getTelemDataForTileAggregator(const std::map<uint32_t, std::string> telemNodesInPciPath, uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     static bool getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
-    static bool readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value);
-    static bool readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value);
+    static bool readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value);
+    static bool readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value);
     static bool isTelemetrySupportAvailable(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
+    static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::map<std::string, std::map<std::string, uint64_t>> &guidToKeyOffsetMap, const std::string &rootPath,
+                                                       std::map<std::string, uint64_t> &keyOffsetMap,
+                                                       std::unordered_map<std::string, std::string> &keyTelemInfoMap);
 };
 
 } // namespace Sysman

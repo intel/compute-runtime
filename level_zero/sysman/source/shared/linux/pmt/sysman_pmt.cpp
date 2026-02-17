@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ bool PlatformMonitoringTech::getTelemOffsetForContainer(SysmanProductHelper *pSy
     return true;
 }
 
-bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value) {
+bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value) {
 
     auto containerOffset = keyOffsetMap.find(key);
     if (containerOffset == keyOffsetMap.end()) {
@@ -93,7 +93,7 @@ bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> key
     return true;
 }
 
-bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value) {
+bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value) {
 
     auto containerOffset = keyOffsetMap.find(key);
     if (containerOffset == keyOffsetMap.end()) {
@@ -173,6 +173,51 @@ bool PlatformMonitoringTech::isTelemetrySupportAvailable(LinuxSysmanImp *pLinuxS
     }
 
     return true;
+}
+
+ze_result_t PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(const std::map<std::string, std::map<std::string, uint64_t>> &guidToKeyOffsetMap, const std::string &rootPath,
+                                                                    std::map<std::string, uint64_t> &keyOffsetMap,
+                                                                    std::unordered_map<std::string, std::string> &keyTelemInfoMap) {
+
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find any telemetry node in PCI path %s\n", __FUNCTION__, rootPath.c_str());
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (guidToKeyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): guidToKeyOffsetMap is empty\n", __FUNCTION__);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    // Iterate through all the TelemNodes to find all supported GUIDs along with their keyOffsetMap
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (const auto &[key, value] : tempKeyOffsetMap) {
+            keyOffsetMap[key] = value;
+            keyTelemInfoMap[key] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find any matching GUID in guidToKeyOffsetMap for any of the telemetry nodes in PCI path %s\n", __FUNCTION__, rootPath.c_str());
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace Sysman

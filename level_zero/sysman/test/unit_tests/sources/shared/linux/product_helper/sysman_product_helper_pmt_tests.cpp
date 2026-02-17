@@ -1,19 +1,38 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
+#include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
-using SysmanProductHelperPmtTest = ::testing::Test;
+using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
+using SysmanProductHelperPmtTest = SysmanDeviceFixture;
+
+static int mockReadLinkSingleTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
+    std::map<std::string, std::string> fileNameLinkMap = {
+        {sysfsPathTelem1, realPathTelem1},
+    };
+    auto it = fileNameLinkMap.find(std::string(path));
+    if (it != fileNameLinkMap.end()) {
+        std::memcpy(buf, it->second.c_str(), it->second.size());
+        return static_cast<int>(it->second.size());
+    }
+    return -1;
+}
+
+static int mockOpenSuccess(const char *pathname, int flags) {
+    return 3;
+}
 
 HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledThenValidMapIsReturned, IsDG1) {
     const std::map<std::string, std::map<std::string, uint64_t>> mockDg1GuidToKeyOffsetMap = {{"0x490e01",
@@ -87,6 +106,24 @@ HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGui
     EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x1e2f8202").at("XTAL_COUNT"), (*pGuidToKeyOffsetMap).at("0x1e2f8202").at("XTAL_COUNT"));
     EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x1e2f8202").at("VCCGT_ENERGY_ACCUMULATOR"), (*pGuidToKeyOffsetMap).at("0x1e2f8202").at("VCCGT_ENERGY_ACCUMULATOR"));
     EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x1e2f8202").at("VCCDDR_ENERGY_ACCUMULATOR"), (*pGuidToKeyOffsetMap).at("0x1e2f8202").at("VCCDDR_ENERGY_ACCUMULATOR"));
+}
+
+HWTEST2_F(SysmanProductHelperPmtTest, GivenGuidToKeyOffsetMapIsEmptyWhenGettingTelemetryOffsetMapsThenErrorIsReturned, IsBmgOrCri) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)>
+        mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        return count;
+    });
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    // Pass empty guidToKeyOffsetMap
+    std::map<std::string, std::map<std::string, uint64_t>> emptyGuidToKeyOffsetMap;
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(emptyGuidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
 } // namespace ult
