@@ -246,6 +246,7 @@ class DrmMock : public Drm {
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
+    bool allowMissingResetStats = false;
     std::optional<bool> isVMBindImmediateSupported{};
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();

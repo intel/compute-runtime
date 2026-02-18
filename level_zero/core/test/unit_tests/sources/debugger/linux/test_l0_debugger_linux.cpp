@@ -440,6 +440,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAnd
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
     neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
+    drmMock->allowMissingResetStats = true;
     drmMock->ioctlCallsCount = 0;
 
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_DEFAULT, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};

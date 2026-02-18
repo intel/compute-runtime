@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
                ${NEO_SHARED_DIRECTORY}/dll/usm_pool_size.cpp
                ${NEO_SHARED_DIRECTORY}/dll/default_heap_size.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/pool_allocator_sizes.cpp
                ${NEO_SHARED_DIRECTORY}/dll/pool_info.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp

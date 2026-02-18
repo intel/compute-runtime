@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -29,6 +29,7 @@ if(WIN32)
                  ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/default_heap_size.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/pool_allocator_sizes.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows${BRANCH_DIR_SUFFIX}/options.cpp

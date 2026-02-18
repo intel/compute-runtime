@@ -119,7 +119,12 @@ class GenericViewPoolAllocator : public AbstractBuffersAllocator<GenericViewPool
     void processDeferredFrees(const DeferredFreeContext *ctx);
     void releasePools();
 
-    size_t getDefaultPoolSize() const { return Traits::defaultPoolSize; }
+    size_t getDefaultPoolSize() const {
+        if constexpr (requires { Traits::getDefaultPoolSize(); }) {
+            return Traits::getDefaultPoolSize();
+        }
+        return Traits::defaultPoolSize;
+    }
 
     static bool isEnabled(const ProductHelper &productHelper) {
         if constexpr (requires { Traits::isEnabled(productHelper); }) {

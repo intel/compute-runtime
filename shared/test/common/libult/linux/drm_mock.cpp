@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -307,6 +307,13 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
                 *outResetStats = resetStats;
                 return 0;
             }
+        }
+
+        if (allowMissingResetStats) {
+            auto contextId = outResetStats->contextId;
+            *outResetStats = {};
+            outResetStats->contextId = contextId;
+            return 0;
         }
 
         return -1;

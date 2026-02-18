@@ -22,6 +22,7 @@ set(NEO_SHARED_DLLS
     ${CMAKE_CURRENT_SOURCE_DIR}/get_staging_buffer_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/default_heap_size.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_sizes.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_size.cpp
 )

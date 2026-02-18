@@ -61,6 +61,7 @@ struct CommandBufferPoolTraits {
 
     static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
     static bool isEnabled(const ProductHelper &productHelper);
+    static size_t getDefaultPoolSize();
 };
 
 struct LinearStreamPoolTraits {

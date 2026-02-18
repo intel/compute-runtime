@@ -193,7 +193,7 @@ GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size, cons
     }
 
     if (this->bufferPools.empty()) {
-        this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
+        this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(getDefaultPoolSize())));
     }
 
     auto allocFromPool = allocateFromPools(size);
@@ -208,7 +208,7 @@ GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size, cons
         return allocFromPool;
     }
 
-    this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
+    this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(getDefaultPoolSize())));
     return allocateFromPools(size);
 }
 
