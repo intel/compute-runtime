@@ -1995,6 +1995,23 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendRecordedBcsSplit(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                                         ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    bool hasStallingCmds = true;
+    bool copyOffloadFlush = false;
+    setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
+
+    auto splitCall = [&](CommandListCoreFamily<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+        memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
+        auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
+        return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
+    };
+
+    BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
+    return this->device->bcsSplit->template appendRecordedInOrderSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, splitCall);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    const void *srcptr,
                                                                    size_t size,
@@ -2022,18 +2039,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     NEO::TransferDirection direction;
 
     if (this->bcsSplitMode == BcsSplitParams::BcsSplitMode::recorded && this->isAppendSplitNeeded(dstptr, srcptr, size, direction)) {
-        bool hasStallingCmds = true;
-        bool copyOffloadFlush = false;
-        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
-
-        auto splitCall = [&](CommandListCoreFamily<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
-            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
-            auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
-            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
-        };
-
-        BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
-        return this->device->bcsSplit->template appendRecordedInOrderSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, splitCall);
+        return appendRecordedBcsSplit(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);

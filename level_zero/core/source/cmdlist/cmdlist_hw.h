@@ -345,6 +345,9 @@ struct CommandListCoreFamily : public CommandList {
                                           Event *signalEvent,
                                           CmdListKernelLaunchParams &launchParams);
 
+    ze_result_t appendRecordedBcsSplit(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
+
     template <typename PatchSemaphoreType>
     void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload);
 
