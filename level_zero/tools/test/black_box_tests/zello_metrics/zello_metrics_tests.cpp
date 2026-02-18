@@ -1011,13 +1011,13 @@ bool metricSupportedScopesTest() {
             VALIDATECALL(zetMetricGetProperties(metrics[i], &metricProps));
 
             uint32_t supportedScopeCount = 0;
-            VALIDATECALL(zetIntelMetricSupportedScopesGetExp(&metrics[i],
+            VALIDATECALL(zetIntelMetricSupportedScopesGetExp(metrics[i],
                                                              &supportedScopeCount,
                                                              nullptr));
 
             if (supportedScopeCount > 0) {
                 std::vector<zet_intel_metric_scope_exp_handle_t> supportedScopes(supportedScopeCount);
-                VALIDATECALL(zetIntelMetricSupportedScopesGetExp(&metrics[i],
+                VALIDATECALL(zetIntelMetricSupportedScopesGetExp(metrics[i],
                                                                  &supportedScopeCount,
                                                                  supportedScopes.data()));
 

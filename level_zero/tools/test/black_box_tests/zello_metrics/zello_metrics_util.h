@@ -104,7 +104,7 @@ typedef ze_result_t (*pfzetIntelMetricScopesGetExp)(
 typedef ze_result_t (*pfzetIntelMetricScopeGetPropertiesExp)(
     zet_intel_metric_scope_exp_handle_t, zet_intel_metric_scope_properties_exp_t *);
 typedef ze_result_t (*pfzetIntelMetricSupportedScopesGetExp)(
-    zet_metric_handle_t *, uint32_t *, zet_intel_metric_scope_exp_handle_t *);
+    zet_metric_handle_t, uint32_t *, zet_intel_metric_scope_exp_handle_t *);
 
 class ZetIntelMetricExtensions {
   public:
