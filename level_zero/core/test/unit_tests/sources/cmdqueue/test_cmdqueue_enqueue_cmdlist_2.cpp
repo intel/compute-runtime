@@ -1309,7 +1309,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    constexpr size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT);
+    const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    const size_t expectedSize = useSemaphore64bCmd ? sizeof(MI_SEMAPHORE_WAIT) : 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT);
     CommandListExecutionContext ctx{};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -1762,18 +1763,25 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
         cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
 
     // third execution of command list, different tag allocation and semaphore required
+    const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
     auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(2u, lriCmds.size());
+    if (useSemaphore64bCmd) {
+        EXPECT_EQ(0u, lriCmds.size());
+        semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    } else {
+        ASSERT_EQ(2u, lriCmds.size());
 
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[0]);
-    EXPECT_EQ(RegisterOffsets::csGprR0, lriCmd->getRegisterOffset());
-    EXPECT_EQ(getLowPart(otherTaskCount), lriCmd->getDataDword());
+        auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[0]);
+        EXPECT_EQ(RegisterOffsets::csGprR0, lriCmd->getRegisterOffset());
+        EXPECT_EQ(getLowPart(otherTaskCount), lriCmd->getDataDword());
 
-    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[1]);
-    EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lriCmd->getRegisterOffset());
-    EXPECT_EQ(getHighPart(otherTaskCount), lriCmd->getDataDword());
+        lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[1]);
+        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lriCmd->getRegisterOffset());
+        EXPECT_EQ(getHighPart(otherTaskCount), lriCmd->getDataDword());
 
-    semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(lriCmds[1], cmdList.end());
+        semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(lriCmds[1], cmdList.end());
+    }
+
     ASSERT_EQ(1u, semWaitCmds.size());
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds[0]);
 
