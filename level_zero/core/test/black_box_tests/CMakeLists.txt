@@ -79,6 +79,7 @@ set(TEST_TARGETS
     zello_p2p_copy
     zello_sandbox
     zello_scratch
+    zello_stress_commandlist
     zello_timestamp
     zello_world_global_work_offset
     zello_world_gpu
