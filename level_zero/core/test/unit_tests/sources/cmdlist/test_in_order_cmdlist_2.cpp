@@ -2748,16 +2748,16 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskin
     EXPECT_TRUE(events[0]->hasInOrderTimestampNode());
     EXPECT_TRUE(events[1]->hasInOrderTimestampNode());
 
-    EXPECT_NE(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation());
+    EXPECT_NE(events[0]->inOrderExecHelper.getTimestampNode(0)->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
+    EXPECT_NE(nullptr, events[0]->inOrderExecHelper.getTimestampNode(0)->getBaseGraphicsAllocation());
     EXPECT_EQ(nullptr, events[0]->eventPoolAllocation);
 
-    EXPECT_EQ(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
-    EXPECT_EQ(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
+    EXPECT_EQ(events[0]->inOrderExecHelper.getTimestampNode(0)->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
+    EXPECT_EQ(events[0]->inOrderExecHelper.getTimestampNode(0)->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
     EXPECT_EQ(events[0]->getGpuAddress(device) + events[0]->getCompletionFieldOffset(), events[0]->getCompletionFieldGpuAddress(device));
 
-    EXPECT_EQ(events[0]->getGpuAddress(device), events[0]->inOrderTimestampNode[0]->getGpuAddress());
-    EXPECT_EQ(events[1]->getGpuAddress(device), events[1]->inOrderTimestampNode[0]->getGpuAddress());
+    EXPECT_EQ(events[0]->getGpuAddress(device), events[0]->inOrderExecHelper.getTimestampNode(0)->getGpuAddress());
+    EXPECT_EQ(events[1]->getGpuAddress(device), events[1]->inOrderExecHelper.getTimestampNode(0)->getGpuAddress());
     EXPECT_NE(events[0]->getGpuAddress(device), events[1]->getGpuAddress(device));
 }
 
@@ -2825,7 +2825,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
+    EXPECT_FALSE(events[0]->inOrderExecHelper.hasTimestampNodes());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
@@ -2876,30 +2876,30 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispa
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
+    EXPECT_FALSE(events[0]->inOrderExecHelper.hasTimestampNodes());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    EXPECT_FALSE(events[0]->inOrderTimestampNode.empty());
+    EXPECT_TRUE(events[0]->inOrderExecHelper.hasTimestampNodes());
 
     // keep node0 ownership for testing
-    auto node0 = events[0]->inOrderTimestampNode[0];
-    events[0]->inOrderTimestampNode.clear();
+    auto node0 = events[0]->inOrderExecHelper.getTimestampNode(0);
+    events[0]->resetInOrderTimestampNode(nullptr, 0);
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
-    EXPECT_FALSE(events[0]->inOrderTimestampNode.empty());
-    EXPECT_NE(node0, events[0]->inOrderTimestampNode[0]);
+    EXPECT_TRUE(events[0]->inOrderExecHelper.hasTimestampNodes());
+    EXPECT_NE(node0, events[0]->inOrderExecHelper.getTimestampNode(0));
 
-    auto node1 = events[0]->inOrderTimestampNode[0];
+    auto node1 = events[0]->inOrderExecHelper.getTimestampNode(0);
 
     // node1 moved to reusable list
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode[0]);
-    EXPECT_NE(node1->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
+    EXPECT_NE(nullptr, events[0]->inOrderExecHelper.getTimestampNode(0));
+    EXPECT_NE(node1->getGpuAddress(), events[0]->inOrderExecHelper.getTimestampNode(0)->getGpuAddress());
 
-    auto node2 = events[0]->inOrderTimestampNode[0];
+    auto node2 = events[0]->inOrderExecHelper.getTimestampNode(0);
 
-    *static_cast<Event::State *>(ptrOffset(events[0]->inOrderTimestampNode[0]->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
+    *static_cast<Event::State *>(ptrOffset(events[0]->inOrderExecHelper.getTimestampNode(0)->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
     auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress();
     *hostAddress = 3;
 
@@ -2908,7 +2908,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispa
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     // node1 reused
-    EXPECT_EQ(node1->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
+    EXPECT_EQ(node1->getGpuAddress(), events[0]->inOrderExecHelper.getTimestampNode(0)->getGpuAddress());
 
     // reuse node2 - counter already waited
     *hostAddress = 2;
@@ -2916,10 +2916,10 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispa
     cmdList->inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    EXPECT_EQ(node2->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
+    EXPECT_EQ(node2->getGpuAddress(), events[0]->inOrderExecHelper.getTimestampNode(0)->getGpuAddress());
 
     events[0]->unsetInOrderExecInfo();
-    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
+    EXPECT_FALSE(events[0]->inOrderExecHelper.hasTimestampNodes());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
@@ -3670,9 +3670,9 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppen
     tag->returnTag();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
-    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+    ASSERT_EQ(1u, eventObj->inOrderExecHelper.getTimestampNodesCount());
 
-    auto node2 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderTimestampNode[0]->getCpuBase());
+    auto node2 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase());
 
     EXPECT_EQ(node, node2);
 
@@ -4134,7 +4134,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, gpuAddress, immCmdList2->isQwordInOrderCounter(), false));
 
     // event
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->inOrderExecInfo->getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->getInOrderExecInfo()->getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeCore) {

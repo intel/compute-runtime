@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
@@ -319,15 +320,15 @@ struct Event : _ze_event_handle_t {
     void setMetricNotification(MetricCollectorEventNotify *metricNotification) {
         this->metricNotification = metricNotification;
     }
-    void updateInOrderExecState(const std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
+    void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
     bool isFlushRequiredForSignal() const { return !isCounterBased() && isSignalScope(); }
     void enableCounterBasedMode(bool apiRequest, uint32_t flags);
     void disableImplicitCounterBasedMode();
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
-    uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
-    uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
+    uint64_t getInOrderExecBaseSignalValue() const;
+    uint32_t getInOrderAllocationOffset() const;
     uint64_t getInOrderIncrementValue(uint32_t partitionCount) const;
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
@@ -336,7 +337,7 @@ struct Event : _ze_event_handle_t {
     void setReferenceTs(uint64_t currentCpuTimeStamp);
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKernelMappedTsCapability = false;
-    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo();
     void enableKmdWaitMode() { kmdWaitMode = true; }
     void enableInterruptMode() { interruptMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
@@ -353,7 +354,7 @@ struct Event : _ze_event_handle_t {
     void resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount);
     void resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount, bool resetAggregatedEvent);
 
-    bool hasInOrderTimestampNode() const { return !inOrderTimestampNode.empty(); }
+    bool hasInOrderTimestampNode() const;
 
     bool isIpcImported() const { return isFromIpcPool; }
 
@@ -392,7 +393,6 @@ struct Event : _ze_event_handle_t {
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
     void unsetCmdQueue();
-    void releaseTempInOrderTimestampNodes();
     virtual void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) = 0;
 
     static const uint64_t completionTimeoutMs;
@@ -406,10 +406,6 @@ struct Event : _ze_event_handle_t {
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
-
-    uint64_t inOrderExecSignalValue = 0;
-    uint64_t inOrderIncrementValue = 0;
-    uint32_t inOrderAllocationOffset = 0;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
@@ -435,10 +431,8 @@ struct Event : _ze_event_handle_t {
     Device *device = nullptr;
     std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>{};
     std::mutex *kernelWithPrintfDeviceMutex = nullptr;
-    std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
+    NEO::InOrderExecEventHelper inOrderExecHelper;
     CommandQueue *latestUsedCmdQueue = nullptr;
-    std::vector<NEO::TagNodeBase *> inOrderTimestampNode;
-    std::vector<NEO::TagNodeBase *> additionalTimestampNode;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

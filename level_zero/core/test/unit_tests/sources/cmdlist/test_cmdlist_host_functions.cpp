@@ -474,8 +474,8 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
         EXPECT_EQ(2u, miStoreCmd->getDataDword0());
     }
 
-    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
-    EXPECT_EQ(2u, events[1]->inOrderExecSignalValue);
+    EXPECT_EQ(1u, events[0]->inOrderExecHelper.getEventData()->counterValue);
+    EXPECT_EQ(2u, events[1]->inOrderExecHelper.getEventData()->counterValue);
 }
 
 HWTEST_F(HostFunctionsInOrderCmdListTests, givenImmediateCmdListWhenAppendHostFunctionThenPerformMigrationsIsFalse) {

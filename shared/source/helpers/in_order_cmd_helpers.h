@@ -281,4 +281,69 @@ struct PatchCmd {
 template <typename GfxFamily>
 using InOrderPatchCommandsContainer = std::vector<NEO::InOrderPatchCommandHelpers::PatchCmd<GfxFamily>>;
 
+// Used for IPC exchange - keep minimal set of data to share
+#pragma pack(1)
+struct InOrderExecEventData {
+    uint64_t counterValue = 0;
+    uint64_t incrementValue = 0;
+    uint32_t counterOffset = 0;
+    uint32_t devicePartitions = 0;
+    uint32_t hostPartitions = 0;
+};
+#pragma pack()
+
+class InOrderExecEventHelper {
+  public:
+    void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset);
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+
+    bool isDataAssigned() const { return dataAssigned; }
+
+    bool isCounterAlreadyDone(uint64_t waitValue, uint32_t offset) const { return inOrderExecInfo->isCounterAlreadyDone(waitValue, offset); }
+    void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) { inOrderExecInfo->setLastWaitedCounterValue(value, allocationOffset); }
+
+    const InOrderExecEventData *getEventData() const { return eventData.get(); }
+
+    uint64_t getExecSignalValueWithSubmissionCounter() const;
+
+    uint64_t *getBaseHostAddress() const { return baseHostAddress; }
+    uint64_t getBaseDeviceAddress() const { return baseDeviceAddress; }
+
+    NEO::GraphicsAllocation *getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+    NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
+    bool isHostStorageDuplicated() const { return hostStorageDuplicated; }
+
+    void setIncrementValue(uint64_t newIncrementValue) { eventData->incrementValue = newIncrementValue; }
+
+    NEO::TagNodeBase *getLatestTimestampNode() const { return timestampNodes.back(); }
+    NEO::TagNodeBase *getTimestampNode(size_t index) const { return timestampNodes[index]; }
+    void addTimestampNode(NEO::TagNodeBase *node) { timestampNodes.push_back(node); }
+    bool hasTimestampNodes() const { return !timestampNodes.empty(); }
+    size_t getTimestampNodesCount() const { return timestampNodes.size(); }
+
+    NEO::TagNodeBase *getAdditionalTimestampNode(size_t index) const { return additionalTimestampNodes[index]; }
+    void addAdditionalTimestampNode(NEO::TagNodeBase *node) { additionalTimestampNodes.push_back(node); }
+    bool hasAdditionalTimestampNodes() const { return !additionalTimestampNodes.empty(); }
+    size_t getAdditionalTimestampNodesCount() const { return additionalTimestampNodes.size(); }
+
+    void releaseNotUsedTempTimestampNodes();
+    void moveTimestampNodeToReleaseList();
+    void moveAdditionalTimestampNodesToReleaseList();
+    void unsetInOrderExecInfo();
+
+  protected:
+    std::unique_ptr<InOrderExecEventData> eventData = std::make_unique<InOrderExecEventData>();
+
+    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
+    std::vector<NEO::TagNodeBase *> timestampNodes;
+    std::vector<NEO::TagNodeBase *> additionalTimestampNodes;
+
+    NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
+    uint64_t *baseHostAddress = nullptr;
+    uint64_t baseDeviceAddress = 0;
+    bool hostStorageDuplicated = false;
+    bool dataAssigned = false;
+};
+
 } // namespace NEO

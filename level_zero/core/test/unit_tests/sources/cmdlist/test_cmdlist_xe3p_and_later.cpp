@@ -61,8 +61,8 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
 
     auto offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
-    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
-    auto expectedAddress0 = eventObj->inOrderTimestampNode[0]->getGpuAddress();
+    ASSERT_EQ(1u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+    auto expectedAddress0 = eventObj->inOrderExecHelper.getTimestampNode(0)->getGpuAddress();
 
     {
         GenCmdList cmdList;
@@ -79,8 +79,8 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
-    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
-    auto expectedAddress1 = eventObj->inOrderTimestampNode[1]->getGpuAddress();
+    ASSERT_EQ(2u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+    auto expectedAddress1 = eventObj->inOrderExecHelper.getTimestampNode(1)->getGpuAddress();
 
     {
         GenCmdList cmdList;

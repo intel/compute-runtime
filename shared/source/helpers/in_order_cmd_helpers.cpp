@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,6 +197,82 @@ uint64_t InOrderExecInfo::getDeviceNodeGpuAddress() const {
 
 uint64_t InOrderExecInfo::getInitialCounterValue() const {
     return debugManager.flags.InitialCounterBasedEventValue.getIfNotDefault<uint64_t>(0);
+}
+
+void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset) {
+    if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
+        inOrderExecInfo = newInOrderExecInfo;
+    }
+
+    if (!eventData) {
+        eventData = std::make_unique<InOrderExecEventData>();
+    }
+
+    eventData->counterValue = newSignalValue;
+    eventData->counterOffset = newAllocationOffset;
+    eventData->devicePartitions = inOrderExecInfo->getNumDevicePartitionsToWait();
+    eventData->hostPartitions = inOrderExecInfo->getNumHostPartitionsToWait();
+    baseHostAddress = inOrderExecInfo->getBaseHostAddress();
+    baseDeviceAddress = inOrderExecInfo->getBaseDeviceAddress();
+    hostStorageDuplicated = inOrderExecInfo->isHostStorageDuplicated();
+    if (inOrderExecInfo->isExternalMemoryExecInfo()) {
+        deviceCounterAllocation = inOrderExecInfo->getExternalDeviceAllocation();
+        hostCounterAllocation = inOrderExecInfo->getExternalHostAllocation();
+    } else {
+        deviceCounterAllocation = inOrderExecInfo->getDeviceCounterAllocation();
+        hostCounterAllocation = inOrderExecInfo->getHostCounterAllocation();
+    }
+
+    dataAssigned = true;
+}
+
+void InOrderExecEventHelper::unsetInOrderExecInfo() {
+    dataAssigned = false;
+    inOrderExecInfo.reset();
+    baseHostAddress = nullptr;
+    deviceCounterAllocation = nullptr;
+    hostCounterAllocation = nullptr;
+    hostStorageDuplicated = false;
+    baseDeviceAddress = 0;
+    if (eventData) {
+        eventData->counterValue = 0;
+        eventData->counterOffset = 0;
+        eventData->devicePartitions = 0;
+        eventData->hostPartitions = 0;
+        eventData->incrementValue = 0;
+    }
+}
+
+void InOrderExecEventHelper::releaseNotUsedTempTimestampNodes() {
+    if (inOrderExecInfo) {
+        inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
+    }
+}
+
+void InOrderExecEventHelper::moveTimestampNodeToReleaseList() {
+    for (auto &node : timestampNodes) {
+        inOrderExecInfo->pushTempTimestampNode(node, eventData->counterValue, eventData->counterOffset);
+    }
+    timestampNodes.clear();
+}
+
+void InOrderExecEventHelper::moveAdditionalTimestampNodesToReleaseList() {
+    if (inOrderExecInfo) {
+        std::for_each(additionalTimestampNodes.cbegin(), additionalTimestampNodes.cend(), [&](TagNodeBase *node) {
+            inOrderExecInfo->pushTempTimestampNode(node, eventData->counterValue, eventData->counterOffset);
+        });
+    } else {
+        std::for_each(additionalTimestampNodes.cbegin(), additionalTimestampNodes.cend(), [&](TagNodeBase *node) {
+            node->returnTag();
+        });
+    }
+
+    additionalTimestampNodes.clear();
+}
+
+uint64_t InOrderExecEventHelper::getExecSignalValueWithSubmissionCounter() const {
+    uint64_t appendCounter = inOrderExecInfo ? NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo) : 0;
+    return (eventData->counterValue + appendCounter);
 }
 
 } // namespace NEO

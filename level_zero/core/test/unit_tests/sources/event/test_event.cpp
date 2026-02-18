@@ -4101,7 +4101,7 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMul
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
 
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
-    EXPECT_EQ(1u, event->additionalTimestampNode.size());
+    EXPECT_EQ(1u, event->inOrderExecHelper.getAdditionalTimestampNodesCount());
 }
 
 HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeWithNullptrThenVectorCleared) {
@@ -4112,10 +4112,10 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeWit
     ASSERT_NE(event, nullptr);
 
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
-    EXPECT_EQ(1u, event->additionalTimestampNode.size());
+    EXPECT_EQ(1u, event->inOrderExecHelper.getAdditionalTimestampNodesCount());
 
     event->resetAdditionalTimestampNode(nullptr, 0, false);
-    EXPECT_EQ(0u, event->additionalTimestampNode.size());
+    EXPECT_EQ(0u, event->inOrderExecHelper.getAdditionalTimestampNodesCount());
 }
 
 HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {

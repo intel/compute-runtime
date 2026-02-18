@@ -34,20 +34,16 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
     using EventImp<uint32_t>::Event::counterBasedFlags;
     using EventImp<uint32_t>::Event::isSharableCounterBased;
     using EventImp<uint32_t>::Event::isTimestampEvent;
+    using EventImp<uint32_t>::Event::inOrderExecHelper;
     using EventImp<uint32_t>::isTimestampPopulated;
     using EventImp<uint32_t>::eventPoolAllocation;
     using EventImp<uint32_t>::maxPacketCount;
-    using EventImp<uint32_t>::inOrderExecInfo;
-    using EventImp<uint32_t>::inOrderExecSignalValue;
-    using EventImp<uint32_t>::inOrderAllocationOffset;
     using EventImp<uint32_t>::csrs;
     using EventImp<uint32_t>::signalScope;
     using EventImp<uint32_t>::waitScope;
     using EventImp<uint32_t>::unsetCmdQueue;
     using EventImp<uint32_t>::externalInterruptId;
     using EventImp<uint32_t>::latestUsedCmdQueue;
-    using EventImp<uint32_t>::inOrderTimestampNode;
-    using EventImp<uint32_t>::additionalTimestampNode;
     using EventImp<uint32_t>::isCompleted;
 
     void makeCounterBasedInitiallyDisabled(MultiGraphicsAllocation &poolAllocation) {
@@ -69,6 +65,12 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
         this->hostAddressFromPool = ptrOffset(eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer(), eventPoolOffset);
         reset();
     }
+};
+
+class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
+  public:
+    using InOrderExecEventHelper::eventData;
+    using InOrderExecEventHelper::timestampNodes;
 };
 
 class WhiteboxInOrderExecInfo : public InOrderExecInfo {

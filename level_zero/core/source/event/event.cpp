@@ -31,6 +31,8 @@
 #include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
+static_assert(sizeof(NEO::InOrderExecEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "InOrderExecEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
 namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
@@ -358,7 +360,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (!isCounterBasedExplicitlyEnabled() || !this->inOrderExecInfo.get() || isEventTimestampFlagSet()) {
+    if (!isCounterBasedExplicitlyEnabled() || !inOrderExecHelper.isDataAssigned() || isEventTimestampFlagSet()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -370,7 +372,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     ipcData.waitScopeFlags = this->waitScope;
 
     auto memoryManager = device->getNEODevice()->getMemoryManager();
-    auto deviceAlloc = inOrderExecInfo->getDeviceCounterAllocation();
+    auto deviceAlloc = inOrderExecHelper.getDeviceCounterAllocation();
 
     uint64_t handle = 0;
     if (int retCode = deviceAlloc->peekInternalHandle(memoryManager, handle, nullptr); retCode != 0) {
@@ -379,20 +381,20 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     memoryManager->registerIpcExportedAllocation(deviceAlloc);
 
     ipcData.deviceHandle = handle;
-    ipcData.devicePartitions = inOrderExecInfo->getNumDevicePartitionsToWait();
+    ipcData.devicePartitions = inOrderExecHelper.getEventData()->devicePartitions;
     ipcData.hostPartitions = ipcData.devicePartitions;
 
-    ipcData.counterOffset = static_cast<uint32_t>(inOrderExecInfo->getBaseDeviceAddress() - deviceAlloc->getGpuAddress()) + inOrderAllocationOffset;
+    ipcData.counterOffset = static_cast<uint32_t>(inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress()) + inOrderExecHelper.getEventData()->counterOffset;
 
-    if (inOrderExecInfo->isHostStorageDuplicated()) {
-        auto hostAlloc = inOrderExecInfo->getHostCounterAllocation();
+    if (inOrderExecHelper.isHostStorageDuplicated()) {
+        auto hostAlloc = inOrderExecHelper.getHostCounterAllocation();
         if (int retCode = hostAlloc->peekInternalHandle(memoryManager, handle, nullptr); retCode != 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
 
         ipcData.hostHandle = handle;
-        ipcData.hostPartitions = inOrderExecInfo->getNumHostPartitionsToWait();
+        ipcData.hostPartitions = inOrderExecHelper.getEventData()->hostPartitions;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -550,23 +552,17 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     return ZE_RESULT_SUCCESS;
 }
 
-void Event::releaseTempInOrderTimestampNodes() {
-    if (inOrderExecInfo) {
-        inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
-    }
-}
-
 ze_result_t Event::destroy() {
     resetInOrderTimestampNode(nullptr, 0);
     resetAdditionalTimestampNode(nullptr, 0, true);
-    releaseTempInOrderTimestampNodes();
+    inOrderExecHelper.releaseNotUsedTempTimestampNodes();
 
     if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
         auto memoryManager = device->getNEODevice()->getMemoryManager();
 
-        memoryManager->freeGraphicsMemory(inOrderExecInfo->getExternalDeviceAllocation());
-        if (inOrderExecInfo->isHostStorageDuplicated()) {
-            memoryManager->freeGraphicsMemory(inOrderExecInfo->getExternalHostAllocation());
+        memoryManager->freeGraphicsMemory(inOrderExecHelper.getDeviceCounterAllocation());
+        if (inOrderExecHelper.isHostStorageDuplicated()) {
+            memoryManager->freeGraphicsMemory(inOrderExecHelper.getHostCounterAllocation());
         }
     }
 
@@ -594,15 +590,15 @@ void Event::disableImplicitCounterBasedMode() {
 }
 
 uint64_t Event::getGpuAddress(Device *device) const {
-    if (!inOrderTimestampNode.empty()) {
-        return inOrderTimestampNode.back()->getGpuAddress();
+    if (inOrderExecHelper.hasTimestampNodes()) {
+        return inOrderExecHelper.getLatestTimestampNode()->getGpuAddress();
     }
     return getAllocation(device)->getGpuAddress() + this->eventPoolOffset + this->offsetInSharedAlloc;
 }
 
 void *Event::getHostAddress() const {
-    if (!inOrderTimestampNode.empty()) {
-        return inOrderTimestampNode.back()->getCpuBase();
+    if (inOrderExecHelper.hasTimestampNodes()) {
+        return inOrderExecHelper.getLatestTimestampNode()->getCpuBase();
     }
 
     return this->hostAddressFromPool;
@@ -611,8 +607,8 @@ void *Event::getHostAddress() const {
 NEO::GraphicsAllocation *Event::getAllocation(Device *device) const {
     auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 
-    if (!inOrderTimestampNode.empty()) {
-        return inOrderTimestampNode.back()->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
+    if (inOrderExecHelper.hasTimestampNodes()) {
+        return inOrderExecHelper.getLatestTimestampNode()->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
     } else if (eventPoolAllocation) {
         return eventPoolAllocation->getGraphicsAllocation(rootDeviceIndex);
     }
@@ -664,25 +660,19 @@ void Event::setIsCompleted() {
     unsetCmdQueue();
 }
 
-void Event::updateInOrderExecState(const std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
+void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
     resetCompletionStatus();
 
-    if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
-        inOrderExecInfo = newInOrderExecInfo;
-    }
-
-    inOrderExecSignalValue = signalValue;
-    inOrderAllocationOffset = allocationOffset;
+    inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset);
 }
 
 uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
-    uint64_t appendCounter = inOrderExecInfo.get() ? NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo) : 0;
-    return (inOrderExecSignalValue + appendCounter);
+    return inOrderExecHelper.getExecSignalValueWithSubmissionCounter();
 }
 
 uint64_t Event::getInOrderIncrementValue(uint32_t partitionCount) const {
-    DEBUG_BREAK_IF(inOrderIncrementValue % partitionCount != 0);
-    return (inOrderIncrementValue / partitionCount);
+    DEBUG_BREAK_IF(inOrderExecHelper.getEventData()->incrementValue % partitionCount != 0);
+    return (inOrderExecHelper.getEventData()->incrementValue / partitionCount);
 }
 
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
@@ -708,59 +698,41 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 
 void Event::unsetInOrderExecInfo() {
     resetInOrderTimestampNode(nullptr, 0);
-    inOrderExecInfo.reset();
-    inOrderAllocationOffset = 0;
-    inOrderExecSignalValue = 0;
+    inOrderExecHelper.unsetInOrderExecInfo();
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
-    if (inOrderIncrementValue == 0 || !newNode) {
-        for (auto &node : inOrderTimestampNode) {
-            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
-        }
-
-        inOrderTimestampNode.clear();
+    if (inOrderExecHelper.getEventData()->incrementValue == 0 || !newNode) {
+        inOrderExecHelper.moveTimestampNodeToReleaseList();
     }
 
     if (newNode) {
-        inOrderTimestampNode.push_back(newNode);
-
+        inOrderExecHelper.addTimestampNode(newNode);
         if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
-            clearTimestampTagData(partitionCount, inOrderTimestampNode.back());
+            clearTimestampTagData(partitionCount, inOrderExecHelper.getLatestTimestampNode());
         }
     }
 }
 
 void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount, bool resetAggregatedEvent) {
-    if (inOrderIncrementValue > 0) {
+    if (inOrderExecHelper.getEventData()->incrementValue > 0) {
         if (newNode) {
-            additionalTimestampNode.push_back(newNode);
+            inOrderExecHelper.addAdditionalTimestampNode(newNode);
             if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
                 clearTimestampTagData(partitionCount, newNode);
             }
         } else if (resetAggregatedEvent) {
             // If we are resetting aggregated event, we need to clear all additional timestamp nodes
-            for (auto &node : additionalTimestampNode) {
-                inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
-            }
-            additionalTimestampNode.clear();
+            inOrderExecHelper.moveAdditionalTimestampNodesToReleaseList();
         }
 
         return;
     }
 
-    for (auto &node : additionalTimestampNode) {
-        if (inOrderExecInfo) {
-            // Push to temp node vector and releaseNotUsedTempTimestampNodes will clear when needed
-            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
-        } else {
-            node->returnTag();
-        }
-    }
-    additionalTimestampNode.clear();
+    inOrderExecHelper.moveAdditionalTimestampNodesToReleaseList();
 
     if (newNode) {
-        additionalTimestampNode.push_back(newNode);
+        inOrderExecHelper.addAdditionalTimestampNode(newNode);
         if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
             clearTimestampTagData(partitionCount, newNode);
         }
@@ -835,7 +807,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
 
             updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
 
-            this->inOrderIncrementValue = externalStorageProperties->incrementValue;
+            this->inOrderExecHelper.setIncrementValue(externalStorageProperties->incrementValue);
             disableHostCaching(true);
         }
 
@@ -855,5 +827,13 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
 
     return ZE_RESULT_SUCCESS;
 }
+
+std::shared_ptr<NEO::InOrderExecInfo> &Event::getInOrderExecInfo() { return inOrderExecHelper.getInOrderExecInfo(); }
+
+uint64_t Event::getInOrderExecBaseSignalValue() const { return inOrderExecHelper.getEventData()->counterValue; }
+
+uint32_t Event::getInOrderAllocationOffset() const { return inOrderExecHelper.getEventData()->counterOffset; }
+
+bool Event::hasInOrderTimestampNode() const { return inOrderExecHelper.hasTimestampNodes(); }
 
 } // namespace L0
