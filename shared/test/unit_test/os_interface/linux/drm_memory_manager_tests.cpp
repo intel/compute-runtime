@@ -2846,6 +2846,63 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAnd
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenLockIsCalledForDebugAllocationsThenVerifyAllocationIsNotResident) {
+    mock->ioctlExpected.total = -1;
+    this->dontTestIoctlInTearDown = true;
+
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
+
+    auto osContext = device->getDefaultEngine().osContext;
+
+    // Test debugContextSaveArea - should NOT be resident
+    {
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::debugContextSaveArea});
+        ASSERT_NE(nullptr, allocation);
+
+        auto ptr = memoryManager->lockResource(allocation);
+        EXPECT_NE(nullptr, ptr);
+
+        EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+
+        memoryManager->unlockResource(allocation);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    // Test debugSbaTrackingBuffer - should NOT be resident
+    {
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::debugSbaTrackingBuffer});
+        ASSERT_NE(nullptr, allocation);
+
+        auto ptr = memoryManager->lockResource(allocation);
+        EXPECT_NE(nullptr, ptr);
+
+        EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+
+        memoryManager->unlockResource(allocation);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    // Test debugModuleArea - should NOT be resident
+    {
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::debugModuleArea});
+        ASSERT_NE(nullptr, allocation);
+
+        auto ptr = memoryManager->lockResource(allocation);
+        EXPECT_NE(nullptr, ptr);
+
+        EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+
+        memoryManager->unlockResource(allocation);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithCpuPtrThenReturnCpuPtrAndSetCpuDomain) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemSetDomain = 1;
@@ -4973,55 +5030,6 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
 
     ASSERT_NE(nullptr, bo);
     EXPECT_TRUE(bo->isMarkedForCapture());
-}
-
-TEST(DrmMemoryManager, givenEnabledResourceRegistrationAndMakeResidentBeforeLockNeededWhenLockResourceIsCalledThenResourceIsRegistered) {
-    struct MockDrmMemoryOperationsHandlerForLockResourceTest : public DrmMemoryOperationsHandlerBind {
-        MockDrmMemoryOperationsHandlerForLockResourceTest(RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
-            : DrmMemoryOperationsHandlerBind(rootDeviceEnvironment, rootDeviceIndex) {}
-
-        MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override {
-            return NEO::MemoryOperationsStatus::success;
-        }
-    };
-
-    auto executionEnvironment = new MockExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    executionEnvironment->setDebuggingMode(DebuggingMode::online);
-
-    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerForLockResourceTest(*executionEnvironment->rootDeviceEnvironments[0], 0u));
-    executionEnvironment->memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
-
-    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
-    ioctlHelper->makeResidentBeforeLockNeededResult = true;
-
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        ioctlHelper->classHandles.push_back(i);
-    }
-    mockDrm->ioctlHelper.reset(ioctlHelper.release());
-    EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
-
-    auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment->memoryManager.get());
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
-
-    const uint32_t rootDeviceIndex = 0u;
-    BufferObject bo(rootDeviceIndex, mockDrm, 3, 1, 1024, 0);
-
-    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
-    drmAllocation.bufferObjects[0] = &bo;
-    EXPECT_EQ(&bo, drmAllocation.getBO());
-
-    auto ptr = memoryManager->lockResource(&drmAllocation);
-    EXPECT_NE(nullptr, ptr);
-
-    EXPECT_TRUE(bo.isMarkedForCapture());
-    EXPECT_TRUE(drmAllocation.registerBOBindExtHandleCalled);
-
-    memoryManager->unlockResource(&drmAllocation);
 }
 
 TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
