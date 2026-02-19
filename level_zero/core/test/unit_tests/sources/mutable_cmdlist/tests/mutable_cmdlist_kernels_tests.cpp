@@ -198,9 +198,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    uint64_t eventAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderExecInfo()->getAllocationOffset();
-    if (event->getInOrderExecInfo()->isHostStorageDuplicated()) {
-        eventAddress = event->getInOrderExecInfo()->getBaseHostGpuAddress();
+    uint64_t eventAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderExecEventHelper().getEventData()->counterOffset;
+    if (event->getInOrderExecEventHelper().isHostStorageDuplicated()) {
+        auto offset = ptrDiff(event->getInOrderExecEventHelper().getBaseHostAddress(), event->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+        eventAddress = event->getInOrderExecEventHelper().getHostCounterAllocation()->getGpuAddress() + offset;
     }
 
     ASSERT_NE(nullptr, mutation.kernelGroup->getCurrentMutableKernel());

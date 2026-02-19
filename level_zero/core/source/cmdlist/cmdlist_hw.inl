@@ -176,7 +176,7 @@ void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *e
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation) {
     if (!isInOrderExecutionEnabled()) {
-        if (signalEvent && signalEvent->getInOrderExecInfo().get()) {
+        if (signalEvent && signalEvent->getInOrderExecEventHelper().isDataAssigned()) {
             UNRECOVERABLE_IF(signalEvent->isCounterBased());
             signalEvent->unsetInOrderExecInfo(); // unset temporary assignment from previous append calls
         }
@@ -199,12 +199,12 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
             }
         } else {
             auto incrementValue = signalEvent->getInOrderIncrementValue(1);
-            auto currentUsage = signalEvent->getInOrderExecInfo()->getAggregatedEventUsageCounter();
+            auto currentUsage = signalEvent->getInOrderExecEventHelper().getAggregatedEventUsageCounter();
 
             if ((currentUsage + incrementValue) > signalEvent->getInOrderExecBaseSignalValue()) {
-                signalEvent->getInOrderExecInfo()->resetAggregatedEventUsageCounter();
+                signalEvent->getInOrderExecEventHelper().resetAggregatedEventUsageCounter();
             }
-            signalEvent->getInOrderExecInfo()->addAggregatedEventUsageCounter(incrementValue);
+            signalEvent->getInOrderExecEventHelper().addAggregatedEventUsageCounter(incrementValue);
         }
     }
 
@@ -3434,7 +3434,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if (!event || (event->isCounterBased() && !event->getInOrderExecInfo().get())) {
+        if (!event || (event->isCounterBased() && !event->getInOrderExecEventHelper().isDataAssigned())) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
         }
 
@@ -3448,7 +3448,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             // 2. Immediate CmdList takes current value (with submission counter)
             auto waitValue = !isImmediateType() ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
 
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecInfo(), outWaitCmds,
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecEventHelper().getInOrderExecInfo(), outWaitCmds,
                                                                                 waitValue, event->getInOrderAllocationOffset(),
                                                                                 relaxedOrderingAllowed, false, skipAddingWaitEventsToResidency,
                                                                                 isCbEventBoundToCmdList(event), dualStreamCopyOffload);
@@ -3522,7 +3522,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Eve
 
     auto incValue = event.getInOrderIncrementValue(partitionCountForAtomic);
 
-    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecInfo()->getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecEventHelper().getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
                                                   DATA_SIZE::DATA_SIZE_QWORD, 0, 0, incValue, 0);
 }
 
@@ -4924,7 +4924,7 @@ inline void CommandListCoreFamily<gfxCoreFamily>::enablePatching(size_t inOrderP
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline bool CommandListCoreFamily<gfxCoreFamily>::isCbEventBoundToCmdList(Event *event) const {
-    return event->isCounterBased() && event->getInOrderExecInfo().get() == inOrderExecInfo.get();
+    return event->isCounterBased() && this->isInOrderExecutionEnabled() && (event->getInOrderExecEventHelper().getBaseDeviceAddress() == inOrderExecInfo->getBaseDeviceAddress());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

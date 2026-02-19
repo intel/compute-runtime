@@ -136,7 +136,7 @@ auto getOptionalData(ContainerT &container) {
 
 void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &container) {
     if (event && event->isExternalEvent()) {
-        container.addCbEventInfo(event, event->getInOrderExecInfo(), event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset());
+        container.addCbEventInfo(event, event->getInOrderExecEventHelper().getInOrderExecInfo(), event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset());
     }
 }
 

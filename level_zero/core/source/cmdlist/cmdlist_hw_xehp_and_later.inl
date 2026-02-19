@@ -323,7 +323,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 if (event && event->isCounterBased()) {
                     isCounterBasedEvent = true;
                     if (event->getInOrderIncrementValue(this->partitionCount) > 0) {
-                        inOrderIncrementGpuAddress = event->getInOrderExecInfo()->getBaseDeviceAddress();
+                        inOrderIncrementGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress();
                         inOrderIncrementValue = event->getInOrderIncrementValue(this->partitionCount);
                     }
                 }

@@ -828,7 +828,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     return ZE_RESULT_SUCCESS;
 }
 
-std::shared_ptr<NEO::InOrderExecInfo> &Event::getInOrderExecInfo() { return inOrderExecHelper.getInOrderExecInfo(); }
+NEO::InOrderExecEventHelper &Event::getInOrderExecEventHelper() { return inOrderExecHelper; }
 
 uint64_t Event::getInOrderExecBaseSignalValue() const { return inOrderExecHelper.getEventData()->counterValue; }
 

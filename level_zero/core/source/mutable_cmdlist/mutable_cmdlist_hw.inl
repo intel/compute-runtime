@@ -168,10 +168,10 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     mutableWaitEventDesc.waitEventIndex = i;
 
                     if (CommandList::isInOrderExecutionEnabled() && event->isCounterBased()) {
-                        mutableWaitEventDesc.waitEventPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
+                        mutableWaitEventDesc.waitEventPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
                         if (!isCbEventBoundToCmdList(event)) {
                             omitWaitEventResidency = true;
-                            auto deviceCounterAlloc = event->getInOrderExecInfo()->getDeviceCounterAllocation();
+                            auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
                             addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
                         }
                     } else {

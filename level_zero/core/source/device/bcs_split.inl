@@ -101,9 +101,9 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     const bool dualStreamCopyOffload = mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
 
     if (useSignalEventForSubCopy && mainCmdList->isInOrderExecutionEnabled()) {
-        auto currentCounter = signalEvent->getInOrderExecInfo()->getAggregatedEventUsageCounter();
+        auto currentCounter = signalEvent->getInOrderExecEventHelper().getAggregatedEventUsageCounter();
         auto expectedCounter = currentCounter + signalEvent->getInOrderIncrementValue(1);
-        mainCmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecInfo(), nullptr,
+        mainCmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecEventHelper().getInOrderExecInfo(), nullptr,
                                                    expectedCounter,
                                                    signalEvent->getInOrderAllocationOffset(),
                                                    hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
@@ -173,7 +173,7 @@ ze_result_t BcsSplit::appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> 
                copyParams);
 
     if (events.isAggregatedEventMode() && !useSignalEventForSubcopy) {
-        subCmdList->getCmdContainer().addToResidencyContainer(Event::fromHandle(subCopyOutEventHandle)->getInOrderExecInfo()->getDeviceCounterAllocation());
+        subCmdList->getCmdContainer().addToResidencyContainer(Event::fromHandle(subCopyOutEventHandle)->getInOrderExecEventHelper().getDeviceCounterAllocation());
     }
 
     if (useSignalEventForSubcopy) {

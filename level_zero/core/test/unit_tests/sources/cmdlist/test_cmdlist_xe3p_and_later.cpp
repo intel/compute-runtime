@@ -774,9 +774,9 @@ HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWh
 
     auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
-    ASSERT_NE(nullptr, eventObj->getInOrderExecInfo());
+    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
 
-    auto inOrderExecInfo = eventObj->getInOrderExecInfo();
+    auto inOrderExecInfo = eventObj->getInOrderExecEventHelper().getInOrderExecInfo();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -1021,9 +1021,9 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendC
 
     auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
-    ASSERT_NE(nullptr, eventObj->getInOrderExecInfo());
+    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
 
-    auto inOrderExecInfo = eventObj->getInOrderExecInfo();
+    auto inOrderExecInfo = eventObj->getInOrderExecEventHelper().getInOrderExecInfo();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 

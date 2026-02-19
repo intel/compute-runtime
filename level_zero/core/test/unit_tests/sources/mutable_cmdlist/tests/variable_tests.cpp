@@ -1767,7 +1767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
     EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
 
-    auto expectedWaitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
+    auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
@@ -1819,7 +1819,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
     EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
 
-    auto expectedWaitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
+    auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
@@ -1845,7 +1845,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(nullptr, event);
 
     this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(differentCmdList->base));
-    auto expectedWaitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
+    auto expectedWaitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto &inOrderPatchCmds = prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, false, true);
 
@@ -1921,7 +1921,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
     EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
 
-    auto expectedWaitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
+    auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
@@ -1948,7 +1948,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
 
-    auto expectedWaitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
+    auto expectedWaitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto newEvent = nullptr;
 

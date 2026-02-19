@@ -1752,7 +1752,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdList->inOrderExecInfo.get(), newEvent->getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdList->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1808,7 +1808,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
 
     baseGpuVa = newEvent->getGpuAddress(this->device);
 
@@ -1870,7 +1870,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
 
     baseGpuVa = newEvent->getGpuAddress(this->device);
 
@@ -2330,7 +2330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto waitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+    auto waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 
     if (qwordInUse) {
@@ -2464,7 +2464,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
-    auto waitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
@@ -2542,7 +2542,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
     uint64_t waitAddress = 0;
     if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+        waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     } else {
         waitAddress = event->getCompletionFieldGpuAddress(this->device);
     }
@@ -2555,7 +2555,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+        waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
     } else {
         waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
     }
@@ -2610,7 +2610,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
-    auto waitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
@@ -2662,7 +2662,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    waitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+    waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
 
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
     if (qwordInUse) {

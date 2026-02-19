@@ -386,11 +386,11 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     uint32_t incValue = 0;
     zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
-    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecInfo()->getBaseDeviceAddress());
-    *event->getInOrderExecInfo()->getBaseHostAddress() = 0;
+    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
+    *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
 
     auto csr = getRootSimulatedCsr<FamilyType>();
-    csr->writeMemory(*event->getInOrderExecInfo()->getDeviceCounterAllocation());
+    csr->writeMemory(*event->getInOrderExecEventHelper().getDeviceCounterAllocation());
 
     zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
     zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
@@ -526,11 +526,11 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     uint32_t incValue = 0;
     zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
-    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecInfo()->getBaseDeviceAddress());
-    *event->getInOrderExecInfo()->getBaseHostAddress() = 0;
+    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
+    *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
 
     auto csr = getRootSimulatedCsr<FamilyType>();
-    csr->writeMemory(*event->getInOrderExecInfo()->getDeviceCounterAllocation());
+    csr->writeMemory(*event->getInOrderExecEventHelper().getDeviceCounterAllocation());
 
     zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
     zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());

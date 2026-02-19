@@ -1355,7 +1355,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     EXPECT_NE(nullptr, graphExecInfo);
 
     // 1st executable graph, event attached during instantiation
-    NEO::InOrderExecInfo *currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    NEO::InOrderExecInfo *currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
     EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
 
     ExecutableGraph execGraph2;
@@ -1373,21 +1373,21 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     EXPECT_NE(graphExecInfo, graph2ExecInfo);
 
     // 2nd executable graph, event attached during instantiation
-    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
     EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
 
     // 1st executable graph execution, event should be attached to 1st graphExecInfo
     returnValue = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
     EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
 
     // 2nd executable graph execution, event should be attached to 2nd graphExecInfo
     returnValue = execGraph2.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
     EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
 
     srcGraph.reset();

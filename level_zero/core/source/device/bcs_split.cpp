@@ -394,7 +394,7 @@ void BcsSplitEvents::resetAggregatedEventsStateForRecordedSubmission(const std::
 }
 
 void BcsSplitEvents::resetAggregatedEventState(size_t index, bool markerCompleted, bool keepRecordedCmdListReservation) {
-    *this->eventResources.subcopy[index]->getInOrderExecInfo()->getBaseHostAddress() = 0;
+    *this->eventResources.subcopy[index]->getInOrderExecEventHelper().getBaseHostAddress() = 0;
 
     auto &markerEvent = this->eventResources.marker[index];
     markerEvent.event->resetCompletionStatus();

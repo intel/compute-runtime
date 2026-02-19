@@ -337,7 +337,7 @@ struct Event : _ze_event_handle_t {
     void setReferenceTs(uint64_t currentCpuTimeStamp);
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKernelMappedTsCapability = false;
-    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo();
+    NEO::InOrderExecEventHelper &getInOrderExecEventHelper();
     void enableKmdWaitMode() { kmdWaitMode = true; }
     void enableInterruptMode() { interruptMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }

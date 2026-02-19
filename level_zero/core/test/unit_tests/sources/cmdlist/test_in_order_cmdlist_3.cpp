@@ -18,12 +18,12 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
     void enableEventSharing(InOrderFixtureMockEvent &event) {
         event.isSharableCounterBased = true;
 
-        if (event.getInOrderExecInfo().get()) {
-            if (event.getInOrderExecInfo()->getDeviceCounterAllocation()) {
-                static_cast<MemoryAllocation *>(event.getInOrderExecInfo()->getDeviceCounterAllocation())->internalHandle = 1;
+        if (event.getInOrderExecEventHelper().isDataAssigned()) {
+            if (event.getInOrderExecEventHelper().getDeviceCounterAllocation()) {
+                static_cast<MemoryAllocation *>(event.getInOrderExecEventHelper().getDeviceCounterAllocation())->internalHandle = 1;
             }
-            if (event.getInOrderExecInfo()->getHostCounterAllocation()) {
-                static_cast<MemoryAllocation *>(event.getInOrderExecInfo()->getHostCounterAllocation())->internalHandle = 2;
+            if (event.getInOrderExecEventHelper().getHostCounterAllocation()) {
+                static_cast<MemoryAllocation *>(event.getInOrderExecEventHelper().getHostCounterAllocation())->internalHandle = 2;
             }
         }
     }
@@ -55,7 +55,7 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
-    EXPECT_EQ(events[0]->getInOrderExecInfo()->isHostStorageDuplicated() ? 2u : 1u, mockMemoryManager->registerIpcExportedAllocationCalled);
+    EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 2u : 1u, mockMemoryManager->registerIpcExportedAllocationCalled);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventGetIpcHandle(events[1]->toHandle(), &zexIpcData));
 
@@ -105,14 +105,14 @@ HWTEST_F(InOrderIpcTests, givenIncorrectInternalHandleWhenGetIsCalledThenReturnE
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
 
-    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation());
+    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation());
     deviceAlloc->internalHandle = std::numeric_limits<uint64_t>::max();
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
-    if (events[0]->getInOrderExecInfo()->isHostStorageDuplicated()) {
+    if (events[0]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
         deviceAlloc->internalHandle = 1;
-        static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getHostCounterAllocation())->internalHandle = std::numeric_limits<uint64_t>::max();
+        static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getHostCounterAllocation())->internalHandle = std::numeric_limits<uint64_t>::max();
         EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
     }
 }
@@ -133,11 +133,11 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
     inOrderEventHelper.eventData->devicePartitions = 2;
     inOrderEventHelper.eventData->hostPartitions = 3;
 
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecInfo().get())->numDevicePartitionsToWait = 2;
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecInfo().get())->numHostPartitionsToWait = 3;
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecInfo().get())->initializeAllocationsFromHost();
-    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation());
-    auto hostAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getHostCounterAllocation());
+    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->numDevicePartitionsToWait = 2;
+    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->numHostPartitionsToWait = 3;
+    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->initializeAllocationsFromHost();
+    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation());
+    auto hostAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getHostCounterAllocation());
 
     zex_ipc_counter_based_event_handle_t zexIpcData = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
@@ -145,20 +145,20 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
     IpcCounterBasedEventData &ipcData = *reinterpret_cast<IpcCounterBasedEventData *>(zexIpcData.data);
 
     EXPECT_TRUE(deviceAlloc->internalHandle == ipcData.deviceHandle);
-    EXPECT_TRUE(events[0]->getInOrderExecInfo()->isHostStorageDuplicated() ? hostAlloc->internalHandle : 0u == ipcData.hostHandle);
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? hostAlloc->internalHandle : 0u == ipcData.hostHandle);
     EXPECT_TRUE(events[0]->counterBasedFlags == ipcData.counterBasedFlags);
     EXPECT_TRUE(device->getRootDeviceIndex() == ipcData.rootDeviceIndex);
     EXPECT_TRUE(events[0]->getInOrderExecBaseSignalValue() == ipcData.counterValue);
     EXPECT_TRUE(events[0]->signalScope == ipcData.signalScopeFlags);
     EXPECT_TRUE(events[0]->waitScope == ipcData.waitScopeFlags);
 
-    auto expectedOffset = static_cast<uint32_t>(events[0]->getInOrderExecInfo()->getBaseDeviceAddress() - events[0]->getInOrderExecInfo()->getDeviceCounterAllocation()->getGpuAddress());
+    auto expectedOffset = static_cast<uint32_t>(events[0]->getInOrderExecEventHelper().getBaseDeviceAddress() - events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation()->getGpuAddress());
     EXPECT_NE(0u, expectedOffset);
     expectedOffset += events[0]->getInOrderAllocationOffset();
 
     EXPECT_TRUE(expectedOffset == ipcData.counterOffset);
-    EXPECT_TRUE(events[0]->getInOrderExecInfo()->getNumDevicePartitionsToWait() == ipcData.devicePartitions);
-    EXPECT_TRUE(events[0]->getInOrderExecInfo()->isHostStorageDuplicated() ? events[0]->getInOrderExecInfo()->getNumHostPartitionsToWait() : events[0]->getInOrderExecInfo()->getNumDevicePartitionsToWait() == ipcData.hostPartitions);
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().getEventData()->devicePartitions == ipcData.devicePartitions);
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? events[0]->getInOrderExecEventHelper().getEventData()->hostPartitions : events[0]->getInOrderExecEventHelper().getEventData()->devicePartitions == ipcData.hostPartitions);
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
@@ -172,7 +172,7 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
     static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 0x100;
-    auto event0InOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecInfo().get());
+    auto event0InOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
     event0InOrderInfo->numDevicePartitionsToWait = 2;
     event0InOrderInfo->numHostPartitionsToWait = 3;
     event0InOrderInfo->initializeAllocationsFromHost();
@@ -192,7 +192,7 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     EXPECT_NE(nullptr, newEvent);
 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
-    auto inOrderInfo = newEventMock->getInOrderExecInfo().get();
+    auto inOrderInfo = newEventMock->getInOrderExecEventHelper().getInOrderExecInfo().get();
 
     EXPECT_FALSE(inOrderInfo->isRegularCmdList());
     EXPECT_EQ(inOrderInfo->getDeviceCounterAllocation()->getGpuAddress(), inOrderInfo->getBaseDeviceAddress());
@@ -231,7 +231,7 @@ HWTEST_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnErro
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
 
-    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation());
+    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation());
     deviceAlloc->internalHandle = NEO::MockMemoryManager::invalidSharedHandle;
 
     zex_ipc_counter_based_event_handle_t zexIpcData = {};
@@ -242,9 +242,9 @@ HWTEST_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnErro
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, zexCounterBasedEventOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
 
-    if (events[0]->getInOrderExecInfo()->isHostStorageDuplicated()) {
+    if (events[0]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
         deviceAlloc->internalHandle = 1;
-        static_cast<MemoryAllocation *>(events[0]->getInOrderExecInfo()->getHostCounterAllocation())->internalHandle = NEO::MockMemoryManager::invalidSharedHandle;
+        static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getHostCounterAllocation())->internalHandle = NEO::MockMemoryManager::invalidSharedHandle;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
@@ -273,10 +273,10 @@ HWTEST_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams) {
 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
 
-    EXPECT_TRUE(newEventMock->getInOrderExecInfo()->getExternalDeviceAllocation()->getAubInfo().writeMemoryOnly);
+    EXPECT_TRUE(newEventMock->getInOrderExecEventHelper().getDeviceCounterAllocation()->getAubInfo().writeMemoryOnly);
 
-    if (newEventMock->getInOrderExecInfo()->isHostStorageDuplicated()) {
-        EXPECT_TRUE(newEventMock->getInOrderExecInfo()->getExternalHostAllocation()->getAubInfo().writeMemoryOnly);
+    if (newEventMock->getInOrderExecEventHelper().isHostStorageDuplicated()) {
+        EXPECT_TRUE(newEventMock->getInOrderExecEventHelper().getHostCounterAllocation()->getAubInfo().writeMemoryOnly);
     }
 
     zexCounterBasedEventCloseIpcHandle(newEvent);

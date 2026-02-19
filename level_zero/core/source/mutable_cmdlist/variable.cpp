@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -151,13 +151,13 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     this->eventValue.kernelCount = event->getKernelCount();
     this->eventValue.packetCount = event->getPacketsInUse();
     if (this->eventValue.counterBasedEvent) {
-        this->eventValue.waitPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
+        this->eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
         this->eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
         if (cmdList->isQwordInOrderCounter()) {
             this->eventValue.loadRegImmCmds.reserve(2 * this->eventValue.waitPackets);
         }
         this->eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
-        auto deviceCounterAlloc = event->getInOrderExecInfo()->getDeviceCounterAllocation();
+        auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
         this->eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
     } else {
         this->eventValue.waitPackets = event->getPacketsToWait();
@@ -584,7 +584,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     }
 
     if (this->eventValue.inOrderIncrementEvent) {
-        inOrderIncrementAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress();
+        inOrderIncrementAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress();
     }
 
     if (postSyncAddress != 0 || inOrderIncrementAddress != 0) {
@@ -623,7 +623,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     bool newCbEventBoundToCmdList = false;
     bool newNooped = true;
     if (newEvent != nullptr) {
-        newInOrderInfo = &newEvent->getInOrderExecInfo();
+        newInOrderInfo = &newEvent->getInOrderExecEventHelper().getInOrderExecInfo();
         newNooped = false;
         newEventAllocation = newEvent->getAllocation(device);
         if (newEvent->isCounterBased()) {

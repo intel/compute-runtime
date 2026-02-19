@@ -1118,32 +1118,6 @@ HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPol
     }
 }
 
-HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenAggregatedEventUsageCounterIsUsedThenVerifyCorrectBehavior) {
-    MockDevice mockDevice;
-
-    uint64_t counterValue = 20;
-    uint64_t *hostAddress = &counterValue;
-    uint64_t gpuAddress = castToUint64(ptrOffset(&counterValue, 64));
-
-    MockGraphicsAllocation deviceAlloc(nullptr, gpuAddress, 1);
-
-    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, &deviceAlloc, gpuAddress, nullptr, hostAddress, counterValue, 1, 1);
-
-    EXPECT_EQ(0u, inOrderExecInfo->getAggregatedEventUsageCounter());
-
-    inOrderExecInfo->addAggregatedEventUsageCounter(5);
-    EXPECT_EQ(5u, inOrderExecInfo->getAggregatedEventUsageCounter());
-
-    inOrderExecInfo->addAggregatedEventUsageCounter(10);
-    EXPECT_EQ(15u, inOrderExecInfo->getAggregatedEventUsageCounter());
-
-    inOrderExecInfo->resetAggregatedEventUsageCounter();
-    EXPECT_EQ(0u, inOrderExecInfo->getAggregatedEventUsageCounter());
-
-    inOrderExecInfo->addAggregatedEventUsageCounter(7);
-    EXPECT_EQ(7u, inOrderExecInfo->getAggregatedEventUsageCounter());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalseWithCorrectWalkOrder) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableHwGenerationLocalIds.set(1);

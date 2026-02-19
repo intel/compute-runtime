@@ -4134,7 +4134,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, gpuAddress, immCmdList2->isQwordInOrderCounter(), false));
 
     // event
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->getInOrderExecInfo()->getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->getInOrderExecEventHelper().getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeCore) {
@@ -4447,7 +4447,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         uint64_t signalSubCopyEventGpuVa = 0;
 
         if (aggregatedEventSplit) {
-            signalSubCopyEventGpuVa = bcsSplit->events.getEventResources().subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
+            signalSubCopyEventGpuVa = bcsSplit->events.getEventResources().subcopy[engineOffset]->getInOrderExecEventHelper().getBaseDeviceAddress();
         } else {
             signalSubCopyEventGpuVa = bcsSplit->events.getEventResources().subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
         }
@@ -4543,7 +4543,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-        while (bcsSplit->events.getEventResources().subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
+        while (bcsSplit->events.getEventResources().subcopy[submissionId]->getInOrderExecEventHelper().getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
             semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
             ASSERT_NE(cmdList.end(), semaphoreItor);
 
