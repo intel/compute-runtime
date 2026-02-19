@@ -8,6 +8,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 
 #include "shared/source/aub/aub_center.h"
+#include "shared/source/aub/aub_kernel_info_helper.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -1911,70 +1912,24 @@ void ModuleImp::dumpKernelInfoToAubComments() {
 
     auto neoDevice = device->getNEODevice();
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-
     if (csr->getType() == NEO::CommandStreamReceiverType::hardware) {
         return;
     }
 
-    auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(device->getHwInfo());
-
-    std::string comments;
-    comments.append("<KernelInfo>\n");
-
-    for (auto &data : kernelImmData) {
-        auto isaAllocation = data->getIsaGraphicsAllocation();
-        if (!isaAllocation) {
-            continue;
-        }
-
-        auto isaGpuAddress = useFullAddress ? isaAllocation->getGpuAddress() : isaAllocation->getGpuAddressToPatch();
-        isaGpuAddress += data->getIsaOffsetInParentAllocation();
-
-        auto &desc = data->getDescriptor();
-        std::ostringstream os;
-        os << "name : " << desc.kernelMetadata.kernelName << "\n"
-           << "address : 0x" << std::hex << isaGpuAddress << "\n"
-           << "size: " << std::dec << data->getIsaSize() << "\n\n";
-        comments.append(os.str());
-    }
-
-    if (!symbols.empty()) {
-        comments.append("<ExportedSymbols>\n");
-        for (const auto &[name, symbol] : symbols) {
-            std::ostringstream os;
-            os << "name : " << name << "\n"
-               << "address : 0x" << std::hex << symbol.gpuAddress << "\n"
-               << "size: " << std::dec << symbol.symbol.size << "\n\n";
-            comments.append(os.str());
-        }
-    }
-
-    if (!translationUnit->options.empty()) {
-        comments.append("<BuildOptions>\n" + translationUnit->options + "\n\n");
-    }
-
-    if (isZebinBinary && translationUnit->unpackedDeviceBinary) {
-        auto deviceBinary = translationUnit->unpackedDeviceBinary.get();
-        auto deviceBinarySize = translationUnit->unpackedDeviceBinarySize;
-        auto refBin = ArrayRef<const uint8_t>::fromAny(deviceBinary, deviceBinarySize);
-
-        std::string errors;
-        std::string warnings;
-        auto zeInfoYaml = NEO::Zebin::getZeInfoFromZebin(refBin, errors, warnings);
-
-        if (!zeInfoYaml.empty()) {
-            comments.append("<Zeinfo>\n");
-            std::string zeInfo(zeInfoYaml.begin(), zeInfoYaml.size());
-            comments.append(zeInfo);
-        }
-    }
-
+    auto &options = translationUnit->options;
+    auto deviceBinary = translationUnit->unpackedDeviceBinary.get();
+    auto deviceBinarySize = translationUnit->unpackedDeviceBinarySize;
+    auto refBin = ArrayRef<const uint8_t>::fromAny(deviceBinary, deviceBinarySize);
     auto &executionEnvironment = *neoDevice->getExecutionEnvironment();
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->aubCenter.get();
-    if (aubCenter && aubCenter->getAubManager()) {
-        aubCenter->getAubManager()->addComment(comments.c_str());
+
+    if (!deviceBinary || !isZebinBinary) {
+        return;
     }
+
+    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelImmData, symbols, options, refBin);
 }
 
 ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {

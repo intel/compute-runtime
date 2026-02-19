@@ -7,6 +7,8 @@
 
 #include "program.h"
 
+#include "shared/source/aub/aub_center.h"
+#include "shared/source/aub/aub_kernel_info_helper.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -180,6 +182,38 @@ void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocati
     } else {
         this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalBuffer->getGraphicsAllocation());
     }
+}
+
+void Program::dumpKernelInfoToAubComments() {
+
+    if (NEO::debugManager.flags.PrintZeInfoInAub.get() == false) {
+        return;
+    }
+
+    auto pClDevice = clDevices[0];
+    auto csr = pClDevice->getDevice().getDefaultEngine().commandStreamReceiver;
+    if (csr->getType() == NEO::CommandStreamReceiverType::hardware) {
+        return;
+    }
+
+    auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(*rootDeviceEnvironment.getHardwareInfo());
+    auto &symbols = buildInfos[rootDeviceIndex].symbols;
+    auto &buildInfo = buildInfos[rootDeviceIndex];
+    auto deviceBinary = buildInfo.unpackedDeviceBinary.get();
+    auto deviceBinarySize = buildInfo.unpackedDeviceBinarySize;
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(deviceBinary), deviceBinarySize);
+    auto aubCenter = rootDeviceEnvironment.aubCenter.get();
+
+    if (!deviceBinary || !NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
+        return;
+    }
+
+    auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
+
+    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelInfoArray, symbols, options, refBin);
 }
 
 cl_int Program::createProgramFromBinary(

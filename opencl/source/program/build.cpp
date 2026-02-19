@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,6 +160,7 @@ cl_int Program::build(
             debugNotify(deviceVector, phaseReached);
         }
         notifyModuleCreate();
+        dumpKernelInfoToAubComments();
     } while (false);
 
     if (retVal != CL_SUCCESS) {

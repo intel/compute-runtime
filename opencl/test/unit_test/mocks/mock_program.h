@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ class MockProgram : public Program {
     using Program::createProgramFromBinary;
     using Program::debuggerInfos;
     using Program::deviceBuildInfos;
+    using Program::dumpKernelInfoToAubComments;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
     using Program::getModuleAllocations;

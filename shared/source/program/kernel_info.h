@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,7 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     inline size_t getIsaSubAllocationSize() const {
         return isaSubAllocationSize;
     }
+    const NEO::KernelDescriptor &getDescriptor() const { return kernelDescriptor; }
 
     HeapInfo heapInfo = {};
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;

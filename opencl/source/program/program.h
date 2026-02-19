@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -306,6 +306,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int createFromILExt(Context *context, const void *il, size_t length);
 
   protected:
+    void dumpKernelInfoToAubComments();
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
     cl_int packDeviceBinary(ClDevice &clDevice);
