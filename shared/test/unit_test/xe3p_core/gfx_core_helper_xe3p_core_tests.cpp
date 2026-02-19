@@ -1070,6 +1070,20 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenGrfCount512WhenHeaplessModeDisab
     }
 }
 
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenSetExtraPropertiesThenFlushLSC) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
+    EXPECT_FALSE(pipeControl.getDataportFlush());
+    EXPECT_FALSE(pipeControl.getUnTypedDataPortCacheFlush());
+
+    PipeControlArgs args = {};
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(&pipeControl, args);
+    EXPECT_TRUE(pipeControl.getDataportFlush());
+    EXPECT_TRUE(pipeControl.getUnTypedDataPortCacheFlush());
+}
+
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrierThenResourceBarrierProgrammed) {
     using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
     constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);

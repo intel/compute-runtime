@@ -108,6 +108,13 @@ bool GfxCoreHelperHw<Family>::inOrderAtomicSignallingEnabled(const RootDeviceEnv
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
 }
+
+template <>
+void MemorySynchronizationCommands<Family>::setPipeControlRequiredFields(typename Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+    pipeControl.setDataportFlush(true);
+    pipeControl.setUnTypedDataPortCacheFlush(true);
+}
+
 } // namespace NEO
 
 namespace NEO {
