@@ -1344,7 +1344,7 @@ XE3P_CORETEST_F(Xe3pSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgr
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
 }
 
 XE3P_CORETEST_F(Xe3pSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {

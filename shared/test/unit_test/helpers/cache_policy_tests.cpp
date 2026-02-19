@@ -14,6 +14,36 @@
 
 using namespace NEO;
 
+HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetDefaultL1CachePolicyThenReturnZero, IsGen12LP) {
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 0u);
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 0u);
+}
+
+HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetUncached1CachePolicyThenReturnOne, IsGen12LP) {
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), 1u);
+}
+
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsWithinXeCoreAndXe2HpgCore) {
+    using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
+}
+
+HWTEST2_F(ProductHelperTest, givenXe3CoreWhenGetL1CachePolicyThenReturnCorrectValue, IsXe3Core) {
+    using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
+    auto policy = [&](bool debuggerActive) -> uint32_t {
+        return debuggerActive ? GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP : GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
+    };
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), policy(false));
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), policy(true));
+}
+
+HWTEST2_F(ProductHelperTest, givenAtLeastXe3pCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXe3pCore) {
+    using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+}
+
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     auto policy = [&]() -> uint32_t {
