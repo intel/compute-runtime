@@ -115,31 +115,31 @@ void usage() {
                  "\n zello_sysman [OPTIONS]"
                  "\n"
                  "\n OPTIONS:"
-                 "\n  -p,   --pci                                                                       selectively run pci black box test"
-                 "\n        [--downgrade <deviceNo> <0/1>]                                              optionally set PCI link speed downgrade (0=disable, 1=enable) for particular device"
-                 "\n  -f,   --frequency                                                                 selectively run frequency black box test"
-                 "\n  -s,   --standby                                                                   selectively run standby black box test"
-                 "\n  -e,   --engine                                                                    selectively run engine black box test"
-                 "\n  -c,   --scheduler                                                                 selectively run scheduler black box test"
-                 "\n  -t,   --temperature                                                               selectively run temperature black box test"
-                 "\n  -o,   --power                                                                     selectively run power black box test"
-                 "\n        [--setlimit --sustained/--peak/--instantaneous/--burst <deviceNo limit>]    optionally set required power limit for particular device"
-                 "\n  -m,   --memory                                                                    selectively run memory black box test"
-                 "\n  -g,   --global                                                                    selectively run device/global operations black box test"
-                 "\n  -R,   --ras                                                                       selectively run ras black box test"
-                 "\n  -E,   --event                                                                     set and listen to events black box test"
-                 "\n  -r,   --reset force|noforce                                                       selectively run device reset test on all devices"
-                 "\n        [deviceNo]                                                                  optionally run device reset test only on specified device"
-                 "\n  -i,   --firmware <image>                                                          selectively run device firmware test <image> is the firmware binary needed to flash"
-                 "\n  -F,   --fabricport                                                                selectively run fabricport black box test"
-                 "\n  -d,   --diagnostics                                                               selectively run diagnostics black box test"
-                 "\n  -P,   --performance                                                               selectively run performance black box test"
-                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]                       optionally set the performance factor for the particular handle"
-                 "\n  -C,   --ecc                                                                       selectively run ecc black box test"
-                 "\n  -a,   --fan                                                                       selectively run fan black box test"
-                 "\n  -h,   --help                                                                      display help message"
-                 "\n  -re,  --rasexp                                                                    selectively run ras experimental API black box test"
-                 "\n  -v,   --vftelemetry                                                               selectively run vf telemetry API black box test"
+                 "\n  -p,   --pci                                                                                     selectively run pci black box test"
+                 "\n        [--downgrade <deviceNo> <0/1>]                                                            optionally set PCI link speed downgrade (0=disable, 1=enable) for particular device"
+                 "\n  -f,   --frequency                                                                               selectively run frequency black box test"
+                 "\n  -s,   --standby                                                                                 selectively run standby black box test"
+                 "\n  -e,   --engine                                                                                  selectively run engine black box test"
+                 "\n  -c,   --scheduler                                                                               selectively run scheduler black box test"
+                 "\n  -t,   --temperature                                                                             selectively run temperature black box test"
+                 "\n  -o,   --power                                                                                   selectively run power black box test"
+                 "\n        [--setlimit --sustained/--peak/--instantaneous/--burst/--global-limit <deviceNo limit>]   optionally set required power limit for particular device"
+                 "\n  -m,   --memory                                                                                  selectively run memory black box test"
+                 "\n  -g,   --global                                                                                  selectively run device/global operations black box test"
+                 "\n  -R,   --ras                                                                                     selectively run ras black box test"
+                 "\n  -E,   --event                                                                                   set and listen to events black box test"
+                 "\n  -r,   --reset force|noforce                                                                     selectively run device reset test on all devices"
+                 "\n        [deviceNo]                                                                                optionally run device reset test only on specified device"
+                 "\n  -i,   --firmware <image>                                                                        selectively run device firmware test <image> is the firmware binary needed to flash"
+                 "\n  -F,   --fabricport                                                                              selectively run fabricport black box test"
+                 "\n  -d,   --diagnostics                                                                             selectively run diagnostics black box test"
+                 "\n  -P,   --performance                                                                             selectively run performance black box test"
+                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]                                     optionally set the performance factor for the particular handle"
+                 "\n  -C,   --ecc                                                                                     selectively run ecc black box test"
+                 "\n  -a,   --fan                                                                                     selectively run fan black box test"
+                 "\n  -h,   --help                                                                                    display help message"
+                 "\n  -re,  --rasexp                                                                                  selectively run ras experimental API black box test"
+                 "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -201,6 +201,18 @@ void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector
     VALIDATECALL(zesDeviceGet(sysmanDriverHandle, &deviceCount, sysmanDevices.data()));
 }
 
+bool isRegularPowerLimit(const std::string &limitType) {
+    if (limitType == "--sustained" || limitType == "--peak" || limitType == "--instantaneous" || limitType == "--burst") {
+        return true;
+    }
+
+    return false;
+}
+
+bool isGlobalPowerLimit(const std::string &limitType) {
+    return (limitType == "--global-limit");
+}
+
 std::string getPowerLimitSourceType(zes_power_source_t type) {
     static const std::map<zes_power_source_t, std::string> powerLimitsSourceTypeMap{
         {ZES_POWER_SOURCE_ANY, "ZES_POWER_SOURCE_ANY"},
@@ -218,12 +230,19 @@ typedef ze_result_t(ZE_APICALL *zesIntelPowerSetLimitsExp_pfn)(
     zes_pwr_handle_t hPower,
     const uint32_t limit);
 
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceGetPowerUsageExp_pfn)(
+    zes_pwr_handle_t hPower,
+    uint32_t *pInstantPower,
+    uint32_t *pAveragePower);
+
 zesIntelPowerGetLimitsExp_pfn zesIntelPowerGetLimitsExpPtr = nullptr;
 zesIntelPowerSetLimitsExp_pfn zesIntelPowerSetLimitsExpPtr = nullptr;
+zesIntelDeviceGetPowerUsageExp_pfn zesIntelDeviceGetPowerUsageExpPtr = nullptr;
 
-void getPowerExpFunctionPointers(ze_driver_handle_t driverHandle) {
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerGetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerGetLimitsExpPtr)));
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerSetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerSetLimitsExpPtr)));
+void getPowerExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerGetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerGetLimitsExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerSetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerSetLimitsExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerUsageExp", reinterpret_cast<void **>(&zesIntelDeviceGetPowerUsageExpPtr)));
 }
 
 void getPowerLimits(const zes_pwr_handle_t &handle) {
@@ -303,30 +322,19 @@ void setPowerLimit(const zes_pwr_handle_t &handle, std::vector<std::string> &buf
     }
 }
 
-void setPowerLimitExp(const zes_pwr_handle_t &handle, uint32_t limitValue) {
-    // First get current value
-    uint32_t currentLimit = 0;
-    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &currentLimit));
+void setPowerLimitExp(const zes_pwr_handle_t &handle, std::vector<std::string> &buf) {
+    uint32_t limitValue = static_cast<uint32_t>(std::stoi(buf[3]));
 
-    if (verbose) {
-        std::cout << "Current experimental power limit: " << currentLimit << " mW" << std::endl;
-        std::cout << "Setting experimental power limit to: " << limitValue << " mW" << std::endl;
-    }
-
-    // Set the new value
+    // Set the Global power limit
     VALIDATECALL(zesIntelPowerSetLimitsExpPtr(handle, limitValue));
+    std::cout << "Power limit set to " << limitValue << " successfully." << std::endl;
 
-    // Verify by reading back
-    uint32_t verifyLimit = 0;
-    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &verifyLimit));
-
-    if (verbose) {
-        std::cout << "Successfully set experimental power limit" << std::endl;
-        std::cout << "Verified experimental power limit: " << verifyLimit << " mW" << std::endl;
-    }
-    if (verifyLimit != limitValue) {
-        std::cout << "Warning: Set value (" << limitValue << " mW) differs from read value ("
-                  << verifyLimit << " mW)" << std::endl;
+    // Read back the Global power limit to verify that the set operation took effect
+    uint32_t readBackLimit = 0;
+    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &readBackLimit));
+    if (verbose && (readBackLimit != limitValue)) {
+        std::cout << "Warning: Requested global power limit " << limitValue
+                  << " does not match applied limit " << readBackLimit << std::endl;
     }
 }
 
@@ -417,41 +425,53 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
             if (iamroot) {
                 VALIDATECALL(zesPowerSetLimits(handle, &sustainedGetDefault, nullptr, &peakGetDefault));
             }
-            if (buf.size() != 0) {
+
+            if (buf.size() != 0 && isRegularPowerLimit(buf[1])) {
                 uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[2]));
                 if (deviceIndex == curDeviceIndex) {
                     if (iamroot) {
                         setPowerLimit(handle, buf);
                     } else {
-                        std::cout << "In sufficient permissions to set power limit" << std::endl;
+                        std::cout << "Insufficient permissions to set power limit" << std::endl;
                     }
                 }
             }
             getPowerLimits(handle);
 
-            // Test experimental power limit APIs
+            // Test Global Power Limit APIs
             if (zesIntelPowerGetLimitsExpPtr && zesIntelPowerSetLimitsExpPtr) {
-                std::cout << std::endl
-                          << " --- Testing Experimental Power Limit APIs --- " << std::endl;
-
-                // Get current experimental power limit
                 uint32_t currentLimit = 0;
-                ze_result_t result = zesIntelPowerGetLimitsExpPtr(handle, &currentLimit);
+                VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &currentLimit));
+                if (verbose) {
+                    std::cout << " --- Global Power Limit --- " << std::endl;
+                    std::cout << "powerLimit = " << currentLimit << " mW" << std::endl;
+                }
 
-                if (result == ZE_RESULT_SUCCESS) {
-                    if (verbose) {
-                        std::cout << " --- Experimental Power Limit --- " << std::endl;
-                        std::cout << "powerLimit = " << currentLimit << " mW" << std::endl;
+                if (buf.size() != 0 && isGlobalPowerLimit(buf[1])) {
+                    uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[2]));
+                    if (deviceIndex == curDeviceIndex) {
+                        if (iamroot) {
+                            setPowerLimitExp(handle, buf);
+                        } else {
+                            std::cout << "Insufficient permissions to test Global Power limit set operation" << std::endl;
+                        }
                     }
+                }
+            }
 
-                    // If we're root, test set operation
-                    if (iamroot && currentLimit > 0) {
-                        setPowerLimitExp(handle, currentLimit);
-                    } else if (!iamroot) {
-                        std::cout << "Insufficient permissions to test experimental power limit set operation" << std::endl;
-                    }
-                } else {
-                    std::cout << "Experimental Power Get API returned: " << getErrorString(result) << std::endl;
+            // Test Power Usage API
+            if (zesIntelDeviceGetPowerUsageExpPtr) {
+                std::cout << std::endl
+                          << " --- Testing Power Usage API --- " << std::endl;
+
+                uint32_t instantPower = 0;
+                uint32_t averagePower = 0;
+                VALIDATECALL(zesIntelDeviceGetPowerUsageExpPtr(handle, &instantPower, &averagePower));
+
+                if (verbose) {
+                    std::cout << " --- Power Usage for " << getPowerDomainType(extProperties.domain) << " --- " << std::endl;
+                    std::cout << "Instantaneous Power = " << instantPower << " mW" << std::endl;
+                    std::cout << "Average Power = " << averagePower << " mW" << std::endl;
                 }
             }
         }
@@ -2021,7 +2041,11 @@ bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector
 }
 
 bool validatePowerLimitArguments(const size_t devCount, std::vector<std::string> &buf) {
-    if ((buf.size() != 4 || buf[0] != "--setlimit" || (!(buf[1] == "--sustained" || buf[1] == "--peak" || buf[1] == "--instantaneous" || buf[1] == "--burst")))) {
+    if ((buf.size() != 4) || (buf[0] != "--setlimit")) {
+        return false;
+    }
+
+    if (!isRegularPowerLimit(buf[1]) && !isGlobalPowerLimit(buf[1])) {
         return false;
     }
 
