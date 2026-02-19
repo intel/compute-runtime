@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -30,6 +31,7 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -5715,6 +5717,117 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
     const auto &kernImmData = module->getKernelImmutableData("kernel");
     ASSERT_NE(nullptr, kernImmData);
     EXPECT_EQ(zebin.barrierCount, kernImmData->getDescriptor().kernelAttributes.barrierCount);
+}
+
+HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCalledThenExpectedTokensAreVisible) {
+
+    class MyModuleImpl : public ModuleImp {
+      public:
+        using ModuleImp::dumpKernelInfoToAubComments;
+        using ModuleImp::ModuleImp;
+        using ModuleImp::symbols;
+        using ModuleImp::translationUnit;
+    };
+
+    DebugManagerStateRestore restorer{};
+    NEO::debugManager.flags.PrintZeInfoInAub.set(true);
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::aub;
+    neoDevice->getRootDeviceEnvironmentRef().initAubCenter(false, "", NEO::CommandStreamReceiverType::aub);
+    auto aubManager = static_cast<MockAubManager *>(neoDevice->getRootDeviceEnvironmentRef().aubCenter->getAubManager());
+
+    ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
+
+    auto copyHwInfo = device->getHwInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.setProductFamily(static_cast<uint16_t>(copyHwInfo.platform.eProductFamily));
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = zebin.storage.data();
+    moduleDesc.inputSize = zebin.storage.size();
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::make_unique<MyModuleImpl>(device, moduleBuildLog, ModuleType::user);
+    ASSERT_NE(nullptr, module.get());
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module->initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto &comments = aubManager->receivedComments;
+
+    // <KernelInfo> tag exists
+    auto kernelInfoPos = comments.find("<KernelInfo>");
+    EXPECT_NE(std::string::npos, kernelInfoPos);
+
+    // <ExportedSymbols> tag exists
+    auto exportedSymbolsPos = comments.find("<ExportedSymbols>");
+    EXPECT_NE(std::string::npos, exportedSymbolsPos);
+
+    // <BuildOptions> tag doesn't exist
+    auto buildOptionsPos = comments.find("<BuildOptions>");
+    EXPECT_EQ(std::string::npos, buildOptionsPos);
+
+    // <Zeinfo> tag exists
+    auto zeInfoPos = comments.find("<Zeinfo>");
+    EXPECT_NE(std::string::npos, zeInfoPos);
+
+    // correct ordering: <KernelInfo> before <ExportedSymbols> before <Zeinfo>
+    EXPECT_LT(kernelInfoPos, exportedSymbolsPos);
+    EXPECT_LT(exportedSymbolsPos, zeInfoPos);
+
+    // kernel names exist between <KernelInfo> and <ExportedSymbols>
+    auto kernelInfoSection = comments.substr(kernelInfoPos, exportedSymbolsPos - kernelInfoPos);
+    EXPECT_NE(std::string::npos, kernelInfoSection.find("name : kernel"));
+    EXPECT_NE(std::string::npos, kernelInfoSection.find("name : Intel_Symbol_Table_Void_Program"));
+
+    // exported symbol names exist between <ExportedSymbols> and <Zeinfo>
+    auto exportedSymbolsSection = comments.substr(exportedSymbolsPos, zeInfoPos - exportedSymbolsPos);
+    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name : fun0"));
+    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name : fun1"));
+
+    // zeinfo content exists after <Zeinfo>
+    auto zeInfoSection = comments.substr(zeInfoPos);
+    EXPECT_NE(std::string::npos, zeInfoSection.find("name: kernel"));
+    EXPECT_NE(std::string::npos, zeInfoSection.find("name: Intel_Symbol_Table_Void_Program"));
+    EXPECT_NE(std::string::npos, zeInfoSection.find("name: fun0"));
+    EXPECT_NE(std::string::npos, zeInfoSection.find("name: fun1"));
+
+    {
+        // no exported symbols, add build options
+
+        aubManager->receivedComments.clear();
+
+        std::string testBuildOptions = "-ze-opt-disable -ze-opt-greater-than-4GB-buffer-required";
+        module->translationUnit->options = testBuildOptions;
+        module->symbols.clear();
+
+        module->dumpKernelInfoToAubComments();
+
+        // <KernelInfo> tag exists
+        auto kernelInfoPos = comments.find("<KernelInfo>");
+        EXPECT_NE(std::string::npos, kernelInfoPos);
+
+        // <ExportedSymbols> tag doesn't exist
+        auto exportedSymbolsPos = comments.find("<ExportedSymbols>");
+        EXPECT_EQ(std::string::npos, exportedSymbolsPos);
+
+        // <BuildOptions> tag exists
+        auto buildOptionsPos = comments.find("<BuildOptions>");
+        EXPECT_NE(std::string::npos, buildOptionsPos);
+
+        // <Zeinfo> tag exists
+        auto zeInfoPos = comments.find("<Zeinfo>");
+        EXPECT_NE(std::string::npos, zeInfoPos);
+
+        // correct ordering: <KernelInfo> before <BuildOptions> before <Zeinfo>
+        EXPECT_LT(kernelInfoPos, buildOptionsPos);
+        EXPECT_LT(buildOptionsPos, zeInfoPos);
+    }
 }
 
 using ModuleKernelImmDataTest = Test<ModuleFixture>;

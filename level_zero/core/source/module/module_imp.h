@@ -191,6 +191,7 @@ struct ModuleImp : public Module {
     }
 
   protected:
+    void dumpKernelInfoToAubComments();
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
     bool shouldBuildBeFailed(NEO::Device *neoDevice);
     ze_result_t allocateKernelImmutableData(size_t kernelsCount);

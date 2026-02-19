@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/module/module_imp.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -20,6 +21,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -59,6 +61,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <unordered_map>
 
 #define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
@@ -652,6 +655,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
             device->getL0Debugger()->notifyModuleLoadAllocations(device->getNEODevice(), allocs);
             notifyModuleCreate();
         }
+        this->dumpKernelInfoToAubComments();
     }
     if (linkageSuccessful == false) {
         result = ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
@@ -1866,6 +1870,80 @@ size_t ModuleImp::getIsaAllocationPageSize() const {
         return MemoryConstants::pageSize2M;
     } else {
         return MemoryConstants::pageSize64k;
+    }
+}
+
+void ModuleImp::dumpKernelInfoToAubComments() {
+
+    if (NEO::debugManager.flags.PrintZeInfoInAub.get() == false) {
+        return;
+    }
+
+    auto neoDevice = device->getNEODevice();
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+
+    if (csr->getType() == NEO::CommandStreamReceiverType::hardware) {
+        return;
+    }
+
+    auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(device->getHwInfo());
+
+    std::string comments;
+    comments.append("<KernelInfo>\n");
+
+    for (auto &data : kernelImmData) {
+        auto isaAllocation = data->getIsaGraphicsAllocation();
+        if (!isaAllocation) {
+            continue;
+        }
+
+        auto isaGpuAddress = useFullAddress ? isaAllocation->getGpuAddress() : isaAllocation->getGpuAddressToPatch();
+        isaGpuAddress += data->getIsaOffsetInParentAllocation();
+
+        auto &desc = data->getDescriptor();
+        std::ostringstream os;
+        os << "name : " << desc.kernelMetadata.kernelName << "\n"
+           << "address : 0x" << std::hex << isaGpuAddress << "\n"
+           << "size: " << std::dec << data->getIsaSize() << "\n\n";
+        comments.append(os.str());
+    }
+
+    if (!symbols.empty()) {
+        comments.append("<ExportedSymbols>\n");
+        for (const auto &[name, symbol] : symbols) {
+            std::ostringstream os;
+            os << "name : " << name << "\n"
+               << "address : 0x" << std::hex << symbol.gpuAddress << "\n"
+               << "size: " << std::dec << symbol.symbol.size << "\n\n";
+            comments.append(os.str());
+        }
+    }
+
+    if (!translationUnit->options.empty()) {
+        comments.append("<BuildOptions>\n" + translationUnit->options + "\n\n");
+    }
+
+    if (isZebinBinary && translationUnit->unpackedDeviceBinary) {
+        auto deviceBinary = translationUnit->unpackedDeviceBinary.get();
+        auto deviceBinarySize = translationUnit->unpackedDeviceBinarySize;
+        auto refBin = ArrayRef<const uint8_t>::fromAny(deviceBinary, deviceBinarySize);
+
+        std::string errors;
+        std::string warnings;
+        auto zeInfoYaml = NEO::Zebin::getZeInfoFromZebin(refBin, errors, warnings);
+
+        if (!zeInfoYaml.empty()) {
+            comments.append("<Zeinfo>\n");
+            std::string zeInfo(zeInfoYaml.begin(), zeInfoYaml.size());
+            comments.append(zeInfo);
+        }
+    }
+
+    auto &executionEnvironment = *neoDevice->getExecutionEnvironment();
+    auto aubCenter = executionEnvironment.rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->aubCenter.get();
+    if (aubCenter && aubCenter->getAubManager()) {
+        aubCenter->getAubManager()->addComment(comments.c_str());
     }
 }
 

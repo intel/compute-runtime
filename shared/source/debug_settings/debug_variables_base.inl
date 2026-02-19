@@ -94,6 +94,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableDdiHandlesExtension, true, "Enable L0 Driver 
 DECLARE_DEBUG_VARIABLE(bool, BlockingEventRelease, false, "Makes clReleaseEvent blocking")
 DECLARE_DEBUG_VARIABLE(bool, Disable2WayCoherencyOverride, false, "Disable 2-way coherency override for misaligned user ptr allocations")
 DECLARE_DEBUG_VARIABLE(bool, SkipHpBcsInitialization, false, "do not initialize High Priority only BCS engine")
+DECLARE_DEBUG_VARIABLE(bool, PrintZeInfoInAub, false, "When enabled print ZeInfo in AUB")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
