@@ -177,6 +177,40 @@ HWTEST_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectS
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
 }
 
+HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_D;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_D;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto surfaceState = &imageHW->surfaceState;
+
+    ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectGreen(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectBlue(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+}
+
 HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgsAreCorrectlyStoredInNewSeparateAllocation) {
     if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
         GTEST_SKIP();

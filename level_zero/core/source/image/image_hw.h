@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct ImageCoreFamily : public ImageImp {
         return false;
     }
     void encodeImplicitArgsSurfaceState() override;
-    static constexpr uint32_t zeImageFormatSwizzleMax = ZE_IMAGE_FORMAT_SWIZZLE_X + 1u;
+    static constexpr uint32_t zeImageFormatSwizzleMax = ZE_IMAGE_FORMAT_SWIZZLE_D + 1u;
 
     const std::array<typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT, zeImageFormatSwizzleMax> shaderChannelSelect = {
         RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED,
@@ -47,7 +47,8 @@ struct ImageCoreFamily : public ImageImp {
         RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA,
         RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO,
         RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE,
-        RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO};
+        RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO,
+        RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED};
 
   protected:
     bool isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo);
