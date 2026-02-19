@@ -12,6 +12,7 @@
 
 #include <mutex>
 #include <optional>
+#include <vector>
 
 namespace NEO {
 class OSInterface;
@@ -72,6 +73,15 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
                                              bool &startOnInit,
                                              bool &startInContext);
     virtual void reInitializeContext() {}
+
+    virtual const std::vector<uint32_t> &getDrmContextIds() const {
+        return emptyIdVector;
+    }
+    virtual const std::vector<uint32_t> &getDrmVmIds() const {
+        return emptyIdVector;
+    }
+    virtual void setHangDetected() {}
+    virtual bool isHangDetected() const { return false; }
 
     static constexpr uint8_t getUmdPowerHintMax() { return NEO::OsContext::powerHintMax; }
     uint8_t getUmdPowerHintValue() { return powerHintValue; }
@@ -149,6 +159,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool initializeInternalEngineImmediately = true;
     uint8_t powerHintValue = 0;
     static constexpr inline uint8_t powerHintMax = 100u; // by definition: 100% power-saving
+    static const std::vector<uint32_t> emptyIdVector;
 
     uint32_t contextGroupCount = 0;
     const OsContext *primaryContext = nullptr;

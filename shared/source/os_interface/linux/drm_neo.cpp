@@ -271,18 +271,28 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
 }
 
 bool Drm::checkResetStatus(OsContext &osContext) {
-    const auto osContextLinux = static_cast<OsContextLinux *>(&osContext);
-    const auto &drmContextIds = osContextLinux->getDrmContextIds();
+    const auto &drmContextIds = osContext.getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
         ResetStatsFault fault{};
         uint32_t status = 0;
+        bool getResetStatsSucceeded = false;
         const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
-        UNRECOVERABLE_IF(retVal != 0);
+        if (retVal != 0) {
+            // getResetStats may fail if exec queue is destroyed or not supported
+            // Still check VM faults below
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "getResetStats failed with error %d for contextId %u, checking VM faults\n",
+                         retVal, drmContextId);
+        } else {
+            getResetStatsSucceeded = true;
+        }
         auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
-        if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
+
+        // Check for page fault from prelim extension API (only if getResetStats succeeded)
+        if (getResetStatsSucceeded && checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
             bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
             if (!banned && debuggingEnabled) {
                 return false;
@@ -305,9 +315,57 @@ bool Drm::checkResetStatus(OsContext &osContext) {
                                  banned);
             UNRECOVERABLE_IF(true);
         }
-        if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
+
+        // Check for page fault from upstream VM get property API
+        // Query VM faults independently - they may exist even before exec queue is banned
+        bool banned = getResetStatsSucceeded ? ((status & ioctlHelper->getStatusForResetStats(true)) != 0) : false;
+        if (checkToDisableScratchPage()) {
+            // Use per-context VM IDs if available, otherwise fall back to shared VM IDs
+            const auto &contextVmIds = osContext.getDrmVmIds();
+            std::vector<uint32_t> vmIdsToCheck;
+            if (!contextVmIds.empty()) {
+                vmIdsToCheck = contextVmIds;
+            } else {
+                // For Xe driver without per-context VMs, use the shared virtualMemoryIds
+                for (size_t i = 0; i < virtualMemoryIds.size(); i++) {
+                    if (virtualMemoryIds[i] != 0) {
+                        vmIdsToCheck.push_back(virtualMemoryIds[i]);
+                    }
+                }
+            }
+
+            for (const auto vmId : vmIdsToCheck) {
+                std::vector<ResetStatsFault> vmFaults;
+                if (ioctlHelper->getVmFaults(vmId, vmFaults) == 0 && !vmFaults.empty()) {
+                    if (!banned && debuggingEnabled) {
+                        return false;
+                    }
+                    for (const auto &vmFault : vmFaults) {
+                        IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, vm_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                             vmFault.addr,
+                                             vmId,
+                                             EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                             vmFault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(vmFault.type)).c_str(),
+                                             vmFault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(vmFault.level)).c_str(),
+                                             vmFault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(vmFault.access)).c_str(),
+                                             banned);
+                        IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, vm_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                             vmFault.addr,
+                                             vmId,
+                                             EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                             vmFault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(vmFault.type)).c_str(),
+                                             vmFault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(vmFault.level)).c_str(),
+                                             vmFault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(vmFault.access)).c_str(),
+                                             banned);
+                    }
+                    UNRECOVERABLE_IF(true);
+                }
+            }
+        }
+
+        if (getResetStatsSucceeded && (resetStats.batchActive > 0 || resetStats.batchPending > 0)) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
-            osContextLinux->setHangDetected();
+            osContext.setHangDetected();
             return true;
         }
     }
@@ -1766,9 +1824,10 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     }
 
     bool useVmBind = isVmBindAvailable();
-    bool enablePageFault = hasPageFaultSupport() && useVmBind;
+    bool disableScratch = checkToDisableScratchPage();
+    bool enablePageFault = (hasPageFaultSupport() && useVmBind) || disableScratch;
 
-    ctl.flags = ioctlHelper->getFlagsForVmCreate(checkToDisableScratchPage(), enablePageFault, useVmBind);
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
 
     auto ret = ioctlHelper->ioctl(DrmIoctl::gemVmCreate, &ctl);
 

@@ -78,6 +78,26 @@ TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinit
     delete pOsContext;
 }
 
+TEST(OSContext, givenBaseOsContextWhenCallingDrmMethodsThenDefaultImplementationsAreUsed) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+
+    // Test getDrmContextIds - should return empty vector
+    const auto &contextIds = pOsContext->getDrmContextIds();
+    EXPECT_TRUE(contextIds.empty());
+
+    // Test getDrmVmIds - should return empty vector
+    const auto &vmIds = pOsContext->getDrmVmIds();
+    EXPECT_TRUE(vmIds.empty());
+
+    // Test setHangDetected and isHangDetected - base implementation does nothing
+    EXPECT_FALSE(pOsContext->isHangDetected());
+    pOsContext->setHangDetected();
+    EXPECT_FALSE(pOsContext->isHangDetected()); // Should still be false (base impl is no-op)
+
+    delete pOsContext;
+}
+
 TEST(OSContext, givenSetPowerHintThenGetPowerHintShowsTheSameValue) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
     auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);

@@ -56,11 +56,24 @@ struct DrmMockXe : public DrmMockCustom {
 
     int waitUserFenceReturn = 0;
     int execQueueBanPropertyReturn = 0;
+    int getResetStatsReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;
     bool ioctlCalled = false;
     bool forceMmapOffsetFail = false;
+
+    // VM faults mock data
+    struct VmFaultMock {
+        uint64_t address;
+        uint32_t addressPrecision;
+        uint8_t accessType;
+        uint8_t faultType;
+        uint8_t faultLevel;
+    };
+    std::vector<VmFaultMock> mockVmFaults;
+    int vmGetPropertyCallCount = 0;
+    int vmGetPropertyFailOnCall = 0; // 0 = never fail, N = fail on Nth call
 
   protected:
     // Don't call directly, use the create() function

@@ -1422,7 +1422,7 @@ TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) 
     EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::gemExecbuffer2, nullptr));
 }
 
-TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenNoHangDetected) {
     MockExecutionEnvironment executionEnvironment{};
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
@@ -1433,7 +1433,9 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+    // getResetStats fails (no resetStatsToReturn entries), but gracefully handled
+    EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
+    EXPECT_FALSE(mockOsContextLinux.isHangDetected());
 }
 
 TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCalledThenNoHangIsReported) {
