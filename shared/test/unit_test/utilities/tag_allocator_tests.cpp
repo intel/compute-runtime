@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,9 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <cstdint>
+#include <limits>
 
 using namespace NEO;
 
@@ -642,4 +644,50 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_NO_THROW(timestampPacketsNode.getGlobalEndValue(0));
         EXPECT_NO_THROW(timestampPacketsNode.getGlobalStartValue(0));
     }
+}
+
+TEST_F(TagAllocatorTest, givenTagNodeWithoutAllocatorWhenMarkAsAbortedThenResetTagValueWithoutCallback) {
+    TagNode<DeviceAllocNodeType<true>> node = {};
+    DeviceAllocNodeType<true> data = {};
+    data.initialize(0x1234);
+    node.tagForCpuAccess = &data;
+
+    node.markAsAborted();
+
+    EXPECT_EQ(0u, *reinterpret_cast<uint64_t *>(node.getCpuBase()));
+}
+
+TEST_F(TagAllocatorTest, givenAllocatorCallbackWhenInitializingTagThenNotifyCallbackOnTagInitialization) {
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(memoryManager, 1u, 64u, deviceBitfield);
+    uint32_t callbackCallCount = 0u;
+    uint64_t updatedOffset = std::numeric_limits<uint64_t>::max();
+    size_t updatedSize = 0u;
+
+    tagAllocator.setTagNodeUpdateCallback([&](TagNodeBase &, uint64_t tagOffset, size_t chunkSize) {
+        callbackCallCount++;
+        updatedOffset = tagOffset;
+        updatedSize = chunkSize;
+    });
+
+    auto *tagNode = static_cast<TagNode<DeviceAllocNodeType<true>> *>(tagAllocator.getTag());
+    ASSERT_NE(nullptr, tagNode);
+
+    EXPECT_EQ(1u, callbackCallCount);
+    EXPECT_EQ(0u, updatedOffset);
+    EXPECT_EQ(tagAllocator.getTagSize(), updatedSize);
+}
+
+TEST_F(TagAllocatorTest, givenTimestampTagNodeWithoutAllocatorWhenAssigningPacketDataThenCopyPacketData) {
+    using TimestampType = TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>;
+    TagNode<TimestampType> node = {};
+    TimestampType data = {};
+    node.tagForCpuAccess = &data;
+
+    const std::array<uint32_t, 4> sourcePacket = {1u, 2u, 3u, 4u};
+    node.assignDataToAllTimestamps(0u, sourcePacket.data());
+
+    EXPECT_EQ(1u, node.getContextStartValue(0u));
+    EXPECT_EQ(2u, node.getGlobalStartValue(0u));
+    EXPECT_EQ(3u, node.getContextEndValue(0u));
+    EXPECT_EQ(4u, node.getGlobalEndValue(0u));
 }

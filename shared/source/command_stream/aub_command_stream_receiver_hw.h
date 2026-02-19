@@ -42,6 +42,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
+    bool isChunkCopySupportedForSimulation() const override { return aubManager != nullptr; }
+    void setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) override {
+        this->setAubWritable(writable, gfxAllocation);
+    }
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void writeMMIO(uint32_t offset, uint32_t value) override;
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);

@@ -62,6 +62,10 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
+    bool isChunkCopySupportedForSimulation() const override { return true; }
+    void setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) override {
+        this->setTbxWritable(writable, gfxAllocation);
+    }
     void writeMMIO(uint32_t offset, uint32_t value) override;
     bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
     void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;

@@ -20,6 +20,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
@@ -67,6 +68,7 @@
 #include <chrono>
 #include <functional>
 #include <limits>
+#include <vector>
 
 StreamCapture capture;
 
@@ -100,6 +102,52 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     MemoryManager *memoryManager = nullptr;
     InternalAllocationStorage *internalAllocationStorage = nullptr;
     bool heaplessStateInit = false;
+};
+
+template <typename GfxFamily>
+struct SimulationWriteTrackingCsr : public UltCommandStreamReceiver<GfxFamily> {
+    using BaseClass = UltCommandStreamReceiver<GfxFamily>;
+    using BaseClass::BaseClass;
+
+    bool isChunkCopySupportedForSimulation() const override {
+        return chunkCopySupported;
+    }
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        writeMemoryCallCount++;
+        lastWriteAllocation = &gfxAllocation;
+        lastChunkCopyMode = isChunkCopy;
+        lastChunkOffset = gpuVaChunkOffset;
+        lastChunkSize = chunkSize;
+        return writeMemoryReturnValue;
+    }
+
+    void setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) override {
+        setWritableCallCount++;
+        lastWritableAllocation = &gfxAllocation;
+        writableTransitions.push_back(writable);
+    }
+
+    bool chunkCopySupported = false;
+    bool writeMemoryReturnValue = true;
+    uint32_t writeMemoryCallCount = 0;
+    uint32_t setWritableCallCount = 0;
+    GraphicsAllocation *lastWriteAllocation = nullptr;
+    GraphicsAllocation *lastWritableAllocation = nullptr;
+    uint64_t lastChunkOffset = 0;
+    size_t lastChunkSize = 0;
+    bool lastChunkCopyMode = false;
+    std::vector<bool> writableTransitions = {};
+};
+
+using SimulationUploadTagType = TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>;
+
+struct MockTagNodeForSimulationUpload : public TagNode<SimulationUploadTagType> {
+    MockTagNodeForSimulationUpload(MultiGraphicsAllocation *allocation, uint64_t gpuAddress, void *cpuBase) {
+        this->gfxAllocation = allocation;
+        this->gpuAddress = gpuAddress;
+        this->tagForCpuAccess = reinterpret_cast<SimulationUploadTagType *>(cpuBase);
+    }
 };
 
 TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueThenProperTaskCountIsReturned) {
@@ -534,6 +582,185 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
     EXPECT_EQ(WaitStatus::ready, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingAllocationChunkWithZeroSizeThenSkipUpload) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    uint8_t storage[32] = {};
+    MockGraphicsAllocation allocation(storage, 0x1000, sizeof(storage));
+
+    csr.writeAllocationChunkToSimulation(allocation, 4u, 0u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+    EXPECT_EQ(0u, csr.setWritableCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNonSimulationModeWhenWritingAllocationChunkThenSkipUpload) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+
+    uint8_t storage[32] = {};
+    MockGraphicsAllocation allocation(storage, 0x1800, sizeof(storage));
+
+    csr.writeAllocationChunkToSimulation(allocation, 4u, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+    EXPECT_EQ(0u, csr.setWritableCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenAubModeWhenWritingAllocationChunkThenUploadIsAllowed) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[32] = {};
+    MockGraphicsAllocation allocation(storage, 0x1a00, sizeof(storage));
+
+    csr.writeAllocationChunkToSimulation(allocation, 4u, 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_TRUE(csr.lastChunkCopyMode);
+    EXPECT_EQ(4u, csr.lastChunkOffset);
+    EXPECT_EQ(8u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingAllocationChunkThenUseChunkOffsetAndRestoreWritableForOneTimeAllocation) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+    allocation.allocationType = AllocationType::tagBuffer;
+
+    csr.writeAllocationChunkToSimulation(allocation, 8u, 16u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&allocation, csr.lastWriteAllocation);
+    EXPECT_TRUE(csr.lastChunkCopyMode);
+    EXPECT_EQ(8u, csr.lastChunkOffset);
+    EXPECT_EQ(16u, csr.lastChunkSize);
+    EXPECT_EQ(2u, csr.setWritableCallCount);
+    ASSERT_EQ(2u, csr.writableTransitions.size());
+    EXPECT_EQ(true, csr.writableTransitions[0]);
+    EXPECT_EQ(false, csr.writableTransitions[1]);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagNodeInAdditionalAllocationWhenUploadingTagChunkThenWriteExpectedChunkRange) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t rootStorage[64] = {};
+    uint8_t additionalStorage[64] = {};
+    MockGraphicsAllocation rootAllocation(rootStorage, 0x3000, sizeof(rootStorage));
+    MockGraphicsAllocation additionalAllocation(1u, additionalStorage, sizeof(additionalStorage));
+    additionalAllocation.gpuAddress = 0x4000;
+
+    MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&rootAllocation);
+    multiAllocation.addAllocation(&additionalAllocation);
+
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x4020, additionalStorage + 0x20);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 4u, 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&additionalAllocation, csr.lastWriteAllocation);
+    EXPECT_TRUE(csr.lastChunkCopyMode);
+    EXPECT_EQ(0x24u, csr.lastChunkOffset);
+    EXPECT_EQ(8u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenEmptyMultiAllocationWhenUploadingTagChunkThenSkipWrite) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    MultiGraphicsAllocation multiAllocation(0);
+    uint8_t storage[64] = {};
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x7000, storage);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 0u, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagNodeOutsideAllocationRangeWhenUploadingTagChunkThenSkipWrite) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation rootAllocation(storage, 0x5000, sizeof(storage));
+
+    MultiGraphicsAllocation multiAllocation(0);
+    multiAllocation.addAllocation(&rootAllocation);
+
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x4ff0, nullptr);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 0u, 8u);
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagNodeWithNoCpuBackedAllocationWhenUploadingTagChunkThenUseGpuOffsetPath) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    MockGraphicsAllocation rootAllocation(nullptr, 0x5800, 64u);
+
+    MultiGraphicsAllocation multiAllocation(0);
+    multiAllocation.addAllocation(&rootAllocation);
+
+    uint8_t storage[64] = {};
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x5810, storage);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 4u, 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&rootAllocation, csr.lastWriteAllocation);
+    EXPECT_TRUE(csr.lastChunkCopyMode);
+    EXPECT_EQ(0x14u, csr.lastChunkOffset);
+    EXPECT_EQ(8u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNoRootAllocationAndNoMatchingRangeWhenUploadingTagChunkThenFallbackAllocationStillSkipsWrite) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation nonRootAllocation(1u, storage, sizeof(storage));
+    nonRootAllocation.gpuAddress = 0x9000;
+
+    MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&nonRootAllocation);
+
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x8ff0, nullptr);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 0u, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenChunkOffsetOutsideAllocationWhenUploadingTagChunkThenSkipWrite) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation rootAllocation(storage, 0x6000, sizeof(storage));
+
+    MultiGraphicsAllocation multiAllocation(0);
+    multiAllocation.addAllocation(&rootAllocation);
+
+    MockTagNodeForSimulationUpload tagNode(&multiAllocation, 0x6000, storage);
+
+    csr.writeTagAllocationChunkToSimulation(tagNode, 80u, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {

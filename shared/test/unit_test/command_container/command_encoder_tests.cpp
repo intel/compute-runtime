@@ -383,6 +383,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUpload
     MockDevice mockDevice;
     auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
 
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
     MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
@@ -393,19 +394,212 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUpload
 
     auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, hostNode, mockDevice, 2, true, false);
     EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
-    EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(2u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
 
     inOrderExecInfo->reset();
     EXPECT_EQ(4u, csr.writeMemoryParams.totalCallCount);
-    EXPECT_EQ(2u, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(4u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
 
     inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, nullptr, mockDevice, 2, true, false);
     EXPECT_EQ(5u, csr.writeMemoryParams.totalCallCount);
-    EXPECT_EQ(3u, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(5u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
 
     inOrderExecInfo->reset();
     EXPECT_EQ(6u, csr.writeMemoryParams.totalCallCount);
-    EXPECT_EQ(4u, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(6u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+}
+
+HWTEST_F(CommandEncoderTests, givenAtomicSignallingAndDuplicatedHostStorageWhenResetCalledThenSkipDeviceCounterUploadToSimulation) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+    auto hostNode = hostTagAllocator.getTag();
+
+    auto hostAllocation = hostNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex());
+    auto deviceAllocation = deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex());
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, hostNode, mockDevice, 2, true, true);
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(hostAllocation, csr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_NE(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    inOrderExecInfo->reset();
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(hostAllocation, csr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_NE(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(CommandEncoderTests, givenAtomicSignallingWithoutDuplicatedHostStorageWhenUploadingAllocationsThenDoNotSkipDeviceNodeUpload) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, nullptr, mockDevice, 2, true, true);
+    csr.writeMemoryParams = {};
+
+    inOrderExecInfo->initializeAllocationsFromHost(false);
+    inOrderExecInfo->uploadAllocationsToSimulation();
+
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex()),
+              csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenInitializeAllocationsFromHostWithoutUploadThenUploadIsDeferred) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, nullptr, mockDevice, 2, true, false);
+
+    csr.writeMemoryParams = {};
+    inOrderExecInfo->initializeAllocationsFromHost(false);
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
+
+    inOrderExecInfo->uploadAllocationsToSimulation();
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+
+    inOrderExecInfo->uploadAllocationsToSimulation();
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+}
+
+HWTEST_F(CommandEncoderTests, givenNullSimulationUploadCsrWhenSetThenUseDefaultCsrForSimulationParams) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::immWritePostSyncWriteOffset;
+        using InOrderExecInfo::InOrderExecInfo;
+        using InOrderExecInfo::isSimulationMode;
+        using InOrderExecInfo::simulationUploadCsr;
+    };
+
+    MockDevice mockDevice;
+    auto &defaultCsr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    defaultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 1, true, false);
+
+    inOrderExecInfo.setSimulationUploadCsr(nullptr);
+
+    EXPECT_EQ(nullptr, inOrderExecInfo.simulationUploadCsr);
+    EXPECT_TRUE(inOrderExecInfo.isSimulationMode);
+    EXPECT_EQ(std::max(defaultCsr.getImmWritePostSyncWriteOffset(), static_cast<uint32_t>(sizeof(uint64_t))),
+              inOrderExecInfo.immWritePostSyncWriteOffset);
+}
+
+HWTEST_F(CommandEncoderTests, givenExplicitSimulationUploadCsrWhenSettingThenEvaluateAubAndNonSimulationModes) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::immWritePostSyncWriteOffset;
+        using InOrderExecInfo::InOrderExecInfo;
+        using InOrderExecInfo::isSimulationMode;
+        using InOrderExecInfo::simulationUploadCsr;
+    };
+
+    MockDevice mockDevice;
+    auto &defaultCsr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    defaultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 1, true, false);
+
+    UltCommandStreamReceiver<FamilyType> explicitHardwareCsr(*mockDevice.getExecutionEnvironment(), mockDevice.getRootDeviceIndex(), mockDevice.getDeviceBitfield());
+    explicitHardwareCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    inOrderExecInfo.setSimulationUploadCsr(&explicitHardwareCsr);
+    EXPECT_EQ(&explicitHardwareCsr, inOrderExecInfo.simulationUploadCsr);
+    EXPECT_FALSE(inOrderExecInfo.isSimulationMode);
+
+    UltCommandStreamReceiver<FamilyType> explicitAubCsr(*mockDevice.getExecutionEnvironment(), mockDevice.getRootDeviceIndex(), mockDevice.getDeviceBitfield());
+    explicitAubCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    inOrderExecInfo.setSimulationUploadCsr(&explicitAubCsr);
+    EXPECT_EQ(&explicitAubCsr, inOrderExecInfo.simulationUploadCsr);
+    EXPECT_TRUE(inOrderExecInfo.isSimulationMode);
+    EXPECT_EQ(std::max(explicitAubCsr.getImmWritePostSyncWriteOffset(), static_cast<uint32_t>(sizeof(uint64_t))),
+              inOrderExecInfo.immWritePostSyncWriteOffset);
+}
+
+HWTEST_F(CommandEncoderTests, givenNullSimulationUploadCsrWhenUploadingCounterNodeThenSkipUpload) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::InOrderExecInfo;
+        using InOrderExecInfo::uploadCounterNodeToSimulation;
+    };
+
+    MockDevice mockDevice;
+    auto &defaultCsr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    defaultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 1, true, false);
+    defaultCsr.writeMemoryParams = {};
+
+    inOrderExecInfo.setSimulationUploadCsr(nullptr);
+    inOrderExecInfo.uploadCounterNodeToSimulation(*deviceNode, sizeof(uint64_t));
+
+    EXPECT_EQ(0u, defaultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(CommandEncoderTests, givenNonSimulationCsrWhenUploadingAllocationsThenSkipSimulationUpload) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, nullptr, mockDevice, 2, true, false);
+    csr.writeMemoryParams = {};
+
+    inOrderExecInfo->initializeAllocationsFromHost(false);
+    inOrderExecInfo->uploadAllocationsToSimulation();
+
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(CommandEncoderTests, givenHostOnlyCounterNodeWhenUploadingAllocationsThenUploadHostNodeOnly) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+    auto hostNode = hostTagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, hostNode, mockDevice, 2, true, false);
+    csr.writeMemoryParams = {};
+
+    inOrderExecInfo->initializeAllocationsFromHost(false);
+    inOrderExecInfo->uploadAllocationsToSimulation();
+
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(hostNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex()),
+              csr.writeMemoryParams.latestGfxAllocation);
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValues) {

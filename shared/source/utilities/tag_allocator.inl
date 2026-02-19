@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,25 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
+template <typename TagType>
+void TagNode<TagType>::initialize() {
+    auto *tagAllocator = static_cast<TagAllocator<TagType> *>(allocator);
+    UNRECOVERABLE_IF(tagAllocator == nullptr);
+
+    tagForCpuAccess->initialize(tagAllocator->getInitialValue());
+    packetsUsed = 1;
+    setProfilingCapable(true);
+    tagAllocator->notifyTagNodeUpdated(*this, 0, tagAllocator->getTagSize());
+}
+
+template <typename TagType>
+void TagNode<TagType>::markAsAborted() {
+    tagForCpuAccess->initialize(0);
+    if (allocator != nullptr) {
+        allocator->notifyTagNodeUpdated(*this, 0, allocator->getTagSize());
+    }
+}
+
 template <typename TagType>
 TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment,
                                     size_t tagSize, ValueT initialValue, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield)
@@ -256,7 +275,13 @@ template <typename TagType>
 void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] const void *source) {
     if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         UNRECOVERABLE_IF(packetIndex >= tagForCpuAccess->getPacketCount());
-        return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
+        constexpr size_t packetSize = TagType::getSinglePacketSize();
+        tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
+        if (allocator != nullptr) {
+            const uint64_t packetOffset = static_cast<uint64_t>(packetIndex) * packetSize;
+            allocator->notifyTagNodeUpdated(*this, packetOffset, packetSize);
+        }
+        return;
     } else {
         UNRECOVERABLE_IF(true);
     }

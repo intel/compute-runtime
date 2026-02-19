@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,11 +127,53 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::expectMemory(const void *gfxAddr
 
 template <typename BaseCSR>
 bool CommandStreamReceiverWithAUBDump<BaseCSR>::writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
+    const bool chunkWriteForAub = isChunkCopy && ((aubCSR == nullptr) || aubCSR->isChunkCopySupportedForSimulation());
+    const uint64_t aubChunkOffset = chunkWriteForAub ? gpuVaChunkOffset : 0;
+    const size_t aubChunkSize = chunkWriteForAub ? chunkSize : 0;
+    bool aubWriteStatus = true;
     if (aubCSR) {
-        [[maybe_unused]] auto result = aubCSR->writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
-        DEBUG_BREAK_IF(!result);
+        aubWriteStatus = aubCSR->writeMemory(gfxAllocation,
+                                             chunkWriteForAub,
+                                             aubChunkOffset,
+                                             aubChunkSize);
+        DEBUG_BREAK_IF(!aubWriteStatus);
     }
-    return BaseCSR::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+
+    const bool chunkWriteForBase = isChunkCopy && BaseCSR::isChunkCopySupportedForSimulation();
+    const uint64_t baseChunkOffset = chunkWriteForBase ? gpuVaChunkOffset : 0;
+    const size_t baseChunkSize = chunkWriteForBase ? chunkSize : 0;
+    const bool baseWriteStatus = BaseCSR::writeMemory(gfxAllocation,
+                                                      chunkWriteForBase,
+                                                      baseChunkOffset,
+                                                      baseChunkSize);
+
+    if (BaseCSR::getType() == CommandStreamReceiverType::hardware) {
+        return aubCSR ? aubWriteStatus : baseWriteStatus;
+    }
+
+    if (aubCSR) {
+        return aubWriteStatus && baseWriteStatus;
+    }
+
+    return baseWriteStatus;
+}
+
+template <typename BaseCSR>
+bool CommandStreamReceiverWithAUBDump<BaseCSR>::isChunkCopySupportedForSimulation() const {
+    const bool aubChunkCopySupported = (aubCSR == nullptr) || aubCSR->isChunkCopySupportedForSimulation();
+    if (BaseCSR::getType() == CommandStreamReceiverType::hardware) {
+        return aubChunkCopySupported;
+    }
+
+    return BaseCSR::isChunkCopySupportedForSimulation() || aubChunkCopySupported;
+}
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) {
+    BaseCSR::setWritableForSimulation(writable, gfxAllocation);
+    if (aubCSR) {
+        aubCSR->setWritableForSimulation(writable, gfxAllocation);
+    }
 }
 
 template <typename BaseCSR>

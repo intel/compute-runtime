@@ -350,6 +350,30 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenQueryingRequiredSize
     EXPECT_NE(0u, hostNodeAddress);
 }
 
+HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenClearingInOrderExecCounterAllocationThenResetHostCounterStorage) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto *hostAddress = regularCmdList->inOrderExecInfo->getBaseHostAddress();
+    ASSERT_NE(nullptr, hostAddress);
+
+    *hostAddress = 0x1234;
+    regularCmdList->clearInOrderExecCounterAllocation();
+
+    EXPECT_EQ(regularCmdList->inOrderExecInfo->getInitialCounterValue(), *hostAddress);
+}
+
+HWTEST_F(InOrderRegularCmdListTests, givenOutOfOrderCmdListWhenClearingInOrderExecCounterAllocationThenDoNothing) {
+    auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, EngineGroupType::renderCompute, 0u));
+    EXPECT_FALSE(cmdList->isInOrderExecutionEnabled());
+    EXPECT_EQ(nullptr, cmdList->inOrderExecInfo.get());
+
+    cmdList->clearInOrderExecCounterAllocation();
+
+    EXPECT_EQ(nullptr, cmdList->inOrderExecInfo.get());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             InOrderRegularCmdListTests,
             givenPatchPreambleWhenExecutingInOrderCommandListThenPatchInOrderExecInfoSpace) {

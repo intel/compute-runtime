@@ -1992,6 +1992,7 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables
     csr.timestampPacketWriteEnabled = true;
 
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
 
     constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
 
@@ -2007,6 +2008,57 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables
     EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
     EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(allocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(TimestampPacketTests, givenTbxCsrWhenReusingTagNodeThenEveryNodeUpdateIsUploadedToSimulation) {
+    auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    csr.timestampPacketWriteEnabled = true;
+
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+
+    csr.writeMemoryParams = {};
+
+    auto firstNode = mockTagAllocator->getTag();
+    auto expectedAllocation = firstNode->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(expectedAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    firstNode->returnTag();
+    auto reusedNode = mockTagAllocator->getTag();
+
+    EXPECT_EQ(firstNode, reusedNode);
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(expectedAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    reusedNode->assignDataToAllTimestamps(0, reusedNode->getCpuBase());
+    EXPECT_EQ(3u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(expectedAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    reusedNode->returnTag();
+}
+
+HWTEST_F(TimestampPacketTests, givenHwCsrWhenSettingTagAllocatorForSimulationThenTagUpdatesAreNotUploaded) {
+    auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    csr.timestampPacketWriteEnabled = true;
+
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+
+    csr.writeMemoryParams = {};
+    auto node = mockTagAllocator->getTag();
+
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
+
+    node->returnTag();
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {

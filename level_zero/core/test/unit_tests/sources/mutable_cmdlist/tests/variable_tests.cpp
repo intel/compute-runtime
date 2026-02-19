@@ -7,11 +7,13 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/variable_fixture.h"
 
 namespace L0 {
@@ -1649,6 +1651,43 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->eventValue.event, newEvent);
     EXPECT_EQ(this->cmdListInOrderAllocationOffset, newEvent->getInOrderAllocationOffset());
     EXPECT_EQ(this->cmdListInOrderCounterValue, newEvent->getInOrderExecBaseSignalValue());
+    EXPECT_TRUE(newEvent->hasInOrderTimestampNode());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenStandaloneProfilingNodeWhenMutatingSignalEventOnImmediateBaseThenUseImmediateCsrForSimulationUpload) {
+    auto event = this->createTestEvent(true, false, true, false);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event);
+
+    createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
+    auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_TRUE(this->variable->eventValue.hasStandaloneProfilingNode);
+
+    auto newEvent = this->createTestEvent(true, false, true, false);
+    ASSERT_NE(nullptr, newEvent);
+
+    auto uploadCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*this->device->getNEODevice()->getExecutionEnvironment(),
+                                                                            this->device->getNEODevice()->getRootDeviceIndex(),
+                                                                            this->device->getNEODevice()->getDeviceBitfield());
+    uploadCsr->commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    uploadCsr->writeMemoryParams = {};
+
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    auto immediateQueue = std::make_unique<Mock<CommandQueue>>(this->device, uploadCsr.get(), &queueDesc);
+    auto previousCmdListType = this->mockBaseCmdList->cmdListType;
+    auto *previousImmediateQueue = this->mockBaseCmdList->cmdQImmediate;
+    this->mockBaseCmdList->cmdListType = CommandList::CommandListType::typeImmediate;
+    this->mockBaseCmdList->cmdQImmediate = immediateQueue.get();
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    this->mockBaseCmdList->cmdQImmediate = previousImmediateQueue;
+    this->mockBaseCmdList->cmdListType = previousCmdListType;
+
+    EXPECT_EQ(1u, uploadCsr->writeMemoryParams.totalCallCount);
     EXPECT_TRUE(newEvent->hasInOrderTimestampNode());
 }
 

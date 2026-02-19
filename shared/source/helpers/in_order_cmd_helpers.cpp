@@ -72,57 +72,82 @@ InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *ho
         deviceAddress = deviceCounterNode->getGpuAddress();
     }
 
-    auto csr = device.getDefaultEngine().commandStreamReceiver;
-    isTbx = csr->isTbxMode();
-    immWritePostSyncWriteOffset = std::max(csr->getImmWritePostSyncWriteOffset(), static_cast<uint32_t>(sizeof(uint64_t)));
+    setSimulationUploadCsr(device.getDefaultEngine().commandStreamReceiver);
 
     reset();
 }
 
-void InOrderExecInfo::uploadToTbx(TagNodeBase &node, size_t size) {
-    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+void InOrderExecInfo::setSimulationUploadCsr(NEO::CommandStreamReceiver *csr) {
+    simulationUploadCsr = csr;
 
-    auto csr = device.getDefaultEngine().commandStreamReceiver;
-
-    auto allocation = node.getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
-    auto offset = ptrDiff(node.getGpuAddress(), allocation->getGpuAddress()) + this->allocationOffset;
-
-    if (allocation->isTbxWritable(allBanks)) {
-        // initialize full page tables for the first time
-        csr->writeMemory(*allocation, false, 0, 0);
-    } else {
-        // chunk write if allocation already initialized
-        allocation->setTbxWritable(true, allBanks);
-        csr->writeMemory(*allocation, true, offset, size);
-    }
-    allocation->setTbxWritable(false, allBanks);
+    auto selectedCsr = simulationUploadCsr ? simulationUploadCsr : device.getDefaultEngine().commandStreamReceiver;
+    immWritePostSyncWriteOffset = std::max(selectedCsr->getImmWritePostSyncWriteOffset(), static_cast<uint32_t>(sizeof(uint64_t)));
+    isSimulationMode = selectedCsr->isTbxMode() || selectedCsr->isAubMode();
 }
 
-void InOrderExecInfo::initializeAllocationsFromHost() {
-    const uint64_t initialValue = getInitialCounterValue();
+void InOrderExecInfo::uploadCounterNodeToSimulation(TagNodeBase &node, size_t size) {
+    if (!simulationUploadCsr) {
+        return;
+    }
+    simulationUploadCsr->writeTagAllocationChunkToSimulation(node, this->allocationOffset, size);
+}
+
+void InOrderExecInfo::uploadAllocationsToSimulation() {
+    if (!isSimulationMode || !simulationUploadCsr) {
+        return;
+    }
+
+    const bool csrChanged = (lastSimulationUploadCsr != simulationUploadCsr);
+    if (!simulationUploadDirty && !csrChanged) {
+        return;
+    }
+
+    const auto getUploadSize = [&](uint32_t partitionCount) -> size_t {
+        return alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * partitionCount;
+    };
 
     if (deviceCounterNode) {
-        for (uint32_t i = 0; i < numDevicePartitionsToWait; i++) {
-            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(deviceCounterNode->getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
-            *ptr = initialValue;
-        }
-
-        if (isTbx) {
-            const size_t deviceAllocationWriteSize = alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * numDevicePartitionsToWait;
-            uploadToTbx(*deviceCounterNode, deviceAllocationWriteSize);
+        // In atomic + duplicated mode device counter is GPU-owned, host upload would overwrite it.
+        const bool skipDeviceCounterUploadToSimulation = atomicDeviceSignalling && duplicatedHostStorage;
+        if (!skipDeviceCounterUploadToSimulation) {
+            uploadCounterNodeToSimulation(*deviceCounterNode, getUploadSize(numDevicePartitionsToWait));
         }
     }
 
     if (hostCounterNode) {
-        for (uint32_t i = 0; i < numHostPartitionsToWait; i++) {
-            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(hostCounterNode->getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
+        uploadCounterNodeToSimulation(*hostCounterNode, getUploadSize(numHostPartitionsToWait));
+    }
+
+    lastSimulationUploadCsr = simulationUploadCsr;
+    simulationUploadDirty = false;
+}
+
+void InOrderExecInfo::initializeAllocationsFromHost() {
+    initializeAllocationsFromHost(true);
+}
+
+void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulation) {
+    const uint64_t initialValue = getInitialCounterValue();
+
+    const auto initializeNodeFromHost = [&](TagNodeBase &node, uint32_t partitionCount) {
+        for (uint32_t i = 0; i < partitionCount; i++) {
+            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(node.getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
             *ptr = initialValue;
         }
+    };
 
-        if (isTbx) {
-            const size_t hostAllocationWriteSize = alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * numHostPartitionsToWait;
-            uploadToTbx(*hostCounterNode, hostAllocationWriteSize);
-        }
+    if (deviceCounterNode) {
+        initializeNodeFromHost(*deviceCounterNode, numDevicePartitionsToWait);
+    }
+
+    if (hostCounterNode) {
+        initializeNodeFromHost(*hostCounterNode, numHostPartitionsToWait);
+    }
+
+    simulationUploadDirty = true;
+
+    if (shouldUploadToSimulation) {
+        uploadAllocationsToSimulation();
     }
 }
 

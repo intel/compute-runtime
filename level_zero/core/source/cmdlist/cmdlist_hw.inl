@@ -2765,6 +2765,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
 
         NEO::GraphicsAllocation *patternGfxAlloc = nullptr;
+        NEO::TagNodeBase *patternTagNode = nullptr;
         void *patternGfxAllocPtr = nullptr;
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
 
@@ -2781,10 +2782,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
             patternAllocations.push_back(patternGfxAlloc);
         } else {
-            auto patternTag = device->getFillPatternAllocator()->getTag();
-            patternGfxAllocPtr = patternTag->getCpuBase();
-            patternGfxAlloc = patternTag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
-            this->patternTags.push_back(patternTag);
+            patternTagNode = device->getFillPatternAllocator()->getTag();
+            patternGfxAllocPtr = patternTagNode->getCpuBase();
+            patternGfxAlloc = patternTagNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+            this->patternTags.push_back(patternTagNode);
             commandContainer.addToResidencyContainer(patternGfxAlloc);
         }
 
@@ -2801,6 +2802,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             patternAllocOffset += patternSizeToCopy;
         } while (patternAllocOffset < patternAllocationSize);
+
+        if (patternTagNode != nullptr) {
+            auto *uploadCsr = isImmediateType() ? getCsr(false) : device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+            uploadCsr->writeTagAllocationChunkToSimulation(*patternTagNode, 0, patternAllocationSize);
+            uploadCsr->setWritableForSimulation(false, *patternGfxAlloc);
+        }
+
         if (fillArguments.leftRemainingBytes == 0) {
             builtinSetArg(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
@@ -4872,7 +4880,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
 
         if (signalEvent->isEventTimestampFlagSet()) {
-            auto tag = device->getInOrderTimestampAllocator()->getTag();
+            auto *inOrderTimestampAllocator = device->getInOrderTimestampAllocator();
+            auto tag = inOrderTimestampAllocator->getTag();
+            auto *uploadCsr = isImmediateType() ? getCsr(false) : device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+            uploadCsr->writeTagAllocationChunkToSimulation(*tag, 0, inOrderTimestampAllocator->getTagSize());
 
             if (skipAddingEventToResidency == false) {
                 this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));

@@ -29,6 +29,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
@@ -1015,16 +1016,28 @@ TagNodeBase *Event::getHwPerfCounterNode() {
 }
 
 TagNodeBase *Event::getMultiRootTimestampSyncNode() {
-    auto lock = getContext()->obtainOwnershipForMultiRootDeviceAllocator();
-    if (getContext()->getMultiRootDeviceTimestampPacketAllocator() == nullptr) {
-        auto allocator = cmdQueue->getGpgpuCommandStreamReceiver().createMultiRootDeviceTimestampPacketAllocator(getContext()->getRootDeviceIndices());
-        getContext()->setMultiRootDeviceTimestampPacketAllocator(allocator);
+    auto *context = getContext();
+    UNRECOVERABLE_IF(context == nullptr);
+
+    auto *csr = cmdQueue ? &cmdQueue->getGpgpuCommandStreamReceiver()
+                         : context->getDevice(0)->getDevice().getDefaultEngine().commandStreamReceiver;
+    UNRECOVERABLE_IF(csr == nullptr);
+
+    auto csrLock = csr->obtainUniqueOwnership();
+    auto contextLock = context->obtainOwnershipForMultiRootDeviceAllocator();
+    if (context->getMultiRootDeviceTimestampPacketAllocator() == nullptr) {
+        auto allocator = csr->createMultiRootDeviceTimestampPacketAllocator(context->getRootDeviceIndices());
+        context->setMultiRootDeviceTimestampPacketAllocator(allocator);
     }
-    lock.unlock();
+
+    auto *allocator = context->getMultiRootDeviceTimestampPacketAllocator();
+    csr->setupTagAllocatorForSimulation(*allocator);
+    multiRootTimeStampSyncNode = allocator->getTag();
+    contextLock.unlock();
+
     if (multiRootDeviceTimestampPacketContainer.get() == nullptr) {
         multiRootDeviceTimestampPacketContainer = std::make_unique<TimestampPacketContainer>();
     }
-    multiRootTimeStampSyncNode = getContext()->getMultiRootDeviceTimestampPacketAllocator()->getTag();
     multiRootDeviceTimestampPacketContainer->add(multiRootTimeStampSyncNode);
     return multiRootTimeStampSyncNode;
 }

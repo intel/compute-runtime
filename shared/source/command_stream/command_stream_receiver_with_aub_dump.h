@@ -54,6 +54,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
                       size_t length, uint32_t compareOperation) override;
 
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
+    bool isChunkCopySupportedForSimulation() const override;
+    void setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) override;
     void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;
 
     std::unique_ptr<CommandStreamReceiver> aubCSR;

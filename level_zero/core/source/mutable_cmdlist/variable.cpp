@@ -8,6 +8,7 @@
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -551,7 +552,12 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     auto device = cmdList->getBase()->getDevice();
 
     if (this->eventValue.hasStandaloneProfilingNode) {
-        newEvent->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag(), cmdList->getBase()->getPartitionCount());
+        auto *inOrderTimestampAllocator = device->getInOrderTimestampAllocator();
+        auto *timestampNode = inOrderTimestampAllocator->getTag();
+        auto *uploadCsr = cmdList->getBase()->isImmediateType() ? cmdList->getBase()->getCsr(false) : device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+        uploadCsr->writeTagAllocationChunkToSimulation(*timestampNode, 0, inOrderTimestampAllocator->getTagSize());
+
+        newEvent->resetInOrderTimestampNode(timestampNode, cmdList->getBase()->getPartitionCount());
     }
 
     auto newEventAllocation = newEvent->getAllocation(device);

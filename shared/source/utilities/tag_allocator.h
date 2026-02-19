@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,10 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <mutex>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace NEO {
@@ -109,17 +111,11 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
     using ValueT = typename TagType::ValueT;
     TagType *tagForCpuAccess;
 
-    void initialize() override {
-        tagForCpuAccess->initialize(static_cast<TagAllocator<TagType> *>(allocator)->getInitialValue());
-        packetsUsed = 1;
-        setProfilingCapable(true);
-    }
+    void initialize() override;
 
     void *getCpuBase() const override { return tagForCpuAccess; }
 
-    void markAsAborted() override {
-        tagForCpuAccess->initialize(0);
-    }
+    void markAsAborted() override;
 
     void assignDataToAllTimestamps(uint32_t packetIndex, const void *source) override;
 
@@ -145,11 +141,21 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 
 class TagAllocatorBase {
   public:
+    using TagNodeUpdateCallback = std::function<void(TagNodeBase &, uint64_t, size_t)>;
+
     virtual ~TagAllocatorBase() { cleanUpResources(); };
 
     virtual void returnTag(TagNodeBase *node) = 0;
 
     virtual TagNodeBase *getTag() = 0;
+
+    void setTagNodeUpdateCallback(TagNodeUpdateCallback callback) { tagNodeUpdateCallback = std::move(callback); }
+    void notifyTagNodeUpdated(TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {
+        if (tagNodeUpdateCallback) {
+            tagNodeUpdateCallback(tagNode, tagOffset, chunkSize);
+        }
+    }
+    size_t getTagSize() const { return tagSize; }
 
     const std::vector<std::unique_ptr<MultiGraphicsAllocation>> &getGfxAllocations() const { return gfxAllocations; }
 
@@ -176,6 +182,7 @@ class TagAllocatorBase {
     const uint32_t tagCount;
     const uint32_t tagSize;
     bool doNotReleaseNodes = false;
+    TagNodeUpdateCallback tagNodeUpdateCallback;
 
     std::mutex allocatorMutex;
 };

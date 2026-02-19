@@ -229,16 +229,25 @@ template <typename TagSizeT>
 void EventImp<TagSizeT>::clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) {
     auto node = newNode;
     auto hostAddress = node->getCpuBase();
-    auto deviceAddress = node->getGpuAddress();
 
     const std::array<TagSizeT, 4> data = {Event::STATE_INITIAL, Event::STATE_INITIAL, Event::STATE_INITIAL, Event::STATE_INITIAL};
     constexpr size_t copySize = data.size() * sizeof(TagSizeT);
 
     for (uint32_t i = 0; i < partitionCount; i++) {
-        copyDataToEventAlloc(hostAddress, deviceAddress, copySize, data.data());
+        memcpy_s(hostAddress, copySize, data.data(), copySize);
 
         hostAddress = ptrOffset(hostAddress, singlePacketSize);
-        deviceAddress += singlePacketSize;
+    }
+
+    const bool uploadToSimulation = (partitionCount > 0) && !csrs.empty() && (csrs[0]->isTbxMode() || csrs[0]->isAubMode());
+    if (!uploadToSimulation) {
+        return;
+    }
+
+    uint64_t tagOffset = 0;
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        csrs[0]->writeTagAllocationChunkToSimulation(*node, tagOffset, copySize);
+        tagOffset += singlePacketSize;
     }
 }
 

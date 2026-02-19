@@ -643,6 +643,10 @@ void CommandList::enableInOrderExecution() {
     }
 
     inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, hostCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType());
+    if (isImmediateType()) {
+        inOrderExecInfo->setSimulationUploadCsr(getCsr(false));
+        inOrderExecInfo->uploadAllocationsToSimulation();
+    }
 }
 
 void CommandList::storeReferenceTsToMappedEvents(bool isClearEnabled) {

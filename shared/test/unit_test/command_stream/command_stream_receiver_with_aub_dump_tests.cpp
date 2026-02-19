@@ -32,6 +32,8 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <optional>
+
 using namespace NEO;
 
 template <typename GfxFamily>
@@ -89,6 +91,14 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         writePooledMemoryParameterization.receivedInitFullPageTables = initFullPageTables;
     };
 
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        const bool baseWriteStatus = UltCommandStreamReceiver<GfxFamily>::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+        if (overrideWriteMemoryStatus.has_value()) {
+            return *overrideWriteMemoryStatus;
+        }
+        return baseWriteStatus;
+    }
+
     struct FlushParameterization {
         bool wasCalled = false;
         FlushStamp flushStampToReturn = 1;
@@ -129,6 +139,8 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         size_t callCount = 0u;
         bool receivedInitFullPageTables = false;
     } writePooledMemoryParameterization;
+
+    std::optional<bool> overrideWriteMemoryStatus{};
 };
 
 template <typename GfxFamily, typename BaseCSR>
@@ -241,6 +253,49 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0, deviceBitfield);
     ASSERT_NE(nullptr, csrWithAubDump.aubCSR);
     EXPECT_EQ(CommandStreamReceiverType::hardwareWithAub, csrWithAubDump.getType());
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNonHardwareTypeAndAubCsrWhenWriteMemoryCalledThenUseCombinedNonHardwarePath) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    auto csrWithAubDump = std::make_unique<MyMockCsrWithAubDump<FamilyType, MyMockCsr<FamilyType>>>(true, *executionEnvironment, deviceBitfield);
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
+                                                                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
+    csrWithAubDump->setupContext(osContext);
+
+    csrWithAubDump->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csrWithAubDump->getAubMockCsr().commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    MockGraphicsAllocation allocation;
+    csrWithAubDump->writeMemory(allocation, true, 3u, 7u);
+
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNonHardwareTypeWithoutAubCsrWhenWriteMemoryCalledThenUseBaseNonHardwarePath) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    auto csrWithAubDump = std::make_unique<MyMockCsrWithAubDump<FamilyType, MyMockCsr<FamilyType>>>(false, *executionEnvironment, deviceBitfield);
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
+                                                                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
+    csrWithAubDump->setupContext(osContext);
+
+    csrWithAubDump->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    MockGraphicsAllocation allocation;
+    csrWithAubDump->writeMemory(allocation, true, 3u, 7u);
+
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.totalCallCount);
+    EXPECT_EQ(nullptr, csrWithAubDump->aubCSR.get());
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenWaitingForTaskCountThenAddPollForCompletion) {
@@ -366,20 +421,62 @@ HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamRecei
         EXPECT_FALSE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
     }
 
+    const bool expectedChunkWriteForBase = static_cast<MyMockCsr<FamilyType> *>(csrWithAubDump)->MyMockCsr<FamilyType>::isChunkCopySupportedForSimulation();
+    const bool expectedChunkWriteForAub = createAubCSR && csrWithAubDump->getAubMockCsr().isChunkCopySupportedForSimulation();
+
     csrWithAubDump->writeMemory(mockAllocation, true, 1, 2);
 
     EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.totalCallCount);
-    EXPECT_TRUE(csrWithAubDump->writeMemoryParams.latestChunkedMode);
+    EXPECT_EQ(expectedChunkWriteForBase, csrWithAubDump->writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(&mockAllocation, csrWithAubDump->writeMemoryParams.latestGfxAllocation);
-    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.latestGpuVaChunkOffset);
-    EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(expectedChunkWriteForBase ? 1u : 0u, csrWithAubDump->writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(expectedChunkWriteForBase ? 2u : 0u, csrWithAubDump->writeMemoryParams.latestChunkSize);
 
     if (createAubCSR) {
         EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
-        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
+        EXPECT_EQ(expectedChunkWriteForAub, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
         EXPECT_EQ(&mockAllocation, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGfxAllocation);
-        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGpuVaChunkOffset);
-        EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkSize);
+        EXPECT_EQ(expectedChunkWriteForAub ? 1u : 0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGpuVaChunkOffset);
+        EXPECT_EQ(expectedChunkWriteForAub ? 2u : 0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkSize);
+    }
+}
+
+HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenNonHardwareBaseCsrWhenCheckingChunkCopySupportThenUseNonHardwarePath) {
+    auto csrWithAubDump = getCsrWithAubDump<FamilyType>();
+
+    csrWithAubDump->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    if (createAubCSR) {
+        csrWithAubDump->getAubMockCsr().commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    }
+
+    // For non-hardware path:
+    // - base CSR reports no chunk-copy support
+    // - AUB side reports no chunk-copy support when present
+    // => only no-AUB case returns true because aubChunkCopySupported = (aubCSR == nullptr).
+    EXPECT_EQ(!createAubCSR, csrWithAubDump->isChunkCopySupportedForSimulation());
+}
+
+HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenNonHardwareBaseCsrWhenWritingMemoryThenUseCombinedReturnPath) {
+    MockGraphicsAllocation mockAllocation;
+
+    auto csrWithAubDump = getCsrWithAubDump<FamilyType>();
+    csrWithAubDump->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    if (createAubCSR) {
+        csrWithAubDump->getAubMockCsr().commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    }
+
+    const bool writeStatus = csrWithAubDump->writeMemory(mockAllocation, true, 3u, 5u);
+
+    EXPECT_FALSE(writeStatus);
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.totalCallCount);
+    if (createAubCSR) {
+        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
+
+        csrWithAubDump->overrideWriteMemoryStatus = true;
+        csrWithAubDump->getAubMockCsr().overrideWriteMemoryStatus = true;
+        EXPECT_TRUE(csrWithAubDump->writeMemory(mockAllocation, true, 3u, 5u));
+        csrWithAubDump->overrideWriteMemoryStatus.reset();
+        csrWithAubDump->getAubMockCsr().overrideWriteMemoryStatus.reset();
     }
 }
 

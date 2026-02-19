@@ -2014,15 +2014,29 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx) {
     if (commandList->inOrderCmdsPatchingEnabled()) {
         UNRECOVERABLE_IF(ctx.patchPreambleEnabled);
+        if (commandList->isInOrderExecutionEnabled()) {
+            auto &inOrderExecInfo = *commandList->getInOrderExecInfo();
+            inOrderExecInfo.setSimulationUploadCsr(this->csr);
+            inOrderExecInfo.uploadAllocationsToSimulation();
+        }
         commandList->addRegularCmdListSubmissionCounter();
         commandList->patchInOrderCmds();
+        return;
+    }
+
+    if (!commandList->isInOrderExecutionEnabled()) {
+        return;
+    }
+
+    auto &inOrderExecInfo = *commandList->getInOrderExecInfo();
+    inOrderExecInfo.setSimulationUploadCsr(this->csr);
+
+    if (ctx.patchPreambleEnabled) {
+        inOrderExecInfo.uploadAllocationsToSimulation();
+        ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecDeviceRequiredSize();
+        ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecHostRequiredSize();
     } else {
-        if (ctx.patchPreambleEnabled) {
-            ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecDeviceRequiredSize();
-            ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecHostRequiredSize();
-        } else {
-            commandList->clearInOrderExecCounterAllocation();
-        }
+        commandList->clearInOrderExecCounterAllocation();
     }
 }
 

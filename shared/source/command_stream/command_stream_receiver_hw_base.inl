@@ -1494,6 +1494,7 @@ TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocato
         const RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
 
         timestampPacketAllocator = gfxCoreHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
+        setupTagAllocatorForSimulation(*timestampPacketAllocator);
     }
     return timestampPacketAllocator.get();
 }
@@ -1501,7 +1502,9 @@ TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocato
 template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> CommandStreamReceiverHw<GfxFamily>::createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices) {
     auto &gfxCoreHelper = getGfxCoreHelper();
-    return gfxCoreHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
+    auto allocator = gfxCoreHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
+    setupTagAllocatorForSimulation(*allocator);
+    return allocator;
 }
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup() {

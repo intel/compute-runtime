@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
+#include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -55,6 +56,55 @@ namespace NEO {
 
 // Global table of CommandStreamReceiver factories for HW and tests
 CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue] = {};
+
+namespace {
+bool gpuAddressInAllocationRange(const GraphicsAllocation &allocation, uint64_t gpuAddress) {
+    if (gpuAddress < allocation.getGpuAddress()) {
+        return false;
+    }
+
+    const auto offsetInAllocation = ptrDiff(gpuAddress, allocation.getGpuAddress());
+    return offsetInAllocation < allocation.getUnderlyingBufferSize();
+}
+
+GraphicsAllocation *getGraphicsAllocationForTagNode(MultiGraphicsAllocation &multiAllocation, uint64_t tagGpuAddress, uint32_t rootDeviceIndex) {
+    auto *rootDeviceAllocation = multiAllocation.getGraphicsAllocation(rootDeviceIndex);
+    if ((rootDeviceAllocation != nullptr) && gpuAddressInAllocationRange(*rootDeviceAllocation, tagGpuAddress)) {
+        return rootDeviceAllocation;
+    }
+
+    for (auto *allocation : multiAllocation.getGraphicsAllocations()) {
+        if ((allocation != nullptr) && gpuAddressInAllocationRange(*allocation, tagGpuAddress)) {
+            return allocation;
+        }
+    }
+
+    if (rootDeviceAllocation != nullptr) {
+        return rootDeviceAllocation;
+    }
+
+    return multiAllocation.getDefaultGraphicsAllocation();
+}
+
+bool tryGetTagNodeChunkOffsetInAllocation(const TagNodeBase &tagNode, const GraphicsAllocation &gfxAllocation, uint64_t tagOffset, size_t chunkSize, uint64_t &chunkOffset) {
+    const auto allocationCpuBase = gfxAllocation.getUnderlyingBuffer();
+    if ((allocationCpuBase != nullptr) &&
+        byteRangeContains(allocationCpuBase, gfxAllocation.getUnderlyingBufferSize(), tagNode.getCpuBase())) {
+        chunkOffset = ptrDiff(tagNode.getCpuBase(), allocationCpuBase) + tagOffset;
+    } else {
+        if (tagNode.getGpuAddress() < gfxAllocation.getGpuAddress()) {
+            return false;
+        }
+        chunkOffset = ptrDiff(tagNode.getGpuAddress(), gfxAllocation.getGpuAddress()) + tagOffset;
+    }
+
+    if (chunkOffset > gfxAllocation.getUnderlyingBufferSize()) {
+        return false;
+    }
+    const auto availableChunkSize = gfxAllocation.getUnderlyingBufferSize() - static_cast<size_t>(chunkOffset);
+    return chunkSize <= availableChunkSize;
+}
+} // namespace
 
 CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                              uint32_t rootDeviceIndex,
@@ -1170,6 +1220,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
         RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
                                                                                    sizeof(HwTimeStamps), 0, false, true, osContext->getDeviceBitfield());
+        setupTagAllocatorForSimulation(*profilingTimeStampAllocator);
     }
     return profilingTimeStampAllocator.get();
 }
@@ -1179,8 +1230,66 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
         RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
             rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, 0, false, true, osContext->getDeviceBitfield());
+        setupTagAllocatorForSimulation(*perfCounterAllocator);
     }
     return perfCounterAllocator.get();
+}
+
+void CommandStreamReceiver::setupTagAllocatorForSimulation(TagAllocatorBase &tagAllocator) {
+    if (!isTbxMode() && !isAubMode()) {
+        tagAllocator.setTagNodeUpdateCallback({});
+        return;
+    }
+
+    tagAllocator.setTagNodeUpdateCallback([this](TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {
+        this->writeTagAllocationChunkToSimulation(tagNode, tagOffset, chunkSize);
+    });
+}
+
+void CommandStreamReceiver::writeAllocationChunkToSimulation(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize) {
+    if ((!isTbxMode() && !isAubMode()) || chunkSize == 0) {
+        return;
+    }
+
+    [[maybe_unused]] auto ownership = obtainUniqueOwnership();
+    setWritableForSimulation(true, gfxAllocation);
+
+    const bool useChunkCopy = isChunkCopySupportedForSimulation();
+    const uint64_t selectedChunkOffset = useChunkCopy ? chunkOffset : 0;
+    const size_t selectedChunkSize = useChunkCopy ? chunkSize : 0;
+    [[maybe_unused]] const bool writeStatus = writeMemory(gfxAllocation,
+                                                          useChunkCopy,
+                                                          selectedChunkOffset,
+                                                          selectedChunkSize);
+
+    if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
+        setWritableForSimulation(false, gfxAllocation);
+    }
+    DEBUG_BREAK_IF(!writeStatus);
+}
+
+void CommandStreamReceiver::writeTagAllocationChunkToSimulation(TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {
+    if (chunkSize == 0) {
+        return;
+    }
+
+    auto *multiAllocation = tagNode.getBaseGraphicsAllocation();
+    if (multiAllocation == nullptr) {
+        return;
+    }
+
+    auto *gfxAllocation = getGraphicsAllocationForTagNode(*multiAllocation, tagNode.getGpuAddress(), rootDeviceIndex);
+    if (gfxAllocation == nullptr) {
+        return;
+    }
+
+    uint64_t chunkOffset = 0;
+    if (!tryGetTagNodeChunkOffsetInAllocation(tagNode, *gfxAllocation, tagOffset, chunkSize, chunkOffset)) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
+    writeAllocationChunkToSimulation(*gfxAllocation, chunkOffset, chunkSize);
 }
 
 uint32_t CommandStreamReceiver::getPreferredTagPoolSize() const {

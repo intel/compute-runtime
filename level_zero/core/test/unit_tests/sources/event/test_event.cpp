@@ -4424,6 +4424,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 template <typename TagSizeT>
 struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     using BaseClass = L0::EventImp<TagSizeT>;
+    using BaseClass::clearTimestampTagData;
+    using BaseClass::csrs;
     using BaseClass::gpuEndTimestamp;
     using BaseClass::gpuStartTimestamp;
     using BaseClass::hostAddressFromPool;
@@ -4439,7 +4441,11 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
         this->totalEventSize = eventSize;
         this->eventPoolOffset = index * this->totalEventSize;
         hostAddressFromPool = reinterpret_cast<void *>(baseHostAddr + this->eventPoolOffset);
-        this->csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
+        if (this->csrs.empty()) {
+            this->csrs.push_back(neoDevice->getDefaultEngine().commandStreamReceiver);
+        } else {
+            this->csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
+        }
 
         this->maxKernelCount = maxKernelCount;
         this->maxPacketCount = maxPacketsCount;
@@ -4476,6 +4482,16 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     bool failOnNextQueryStatus = false;
     uint32_t assignKernelEventCompletionDataCounter = 0u;
     uint32_t hostSynchronizeCalled = 0;
+};
+
+using SimulationUploadTagType = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+
+struct MockTagNodeForSimulationUpload : public NEO::TagNode<SimulationUploadTagType> {
+    MockTagNodeForSimulationUpload(NEO::MultiGraphicsAllocation *allocation, uint64_t gpuAddress, void *cpuBase) {
+        this->gfxAllocation = allocation;
+        this->gpuAddress = gpuAddress;
+        this->tagForCpuAccess = reinterpret_cast<SimulationUploadTagType *>(cpuBase);
+    }
 };
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndReturnSuccess) {
@@ -4641,6 +4657,122 @@ TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->gpuStartTimestamp, 0u);
     EXPECT_EQ(event->gpuEndTimestamp, 0u);
+}
+
+HWTEST_F(EventTests, givenZeroPartitionCountWhenClearingTimestampTagDataThenSkipSimulationUpload) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    event->csrs.push_back(&ultCsr);
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x1234000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    event->clearTimestampTagData(0u, &timestampNode);
+
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, givenEmptyCsrListWhenClearingTimestampTagDataThenSkipSimulationUpload) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x1834000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    event->clearTimestampTagData(2u, &timestampNode);
+
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, givenNonSimulationCsrWhenClearingTimestampTagDataThenSkipSimulationUpload) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    event->csrs.push_back(&ultCsr);
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x2234000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    event->clearTimestampTagData(2u, &timestampNode);
+
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, givenAubCsrWhenClearingTimestampTagDataThenUploadEachPartitionChunk) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    event->csrs.push_back(&ultCsr);
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x2834000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    constexpr uint32_t partitionCount = 2u;
+    event->clearTimestampTagData(partitionCount, &timestampNode);
+
+    EXPECT_EQ(partitionCount, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, givenAubCsrAnd64BitTagWhenClearingTimestampTagDataThenUploadEachPartitionChunk) {
+    auto event = std::make_unique<MockEventCompletion<uint64_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    event->csrs.push_back(&ultCsr);
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x2c34000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    constexpr uint32_t partitionCount = 2u;
+    event->clearTimestampTagData(partitionCount, &timestampNode);
+
+    EXPECT_EQ(partitionCount, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, givenSimulationCsrWhenClearingTimestampTagDataThenUploadEachPartitionChunk) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs.clear();
+    event->csrs.push_back(&ultCsr);
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr.writeMemoryParams = {};
+
+    uint8_t storage[4096] = {};
+    NEO::MockGraphicsAllocation tagAllocation(storage, 0x3234000, sizeof(storage));
+    NEO::MultiGraphicsAllocation multiAllocation(1);
+    multiAllocation.addAllocation(&tagAllocation);
+    MockTagNodeForSimulationUpload timestampNode(&multiAllocation, tagAllocation.getGpuAddress(), storage);
+
+    constexpr uint32_t partitionCount = 2u;
+    event->clearTimestampTagData(partitionCount, &timestampNode);
+
+    EXPECT_EQ(partitionCount, ultCsr.writeMemoryParams.totalCallCount);
 }
 
 TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBeenReset) {

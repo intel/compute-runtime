@@ -24,6 +24,7 @@ class GraphicsAllocation;
 class MemoryManager;
 class Device;
 class TagNodeBase;
+class CommandStreamReceiver;
 
 template <bool deviceAlloc>
 class DeviceAllocNodeType {
@@ -98,7 +99,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     void setAllocationOffset(uint32_t newOffset) { allocationOffset = newOffset; }
     void initializeAllocationsFromHost();
+    void initializeAllocationsFromHost(bool shouldUploadToSimulation);
+    void uploadAllocationsToSimulation();
     uint32_t getAllocationOffset() const { return allocationOffset; }
+    void setSimulationUploadCsr(NEO::CommandStreamReceiver *csr);
 
     void reset();
     bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
@@ -123,7 +127,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
   protected:
     using CounterAndOffsetPairT = std::pair<uint64_t, uint32_t>;
 
-    void uploadToTbx(TagNodeBase &node, size_t size);
+    void uploadCounterNodeToSimulation(TagNodeBase &node, size_t size);
 
     NEO::Device &device;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
@@ -147,7 +151,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
-    bool isTbx = false;
+    bool isSimulationMode = false;
+    bool simulationUploadDirty = false;
+    NEO::CommandStreamReceiver *simulationUploadCsr = nullptr;
+    NEO::CommandStreamReceiver *lastSimulationUploadCsr = nullptr;
 };
 
 static_assert(NEO::NonCopyable<InOrderExecInfo>);
