@@ -3033,8 +3033,11 @@ HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbac
     immCmdList->appendSignalEvent(events[0]->toHandle(), false);
     EXPECT_EQ(0u, immCmdList->appendBarrierCalled);
 
+    auto initialTaskCount = immCmdList->cmdQImmediate->getTaskCount();
+
     immCmdList->appendSignalEvent(events[1]->toHandle(), false);
     EXPECT_EQ(1u, immCmdList->appendBarrierCalled);
+    EXPECT_EQ(initialTaskCount + 1, immCmdList->cmdQImmediate->getTaskCount());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
@@ -4922,6 +4925,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto eventPool = createEvents<FamilyType>(2, false);
 
+    events[1]->signalScope = 0;
+
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
@@ -4935,7 +4940,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 
-    EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+
+    events[1]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    if (immCmdList->dcFlushSupport) {
+        EXPECT_NE(offset, cmdStream->getUsed());
+        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+    } else {
+        EXPECT_EQ(offset, cmdStream->getUsed());
+        EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAfterKernelWithoutEventThenDontInheritSignalSyncAllocation) {
@@ -4960,8 +4978,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         EXPECT_LT(offset, cmdStream->getUsed());
         EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
     } else {
-        EXPECT_EQ(offset, cmdStream->getUsed());
-        EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
+        if (immCmdList->dcFlushSupport) {
+            EXPECT_NE(offset, cmdStream->getUsed());
+            EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
+        } else {
+            EXPECT_EQ(offset, cmdStream->getUsed());
+            EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
+        }
     }
 }
 
@@ -4978,13 +5001,27 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
     auto offset = cmdStream->getUsed();
 
     auto eventHandle = events[1]->toHandle();
+    events[1]->signalScope = 0;
 
     cmdList->appendBarrier(nullptr, 0, nullptr, false);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 
-    EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+
+    events[1]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    cmdList->appendBarrier(nullptr, 0, nullptr, false);
+    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    if (cmdList->dcFlushSupport) {
+        EXPECT_NE(offset, cmdStream->getUsed());
+        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+    } else {
+        EXPECT_EQ(offset, cmdStream->getUsed());
+        EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+    }
 }
 
 HWTEST_F(InOrderCmdListTests, givenEventCounterReusedFromPreviousAppendWhenHostSynchronizeThenFlushCaches) {

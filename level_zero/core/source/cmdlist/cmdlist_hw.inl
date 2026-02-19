@@ -4281,7 +4281,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation));
+    if (signalEvent) {
+        const bool dcFLushEvent = getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation);
+    }
+
+    return true;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

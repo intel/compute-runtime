@@ -793,9 +793,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent, bool relaxedOrderingDispatch) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+
+    if (signalEvent && signalEvent->isCounterBased()) {
+        return appendBarrier(hSignalEvent, 0, nullptr, relaxedOrderingDispatch);
+    }
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
-    bool hasStallingCmds = !Event::fromHandle(hSignalEvent)->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, relaxedOrderingDispatch);
+    bool hasStallingCmds = !signalEvent->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, relaxedOrderingDispatch);
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
