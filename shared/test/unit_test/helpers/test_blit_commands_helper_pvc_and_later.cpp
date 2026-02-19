@@ -18,6 +18,29 @@
 
 using BlitTests = Test<DeviceFixture>;
 
+HWTEST2_F(BlitTests, givenPrintBlitDispatchDetailsEnabledWhenDispatchBlitMemoryByteFillThenDebugOutputGenerated, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintBlitDispatchDetails.set(1);
+
+    uint32_t pattern = 1;
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation mockAllocation(0, 1u, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+
+    testing::internal::CaptureStdout();
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(output.find("Blit SET_MEM command") != std::string::npos);
+    EXPECT_TRUE(output.find("width:") != std::string::npos);
+    EXPECT_TRUE(output.find("height:") != std::string::npos);
+    EXPECT_TRUE(output.find("dstAddr:") != std::string::npos);
+}
+
 HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProgrammed, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     uint32_t pattern = 1;

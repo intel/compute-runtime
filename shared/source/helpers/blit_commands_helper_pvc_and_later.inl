@@ -94,6 +94,9 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
         }
         appendBlitMemSetCommand(blitProperties, &tmpCmd);
 
+        PRINT_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+                     "\nBlit SET_MEM command. width: %u, height: %u, dstAddr: %#llx ", width, height, ptrOffset(blitProperties.dstGpuAddress, static_cast<size_t>(offset)));
+
         auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
         *cmd = tmpCmd;
         if (lastCommand) {
