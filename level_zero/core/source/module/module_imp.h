@@ -393,6 +393,10 @@ struct ModulesPackage : public Module {
         return true;
     }
 
+    void getAllUnderlyingModuleHandles(std::vector<ze_module_handle_t> &out) {
+        gatherAllUnderlyingModuleHandles(std::span(this->modules), out);
+    }
+
     static bool isModulesPackageInput(const ze_module_desc_t *desc);
 
     template <typename T>
