@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,11 @@ void CommandListCoreFamily<IGFX_XE3P_CORE>::setAdditionalBlitProperties(NEO::Bli
 
 template <>
 bool CommandListCoreFamily<IGFX_XE3P_CORE>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
+
+template <>
+bool CommandListCoreFamily<IGFX_XE3P_CORE>::useZeroedPatternInMemoryFill(CmdListMemoryCopyParams &memoryCopyParams) const {
+    return false;
+}
 
 template struct CommandListCoreFamily<IGFX_XE3P_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_XE3P_CORE>;

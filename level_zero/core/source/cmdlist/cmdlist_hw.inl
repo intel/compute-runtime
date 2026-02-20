@@ -2951,7 +2951,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         }
 
         uint32_t patternToCommand[4] = {};
-        memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
+        if (!useZeroedPatternInMemoryFill(memoryCopyParams)) {
+            memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
+        }
         NEO::BlitProperties blitProperties;
         bool useAdditionalTimestamp = false;
         if (gpuAllocation) {

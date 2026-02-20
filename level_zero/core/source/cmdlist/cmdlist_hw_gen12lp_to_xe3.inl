@@ -73,4 +73,9 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
     this->hostFunctionPatchListCount = 0;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::useZeroedPatternInMemoryFill(CmdListMemoryCopyParams &memoryCopyParams) const {
+    return false;
+}
+
 } // namespace L0
