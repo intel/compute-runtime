@@ -73,7 +73,7 @@ Using Level-Zero Loader Tracing Layer register epilog callbacks for L0 APIs. See
                 hDriver, "zexKernelGetBaseAddress",
                 reinterpret_cast<void **>(&zexKernelGetBaseAddressPointer));
             if (internalResult == ZE_RESULT_SUCCESS) {
-                unit64_t baseAddress;
+                uint64_t baseAddress;
                 // Recently created kernel taken from the API parameters
                 internalResult = zexKernelGetBaseAddressPointer(**params->pphkernel, &baseAddress);
                 if (internalResult == ZE_RESULT_SUCCESS) {
