@@ -339,13 +339,23 @@ template <>
 void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (hwInfo.featureTable.flags.ftrLocalMemory) {
-        if (properties.allocationType == AllocationType::timestampPacketTagBuffer ||
-            properties.allocationType == AllocationType::commandBuffer) {
+        if (properties.allocationType == AllocationType::timestampPacketTagBuffer) {
             allocationData.flags.useSystemMemory = false;
         }
 
-        if (properties.allocationType == AllocationType::semaphoreBuffer && !rootDeviceEnvironment.getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)) {
-            allocationData.flags.useSystemMemory = true;
+        if (properties.allocationType == AllocationType::commandBuffer ||
+            properties.allocationType == AllocationType::ringBuffer) {
+            allocationData.flags.useSystemMemory = false;
+            allocationData.flags.requiresCpuAccess = true;
+        }
+
+        if (properties.allocationType == AllocationType::semaphoreBuffer) {
+            if (rootDeviceEnvironment.getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)) {
+                allocationData.flags.useSystemMemory = false;
+            } else {
+                allocationData.flags.useSystemMemory = true;
+            }
+            allocationData.flags.requiresCpuAccess = true;
         }
     }
 }
