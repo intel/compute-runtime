@@ -48,6 +48,14 @@ bool CommandListCoreFamily<IGFX_XE3P_CORE>::useZeroedPatternInMemoryFill(CmdList
     return false;
 }
 
+template <>
+ze_result_t CommandListCoreFamily<IGFX_XE3P_CORE>::appendCustomOperation(const void *pNext,
+                                                                         ze_event_handle_t hSignalEvent,
+                                                                         uint32_t numWaitEvents,
+                                                                         ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 template struct CommandListCoreFamily<IGFX_XE3P_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_XE3P_CORE>;
 

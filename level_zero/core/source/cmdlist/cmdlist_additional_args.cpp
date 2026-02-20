@@ -75,6 +75,12 @@ ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t CommandList::obtainCustomOperationParamsFromExtensions(const ze_base_desc_t *desc, CmdListCustomOperationParams &customOperationParams) const {
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
+                 desc->stype);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t CommandList::cloneAppendMemoryCopyExtensions(const ze_base_desc_t *desc, void *&outPnext) {
     if (desc) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

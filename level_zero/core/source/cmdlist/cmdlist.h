@@ -60,6 +60,7 @@ struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
 struct CmdListHostFunctionParameters;
+struct CmdListCustomOperationParams;
 struct MemAllocInfo;
 
 struct CmdListReturnPoint {
@@ -97,6 +98,10 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendEventReset(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
+    virtual ze_result_t appendCustomOperation(const void *pNext,
+                                              ze_event_handle_t hSignalEvent,
+                                              uint32_t numWaitEvents,
+                                              ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                                   const void **pRanges,
                                                   ze_event_handle_t hSignalEvent,
@@ -487,6 +492,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
     ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
     ze_result_t obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams, bool writesOnly) const;
+    ze_result_t obtainCustomOperationParamsFromExtensions(const ze_base_desc_t *desc, CmdListCustomOperationParams &customOperationParams) const;
 
     void setCaptureTarget(Graph *graph) {
         this->captureTarget = graph;

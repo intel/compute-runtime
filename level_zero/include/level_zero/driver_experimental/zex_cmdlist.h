@@ -87,6 +87,14 @@ zexCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendCustomOperation(
+    ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    const void *pNext,                     ///< [in] operation parameters, there may be only a single operation defined
+    ze_event_handle_t hEvent,              ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
+    ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
+
 typedef void (*zex_command_list_cleanup_callback_fn_t)(void *pUserData);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

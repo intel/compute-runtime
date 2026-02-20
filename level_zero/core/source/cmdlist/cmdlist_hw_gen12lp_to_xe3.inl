@@ -78,4 +78,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::useZeroedPatternInMemoryFill(CmdListM
     return false;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCustomOperation(const void *pNext,
+                                                                        ze_event_handle_t hSignalEvent,
+                                                                        uint32_t numWaitEvents,
+                                                                        ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0

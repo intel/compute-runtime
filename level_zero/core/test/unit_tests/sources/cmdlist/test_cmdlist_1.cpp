@@ -124,6 +124,31 @@ TEST_F(CommandListCallbacksTests, givenInvalidInputParamsThenReturnError) {
     zeCommandListDestroy(hCommandList);
 }
 
+struct CommandListAppendCustomOperationTests : public CommandListCreateTests {};
+TEST_F(CommandListAppendCustomOperationTests, givenInvalidInputParamsThenReturnError) {
+    ze_base_desc_t operationDesc = {};
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    auto result = context->createCommandList(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zexCommandListAppendCustomOperation(nullptr, &operationDesc, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, result);
+
+    result = zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
+
+    result = zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    result = zexCommandListAppendCustomOperation(hCommandList, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    commandList->destroy();
+}
+
 TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
     ze_command_list_desc_t desc = {};
     ze_command_list_handle_t hCommandList = {};

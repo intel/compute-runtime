@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,6 +113,16 @@ bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported(bool ad
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::bcsSplitAggregatedModeEnabled() const {
     return false;
+}
+
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations1() const {
+    return 0u;
+}
+
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations2() const {
+    return 0u;
 }
 
 } // namespace L0

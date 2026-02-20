@@ -1310,5 +1310,21 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSize
     EXPECT_EQ(sizeof(uint8_t), l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine());
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, GivenL0GfxCoreHelperWhenGettingSupportedCustomOperations1ThenReturnCorrectValue, IsAtMostXe3pCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(0u, l0GfxCoreHelper.getSupportedCustomOperations1());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, GivenL0GfxCoreHelperWhenGettingSupportedCustomOperations2ThenReturnCorrectValue, IsAtMostXe3pCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(0u, l0GfxCoreHelper.getSupportedCustomOperations2());
+}
+
 } // namespace ult
 } // namespace L0
