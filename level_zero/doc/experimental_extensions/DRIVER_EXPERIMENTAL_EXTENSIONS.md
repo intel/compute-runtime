@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 -->
 
 
-# Level Zero GPU Driver Driver Experimental Extensions
+# Level Zero GPU Driver Experimental Extensions
 
 ## Introduction
 
