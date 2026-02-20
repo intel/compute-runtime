@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ struct WhiteBox<::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>>
     : public ::L0::MCL::MutableSemaphoreWaitHw<GfxFamily> {
 
     using BaseClass = ::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>;
-    using BaseClass::inOrderPatchListIndex;
     using BaseClass::offset;
     using BaseClass::qwordDataIndirect;
     using BaseClass::semWait;

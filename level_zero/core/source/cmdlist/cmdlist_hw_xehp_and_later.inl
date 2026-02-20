@@ -499,7 +499,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         } else {
             launchParams.skipInOrderNonWalkerSignaling = false;
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
-            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker);
         }
     } else {
         launchParams.skipInOrderNonWalkerSignaling = false;

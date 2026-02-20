@@ -204,22 +204,6 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
 }
 
 template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
-    if (!deviceAtomicSignaling) {
-        auto walkerCmd = reinterpret_cast<typename Family::DefaultWalkerType *>(cmd1);
-        auto &postSync0 = walkerCmd->getPostSync();
-        postSync0.setImmediateData(baseCounterValue + appendCounterValue);
-    }
-
-    if (duplicatedHostStorage) {
-        auto walkerCmd = reinterpret_cast<typename Family::COMPUTE_WALKER_2 *>(cmd1);
-        auto &postSync1 = walkerCmd->getPostSyncOpn1();
-
-        postSync1.setImmediateData(baseCounterValue + appendCounterValue);
-    }
-}
-
-template <typename Family>
 bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
     return false;
 }

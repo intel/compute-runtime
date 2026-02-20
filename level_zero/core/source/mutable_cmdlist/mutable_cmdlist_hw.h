@@ -98,16 +98,6 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
         return CommandListCoreFamily<gfxCoreFamily>::isQwordInOrderCounter();
     }
 
-    void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo, bool disablePatchingFlag) override {
-        CommandListCoreFamily<gfxCoreFamily>::updateInOrderExecInfo(inOrderPatchIndex, inOrderExecInfo, disablePatchingFlag);
-    }
-    void disablePatching(size_t inOrderPatchIndex) override {
-        CommandListCoreFamily<gfxCoreFamily>::disablePatching(inOrderPatchIndex);
-    }
-    void enablePatching(size_t inOrderPatchIndex) override {
-        CommandListCoreFamily<gfxCoreFamily>::enablePatching(inOrderPatchIndex);
-    }
-
     void storeKernelArgumentAndDispatchVariables(MutableAppendLaunchKernelWithParams &mutableParams,
                                                  CmdListKernelLaunchParams &launchParams,
                                                  Kernel *kernel,

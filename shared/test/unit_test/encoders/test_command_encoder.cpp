@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -238,7 +238,7 @@ HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingRequiresSystemMem
 HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingIsRegularEventThenCorrectValuesAreReturned) {
     EncodePostSyncArgs args{};
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
-    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), deviceTagAllocator.getTag(), *pDevice, 1, false); // setting duplicateStorage = true;
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), deviceTagAllocator.getTag(), *pDevice, 1); // setting duplicateStorage = true;
     for (bool inOrderExec : {true, false}) {
         for (uint64_t eventAddress : {0, 0x1010}) {
             args.device = pDevice;

@@ -581,8 +581,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);
 
         auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->pDestination,
-                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
-                                                                                   loadRegImmCmdToPatch->inOrderPatchListIndex);
+                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -593,8 +592,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
 
         loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->pDestination,
-                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
-                                                                              loadRegImmCmdToPatch2->inOrderPatchListIndex);
+                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -607,7 +605,6 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
 
     auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
-                                                                          semaphoreWaitCmdToPatch->inOrderPatchListIndex,
                                                                           MutableSemaphoreWait::cbEventWait,
                                                                           qwordIndirect,
                                                                           this->semaphore64bCmdSupported);
@@ -627,7 +624,6 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureRegularWaitEventCommand
 
     auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
-                                                                          0,
                                                                           MutableSemaphoreWait::regularEventWait,
                                                                           false,
                                                                           this->semaphore64bCmdSupported);
@@ -662,7 +658,6 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSi
         } else if (auto *semaphoreWaitPatch = std::get_if<PatchCbEventTimestampPostSyncSemaphoreWait>(&cmdToPatch)) {
             auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitPatch->pDestination,
                                                                                   semaphoreWaitPatch->offset,
-                                                                                  0,
                                                                                   MutableSemaphoreWait::cbEventTimestampSyncWait,
                                                                                   false,
                                                                                   this->semaphore64bCmdSupported);

@@ -724,18 +724,9 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 mutableSemWait->setSemaphoreValue(eventInOrderInfo->get()->getCounterValue());
             }
         }
-
-        auto semWaitIndex = mutableSemWait->getInOrderPatchListIndex();
-        if (semWaitIndex != std::numeric_limits<size_t>::max()) {
-            if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                cmdList->updateInOrderExecInfo(semWaitIndex, eventInOrderInfo, false);
-            } else if (operation == CbWaitEventOperationType::noop) {
-                cmdList->disablePatching(semWaitIndex);
-            }
-        }
     }
     if (qwordInUse) {
-        size_t lastIndex = std::numeric_limits<size_t>::max();
+
         uint32_t cmdIndex = 0;
         for (auto &mutableLoadRegImm : this->eventValue.loadRegImmCmds) {
             if (operation == CbWaitEventOperationType::noop) {
@@ -751,18 +742,6 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 }
             }
             cmdIndex++;
-
-            auto lriIndex = mutableLoadRegImm->getInOrderPatchListIndex();
-            // there are 2 LRI commands for the same in order patchlist index, skip second update of in order exec info
-            if (lriIndex == lastIndex) {
-                continue;
-            }
-            if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                cmdList->updateInOrderExecInfo(lriIndex, eventInOrderInfo, false);
-            } else if (operation == CbWaitEventOperationType::noop) {
-                cmdList->disablePatching(lriIndex);
-            }
-            lastIndex = lriIndex;
         }
     }
 }

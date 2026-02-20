@@ -583,7 +583,6 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
     virtual void appendMultiPartitionEpilogue() = 0;
-    virtual void patchInOrderCmds() = 0;
     virtual bool kernelMemoryPrefetchEnabled() const = 0;
 
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
@@ -592,8 +591,6 @@ struct CommandList : _ze_command_list_handle_t {
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
-    void addRegularCmdListSubmissionCounter();
-    bool inOrderCmdsPatchingEnabled() const;
     void clearInOrderExecCounterAllocation();
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }

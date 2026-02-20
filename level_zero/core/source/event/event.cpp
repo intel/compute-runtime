@@ -366,7 +366,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
 
     ipcData = {};
     ipcData.rootDeviceIndex = device->getRootDeviceIndex();
-    ipcData.counterValue = this->getInOrderExecSignalValueWithSubmissionCounter();
+    ipcData.counterValue = inOrderExecHelper.getEventData()->counterValue;
     ipcData.counterBasedFlags = this->counterBasedFlags;
     ipcData.signalScopeFlags = this->signalScope;
     ipcData.waitScopeFlags = this->waitScope;
@@ -664,10 +664,6 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
     resetCompletionStatus();
 
     inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset);
-}
-
-uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
-    return inOrderExecHelper.getExecSignalValueWithSubmissionCounter();
 }
 
 uint64_t Event::getInOrderIncrementValue(uint32_t partitionCount) const {

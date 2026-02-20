@@ -28,7 +28,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = Event::STATE_CLEARED;
-    size_t inOrderPatchListIndex = 2;
     bool qwordDataIndirect = false;
     bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
@@ -43,12 +42,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
     // initialize command and mutable object
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, inOrderPatchListIndex, type, qwordDataIndirect, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, useSemaphore64bCmd);
 
     mutableSemaphoreWait.noop();
 
     EXPECT_EQ(0, memcmp(noopSpace, this->cmdBufferGpuPtr, sizeof(MI_SEMAPHORE_WAIT)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableSemaphoreWait.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -61,7 +59,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = Event::STATE_CLEARED;
-    size_t inOrderPatchListIndex = 2;
     bool qwordDataIndirect = false;
     bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
@@ -75,12 +72,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, inOrderPatchListIndex, type, qwordDataIndirect, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
     EXPECT_EQ(0, memcmp(&cmdSemaphore, this->cmdBufferGpuPtr, sizeof(MI_SEMAPHORE_WAIT)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableSemaphoreWait.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -93,7 +89,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = Event::STATE_CLEARED;
-    size_t inOrderPatchListIndex = 2;
     bool qwordDataIndirect = false;
     bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
@@ -107,12 +102,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, inOrderPatchListIndex, type, qwordDataIndirect, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
     EXPECT_EQ(0, memcmp(&cmdSemaphore, this->cmdBufferGpuPtr, sizeof(MI_SEMAPHORE_WAIT)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableSemaphoreWait.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -125,7 +119,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = 0;
-    size_t inOrderPatchListIndex = 2;
     bool qwordDataIndirect = false;
     bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
@@ -139,12 +132,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, inOrderPatchListIndex, type, qwordDataIndirect, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
     EXPECT_EQ(0, memcmp(&cmdSemaphore, this->cmdBufferGpuPtr, sizeof(MI_SEMAPHORE_WAIT)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableSemaphoreWait.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -157,7 +149,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = Event::STATE_CLEARED;
-    size_t inOrderPatchListIndex = 2;
     bool qwordDataIndirect = false;
     bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
 
@@ -172,7 +163,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
     EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
 
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, inOrderPatchListIndex, type, qwordDataIndirect, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, useSemaphore64bCmd);
 
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);

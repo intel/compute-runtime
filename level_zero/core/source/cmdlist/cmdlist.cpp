@@ -642,7 +642,7 @@ void CommandList::enableInOrderExecution() {
         hostCounterNode = this->device->getHostInOrderCounterAllocator()->getTag();
     }
 
-    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, hostCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType());
+    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, hostCounterNode, *this->device->getNEODevice(), this->partitionCount);
     if (isImmediateType()) {
         inOrderExecInfo->setSimulationUploadCsr(getCsr(false));
         inOrderExecInfo->uploadAllocationsToSimulation();
@@ -669,16 +669,6 @@ void CommandList::addToMappedEventList(Event *event) {
             mappedTsEventList.push_back(event);
         }
     }
-}
-
-void CommandList::addRegularCmdListSubmissionCounter() {
-    if (isInOrderExecutionEnabled()) {
-        inOrderExecInfo->addRegularCmdListSubmissionCounter(1);
-    }
-}
-
-bool CommandList::inOrderCmdsPatchingEnabled() const {
-    return (!isImmediateType() && NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() == 1);
 }
 
 void CommandList::clearInOrderExecCounterAllocation() {

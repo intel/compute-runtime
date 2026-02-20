@@ -54,11 +54,11 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
+    static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount);
     static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation,
                                                                          uint64_t *hostAddress, uint64_t counterValue, uint32_t devicePartitions, uint32_t hostPartitions);
 
-    InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
+    InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const;
     NEO::GraphicsAllocation *getHostCounterAllocation() const;
@@ -87,10 +87,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
     void resetCounterValue();
 
-    uint64_t getRegularCmdListSubmissionCounter() const { return regularCmdListSubmissionCounter; }
-    void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
-
-    bool isRegularCmdList() const { return regularCmdList; }
     bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
     bool isAtomicDeviceSignalling() const { return atomicDeviceSignalling; }
 
@@ -140,7 +136,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     std::atomic<uint64_t> lastWaitedCounterValue[2] = {0, 0}; // [0] for offset == 0, [1] for offset != 0
 
     uint64_t counterValue = 0;
-    uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
@@ -148,7 +143,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t allocationOffset = 0;
     uint32_t rootDeviceIndex = 0;
     uint32_t immWritePostSyncWriteOffset = 0;
-    bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
     bool isSimulationMode = false;
@@ -158,130 +152,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 };
 
 static_assert(NEO::NonCopyable<InOrderExecInfo>);
-
-namespace InOrderPatchCommandHelpers {
-inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
-    if (inOrderExecInfo.isRegularCmdList() && inOrderExecInfo.getRegularCmdListSubmissionCounter() > 1) {
-        return inOrderExecInfo.getCounterValue() * (inOrderExecInfo.getRegularCmdListSubmissionCounter() - 1);
-    }
-
-    return 0;
-}
-
-enum class PatchCmdType {
-    none,
-    lri64b,
-    sdi,
-    semaphore,
-    walker,
-    pipeControl,
-    xyCopyBlt,
-    xyBlockCopyBlt,
-    xyColorBlt,
-    memSet
-};
-
-template <typename GfxFamily>
-struct PatchCmd {
-    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType, bool deviceAtomicSignaling, bool duplicatedHostStorage, bool useSemaphore64bCmd)
-        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType), deviceAtomicSignaling(deviceAtomicSignaling), duplicatedHostStorage(duplicatedHostStorage), useSemaphore64bCmd(useSemaphore64bCmd) {
-        if (inOrderExecInfo) {
-            this->inOrderExecInfo = *inOrderExecInfo;
-        }
-    }
-
-    void patch(uint64_t appendCounterValue) {
-        if (skipPatching) {
-            return;
-        }
-        switch (patchCmdType) {
-        case PatchCmdType::sdi:
-            patchSdi(appendCounterValue);
-            break;
-        case PatchCmdType::semaphore:
-            patchSemaphore(appendCounterValue);
-            break;
-        case PatchCmdType::walker:
-            patchComputeWalker(appendCounterValue);
-            break;
-        case PatchCmdType::lri64b:
-            patchLri64b(appendCounterValue);
-            break;
-        case PatchCmdType::pipeControl:
-            patchPipeControl(appendCounterValue);
-            break;
-        case PatchCmdType::xyCopyBlt:
-        case PatchCmdType::xyBlockCopyBlt:
-        case PatchCmdType::xyColorBlt:
-        case PatchCmdType::memSet:
-            patchBlitterCommand(appendCounterValue, patchCmdType);
-            break;
-        default:
-            UNRECOVERABLE_IF(true);
-            break;
-        }
-    }
-
-    void updateInOrderExecInfo(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo) {
-        this->inOrderExecInfo = *inOrderExecInfo;
-    }
-
-    void setSkipPatching(bool value) {
-        skipPatching = value;
-    }
-
-    bool isExternalDependency() const { return inOrderExecInfo.get(); }
-
-    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
-    void *cmd1 = nullptr;
-    void *cmd2 = nullptr;
-    const uint64_t baseCounterValue = 0;
-    const PatchCmdType patchCmdType = PatchCmdType::none;
-    bool deviceAtomicSignaling = false;
-    bool duplicatedHostStorage = false;
-    bool skipPatching = false;
-    bool useSemaphore64bCmd = false;
-
-  protected:
-    void patchSdi(uint64_t appendCounterValue) {
-        auto sdiCmd = reinterpret_cast<typename GfxFamily::MI_STORE_DATA_IMM *>(cmd1);
-        sdiCmd->setDataDword0(getLowPart(baseCounterValue + appendCounterValue));
-        sdiCmd->setDataDword1(getHighPart(baseCounterValue + appendCounterValue));
-    }
-
-    void patchSemaphore(uint64_t appendCounterValue);
-    void patchComputeWalker(uint64_t appendCounterValue);
-    void patchBlitterCommand(uint64_t appendCounterValue, PatchCmdType patchCmdType);
-
-    void patchPipeControl(uint64_t appendCounterValue) {
-        auto pcCmd = reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(cmd1);
-        pcCmd->setImmediateData(static_cast<uint64_t>(baseCounterValue + appendCounterValue));
-    }
-
-    void patchLri64b(uint64_t appendCounterValue) {
-        if (isExternalDependency()) {
-            appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
-            if (appendCounterValue == 0) {
-                return;
-            }
-        }
-
-        const uint64_t counterValue = baseCounterValue + appendCounterValue;
-
-        auto lri1 = reinterpret_cast<typename GfxFamily::MI_LOAD_REGISTER_IMM *>(cmd1);
-        lri1->setDataDword(getLowPart(counterValue));
-
-        auto lri2 = reinterpret_cast<typename GfxFamily::MI_LOAD_REGISTER_IMM *>(cmd2);
-        lri2->setDataDword(getHighPart(counterValue));
-    }
-
-    PatchCmd() = delete;
-};
-
-} // namespace InOrderPatchCommandHelpers
-
-template <typename GfxFamily>
-using InOrderPatchCommandsContainer = std::vector<NEO::InOrderPatchCommandHelpers::PatchCmd<GfxFamily>>;
 
 // Used for IPC exchange - keep minimal set of data to share
 #pragma pack(1)
@@ -305,8 +175,6 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) { inOrderExecInfo->setLastWaitedCounterValue(value, allocationOffset); }
 
     const InOrderExecEventData *getEventData() const { return eventData.get(); }
-
-    uint64_t getExecSignalValueWithSubmissionCounter() const;
 
     uint64_t *getBaseHostAddress() const { return baseHostAddress; }
     uint64_t getBaseDeviceAddress() const { return baseDeviceAddress; }

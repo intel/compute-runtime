@@ -2815,7 +2815,6 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         ASSERT_EQ(*loadRegImmList[outCbWaitEventCmdsIndex], cmd->pDestination);
         auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd->pDestination);
         ASSERT_NE(nullptr, loadRegImmCmd);
-        EXPECT_EQ(0u, cmd->inOrderPatchListIndex);
         auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
         EXPECT_EQ(registerNumber, cmd->offset);
     }
@@ -2828,12 +2827,6 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd->pDestination);
     ASSERT_NE(nullptr, semaphoreWaitCmd);
     EXPECT_EQ(eventCompletionAddress + cmd->offset, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
-
-    if (FamilyType::isQwordInOrderCounter) {
-        EXPECT_EQ(std::numeric_limits<size_t>::max(), cmd->inOrderPatchListIndex);
-    } else {
-        EXPECT_EQ(0u, cmd->inOrderPatchListIndex);
-    }
 
     auto &residencyContainer = commandContainer.getResidencyContainer();
 

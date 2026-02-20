@@ -31,7 +31,7 @@ zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uin
         if (!eventObj->getInOrderExecEventHelper().isDataAssigned()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        *completionValue = eventObj->getInOrderExecSignalValueWithSubmissionCounter();
+        *completionValue = eventObj->getInOrderExecBaseSignalValue();
         *address = eventObj->getInOrderExecEventHelper().getBaseDeviceAddress() + eventObj->getInOrderAllocationOffset();
     } else if (eventObj->isEventTimestampFlagSet()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

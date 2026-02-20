@@ -486,37 +486,6 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, GivenMiSemaphoreWaitLegacyWhenProgra
     EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphoreLegacy->getWaitMode());
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenInOrderExecInfoWhenPatchingLegacySemaphoreThenSetCorrectValues) {
-    MockDevice mockDevice;
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    MockMemoryManager memoryManager(mockExecutionEnvironment);
-
-    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
-    auto node = tagAllocator.getTag();
-
-    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(node, nullptr, mockDevice, 2, true, false);
-    inOrderExecInfo->addCounterValue(1);
-
-    bool useSemaphore64bCmd = false;
-
-    auto miSemaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
-    auto miSemaphoreLegacyCmd = reinterpret_cast<typename FamilyType::MI_SEMAPHORE_WAIT_LEGACY *>(&miSemaphoreCmd);
-    miSemaphoreLegacyCmd->setSemaphoreDataDword(1);
-
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &miSemaphoreCmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false, useSemaphore64bCmd);
-    patchCmd.patch(2);
-    EXPECT_EQ(1u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
-
-    inOrderExecInfo->addRegularCmdListSubmissionCounter(3);
-    patchCmd.patch(3);
-    EXPECT_EQ(3u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &miSemaphoreCmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false, useSemaphore64bCmd);
-    patchCmdInternal.patch(3);
-
-    EXPECT_EQ(4u, miSemaphoreLegacyCmd->getSemaphoreDataDword());
-}
-
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, given57bitVaForDestinationAddressWhenProgrammingMiFlushDwThenVerifyAll57bitsAreUsed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};

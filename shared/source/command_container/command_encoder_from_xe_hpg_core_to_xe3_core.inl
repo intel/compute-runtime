@@ -125,29 +125,6 @@ void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename P
 }
 
 template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue) {
-    if (this->isExternalDependency()) {
-        appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
-        if (appendCounterValue == 0) {
-            return;
-        }
-    }
-
-    auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmd1);
-    semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
-}
-
-template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
-    auto walkerCmd = reinterpret_cast<typename Family::DefaultWalkerType *>(cmd1);
-    auto &postSync = walkerCmd->getPostSync();
-    postSync.setImmediateData(baseCounterValue + appendCounterValue);
-}
-
-template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
-}
-template <typename Family>
 template <typename CommandType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, CommandType &cmd, const EncodeWalkerArgs &walkerArgs) {}
 

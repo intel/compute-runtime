@@ -105,26 +105,23 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     }
 
     template <typename FamilyType>
-    void createMutableLoadRegisterImm(uint32_t registerAddress, size_t inOrderPatchListIndex) {
+    void createMutableLoadRegisterImm(uint32_t registerAddress) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         auto loadRegisterImmBuffer = this->cmdBuffer->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
         *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(loadRegisterImmBuffer) = FamilyType::cmdInitLoadRegisterImm;
 
         this->loadRegisterImmBuffers.push_back(loadRegisterImmBuffer);
-        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(loadRegisterImmBuffer,
-                                                                                                                registerAddress,
-                                                                                                                inOrderPatchListIndex));
+        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(loadRegisterImmBuffer, registerAddress));
     }
 
     template <typename FamilyType>
-    void createMutableSemaphoreWait(size_t offset, size_t inOrderPatchListIndex, L0::MCL::MutableSemaphoreWait::Type type, bool qwordDataIndirect) {
+    void createMutableSemaphoreWait(size_t offset, L0::MCL::MutableSemaphoreWait::Type type, bool qwordDataIndirect) {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         this->semaphoreWaitBuffer = this->cmdBuffer->getSpace(sizeof(MI_SEMAPHORE_WAIT));
         *reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer) = FamilyType::cmdInitMiSemaphoreWait;
 
         this->mutableSemaphoreWait = std::make_unique<L0::MCL::MutableSemaphoreWaitHw<FamilyType>>(this->semaphoreWaitBuffer,
                                                                                                    offset,
-                                                                                                   inOrderPatchListIndex,
                                                                                                    type,
                                                                                                    qwordDataIndirect,
                                                                                                    HasSemaphore64bCmd<FamilyType>);
@@ -233,30 +230,13 @@ struct VariableInOrderFixture : public VariableFixture {
     }
 
     template <typename FamilyType>
-    NEO::InOrderPatchCommandsContainer<FamilyType> &prepareInOrderWaitCommands(L0::CommandList *cmdList, bool disablePatching, bool addToPatchList) {
-        auto mockCmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(cmdList);
-        size_t inOrderPatchIndex = addToPatchList ? mockCmdListHw->inOrderPatchCmds.size() : std::numeric_limits<size_t>::max();
+    void prepareInOrderWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600, inOrderPatchIndex);
-            createMutableLoadRegisterImm<FamilyType>(0x2604, inOrderPatchIndex);
-            if (addToPatchList) {
-                mockCmdListHw->addCmdForPatching(&mockCmdListHw->inOrderExecInfo, this->loadRegisterImmBuffers[0], this->loadRegisterImmBuffers[1], 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b);
-                if (disablePatching) {
-                    mockCmdListHw->disablePatching(inOrderPatchIndex);
-                }
-                inOrderPatchIndex++;
-            }
+            createMutableLoadRegisterImm<FamilyType>(0x2600);
+            createMutableLoadRegisterImm<FamilyType>(0x2604);
         }
 
-        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, inOrderPatchIndex, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect);
-        if (addToPatchList) {
-            mockCmdListHw->addCmdForPatching(&mockCmdListHw->inOrderExecInfo, this->semaphoreWaitBuffer, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
-            if (disablePatching) {
-                mockCmdListHw->disablePatching(inOrderPatchIndex);
-            }
-        }
-
-        return mockCmdListHw->inOrderPatchCmds;
+        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect);
     }
 
     uint64_t cmdListInOrderCounterValue = 0;

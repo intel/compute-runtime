@@ -39,7 +39,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
-    using BaseClass::addCmdForPatching;
     using BaseClass::addHostFunctionToPatchCommands;
     using BaseClass::addPatchScratchAddressInImplicitArgs;
     using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
@@ -80,12 +79,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
-    using BaseClass::disablePatching;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::dispatchHostFunction;
     using BaseClass::doubleSbaWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
-    using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::eventsForRecordedBcsSplit;
@@ -106,7 +103,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::initialize;
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
-    using BaseClass::inOrderPatchCmds;
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
@@ -140,7 +136,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::syncDispatchQueueId;
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::unifiedMemoryControls;
-    using BaseClass::updateInOrderExecInfo;
     using BaseClass::updateStreamProperties;
     using BaseClass::useAdditionalBlitProperties;
 
@@ -209,7 +204,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
-    using BaseClass::addCmdForPatching;
     using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
     using BaseClass::appendLaunchKernelWithParams;
@@ -230,13 +224,11 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
-    using BaseClass::disablePatching;
     using BaseClass::dispatchEventRemainingPacketsPostSyncOperation;
     using BaseClass::dispatchHostFunction;
     using BaseClass::doubleSbaWa;
     using BaseClass::dummyBlitWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
-    using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
@@ -249,7 +241,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
-    using BaseClass::inOrderPatchCmds;
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
     using BaseClass::isCopyOffloadAllowed;
@@ -278,7 +269,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::synchronizeInOrderExecution;
     using BaseClass::transferDirectionRequiresBcsSplit;
-    using BaseClass::updateInOrderExecInfo;
     using BaseClass::useAdditionalBlitProperties;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
@@ -387,7 +377,6 @@ struct Mock<CommandList> : public CommandList {
 
     ADDMETHOD_NOBASE(close, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
-    ADDMETHOD_NOBASE_VOIDRETURN(patchInOrderCmds, (void));
 
     ADDMETHOD_CONST_NOBASE(kernelMemoryPrefetchEnabled, bool, false, (void));
 

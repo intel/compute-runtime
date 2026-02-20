@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -162,10 +162,6 @@ struct MutableCommandList {
     virtual bool isCbEventBoundToCmdList(Event *event) const = 0;
     virtual NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc) = 0;
     virtual bool isQwordInOrderCounter() const = 0;
-
-    virtual void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo, bool disablePatchingFlag) = 0;
-    virtual void disablePatching(size_t inOrderPatchIndex) = 0;
-    virtual void enablePatching(size_t inOrderPatchIndex) = 0;
 
     virtual void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
     virtual void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;

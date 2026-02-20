@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@ template <typename GfxFamily>
 struct MutableLoadRegisterImmHw : public MutableLoadRegisterImm {
     using LoadRegisterImm = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    MutableLoadRegisterImmHw(void *loadRegImm, uint32_t registerAddress, size_t inOrderPatchListIndex)
-        : MutableLoadRegisterImm(inOrderPatchListIndex),
+    MutableLoadRegisterImmHw(void *loadRegImm, uint32_t registerAddress)
+        : MutableLoadRegisterImm(),
           loadRegImm(loadRegImm),
           registerAddress(registerAddress) {}
 

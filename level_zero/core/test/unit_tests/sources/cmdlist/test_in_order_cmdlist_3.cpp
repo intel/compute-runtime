@@ -194,7 +194,6 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
     auto inOrderInfo = newEventMock->getInOrderExecEventHelper().getInOrderExecInfo().get();
 
-    EXPECT_FALSE(inOrderInfo->isRegularCmdList());
     EXPECT_EQ(inOrderInfo->getDeviceCounterAllocation()->getGpuAddress(), inOrderInfo->getBaseDeviceAddress());
     EXPECT_EQ(event0InOrderInfo->getNumDevicePartitionsToWait(), inOrderInfo->getNumDevicePartitionsToWait());
     EXPECT_EQ(event0InOrderInfo->isHostStorageDuplicated() ? event0InOrderInfo->getNumHostPartitionsToWait() : event0InOrderInfo->getNumDevicePartitionsToWait(), inOrderInfo->getNumHostPartitionsToWait());
@@ -207,7 +206,6 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
         EXPECT_TRUE(inOrderInfo->isHostStorageDuplicated());
     } else {
         EXPECT_EQ(inOrderInfo->getExternalDeviceAllocation(), inOrderInfo->getExternalHostAllocation());
-        EXPECT_FALSE(inOrderInfo->isHostStorageDuplicated());
     }
 
     EXPECT_TRUE(newEventMock->isFromIpcPool);

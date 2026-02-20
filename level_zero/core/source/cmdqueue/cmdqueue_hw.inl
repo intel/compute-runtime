@@ -2012,18 +2012,6 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx) {
-    if (commandList->inOrderCmdsPatchingEnabled()) {
-        UNRECOVERABLE_IF(ctx.patchPreambleEnabled);
-        if (commandList->isInOrderExecutionEnabled()) {
-            auto &inOrderExecInfo = *commandList->getInOrderExecInfo();
-            inOrderExecInfo.setSimulationUploadCsr(this->csr);
-            inOrderExecInfo.uploadAllocationsToSimulation();
-        }
-        commandList->addRegularCmdListSubmissionCounter();
-        commandList->patchInOrderCmds();
-        return;
-    }
-
     if (!commandList->isInOrderExecutionEnabled()) {
         return;
     }

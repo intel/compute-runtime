@@ -80,7 +80,6 @@ struct PatchSignalEventPostSyncPipeControl {
 
 struct PatchWaitEventSemaphoreWait {
     void *pDestination = nullptr;
-    size_t inOrderPatchListIndex = 0;
     size_t offset = 0;
 };
 
@@ -101,13 +100,11 @@ struct PatchCbEventTimestampClearStoreDataImm {
 
 struct PatchCbWaitEventSemaphoreWait {
     void *pDestination = nullptr;
-    size_t inOrderPatchListIndex = 0;
     size_t offset = 0;
 };
 
 struct PatchCbWaitEventLoadRegisterImm {
     void *pDestination = nullptr;
-    size_t inOrderPatchListIndex = 0;
     size_t offset = 0;
 };
 

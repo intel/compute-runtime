@@ -258,7 +258,6 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t reset() override;
 
     size_t getReserveSshSize();
-    void patchInOrderCmds() override;
     MOCKABLE_VIRTUAL bool handleCounterBasedEventOperations(Event *signalEvent, bool skipAddingEventToResidency);
     bool isCbEventBoundToCmdList(Event *event) const;
     bool kernelMemoryPrefetchEnabled() const override;
@@ -440,14 +439,9 @@ struct CommandListCoreFamily : public CommandList {
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     void appendFullSynchronizedDispatchInit();
     void addPatchScratchAddressInImplicitArgs(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &args, const NEO::KernelDescriptor &kernelDescriptor, bool kernelNeedsImplicitArgs);
-    size_t addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
     uint64_t getInOrderIncrementValue() const;
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
     void encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args);
-
-    void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo, bool disablePatchingFlag);
-    void disablePatching(size_t inOrderPatchIndex);
-    void enablePatching(size_t inOrderPatchIndex);
 
     void appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyEngineOperation);
     bool isDeviceToHostCopyEventFenceRequired(Event *signalEvent) const;
@@ -487,8 +481,6 @@ struct CommandListCoreFamily : public CommandList {
     bool isCopyOffloadForFillPreferred(size_t size) const;
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
-
-    NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     bool latestOperationHasHeapfullCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;

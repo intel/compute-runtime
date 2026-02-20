@@ -18,17 +18,17 @@
 
 namespace NEO {
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList) {
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount) {
     bool atomicDeviceSignalling = device.getGfxCoreHelper().inOrderAtomicSignallingEnabled(device.getRootDeviceEnvironment());
 
     UNRECOVERABLE_IF(!deviceCounterNode);
 
-    return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterNode, device, partitionCount, regularCmdList, atomicDeviceSignalling);
+    return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterNode, device, partitionCount, atomicDeviceSignalling);
 }
 
 std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation,
                                                                                uint64_t *hostAddress, uint64_t counterValue, uint32_t devicePartitions, uint32_t hostPartitions) {
-    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(nullptr, nullptr, device, 1, false, true);
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(nullptr, nullptr, device, 1, true);
 
     inOrderExecInfo->counterValue = counterValue;
     inOrderExecInfo->externalHostAllocation = hostAllocation;
@@ -54,9 +54,8 @@ InOrderExecInfo::~InOrderExecInfo() {
     releaseNotUsedTempTimestampNodes(true);
 }
 
-InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling)
-    : device(device), deviceCounterNode(deviceCounterNode), hostCounterNode(hostCounterNode), rootDeviceIndex(device.getRootDeviceIndex()),
-      regularCmdList(regularCmdList), atomicDeviceSignalling(atomicDeviceSignalling) {
+InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool atomicDeviceSignalling)
+    : device(device), deviceCounterNode(deviceCounterNode), hostCounterNode(hostCounterNode), rootDeviceIndex(device.getRootDeviceIndex()), atomicDeviceSignalling(atomicDeviceSignalling) {
 
     numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
     numHostPartitionsToWait = partitionCount;
@@ -153,7 +152,6 @@ void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulatio
 
 void InOrderExecInfo::reset() {
     resetCounterValue();
-    regularCmdListSubmissionCounter = 0;
     allocationOffset = 0;
 
     initializeAllocationsFromHost();
@@ -294,11 +292,6 @@ void InOrderExecEventHelper::moveAdditionalTimestampNodesToReleaseList() {
     }
 
     additionalTimestampNodes.clear();
-}
-
-uint64_t InOrderExecEventHelper::getExecSignalValueWithSubmissionCounter() const {
-    uint64_t appendCounter = inOrderExecInfo ? NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo) : 0;
-    return (eventData->counterValue + appendCounter);
 }
 
 } // namespace NEO

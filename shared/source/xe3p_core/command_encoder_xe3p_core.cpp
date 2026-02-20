@@ -17,7 +17,6 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
@@ -366,29 +365,8 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
 }
 
 template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue) {
-    if (this->isExternalDependency()) {
-        appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
-        if (appendCounterValue == 0) {
-            return;
-        }
-    }
-
-    if (this->useSemaphore64bCmd) {
-        auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmd1);
-        semaphoreCmd->setSemaphoreDataDword(baseCounterValue + appendCounterValue);
-    } else {
-        auto semaphoreCmd = reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT_LEGACY *>(cmd1);
-        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
-    }
-}
-
-template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool interrupt) {}
-
-template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {}
 
 } // namespace NEO
 
@@ -417,10 +395,6 @@ template void NEO::EncodePostSync<Family>::adjustTimestampPacket<Family::COMPUTE
 template void NEO::EncodePostSync<Family>::setupPostSyncForRegularEvent<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
 template void NEO::EncodePostSync<Family>::encodeL3Flush<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
 template void NEO::EncodePostSync<Family>::setupPostSyncForInOrderExec<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
-
-template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchSemaphore(uint64_t appendCounterValue);
-template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
-template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
 template struct EncodeDispatchKernelWithHeap<Family>;
 

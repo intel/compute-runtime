@@ -326,7 +326,6 @@ struct Event : _ze_event_handle_t {
     bool isFlushRequiredForSignal() const { return !isCounterBased() && isSignalScope(); }
     void enableCounterBasedMode(bool apiRequest, uint32_t flags);
     void disableImplicitCounterBasedMode();
-    uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const;
     uint32_t getInOrderAllocationOffset() const;
     uint64_t getInOrderIncrementValue(uint32_t partitionCount) const;

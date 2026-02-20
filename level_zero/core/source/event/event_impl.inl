@@ -303,7 +303,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
         return reportEmptyCbEventAsReady ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
     }
 
-    auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
+    const auto waitValue = getInOrderExecBaseSignalValue();
 
     if (!inOrderExecHelper.isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
@@ -711,7 +711,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostAddress(), inOrderExecHelper.getEventData()->counterOffset));
     NEO::GraphicsAllocation *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
 
-    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc)) {
+    if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc)) {
         return ZE_RESULT_NOT_READY;
     }
 
@@ -755,7 +755,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (this->heapfullCbEventWithProfiling) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
-                inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter(), this->getInOrderAllocationOffset());
+                inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
                 this->heapfullCbEventWithProfiling = false;

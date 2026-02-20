@@ -389,7 +389,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenL2FlushRequiredWhenCallingSe
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
     WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
-    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1, false);
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1);
 
     dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExecInfo.get();
     auto &postSyncArgs = dispatchArgs.postSyncArgs;
@@ -426,7 +426,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndDefaultArgs
 
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
 
-    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1, false);
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1);
 
     dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExecInfo.get();
     auto &postSyncArgs = dispatchArgs.postSyncArgs;
@@ -452,7 +452,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
 
     for (bool hostStorageDuplicated : {true, false}) {
         for (bool atomicSignalling : {true, false}) {
-            InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), (hostStorageDuplicated) ? hostTagAllocator.getTag() : nullptr, *pDevice, 1, false, atomicSignalling);
+            InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), (hostStorageDuplicated) ? hostTagAllocator.getTag() : nullptr, *pDevice, 1, atomicSignalling);
             dispatchArgs.postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
             for (bool interruptEvent : {true, false}) {
 

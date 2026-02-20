@@ -14,8 +14,8 @@ template <typename GfxFamily>
 struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     using SemaphoreWait = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    MutableSemaphoreWaitHw(void *semWait, size_t offset, size_t inOrderPatchListIndex, Type type, bool qwordDataIndirect, bool useSemaphore64bCmd)
-        : MutableSemaphoreWait(inOrderPatchListIndex),
+    MutableSemaphoreWaitHw(void *semWait, size_t offset, Type type, bool qwordDataIndirect, bool useSemaphore64bCmd)
+        : MutableSemaphoreWait(),
           semWait(semWait),
           offset(offset),
           type(type),

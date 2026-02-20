@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint32_t registerAddress = 0x2600;
     uint32_t value = 0x8;
-    size_t inOrderPatchListIndex = 2;
 
     uint8_t noopSpace[sizeof(MI_LOAD_REGISTER_IMM)];
 
@@ -33,12 +32,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // initialize command and mutable object
     NEO::LriHelper<FamilyType>::program(&this->commandStream, registerAddress, value, true, false);
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress, inOrderPatchListIndex);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress);
 
     mutableLoadRegisterImm.noop();
 
     EXPECT_EQ(0, memcmp(noopSpace, this->cmdBufferGpuPtr, sizeof(MI_LOAD_REGISTER_IMM)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableLoadRegisterImm.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -48,7 +46,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint32_t registerAddress = 0x2600;
     uint32_t value = 0x0;
-    size_t inOrderPatchListIndex = 2;
 
     MI_LOAD_REGISTER_IMM cmdLri;
 
@@ -57,12 +54,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_LOAD_REGISTER_IMM));
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress, inOrderPatchListIndex);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress);
 
     mutableLoadRegisterImm.restore();
 
     EXPECT_EQ(0, memcmp(&cmdLri, this->cmdBufferGpuPtr, sizeof(MI_LOAD_REGISTER_IMM)));
-    EXPECT_EQ(inOrderPatchListIndex, mutableLoadRegisterImm.getInOrderPatchListIndex());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -72,7 +68,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint32_t registerAddress = 0x2600;
     uint32_t value = 0x0;
-    size_t inOrderPatchListIndex = 2;
 
     // prepare buffer for comparison
     NEO::LriHelper<FamilyType>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(this->cmdBufferGpuPtr), registerAddress, value, true, false);
@@ -80,13 +75,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto lriCommand = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(this->cmdBufferGpuPtr);
     EXPECT_EQ(value, lriCommand->getDataDword());
 
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress, inOrderPatchListIndex);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(this->cmdBufferGpuPtr, registerAddress);
 
     value = 0x8;
     mutableLoadRegisterImm.setValue(value);
     EXPECT_EQ(value, lriCommand->getDataDword());
-
-    EXPECT_EQ(inOrderPatchListIndex, mutableLoadRegisterImm.getInOrderPatchListIndex());
 }
 
 } // namespace ult

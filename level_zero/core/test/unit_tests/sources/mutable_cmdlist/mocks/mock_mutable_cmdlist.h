@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,6 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::initialize;
     using BaseClass::inlineDataSize;
     using BaseClass::inOrderExecInfo;
-    using BaseClass::inOrderPatchCmds;
     using BaseClass::iohAlignment;
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isSyncModeQueue;

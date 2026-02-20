@@ -287,7 +287,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, WaitForUserFenceOnEventHostSynchronize, -1, "-1:
 DECLARE_DEBUG_VARIABLE(int32_t, ForceGpuStatusCheckOnSuccessfulEventHostSynchronize, -1, "-1: default, 0: Disabled, 1: Enabled. If enabled, check GPU status for every successful event host synchronize for hang/segfault.")
 DECLARE_DEBUG_VARIABLE(int32_t, DisableSystemPointerKernelArgument, -1, "-1: default, 0: Disabled, 1: using a system pointer for kernel argument returns an error.")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramUserInterruptOnResolvedDependency, -1, "-1: default, 0: Disabled, 1: On signaling append completion (if possible) - for example in-order counter update")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRegularCmdListPatching, -1, "-1: default, 0: Disabled, 1: If set, patch counter value on execute call")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRelaxedOrderingForEventsChaining, -1, "-1: default, 0: Disabled, 1: If set, send 2 immediate flushes to avoid stalling RelaxedOrdering Scheduler.")
 DECLARE_DEBUG_VARIABLE(int32_t, InOrderAtomicSignallingEnabled, -1, "-1: default, 0: disabled, 1: Use atomic GPU operations in increment the counter. Otherwise use non-atomic commands like SDI.")
 DECLARE_DEBUG_VARIABLE(int32_t, InOrderDuplicatedCounterStorageEnabled, -1, "-1: default, 0: disabled, 1: Allocate additional host storage for signaling")

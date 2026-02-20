@@ -1386,7 +1386,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
-    createMutableSemaphoreWait<FamilyType>(offset, 0, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
+    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
@@ -1422,7 +1422,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
-    createMutableSemaphoreWait<FamilyType>(offset, 0, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
+    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
@@ -1715,232 +1715,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
-            givenCounterBasedWaitEventBelongingToVariableMclWhenMutatingIntoEventBelongingToSameMclThenStateIsPreserved) {
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
-
-    auto event = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, event);
-
-    this->attachCbEvent(event);
-
-    auto &inOrderPatchCmds = prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, true, true);
-
-    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
-    if (this->qwordIndirect) {
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
-    }
-    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_TRUE(this->variable->eventValue.counterBasedEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
-    EXPECT_TRUE(this->variable->eventValue.isCbEventBoundToCmdList);
-
-    auto newEvent = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, newEvent);
-
-    this->attachCbEvent(newEvent);
-    ret = this->variable->setValue(0, 0, newEvent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
-    EXPECT_TRUE(this->variable->eventValue.isCbEventBoundToCmdList);
-    EXPECT_EQ(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
-
-    EXPECT_TRUE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        EXPECT_TRUE(inOrderPatchCmds[1].skipPatching);
-    }
-
-    this->mutableCommandList->enablePatching(0);
-    EXPECT_FALSE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        this->mutableCommandList->enablePatching(1);
-        EXPECT_FALSE(inOrderPatchCmds[1].skipPatching);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableInOrderTest,
-            givenCounterBasedWaitEventBelongingToVariableMclWhenMutatingIntoEventBelongingToDifferentMclThenWaitIsUpdated) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
-
-    auto event = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, event);
-
-    this->attachCbEvent(event);
-
-    auto &inOrderPatchCmds = prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, true, true);
-
-    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
-    if (this->qwordIndirect) {
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
-    }
-    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_TRUE(this->variable->eventValue.counterBasedEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
-    EXPECT_TRUE(this->variable->eventValue.isCbEventBoundToCmdList);
-
-    std::unique_ptr<MutableCommandList> differentCmdList = createMutableCmdList();
-    auto newEvent = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, newEvent);
-
-    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(differentCmdList->base));
-
-    ret = this->variable->setValue(0, 0, newEvent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
-    EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
-
-    auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
-
-    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
-    EXPECT_EQ(expectedWaitAddress, testWaitAddress);
-
-    EXPECT_FALSE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        EXPECT_FALSE(inOrderPatchCmds[1].skipPatching);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableInOrderTest,
-            givenCounterBasedWaitEventBelongingToDifferentMclWhenMutatingIntoEventBelongingToOtherDifferentMclThenWaitIsUpdated) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
-    std::unique_ptr<MutableCommandList> differentCmdList = createMutableCmdList();
-    auto event = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, event);
-
-    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(differentCmdList->base));
-
-    auto &inOrderPatchCmds = prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, false, true);
-
-    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
-    if (this->qwordIndirect) {
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
-    }
-    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_TRUE(this->variable->eventValue.counterBasedEvent);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
-
-    std::unique_ptr<MutableCommandList> otherDifferentCmdList = createMutableCmdList();
-    auto newEvent = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, newEvent);
-
-    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherDifferentCmdList->base));
-
-    ret = this->variable->setValue(0, 0, newEvent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
-    EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
-
-    auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
-
-    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
-    EXPECT_EQ(expectedWaitAddress, testWaitAddress);
-
-    EXPECT_FALSE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        EXPECT_FALSE(inOrderPatchCmds[1].skipPatching);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableInOrderTest,
-            givenCounterBasedWaitEventBelongingToDifferentMclWhenNoopingAndRestoringEventThenWaitIsNoopedAndRestored) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
-
-    alignas(sizeof(uint32_t)) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
-    memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
-
-    std::unique_ptr<MutableCommandList> differentCmdList = createMutableCmdList();
-    auto event = this->createTestEvent(true, false, false, false);
-    ASSERT_NE(nullptr, event);
-
-    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(differentCmdList->base));
-    auto expectedWaitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
-
-    auto &inOrderPatchCmds = prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, false, true);
-
-    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
-    if (this->qwordIndirect) {
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
-        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
-    }
-    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_TRUE(this->variable->eventValue.counterBasedEvent);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
-
-    auto newEvent = nullptr;
-
-    ret = this->variable->setValue(0, 0, newEvent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
-    EXPECT_EQ(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
-
-    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
-    EXPECT_TRUE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        EXPECT_TRUE(inOrderPatchCmds[1].skipPatching);
-    }
-
-    ret = this->variable->setValue(0, 0, event);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
-
-    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
-    EXPECT_EQ(expectedWaitAddress, testWaitAddress);
-
-    EXPECT_FALSE(inOrderPatchCmds[0].skipPatching);
-    if (this->qwordIndirect) {
-        EXPECT_FALSE(inOrderPatchCmds[1].skipPatching);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableInOrderTest,
             givenExternalCounterBasedWaitEventWhenMutatingIntoOtherExternalCounterBasedEventThenWaitIsUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto event = this->createTestEvent(true, false, false, true);
     ASSERT_NE(nullptr, event);
 
-    prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, false, false);
+    prepareInOrderWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
@@ -1977,7 +1758,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = this->createTestEvent(true, false, false, true);
     ASSERT_NE(nullptr, event);
 
-    prepareInOrderWaitCommands<FamilyType>(this->mutableCommandList.get()->base, false, false);
+    prepareInOrderWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
