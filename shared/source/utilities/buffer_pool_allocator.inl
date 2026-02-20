@@ -44,7 +44,8 @@ template <typename PoolT, typename BufferType, typename BufferParentType>
 bool AbstractBuffersPool<PoolT, BufferType, BufferParentType>::isPoolBuffer(const BufferParentType *buffer) const {
     static_assert(std::is_base_of_v<BufferParentType, BufferType>);
 
-    return (buffer && this->mainStorage.get() == buffer);
+    const auto *bufferObj = static_cast<const BufferType *>(buffer);
+    return bufferObj && bufferObj->isPoolBuffer();
 }
 
 template <typename PoolT, typename BufferType, typename BufferParentType>

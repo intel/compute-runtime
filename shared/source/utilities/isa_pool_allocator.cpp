@@ -32,6 +32,9 @@ ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
                                                       MemoryConstants::pageSize,
                                                       0u));
     this->mainStorage.reset(graphicsAllocation);
+    if (this->mainStorage) {
+        this->mainStorage->setAsPoolBuffer(true);
+    }
     this->mtx = std::make_unique<std::mutex>();
     this->stackVec.push_back(graphicsAllocation);
 }
