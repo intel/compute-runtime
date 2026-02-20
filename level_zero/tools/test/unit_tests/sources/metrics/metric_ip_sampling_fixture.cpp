@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
+
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -24,6 +26,9 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
 
     debugManager.flags.EnableImplicitScaling.set(1);
 
+    auto mockProductHelperHw = std::make_unique<MockProductHelperHw<IGFX_UNKNOWN>>();
+    std::unique_ptr<ProductHelper> mockProductHelper = std::move(mockProductHelperHw);
+
     MultiDeviceFixture::numRootDevices = 1;
     MultiDeviceFixture::numSubDevices = 2;
     MultiDeviceFixture::setUp();
@@ -31,12 +36,19 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
                         (MultiDeviceFixture::numRootDevices *
                          MultiDeviceFixture::numSubDevices));
     for (auto device : driverHandle->devices) {
+
         testDevices.push_back(device);
         auto &l0Device = *device;
         const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
         for (uint32_t i = 0; i < subDeviceCount; i++) {
             testDevices.push_back(l0Device.subDevices[i]);
         }
+    }
+
+    for (auto &device : testDevices) {
+        auto neoDevice = device->getNEODevice();
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
     }
 
     osInterfaceVector.reserve(testDevices.size());
@@ -51,40 +63,52 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
         metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
     globalDriverHandles->push_back(driverHandle.get());
+
+    ipSamplingTestProductHelper = IpSamplingTestProductHelper::create();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 }
 
 void MetricIpSamplingMultiDevFixture::TearDown() {
     MultiDeviceFixture::tearDown();
     globalDriverHandles->clear();
+    delete ipSamplingTestProductHelper;
+    ipSamplingTestProductHelper = nullptr;
 }
 
 void MetricIpSamplingFixture::SetUp() {
     DeviceFixture::setUp();
+
+    auto mockProductHelperHw = std::make_unique<MockProductHelperHw<IGFX_UNKNOWN>>();
+    std::unique_ptr<ProductHelper> mockProductHelper = std::move(mockProductHelperHw);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+
     auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
     osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
 
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-    metricSource.metricCount = platformIpMetricCountXe;
     metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 
     globalDriverHandles->push_back(driverHandle.get());
+
+    ipSamplingTestProductHelper = IpSamplingTestProductHelper::create();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
 }
 
 void MetricIpSamplingFixture::TearDown() {
     DeviceFixture::tearDown();
     globalDriverHandles->clear();
+    delete ipSamplingTestProductHelper;
+    ipSamplingTestProductHelper = nullptr;
 }
 
-void MetricIpSamplingCalculateBaseFixture::initRawReports() {
-    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElements.size()), rawDataElements, rawReports);
+void MetricIpSamplingCalculateBaseFixture::initRawReports(IpSamplingTestProductHelper *ipSamplingTestProductHelper, PRODUCT_FAMILY productFamily) {
+    ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, false, &rawReports);
     rawReportsBytesSize = sizeof(rawReports[0][0]) * rawReports[0].size() * rawReports.size();
-
-    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElementsOverflow.size()), rawDataElementsOverflow, rawReportsOverflow);
-    rawReportsBytesSizeOverflow = sizeof(rawReportsOverflow[0][0]) * rawReportsOverflow[0].size() * rawReportsOverflow.size();
 }
 
 void MetricIpSamplingCalculateBaseFixture::initCalHandles(L0::ContextImp *context,
@@ -131,7 +155,7 @@ void MetricIpSamplingCalculateMultiDevFixture::SetUp() {
         initCalHandles(context, device);
     }
     rootDevice = testDevices[0];
-    initRawReports();
+    initRawReports(ipSamplingTestProductHelper, productFamily);
 }
 
 void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
@@ -145,7 +169,7 @@ void MetricIpSamplingCalculateSingleDevFixture::SetUp() {
     device->getMetricDeviceContext().enableMetricApi();
 
     initCalHandles(context, device);
-    initRawReports();
+    initRawReports(ipSamplingTestProductHelper, productFamily);
 }
 
 void MetricIpSamplingCalculateSingleDevFixture::TearDown() {
@@ -163,8 +187,9 @@ void MetricIpSamplingMetricsAggregationMultiDevFixture::initMultiRawReports() {
 }
 
 void MetricIpSamplingMetricsAggregationMultiDevFixture::SetUp() {
+
     MetricIpSamplingMultiDevFixture::SetUp();
-    initRawReports();
+    initRawReports(ipSamplingTestProductHelper, productFamily);
     initMultiRawReports();
 
     rootDevice = testDevices[0];

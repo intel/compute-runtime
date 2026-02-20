@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
     uint32_t clampNReports(uint32_t notifyEveryNReports);
     uint32_t getUnitReportSize() override;
     bool isNReportsAvailable() override;
-    bool isDependencyAvailable() override;
+    bool isOsSupportAvailable() override;
     ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
 
   private:

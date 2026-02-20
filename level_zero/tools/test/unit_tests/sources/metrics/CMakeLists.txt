@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,10 @@
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_fixture.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_ip_sampling_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_test_hw_helper.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_ip_sampling_test_hw_helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_test_hw_helper_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_ip_sampling_source.h

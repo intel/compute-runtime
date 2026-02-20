@@ -31,7 +31,7 @@ std::unique_ptr<IpSamplingMetricSourceImp> IpSamplingMetricSourceImp::create(con
 }
 
 IpSamplingMetricSourceImp::IpSamplingMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext) {
-    metricIPSamplingpOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
+    metricIPSamplingOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
     activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
     type = MetricSource::metricSourceTypeIpSampling;
 
@@ -51,7 +51,15 @@ ze_result_t IpSamplingMetricSourceImp::getTimestampValidBits(uint64_t &validBits
 }
 
 void IpSamplingMetricSourceImp::enable() {
-    isEnabled = metricIPSamplingpOsInterface->isDependencyAvailable();
+    Device &device = getMetricDeviceContext().getDevice();
+    const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
+    const auto &productHelper = device.getNEODevice()->getProductHelper();
+
+    if (productHelper.isIpSamplingSupported(hardwareInfo)) {
+        isEnabled = metricIPSamplingOsInterface->isOsSupportAvailable();
+    } else {
+        isEnabled = false;
+    }
 }
 
 bool IpSamplingMetricSourceImp::isAvailable() {
@@ -86,7 +94,6 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
         std::vector<zet_metric_handle_t> hMetrics(pCount);
         subDeviceMetricGroup[0]->metricGet(&pCount, hMetrics.data());
         std::vector<IpSamplingMetricImp> metrics = {};
-
         // Root device metrics must have the root device source
         for (const auto &hMetric : hMetrics) {
             zet_metric_properties_t metricProperties = {ZET_STRUCTURE_TYPE_METRIC_PROPERTIES, nullptr};
@@ -218,8 +225,8 @@ bool IpSamplingMetricSourceImp::isMetricGroupActivated(const zet_metric_group_ha
     return activationTracker->isMetricGroupActivated(hMetricGroup);
 }
 
-void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface) {
-    this->metricIPSamplingpOsInterface = std::move(metricIPSamplingpOsInterface);
+void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface) {
+    this->metricIPSamplingOsInterface = std::move(metricIPSamplingOsInterface);
 }
 
 ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
@@ -640,7 +647,6 @@ ze_result_t IpSamplingCalculation::getMetricValueCountSubDevIndex(const size_t r
 
     ze_result_t status = ZE_RESULT_SUCCESS;
     std::unordered_set<uint64_t> stallReportIpCount{};
-
     status = getIpsInRawDataForSubDevIndex(rawDataSize, pMultiMetricData, setIndex, stallReportIpCount);
     if (status != ZE_RESULT_SUCCESS) {
         metricValueCount = 0;

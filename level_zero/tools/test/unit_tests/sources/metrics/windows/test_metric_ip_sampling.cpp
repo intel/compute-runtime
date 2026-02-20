@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,7 +234,7 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, GivenSupportedProductFamilyIsUsedWh
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 
-    EXPECT_TRUE(metricIpSamplingOsInterface->isDependencyAvailable());
+    EXPECT_TRUE(metricIpSamplingOsInterface->isOsSupportAvailable());
 }
 
 } // namespace ult

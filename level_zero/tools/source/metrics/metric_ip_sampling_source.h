@@ -37,9 +37,9 @@ class IpSamplingMetricSourceImp : public MetricSource {
                                           uint32_t *pConcurrentGroupCount,
                                           uint32_t *pCountPerConcurrentGroup) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
-    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface);
+    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
-    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingpOsInterface.get(); }
+    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingOsInterface.get(); }
     IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup,
@@ -73,7 +73,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     bool isEnabled = false;
 
     const MetricDeviceContext &metricDeviceContext;
-    std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingpOsInterface = nullptr;
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingOsInterface = nullptr;
     std::unique_ptr<MetricGroup> cachedMetricGroup = nullptr;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
     ze_result_t getTimerResolution(uint64_t &resolution);

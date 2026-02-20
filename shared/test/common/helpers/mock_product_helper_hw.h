@@ -28,6 +28,9 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     aub_stream::EngineType getDefaultCopyEngine() const override;
     bool isBufferPoolAllocatorSupported() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override { return enableAdditionalBlitProperties; }
+    bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override {
+        return isIpSamplingSupportedValue;
+    }
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -38,6 +41,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool returnedIsUnlockingLockedPtrNecessary = false;
     bool isBufferPoolAllocatorSupportedValue = true;
     bool enableAdditionalBlitProperties = false;
+    bool isIpSamplingSupportedValue = true;
     uint32_t returnedStepping = 0;
     uint32_t returnedL1CachePolicy = 0;
     uint32_t returnedL1CachePolicyIfDebugger = 0;

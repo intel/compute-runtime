@@ -300,25 +300,6 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenPollIsFailureWhenisNReportsAvail
     EXPECT_FALSE(metricIpSamplingOsInterface->isNReportsAvailable());
 }
 
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndUnsupportedDeviceIdIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
-
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::pvcXlDeviceIds.front();
-    EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
-}
-
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupportedDeviceIdIsUsedWhenIsDependencyAvailableIsCalledThenReturnSucess, IsPVC) {
-
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
-
-    for (const auto &deviceId : NEO::pvcXtDeviceIds) {
-        hwInfo->platform.usDeviceID = deviceId;
-        EXPECT_TRUE(metricIpSamplingOsInterface->isDependencyAvailable());
-    }
-}
-
 struct MetricIpSamplingLinuxMultiDeviceTest : public ::testing::Test {
 
     std::unique_ptr<UltDeviceFactory> createDevices(uint32_t numSubDevices) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     bool isNReportsAvailable() override {
         return isNReportsAvailableReturn;
     }
-    bool isDependencyAvailable() override {
+    bool isOsSupportAvailable() override {
         return isDependencyAvailableReturn;
     }
 

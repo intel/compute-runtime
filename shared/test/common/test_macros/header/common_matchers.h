@@ -233,12 +233,17 @@ struct HasDispatchAllSupport {
     }
 };
 
+// IP Sampling support matches exactly with the platforms that support dispatch all
+using HasIPSamplingSupport = HasDispatchAllSupport;
+
 struct DoesNotHaveDispatchAllSupport {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return !IsPVC::isMatched<productFamily>() && IsAtMostXeCore::isMatched<productFamily>();
     }
 };
+
+using DoesNotHaveIPSamplingSupport = DoesNotHaveDispatchAllSupport;
 
 struct IsXeLpg {
     template <PRODUCT_FAMILY productFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,7 +233,7 @@ class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override { return 0; }
     uint32_t getUnitReportSize() override { return 0; }
     bool isNReportsAvailable() override { return false; }
-    bool isDependencyAvailable() override { return false; }
+    bool isOsSupportAvailable() override { return false; }
     ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
         timerResolution = 12500000UL;
         return getMetricsTimerResolutionReturn;

@@ -34,7 +34,7 @@ class MetricIpSamplingStreamerTest : public MetricIpSamplingMultiDevFixture {
     }
 };
 
-TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenAndCloseAreCalledThenSuccessIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenAndCloseAreCalledThenSuccessIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -54,7 +54,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenAnd
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenWithHwBufferSizeQueryIsCalledExpectedSizeIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenWithHwBufferSizeQueryIsCalledExpectedSizeIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -87,7 +87,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenWit
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenEventHandleIsNullWhenStreamerOpenAndCloseAreCalledThenSuccessIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenEventHandleIsNullWhenStreamerOpenAndCloseAreCalledThenSuccessIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -106,7 +106,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenEventHandleIsNullWhenStreamerOpenAndCl
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenMetricGroupIsNotActivatedWhenStreamerOpenIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenMetricGroupIsNotActivatedWhenStreamerOpenIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -126,7 +126,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenMetricGroupIsNotActivatedWhenStreamerO
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsAlreadyOpenWhenStreamerOpenIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsAlreadyOpenWhenStreamerOpenIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -149,7 +149,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsAlreadyOpenWhenStreamerOpenI
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStartMeasurementFailsWhenStreamerOpenIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStartMeasurementFailsWhenStreamerOpenIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -179,7 +179,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStartMeasurementFailsWhenStreamerOpenI
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerCloseIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerCloseIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -210,7 +210,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerCloseI
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledThenSuccessIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledThenSuccessIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -238,7 +238,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledWithMaxReportCountUint32MaxThenSuccessIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledWithMaxReportCountUint32MaxThenSuccessIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -266,7 +266,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerReadDataIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerReadDataIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -302,7 +302,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerReadDa
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfullWhenStreamerAppendMarkerIsCalledThenErrorIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfullWhenStreamerAppendMarkerIsCalledThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -328,7 +328,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfullWhenStreamerA
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToReadWhenEventQueryStatusIsCalledThenEventIsSignalled) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToReadWhenEventQueryStatusIsCalledThenEventIsSignalled, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -379,7 +379,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToRead
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToReadWhenEventQueryStatusIsCalledThenEventIsNotSignalled) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToReadWhenEventQueryStatusIsCalledThenEventIsNotSignalled, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (std::size_t index = 0; index < testDevices.size(); index++) {
@@ -433,7 +433,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToR
     }
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     auto device = testDevices[0];
@@ -488,7 +488,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZetContextActivateMetricGroupsWithRootDeviceMetricGroupsThenCallFails) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZetContextActivateMetricGroupsWithRootDeviceMetricGroupsThenCallFails, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     auto device = testDevices[0];
@@ -503,7 +503,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZetCon
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), subDevice, 1, &metricGroupHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     auto device = testDevices[0];
@@ -553,7 +553,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDat
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThenCorrectConcurrentGroupsAreRetrieved) {
+HWTEST2_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThenCorrectConcurrentGroupsAreRetrieved, EuStallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
@@ -576,7 +576,7 @@ TEST_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThenCo
 
 using MetricIpSamplingCalcOpMultiDevTest = MetricIpSamplingCalculateMultiDevFixture;
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
@@ -621,7 +621,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricWhenGettingSupportedMet
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCreateAndDestroyCalcOpIsSuccessful, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCreateAndDestroyCalcOpIsSuccessful, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -648,7 +648,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreatingCalcOpThenErrorIsReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreatingCalcOpThenErrorIsReturned, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
@@ -671,7 +671,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreati
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreatingCalcOpIgnoresTimeFilters, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreatingCalcOpIgnoresTimeFilters, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
         calcDescPerDevice[device].timeAggregationWindow = 1000;
@@ -706,7 +706,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreating
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportFormat, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportFormat, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
@@ -754,7 +754,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportFormatIncludesSelectedMetrics, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportFormatIncludesSelectedMetrics, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
@@ -816,7 +816,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCalculationDoesNotAcceptSubDeviceData, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCalculationDoesNotAcceptSubDeviceData, EuStallSupportedPlatforms) {
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -836,7 +836,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCal
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExcludedMetricsAreZero, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExcludedMetricsAreZero, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
@@ -854,7 +854,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExclude
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, WhenReadingMetricGroupTimeCalculateFilterThenCorrectValueIsReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, WhenReadingMetricGroupTimeCalculateFilterThenCorrectValueIsReturned, EuStallSupportedPlatforms) {
 
     for (auto device : testDevices) {
         zet_intel_metric_group_calculation_properties_exp_t metricGroupCalcProps{};
@@ -872,7 +872,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, WhenReadingMetricGroupTimeCalculat
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricNotSupportingRequestedScopeWhenValidatingThenMetricIsExcluded, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricNotSupportingRequestedScopeWhenValidatingThenMetricIsExcluded, EuStallSupportedPlatforms) {
 
     zet_intel_metric_scope_properties_exp_t scopeProperties{};
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
@@ -907,7 +907,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricNotSupportingRequestedS
     delete mockMetricScope;
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentScopeSupportWhenValidatingThenOnlyUnsupportedAreExcluded, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentScopeSupportWhenValidatingThenOnlyUnsupportedAreExcluded, EuStallSupportedPlatforms) {
 
     // ***  Test is only for root device since sub-device calculate operation only supports one scope ***
 
@@ -994,7 +994,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentS
     delete mockMetricScope2;
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenRootDeviceCreatingCalcOpWithOnlyMetricsHandlesOnlyThoseMetricsAreInResultReport, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenRootDeviceCreatingCalcOpWithOnlyMetricsHandlesOnlyThoseMetricsAreInResultReport, EuStallSupportedPlatforms) {
 
     uint32_t metricGroupCount = 1;
     ASSERT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandlePerDevice[rootDevice]), ZE_RESULT_SUCCESS);

@@ -132,15 +132,7 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
     return false;
 }
 
-bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
-
-    const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
-    const auto &productHelper = device.getNEODevice()->getProductHelper();
-
-    if (!productHelper.isIpSamplingSupported(hardwareInfo)) {
-        return false;
-    }
-
+bool MetricIpSamplingLinuxImp::isOsSupportAvailable() {
     const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto ioctlHelper = drm->getIoctlHelper();
     return ioctlHelper->isEuStallSupported();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_NOBASE(closAlloc, CacheRegion, CacheRegion::none, (CacheLevel));
     ADDMETHOD_NOBASE(closFree, CacheRegion, CacheRegion::none, (CacheRegion));
     ADDMETHOD_NOBASE(closAllocWays, uint16_t, 0U, (CacheRegion, uint16_t, uint16_t));
+    ADDMETHOD_NOBASE(isEuStallSupported, bool, true, ());
 
     int getDrmParamValue(DrmParam drmParam) const override {
         if (drmParam == DrmParam::memoryClassSystem) {

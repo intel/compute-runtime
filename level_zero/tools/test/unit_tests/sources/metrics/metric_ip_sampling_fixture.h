@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_test_hw_helper.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_ip_sampling_raw_data.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 #include <level_zero/zet_api.h>
@@ -21,9 +22,9 @@ namespace L0 {
 namespace ult {
 class MockMetricIpSamplingOsInterface;
 
-using EustallSupportedPlatforms = IsProduct<IGFX_PVC>;
+using EuStallSupportedPlatforms = IsProduct<IGFX_PVC>;
+using EuStallSupportXe = IsProduct<IGFX_PVC>;
 
-constexpr uint32_t platformIpMetricCountXe = 10;
 class MetricIpSamplingMultiDevFixture : public MultiDeviceFixture,
                                         public ::testing::Test {
   public:
@@ -32,6 +33,7 @@ class MetricIpSamplingMultiDevFixture : public MultiDeviceFixture,
 
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
     std::vector<L0::Device *> testDevices = {};
+    IpSamplingTestProductHelper *ipSamplingTestProductHelper = {};
 };
 
 class MetricIpSamplingFixture : public DeviceFixture,
@@ -42,20 +44,12 @@ class MetricIpSamplingFixture : public DeviceFixture,
 
     DebugManagerStateRestore restorer;
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
+    IpSamplingTestProductHelper *ipSamplingTestProductHelper = {};
 };
 
 class MetricIpSamplingCalculateBaseFixture {
   public:
-    std::vector<MockRawDataHelper::RawReportElements> rawDataElements = {
-        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},                   // 1st raw report
-        {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},        // 2nd raw report
-        {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},                    // 3rd raw report
-        {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3},           // 4th raw report
-        {100, 190, 180, 170, 160, 150, 140, 130, 120, 110, 1000, 0x3}, // 5th raw report
-        {100, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1000, 0x3}};        // 6th raw report
-
-    // Raw reports are 64Bytes, 8 x uint64_t
-    std::vector<std::array<uint64_t, 8>> rawReports = std::vector<std::array<uint64_t, 8>>(rawDataElements.size());
+    std::vector<std::array<uint64_t, 8>> rawReports;
     size_t rawReportsBytesSize = 0;
 
     std::vector<std::string> expectedMetricNamesInReport = {"IP", "Active", "ControlStall", "PipeStall",
@@ -213,42 +207,11 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {210}},
         {ZET_VALUE_TYPE_UINT64, {210}}};
 
-    std::vector<MockRawDataHelper::RawReportElements> rawDataElementsOverflow = {
-        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
-        {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
-        {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x100}, // set the overflow bit in flags
-        {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3}};
-    // Raw reports are 64Bytes, 8 x uint64_t
-    std::vector<std::array<uint64_t, 8>> rawReportsOverflow = std::vector<std::array<uint64_t, 8>>(rawDataElementsOverflow.size());
-    size_t rawReportsBytesSizeOverflow = 0;
-
-    std::vector<zet_typed_value_t> expectedMetricOverflowValues = {
-        {ZET_VALUE_TYPE_UINT64, {1}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {10}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}}};
-
     std::map<L0::Device *, zet_metric_group_handle_t> metricGroupHandlePerDevice{};
     std::map<L0::Device *, std::vector<zet_intel_metric_scope_exp_handle_t>> scopesPerDevice{};
     std::map<L0::Device *, zet_intel_metric_calculation_exp_desc_t> calcDescPerDevice{};
 
-    void initRawReports();
+    void initRawReports(IpSamplingTestProductHelper *ipSamplingTestProductHelper, PRODUCT_FAMILY productFamily);
     void initCalHandles(L0::ContextImp *context,
                         L0::Device *device);
     void cleanUpHandles();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class MetricIpSamplingOsInterface : public MetricOsInterface {
     virtual uint32_t getRequiredBufferSize(const uint32_t maxReportCount) = 0;
     virtual uint32_t getUnitReportSize() = 0;
     virtual bool isNReportsAvailable() = 0;
-    virtual bool isDependencyAvailable() = 0;
+    virtual bool isOsSupportAvailable() = 0;
     static std::unique_ptr<MetricIpSamplingOsInterface> create(Device &device);
 
     uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;

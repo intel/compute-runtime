@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -228,7 +228,7 @@ TEST_F(IoctlHelperXeTest, givenCalltoPerfOpenEuStallStreamWithValidStreamButFcnt
     SysCalls::failFcntl1 = false;
 }
 
-TEST_F(IoctlHelperXeTest, whenCallingIsEuStallSupportedThenFalseIsReturned) {
+TEST_F(IoctlHelperXeTest, whenCallingIsEuStallSupportedThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);

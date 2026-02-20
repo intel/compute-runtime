@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestUpstream, GivenSupportedProductFamilyAndSuppo
 
     for (const auto &deviceId : NEO::pvcXtDeviceIds) {
         hwInfo->platform.usDeviceID = deviceId;
-        EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
+        EXPECT_FALSE(metricIpSamplingOsInterface->isOsSupportAvailable());
     }
 }
 

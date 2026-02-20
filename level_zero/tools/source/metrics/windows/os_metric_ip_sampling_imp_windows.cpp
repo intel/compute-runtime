@@ -27,7 +27,7 @@ class MetricIpSamplingWindowsImp : public MetricIpSamplingOsInterface {
     uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override;
     uint32_t getUnitReportSize() override;
     bool isNReportsAvailable() override;
-    bool isDependencyAvailable() override;
+    bool isOsSupportAvailable() override;
     ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
 
   private:
@@ -119,12 +119,8 @@ bool MetricIpSamplingWindowsImp::isNReportsAvailable() {
     return (bytesAvailable / unitReportSize) >= notifyEveryNReports ? true : false;
 }
 
-bool MetricIpSamplingWindowsImp::isDependencyAvailable() {
-
-    const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
-    const auto &productHelper = device.getNEODevice()->getProductHelper();
-
-    return productHelper.isIpSamplingSupported(hardwareInfo) ? true : false;
+bool MetricIpSamplingWindowsImp::isOsSupportAvailable() {
+    return true;
 }
 
 ze_result_t MetricIpSamplingWindowsImp::getMetricsTimerResolution(uint64_t &timerResolution) {
