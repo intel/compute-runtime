@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,17 +13,17 @@ DEVICE(0x674C, CriHwConfig)
 
 #if SUPPORT_XE3_CORE
 #ifdef SUPPORT_PTL
-DEVICE(0xB080, PtlHwConfig)
-DEVICE(0xB081, PtlHwConfig)
-DEVICE(0xB082, PtlHwConfig)
-DEVICE(0xB083, PtlHwConfig)
+NAMEDDEVICE(0xB080, PtlHwConfig, "Intel(R) Arc(TM) B390 GPU")
+NAMEDDEVICE(0xB081, PtlHwConfig, "Intel(R) Arc(TM) B370 GPU")
+NAMEDDEVICE(0xB082, PtlHwConfig, "Intel(R) Arc(TM) B390 GPU")
+NAMEDDEVICE(0xB083, PtlHwConfig, "Intel(R) Arc(TM) B370 GPU")
 DEVICE(0xB084, PtlHwConfig)
 DEVICE(0xB085, PtlHwConfig)
 DEVICE(0xB086, PtlHwConfig)
 DEVICE(0xB087, PtlHwConfig)
-DEVICE(0xB08F, PtlHwConfig)
-DEVICE(0xB090, PtlHwConfig)
-DEVICE(0xB0A0, PtlHwConfig)
+NAMEDDEVICE(0xB08F, PtlHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xB090, PtlHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xB0A0, PtlHwConfig, "Intel(R) Graphics")
 DEVICE(0xB0B0, PtlHwConfig)
 DEVICE(0xFD80, PtlHwConfig)
 DEVICE(0xFD81, PtlHwConfig)
