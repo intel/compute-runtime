@@ -6911,6 +6911,81 @@ HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenCommandBufferEx
     EXPECT_TRUE(pDevice->getCommandBufferPoolAllocator().isPoolBuffer(parent));
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenPrimaryCommandBufferWithTwoViewsFromSameParentWhenAggregatingThenBothViewsAreTracked) {
+    auto contextId = commandStreamReceiver->getOsContext().getContextId();
+
+    auto parentAllocation = std::unique_ptr<GraphicsAllocation>(
+        memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize64k, AllocationType::commandBuffer}));
+    ASSERT_NE(nullptr, parentAllocation);
+
+    auto firstView = std::unique_ptr<GraphicsAllocation>(parentAllocation->createView(0u, MemoryConstants::pageSize64k));
+    auto secondView = std::unique_ptr<GraphicsAllocation>(parentAllocation->createView(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k));
+    ASSERT_NE(nullptr, firstView);
+    ASSERT_NE(nullptr, secondView);
+
+    SubmissionAggregator aggregator;
+    auto primaryCommandBuffer = std::make_unique<CommandBuffer>(*pDevice);
+    primaryCommandBuffer->batchBuffer.commandBufferAllocation = firstView.get();
+    primaryCommandBuffer->surfaces.push_back(firstView.get());
+    primaryCommandBuffer->surfaces.push_back(secondView.get());
+    aggregator.recordCommandBuffer(primaryCommandBuffer.release());
+
+    ResourcePackage resourcePackage;
+    size_t totalUsedSize = 0u;
+    aggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
+
+    bool firstViewTracked = false;
+    bool secondViewTracked = false;
+    for (auto *allocation : resourcePackage) {
+        firstViewTracked |= (allocation == firstView.get());
+        secondViewTracked |= (allocation == secondView.get());
+    }
+
+    EXPECT_TRUE(firstViewTracked);
+    EXPECT_TRUE(secondViewTracked);
+    EXPECT_EQ(2u, resourcePackage.size());
+
+    memoryManager->freeGraphicsMemory(parentAllocation.release());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenMergedCommandBuffersWithViewsFromSameParentWhenAggregatingThenSecondaryCommandBufferViewIsTracked) {
+    auto contextId = commandStreamReceiver->getOsContext().getContextId();
+
+    auto parentAllocation = std::unique_ptr<GraphicsAllocation>(
+        memoryManager->allocateGraphicsMemoryWithProperties(
+            MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize64k, AllocationType::commandBuffer}));
+    ASSERT_NE(nullptr, parentAllocation);
+
+    auto firstView = std::unique_ptr<GraphicsAllocation>(parentAllocation->createView(0u, MemoryConstants::pageSize64k));
+    auto secondView = std::unique_ptr<GraphicsAllocation>(parentAllocation->createView(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k));
+    ASSERT_NE(nullptr, firstView);
+    ASSERT_NE(nullptr, secondView);
+
+    SubmissionAggregator aggregator;
+    auto primaryCommandBuffer = std::make_unique<CommandBuffer>(*pDevice);
+    auto secondaryCommandBuffer = std::make_unique<CommandBuffer>(*pDevice);
+
+    primaryCommandBuffer->batchBuffer.commandBufferAllocation = firstView.get();
+    primaryCommandBuffer->surfaces.push_back(firstView.get());
+    secondaryCommandBuffer->batchBuffer.commandBufferAllocation = secondView.get();
+
+    aggregator.recordCommandBuffer(primaryCommandBuffer.release());
+    aggregator.recordCommandBuffer(secondaryCommandBuffer.release());
+
+    ResourcePackage resourcePackage;
+    size_t totalUsedSize = 0u;
+    aggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
+
+    bool secondViewTracked = false;
+    for (auto *allocation : resourcePackage) {
+        secondViewTracked |= (allocation == secondView.get());
+    }
+
+    EXPECT_TRUE(secondViewTracked);
+
+    memoryManager->freeGraphicsMemory(parentAllocation.release());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCreateDeferredFreeContextThenFieldsMatchCsrState) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

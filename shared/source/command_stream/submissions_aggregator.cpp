@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,38 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
     this->inspectionId++;
     primaryCommandBuffer->inspectionId = currentInspection;
 
-    // primary command buffers must fix to budget
+    ResourcePackage newResources;
+
+    auto isTrackedByPointer = [&](GraphicsAllocation *graphicsAllocation) {
+        if (graphicsAllocation == nullptr) {
+            return false;
+        }
+
+        if (std::find(resourcePackage.begin(), resourcePackage.end(), graphicsAllocation) != resourcePackage.end()) {
+            return true;
+        }
+
+        return std::find(newResources.begin(), newResources.end(), graphicsAllocation) != newResources.end();
+    };
+
+    // primary command buffers must fit to budget
     for (auto &graphicsAllocation : primaryCommandBuffer->surfaces) {
+        if (graphicsAllocation == nullptr) {
+            continue;
+        }
+
+        if (graphicsAllocation->isView()) {
+            // Different views of one parent share inspectionId.
+            // Track views by pointer so we don't drop distinct subranges.
+            if (isTrackedByPointer(graphicsAllocation)) {
+                continue;
+            }
+
+            resourcePackage.push_back(graphicsAllocation);
+            totalUsedSize += graphicsAllocation->getUnderlyingBufferSize();
+            continue;
+        }
+
         if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
             graphicsAllocation->setInspectionId(currentInspection, osContextId);
             resourcePackage.push_back(graphicsAllocation);
@@ -53,7 +83,29 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
     }
 
     auto nextCommandBuffer = primaryCommandBuffer->next;
-    ResourcePackage newResources;
+    auto addMergedResource = [&](GraphicsAllocation *graphicsAllocation, size_t &newResourcesSize) {
+        if (graphicsAllocation == nullptr) {
+            return;
+        }
+
+        if (graphicsAllocation->isView()) {
+            // Different views of one parent share inspectionId.
+            // Track views by pointer so we don't drop distinct subranges.
+            if (isTrackedByPointer(graphicsAllocation)) {
+                return;
+            }
+
+            newResources.push_back(graphicsAllocation);
+            newResourcesSize += graphicsAllocation->getUnderlyingBufferSize();
+            return;
+        }
+
+        if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
+            graphicsAllocation->setInspectionId(currentInspection, osContextId);
+            newResources.push_back(graphicsAllocation);
+            newResourcesSize += graphicsAllocation->getUnderlyingBufferSize();
+        }
+    };
 
     while (nextCommandBuffer) {
         size_t nextCommandBufferNewResourcesSize = 0;
@@ -62,19 +114,11 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
             if (graphicsAllocation == primaryBatchGraphicsAllocation) {
                 continue;
             }
-            if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
-                graphicsAllocation->setInspectionId(currentInspection, osContextId);
-                newResources.push_back(graphicsAllocation);
-                nextCommandBufferNewResourcesSize += graphicsAllocation->getUnderlyingBufferSize();
-            }
+            addMergedResource(graphicsAllocation, nextCommandBufferNewResourcesSize);
         }
 
         if (nextCommandBuffer->batchBuffer.commandBufferAllocation && (nextCommandBuffer->batchBuffer.commandBufferAllocation != primaryBatchGraphicsAllocation)) {
-            if (nextCommandBuffer->batchBuffer.commandBufferAllocation->getInspectionId(osContextId) < currentInspection) {
-                nextCommandBuffer->batchBuffer.commandBufferAllocation->setInspectionId(currentInspection, osContextId);
-                newResources.push_back(nextCommandBuffer->batchBuffer.commandBufferAllocation);
-                nextCommandBufferNewResourcesSize += nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBufferSize();
-            }
+            addMergedResource(nextCommandBuffer->batchBuffer.commandBufferAllocation, nextCommandBufferNewResourcesSize);
         }
 
         if (nextCommandBufferNewResourcesSize + totalUsedSize <= totalMemoryBudget) {
