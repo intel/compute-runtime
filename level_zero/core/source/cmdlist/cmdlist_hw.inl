@@ -2603,6 +2603,13 @@ bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadForFillOrStagingPreferre
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadForFillPreferred(size_t size) const {
+    constexpr size_t defaultThresholdKb = 8;
+
+    return (size <= (NEO::debugManager.flags.OverrideFillCopyOffloadThresholdKb.getIfNotDefault(defaultThresholdKb)) * MemoryConstants::kiloByte);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    const void *pattern,
                                                                    size_t patternSize,
@@ -2614,7 +2621,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && isCopyOffloadForFillOrStagingPreferred() && (patternSize <= this->maxFillPatternSizeForCopyEngine);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && isCopyOffloadForFillOrStagingPreferred() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && isCopyOffloadForFillPreferred(size);
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();

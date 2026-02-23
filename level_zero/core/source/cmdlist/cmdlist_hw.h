@@ -484,6 +484,7 @@ struct CommandListCoreFamily : public CommandList {
     }
 
     bool isCopyOffloadForFillOrStagingPreferred() const;
+    bool isCopyOffloadForFillPreferred(size_t size) const;
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
 

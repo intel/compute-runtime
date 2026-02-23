@@ -806,21 +806,55 @@ HWTEST2_F(CopyOffloadInOrderTests, givenBlitEnqueuePreferenceWhenAppendFillCalle
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    auto data = allocHostMem(immCmdList->maxFillPatternSizeForCopyEngine * 2);
+    auto data = allocHostMem(MemoryConstants::kiloByte * 10);
 
-    auto offset = cmdStream->getUsed();
+    {
+        auto offset = cmdStream->getUsed();
 
-    immCmdList->appendMemoryFill(data, data, 1, 1, nullptr, 0, nullptr, copyParams);
+        immCmdList->appendMemoryFill(data, data, 1, MemoryConstants::kiloByte * 8, nullptr, 0, nullptr, copyParams);
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+        auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
 
-    if (blitOffloadPreferred) {
-        EXPECT_NE(cmdList.end(), fillItor);
-    } else {
+        if (blitOffloadPreferred) {
+            EXPECT_NE(cmdList.end(), fillItor);
+        } else {
+            EXPECT_EQ(cmdList.end(), fillItor);
+        }
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryFill(data, data, 1, (MemoryConstants::kiloByte * 8) + 1, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+
         EXPECT_EQ(cmdList.end(), fillItor);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        debugManager.flags.OverrideFillCopyOffloadThresholdKb.set(9);
+
+        immCmdList->appendMemoryFill(data, data, 1, MemoryConstants::kiloByte * 9, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+
+        if (blitOffloadPreferred) {
+            EXPECT_NE(cmdList.end(), fillItor);
+        } else {
+            EXPECT_EQ(cmdList.end(), fillItor);
+        }
     }
 
     context->freeMem(data);
