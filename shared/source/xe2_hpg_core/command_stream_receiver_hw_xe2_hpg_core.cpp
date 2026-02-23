@@ -41,6 +41,14 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
+uint64_t BlitCommandsHelper<Family>::getMaxBlitSetHeight(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (debugManager.flags.LimitBlitterMaxSetHeight.get() != -1) {
+        return static_cast<uint64_t>(debugManager.flags.LimitBlitterMaxSetHeight.get());
+    }
+    return 0x8000;
+}
+
+template <>
 void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
 
