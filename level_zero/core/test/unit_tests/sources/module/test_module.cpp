@@ -5822,9 +5822,6 @@ HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCa
         using ModuleImp::translationUnit;
     };
 
-    DebugManagerStateRestore restorer{};
-    NEO::debugManager.flags.PrintZeInfoInAub.set(true);
-
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::aub;
     neoDevice->getRootDeviceEnvironmentRef().initAubCenter(false, "", NEO::CommandStreamReceiverType::aub);

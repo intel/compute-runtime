@@ -190,8 +190,6 @@ TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerNotAvailableWhenCreat
 }
 
 HWTEST_F(ProgramWithZebinFixture, givenProgramWhenDumpKernelInfoToAubCommentsIsCalledThenExpectedTokensAreVisible) {
-    DebugManagerStateRestore restorer{};
-    NEO::debugManager.flags.PrintZeInfoInAub.set(true);
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
