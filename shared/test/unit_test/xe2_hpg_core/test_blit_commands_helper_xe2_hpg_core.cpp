@@ -512,3 +512,19 @@ HWTEST2_F(BlitTests, givenSurfaceTypeAndSliceIndexAndGraphicsAllocationAreNullWh
         }
     }
 }
+
+HWTEST2_F(BlitTests, givenXe2HpgWhenGetMaxBlitSetHeightWithoutOverrideThenXe2DefaultReturned, IsXe2HpgCore) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.LimitBlitterMaxSetHeight.set(-1);
+
+    EXPECT_EQ(0x8000u, BlitCommandsHelper<FamilyType>::getMaxBlitSetHeight(pDevice->getRootDeviceEnvironment()));
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgWhenLimitBlitterMaxSetHeightIsSetThenReturnsOverriddenValue, IsXe2HpgCore) {
+    DebugManagerStateRestore dbgRestore;
+    constexpr uint64_t overriddenHeight = 0x1234u;
+
+    debugManager.flags.LimitBlitterMaxSetHeight.set(static_cast<int32_t>(overriddenHeight));
+
+    EXPECT_EQ(overriddenHeight, BlitCommandsHelper<FamilyType>::getMaxBlitSetHeight(pDevice->getRootDeviceEnvironment()));
+}
