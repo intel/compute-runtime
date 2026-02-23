@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,12 +96,24 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompleti
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
 
+    if (pDevice->getSecondaryCsrs().size() > 0) {
+        auto secondaryCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getSecondaryCsrs()[0].get());
+        secondaryCsr->isAnyDirectSubmissionEnabledCallBase = false;
+        secondaryCsr->isAnyDirectSubmissionEnabledResult = true;
+        secondaryCsr->callBaseStopDirectSubmission = false;
+    }
+
     EXPECT_FALSE(csr.stopDirectSubmissionCalled);
     pDevice->stopDirectSubmissionAndWaitForCompletion();
     EXPECT_TRUE(csr.stopDirectSubmissionCalled);
     EXPECT_TRUE(csr.stopDirectSubmissionCalledBlocking);
 
     csr.directSubmission.release();
+
+    if (pDevice->getSecondaryCsrs().size() > 0) {
+        auto secondaryCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getSecondaryCsrs()[0].get());
+        EXPECT_TRUE(secondaryCsr->stopDirectSubmissionCalled);
+    }
 }
 
 HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompletionCalledThenBcsStopDirectSubmissionCalledBlocking) {

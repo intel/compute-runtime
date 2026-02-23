@@ -1137,6 +1137,12 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
             csr->stopDirectSubmission(true, true);
         }
     }
+
+    for (auto &secondaryCsr : getSecondaryCsrs()) {
+        if (secondaryCsr->isAnyDirectSubmissionEnabled()) {
+            secondaryCsr->stopDirectSubmission(true, true);
+        }
+    }
 }
 
 void Device::pollForCompletion() {
