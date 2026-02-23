@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,32 @@ struct alignas(32) ImplicitArgsV0 {
     static constexpr uint8_t getAlignedSize() {
         return static_cast<uint8_t>(alignUp(sizeof(ImplicitArgsV0), 64));
     }
+
+    static constexpr const char *getStructAsString() {
+        return "struct ImplicitArgsV0:\n"
+               "uint8_t structSize;\n"
+               "uint8_t structVersion;\n"
+               "uint8_t numWorkDim;\n"
+               "uint8_t simdWidth;\n"
+               "uint32_t localSizeX;\n"
+               "uint32_t localSizeY;\n"
+               "uint32_t localSizeZ;\n"
+               "uint64_t globalSizeX;\n"
+               "uint64_t globalSizeY;\n"
+               "uint64_t globalSizeZ;\n"
+               "uint64_t printfBufferPtr;\n"
+               "uint64_t globalOffsetX;\n"
+               "uint64_t globalOffsetY;\n"
+               "uint64_t globalOffsetZ;\n"
+               "uint64_t localIdTablePtr;\n"
+               "uint32_t groupCountX;\n"
+               "uint32_t groupCountY;\n"
+               "uint32_t groupCountZ;\n"
+               "uint32_t padding0;\n"
+               "uint64_t rtGlobalBufferPtr;\n"
+               "uint64_t assertBufferPtr;\n"
+               "uint8_t reserved[16];\n";
+    }
 };
 
 static_assert(ImplicitArgsV0::getSize() == (28 * sizeof(uint32_t)));
@@ -81,6 +107,36 @@ struct alignas(32) ImplicitArgsV1 {
     static constexpr uint8_t getSize() { return static_cast<uint8_t>((offsetof(ImplicitArgsV1, enqueuedLocalSizeZ) + sizeof(ImplicitArgsV1::enqueuedLocalSizeZ))); }
     static constexpr uint8_t getAlignedSize() {
         return static_cast<uint8_t>(alignUp(sizeof(ImplicitArgsV1), 64));
+    }
+
+    static constexpr const char *getStructAsString() {
+        return "struct ImplicitArgsV1:\n"
+               "uint8_t structSize;\n"
+               "uint8_t structVersion;\n"
+               "uint8_t numWorkDim;\n"
+               "uint8_t simdWidth;\n"
+               "uint32_t localSizeX;\n"
+               "uint32_t localSizeY;\n"
+               "uint32_t localSizeZ;\n"
+               "uint64_t globalSizeX;\n"
+               "uint64_t globalSizeY;\n"
+               "uint64_t globalSizeZ;\n"
+               "uint64_t printfBufferPtr;\n"
+               "uint64_t globalOffsetX;\n"
+               "uint64_t globalOffsetY;\n"
+               "uint64_t globalOffsetZ;\n"
+               "uint64_t localIdTablePtr;\n"
+               "uint32_t groupCountX;\n"
+               "uint32_t groupCountY;\n"
+               "uint32_t groupCountZ;\n"
+               "uint32_t padding0;\n"
+               "uint64_t rtGlobalBufferPtr;\n"
+               "uint64_t assertBufferPtr;\n"
+               "uint64_t scratchPtr;\n"
+               "uint64_t syncBufferPtr;\n"
+               "uint32_t enqueuedLocalSizeX;\n"
+               "uint32_t enqueuedLocalSizeY;\n"
+               "uint32_t enqueuedLocalSizeZ;\n";
     }
 };
 

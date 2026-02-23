@@ -5816,6 +5816,7 @@ HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCa
     class MyModuleImpl : public ModuleImp {
       public:
         using ModuleImp::dumpKernelInfoToAubComments;
+        using ModuleImp::kernelImmData;
         using ModuleImp::ModuleImp;
         using ModuleImp::symbols;
         using ModuleImp::translationUnit;
@@ -5874,13 +5875,13 @@ HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCa
 
     // kernel names exist between <KernelInfo> and <ExportedSymbols>
     auto kernelInfoSection = comments.substr(kernelInfoPos, exportedSymbolsPos - kernelInfoPos);
-    EXPECT_NE(std::string::npos, kernelInfoSection.find("name : kernel"));
-    EXPECT_NE(std::string::npos, kernelInfoSection.find("name : Intel_Symbol_Table_Void_Program"));
+    EXPECT_NE(std::string::npos, kernelInfoSection.find("name: kernel"));
+    EXPECT_NE(std::string::npos, kernelInfoSection.find("name: Intel_Symbol_Table_Void_Program"));
 
     // exported symbol names exist between <ExportedSymbols> and <Zeinfo>
     auto exportedSymbolsSection = comments.substr(exportedSymbolsPos, zeInfoPos - exportedSymbolsPos);
-    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name : fun0"));
-    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name : fun1"));
+    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name: fun0"));
+    EXPECT_NE(std::string::npos, exportedSymbolsSection.find("name: fun1"));
 
     // zeinfo content exists after <Zeinfo>
     auto zeInfoSection = comments.substr(zeInfoPos);
@@ -5890,15 +5891,30 @@ HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCa
     EXPECT_NE(std::string::npos, zeInfoSection.find("name: fun1"));
 
     {
-        // no exported symbols, add build options
+        // no exported symbols, add build options, add implicit args
 
         aubManager->receivedComments.clear();
 
         std::string testBuildOptions = "-ze-opt-disable -ze-opt-greater-than-4GB-buffer-required";
         module->translationUnit->options = testBuildOptions;
         module->symbols.clear();
+        module->translationUnit->programInfo.indirectAccessBufferMajorVersion = 1;
+
+        auto &kernelDesc = const_cast<KernelDescriptor &>(module->kernelImmData[0]->getDescriptor());
+        kernelDesc.kernelAttributes.flags.requiresImplicitArgs = true;
 
         module->dumpKernelInfoToAubComments();
+
+        // <ImplicitArgs> tag exists
+        auto implicitArgsPos = comments.find("<ImplicitArgs>");
+        EXPECT_NE(std::string::npos, implicitArgsPos);
+
+        // V1 layout
+        EXPECT_NE(std::string::npos, comments.find("struct ImplicitArgsV1:"));
+        EXPECT_NE(std::string::npos, comments.find("Aligned size:"));
+
+        // kernel uses implicit args exists
+        EXPECT_NE(std::string::npos, comments.find("Kernel uses implicit args"));
 
         // <KernelInfo> tag exists
         auto kernelInfoPos = comments.find("<KernelInfo>");
@@ -5916,7 +5932,8 @@ HWTEST_F(ModuleTest, givenModuleInitalizationWhenDumpKernelInfoToAubCommentsIsCa
         auto zeInfoPos = comments.find("<Zeinfo>");
         EXPECT_NE(std::string::npos, zeInfoPos);
 
-        // correct ordering: <KernelInfo> before <BuildOptions> before <Zeinfo>
+        // correct ordering: <ImplicitArgs>, <KernelInfo>, <BuildOptions>, <Zeinfo>
+        EXPECT_LT(implicitArgsPos, kernelInfoPos);
         EXPECT_LT(kernelInfoPos, buildOptionsPos);
         EXPECT_LT(buildOptionsPos, zeInfoPos);
     }

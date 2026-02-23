@@ -28,6 +28,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -212,8 +213,11 @@ void Program::dumpKernelInfoToAubComments() {
     }
 
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
+    auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
+        rootDeviceEnvironment.getHelper<GfxCoreHelper>().getImplicitArgsVersion(),
+        this->getIndirectAccessBufferVersion());
 
-    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelInfoArray, symbols, options, refBin);
+    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelInfoArray, symbols, options, refBin, implicitArgsVersion);
 }
 
 cl_int Program::createProgramFromBinary(

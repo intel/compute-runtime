@@ -36,6 +36,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -1929,7 +1930,11 @@ void ModuleImp::dumpKernelInfoToAubComments() {
         return;
     }
 
-    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelImmData, symbols, options, refBin);
+    auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
+        neoDevice->getGfxCoreHelper().getImplicitArgsVersion(),
+        translationUnit->programInfo.indirectAccessBufferMajorVersion);
+
+    NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelImmData, symbols, options, refBin, implicitArgsVersion);
 }
 
 ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/aub/aub_center.h"
 
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub/aub_kernel_info_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -101,5 +102,12 @@ uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, CommandStre
     }
 
     return mode;
+}
+
+void AubCenter::addImplicitArgsInfoToAubComments(uint32_t implicitArgsVersion) {
+
+    std::call_once(addImplicitArgsInfoOnceFlag, [implicitArgsVersion, this]() {
+        aubManager->addComment(NEO::AubComment::printImplicitArgsLayouts(implicitArgsVersion).c_str());
+    });
 }
 } // namespace NEO

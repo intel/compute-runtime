@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,8 @@ class AubCenter {
 
     static uint32_t getAubStreamMode(const std::string &aubFileName, CommandStreamReceiverType csrType);
 
+    void addImplicitArgsInfoToAubComments(uint32_t implicitArgsVersion);
+
   protected:
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
 
@@ -47,5 +49,6 @@ class AubCenter {
     std::unique_ptr<aub_stream::AubManager> aubManager;
     uint32_t aubStreamMode = 0;
     uint32_t stepping = 0;
+    std::once_flag addImplicitArgsInfoOnceFlag;
 };
 } // namespace NEO

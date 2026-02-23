@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,8 @@
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_helper_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_layout_test_helper.h
+               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}implicit_args_v2_layout_test_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_metadata_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens_tests.cpp
@@ -16,3 +18,4 @@ target_sources(neo_shared_tests PRIVATE
 )
 
 add_subdirectories()
+

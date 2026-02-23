@@ -10,11 +10,18 @@
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/implicit_args_base.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/kernel/implicit_args_layout_test_helper.h"
+
+#include "implicit_args.h"
+
+#include <cstring>
+#include <vector>
 
 using namespace NEO;
 
@@ -399,4 +406,16 @@ TEST(ImplicitArgsV1Test, givenImplicitArgsWithUnknownVersionWhenSettingFieldsThe
     EXPECT_EQ(0u, implicitArgs.v1.printfBufferPtr);
     EXPECT_EQ(0u, implicitArgs.v1.numWorkDim);
     EXPECT_EQ(0u, implicitArgs.v1.rtGlobalBufferPtr);
+}
+
+TEST(ImplicitArgsLayoutString, givenImplicitArgV0WhenComparingPrintedLayoutWithStructOffsetsThenLayoutMatches) {
+    verifyStructLayoutMatchesPrintedString<NEO::ImplicitArgsV0>(getImplicitArgsV0ExpectedOffsets());
+}
+
+TEST(ImplicitArgsLayoutString, givenImplicitArgV1WhenComparingPrintedLayoutWithStructOffsetsThenLayoutMatches) {
+    verifyStructLayoutMatchesPrintedString<NEO::ImplicitArgsV1>(getImplicitArgsV1ExpectedOffsets());
+}
+
+TEST(ImplicitArgsLayoutString, givenImplicitArgV2WhenComparingPrintedLayoutWithStructOffsetsThenLayoutMatches) {
+    verifyStructLayoutMatchesPrintedString<NEO::ImplicitArgsV2>(getImplicitArgsV2ExpectedOffsets());
 }
