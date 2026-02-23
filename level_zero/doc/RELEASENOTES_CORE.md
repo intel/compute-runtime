@@ -6,6 +6,27 @@ SPDX-License-Identifier: MIT
 
 -->
 
+# Release Notes v1.15
+
+Level Zero Core API.
+
+February 2026
+
+Changes in this release:
+
+The update involves changes introduced in Level Zero spec v1.15. Some of the important changes are as follows:
+
+| Feature	| Spec link	|
+| ------------------ | -------------------|
+| Support for zePhysicalMemGetProperties API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zephysicalmemgetproperties |
+| Support for zeDeviceGetAggregatedCopyOffloadIncrementValue API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zedevicegetaggregatedcopyoffloadincrementvalue |
+| Support for zeEventCounterBasedCreate API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventcounterbasedcreate |
+| Support for zeEventCounterBasedGetDeviceAddress API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventcounterbasedgetdeviceaddress |
+| Support for zeEventCounterBasedGetIpcHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventcounterbasedgetipchandle |
+| Support for zeEventCounterBasedOpenIpcHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventcounterbasedopenipchandle |
+| Support for zeEventCounterBasedCloseIpcHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventcounterbasedcloseipchandle |
+| Support for zeMemGetIpcHandleWithProperties API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zememgetipchandlewithproperties |
+
 # Release Notes v1.14
 
 Level Zero Core API.
