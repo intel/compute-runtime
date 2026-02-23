@@ -9,6 +9,7 @@
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -52,8 +53,18 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(Arra
 
         auto memoryBanks = static_cast<uint32_t>(getMemoryBanksBitfield(allocation, deviceBitfield, isMultiOsContextCapable).to_ulong());
         uint64_t gpuAddress = decanonizeAddress(allocation->getGpuAddress());
+        auto cpuAddress = allocation->getUnderlyingBuffer();
+
+        std::unique_ptr<unsigned char[]> memoryCopy;
+        if (allocation->isLocked() && debugManager.flags.CopyLockedMemoryBeforeWrite.get()) {
+            auto allocSize = allocation->getUnderlyingBufferSize();
+            memoryCopy = std::make_unique_for_overwrite<unsigned char[]>(allocSize);
+            memcpy_s(memoryCopy.get(), allocSize, cpuAddress, allocSize);
+            cpuAddress = memoryCopy.get();
+        }
+
         aub_stream::AllocationParams params(gpuAddress,
-                                            allocation->getUnderlyingBuffer(),
+                                            cpuAddress,
                                             allocation->getUnderlyingBufferSize(),
                                             memoryBanks,
                                             hint,

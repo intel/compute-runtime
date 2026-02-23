@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ class OsContext;
 struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
     using AubMemoryOperationsHandler::AubMemoryOperationsHandler;
     using AubMemoryOperationsHandler::getMemoryBanksBitfield;
+    using AubMemoryOperationsHandler::makeResidentWithinDevice;
     using AubMemoryOperationsHandler::residentAllocations;
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {

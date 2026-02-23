@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,54 @@ HWTEST_F(AubCsrTest, GivenCopyLockedMemoryBeforeWriteWhenWriteWithAubManagerIsCa
     EXPECT_EQ(ptrOffset(allocation->getGpuAddress(), 1), aubManager.storedAllocationParams[0].gfxAddress);
     EXPECT_EQ(1u, aubManager.storedAllocationParams[0].size);
 
+    executionEnvironment->memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(AubCsrTest, GivenCopyLockedMemoryBeforeWriteWhenAubMemoryOperationsWritesWithAubManagerThenAubManagerIsInvokedWithCorrectHintAndParams) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.CopyLockedMemoryBeforeWrite.set(true);
+
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    DeviceBitfield deviceBitfield(1);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    uint32_t rootDeviceIndex = 0u;
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(false, "", CommandStreamReceiverType::aub);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager();
+
+    executionEnvironment->initializeMemoryManager();
+    MockAubManager aubManager;
+
+    auto memoryOperationsHandler = new NEO::MockAubMemoryOperationsHandler(&aubManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *executionEnvironment, rootDeviceIndex, deviceBitfield));
+    aubCsr->aubManager = &aubManager;
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(aubCsr.get(),
+                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(hwInfo), EngineUsage::regular},
+                                                                                                                                  PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+    aubCsr->setupContext(*osContext);
+    aubManager.writeMemory2Called = false;
+
+    auto allocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::linearStream});
+    executionEnvironment->memoryManager->lockResource(allocation);
+
+    EXPECT_TRUE(allocation->isLocked());
+    aubManager.storeAllocationParams = true;
+
+    memoryOperationsHandler->makeResidentWithinDevice(ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, deviceBitfield, false);
+
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
+    ASSERT_EQ(1u, aubManager.storedAllocationParams.size());
+
+    EXPECT_NE(allocation->getUnderlyingBuffer(), aubManager.storedAllocationParams[0].memory);
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(nullptr);
     executionEnvironment->memoryManager->freeGraphicsMemory(allocation);
 }
 
