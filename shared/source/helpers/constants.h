@@ -58,10 +58,10 @@ inline constexpr size_t chunkThreshold = MemoryConstants::pageSize64k;
 } // namespace MemoryConstants
 
 namespace BlitterConstants {
-inline constexpr uint64_t maxBlitWidth = 0x40'00u;
-inline constexpr uint64_t maxBlitHeight = 0x40'00u;
-inline constexpr uint64_t maxBlitSetWidth = 0x2'00'00u;
-inline constexpr uint64_t maxBlitSetHeight = 0x80'00u;
+inline constexpr uint64_t maxBlitWidth = 0x4000;
+inline constexpr uint64_t maxBlitHeight = 0x4000;
+inline constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128
+inline constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cacheline size
 
 inline constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {
