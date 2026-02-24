@@ -384,8 +384,13 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
 
     const bool isBcs = EngineHelpers::isBcs(this->osContext->getEngineType());
     auto internalHeapsToFill = isBcs ? 0u : productHelper.getInternalHeapsPreallocated();
-    for (auto i = 0u; i < internalHeapsToFill; i++) {
-        preallocateInternalHeap();
+    const auto internalHeapPreallocationSize = HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject);
+    const bool internalHeapPoolHandlesPreallocationSize = InternalHeapPoolAllocator::isEnabled(productHelper) &&
+                                                          (internalHeapPreallocationSize <= InternalHeapPoolTraits::maxAllocationSize);
+    if (!internalHeapPoolHandlesPreallocationSize) {
+        for (auto i = 0u; i < internalHeapsToFill; i++) {
+            preallocateInternalHeap();
+        }
     }
 }
 
@@ -934,11 +939,14 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     }
 
     GraphicsAllocation *heapMemory = nullptr;
-    if (allocationType == AllocationType::linearStream && device) {
-        if (LinearStreamPoolAllocator::isEnabled(device->getProductHelper())) {
+    if (device) {
+        auto &productHelper = device->getProductHelper();
+        if (allocationType == AllocationType::linearStream && LinearStreamPoolAllocator::isEnabled(productHelper)) {
             auto ctx = createDeferredFreeContext();
-            auto &poolAllocator = device->getLinearStreamPoolAllocator();
-            heapMemory = poolAllocator.allocate(allocationSize, &ctx);
+            heapMemory = device->getLinearStreamPoolAllocator().allocate(allocationSize, &ctx);
+        } else if (allocationType == AllocationType::internalHeap && InternalHeapPoolAllocator::isEnabled(productHelper)) {
+            auto ctx = createDeferredFreeContext();
+            heapMemory = device->getInternalHeapPoolAllocator().allocate(allocationSize, &ctx);
         }
     }
     if (!heapMemory) {
@@ -990,6 +998,10 @@ void CommandStreamReceiver::releaseHeapAllocation(GraphicsAllocation *heapMemory
         auto *parent = heapMemory->getParentAllocation();
         if (parent && device->getLinearStreamPoolAllocator().isPoolBuffer(parent)) {
             device->getLinearStreamPoolAllocator().free(heapMemory, peekTaskCount(), osContext->getContextId());
+            return;
+        }
+        if (parent && device->getInternalHeapPoolAllocator().isPoolBuffer(parent)) {
+            device->getInternalHeapPoolAllocator().free(heapMemory, peekTaskCount(), osContext->getContextId());
             return;
         }
     }

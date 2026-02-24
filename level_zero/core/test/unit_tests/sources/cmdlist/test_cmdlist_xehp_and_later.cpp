@@ -2912,6 +2912,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
 
     DebugManagerStateRestore restorer;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     debugManager.flags.EnableMemoryPrefetch.set(1);
     Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));

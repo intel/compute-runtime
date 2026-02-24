@@ -35,13 +35,15 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
     }
 
     GraphicsAllocation *heapAllocation = nullptr;
-    if (allocationType == AllocationType::linearStream && device) {
-        if (LinearStreamPoolAllocator::isEnabled(device->getProductHelper())) {
-            auto &poolAllocator = device->getLinearStreamPoolAllocator();
-            heapAllocation = poolAllocator.allocate(heapSize);
-            if (heapAllocation) {
-                return heapAllocation;
-            }
+    if (device) {
+        auto &productHelper = device->getProductHelper();
+        if (allocationType == AllocationType::linearStream && LinearStreamPoolAllocator::isEnabled(productHelper)) {
+            heapAllocation = device->getLinearStreamPoolAllocator().allocate(heapSize);
+        } else if (allocationType == AllocationType::internalHeap && InternalHeapPoolAllocator::isEnabled(productHelper)) {
+            heapAllocation = device->getInternalHeapPoolAllocator().allocate(heapSize);
+        }
+        if (heapAllocation) {
+            return heapAllocation;
         }
     }
     auto allocation = this->storageForReuse->obtainReusableAllocation(heapSize, allocationType);
@@ -61,6 +63,9 @@ void HeapHelper::storeHeapAllocation(GraphicsAllocation *heapAllocation) {
             auto *parent = heapAllocation->getParentAllocation();
             if (parent && device && device->getLinearStreamPoolAllocator().isPoolBuffer(parent)) {
                 device->getLinearStreamPoolAllocator().free(heapAllocation);
+                return;
+            } else if (parent && device && device->getInternalHeapPoolAllocator().isPoolBuffer(parent)) {
+                device->getInternalHeapPoolAllocator().free(heapAllocation);
                 return;
             }
         }

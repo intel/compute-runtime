@@ -263,6 +263,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFill
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(0);
     debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(1);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());

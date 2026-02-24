@@ -80,6 +80,7 @@ using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
 TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphicsAllocationsThenTheyHaveCorrectRootDeviceIndex) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     auto commandStreamReceiver = &device1->getGpgpuCommandStreamReceiver();
 
     auto originalLocalMemorySupported = mockMemoryManager->localMemorySupported[1];

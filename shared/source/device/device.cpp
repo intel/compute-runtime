@@ -49,6 +49,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex),
       isaPoolAllocator(std::make_unique<ISAPoolAllocator>(this)),
       linearStreamPoolAllocator(this),
+      internalHeapPoolAllocator(this),
       deviceTimestampPoolAllocator(this),
       globalSurfacePoolAllocator(this),
       constantSurfacePoolAllocator(this),
@@ -104,6 +105,7 @@ Device::~Device() {
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
     linearStreamPoolAllocator.releasePools();
+    internalHeapPoolAllocator.releasePools();
     commandBufferPoolAllocator.releasePools();
     executionEnvironment->memoryManager->waitForDeletions();
 

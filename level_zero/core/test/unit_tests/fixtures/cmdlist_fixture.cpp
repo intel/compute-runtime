@@ -340,6 +340,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::setUp(int32_t useImmediate
     this->useImmediateFlushTask = useImmediateFlushTask;
     debugManager.flags.UseImmediateFlushTask.set(useImmediateFlushTask);
     debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
 
     ImmediateCmdListSharedHeapsFixture::setUp();
 }

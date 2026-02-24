@@ -13,6 +13,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -599,6 +600,9 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
 }
 
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAllocationHaveDifferentBaseThenHeapIsDirty) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
@@ -717,6 +721,9 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThe
 }
 
 TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSizeThenBiggerHeapIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+
     HeapType heapType = GetParam();
 
     CommandContainer cmdContainer;
@@ -1428,6 +1435,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1464,6 +1473,8 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1556,6 +1567,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     auto cmdContainer = std::make_unique<CommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1580,6 +1593,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
 
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1698,10 +1713,8 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);
 
     auto &productHelper = pDevice->getProductHelper();
-    auto enableLinearStreamPoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
-    bool usePoolAllocator = (enableLinearStreamPoolAllocator == 1) ||
-                            (enableLinearStreamPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
-    if (usePoolAllocator) {
+    bool useLinearStreamHeapPoolAllocator = LinearStreamPoolTraits::isEnabled(productHelper);
+    if (useLinearStreamHeapPoolAllocator) {
         EXPECT_TRUE(heap->getGraphicsAllocation()->isView());
         EXPECT_NE(heap->getGraphicsAllocation(), reusableAlloc);
         EXPECT_FALSE(reusableHeapsList.peekContains(*baseAlloc));
@@ -1725,6 +1738,55 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAnd
 
     cmdContainer->fillReusableAllocationLists();
     EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorEnabledWhenFillReusableAllocationListsThenSkipHeapFilling) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(1);
+    debugManager.flags.ForceDefaultHeapSize.set(64);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
+
+    cmdContainer->fillReusableAllocationLists();
+
+    // when InternalHeap pool allocator is enabled, only indirectObject heap should be skipped (not dynamicState, surfaceState)
+    auto expectedHeapCount = pDevice->getHardwareInfo().capabilityTable.supportsImages ? 2u : 1u;
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + expectedHeapCount);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenLinearStreamPoolAllocatorEnabledWhenFillReusableAllocationListsThenSkipSurfaceAndDynamicHeaps) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(1);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
+
+    cmdContainer->fillReusableAllocationLists();
+
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1u);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1990,6 +2052,9 @@ TEST_F(CommandContainerTest, givenCmdContainerWithImmediateCsrWhenCreatingSecond
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContainerThenUseStorageForReuseForStoredHeap) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+
     MyMockCommandContainer cmdContainer;
 
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
@@ -2013,11 +2078,20 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
 
     auto internalStorage = pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
 
-    auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
-                                                                         iohOldAllocation->getAllocationType())
-                                   .release();
-    EXPECT_EQ(iohOldAllocation, iohReusedAllocation);
-    pDevice->getMemoryManager()->freeGraphicsMemory(iohReusedAllocation);
+    auto &productHelper = pDevice->getProductHelper();
+    bool usePoolAllocator = InternalHeapPoolTraits::isEnabled(productHelper);
+    if (usePoolAllocator) {
+        auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
+                                                                             iohOldAllocation->getAllocationType())
+                                       .release();
+        EXPECT_EQ(nullptr, iohReusedAllocation);
+    } else {
+        auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
+                                                                             iohOldAllocation->getAllocationType())
+                                       .release();
+        EXPECT_EQ(iohOldAllocation, iohReusedAllocation);
+        pDevice->getMemoryManager()->freeGraphicsMemory(iohReusedAllocation);
+    }
 
     auto ssh = cmdContainer.getIndirectHeap(NEO::HeapType::surfaceState);
     auto sshOldAllocation = ssh->getGraphicsAllocation();
@@ -2036,10 +2110,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContain
     cmdContainer.reset();
     EXPECT_EQ(0u, deallocationList.size());
 
-    auto &productHelper = pDevice->getProductHelper();
-    auto enableLinearStreamPoolAllocator = NEO::debugManager.flags.EnableLinearStreamPoolAllocator.get();
-    bool usePoolAllocator = (enableLinearStreamPoolAllocator == 1) ||
-                            (enableLinearStreamPoolAllocator == -1 && productHelper.is2MBLocalMemAlignmentEnabled());
+    usePoolAllocator = LinearStreamPoolTraits::isEnabled(productHelper);
     if (usePoolAllocator) {
         auto sshReusedAllocation = internalStorage->obtainReusableAllocation(sshOldBufferSize, sshOldAllocType).release();
         EXPECT_EQ(nullptr, sshReusedAllocation);
@@ -2219,6 +2290,100 @@ HWTEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenAddCurrentCommandBuf
 
     bool viewInResidencyAfter = std::find(residencyContainer.begin(), residencyContainer.end(), viewAllocation) != residencyContainer.end();
     EXPECT_FALSE(viewInResidencyAfter);
+}
+
+HWTEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorEnabledWhenGrowingIohThenOldPoolViewIsRemovedFromResidency) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(1);
+    debugManager.flags.ForceDefaultHeapSize.set(64);
+
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    auto ioh = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+
+    auto oldIohAllocation = ioh->getGraphicsAllocation();
+    ASSERT_NE(nullptr, oldIohAllocation);
+    ASSERT_TRUE(oldIohAllocation->isView());
+    ASSERT_NE(nullptr, oldIohAllocation->getParentAllocation());
+    EXPECT_TRUE(pDevice->getInternalHeapPoolAllocator().isPoolBuffer(oldIohAllocation->getParentAllocation()));
+
+    auto &residencyContainer = cmdContainer->getResidencyContainer();
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    ioh->getSpace(ioh->getAvailableSpace());
+    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, 64, 1);
+
+    EXPECT_EQ(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorEnabledAndIohLargerThanPoolThresholdWhenGrowingIohThenStandaloneAllocationStaysInResidency) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(1);
+    debugManager.flags.ForceDefaultHeapSize.set(4096);
+
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    auto ioh = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+
+    auto oldIohAllocation = ioh->getGraphicsAllocation();
+    ASSERT_NE(nullptr, oldIohAllocation);
+    ASSERT_FALSE(oldIohAllocation->isView());
+
+    auto &residencyContainer = cmdContainer->getResidencyContainer();
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    ioh->getSpace(ioh->getAvailableSpace());
+    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, 64, 1);
+
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorDisabledWhenGrowingIohThenOldAllocationStaysInResidency) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    auto ioh = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+
+    auto oldIohAllocation = ioh->getGraphicsAllocation();
+    ASSERT_NE(nullptr, oldIohAllocation);
+    ASSERT_FALSE(oldIohAllocation->isView());
+
+    auto &residencyContainer = cmdContainer->getResidencyContainer();
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    ioh->getSpace(ioh->getAvailableSpace());
+    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, 64, 1);
+
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), oldIohAllocation));
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
 }
 
 HWTEST_F(CommandContainerTest, givenUnusedCommandBufferWhenReusingThenFastPathReturnsImmediately) {

@@ -59,6 +59,16 @@ AllocationProperties LinearStreamPoolTraits::createAllocationProperties(Device *
                                 device->getDeviceBitfield()};
 }
 
+AllocationProperties InternalHeapPoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true, // allocateMemory
+                                poolSize,
+                                allocationType,
+                                (device->getNumGenericSubDevices() > 1u), // multiOsContextCapable
+                                false,
+                                device->getDeviceBitfield()};
+}
+
 bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
     auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
     if (forceEnable != -1) {
@@ -69,6 +79,14 @@ bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
 
 bool LinearStreamPoolTraits::isEnabled(const ProductHelper &productHelper) {
     auto forceEnable = debugManager.flags.EnableLinearStreamPoolAllocator.get();
+    if (forceEnable != -1) {
+        return forceEnable == 1;
+    }
+    return productHelper.is2MBLocalMemAlignmentEnabled();
+}
+
+bool InternalHeapPoolTraits::isEnabled(const ProductHelper &productHelper) {
+    auto forceEnable = debugManager.flags.EnableInternalHeapPoolAllocator.get();
     if (forceEnable != -1) {
         return forceEnable == 1;
     }

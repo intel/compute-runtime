@@ -74,4 +74,14 @@ struct LinearStreamPoolTraits {
     static bool isEnabled(const ProductHelper &productHelper);
 };
 
+struct InternalHeapPoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::internalHeap;
+    static constexpr size_t maxAllocationSize = MemoryConstants::pageSize2M;
+    static constexpr size_t defaultPoolSize = 2 * MemoryConstants::pageSize2M;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+    static bool isEnabled(const ProductHelper &productHelper);
+};
+
 } // namespace NEO

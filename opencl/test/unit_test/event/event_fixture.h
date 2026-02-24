@@ -78,6 +78,7 @@ struct InternalsEventTest
         ClDeviceFixture::setUp();
         mockContext = new MockContext(pClDevice);
         debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+        debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     }
 
     void TearDown() override {

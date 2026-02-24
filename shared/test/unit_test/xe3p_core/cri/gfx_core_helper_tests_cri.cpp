@@ -47,6 +47,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenSingleTileCsrWhenAllocatingCsrSpecificAllo
     debugManager.flags.CreateMultipleSubDevices.set(numDevices);
     debugManager.flags.EnableLocalMemory.set(true);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
     setUpImpl();
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};

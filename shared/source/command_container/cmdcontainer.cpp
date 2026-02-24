@@ -28,9 +28,26 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/pool_allocators.h"
 
 namespace NEO {
+
+namespace {
+
+bool shouldSkipHeapPrefillForPool(HeapType heapType, size_t heapSize, bool linearStreamPoolEnabled, bool internalHeapPoolEnabled) {
+    if (heapType == HeapType::indirectObject) {
+        return internalHeapPoolEnabled && (heapSize <= InternalHeapPoolTraits::maxAllocationSize);
+    }
+
+    if (heapType == HeapType::dynamicState || heapType == HeapType::surfaceState) {
+        return linearStreamPoolEnabled && (heapSize <= LinearStreamPoolTraits::maxAllocationSize);
+    }
+
+    return false;
+}
+
+} // namespace
 
 CommandContainer::~CommandContainer() {
     if (!device) {
@@ -143,7 +160,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             if (!allocationIndirectHeaps[i]) {
                 return ErrorCode::outOfDeviceMemory;
             }
-            residencyContainer.push_back(allocationIndirectHeaps[i]);
+            addToResidencyContainer(allocationIndirectHeaps[i]);
 
             bool requireInternalHeap = false;
             if (IndirectHeap::Type::indirectObject == heapType) {
@@ -300,7 +317,7 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
     indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
                                 newAlloc->getUnderlyingBufferSize());
     auto newBase = indirectHeap->getHeapGpuBase();
-    getResidencyContainer().push_back(newAlloc);
+    addToResidencyContainer(newAlloc);
     if (this->immediateCmdListCsr) {
         this->storeAllocationAndFlushTagUpdate(oldAlloc);
     } else {
@@ -405,7 +422,7 @@ void CommandContainer::prepareBindfulSsh() {
                                                                                                       defaultHeapAllocationAlignment,
                                                                                                       device->getRootDeviceIndex());
             UNRECOVERABLE_IF(!allocationIndirectHeaps[IndirectHeap::Type::surfaceState]);
-            residencyContainer.push_back(allocationIndirectHeaps[IndirectHeap::Type::surfaceState]);
+            addToResidencyContainer(allocationIndirectHeaps[IndirectHeap::Type::surfaceState]);
 
             indirectHeaps[IndirectHeap::Type::surfaceState] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[IndirectHeap::Type::surfaceState], false);
             indirectHeaps[IndirectHeap::Type::surfaceState]->getSpace(reservedSshSize);
@@ -552,6 +569,8 @@ void CommandContainer::fillReusableAllocationLists() {
 
     auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    const bool linearStreamPoolEnabled = LinearStreamPoolTraits::isEnabled(productHelper);
+    const bool internalHeapPoolEnabled = InternalHeapPoolTraits::isEnabled(productHelper);
 
     if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
         for (auto i = 0u; i < amountToFill; i++) {
@@ -571,16 +590,20 @@ void CommandContainer::fillReusableAllocationLists() {
 
     for (auto i = 0u; i < amountToFill; i++) {
         for (auto heapType = 0u; heapType < IndirectHeap::Type::numTypes; heapType++) {
-            if (skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
+            auto currentHeapType = static_cast<HeapType>(heapType);
+            if (skipHeapAllocationCreation(currentHeapType)) {
                 continue;
             }
-            size_t heapSize = getHeapSize(static_cast<HeapType>(heapType));
+            const size_t heapSize = getHeapSize(currentHeapType);
+            if (shouldSkipHeapPrefillForPool(currentHeapType, heapSize, linearStreamPoolEnabled, internalHeapPoolEnabled)) {
+                continue;
+            }
             auto heapToReuse = heapHelper->getHeapAllocation(heapType,
                                                              heapSize,
                                                              defaultHeapAllocationAlignment,
                                                              device->getRootDeviceIndex());
             if (heapToReuse != nullptr) {
-                this->getResidencyContainer().push_back(heapToReuse);
+                addToResidencyContainer(heapToReuse);
             }
             this->heapHelper->storeHeapAllocation(heapToReuse);
         }
@@ -610,6 +633,13 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
             this->immediateReusableAllocationList->pushTailOne(*allocation);
         }
     } else {
+        const auto parent = allocation->getParentAllocation();
+        const bool isPoolView = allocation->isView() && parent &&
+                                (this->device->getLinearStreamPoolAllocator().isPoolBuffer(parent) ||
+                                 this->device->getInternalHeapPoolAllocator().isPoolBuffer(parent));
+        if (isPoolView) {
+            std::erase(residencyContainer, allocation);
+        }
         getHeapHelper()->storeHeapAllocation(allocation);
     }
 }

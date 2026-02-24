@@ -212,6 +212,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     LinearStreamPoolAllocator &getLinearStreamPoolAllocator() {
         return linearStreamPoolAllocator;
     }
+    InternalHeapPoolAllocator &getInternalHeapPoolAllocator() {
+        return internalHeapPoolAllocator;
+    }
     TimestampPoolAllocator &getDeviceTimestampPoolAllocator() {
         return deviceTimestampPoolAllocator;
     }
@@ -380,6 +383,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     std::unique_ptr<ISAPoolAllocator> isaPoolAllocator;
     LinearStreamPoolAllocator linearStreamPoolAllocator;
+    InternalHeapPoolAllocator internalHeapPoolAllocator;
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;

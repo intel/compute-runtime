@@ -28,6 +28,7 @@ using ClReleaseCommandQueueTests = ApiTests;
 TEST_F(ClReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
 
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
