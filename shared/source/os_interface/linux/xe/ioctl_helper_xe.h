@@ -222,9 +222,6 @@ class IoctlHelperXe : public IoctlHelper {
         bool isCookie;
     };
 
-    template <typename... XeLogArgs>
-    void xeLog(XeLogArgs &&...args) const;
-
     struct ExecObjectXe {
         uint64_t gpuAddress;
         uint32_t handle;
@@ -238,15 +235,5 @@ class IoctlHelperXe : public IoctlHelper {
 
     std::unique_ptr<EuDebugInterface> euDebugInterface;
 };
-
-template <typename... XeLogArgs>
-void IoctlHelperXe::xeLog(XeLogArgs &&...args) const {
-    PRINT_STRING(debugManager.flags.PrintXeLogs.get(), stderr, args...);
-}
-
-#define XELOG(...)                              \
-    if (debugManager.flags.PrintXeLogs.get()) { \
-        this->xeLog(__VA_ARGS__);               \
-    }
 
 } // namespace NEO

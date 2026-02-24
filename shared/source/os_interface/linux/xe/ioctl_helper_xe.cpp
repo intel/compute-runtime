@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/xe/xe_log_helper.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/directory.h"
@@ -652,7 +653,6 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     handle = create.handle;
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, handle, create.size);
-
     XELOG(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
           create.vm_id, create.size, create.flags, create.placement, handle, create.cpu_caching, ret);
