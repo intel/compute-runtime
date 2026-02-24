@@ -491,7 +491,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = device->getInternalEngineGroupType();
             }
         } else {
-            if (queueProperties.interruptHint && !productHelper.isInterruptSupported()) {
+            if (queueProperties.interruptHint && !productHelper.isInterruptSupported(device->getNEODevice()->getRootDeviceEnvironment())) {
                 returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
                 return commandList;
             }

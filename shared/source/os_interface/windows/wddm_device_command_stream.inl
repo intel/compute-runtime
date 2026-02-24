@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
@@ -225,6 +226,29 @@ bool WddmCommandStreamReceiver<GfxFamily>::validForEnqueuePagingFence(uint64_t p
     return !this->requiresBlockingResidencyHandling &&
            pagingFenceValue > *this->wddm->getPagingFenceAddress() &&
            pagingFenceValue > this->lastEnqueuedPagingFenceValue;
+}
+
+template <typename GfxFamily>
+bool WddmCommandStreamReceiver<GfxFamily>::waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) {
+    if (inOrderExecInfo != nullptr && inOrderExecInfo->getInterruptFence() != nullptr) {
+        return true;
+    }
+    return false;
+}
+
+template <typename GfxFamily>
+void WddmCommandStreamReceiver<GfxFamily>::allocateUserFence(std::unique_ptr<SyncFence> &mf) {
+    if (wddm->isNativeFenceAvailable()) {
+        mf = std::make_unique<WddmSyncFence>();
+        UNRECOVERABLE_IF(wddm->getWddmInterface()->createNativeFence(*mf->getFence(), true) == false);
+    }
+}
+
+template <typename GfxFamily>
+bool WddmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) {
+    UNRECOVERABLE_IF(!fence);
+
+    return wddm->waitFromCpu(waitValue, *fence->getFence(), false);
 }
 
 } // namespace NEO

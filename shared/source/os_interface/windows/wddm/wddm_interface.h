@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class WddmInterface {
     virtual bool hwQueuesSupported() = 0;
     virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) = 0;
     virtual bool createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) = 0;
+    virtual bool createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) { return false; };
     Wddm &wddm;
 };
 
@@ -64,5 +65,6 @@ class WddmInterface32 : public WddmInterface23 {
   public:
     using WddmInterface23::WddmInterface23;
     bool createSyncObject(MonitoredFence &monitorFence) override;
+    bool createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) override;
 };
 } // namespace NEO

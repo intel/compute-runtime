@@ -292,10 +292,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingShouldRegisterEnqueuedWa
     EXPECT_TRUE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIsInterruptSupportedThenTrueReturned) {
-    EXPECT_TRUE(productHelper->isInterruptSupported());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIsMediaContextSupportedThenTrueReturned) {
     EXPECT_TRUE(productHelper->isMediaContextSupported());
 }

@@ -236,7 +236,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = 2u;
     EXPECT_NE(0u, testDrmCsr->immWritePostSyncWriteOffset);
-    EXPECT_TRUE(testDrmCsr->waitUserFenceSupported());
+    EXPECT_TRUE(testDrmCsr->waitUserFenceSupported(nullptr));
 
     auto rootExecEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     auto &gfxCoreHelper = rootExecEnvironment->getHelper<GfxCoreHelper>();
@@ -265,10 +265,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
 
     EXPECT_EQ(0u, mock->context.gemWaitUserFenceCalled);
 
-    testDrmCsr->waitUserFence(123, tagAddress, 1, true, NEO::InterruptId::notUsed, nullptr);
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, NEO::InterruptId::notUsed, nullptr, nullptr);
     EXPECT_EQ(2u, mock->context.gemWaitUserFenceCalled);
 
-    testDrmCsr->waitUserFence(123, tagAddress, 1, true, 0x678, nullptr);
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, 0x678, nullptr, nullptr);
     EXPECT_EQ(3u, mock->context.gemWaitUserFenceCalled);
 }
 

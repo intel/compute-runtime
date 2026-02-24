@@ -537,6 +537,11 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedUseSharedSystemUsmThenRe
     EXPECT_FALSE(productHelper->useSharedSystemUsm());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfInterruptIsSupportedThenFalseIsReturned, IsAtMostXe3Core) {
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    EXPECT_FALSE(productHelper->isInterruptSupported(rootDeviceEnvironment));
+}
+
 HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
     DebugManagerStateRestore restore{};
 
@@ -1293,10 +1298,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSuppo
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsInterruptSupportedThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isInterruptSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenFalseIsReturned, IsDG1) {

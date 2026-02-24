@@ -437,6 +437,35 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndDefaultArgs
     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
 }
 
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndInterruptFenceWhencallingSetupPostSyncForInOrderExecThenCorrectValuesAreSet, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+
+    WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1);
+
+    dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExecInfo.get();
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.shouldAllocateUserFenceReturnSuccess = true;
+
+    inOrderExecInfo->setupInterruptFence();
+
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+    auto &postSyncData1 = walkerCmd.getPostSyncOpn1();
+    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData1.getOperation());
+}
+
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAtomicDeviceSignallingAndHostStorageOptionsWhencallingSetupPostSyncForInOrderExecThenCorrectValuesAreSet, IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 

@@ -356,6 +356,38 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIs
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1, 0));
 }
 
+HWTEST_F(CommandEncoderTests, whenResetingInOrderExecInfoCounterValueThenAlsoResetInterruptFence) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.shouldAllocateUserFenceReturnSuccess = true;
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, nullptr, mockDevice, 1, true);
+
+    EXPECT_EQ(0u, inOrderExecInfo->getCounterValue());
+    inOrderExecInfo->addCounterValue(1u);
+    EXPECT_EQ(1u, inOrderExecInfo->getCounterValue());
+
+    EXPECT_EQ(inOrderExecInfo->getInterruptFence(), nullptr);
+    inOrderExecInfo->setupInterruptFence();
+    MockSyncFence *fence = static_cast<MockSyncFence *>(inOrderExecInfo->getInterruptFence());
+    EXPECT_NE(fence, nullptr);
+    EXPECT_EQ(fence->fenceValue, inOrderExecInfo->getCounterValue());
+
+    inOrderExecInfo->resetCounterValue();
+    EXPECT_EQ(0u, inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(fence->fenceValue, inOrderExecInfo->getCounterValue());
+}
+
+HWTEST_F(CommandEncoderTests, whenMultipleInterruptFenceSetupThenAtemptAllocationOnce) {
+    MockDevice mockDevice;
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, nullptr, mockDevice, 1, true);
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.userFenceAllocationAttemptCount);
+    inOrderExecInfo->setupInterruptFence();
+    EXPECT_EQ(1u, csr.userFenceAllocationAttemptCount);
+    inOrderExecInfo->setupInterruptFence();
+    EXPECT_EQ(1u, csr.userFenceAllocationAttemptCount);
+}
+
 HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUploadToTbx) {
     MockDevice mockDevice;
     auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();

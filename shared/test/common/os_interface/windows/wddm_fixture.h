@@ -14,12 +14,16 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface20.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
@@ -198,6 +202,38 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
     MockGmmMemory *gmmMem = nullptr;
     ExecutionEnvironment *executionEnvironment;
 };
+
+struct WddmCommandStreamFixture {
+    std::unique_ptr<MockDevice> device;
+    CommandStreamReceiver *csr;
+    MockWddmMemoryManager *memoryManager = nullptr;
+    WddmMock *wddm = nullptr;
+
+    DebugManagerStateRestore stateRestore;
+
+    template <typename GfxFamily>
+    void setUpT() {
+        HardwareInfo *hwInfo = nullptr;
+        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
+        debugManager.flags.SetAmountOfReusableAllocations.set(0);
+        auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+
+        memoryManager = new MockWddmMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        ASSERT_NE(nullptr, device);
+
+        csr = new WddmCommandStreamReceiver<GfxFamily>(*executionEnvironment, 0, device->getDeviceBitfield());
+        device->resetCommandStreamReceiver(csr);
+        csr->getOsContext().ensureContextInitialized(false);
+    }
+
+    template <typename GfxFamily>
+    void tearDownT() {}
+};
+
+struct WddmCommandStreamTest : ::testing::Test, WddmCommandStreamFixture {};
 
 using WddmTest = WddmFixture;
 using WddmTestWithMockGdiDll = Test<WddmFixtureWithMockGdiDll>;

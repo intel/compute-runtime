@@ -280,7 +280,7 @@ class ProductHelper {
     virtual bool isPidFdOrSocketForIpcSupported() const = 0;
     virtual bool checkBcsForDirectSubmissionStop() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
-    virtual bool isInterruptSupported() const = 0;
+    virtual bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isDeviceCapsReaderSupported() const = 0;
     virtual bool isMediaContextSupported() const = 0;
     virtual bool sipUsesSubslicePools() const = 0;

@@ -14,12 +14,14 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/private_allocs_to_reuse_container.h"
 #include "shared/source/host_function/host_function.h"
 #include "shared/source/kernel/kernel_execution_type.h"
+#include "shared/source/os_interface/defs.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <atomic>
@@ -547,8 +549,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
-    virtual bool waitUserFenceSupported() { return false; }
-    virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) { return false; }
+    virtual bool waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) { return false; }
+    virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
+    virtual void allocateUserFence(std::unique_ptr<SyncFence> &mf) {}
     void setPrimaryCsr(CommandStreamReceiver *primaryCsr) {
         this->primaryCsr = primaryCsr;
     }

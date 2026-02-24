@@ -12,6 +12,10 @@
 using namespace NEO;
 
 bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
+    return createNativeFence(monitorFence, false);
+}
+
+bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) {
     UNRECOVERABLE_IF(wddm.getGdi()->createNativeFence == nullptr);
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_CREATENATIVEFENCE createNativeFenceObject = {0};
@@ -19,6 +23,7 @@ bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
     createNativeFenceObject.Info.Type = D3DDDI_NATIVEFENCE_TYPE_DEFAULT;
     createNativeFenceObject.Info.InitialFenceValue = 0;
     auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
+    privateData->UseForWalkerInterrupt = useForWalkerInterrupt;
     privateData->UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get();
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);

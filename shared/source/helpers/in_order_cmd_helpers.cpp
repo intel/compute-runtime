@@ -160,6 +160,10 @@ void InOrderExecInfo::reset() {
 void InOrderExecInfo::resetCounterValue() {
     counterValue = getInitialCounterValue();
     lastWaitedCounterValue[allocationOffset != 0].store(getInitialCounterValue());
+
+    if (getInterruptFence() != nullptr) {
+        interruptFence->get()->setFenceValue(getCounterValue());
+    }
 }
 
 NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
@@ -201,6 +205,17 @@ void InOrderExecInfo::releaseNotUsedTempTimestampNodes(bool forceReturn) {
     }
 
     tempTimestampNodes.swap(tempVector);
+}
+
+void InOrderExecInfo::setupInterruptFence() {
+    if (!interruptFence) {
+        interruptFence = nullptr;
+        device.getDefaultEngine().commandStreamReceiver->allocateUserFence(interruptFence.value());
+    }
+
+    if (interruptFence->get() != nullptr) {
+        interruptFence->get()->setFenceValue(getCounterValue());
+    }
 }
 
 uint64_t InOrderExecInfo::getHostNodeGpuAddress() const {

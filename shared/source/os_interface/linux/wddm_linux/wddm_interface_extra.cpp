@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,5 +12,9 @@ using namespace NEO;
 
 bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
     UNRECOVERABLE_IF(true);
+    return false;
+}
+
+bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) {
     return false;
 }

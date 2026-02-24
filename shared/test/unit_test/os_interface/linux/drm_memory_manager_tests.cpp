@@ -2194,7 +2194,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingAllocateAndReleaseInterruptT
     drm.ioctlHelper.reset(mockIoctlHelper);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    bool interruptSupported = productHelper.isInterruptSupported();
+    bool interruptSupported = productHelper.isInterruptSupported(*rootDeviceEnvironment);
 
     uint32_t handle = 0;
 

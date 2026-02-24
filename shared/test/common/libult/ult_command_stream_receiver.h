@@ -47,6 +47,15 @@ struct WriteMemoryParams {
     bool latestChunkedMode = false;
 };
 
+struct MonitoredFence;
+struct MockSyncFence : SyncFence {
+    volatile uint64_t *getCpuAddress() override { return 0u; }
+    uint64_t getGpuAddress() override { return 0u; }
+    void setFenceValue(uint64_t value) override { fenceValue = value; }
+    MonitoredFence *getFence() override { return nullptr; }
+    uint64_t fenceValue;
+};
+
 template <typename GfxFamily>
 class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
@@ -574,7 +583,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         createHostFunctionWorkerCounter++;
     }
 
-    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
+    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override {
         waitUserFenceParams.callCount++;
         waitUserFenceParams.latestWaitedAddress = hostAddress;
         waitUserFenceParams.latestWaitedValue = waitValue;
@@ -587,10 +596,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
             return waitUserFenceParams.forceRetStatusValue;
         }
 
-        return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
+        return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait, nullptr);
     }
 
-    bool waitUserFenceSupported() override { return isUserFenceWaitSupported; }
+    bool waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) override { return isUserFenceWaitSupported; }
 
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
         this->pagingFenceValueToUnblock = pagingFenceValue;
@@ -625,6 +634,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         } else {
             return CommandStreamReceiver::isGpuHangDetected();
         }
+    }
+
+    void allocateUserFence(std::unique_ptr<SyncFence> &mf) override {
+        userFenceAllocationAttemptCount++;
+
+        if (shouldAllocateUserFenceReturnSuccess) {
+            mf = std::make_unique<MockSyncFence>();
+            return;
+        }
+
+        return CommandStreamReceiver::allocateUserFence(mf);
     }
 
     std::vector<std::string> aubCommentMessages;
@@ -673,6 +693,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t walkerWithProfilingEnqueuedTimes = 0;
     uint32_t createHostFunctionWorkerCounter = 0;
     uint32_t signalHostFunctionWorkerCounter = 0;
+    uint32_t userFenceAllocationAttemptCount = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
@@ -713,6 +734,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool callBaseWaitForCompletionWithTimeout = true;
     bool shouldFailFlushBatchedSubmissions = false;
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
+    bool shouldAllocateUserFenceReturnSuccess = false;
     bool callBaseFillReusableAllocationsList = false;
     bool callBaseFlushBcsTask{true};
     bool callBaseSendRenderStateCacheFlush = true;

@@ -125,11 +125,6 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
     return true;
 }

@@ -273,7 +273,7 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     auto queueProperties = CommandQueue::extractQueueProperties(*desc);
 
-    if (queueProperties.interruptHint && !neoDevice->getProductHelper().isInterruptSupported()) {
+    if (queueProperties.interruptHint && !neoDevice->getProductHelper().isInterruptSupported(neoDevice->getRootDeviceEnvironment())) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 

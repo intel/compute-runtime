@@ -32,45 +32,16 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm_interface23.h"
+#include "shared/test/common/mocks/mock_wddm_interface32.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
 using namespace NEO;
 using namespace ::testing;
-
-class WddmCommandStreamFixture {
-  public:
-    std::unique_ptr<MockDevice> device;
-    CommandStreamReceiver *csr;
-    MockWddmMemoryManager *memoryManager = nullptr;
-    WddmMock *wddm = nullptr;
-
-    DebugManagerStateRestore stateRestore;
-
-    template <typename GfxFamily>
-    void setUpT() {
-        HardwareInfo *hwInfo = nullptr;
-        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
-        debugManager.flags.SetAmountOfReusableAllocations.set(0);
-        auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-
-        memoryManager = new MockWddmMemoryManager(*executionEnvironment);
-        executionEnvironment->memoryManager.reset(memoryManager);
-        wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        ASSERT_NE(nullptr, device);
-
-        csr = new WddmCommandStreamReceiver<GfxFamily>(*executionEnvironment, 0, device->getDeviceBitfield());
-        device->resetCommandStreamReceiver(csr);
-        csr->getOsContext().ensureContextInitialized(false);
-    }
-
-    template <typename GfxFamily>
-    void tearDownT() {
-    }
-};
 
 template <typename GfxFamily>
 struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
@@ -171,7 +142,6 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
     }
 };
 
-struct WddmCommandStreamTest : ::testing::Test, WddmCommandStreamFixture {};
 using WddmDefaultTest = ::Test<DeviceFixture>;
 struct DeviceCommandStreamTest : ::Test<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
@@ -218,6 +188,24 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitF
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_TRUE(wddm->waitFromCpuResult.success);
     EXPECT_EQ(stampToWait, wddm->waitFromCpuResult.uint64ParamPassed);
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmInterfaceBeforeWddm3ThenCreatingNativeFenceFails) {
+    MonitoredFence fence;
+    WddmMockInterface23 *wddmMockInterface = new WddmMockInterface23(*wddm);
+    wddm->wddmInterface.reset(wddmMockInterface);
+    EXPECT_FALSE(wddm->wddmInterface->createNativeFence(fence, false));
+    EXPECT_FALSE(wddm->isNativeFenceAvailable());
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmWhenCallingWaitUserFenceThenUseMonitoredFenceForSynchronization) {
+    std::unique_ptr<SyncFence> mf = std::make_unique<WddmSyncFence>();
+    uint32_t waitFromCpuCallCount = wddm->waitFromCpuResult.called;
+    wddm->callBaseWaitFromCpu = false;
+
+    csr->waitUserFence(0, 0, 0, false, 0, nullptr, mf.get());
+    EXPECT_EQ(waitFromCpuCallCount + 1, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(wddm->waitFromCpuResult.monitoredFence, mf->getFence());
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenFlushingThenFlushIsSubmitted) {

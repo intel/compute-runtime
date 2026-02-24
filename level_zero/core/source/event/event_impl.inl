@@ -711,7 +711,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostAddress(), inOrderExecHelper.getEventData()->counterOffset));
     NEO::GraphicsAllocation *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
 
-    if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc)) {
+    if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc, inOrderExecHelper.getInOrderExecInfo()->getInterruptFence())) {
         return ZE_RESULT_NOT_READY;
     }
 
@@ -749,7 +749,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
-    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported();
+    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInOrderExecInfo());
 
     do {
         if (this->heapfullCbEventWithProfiling) {

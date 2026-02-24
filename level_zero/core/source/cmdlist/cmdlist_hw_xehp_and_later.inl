@@ -322,6 +322,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 }
                 if (event && event->isCounterBased()) {
                     isCounterBasedEvent = true;
+
+                    if (interruptEvent && !NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true)) {
+                        inOrderExecInfo->setupInterruptFence();
+                    }
+
                     if (event->getInOrderIncrementValue(this->partitionCount) > 0) {
                         inOrderIncrementGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress();
                         inOrderIncrementValue = event->getInOrderIncrementValue(this->partitionCount);

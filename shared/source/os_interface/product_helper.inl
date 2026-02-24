@@ -1107,7 +1107,7 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
+bool ProductHelperHw<gfxProduct>::isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 

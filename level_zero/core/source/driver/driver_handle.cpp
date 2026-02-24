@@ -189,7 +189,7 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0);
     }
 
-    if (devices[0]->getProductHelper().isInterruptSupported()) {
+    if (devices[0]->getProductHelper().isInterruptSupported(devices[0]->getNEODevice()->getRootDeviceEnvironment())) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_1_0);
     }
 

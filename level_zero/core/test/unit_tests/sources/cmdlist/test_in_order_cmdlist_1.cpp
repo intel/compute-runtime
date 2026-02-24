@@ -648,7 +648,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenUserInterruptEventAndTbxM
     ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
     ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
-    EXPECT_FALSE(ultCsr->waitUserFenceSupported());
+    EXPECT_FALSE(ultCsr->waitUserFenceSupported(nullptr));
 
     auto eventPool = createEvents<FamilyType>(2, false);
     events[0]->enableKmdWaitMode();
@@ -6645,6 +6645,54 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
     ASSERT_NE(nullptr, cmd->pDestination);
     auto memCmpRet = memcmp(cmd->pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
     EXPECT_EQ(0, memCmpRet);
+}
+
+HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAppendingLaunchKernelMultipleTimesThenAllocateUserFenceOnceCorrectly) {
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t handle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 0u);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+
+    EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 0u);
+
+    auto mockProductHelper = new MockProductHelper;
+    mockProductHelper->isInterruptSupportedResult = true;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
+
+    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    counterBasedDesc.pNext = &syncModeDesc;
+
+    ze_event_handle_t handleWithInterruptHint = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handleWithInterruptHint));
+
+    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getNEODevice()->getDeviceBitfield(), true) || !immCmdList->duplicatedInOrderCounterStorageEnabled) {
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 0u);
+    } else {
+        debugManager.flags.EnableWalkerPartition.set(1);
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 0u);
+
+        debugManager.flags.EnableWalkerPartition.set(0);
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 1u);
+
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 1u);
+    }
+
+    zeEventDestroy(handle);
+    zeEventDestroy(handleWithInterruptHint);
 }
 
 } // namespace ult

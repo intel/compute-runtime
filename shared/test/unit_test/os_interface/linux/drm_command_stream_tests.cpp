@@ -1196,7 +1196,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                 TaskCountType waitValue = 2;
                 TaskCountType currentValue = 1;
                 uint64_t addr = castToUint64(&currentValue);
-                testedCsr->waitUserFence(waitValue, addr, -1, false, NEO::InterruptId::notUsed, nullptr);
+                testedCsr->waitUserFence(waitValue, addr, -1, false, NEO::InterruptId::notUsed, nullptr, nullptr);
 
                 EXPECT_EQ(0, mock->ioctlCnt.gemWait);
                 EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);

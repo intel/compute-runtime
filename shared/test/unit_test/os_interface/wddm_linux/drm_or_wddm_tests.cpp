@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
@@ -171,4 +172,20 @@ TEST(DrmOrWddmTest, givenWddmWhenSetGmmInputArgsThenFileDescriptorIsSetToAdapter
     wddm->setGmmInputArgs(&gmmInArgs);
 
     EXPECT_EQ(expectedBdf, gmmInArgs.FileDescriptor);
+}
+
+TEST(DrmOrWddmTest, givenWslWhenCreateNativeFenceThenFail) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    WddmSyncFence syncFence;
+    syncFence.setFenceValue(0u);
+    EXPECT_EQ(syncFence.getFence()->currentFenceValue, 0u);
+
+    wddm->wddmInterface = std::make_unique<WddmInterface23>(*wddm);
+
+    EXPECT_FALSE(wddm->getWddmInterface()->createNativeFence(*syncFence.getFence(), false));
+    EXPECT_EQ(syncFence.getCpuAddress(), nullptr);
+    EXPECT_EQ(syncFence.getGpuAddress(), 0u);
+    EXPECT_EQ(syncFence.getFence()->currentFenceValue, 0u);
 }

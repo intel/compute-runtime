@@ -13,6 +13,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/os_interface/defs.h"
 
 #include <cstdint>
 #include <memory>
@@ -117,6 +118,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
+    void setupInterruptFence();
+    SyncFence *getInterruptFence() { return interruptFence ? interruptFence->get() : nullptr; }
 
     uint64_t getInitialCounterValue() const;
 
@@ -143,6 +146,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t allocationOffset = 0;
     uint32_t rootDeviceIndex = 0;
     uint32_t immWritePostSyncWriteOffset = 0;
+    std::optional<std::unique_ptr<SyncFence>> interruptFence;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
     bool isSimulationMode = false;

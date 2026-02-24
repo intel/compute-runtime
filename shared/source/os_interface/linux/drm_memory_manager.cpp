@@ -3140,16 +3140,18 @@ bool DrmMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) 
 }
 
 bool DrmMemoryManager::allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) {
-    auto &productHelper = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    if (productHelper.isInterruptSupported()) {
+    auto &rootDeviceEnvironment = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    if (productHelper.isInterruptSupported(rootDeviceEnvironment)) {
         return getDrm(rootDeviceIndex).getIoctlHelper()->allocateInterrupt(outHandle);
     }
     return false;
 }
 
 bool DrmMemoryManager::releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) {
-    auto &productHelper = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    if (productHelper.isInterruptSupported()) {
+    auto &rootDeviceEnvironment = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    if (productHelper.isInterruptSupported(rootDeviceEnvironment)) {
         return getDrm(rootDeviceIndex).getIoctlHelper()->releaseInterrupt(outHandle);
     }
     return false;

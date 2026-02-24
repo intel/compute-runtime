@@ -163,6 +163,10 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
             setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
         }
 
+        if (args.inOrderExecInfo->getInterruptFence()) {
+            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+        }
+
         if (args.eventAddress) {
             setPostSyncData(getPostSync(cmd, postSyncId++), (args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA), args.eventAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
         }
@@ -171,6 +175,9 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
             setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, args.inOrderIncrementGpuAddress, args.inOrderIncrementValue,
                             static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, false, requiresSystemMemoryFence);
         }
+
+        UNRECOVERABLE_IF(postSyncId > 4);
+
         setCommandLevelInterrupt(cmd, args.interruptEvent);
         encodeL3Flush(cmd, args);
     }
