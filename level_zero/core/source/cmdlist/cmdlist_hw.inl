@@ -1632,13 +1632,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
 
     addResidency(dstPtrAlloc, srcPtrAlloc, clearColorAllocation);
 
-    size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
-    bool useAdditionalTimestamp = nBlitsPerRow > 1;
     if (useAdditionalBlitProperties) {
+        size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+        bool useAdditionalTimestamp = nBlitsPerRow > 1;
         setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
     }
 
-    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
 
     dummyBlitWa.isWaRequired = true;
@@ -2054,21 +2053,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(dstAllocationStruct, size);
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
-    memoryCopyParams.copyOffloadAllowed |= isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
+    if (!memoryCopyParams.copyOffloadAllowed) {
+        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
+    }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
-    const size_t middleElSize = sizeof(uint32_t) * 4;
     uint32_t kernelCounter = 0;
     uintptr_t leftSize = 0;
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
-    const auto isStateless = this->forceStateless(size);
-    const bool isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
-    const auto isHeapless = this->isHeaplessModeEnabled();
+    size_t middleElSize = 0;
+    bool isStateless = false;
+    bool isWideness = false;
+    bool isHeapless = false;
 
     if (!isCopyOnlyEnabled) {
+        middleElSize = sizeof(uint32_t) * 4;
+        isStateless = this->forceStateless(size);
+        isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
+        isHeapless = this->isHeaplessModeEnabled();
+
         uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
 
         const size_t middleAlignment = MemoryConstants::cacheLineSize;
@@ -2093,13 +2099,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         kernelCounter = leftSize > 0 ? 1 : 0;
         kernelCounter += middleSizeBytes > 0 ? 1 : 0;
         kernelCounter += rightSize > 0 ? 1 : 0;
-    }
 
-    if (NEO::debugManager.flags.ForceNonWalkerSplitMemoryCopy.get() == 1) {
-        leftSize = size;
-        middleSizeBytes = 0;
-        rightSize = 0;
-        kernelCounter = 1;
+        if (NEO::debugManager.flags.ForceNonWalkerSplitMemoryCopy.get() == 1) {
+            leftSize = size;
+            middleSizeBytes = 0;
+            rightSize = 0;
+            kernelCounter = 1;
+        }
     }
 
     bool waitForImplicitInOrderDependency = !isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed;
