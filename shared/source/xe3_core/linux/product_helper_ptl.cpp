@@ -31,11 +31,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     return false;
 }

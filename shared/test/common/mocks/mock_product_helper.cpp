@@ -493,6 +493,11 @@ template <>
 void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
 }
 
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isDisableScratchPagesSupported() const {
+    return false;
+}
+
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

@@ -82,6 +82,11 @@ void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &tim
     }
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
+    return true;
+}
+
 template <>
 bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
     return true;

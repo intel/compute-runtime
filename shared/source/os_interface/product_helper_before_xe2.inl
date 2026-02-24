@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,11 @@ bool ProductHelperHw<gfxProduct>::isPidFdOrSocketForIpcSupported() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
+    return false;
 }
 
 } // namespace NEO
