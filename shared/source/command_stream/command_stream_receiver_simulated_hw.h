@@ -104,7 +104,10 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
             allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
-        if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
+        bool isSingleDeviceAllocationWrittenByRootCsr = graphicsAllocation.storageInfo.pageTablesVisibility.count() <= 1 && graphicsAllocation.storageInfo.memoryBanks.count() <= 1;
+        isSingleDeviceAllocationWrittenByRootCsr &= (this->osContext && this->osContext->isRootDevice());
+
+        if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool() || isSingleDeviceAllocationWrittenByRootCsr) {
             UNRECOVERABLE_IF(nullptr == aubManager);
             aubManager->writeMemory2(allocationParams);
         } else {

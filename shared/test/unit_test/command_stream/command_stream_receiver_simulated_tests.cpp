@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -440,6 +440,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 2u;
+    graphicsAllocation.storageInfo.pageTablesVisibility = osContext.getDeviceBitfield();
     EXPECT_THROW(csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0), std::exception);
     EXPECT_FALSE(firstMockHardwareContext->writeMemory2Called);
     EXPECT_FALSE(secondMockHardwareContext->writeMemory2Called);
