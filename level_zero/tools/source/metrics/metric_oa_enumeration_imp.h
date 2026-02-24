@@ -228,6 +228,8 @@ struct OaMetricGroupImp : public MetricGroupImp {
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
     void setCachedExportDataHeapSize(size_t size);
+    void addMetricGroupType(zet_metric_group_type_exp_flags_t type) { metricGroupType |= type; }
+    zet_metric_group_type_exp_flags_t getMetricGroupType() const { return metricGroupType; }
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -251,6 +253,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
 
     std::vector<MetricGroupImp *> metricGroups;
     size_t cachedExportDataHeapSize = 0;
+    zet_metric_group_type_exp_flags_t metricGroupType = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
 
   private:
     ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,

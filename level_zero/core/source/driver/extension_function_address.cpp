@@ -76,7 +76,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
     RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
 
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendHostFunction);

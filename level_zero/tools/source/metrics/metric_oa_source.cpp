@@ -222,8 +222,10 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
             getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
 
         } else if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP) {
+
+            auto oaMetricGroupImp = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
             zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
-            groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
+            groupType->type = oaMetricGroupImp->getMetricGroupType();
             retVal = ZE_RESULT_SUCCESS;
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATION_EXP_PROPERTIES) {
             auto calcProperties = reinterpret_cast<zet_intel_metric_group_calculation_properties_exp_t *>(extendedProperties);

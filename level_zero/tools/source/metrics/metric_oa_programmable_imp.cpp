@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -310,6 +310,7 @@ MetricGroup *OaMetricGroupUserDefined::create(zet_metric_group_properties_t &pro
     auto pMetricGroup = new OaMetricGroupUserDefined(metricSource);
     std::vector<Metric *> groupMetrics{};
     pMetricGroup->initialize(properties, metricSet, concurrentGroup, groupMetrics, static_cast<OaMetricSourceImp &>(metricSource));
+    pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_USER_CREATED);
 
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
 

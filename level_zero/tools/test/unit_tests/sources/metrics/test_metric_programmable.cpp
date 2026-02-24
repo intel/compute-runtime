@@ -712,6 +712,56 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingMetri
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
+TEST_F(OaMetricProgrammableTests, givenValidCreatedMetricGroupWhenQueryingPropertiesThenExpectedPropertiesAreReturned) {
+    MockIConcurrentGroup1x13 mockConcurrentGroup;
+    MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, nullptr));
+    EXPECT_EQ(count, 1u);
+    zet_metric_programmable_exp_handle_t programmable{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, &programmable));
+    zet_metric_programmable_param_value_exp_t parameterValue{};
+    parameterValue.value.ui32 = 20;
+    uint32_t metricHandleCount = 0;
+    const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
+    const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, nullptr));
+    EXPECT_EQ(metricHandleCount, 1u);
+    zet_metric_handle_t metricHandle{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_NE(metricGroupCount, 0u);
+    std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    EXPECT_NE(metricGroupCount, 0u);
+    zet_metric_group_handle_t metricGroupHandle = metricGroupHandles[0];
+
+    ASSERT_NE(metricGroupHandle, nullptr);
+
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    zet_metric_group_type_exp_t metricGroupType{};
+    metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
+    metricGroupType.pNext = nullptr;
+    metricGroupType.type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_FORCE_UINT32;
+    metricGroupProperties.pNext = &metricGroupType;
+
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    auto isFlagTypeOtherSet = metricGroupType.type & ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
+    auto isFlagTypeUserCreatedSet = metricGroupType.type & ZET_METRIC_GROUP_TYPE_EXP_FLAG_USER_CREATED;
+    EXPECT_TRUE(isFlagTypeOtherSet);
+    EXPECT_TRUE(isFlagTypeUserCreatedSet);
+
+    for (auto destroyMetricGroupHandle : metricGroupHandles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupDestroyExp(destroyMetricGroupHandle));
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
+    metricEnumeration->cleanupExtendedMetricInformation();
+}
+
 TEST_F(OaMetricProgrammableTests, givenInvalidMeticWhenMetricGroupIsCreatedThenErrorIsReturned) {
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;

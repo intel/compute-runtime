@@ -499,6 +499,11 @@ bool displayAllMetricGroups() {
 
         const zet_metric_group_handle_t metricGroupHandle = metricGroups[i];
         zet_metric_group_properties_t metricGroupProperties = {};
+        zet_metric_group_type_exp_t metricGroupType{};
+        metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
+        metricGroupType.pNext = nullptr;
+        metricGroupType.type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_FORCE_UINT32;
+        metricGroupProperties.pNext = &metricGroupType;
         VALIDATECALL(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties));
 
         LOG(zmu::LogLevel::INFO) << "METRIC GROUP[" << i << "]: "
@@ -506,7 +511,8 @@ bool displayAllMetricGroups() {
         LOG(zmu::LogLevel::INFO) << "\t -> name: " << metricGroupProperties.name << " | "
                                  << "samplingType: " << metricGroupProperties.samplingType << " | "
                                  << "domain: " << metricGroupProperties.domain << " | "
-                                 << "metricCount: " << metricGroupProperties.metricCount << std::endl;
+                                 << "metricCount: " << metricGroupProperties.metricCount << " | "
+                                 << "type: " << metricGroupType.type << std::endl;
 
         uint32_t metricCount = 0;
         std::vector<zet_metric_handle_t> metrics = {};

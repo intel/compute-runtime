@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,6 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::metricsDisable(hDevice);
-}
-
-ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(zet_command_list_handle_t hCommandList,
-                                                          zet_metric_group_handle_t hMetricGroup,
-                                                          uint32_t value) {
-    return L0::metricAppendMarker(hCommandList, hMetricGroup, value);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(zet_context_handle_t hContext,
@@ -155,13 +149,6 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::zetIntelDeviceDisableMetricsExp(hDevice);
-}
-
-ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(
-    zet_command_list_handle_t hCommandList,
-    zet_metric_group_handle_t hMetricGroup,
-    uint32_t value) {
-    return L0::zetIntelCommandListAppendMarkerExp(hCommandList, hMetricGroup, value);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(

@@ -1222,6 +1222,11 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->initialize(properties, metricSet, concurrentGroup, metrics, static_cast<OaMetricSourceImp &>(metricSource));
     pMetricGroup->isPredefined = true;
+    pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER);
+    // Set metric group type flag for marker if metric group is of type time-based.
+    if (properties.samplingType &= ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
+        pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_MARKER);
+    }
     return pMetricGroup;
 }
 
