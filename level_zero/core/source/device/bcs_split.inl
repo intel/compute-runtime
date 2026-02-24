@@ -101,9 +101,11 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     const bool dualStreamCopyOffload = mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
 
     if (useSignalEventForSubCopy && mainCmdList->isInOrderExecutionEnabled()) {
-        auto currentCounter = signalEvent->getInOrderExecEventHelper().getAggregatedEventUsageCounter();
+        auto &inOrderExecHelper = signalEvent->getInOrderExecEventHelper();
+
+        auto currentCounter = inOrderExecHelper.getAggregatedEventUsageCounter();
         auto expectedCounter = currentCounter + signalEvent->getInOrderIncrementValue(1);
-        mainCmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecEventHelper().getInOrderExecInfo(), nullptr,
+        mainCmdList->appendWaitOnInOrderDependency(inOrderExecHelper.getDeviceCounterAllocation(), inOrderExecHelper.getBaseDeviceAddress(), inOrderExecHelper.getEventData()->devicePartitions, nullptr,
                                                    expectedCounter,
                                                    signalEvent->getInOrderAllocationOffset(),
                                                    hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
@@ -152,7 +154,9 @@ ze_result_t BcsSplit::appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> 
 
     if (mainCmdList->hasInOrderDependencies()) {
         auto &inOrderExecInfo = mainCmdList->getInOrderExecInfo();
-        subCmdList->appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), false, false, false, false, false);
+
+        subCmdList->appendWaitOnInOrderDependency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getNumDevicePartitionsToWait(),
+                                                  nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), false, false, false, false, false);
     }
 
     subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, false);

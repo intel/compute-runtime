@@ -20,7 +20,7 @@ namespace NEO {
 struct ArgDescriptor;
 struct RootDeviceEnvironment;
 class GraphicsAllocation;
-class InOrderExecInfo;
+class InOrderExecEventHelper;
 } // namespace NEO
 
 namespace L0 {
@@ -294,7 +294,7 @@ struct Variable : public VariableHandle {
         noop,
         restore
     };
-    void setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, std::shared_ptr<NEO::InOrderExecInfo> *eventInOrderInfo);
+    void setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper);
     void addCommitVariableToBaseCmdList();
     void setCommitVariable() {
         if (desc.isStageCommit) {

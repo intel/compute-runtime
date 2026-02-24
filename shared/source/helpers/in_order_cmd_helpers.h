@@ -182,6 +182,7 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const { return deviceCounterAllocation; }
     NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
     bool isHostStorageDuplicated() const { return hostStorageDuplicated; }
+    bool isFromExternalMemory() const { return fromExternalMemory; }
 
     void setIncrementValue(uint64_t newIncrementValue) { eventData->incrementValue = newIncrementValue; }
 
@@ -218,6 +219,7 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     uint64_t baseDeviceAddress = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     bool hostStorageDuplicated = false;
+    bool fromExternalMemory = false;
     bool dataAssigned = false;
 };
 

@@ -625,11 +625,11 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     NEO::GraphicsAllocation *newInOrderAllocation = nullptr;
     NEO::GraphicsAllocation *oldInOrderAllocation = nullptr;
 
-    std::shared_ptr<NEO::InOrderExecInfo> *newInOrderInfo = nullptr;
+    NEO::InOrderExecEventHelper *newInOrderEventHelper = nullptr;
     bool newCbEventBoundToCmdList = false;
     bool newNooped = true;
     if (newEvent != nullptr) {
-        newInOrderInfo = &newEvent->getInOrderExecEventHelper().getInOrderExecInfo();
+        newInOrderEventHelper = &newEvent->getInOrderExecEventHelper();
         newNooped = false;
         newEventAllocation = newEvent->getAllocation(device);
         if (newEvent->isCounterBased()) {
@@ -637,7 +637,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
             if (newCbEventBoundToCmdList) {
                 newNooped = true;
             } else {
-                auto deviceCounterAlloc = (*newInOrderInfo)->getDeviceCounterAllocation();
+                auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
                 newInOrderAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
             }
         }
@@ -662,18 +662,18 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
                 // was nooped, needs programming - restore
                 this->eventValue.noopState = false;
                 // update in order info with patching, restore commands with new address
-                auto waitAddress = (*newInOrderInfo)->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::restore, waitAddress, newInOrderInfo);
+                auto waitAddress = newInOrderEventHelper->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::restore, waitAddress, newInOrderEventHelper);
             }
         } else {
             if (newNooped) {
                 // was programed, needs noop
                 this->eventValue.noopState = true;
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::noop, 0, newInOrderInfo);
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::noop, 0, newInOrderEventHelper);
             } else {
-                // was programed, needs update address and new in order info
-                auto waitAddress = (*newInOrderInfo)->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::set, waitAddress, newInOrderInfo);
+                // was programed, needs update address and new newInOrderEventHelper
+                auto waitAddress = newInOrderEventHelper->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::set, waitAddress, newInOrderEventHelper);
             }
         }
     } else {
@@ -707,7 +707,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     return ZE_RESULT_SUCCESS;
 }
 
-void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, std::shared_ptr<NEO::InOrderExecInfo> *eventInOrderInfo) {
+void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper) {
     bool qwordInUse = cmdList->isQwordInOrderCounter();
 
     for (auto &mutableSemWait : this->eventValue.semWaitCmds) {
@@ -719,9 +719,9 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
             mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
         }
 
-        if (!qwordInUse && eventInOrderInfo && eventInOrderInfo->get()->isExternalMemoryExecInfo()) {
+        if (!qwordInUse && eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
             if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                mutableSemWait->setSemaphoreValue(eventInOrderInfo->get()->getCounterValue());
+                mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
             }
         }
     }
@@ -735,9 +735,9 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 mutableLoadRegImm->restore();
             }
 
-            if (eventInOrderInfo && eventInOrderInfo->get()->isExternalMemoryExecInfo()) {
+            if (eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
                 if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                    uint32_t waitValue = cmdIndex == 0 ? getLowPart(eventInOrderInfo->get()->getCounterValue()) : getHighPart(eventInOrderInfo->get()->getCounterValue());
+                    uint32_t waitValue = cmdIndex == 0 ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
                     mutableLoadRegImm->setValue(waitValue);
                 }
             }

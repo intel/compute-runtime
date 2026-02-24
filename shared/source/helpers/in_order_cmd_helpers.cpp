@@ -240,9 +240,11 @@ void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecI
     if (inOrderExecInfo->isExternalMemoryExecInfo()) {
         deviceCounterAllocation = inOrderExecInfo->getExternalDeviceAllocation();
         hostCounterAllocation = inOrderExecInfo->getExternalHostAllocation();
+        fromExternalMemory = true;
     } else {
         deviceCounterAllocation = inOrderExecInfo->getDeviceCounterAllocation();
         hostCounterAllocation = inOrderExecInfo->getHostCounterAllocation();
+        fromExternalMemory = false;
     }
 
     dataAssigned = true;
@@ -255,6 +257,7 @@ void InOrderExecEventHelper::unsetInOrderExecInfo() {
     deviceCounterAllocation = nullptr;
     hostCounterAllocation = nullptr;
     hostStorageDuplicated = false;
+    fromExternalMemory = false;
     baseDeviceAddress = 0;
     aggregatedEventUsageCounter = 0;
 
