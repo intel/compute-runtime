@@ -30,7 +30,11 @@ HWTEST2_F(DeviceXe2HpgCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThen
     auto hwInfo = *NEO::defaultHwInfo;
     auto &productHelper = device->getProductHelper();
     EXPECT_EQ(memProperties.maxClockRate, productHelper.getDeviceMemoryMaxClkRate(hwInfo, nullptr, 0));
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
+    auto expectedBusWidth = productHelper.getDeviceMemoryMaxBusWidth(hwInfo);
+    if (expectedBusWidth == 0) {
+        expectedBusWidth = this->neoDevice->getDeviceInfo().addressBits;
+    }
+    EXPECT_EQ(memProperties.maxBusWidth, expectedBusWidth);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 

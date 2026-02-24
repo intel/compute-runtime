@@ -151,3 +151,16 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
+
+BMGTEST_F(BmgProductHelper, givenBmgWhenGetDeviceMemoryMaxBusWidthCalledThenCorrectValueReturned) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.EUCount = 160;
+    EXPECT_EQ(192u, productHelper->getDeviceMemoryMaxBusWidth(hwInfo));
+
+    hwInfo.gtSystemInfo.EUCount = 448;
+    EXPECT_EQ(256u, productHelper->getDeviceMemoryMaxBusWidth(hwInfo));
+
+    hwInfo.gtSystemInfo.EUCount = 512;
+    EXPECT_EQ(256u, productHelper->getDeviceMemoryMaxBusWidth(hwInfo));
+}
