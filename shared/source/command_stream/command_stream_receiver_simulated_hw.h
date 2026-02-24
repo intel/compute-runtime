@@ -88,7 +88,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         }
 
         std::unique_ptr<unsigned char[]> memoryCopy;
-        if (graphicsAllocation.isLocked() && debugManager.flags.CopyLockedMemoryBeforeWrite.get()) {
+        if ((graphicsAllocation.isLocked() || graphicsAllocation.isMapped()) && debugManager.flags.CopyLockedMemoryBeforeWrite.get()) {
             memoryCopy = std::make_unique_for_overwrite<unsigned char[]>(allocSize);
             memcpy_s(memoryCopy.get(), allocSize, cpuAddress, allocSize);
             cpuAddress = memoryCopy.get();

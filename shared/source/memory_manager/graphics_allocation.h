@@ -291,6 +291,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     virtual size_t getHandleSize(uint32_t handleIndex) {
         return 0lu;
     }
+    virtual bool isMapped() { return false; }
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::commandBuffer ||
