@@ -838,8 +838,8 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSup
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
-    EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+    EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
