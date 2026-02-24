@@ -154,7 +154,8 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     if (this->eventValue.counterBasedEvent) {
         this->eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
         this->eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
-        if (cmdList->isQwordInOrderCounter()) {
+        bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+        if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), useSemaphore64bCmd)) {
             this->eventValue.loadRegImmCmds.reserve(2 * this->eventValue.waitPackets);
         }
         this->eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
@@ -709,6 +710,8 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 
 void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper) {
     bool qwordInUse = cmdList->isQwordInOrderCounter();
+    bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, useSemaphore64bCmd);
 
     for (auto &mutableSemWait : this->eventValue.semWaitCmds) {
         if (operation == CbWaitEventOperationType::set) {
@@ -719,14 +722,13 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
             mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
         }
 
-        if (!qwordInUse && eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
+        if (!qwordIndirect && eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
             if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
                 mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
             }
         }
     }
-    if (qwordInUse) {
-
+    if (qwordIndirect) {
         uint32_t cmdIndex = 0;
         for (auto &mutableLoadRegImm : this->eventValue.loadRegImmCmds) {
             if (operation == CbWaitEventOperationType::noop) {

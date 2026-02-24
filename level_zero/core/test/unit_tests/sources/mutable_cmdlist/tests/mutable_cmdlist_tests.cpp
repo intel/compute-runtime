@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -2302,7 +2303,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    size_t expectedLriSize = qwordInUse ? 2 : 0;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const size_t expectedLriSize = lriRequired ? 2 : 0;
+
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
@@ -2312,7 +2315,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
     MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         auto mutableLri = waitEventVar->getLoadRegImmList()[0];
         auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
         lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
@@ -2333,7 +2336,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         constexpr uint32_t firstRegister = 0x2600;
         constexpr uint32_t secondRegister = 0x2604;
 
@@ -2380,7 +2383,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    size_t expectedLriSize = qwordInUse ? 2 : 0;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
@@ -2390,7 +2394,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
     MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         auto mutableLri = waitEventVar->getLoadRegImmList()[0];
         auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
         lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
@@ -2409,7 +2413,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         EXPECT_EQ(0, memcmp(lriCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
@@ -2458,7 +2462,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    size_t expectedLriSize = qwordInUse ? 2 : 0;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
@@ -2470,7 +2475,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
     MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
 
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         constexpr uint32_t firstRegister = 0x2600;
         constexpr uint32_t secondRegister = 0x2604;
 
@@ -2494,7 +2499,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
 
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         EXPECT_EQ(0, memcmp(lriCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
@@ -2604,7 +2609,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    size_t expectedLriSize = qwordInUse ? 2 : 0;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
@@ -2619,7 +2625,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     constexpr uint32_t firstRegister = 0x2600;
     constexpr uint32_t secondRegister = 0x2604;
 
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         auto mutableLri = waitEventVar->getLoadRegImmList()[0];
         auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
         lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
@@ -2639,7 +2645,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         EXPECT_EQ(0, memcmp(lriCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
@@ -2651,7 +2657,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
@@ -2665,7 +2671,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
 
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
-    if (qwordInUse) {
+    if (expectedLriSize > 0) {
         EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }

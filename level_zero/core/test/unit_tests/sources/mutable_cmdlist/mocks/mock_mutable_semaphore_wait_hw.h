@@ -21,7 +21,7 @@ struct WhiteBox<::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>>
 
     using BaseClass = ::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>;
     using BaseClass::offset;
-    using BaseClass::qwordDataIndirect;
+    using BaseClass::qwordData;
     using BaseClass::semWait;
     using BaseClass::type;
 };

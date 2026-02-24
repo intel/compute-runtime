@@ -143,6 +143,9 @@ struct MutableCommandListImp : public MutableCommandList {
     void toggleCommandListUpdated() override {
         this->updatedCommandList = true;
     }
+    bool isSemaphore64bCmdSupported() const override {
+        return this->semaphore64bCmdSupported;
+    }
 
     static constexpr bool kernelInstructionMutationEnabled(ze_mutable_command_exp_flags_t flags) {
         return ((flags & ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION) == ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION);

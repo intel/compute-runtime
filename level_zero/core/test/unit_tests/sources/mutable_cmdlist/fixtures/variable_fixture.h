@@ -115,7 +115,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     }
 
     template <typename FamilyType>
-    void createMutableSemaphoreWait(size_t offset, L0::MCL::MutableSemaphoreWait::Type type, bool qwordDataIndirect) {
+    void createMutableSemaphoreWait(size_t offset, L0::MCL::MutableSemaphoreWait::Type type, bool qwordData) {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         this->semaphoreWaitBuffer = this->cmdBuffer->getSpace(sizeof(MI_SEMAPHORE_WAIT));
         *reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer) = FamilyType::cmdInitMiSemaphoreWait;
@@ -123,7 +123,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
         this->mutableSemaphoreWait = std::make_unique<L0::MCL::MutableSemaphoreWaitHw<FamilyType>>(this->semaphoreWaitBuffer,
                                                                                                    offset,
                                                                                                    type,
-                                                                                                   qwordDataIndirect,
+                                                                                                   qwordData,
                                                                                                    HasSemaphore64bCmd<FamilyType>);
     }
 

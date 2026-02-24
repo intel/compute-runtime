@@ -162,6 +162,7 @@ struct MutableCommandList {
     virtual bool isCbEventBoundToCmdList(Event *event) const = 0;
     virtual NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc) = 0;
     virtual bool isQwordInOrderCounter() const = 0;
+    virtual bool isSemaphore64bCmdSupported() const = 0;
 
     virtual void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
     virtual void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;

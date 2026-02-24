@@ -223,4 +223,10 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     bool dataAssigned = false;
 };
 
+namespace InOrderProgrammingHelpers {
+inline bool isLriFor64bDataProgrammingRequired(bool qwordInOrderCounter, bool useSemaphore64bCmd) {
+    return qwordInOrderCounter && !useSemaphore64bCmd;
+}
+} // namespace InOrderProgrammingHelpers
+
 } // namespace NEO

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -432,7 +433,7 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList2.begin(), cmdList2.end());
     ASSERT_NE(cmdList2.end(), itor);
 
-    if (immCmdList->isQwordInOrderCounter()) {
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
         std::advance(itor, -2); // verify 2x LRI before semaphore and semaphore
     }
 

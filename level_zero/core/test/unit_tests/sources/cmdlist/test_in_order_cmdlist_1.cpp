@@ -11,6 +11,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -995,7 +996,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenSubmitting
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
-    if (immCmdList->isQwordInOrderCounter()) {
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
         std::advance(itor, -2); // verify 2x LRI before semaphore
     }
 
@@ -1170,7 +1171,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
-    if (immCmdList0->isQwordInOrderCounter()) {
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList0->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
         std::advance(itor, -2); // verify 2x LRI before semaphore
     }
 
@@ -2549,7 +2550,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCm
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
-    if (immCmdList1->isQwordInOrderCounter()) {
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList1->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
         std::advance(itor, -2); // verify 2x LRI before semaphore
     }
 
@@ -3886,6 +3887,8 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
+        const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport);
+
         auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), semaphoreItor);
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
@@ -3894,7 +3897,7 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
         if (semaphoreCmd->getSemaphoreGraphicsAddress() == immCmdList->inOrderExecInfo->getBaseDeviceAddress()) {
             // skip implicit dependency
             semaphoreItor++;
-        } else if (immCmdList->isQwordInOrderCounter()) {
+        } else if (lriRequired) {
             std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
         }
 
@@ -4447,7 +4450,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), semaphoreItor);
 
-    if (immCmdList->isQwordInOrderCounter()) {
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport);
+
+    if (lriRequired) {
         std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
     }
 
@@ -6615,7 +6620,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
     result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
+    const bool useSemaphore64bCmd = regularCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport;
+    size_t expectedLoadRegImmCount = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd) ? 2 : 0;
 
     size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());

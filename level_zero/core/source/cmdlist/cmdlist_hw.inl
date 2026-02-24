@@ -3335,8 +3335,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
                 bool indirectMode = false;
+                const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+                const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), useSemaphore64bCmd);
 
-                if (isQwordInOrderCounter()) {
+                if (qwordIndirect) {
                     indirectMode = true;
 
                     constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
@@ -3363,7 +3365,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()));
 
                 if (!noopDispatch) {
-                    bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
                     auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
                     NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                             false, true, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd);

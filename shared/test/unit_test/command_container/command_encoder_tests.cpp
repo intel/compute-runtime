@@ -1227,3 +1227,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGeneration
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
     EXPECT_EQ(6u, requiredWalkOrder);
 }
+
+TEST(InOrderProgrammingHelpersTests, givenQwordInOrderCounterAndUseSemaphore64bCmdWhenCheckingLriRequirementThenReturnsProperValue) {
+    EXPECT_TRUE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(true, false));
+    EXPECT_FALSE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(false, false));
+    EXPECT_FALSE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(false, true));
+    EXPECT_FALSE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(true, true));
+}

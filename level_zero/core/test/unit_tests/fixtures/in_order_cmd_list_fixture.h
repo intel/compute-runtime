@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_os_context.h"
@@ -306,7 +307,10 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    if (qwordCounter) {
+    const bool useSemaphore64bCmd = this->device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordCounter, useSemaphore64bCmd);
+
+    if (lriRequired) {
         auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmd);
         if (!lri) {
             return false;
@@ -333,7 +337,11 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
     if (qwordCounter) {
-        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        if (lriRequired) {
+            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        } else {
+            EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+        }
     } else {
         EXPECT_EQ(0u, getHighPart(counter));
         EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());

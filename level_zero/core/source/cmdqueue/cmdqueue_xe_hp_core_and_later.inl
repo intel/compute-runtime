@@ -197,14 +197,14 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 UNRECOVERABLE_IF(true);
             }
         } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreStart>) {
-            bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+            bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
                                                                     COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                                     false, true, false, false, false, useSemaphore64bCmd);
         } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreEnd>) {
-            bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+            bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),

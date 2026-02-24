@@ -14,12 +14,12 @@ template <typename GfxFamily>
 struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     using SemaphoreWait = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    MutableSemaphoreWaitHw(void *semWait, size_t offset, Type type, bool qwordDataIndirect, bool useSemaphore64bCmd)
+    MutableSemaphoreWaitHw(void *semWait, size_t offset, Type type, bool qwordData, bool useSemaphore64bCmd)
         : MutableSemaphoreWait(),
           semWait(semWait),
           offset(offset),
           type(type),
-          qwordDataIndirect(qwordDataIndirect),
+          qwordData(qwordData),
           useSemaphore64bCmd(useSemaphore64bCmd) {}
     ~MutableSemaphoreWaitHw() override {}
 
@@ -32,7 +32,7 @@ struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     void *semWait;
     size_t offset;
     Type type;
-    bool qwordDataIndirect = false;
+    bool qwordData = false;
     bool useSemaphore64bCmd = false;
 
   private:

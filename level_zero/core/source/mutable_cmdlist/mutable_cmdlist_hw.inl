@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/stackvec.h"
@@ -575,7 +576,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                                        std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                                                                        std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList) {
 
-    bool qwordIndirect = isQwordInOrderCounter();
+    bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), this->semaphore64bCmdSupported);
     if (qwordIndirect) {
         auto *loadRegImmCmdToPatch = std::get_if<PatchCbWaitEventLoadRegisterImm>(&(*cmdsIterator));
         UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);

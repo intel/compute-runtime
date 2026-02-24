@@ -27,7 +27,8 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWaitCbEventIndirectComm
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = 0;
-    bool qwordDataIndirect = true;
+    bool qwordData = true;
+    bool indirectMode = qwordData && !HasSemaphore64bCmd<FamilyType>;
 
     // prepare buffer for comparison
     MI_SEMAPHORE_WAIT cmdSemaphore;
@@ -35,11 +36,11 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWaitCbEventIndirectComm
                                                              semaphoreAddress + offset,
                                                              data,
                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                             false, true, qwordDataIndirect, qwordDataIndirect, false, HasSemaphore64bCmd<FamilyType>);
+                                                             false, true, qwordData, indirectMode, false, HasSemaphore64bCmd<FamilyType>);
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, HasSemaphore64bCmd<FamilyType>);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, HasSemaphore64bCmd<FamilyType>);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
@@ -55,7 +56,7 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWaitLegacyCommandWhenCo
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = 0x1234;
-    bool qwordDataIndirect = false;
+    bool qwordData = false;
     bool use64BitSemaphore = false;
 
     // prepare buffer for comparison
@@ -69,7 +70,7 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWaitLegacyCommandWhenCo
     EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
     EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
 
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, use64BitSemaphore);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, use64BitSemaphore);
 
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);
@@ -89,7 +90,7 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWait64CommandWhenComman
     size_t offset = 0x10;
     uint64_t semaphoreAddress = 0x26000;
     uint64_t data = 0x1234;
-    bool qwordDataIndirect = false;
+    bool qwordData = false;
     bool use64BitSemaphore = true;
 
     // prepare buffer for comparison
@@ -103,7 +104,7 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWait64CommandWhenComman
     EXPECT_EQ((semaphoreAddress + offset), semWait64Command->getSemaphoreGraphicsAddress());
     EXPECT_EQ(data, semWait64Command->getSemaphoreDataDword());
 
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordDataIndirect, use64BitSemaphore);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, use64BitSemaphore);
 
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);

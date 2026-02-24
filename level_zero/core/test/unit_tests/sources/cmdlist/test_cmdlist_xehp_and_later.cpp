@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -2795,7 +2796,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto eventCompletionAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     auto inOrderAllocation = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
 
-    size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
+    const bool useSemaphore64bCmd = commandList->getDevice()->getDeviceInfo().semaphore64bCmdSupport;
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+    size_t expectedLoadRegImmCount = lriRequired ? 2 : 0;
 
     size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());

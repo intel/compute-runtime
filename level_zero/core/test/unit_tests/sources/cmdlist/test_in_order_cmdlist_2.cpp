@@ -2057,7 +2057,9 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        if (regularCmdList->isQwordInOrderCounter()) {
+
+        const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+        if (lriRequired) {
             std::advance(itor, 2); // 2x LRI before semaphore
         }
         EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*itor));
@@ -3531,7 +3533,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
 
     // implicit dependency
     auto gpuAddress = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
-
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, gpuAddress, immCmdList2->isQwordInOrderCounter(), false));
 
     // event
@@ -3588,7 +3589,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
         auto itor = cmdList.begin();
         UnitTestHelper<FamilyType>::skipStatePrefetch(itor);
 
-        if (immCmdList->isQwordInOrderCounter()) {
+        const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport);
+        if (lriRequired) {
             std::advance(itor, 2);
         }
 
@@ -3599,7 +3601,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
         } else {
             ASSERT_NE(nullptr, semaphoreCmd);
 
-            if (immCmdList->isQwordInOrderCounter()) {
+            if (lriRequired) {
                 std::advance(itor, -2);
             }
 
@@ -3744,6 +3746,8 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
 
     bool aggregatedEventSplit = bcsSplit->events.isAggregatedEventMode();
 
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList.isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+
     for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
         auto subCmdStream = bcsSplit->cmdLists[i]->getCmdContainer().getCommandStream();
 
@@ -3767,8 +3771,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             numExpectedSemaphores++;
             itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
             ASSERT_NE(cmdList.end(), itor);
-
-            if (immCmdList.isQwordInOrderCounter()) {
+            if (lriRequired) {
                 std::advance(itor, -2); // verify 2x LRI before semaphore
             }
 
@@ -3838,7 +3841,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
 
     if (submissionId > 0) {
         ASSERT_NE(cmdList.end(), semaphoreItor);
-        if (immCmdList.isQwordInOrderCounter()) {
+        if (lriRequired) {
             std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
         }
 

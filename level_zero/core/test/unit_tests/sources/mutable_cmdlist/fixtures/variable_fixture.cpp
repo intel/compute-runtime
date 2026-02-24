@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/variable_fixture.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -18,7 +19,7 @@ namespace ult {
 void VariableFixture::setUp(bool inOrder) {
     this->inOrder = inOrder;
     MutableCommandListFixtureInit::setUp(inOrder);
-    this->qwordIndirect = this->mutableCommandList->isQwordInOrderCounter();
+    this->qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->mutableCommandList->isQwordInOrderCounter(), this->device->getDeviceInfo().semaphore64bCmdSupport);
 
     this->grfSize = this->device->getHwInfo().capabilityTable.grfSize;
     this->perThreadDataSize = this->mutableCommandList->maxPerThreadDataSize;
