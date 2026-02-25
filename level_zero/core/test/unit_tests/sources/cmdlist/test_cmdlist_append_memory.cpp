@@ -1689,6 +1689,47 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndEventWithoutP
     EXPECT_TRUE(isEventSignaled);
 }
 
+HWTEST2_F(StagingBuffersFixture, givenSingleTransferStagingAndEventWithoutProfilingThenBarrierNotSubmitted, IsAtLeastXeCore) {
+    using DefaultWalkerType = FamilyType::DefaultWalkerType;
+    using PIPE_CONTROL = FamilyType::PIPE_CONTROL;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    auto cmdStream = cmdList.getCmdContainer().getCommandStream();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+    constexpr static auto transferSize = MemoryConstants::pageSize;
+    size_t src[transferSize] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, transferSize, event->toHandle(), 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(1u, event->getKernelCount());
+
+    uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
+    GenCmdList parsedCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(parsedCmdList, ptrOffset(cmdStream->getCpuBase(), 0), cmdStream->getUsed()));
+    auto itorWalkers = findAll<DefaultWalkerType *>(parsedCmdList.begin(), parsedCmdList.end());
+    ASSERT_EQ(1u, itorWalkers.size());
+    auto itorPipeControl = findAll<PIPE_CONTROL *>(itorWalkers[0], parsedCmdList.end());
+
+    bool isEventSignaled = false;
+    for (auto &it : itorPipeControl) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            auto barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+            isEventSignaled |= (barrierNodeAddress == contextStartAddress);
+        }
+    }
+    EXPECT_FALSE(isEventSignaled);
+}
+
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithOOQCmdListAndCounterBasedEventThenReturnFail) {
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();

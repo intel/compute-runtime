@@ -1890,7 +1890,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 
     Event *event = Event::fromHandle(hSignalEvent);
     auto isRead = cpuMemCopyInfo.dstAllocInfo.svmAlloc == nullptr;
-
+    auto isSingleTransfer = cpuMemCopyInfo.size <= NEO::getDefaultStagingBufferSize();
     NEO::ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, void *usmBuffer, size_t chunkSize) -> int32_t {
         checkAvailableSpace(0, relaxedOrdering, commonImmediateCommandSize, false);
         auto chunkSrc = stagingBuffer;
@@ -1903,16 +1903,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
             isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size);
         }
 
-        if (isFirstTransfer) {
+        if (isFirstTransfer && !isSingleTransfer) {
             this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
         }
-        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(chunkDst, chunkSrc, chunkSize, nullptr,
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(chunkDst, chunkSrc, chunkSize, isSingleTransfer ? hSignalEvent : nullptr,
                                                                           0, nullptr, memoryCopyParams);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
 
-        if (isLastTransfer) {
+        if (isLastTransfer && !isSingleTransfer) {
             this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
             if (event && event->isInterruptModeEnabled()) {
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
@@ -1926,7 +1926,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ret;
     };
 
-    if (!this->handleCounterBasedEventOperations(event, false)) {
+    if (!isSingleTransfer && !this->handleCounterBasedEventOperations(event, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
@@ -1935,14 +1935,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ret;
     }
 
-    if (event && this->isInOrderExecutionEnabled()) {
-        this->flushInOrderCounterSignal();
-        this->isPostSyncSkippedOnLatestInOrderOperation = false;
-    }
-    if (event && event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
-        this->assignInOrderExecInfoToEvent(event);
-    } else if (event && !event->isCounterBased() && !event->isEventTimestampFlagSet()) {
-        ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);
+    if (event && !isSingleTransfer) {
+        if (this->isInOrderExecutionEnabled()) {
+            this->flushInOrderCounterSignal();
+            this->isPostSyncSkippedOnLatestInOrderOperation = false;
+        }
+        if (event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
+            this->assignInOrderExecInfoToEvent(event);
+        } else if (!event->isCounterBased() && !event->isEventTimestampFlagSet()) {
+            ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);
+        }
     }
     return ret;
 }
