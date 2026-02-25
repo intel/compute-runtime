@@ -83,10 +83,6 @@ using CommandQueueIndirectAllocationsXe3p = Test<ModuleFixture>;
 
 XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessAndHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled) {
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
-
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>(device, csr, &desc);
@@ -117,10 +113,6 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessA
 }
 
 XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithNoIndirectAccessAndHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled) {
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -155,10 +147,6 @@ using CommandQueueCacheFlushTestsXe3p = Test<ModuleFixture>;
 XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenInstructionCacheWhenExecuteCommandListsRegularHeaplessThenPipeControlContainsInstructionCacheFlush) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -212,10 +200,6 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenInstructionCacheWhenExecut
 XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteCommandListsRegularHeaplessThenPipeControlContainsStateCacheFlush) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -276,10 +260,6 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
 XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenBindlessHelperAndStateNotDirtyWhenExecuteCommandListsRegularHeaplessThenPipeControlDoesntContainStateCacheFlush) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -343,8 +323,6 @@ XE3P_CORETEST_F(CommandQueueHeaplessXe3p, givenSecondaryContextQueueWhenExecutin
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
     DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
     debugManager.flags.ContextGroupSize.set(8);
     debugManager.flags.EnableImplicitScaling.set(1);
 
@@ -404,10 +382,6 @@ using CommandQueueWithAssertXe3p = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(CommandQueueWithAssertXe3p, givenCmdListWithAssertAndStateHeaplessInitWhenExecutingThenCommandQueuesPropertyIsSet) {
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
-
     ze_command_queue_desc_t desc = {};
 
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
@@ -451,10 +425,6 @@ using CommandQueueWithXe3p = Test<DeviceFixture>;
 XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhenExecutingCmdListsForTheFirstTimeThenHeaplessPrologIsSent) {
 
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -506,10 +476,6 @@ using CommandListExecuteImmediateXe3p = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
-
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -520,10 +486,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecu
 }
 
 XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecutingCommandListImmediateNonKernelOperationWithFlushTaskThenSuccessIsReturned) {
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -537,10 +499,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecu
 XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndRegisterInstructionCacheFlushWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -574,10 +532,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndRegist
 XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndStateCacheDirtyWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -690,10 +644,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendi
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
-
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -756,9 +706,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendi
 }
 
 XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendingRegularCommandlistThenCsrMakeNonTesidentSkippedFromCmdQueue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
