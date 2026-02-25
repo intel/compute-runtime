@@ -5190,6 +5190,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldS
 
     uint64_t *data = reinterpret_cast<uint64_t *>(drm.registeredData);
     EXPECT_EQ(offlineDumpContextId, *data);
+    EXPECT_EQ(DrmResourceClass::contextID, drm.registeredClass);
 
     allocation.freeRegisteredBOBindExtHandles(&drm);
     EXPECT_EQ(2u, drm.unregisterCalledCount);
@@ -5229,6 +5230,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldN
 
     uint64_t *data = reinterpret_cast<uint64_t *>(drm.registeredData);
     EXPECT_EQ(offlineDumpContextId, *data);
+    EXPECT_EQ(DrmResourceClass::contextID, drm.registeredClass);
 
     allocation.freeRegisteredBOBindExtHandles(&drm);
     EXPECT_EQ(2u, drm.unregisterCalledCount);

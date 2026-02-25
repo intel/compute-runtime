@@ -1285,7 +1285,7 @@ void IoctlHelperPrelim20::registerBOBindHandle(Drm *drm, DrmAllocation *drmAlloc
                     }();
 
                     auto contextId = drmAllocation->getOsContext()->getOfflineDumpContextId(deviceIndex);
-                    auto externalHandle = drm->registerResource(resourceClass, &contextId, sizeof(uint64_t));
+                    auto externalHandle = drm->registerResource(DrmResourceClass::contextID, &contextId, sizeof(uint64_t));
 
                     bo->addBindExtHandle(externalHandle);
                     drmAllocation->addRegisteredBoBindHandle(externalHandle);

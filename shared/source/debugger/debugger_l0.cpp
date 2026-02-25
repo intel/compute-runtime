@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,7 @@ void DebuggerL0::initialize() {
     SbaTrackedAddresses sbaHeader{};
 
     for (auto &engine : engines) {
-        if (!singleAddressSpaceSbaTracking) {
-            properties.osContext = engine.osContext;
-        }
+        properties.osContext = engine.osContext;
         properties.subDevicesBitfield = engine.osContext->getDeviceBitfield();
 
         auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
