@@ -11,6 +11,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
@@ -25,7 +26,6 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
-#include "opencl/test/unit_test/device/device_caps_test_utils.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
@@ -108,7 +108,27 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
-        verifyAnyRemainingOpenclCFeatures(releaseHelper, openclCFeatureIterator);
+        if (releaseHelper) {
+            uint32_t fp16AdditionalCaps = releaseHelper->getAdditionalFp16Caps();
+            uint32_t fpExtraAdditionalCaps = releaseHelper->getAdditionalExtraCaps();
+
+            if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+                EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_add", (++openclCFeatureIterator)->name);
+                EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_add", (++openclCFeatureIterator)->name);
+            }
+            if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_add", (++openclCFeatureIterator)->name);
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_add", (++openclCFeatureIterator)->name);
+            }
+            if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::loadStoreAtomicCaps)) {
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_load_store", (++openclCFeatureIterator)->name);
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_load_store", (++openclCFeatureIterator)->name);
+            }
+            if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::minMaxAtomicCaps)) {
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_min_max", (++openclCFeatureIterator)->name);
+                EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_min_max", (++openclCFeatureIterator)->name);
+            }
+        }
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 

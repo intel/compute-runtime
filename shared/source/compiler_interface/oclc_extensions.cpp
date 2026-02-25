@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,13 @@
 
 #include "shared/source/compiler_interface/oclc_extensions.h"
 
-#include "shared/source/compiler_interface/oclc_extensions_extra.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_properties.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <sstream>
 #include <string>
@@ -107,7 +109,36 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
 
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
     openclCFeatures.push_back(openClCFeature);
-    getOpenclCFeaturesListExtra(releaseHelper, openclCFeatures);
+
+    if (releaseHelper) {
+        uint32_t fp16AdditionalCaps = releaseHelper->getAdditionalFp16Caps();
+        uint32_t fpExtraAdditionalCaps = releaseHelper->getAdditionalExtraCaps();
+
+        if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+        }
+        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+        }
+        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::loadStoreAtomicCaps)) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_load_store");
+            openclCFeatures.push_back(openClCFeature);
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_load_store");
+            openclCFeatures.push_back(openClCFeature);
+        }
+        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::minMaxAtomicCaps)) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+        }
+    }
 }
 
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions,
