@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ template <typename D3D>
 class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     typedef typename D3D::D3DDevice D3DDevice;
     typedef typename D3D::D3DQuery D3DQuery;
+    typedef typename D3D::D3DFence D3DFence;
     typedef typename D3D::D3DQueryDesc D3DQueryDesc;
     typedef typename D3D::D3DResource D3DResource;
     typedef typename D3D::D3DBufferDesc D3DBufferDesc;
@@ -49,6 +50,21 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     uint32_t createQueryCalled = 0u;
     CreateQueryParams createQueryParamsSet{};
     bool createQuerySetParams = false;
+
+    void createFence(D3DFence **fence) override {
+        createFenceCalled++;
+        if (createFenceSetParams) {
+            *fence = createFenceParamsSet.fence;
+        }
+    }
+
+    struct CreateFenceParams {
+        D3DFence *fence{};
+    };
+
+    uint32_t createFenceCalled = 0;
+    CreateFenceParams createFenceParamsSet{};
+    bool createFenceSetParams = false;
 
     void createBuffer(D3DBufferObj **buffer, unsigned int width) override {
         createBufferCalled++;
@@ -340,5 +356,6 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceContext, (D3DQuery * query));
     ADDMETHOD_NOBASE_VOIDRETURN(releaseDeviceContext, (D3DQuery * query));
     ADDMETHOD_NOBASE_VOIDRETURN(flushAndWait, (D3DQuery * query));
+    ADDMETHOD_NOBASE_VOIDRETURN(signalAndWait, (D3DFence * fence));
 };
 } // namespace NEO

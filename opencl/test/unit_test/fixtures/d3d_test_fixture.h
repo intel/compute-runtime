@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
   public:
     typedef typename T::D3DDevice D3DDevice;
     typedef typename T::D3DQuery D3DQuery;
+    typedef typename T::D3DFence D3DFence;
     typedef typename T::D3DQueryDesc D3DQueryDesc;
     typedef typename T::D3DResource D3DResource;
     typedef typename T::D3DBufferDesc D3DBufferDesc;

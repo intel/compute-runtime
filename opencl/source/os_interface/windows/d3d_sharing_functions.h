@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@
 #include <d3d10_1.h>
 
 #include <CL/cl.h>
-#include <d3d11.h>
+#include <d3d11_4.h>
 #include <d3d9.h>
 
 #if __clang__
@@ -38,6 +38,7 @@ namespace D3DTypesHelper {
 struct D3D9 {
     typedef IDirect3DDevice9 D3DDevice;
     typedef IDirect3DQuery9 D3DQuery;
+    typedef IUnknown D3DFence;
     typedef D3DQUERYTYPE D3DQueryDesc;
     typedef IDirect3DResource9 D3DResource;
     typedef struct {
@@ -53,6 +54,7 @@ struct D3D9 {
 struct D3D10 {
     typedef ID3D10Device D3DDevice;
     typedef ID3D10Query D3DQuery;
+    typedef IUnknown D3DFence;
     typedef D3D10_QUERY_DESC D3DQueryDesc;
     typedef ID3D10Resource D3DResource;
     typedef D3D10_BUFFER_DESC D3DBufferDesc;
@@ -65,6 +67,7 @@ struct D3D10 {
 struct D3D11 {
     typedef ID3D11Device D3DDevice;
     typedef ID3D11Query D3DQuery;
+    typedef ID3D11Fence D3DFence;
     typedef D3D11_QUERY_DESC D3DQueryDesc;
     typedef ID3D11Resource D3DResource;
     typedef D3D11_BUFFER_DESC D3DBufferDesc;
@@ -92,6 +95,7 @@ template <typename D3D>
 class D3DSharingFunctions : public SharingFunctions {
     typedef typename D3D::D3DDevice D3DDevice;
     typedef typename D3D::D3DQuery D3DQuery;
+    typedef typename D3D::D3DFence D3DFence;
     typedef typename D3D::D3DQueryDesc D3DQueryDesc;
     typedef typename D3D::D3DResource D3DResource;
     typedef typename D3D::D3DBufferDesc D3DBufferDesc;
@@ -118,6 +122,7 @@ class D3DSharingFunctions : public SharingFunctions {
     static const uint32_t sharingId;
 
     MOCKABLE_VIRTUAL void createQuery(D3DQuery **query);
+    MOCKABLE_VIRTUAL void createFence(D3DFence **fence);
     MOCKABLE_VIRTUAL void createBuffer(D3DBufferObj **buffer, unsigned int width);
     MOCKABLE_VIRTUAL void createTexture2d(D3DTexture2d **texture, D3DTexture2dDesc *desc, cl_uint subresource);
     MOCKABLE_VIRTUAL void createTexture3d(D3DTexture3d **texture, D3DTexture3dDesc *desc, cl_uint subresource);
@@ -131,6 +136,7 @@ class D3DSharingFunctions : public SharingFunctions {
     MOCKABLE_VIRTUAL void copySubresourceRegion(D3DResource *dst, cl_uint dstSubresource,
                                                 D3DResource *src, cl_uint srcSubresource);
     MOCKABLE_VIRTUAL void flushAndWait(D3DQuery *query);
+    MOCKABLE_VIRTUAL void signalAndWait(D3DFence *fence);
     MOCKABLE_VIRTUAL void getDeviceContext(D3DQuery *query);
     MOCKABLE_VIRTUAL void releaseDeviceContext(D3DQuery *query);
     MOCKABLE_VIRTUAL void lockRect(D3DTexture2d *d3dResource, D3DLOCKED_RECT *lockedRect, uint32_t flags);

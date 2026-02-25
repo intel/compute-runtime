@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -77,7 +77,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhe
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -109,7 +109,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -139,7 +139,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -171,6 +171,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate2dTextureThenStagingText
 
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dTexture->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dTexture->getFence()));
 
         EXPECT_EQ(0u, this->mockSharingFcns->createTexture2dCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
@@ -180,10 +181,11 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate2dTextureThenStagingText
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
+    EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate2dTextureThenCreateStagingTexture) {
@@ -209,6 +211,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate2dTextureThenCreateSt
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTextureStaging));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dTexture->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dTexture->getFence()));
 
         EXPECT_EQ(1u, this->mockSharingFcns->createTexture2dCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
@@ -218,11 +221,12 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate2dTextureThenCreateSt
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTextureStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(4u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
     EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
+    EXPECT_EQ(releaseExpectedParams[3], this->mockSharingFcns->releaseParamsPassed[3].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate3dTextureThenStagingTextureEqualsPassedTexture) {
@@ -245,6 +249,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate3dTextureThenStagingText
 
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dTexture->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dTexture->getFence()));
 
         EXPECT_EQ(0u, this->mockSharingFcns->createTexture3dCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
@@ -254,10 +259,11 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate3dTextureThenStagingText
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
+    EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate3dTextureThenCreateStagingTexture) {
@@ -283,6 +289,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate3dTextureThenCreateSt
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTextureStaging));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dTexture->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dTexture->getFence()));
 
         EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
@@ -292,11 +299,12 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate3dTextureThenCreateSt
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTextureStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(4u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
     EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
+    EXPECT_EQ(releaseExpectedParams[3], this->mockSharingFcns->releaseParamsPassed[3].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues) {
@@ -780,6 +788,100 @@ TEST(D3D11, GivenNonPlanarFormatsWhenCallingIsFormatWithPlane1ThenFalseIsReturne
     for (auto format : planarFormats) {
         EXPECT_FALSE(D3DSharing<D3DTypesHelper::D3D11>::isFormatWithPlane1(format));
     }
+}
+
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncNotSetAndNonSharedResourceBufferWhenAcquiredThenCopySubregionAndSignalAndWait) {
+    this->context->setInteropUserSyncEnabled(false);
+
+    this->mockSharingFcns->createFenceSetParams = true;
+    this->mockSharingFcns->createFenceParamsSet.fence = reinterpret_cast<D3DFence *>(0x10);
+
+    this->mockSharingFcns->createBufferSetParams = true;
+    this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging);
+
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<D3DTypesHelper::D3D11>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    ASSERT_NE(nullptr, buffer.get());
+    cl_mem bufferMem = buffer.get();
+
+    EXPECT_EQ(0u, buffer->acquireCount);
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, buffer->acquireCount);
+
+    EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->copySubresourceRegionCalled);
+}
+
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndNonSharedResourceBufferWhenAcquiredThenCopySubregionAndSignalAndWait) {
+    this->context->setInteropUserSyncEnabled(true);
+
+    this->mockSharingFcns->createFenceSetParams = true;
+    this->mockSharingFcns->createFenceParamsSet.fence = reinterpret_cast<D3DFence *>(0x10);
+
+    this->mockSharingFcns->createBufferSetParams = true;
+    this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBufferStaging);
+
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<D3DTypesHelper::D3D11>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    ASSERT_NE(nullptr, buffer.get());
+    cl_mem bufferMem = buffer.get();
+
+    EXPECT_EQ(0u, buffer->acquireCount);
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, buffer->acquireCount);
+
+    EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->copySubresourceRegionCalled);
+}
+
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncNotSetAndSharedResourceBufferWhenAcquiredThenDoNotCopySubregionAndSignalAndWait) {
+    this->context->setInteropUserSyncEnabled(false);
+
+    this->mockSharingFcns->createFenceSetParams = true;
+    this->mockSharingFcns->createFenceParamsSet.fence = reinterpret_cast<D3DFence *>(0x10);
+
+    this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+    this->mockSharingFcns->getBufferDescSetParams = true;
+    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
+
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<D3DTypesHelper::D3D11>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    ASSERT_NE(nullptr, buffer.get());
+    cl_mem bufferMem = buffer.get();
+
+    EXPECT_EQ(0u, buffer->acquireCount);
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, buffer->acquireCount);
+
+    EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionCalled);
+}
+
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndSharedResourceBufferWhenAcquiredThenDoNotCopySubregionAndSignalAndWait) {
+    this->context->setInteropUserSyncEnabled(true);
+
+    this->mockSharingFcns->createFenceSetParams = true;
+    this->mockSharingFcns->createFenceParamsSet.fence = reinterpret_cast<D3DFence *>(0x10);
+
+    this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+    this->mockSharingFcns->getBufferDescSetParams = true;
+    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
+
+    auto buffer = std::unique_ptr<Buffer>(D3DBuffer<D3DTypesHelper::D3D11>::create(this->context, reinterpret_cast<D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
+    ASSERT_NE(nullptr, buffer.get());
+    cl_mem bufferMem = buffer.get();
+
+    EXPECT_EQ(0u, buffer->acquireCount);
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, buffer->acquireCount);
+
+    EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionCalled);
 }
 
 } // namespace NEO

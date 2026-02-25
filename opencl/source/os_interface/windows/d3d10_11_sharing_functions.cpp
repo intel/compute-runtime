@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,20 @@ template <typename D3D>
 void D3DSharingFunctions<D3D>::createQuery(D3DQuery **query) {
     D3DQueryDesc desc = {};
     d3dDevice->CreateQuery(&desc, query);
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D10>::createFence(D3DFence **fence) {
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D11>::createFence(D3DFence **fence) {
+    ID3D11Device5 *d3d11Device5 = nullptr;
+    d3dDevice->QueryInterface(__uuidof(ID3D11Device5), reinterpret_cast<void **>(&d3d11Device5));
+    if (d3d11Device5) {
+        d3d11Device5->CreateFence(0, D3D11_FENCE_FLAG_NONE, __uuidof(D3DFence), (void **)fence);
+        d3d11Device5->Release();
+    }
 }
 
 template <typename D3D>
@@ -290,7 +304,7 @@ void D3DSharingFunctions<D3D>::getTexture3dDesc(D3DTexture3dDesc *textureDesc, D
 template <typename D3D>
 void D3DSharingFunctions<D3D>::getSharedHandle(D3DResource *resource, void **handle) {
     IDXGIResource *dxgiResource = nullptr;
-    resource->QueryInterface(__uuidof(IDXGIResource), (void **)&dxgiResource);
+    resource->QueryInterface(__uuidof(IDXGIResource), reinterpret_cast<void **>(&dxgiResource));
     dxgiResource->GetSharedHandle(handle);
     dxgiResource->Release();
 }
@@ -299,8 +313,8 @@ template <typename D3D>
 void D3DSharingFunctions<D3D>::getSharedNTHandle(D3DResource *resource, void **handle) {
     IDXGIResource *dxgiResource = nullptr;
     IDXGIResource1 *dxgiResource1 = nullptr;
-    resource->QueryInterface(__uuidof(IDXGIResource), (void **)&dxgiResource);
-    dxgiResource->QueryInterface(__uuidof(IDXGIResource1), (void **)&dxgiResource1);
+    resource->QueryInterface(__uuidof(IDXGIResource), reinterpret_cast<void **>(&dxgiResource));
+    dxgiResource->QueryInterface(__uuidof(IDXGIResource1), reinterpret_cast<void **>(&dxgiResource1));
     dxgiResource1->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE, nullptr, handle);
     dxgiResource1->Release();
     dxgiResource->Release();
@@ -313,7 +327,9 @@ void D3DSharingFunctions<D3D>::addRef(D3DResource *resource) {
 
 template <typename D3D>
 void D3DSharingFunctions<D3D>::release(IUnknown *resource) {
-    resource->Release();
+    if (resource) {
+        resource->Release();
+    }
 }
 
 template <typename D3D>
@@ -354,12 +370,28 @@ void D3DSharingFunctions<D3DTypesHelper::D3D10>::flushAndWait(D3DQuery *query) {
 }
 
 template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D10>::signalAndWait(D3DFence *fence) {
+}
+
+template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D11>::flushAndWait(D3DQuery *query) {
     d3d11DeviceContext->End(query);
     d3d11DeviceContext->Flush();
     while (d3d11DeviceContext->GetData(query, nullptr, 0, 0) != S_OK) {
         ;
     }
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D11>::signalAndWait(D3DFence *fence) {
+    ID3D11DeviceContext4 *d3d11DeviceContext4 = nullptr;
+    d3d11DeviceContext->QueryInterface(__uuidof(ID3D11DeviceContext4), reinterpret_cast<void **>(&d3d11DeviceContext4));
+    auto valueToWait = fence->GetCompletedValue() + 1;
+    d3d11DeviceContext4->Signal(fence, valueToWait);
+    while (fence->GetCompletedValue() < valueToWait) {
+        ;
+    }
+    d3d11DeviceContext4->Release();
 }
 
 template <>
@@ -380,11 +412,12 @@ void D3DSharingFunctions<D3DTypesHelper::D3D11>::releaseDeviceContext(D3DQuery *
     d3d11DeviceContext->Release();
     d3d11DeviceContext = nullptr;
 }
+
 template <typename D3D>
 void D3DSharingFunctions<D3D>::getDxgiDesc(DXGI_ADAPTER_DESC *dxgiDesc, IDXGIAdapter *adapter, D3DDevice *device) {
     if (!adapter) {
         IDXGIDevice *dxgiDevice = nullptr;
-        device->QueryInterface(__uuidof(IDXGIDevice), (void **)&dxgiDevice);
+        device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void **>(&dxgiDevice));
         dxgiDevice->GetAdapter(&adapter);
         dxgiDevice->Release();
     } else {

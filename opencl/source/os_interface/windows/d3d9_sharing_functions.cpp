@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@ template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::createQuery(D3DQuery **query) {
     D3DQUERYTYPE queryType = D3DQUERYTYPE_EVENT;
     d3dDevice->CreateQuery(queryType, query);
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D9>::createFence(D3DFence **fence) {
 }
 
 template <>
@@ -137,6 +141,10 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::flushAndWait(D3DQuery *query) {
 }
 
 template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D9>::signalAndWait(D3DFence *fence) {
+}
+
+template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::getDeviceContext(D3DQuery *query) {
 }
 
@@ -148,7 +156,7 @@ template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::getDxgiDesc(DXGI_ADAPTER_DESC *dxgiDesc, IDXGIAdapter *adapter, D3DDevice *device) {
     if (!adapter) {
         IDXGIDevice *dxgiDevice = nullptr;
-        device->QueryInterface(__uuidof(IDXGIDevice), (void **)&dxgiDevice);
+        device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void **>(&dxgiDevice));
         dxgiDevice->GetAdapter(&adapter);
         dxgiDevice->Release();
     } else {

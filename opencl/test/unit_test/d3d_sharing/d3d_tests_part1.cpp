@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -394,6 +394,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
 
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dBuffer->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dBuffer->getFence()));
 
         EXPECT_EQ(0u, this->mockSharingFcns->createBufferCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->createQueryCalled);
@@ -404,10 +405,11 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
+    EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewStagingBuffer) {
@@ -432,6 +434,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewSt
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer));
         releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DQuery *>(d3dBuffer->getQuery()));
+        releaseExpectedParams.push_back(reinterpret_cast<typename TestFixture::D3DFence *>(d3dBuffer->getFence()));
 
         EXPECT_EQ(1u, this->mockSharingFcns->createBufferCalled);
         EXPECT_EQ(1u, this->mockSharingFcns->createQueryCalled);
@@ -441,11 +444,12 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewSt
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
         EXPECT_EQ(reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), this->mockSharingFcns->addRefParamsPassed[0].resource);
     }
-    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
+    EXPECT_EQ(4u, this->mockSharingFcns->releaseCalled);
 
     EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
     EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
     EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
+    EXPECT_EQ(releaseExpectedParams[3], this->mockSharingFcns->releaseParamsPassed[3].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferWhenAcquiredThenCopySubregion) {
@@ -456,7 +460,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferWhenAcquiredThenCopySubregion
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     // acquireCount == 0, acquire
     EXPECT_EQ(0u, buffer->acquireCount);
@@ -505,7 +509,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferWhenAcquiredThenDontCopySubregio
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -530,7 +534,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenAc
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
-    cl_mem bufferMem = (cl_mem)buffer.get();
+    cl_mem bufferMem = buffer.get();
 
     auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
