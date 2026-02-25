@@ -555,7 +555,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     if (this->eventValue.hasStandaloneProfilingNode) {
         auto *inOrderTimestampAllocator = device->getInOrderTimestampAllocator();
         auto *timestampNode = inOrderTimestampAllocator->getTag();
-        auto *uploadCsr = cmdList->getBase()->isImmediateType() ? cmdList->getBase()->getCsr(false) : device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+        auto *uploadCsr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
         uploadCsr->writeTagAllocationChunkToSimulation(*timestampNode, 0, inOrderTimestampAllocator->getTagSize());
 
         newEvent->resetInOrderTimestampNode(timestampNode, cmdList->getBase()->getPartitionCount());
