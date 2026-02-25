@@ -1,0 +1,8 @@
+components:
+  aub_configs:
+    branch: aub_configs
+    dest_dir: aub_configs
+    revision: 0d41e3e2316378a1cdd61b9a0ac4836441a44ca7
+    type: git
+converter: M-3107
+version: '1'

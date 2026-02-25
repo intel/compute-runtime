@@ -1,9 +1,4 @@
 components:
-  aub_configs:
-    branch: aub_configs
-    dest_dir: aub_configs
-    revision: 0d41e3e2316378a1cdd61b9a0ac4836441a44ca7
-    type: git
   aub_stream:
     branch: master
     dest_dir: aub_stream
@@ -87,5 +82,6 @@ components:
     type: git
 converter: M-4035
 include:
+- aub_configs.yml
 - infra.yml
 version: '1'
