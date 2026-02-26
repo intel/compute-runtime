@@ -6,11 +6,14 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/generic_pool_allocator.h"
 #include "shared/source/utilities/heap_allocator.h"
@@ -219,6 +222,11 @@ void GenericViewPoolAllocator<Traits>::free(GraphicsAllocation *allocation) {
     }
 
     device->getMemoryManager()->removeAllocationFromDownloadAllocationsInCsr(allocation);
+
+    auto memoryOperationsInterface = device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get();
+    if (memoryOperationsInterface) {
+        memoryOperationsInterface->free(device, *allocation);
+    }
 
     std::unique_lock lock(allocatorMtx);
     DEBUG_BREAK_IF(!this->isPoolBuffer(allocation->getParentAllocation()));

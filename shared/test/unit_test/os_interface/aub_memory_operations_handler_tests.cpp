@@ -26,7 +26,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResident
     EXPECT_EQ(result, MemoryOperationsStatus::deviceUninitialized);
 }
 
-TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThenTrueReturnedAndWriteCalled) {
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThenNoDuplicateAddedAndWriteCalled) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
@@ -46,7 +46,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
 
     itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
     EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
-    EXPECT_EQ(2u, memoryOperationsInterface->residentAllocations.size());
+    EXPECT_EQ(1u, memoryOperationsInterface->residentAllocations.size());
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenCallingLockThenTrueReturnedAndWriteCalled) {
@@ -63,11 +63,14 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenCallingLockThenTrueRe
 
     aubManager.writeMemory2Called = false;
 
-    result = memoryOperationsInterface->lock(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    MockGraphicsAllocation allocation2{reinterpret_cast<void *>(0x1000), 0x1000u, MemoryConstants::pageSize};
+    GraphicsAllocation *allocPtr2 = &allocation2;
+
+    result = memoryOperationsInterface->lock(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr2, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
-    itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr2);
     EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
     EXPECT_EQ(2u, memoryOperationsInterface->residentAllocations.size());
 }

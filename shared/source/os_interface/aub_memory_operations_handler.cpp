@@ -80,7 +80,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(Arra
         aubManager->writeMemory2(params);
 
         if (!allocation->getAubInfo().writeMemoryOnly) {
-            residentAllocations.push_back(allocation);
+            auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), allocation);
+            if (itor == residentAllocations.end()) {
+                residentAllocations.push_back(allocation);
+            }
         }
 
         if (AubHelper::isOneTimeAubWritableAllocationType(allocation->getAllocationType())) {

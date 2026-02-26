@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -2438,5 +2439,32 @@ HWTEST_F(CommandContainerTest, givenUsedCommandBufferWhenReusingThenSlowPathChec
     EXPECT_EQ(reusedBuffer, cmdBufferAllocation);
 
     cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenPooledAllocationWhenReleasingHeapThenAllocationIsFreedFromOperationsHandler) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(1);
+    debugManager.flags.ForceDefaultHeapSize.set(64);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    auto memoryOperationsInterface = reinterpret_cast<MockMemoryOperations *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface.get());
+    memoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
+
+    auto allocPtr = cmdContainer->getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation();
+
+    memoryOperationsInterface->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
+
+    EXPECT_EQ(1u, memoryOperationsInterface->gfxAllocationsForMakeResident.size());
+    cmdContainer.reset();
+    EXPECT_EQ(1, memoryOperationsInterface->freeCalledCount);
+    EXPECT_EQ(0u, memoryOperationsInterface->gfxAllocationsForMakeResident.size());
     allocList.freeAllGraphicsAllocations(pDevice);
 }
