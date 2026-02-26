@@ -837,7 +837,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
     uint64_t srcSlicePitchCalculated = srcSlicePitch;
     if (srcSlicePitch == 0) {
-        srcSlicePitchCalculated = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
+        uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height);
+        srcSlicePitchCalculated = height * srcRowPitch;
     }
 
     uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitchCalculated, pDstRegion, bytesPerPixel);
@@ -1055,7 +1056,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
     uint64_t destSlicePitchCalculated = destSlicePitch;
     if (destSlicePitch == 0) {
-        destSlicePitchCalculated = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
+        uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height);
+        destSlicePitchCalculated = height * destRowPitch;
     }
 
     uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitchCalculated, pSrcRegion, bytesPerPixel);
@@ -3051,12 +3053,12 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
     case NEO::ImageType::image1DBuffer:
         return region->width * pixelSize;
     case NEO::ImageType::image2D:
-        return (region->height - 1) * bufferRowPitch + region->width * pixelSize;
+        return static_cast<uint64_t>(region->height - 1) * bufferRowPitch + static_cast<uint64_t>(region->width) * pixelSize;
     case NEO::ImageType::image1DArray:
-        return (region->height - 1) * bufferSlicePitch + region->width * pixelSize;
+        return static_cast<uint64_t>(region->height - 1) * bufferSlicePitch + static_cast<uint64_t>(region->width) * pixelSize;
     case NEO::ImageType::image3D:
     case NEO::ImageType::image2DArray:
-        return (region->depth - 1) * bufferSlicePitch + (region->height - 1) * bufferRowPitch + region->width * pixelSize;
+        return static_cast<uint64_t>(region->depth - 1) * bufferSlicePitch + static_cast<uint64_t>(region->height - 1) * bufferRowPitch + static_cast<uint64_t>(region->width) * pixelSize;
     default:
         CREATE_DEBUG_STRING(str, "invalid imageType: %d\n", static_cast<int>(imageType));
         device->getDriverHandle()->setErrorDescription(std::string(str.get()));
