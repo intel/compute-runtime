@@ -168,15 +168,16 @@ struct InOrderExecEventData {
 };
 #pragma pack()
 
-class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
+class InOrderExecEventHelper : public NonCopyableClass {
   public:
     void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset);
-    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    void copyData(InOrderExecEventHelper &output);
 
     bool isDataAssigned() const { return dataAssigned; }
 
     bool isCounterAlreadyDone(uint64_t waitValue, uint32_t offset) const { return inOrderExecInfo->isCounterAlreadyDone(waitValue, offset); }
     void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) { inOrderExecInfo->setLastWaitedCounterValue(value, allocationOffset); }
+    SyncFence *getInterruptFence() const { return inOrderExecInfo.get() ? inOrderExecInfo->getInterruptFence() : nullptr; }
 
     const InOrderExecEventData *getEventData() const { return eventData.get(); }
 
@@ -189,6 +190,7 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     bool isFromExternalMemory() const { return fromExternalMemory; }
 
     void setIncrementValue(uint64_t newIncrementValue) { eventData->incrementValue = newIncrementValue; }
+    uint64_t getIncrementValue() const { return eventData ? eventData->incrementValue : 0; }
 
     NEO::TagNodeBase *getLatestTimestampNode() const { return timestampNodes.back(); }
     NEO::TagNodeBase *getTimestampNode(size_t index) const { return timestampNodes[index]; }
@@ -211,7 +213,13 @@ class InOrderExecEventHelper : public NonCopyableAndNonMovableClass {
     void resetAggregatedEventUsageCounter() { aggregatedEventUsageCounter = 0; }
 
   protected:
-    std::unique_ptr<InOrderExecEventData> eventData = std::make_unique<InOrderExecEventData>();
+    void assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
+                    NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
+                    bool hostStorageDuplicated, bool fromExternalMemory);
+
+    void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
+
+    std::unique_ptr<InOrderExecEventData> eventData;
 
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     std::vector<NEO::TagNodeBase *> timestampNodes;

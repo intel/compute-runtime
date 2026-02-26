@@ -196,7 +196,7 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
         const auto &eventCompletion = kernelEventCompletionData[kernelId];
 
         auto numPackets = eventCompletion.getPacketsUsed();
-        if (inOrderExecHelper.getEventData()->incrementValue > 0) {
+        if (inOrderExecHelper.getIncrementValue() > 0) {
             numPackets *= static_cast<uint32_t>(inOrderExecHelper.getTimestampNodesCount());
         }
 
@@ -255,14 +255,14 @@ template <typename TagSizeT>
 void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCopy = kernelEventCompletionData[i].getPacketsUsed();
-        if (inOrderExecHelper.getEventData()->incrementValue > 0) {
+        if (inOrderExecHelper.getIncrementValue() > 0) {
             packetsToCopy *= static_cast<uint32_t>(inOrderExecHelper.getTimestampNodesCount());
         }
 
         uint32_t nodeId = 0;
 
         for (uint32_t packetId = 0; packetId < packetsToCopy; packetId++) {
-            if (inOrderExecHelper.getEventData()->incrementValue > 0 && (packetId % kernelEventCompletionData[i].getPacketsUsed() == 0)) {
+            if (inOrderExecHelper.getIncrementValue() > 0 && (packetId % kernelEventCompletionData[i].getPacketsUsed() == 0)) {
                 address = inOrderExecHelper.getTimestampNode(nodeId++)->getCpuBase();
             }
 
@@ -274,7 +274,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         uint32_t remainingPackets = 0;
         if (inOrderExecHelper.hasAdditionalTimestampNodes()) {
             remainingPackets = kernelEventCompletionData[i].getPacketsUsed();
-            if (inOrderExecHelper.getEventData()->incrementValue > 0) {
+            if (inOrderExecHelper.getIncrementValue() > 0) {
                 remainingPackets *= static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
             }
         }
@@ -711,7 +711,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostAddress(), inOrderExecHelper.getEventData()->counterOffset));
     NEO::GraphicsAllocation *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
 
-    if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc, inOrderExecHelper.getInOrderExecInfo()->getInterruptFence())) {
+    if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc, inOrderExecHelper.getInterruptFence())) {
         return ZE_RESULT_NOT_READY;
     }
 
@@ -749,7 +749,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
-    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInOrderExecInfo());
+    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
 
     do {
         if (this->heapfullCbEventWithProfiling) {

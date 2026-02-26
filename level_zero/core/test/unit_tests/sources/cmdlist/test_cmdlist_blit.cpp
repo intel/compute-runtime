@@ -1009,7 +1009,6 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_EQ(subCopySplitValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderIncrementValue(1));
         EXPECT_EQ(deviceIncValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecBaseSignalValue());
 
-        EXPECT_EQ(nullptr, bcsSplit->events.getEventResources().marker[i].event->getInOrderExecEventHelper().getInOrderExecInfo());
         EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i].event->isCounterBased());
         EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i].event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         EXPECT_FALSE(bcsSplit->events.getEventResources().marker[i].event->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
@@ -1100,17 +1099,13 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecEventHelper().getInOrderExecInfo().get());
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[1].event->getInOrderExecEventHelper().getInOrderExecInfo().get());
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[1].event->getInOrderExecBaseSignalValue());
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(nullptr, bcsSplit->events.getEventResources().marker[2].event->getInOrderExecEventHelper().getInOrderExecInfo().get());
-    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecEventHelper().getInOrderExecInfo().get());
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);

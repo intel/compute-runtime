@@ -666,9 +666,15 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
     inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset);
 }
 
+void Event::updateInOrdeState(NEO::InOrderExecEventHelper &input) {
+    resetCompletionStatus();
+
+    input.copyData(this->inOrderExecHelper);
+}
+
 uint64_t Event::getInOrderIncrementValue(uint32_t partitionCount) const {
-    DEBUG_BREAK_IF(inOrderExecHelper.getEventData()->incrementValue % partitionCount != 0);
-    return (inOrderExecHelper.getEventData()->incrementValue / partitionCount);
+    DEBUG_BREAK_IF(inOrderExecHelper.getIncrementValue() % partitionCount != 0);
+    return (inOrderExecHelper.getIncrementValue() / partitionCount);
 }
 
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
@@ -698,7 +704,7 @@ void Event::unsetInOrderExecInfo() {
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
-    if (inOrderExecHelper.getEventData()->incrementValue == 0 || !newNode) {
+    if (inOrderExecHelper.getIncrementValue() == 0 || !newNode) {
         inOrderExecHelper.moveTimestampNodeToReleaseList();
     }
 
@@ -711,7 +717,7 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partit
 }
 
 void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount, bool resetAggregatedEvent) {
-    if (inOrderExecHelper.getEventData()->incrementValue > 0) {
+    if (inOrderExecHelper.getIncrementValue() > 0) {
         if (newNode) {
             inOrderExecHelper.addAdditionalTimestampNode(newNode);
             if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {

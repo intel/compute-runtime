@@ -236,53 +236,50 @@ uint64_t InOrderExecInfo::getInitialCounterValue() const {
     return debugManager.flags.InitialCounterBasedEventValue.getIfNotDefault<uint64_t>(0);
 }
 
-void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset) {
-    if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
-        inOrderExecInfo = newInOrderExecInfo;
-    }
-
+void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
+                                        NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
+                                        bool hostStorageDuplicated, bool fromExternalMemory) {
     if (!eventData) {
         eventData = std::make_unique<InOrderExecEventData>();
     }
 
-    eventData->counterValue = newSignalValue;
-    eventData->counterOffset = newAllocationOffset;
-    eventData->devicePartitions = inOrderExecInfo->getNumDevicePartitionsToWait();
-    eventData->hostPartitions = inOrderExecInfo->getNumHostPartitionsToWait();
-    baseHostAddress = inOrderExecInfo->getBaseHostAddress();
-    baseDeviceAddress = inOrderExecInfo->getBaseDeviceAddress();
-    hostStorageDuplicated = inOrderExecInfo->isHostStorageDuplicated();
-    if (inOrderExecInfo->isExternalMemoryExecInfo()) {
-        deviceCounterAllocation = inOrderExecInfo->getExternalDeviceAllocation();
-        hostCounterAllocation = inOrderExecInfo->getExternalHostAllocation();
-        fromExternalMemory = true;
-    } else {
-        deviceCounterAllocation = inOrderExecInfo->getDeviceCounterAllocation();
-        hostCounterAllocation = inOrderExecInfo->getHostCounterAllocation();
-        fromExternalMemory = false;
-    }
+    eventData->counterValue = counterValue;
+    eventData->counterOffset = counterOffset;
+    eventData->devicePartitions = devicePartitions;
+    eventData->hostPartitions = hostPartitions;
+    eventData->incrementValue = incrementValue;
+
+    this->baseHostAddress = baseHostAddress;
+    this->baseDeviceAddress = baseDeviceAddress;
+    this->hostStorageDuplicated = hostStorageDuplicated;
+    this->fromExternalMemory = fromExternalMemory;
+    this->deviceCounterAllocation = deviceCounterAllocation;
+    this->hostCounterAllocation = hostCounterAllocation;
+    this->aggregatedEventUsageCounter = aggregatedEventUsageCounter;
 
     dataAssigned = true;
 }
 
-void InOrderExecEventHelper::unsetInOrderExecInfo() {
-    dataAssigned = false;
-    inOrderExecInfo.reset();
-    baseHostAddress = nullptr;
-    deviceCounterAllocation = nullptr;
-    hostCounterAllocation = nullptr;
-    hostStorageDuplicated = false;
-    fromExternalMemory = false;
-    baseDeviceAddress = 0;
-    aggregatedEventUsageCounter = 0;
-
-    if (eventData) {
-        eventData->counterValue = 0;
-        eventData->counterOffset = 0;
-        eventData->devicePartitions = 0;
-        eventData->hostPartitions = 0;
-        eventData->incrementValue = 0;
+void InOrderExecEventHelper::assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo) {
+    if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
+        inOrderExecInfo = newInOrderExecInfo;
     }
+}
+
+void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset) {
+    assignInOrderExecInfo(newInOrderExecInfo);
+
+    assignData(newSignalValue, newAllocationOffset, inOrderExecInfo->getNumDevicePartitionsToWait(), inOrderExecInfo->getNumHostPartitionsToWait(), inOrderExecInfo->getDeviceCounterAllocation(),
+               inOrderExecInfo->getHostCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getBaseHostAddress(), 0, 0, inOrderExecInfo->isHostStorageDuplicated(),
+               inOrderExecInfo->isExternalMemoryExecInfo());
+}
+
+void InOrderExecEventHelper::unsetInOrderExecInfo() {
+    inOrderExecInfo.reset();
+
+    assignData(0, 0, 0, 0, nullptr, nullptr, 0, nullptr, 0, 0, false, false);
+
+    dataAssigned = false;
 }
 
 void InOrderExecEventHelper::releaseNotUsedTempTimestampNodes() {
@@ -310,6 +307,14 @@ void InOrderExecEventHelper::moveAdditionalTimestampNodesToReleaseList() {
     }
 
     additionalTimestampNodes.clear();
+}
+
+void InOrderExecEventHelper::copyData(InOrderExecEventHelper &output) {
+    output.assignInOrderExecInfo(inOrderExecInfo);
+
+    output.assignData(eventData->counterValue, eventData->counterOffset, eventData->devicePartitions, eventData->hostPartitions,
+                      getDeviceCounterAllocation(), getHostCounterAllocation(), getBaseDeviceAddress(), getBaseHostAddress(),
+                      eventData->incrementValue, getAggregatedEventUsageCounter(), isHostStorageDuplicated(), isFromExternalMemory());
 }
 
 } // namespace NEO

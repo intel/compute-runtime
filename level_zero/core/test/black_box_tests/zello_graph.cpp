@@ -684,6 +684,8 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
         reinterpret_cast<uint32_t *>(buffer)[i] = initialValue;
     }
 
+    auto buf2 = reinterpret_cast<volatile uint32_t *>(buffer);
+    std::cout << "\nBuffer before graph execution: " << buf2[0] << ", " << buf2[1] << ", " << buf2[2] << std::endl;
     ze_graph_handle_t virtualGraph = nullptr;
     SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
     SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));

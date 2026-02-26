@@ -229,11 +229,8 @@ bool WddmCommandStreamReceiver<GfxFamily>::validForEnqueuePagingFence(uint64_t p
 }
 
 template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) {
-    if (inOrderExecInfo != nullptr && inOrderExecInfo->getInterruptFence() != nullptr) {
-        return true;
-    }
-    return false;
+bool WddmCommandStreamReceiver<GfxFamily>::waitUserFenceSupported(SyncFence *syncFence) {
+    return (syncFence != nullptr);
 }
 
 template <typename GfxFamily>

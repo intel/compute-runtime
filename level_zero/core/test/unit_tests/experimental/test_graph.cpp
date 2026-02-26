@@ -1344,51 +1344,54 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(*(srcGraph.get()));
 
-    NEO::InOrderExecInfo *graphExecInfo = nullptr;
+    const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
     auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
     for (const auto &entry : externalCbEventContainer) {
         if (event == entry.event) {
-            graphExecInfo = entry.eventSharedPtrInfo.lock().get();
+            graphExecHelper = &entry.inOrderExecEventHelper;
             break;
         }
     }
-    EXPECT_NE(nullptr, graphExecInfo);
-
+    ASSERT_NE(nullptr, graphExecHelper);
     // 1st executable graph, event attached during instantiation
-    NEO::InOrderExecInfo *currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
-    EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
+    NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper->getBaseDeviceAddress());
+    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper->getEventData()->counterValue);
 
     ExecutableGraph execGraph2;
     execGraph2.instantiateFrom(*(srcGraph.get()));
 
-    NEO::InOrderExecInfo *graph2ExecInfo = nullptr;
+    const NEO::InOrderExecEventHelper *graphExecHelper2 = nullptr;
     auto &externalCbEventContainer2 = execGraph2.getExternalCbEventInfoContainer().getCbEventInfos();
     for (const auto &entry : externalCbEventContainer2) {
         if (event == entry.event) {
-            graph2ExecInfo = entry.eventSharedPtrInfo.lock().get();
+            graphExecHelper2 = &entry.inOrderExecEventHelper;
             break;
         }
     }
-    EXPECT_NE(nullptr, graph2ExecInfo);
-    EXPECT_NE(graphExecInfo, graph2ExecInfo);
+    EXPECT_NE(nullptr, graphExecHelper2);
+    EXPECT_NE(graphExecHelper, graphExecHelper2);
 
     // 2nd executable graph, event attached during instantiation
-    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
-    EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper2->getBaseDeviceAddress());
+    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper2->getEventData()->counterValue);
 
     // 1st executable graph execution, event should be attached to 1st graphExecInfo
     returnValue = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
-    EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper->getBaseDeviceAddress());
+    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper->getEventData()->counterValue);
 
     // 2nd executable graph execution, event should be attached to 2nd graphExecInfo
     returnValue = execGraph2.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    currentEventInOrderExecInfo = event->getInOrderExecEventHelper().getInOrderExecInfo().get();
-    EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper2->getBaseDeviceAddress());
+    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper2->getEventData()->counterValue);
 
     srcGraph.reset();
     event->destroy();

@@ -323,7 +323,7 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenL
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
-    auto inOrderExecInfo = events[1]->getInOrderExecEventHelper().getInOrderExecInfo();
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
     *inOrderExecInfo->getBaseHostAddress() = 2u;
 
     auto status = events[1]->hostSynchronize(-1);
@@ -748,7 +748,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledTh
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->reset());
 
     EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), immCmdList->inOrderExecInfo->getCounterValue());
-    EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), immCmdList->inOrderExecInfo.get());
+    EXPECT_EQ(events[0]->getInOrderExecEventHelper().getBaseDeviceAddress(), immCmdList->inOrderExecInfo->getBaseDeviceAddress());
     EXPECT_EQ(events[0]->getInOrderAllocationOffset(), 123u);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->hostSignal(false));
@@ -844,10 +844,10 @@ HWTEST_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignmen
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
-    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get() != nullptr);
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
-    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get() != nullptr);
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     if (nonWalkerSignallingSupported) {
         *hostAddress = 1;
@@ -856,13 +856,13 @@ HWTEST_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignmen
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
-    EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get() != nullptr);
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->reset());
-    EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 }
 
 HWTEST_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrderParamsOnlyWhenChainingIsRequired) {
@@ -879,11 +879,11 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrder
 
     if (cmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
         EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), 1u);
-        EXPECT_NE(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+        EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
         EXPECT_EQ(events[0]->getInOrderAllocationOffset(), counterOffset);
     } else {
         EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), 0u);
-        EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+        EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
         EXPECT_EQ(events[0]->getInOrderAllocationOffset(), 0u);
     }
 
@@ -899,7 +899,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrder
 
     EXPECT_FALSE(events[0]->isCounterBased());
     EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), 0u);
-    EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_EQ(events[0]->getInOrderAllocationOffset(), 0u);
 
     context->freeMem(deviceAlloc);
@@ -914,16 +914,16 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventAndImmediateCm
 
     if (cmdList->isInOrderNonWalkerSignalingRequired(events[0].get()) || cmdList->duplicatedInOrderCounterStorageEnabled) {
         EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), 1u);
-        EXPECT_NE(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+        EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     } else {
-        EXPECT_EQ(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get(), nullptr);
+        EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     }
 
     auto tsEventPool = createEvents<FamilyType>(1, true);
     events[1]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
 
     cmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, false);
-    EXPECT_EQ(events[1]->getInOrderExecEventHelper().getInOrderExecInfo().get() != nullptr, cmdList->duplicatedInOrderCounterStorageEnabled);
+    EXPECT_EQ(events[1]->getInOrderExecEventHelper().isDataAssigned(), cmdList->duplicatedInOrderCounterStorageEnabled);
 }
 
 HWTEST_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnRegularCmdListThenUnsetInOrderData) {
@@ -941,14 +941,14 @@ HWTEST_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnRe
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
-    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get() != nullptr);
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     immCmdList->inOrderExecInfo.reset();
     EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 }
 
 HWTEST_F(InOrderCmdListTests, givenDebugFlagSetAndSingleTileCmdListWhenAskingForAtomicSignallingThenReturnTrue) {
@@ -1582,7 +1582,7 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingAppend
     immCmdList->appendEventReset(events[0]->toHandle());
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
     EXPECT_EQ(0u, events[0]->counterBasedFlags);
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 }
 
 HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenCallingAppendThenHandleInOrderExecInfo) {
@@ -1594,20 +1594,18 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenCallingAppe
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     events[0]->reset();
     EXPECT_EQ(0u, events[0]->getInOrderExecBaseSignalValue());
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
-
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
-
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     immCmdList->appendEventReset(events[0]->toHandle());
     EXPECT_EQ(0u, events[0]->getInOrderExecBaseSignalValue());
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgramSemaphoreOnce) {
@@ -3732,12 +3730,12 @@ HWTEST_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingAppendWit
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
-    EXPECT_EQ(regularCmdList->inOrderExecInfo.get(), events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     uint32_t copyData = 0;
     regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, events[1]->toHandle(), 0, nullptr, copyParams);
 
-    EXPECT_EQ(regularCmdList->inOrderExecInfo.get(), events[1]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[1]->getInOrderExecEventHelper().isDataAssigned());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKernelAppendThenWaitForDependencyAndSignalSyncAllocation) {
@@ -5303,7 +5301,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDoing
 
     auto eventHandle = events[0]->toHandle();
 
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     uint32_t hostCopyData = 0;
 
@@ -5323,19 +5321,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDoing
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, copyParams);
 
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_EQ(0u, events[0]->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
     EXPECT_FALSE(events[0]->isAlreadyCompleted());
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, copyParams);
 
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
 
@@ -5343,7 +5341,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDoing
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, copyParams);
 
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
 
@@ -5394,7 +5392,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenProfilingEventWhenDoingCp
     auto eventHandle0 = events[0]->toHandle();
     auto eventHandle1 = events[1]->toHandle();
 
-    EXPECT_EQ(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
 
     uint32_t hostCopyData = 0;
 
@@ -5414,12 +5412,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenProfilingEventWhenDoingCp
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle0, 0, nullptr, copyParams);
 
-    EXPECT_NE(nullptr, events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
 
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle1, 0, nullptr, copyParams);
 
-    EXPECT_NE(nullptr, events[1]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(events[1]->getInOrderExecEventHelper().isDataAssigned());
     EXPECT_TRUE(events[1]->isAlreadyCompleted());
     EXPECT_NE(L0::Event::STATE_CLEARED, *static_cast<uint32_t *>(events[1]->getHostAddress()));
 
@@ -5470,17 +5468,17 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRetu
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, nullptr, counterValue, &eventDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
-    EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
+    EXPECT_FALSE(eventObj->getInOrderExecEventHelper().isDataAssigned());
     zeEventDestroy(handle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, nullptr, hostAddress, counterValue, &eventDesc, &handle));
     eventObj = Event::fromHandle(handle);
-    EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
+    EXPECT_FALSE(eventObj->getInOrderExecEventHelper().isDataAssigned());
     zeEventDestroy(handle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, nullptr, nullptr, counterValue, &eventDesc, &handle));
     eventObj = Event::fromHandle(handle);
-    EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
+    EXPECT_FALSE(eventObj->getInOrderExecEventHelper().isDataAssigned());
     zeEventDestroy(handle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
@@ -5488,7 +5486,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRetu
     eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
-    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
@@ -5555,7 +5553,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
     eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
-    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
@@ -5598,7 +5596,7 @@ HWTEST_F(InOrderCmdListTests, givenUsmDeviceAllocationWhenCreatingCbEventFromExt
     auto eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
-    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(castToUint64(deviceAddress), eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
     EXPECT_NE(nullptr, eventObj->getInOrderExecEventHelper().getDeviceCounterAllocation());
@@ -5634,20 +5632,20 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     externalStorageAllocProperties.incrementValue = incValue;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
-    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
+    EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
-    auto inOrderExecInfo = eventObj->getInOrderExecEventHelper().getInOrderExecInfo();
+    auto &inOrderExecHelper = eventObj->getInOrderExecEventHelper();
 
     EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue(1));
-    EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
-    EXPECT_EQ(castToUint64(externalStorageAllocProperties.deviceAddress), inOrderExecInfo->getBaseDeviceAddress());
-    EXPECT_NE(nullptr, inOrderExecInfo->getDeviceCounterAllocation());
+    EXPECT_EQ(counterValue, inOrderExecHelper.getEventData()->counterValue);
+    EXPECT_EQ(castToUint64(externalStorageAllocProperties.deviceAddress), inOrderExecHelper.getBaseDeviceAddress());
+    EXPECT_NE(nullptr, inOrderExecHelper.getDeviceCounterAllocation());
     SvmAllocationData *deviceAlloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(devAddress));
     auto offset = ptrDiff(devAddress, deviceAlloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
-    auto lockedPtr = reinterpret_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation()->getLockedPtr(), sizeof(uint64_t) + offset));
+    auto lockedPtr = reinterpret_cast<uint64_t *>(ptrOffset(inOrderExecHelper.getDeviceCounterAllocation()->getLockedPtr(), sizeof(uint64_t) + offset));
 
-    EXPECT_EQ(inOrderExecInfo->getBaseHostAddress(), lockedPtr);
-    EXPECT_EQ(inOrderExecInfo->getExternalHostAllocation(), inOrderExecInfo->getDeviceCounterAllocation());
+    EXPECT_EQ(inOrderExecHelper.getBaseHostAddress(), lockedPtr);
+    EXPECT_EQ(inOrderExecHelper.getHostCounterAllocation(), inOrderExecHelper.getDeviceCounterAllocation());
 
     zeEventDestroy(handle);
 
@@ -5662,7 +5660,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     auto event = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     EXPECT_EQ(Event::State::HOST_CACHING_DISABLED_PERMANENT, event->isCompleted.load());
     event->isTimestampEvent = true;
-    ASSERT_NE(nullptr, event->getInOrderExecEventHelper().getInOrderExecInfo());
+    ASSERT_TRUE(event->getInOrderExecEventHelper().isDataAssigned());
 
     auto node0 = device->getDeviceInOrderCounterAllocator()->getTag();
 
@@ -5687,15 +5685,14 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDontR
     auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
-    ASSERT_NE(nullptr, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
+    ASSERT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
-    auto inOrderExecInfo = eventObj->getInOrderExecEventHelper().getInOrderExecInfo();
+    auto &inOrderExecHelper = eventObj->getInOrderExecEventHelper();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
 
-    EXPECT_EQ(inOrderExecInfo, eventObj->getInOrderExecEventHelper().getInOrderExecInfo());
-    EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
+    EXPECT_EQ(counterValue, inOrderExecHelper.getEventData()->counterValue);
     EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue(1));
 
     context->freeMem(devAddress);

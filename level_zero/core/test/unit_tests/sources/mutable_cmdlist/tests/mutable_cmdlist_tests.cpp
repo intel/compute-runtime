@@ -1753,7 +1753,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdList->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdList->inOrderExecInfo->getBaseDeviceAddress(), newEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1809,7 +1809,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo->getBaseDeviceAddress(), newEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
 
     baseGpuVa = newEvent->getGpuAddress(this->device);
 
@@ -1871,7 +1871,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo.get(), newEvent->getInOrderExecEventHelper().getInOrderExecInfo().get());
+    EXPECT_EQ(mockBaseCmdListHw->inOrderExecInfo->getBaseDeviceAddress(), newEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
 
     baseGpuVa = newEvent->getGpuAddress(this->device);
 

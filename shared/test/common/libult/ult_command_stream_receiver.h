@@ -599,7 +599,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait, nullptr);
     }
 
-    bool waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) override { return isUserFenceWaitSupported; }
+    bool waitUserFenceSupported(SyncFence *syncFence) override { return isUserFenceWaitSupported; }
 
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
         this->pagingFenceValueToUnblock = pagingFenceValue;

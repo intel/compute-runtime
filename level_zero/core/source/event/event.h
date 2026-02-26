@@ -321,6 +321,7 @@ struct Event : _ze_event_handle_t {
         this->metricNotification = metricNotification;
     }
     void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
+    void updateInOrdeState(NEO::InOrderExecEventHelper &input);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
     bool isFlushRequiredForSignal() const { return !isCounterBased() && isSignalScope(); }

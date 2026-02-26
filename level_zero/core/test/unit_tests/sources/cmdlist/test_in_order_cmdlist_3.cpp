@@ -133,12 +133,11 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
     inOrderEventHelper.eventData->devicePartitions = 2;
     inOrderEventHelper.eventData->hostPartitions = 3;
 
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->numDevicePartitionsToWait = 2;
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->numHostPartitionsToWait = 3;
-    static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get())->initializeAllocationsFromHost();
-    auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation());
-    auto hostAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getHostCounterAllocation());
-
+    static_cast<WhiteboxInOrderExecInfo *>(inOrderEventHelper.inOrderExecInfo.get())->numDevicePartitionsToWait = 2;
+    static_cast<WhiteboxInOrderExecInfo *>(inOrderEventHelper.inOrderExecInfo.get())->numHostPartitionsToWait = 3;
+    static_cast<WhiteboxInOrderExecInfo *>(inOrderEventHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
+    auto deviceAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getDeviceCounterAllocation());
+    auto hostAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getHostCounterAllocation());
     zex_ipc_counter_based_event_handle_t zexIpcData = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
@@ -171,13 +170,15 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
-    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 0x100;
-    auto event0InOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(events[0]->getInOrderExecEventHelper().getInOrderExecInfo().get());
+
+    auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+
+    inOrderEventHelper.eventData->counterOffset = 0x100;
+    auto event0InOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(inOrderEventHelper.inOrderExecInfo.get());
     event0InOrderInfo->numDevicePartitionsToWait = 2;
     event0InOrderInfo->numHostPartitionsToWait = 3;
     event0InOrderInfo->initializeAllocationsFromHost();
 
-    auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper);
     inOrderEventHelper.eventData->devicePartitions = 2;
     inOrderEventHelper.eventData->hostPartitions = 3;
 
@@ -192,7 +193,9 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     EXPECT_NE(nullptr, newEvent);
 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
-    auto inOrderInfo = newEventMock->getInOrderExecEventHelper().getInOrderExecInfo().get();
+    auto &newInOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(newEventMock->getInOrderExecEventHelper());
+
+    auto inOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(newInOrderEventHelper.inOrderExecInfo.get());
 
     EXPECT_EQ(inOrderInfo->getDeviceCounterAllocation()->getGpuAddress(), inOrderInfo->getBaseDeviceAddress());
     EXPECT_EQ(event0InOrderInfo->getNumDevicePartitionsToWait(), inOrderInfo->getNumDevicePartitionsToWait());

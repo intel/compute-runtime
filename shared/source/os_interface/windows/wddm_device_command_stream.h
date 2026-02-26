@@ -38,7 +38,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     GmmPageTableMngr *createPageTableManager() override;
     void flushMonitorFence(bool notifyKmd) override;
     void setupContext(OsContext &osContext) override;
-    bool waitUserFenceSupported(std::shared_ptr<InOrderExecInfo> const &inOrderExecInfo) override;
+    bool waitUserFenceSupported(SyncFence *syncFence) override;
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override;
     void allocateUserFence(std::unique_ptr<SyncFence> &mf) override;
     using CommandStreamReceiver::pageTableManager;

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/ze_api.h"
@@ -74,27 +75,20 @@ struct Event;
 
 struct ExternalCbEventInfo {
     L0::Event *event = nullptr;
-    std::weak_ptr<NEO::InOrderExecInfo> eventSharedPtrInfo;
-    uint64_t signalValue = 0;
-    uint32_t allocationOffset = 0;
+    NEO::InOrderExecEventHelper inOrderExecEventHelper;
 };
 
 struct ExternalCbEventInfoContainer {
-    void addCbEventInfo(L0::Event *event, std::shared_ptr<NEO::InOrderExecInfo> &eventSharedPtrInfo, uint64_t signalValue, uint32_t allocationOffset) {
+    void addCbEventInfo(L0::Event *event) {
         auto it = std::find_if(storage.begin(),
                                storage.end(),
                                [event](const ExternalCbEventInfo &info) { return info.event == event; });
 
         if (it != storage.end()) {
-            it->signalValue = signalValue;
-            it->allocationOffset = allocationOffset;
-            it->eventSharedPtrInfo = std::weak_ptr<NEO::InOrderExecInfo>(eventSharedPtrInfo);
+            event->getInOrderExecEventHelper().copyData(it->inOrderExecEventHelper);
         } else {
-            ExternalCbEventInfo &info = storage.emplace_back();
-            info.event = event;
-            info.eventSharedPtrInfo = std::weak_ptr<NEO::InOrderExecInfo>(eventSharedPtrInfo);
-            info.signalValue = signalValue;
-            info.allocationOffset = allocationOffset;
+            ExternalCbEventInfo &info = storage.emplace_back(event);
+            event->getInOrderExecEventHelper().copyData(info.inOrderExecEventHelper);
         }
     }
     bool externalCbEventsPresent() const {
