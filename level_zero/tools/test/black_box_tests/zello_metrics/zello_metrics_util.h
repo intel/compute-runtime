@@ -57,6 +57,7 @@ class TestSettings {
     std::vector<TestParameter<std::string>> metricNames{};
     TestParameter<uint32_t> eventNReportCount{1};
     TestParameter<bool> showSystemInfo{false};
+    TestParameter<uint32_t> programmableLimit{0};
     void readMetricNames(char *optArg);
 
   private:

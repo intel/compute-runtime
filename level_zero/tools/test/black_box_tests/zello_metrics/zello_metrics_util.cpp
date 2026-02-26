@@ -548,6 +548,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"
                      "\n                                        (requires ZES_ENABLE_SYSMAN=1)"
+                     "\n  -p,   --programmableLimit <count>     max number of programmables to iterate (0 = no limit)"
                      "\n  -h,   --help                          display help message"
                      "\n";
     };
@@ -592,6 +593,10 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
 
     if (isParamEnabled(argc, argv, "-y", "--showSystemInfo", &optind)) {
         showSystemInfo.set(true);
+    }
+
+    if (isParamEnabled(argc, argv, "-p", "--programmableLimit", &optind)) {
+        programmableLimit.set(static_cast<uint32_t>(std::atoi(copyArg(argc, argv, optind).c_str())));
     }
 }
 
