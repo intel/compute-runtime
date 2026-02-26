@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,6 +92,7 @@ const std::string telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 const std::string hbmFreqFilePath("gt/gt0/mem_RP0_freq_mhz");
 const std::string hbmFreqFilePath2("gt/gt1/mem_RP0_freq_mhz");
 const std::string maxBwFileName("prelim_lmem_max_bw_Mbps");
+const std::string mockPhysicalSize = "0x00000040000000";
 
 struct MockMemoryNeoDrm : public NEO::Drm {
     using Drm::ioctlHelper;

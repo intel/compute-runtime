@@ -70,7 +70,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
             switch (memType) {
             case NEO::DeviceBlobConstants::MemoryType::hbm2e:
             case NEO::DeviceBlobConstants::MemoryType::hbm2:
-            case NEO::DeviceBlobConstants::MemoryType::hbm3:
                 pProperties->type = ZES_MEM_TYPE_HBM;
                 break;
             case NEO::DeviceBlobConstants::MemoryType::lpddr4:

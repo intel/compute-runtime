@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_performance_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_memory_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_memory_tests_xe.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_temperature_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_globalops_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_frequency_tests.cpp
