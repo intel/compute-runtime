@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class GlobalOperations {
     virtual ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) = 0;
     virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;
     virtual ze_result_t resetExt(zes_reset_properties_t *pProperties) = 0;
+    virtual ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) = 0;
 
     virtual void init() = 0;
 };

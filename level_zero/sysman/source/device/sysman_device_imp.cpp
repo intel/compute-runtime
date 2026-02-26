@@ -230,5 +230,9 @@ OsSysman *SysmanDeviceImp::deviceGetOsInterface() {
     return pOsSysman;
 }
 
+ze_result_t SysmanDeviceImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+    return pGlobalOperations->memoryGetPageOfflineStateExp(pPageOfflineState);
+}
+
 } // namespace Sysman
 } // namespace L0

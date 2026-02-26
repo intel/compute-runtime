@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovab
     ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
+    ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) override;
     OsGlobalOperations *pOsGlobalOperations = nullptr;
 
     GlobalOperationsImp() = default;

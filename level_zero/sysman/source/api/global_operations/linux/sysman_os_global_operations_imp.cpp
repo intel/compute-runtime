@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -771,6 +771,10 @@ ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState)
     pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, pState);
     getRepairStatus(pState);
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,6 +165,11 @@ ze_result_t GlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {
 ze_result_t GlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     initGlobalOperations();
     return pOsGlobalOperations->deviceGetState(pState);
+}
+
+ze_result_t GlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+    initGlobalOperations();
+    return pOsGlobalOperations->memoryGetPageOfflineStateExp(pPageOfflineState);
 }
 
 void GlobalOperationsImp::init() {

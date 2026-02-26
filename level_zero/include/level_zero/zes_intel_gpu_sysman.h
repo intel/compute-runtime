@@ -488,6 +488,49 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(
     uint32_t *pAveragePower  ///< [out] Returns the average power usage in milliwatts
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_NAME
+/// @brief  Memory offline extension name
+#define ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_NAME "ZES_intel_memory_page_offline"
+#endif // ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory offline extension Version(s)
+typedef enum _zes_intel_memory_page_offline_exp_version_t {
+    ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_memory_page_offline_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get Memory Page Offline
+///
+/// @details
+///     - This function returns the memory page offline state.
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET
+///     - ::ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pPageOfflineState`
+ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(
+    zes_device_handle_t hDevice,                        ///< [in] handle of the device
+    zes_mem_page_offline_state_exp_t *pPageOfflineState ///< [out] Returns the memory page offline state.
+);
+
 #define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
 
 #if defined(__cplusplus)

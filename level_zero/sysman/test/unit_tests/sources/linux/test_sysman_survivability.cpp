@@ -232,6 +232,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenS
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceResetExt(phDevices[0], nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::fabricPortGetMultiPortThroughput(phDevices[0], count, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceEnumEnabledVF(phDevices[0], &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::memoryGetPageOfflineStateExp(phDevices[0], nullptr));
 
     delete sysmanDriverHandle;
     globalSysmanDriver = nullptr;

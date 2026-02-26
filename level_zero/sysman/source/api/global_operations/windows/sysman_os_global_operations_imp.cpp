@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,6 +153,10 @@ ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_
 }
 
 ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

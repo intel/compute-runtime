@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port.h"
@@ -141,6 +142,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     virtual ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) = 0;
     static ze_result_t deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle);
+
+    virtual ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) = 0;
+    static ze_result_t memoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_mem_page_offline_state_exp_t *pPageOfflineState);
 
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;

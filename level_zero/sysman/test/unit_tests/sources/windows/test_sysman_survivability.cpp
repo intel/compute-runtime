@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,7 @@ TEST_F(SysmanDeviceFixture, GivenSysmanDeviceHandleWhenCallingSysmanDeviceFuncti
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceResetExt(pSysmanDevice, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::fabricPortGetMultiPortThroughput(pSysmanDevice, count, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceEnumEnabledVF(pSysmanDevice, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::memoryGetPageOfflineStateExp(pSysmanDevice, nullptr));
 
     pSysmanDevice->isDeviceInSurvivabilityMode = false;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -209,6 +209,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDebugApiUsedSetWhenGettingDevicePrope
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(16u, properties.core.numSubslicesPerSlice);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceMemoryGetPageOfflineStateExpThenErrorIsReturned) {
+    init(true);
+    zes_mem_page_offline_state_exp_t pageState = {ZES_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_STATE_EXP};
+    ze_result_t result = zesIntelDeviceMemoryGetPageOfflineStateExp(pSysmanDevice->toHandle(), &pageState);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
 class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {

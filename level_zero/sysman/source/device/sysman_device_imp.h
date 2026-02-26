@@ -116,6 +116,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
     ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) override;
     OsSysman *deviceGetOsInterface() override;
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
+    ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
