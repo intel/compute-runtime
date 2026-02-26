@@ -8,12 +8,9 @@
 #include "shared/source/host_function/host_function_scheduler.h"
 
 #include "shared/source/host_function/host_function.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include <chrono>
-#include <iostream>
-#include <type_traits>
 
 namespace NEO {
 
@@ -87,7 +84,6 @@ void HostFunctionScheduler::schedulerLoop(std::stop_token st) noexcept {
         registeredStreamersLock.lock();
         for (auto streamer : registeredStreamers) {
             if (auto id = isHostFunctionReadyToExecute(streamer); id != HostFunctionStatus::completed) {
-                //  std::cout << "id : " << id << std::endl;
                 scheduleHostFunctionToThreadPool(streamer, id);
                 waitStart = std::chrono::steady_clock::now();
             }
