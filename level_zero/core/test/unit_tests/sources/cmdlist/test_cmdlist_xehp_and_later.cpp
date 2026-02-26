@@ -2586,7 +2586,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    CommandToPatch signalCmd{PatchSignalEventPostSyncPipeControl{}};
+    CommandToPatchInCmdList signalCmd{PatchSignalEventPostSyncPipeControl{}};
     launchParams.outSyncCommand = &signalCmd;
     auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);

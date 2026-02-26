@@ -389,7 +389,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
             if (launchParams.outListCommands) {
                 auto prefetchToPatch = std::find_if(launchParams.outListCommands->begin(), launchParams.outListCommands->end(),
-                                                    [](const CommandToPatch &cmd) { return std::holds_alternative<PatchPrefetchKernelMemory>(cmd); });
+                                                    [](const CommandToPatchInCmdList &cmd) { return std::holds_alternative<PatchPrefetchKernelMemory>(cmd); });
 
                 if (prefetchToPatch != launchParams.outListCommands->end()) {
                     currentAppend.kernelGroup->setPrefetchCmd(std::get<PatchPrefetchKernelMemory>(*prefetchToPatch));

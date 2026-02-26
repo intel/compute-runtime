@@ -146,10 +146,10 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernel
 
     // cmdsToPatch should contain two scratch-specific commands to patch
     auto baseCommandList = mutableCommandList->base;
-    auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
+    auto cmdsToPatch = baseCommandList->getCommandsToPatch();
 
     auto scratchPatchNum = std::count_if(cmdsToPatch.begin(), cmdsToPatch.end(),
-                                         [](const CommandToPatch &cmd) { return std::holds_alternative<PatchComputeWalkerInlineDataScratch>(cmd); });
+                                         [](const CommandToPatchOnQueue &cmd) { return std::holds_alternative<PatchComputeWalkerInlineDataScratch>(cmd); });
 
     EXPECT_EQ(scratchPatchNum, 2);
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 2u);
@@ -204,7 +204,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
     EXPECT_TRUE(isDefined(scratchPatchIndex));
 
-    auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
+    auto cmdsToPatch = baseCommandList->getCommandsToPatch();
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
 
     auto *scratchPatchCommand = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex]);
@@ -269,7 +269,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromN
     auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
     EXPECT_TRUE(isDefined(scratchPatchIndex));
 
-    auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
+    auto cmdsToPatch = baseCommandList->getCommandsToPatch();
     ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
 
     auto &scratchPatchCommandVariant = cmdsToPatch[scratchPatchIndex];
@@ -370,7 +370,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
     EXPECT_NE(scratchPatchIndex1, scratchPatchIndex2);
 
     auto baseCommandList = mutableCommandList->base;
-    auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
+    auto cmdsToPatch = baseCommandList->getCommandsToPatch();
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex2);
 
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
@@ -428,7 +428,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDiffe
     // Scratch patch should be set to first kernel offset
     auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
     auto &baseCommandList = mutableCommandList->base;
-    auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
+    auto cmdsToPatch = baseCommandList->getCommandsToPatch();
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
     auto &scratchPatchCommand = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
 

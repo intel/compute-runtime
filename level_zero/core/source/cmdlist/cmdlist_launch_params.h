@@ -22,7 +22,7 @@ struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
     void *cmdWalkerBuffer = nullptr;
     void *hostPayloadBuffer = nullptr;
-    CommandToPatch *outSyncCommand = nullptr;
+    CommandToPatchInCmdList *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
     CmdListKernelLaunchParamsExt launchParamsExt{};
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();

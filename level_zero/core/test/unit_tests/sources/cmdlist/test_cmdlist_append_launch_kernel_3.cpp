@@ -563,7 +563,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 
     EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
 
-    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    auto cmdsToPatch = commandList->getCommandsToPatch();
     ASSERT_NE(0u, cmdsToPatch.size());
 
     auto *noopParam = std::get_if<PatchNoopSpace>(&cmdsToPatch[cooperativeParams.syncBufferPatchIndex]);
@@ -728,7 +728,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
 
     commandList->close();
 
-    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    auto cmdsToPatch = commandList->getCommandsToPatch();
     ASSERT_EQ(2u, cmdsToPatch.size());
 
     auto requiredSize1 = NEO::KernelHelper::getSyncBufferSize(8);

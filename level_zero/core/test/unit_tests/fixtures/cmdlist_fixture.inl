@@ -2070,7 +2070,7 @@ void CommandListScratchPatchFixtureInit::testScratchCommandViewNoPatching() {
     EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(0));
     EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(1));
 
-    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    auto cmdsToPatch = commandList->getCommandsToPatch();
     bool foundScratchPatchCmd = std::ranges::any_of(cmdsToPatch, [](const auto &cmdToPatch) {
         return std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatch) != nullptr;
     });

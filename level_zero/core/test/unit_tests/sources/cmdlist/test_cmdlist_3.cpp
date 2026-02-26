@@ -1090,7 +1090,6 @@ HWTEST_F(CommandListCreateTests, whenGettingCommandsToPatchThenCorrectValuesAreR
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     EXPECT_EQ(&commandList->requiredStreamState, &commandList->getRequiredStreamState());
     EXPECT_EQ(&commandList->finalStreamState, &commandList->getFinalStreamState());
-    EXPECT_EQ(&commandList->commandsToPatch, &commandList->getCommandsToPatch());
 }
 
 HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared) {
@@ -1101,7 +1100,7 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
     {
-        CommandToPatch commandToPatch{
+        CommandToPatchOnQueue commandToPatch{
             PatchInvalidPatchType{}};
         pCommandList->commandsToPatch.push_back(commandToPatch);
         EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
@@ -1117,7 +1116,7 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     if constexpr (FamilyType::isHeaplessRequired() == false) {
         using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
 
-        CommandToPatch commandToPatch{
+        CommandToPatchOnQueue commandToPatch{
             PatchFrontEndState{
                 .pCommand = new FrontEndStateCommand,
             }};
@@ -1199,7 +1198,7 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     }
 
     {
-        CommandToPatch commandToPatch{
+        CommandToPatchOnQueue commandToPatch{
             PatchHostFunctionId{}};
 
         pCommandList->commandsToPatch.push_back(commandToPatch);
@@ -1207,7 +1206,7 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
         EXPECT_TRUE(pCommandList->commandsToPatch.empty());
     }
     {
-        CommandToPatch commandToPatch{
+        CommandToPatchOnQueue commandToPatch{
             PatchHostFunctionWait{}};
 
         pCommandList->commandsToPatch.push_back(commandToPatch);
@@ -1351,7 +1350,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(1u, commandsToPatch.size());
-        CommandToPatch &cfePatchVariant = commandsToPatch[0];
+        CommandToPatchOnQueue &cfePatchVariant = commandsToPatch[0];
 
         auto *cfePatch = std::get_if<PatchFrontEndState>(&cfePatchVariant);
         ASSERT_NE(nullptr, cfePatch);
@@ -1384,7 +1383,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(2u, commandsToPatch.size());
-        CommandToPatch &cfePatchVariant = commandsToPatch[1];
+        CommandToPatchOnQueue &cfePatchVariant = commandsToPatch[1];
 
         auto *cfePatch = std::get_if<PatchFrontEndState>(&cfePatchVariant);
         ASSERT_NE(nullptr, cfePatch);
@@ -1406,7 +1405,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(3u, commandsToPatch.size());
-        CommandToPatch &cfePatchVariant = commandsToPatch[2];
+        CommandToPatchOnQueue &cfePatchVariant = commandsToPatch[2];
 
         auto *cfePatch = std::get_if<PatchFrontEndState>(&cfePatchVariant);
         ASSERT_NE(nullptr, cfePatch);

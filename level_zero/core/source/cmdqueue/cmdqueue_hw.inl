@@ -2043,4 +2043,87 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredCacheFlushes(CommandListExecu
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
+                                                  bool patchNewScratchController,
+                                                  bool patchPreambleEnabled,
+                                                  void **patchPreambleBuffer) {
+    uint32_t hostFunctionsCounter = 0;
+    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
+
+    auto commandsToPatch = commandList.getCommandsToPatch();
+
+    for (auto &command : commandsToPatch) {
+        std::visit(CommandsToPatchVisitor{*this,
+                                          hostFunctionsCounter,
+                                          scratchAddress,
+                                          patchPreambleBuffer,
+                                          patchNewScratchController,
+                                          patchPreambleEnabled,
+                                          memorySynchronizationRequired},
+                   command);
+    }
+
+    if (hostFunctionsCounter > 0) {
+        csr->makeResidentHostFunctionAllocation();
+        csr->signalHostFunctionWorker(hostFunctionsCounter);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueueSemaphoreStart &patchElem) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    bool useSemaphore64bCmd = queue.device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(patchElem.pCommand),
+                                                            queue.csr->getDebugPauseStateGPUAddress(),
+                                                            static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
+                                                            COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                            false, true, false, false, false, useSemaphore64bCmd);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueueSemaphoreEnd &patchElem) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    bool useSemaphore64bCmd = queue.device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(patchElem.pCommand),
+                                                            queue.csr->getDebugPauseStateGPUAddress(),
+                                                            static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
+                                                            COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                            false, true, false, false, false, useSemaphore64bCmd);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueuePipeControlStart &patchElem) {
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = queue.csr->getDcFlushSupport();
+
+    auto command = reinterpret_cast<void *>(patchElem.pCommand);
+    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
+        command,
+        NEO::PostSyncMode::immediateData,
+        queue.csr->getDebugPauseStateGPUAddress(),
+        static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
+        queue.device->getNEODevice()->getRootDeviceEnvironment(),
+        args);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueuePipeControlEnd &patchElem) {
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = queue.csr->getDcFlushSupport();
+
+    auto command = reinterpret_cast<void *>(patchElem.pCommand);
+    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
+        command,
+        NEO::PostSyncMode::immediateData,
+        queue.csr->getDebugPauseStateGPUAddress(),
+        static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
+        queue.device->getNEODevice()->getRootDeviceEnvironment(),
+        args);
+}
+
 } // namespace L0

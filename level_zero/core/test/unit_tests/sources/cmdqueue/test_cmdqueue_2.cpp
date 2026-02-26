@@ -1109,6 +1109,14 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     commandList->commandsToPatch.push_back(PatchInvalidPatchType{});
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, false, nullptr));
     commandList->commandsToPatch.clear();
+
+    commandList->commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, false, nullptr));
+    commandList->commandsToPatch.clear();
+
+    commandList->commandsToPatch.push_back(PatchComputeWalkerImplicitArgsScratch{});
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, false, nullptr));
+    commandList->commandsToPatch.clear();
 }
 
 HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeCore) {
@@ -1207,7 +1215,7 @@ HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchComm
     memset(patchBuffer.get(), 0xFF, dataSize);
     memset(zeroBuffer.get(), 0x0, dataSize);
 
-    CommandToPatch commandToPatch{PatchNoopSpace{
+    CommandToPatchOnQueue commandToPatch{PatchNoopSpace{
         .pDestination = patchBuffer.get(),
         .patchSize = dataSize,
     }};

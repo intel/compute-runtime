@@ -33,7 +33,7 @@ struct MutableAppendLaunchKernelWithParams {
 };
 
 struct MutableAppendLaunchKernelEvents {
-    CommandToPatch signalCmd = {PatchSignalEventPostSyncPipeControl{}};
+    CommandToPatchInCmdList signalCmd = {PatchSignalEventPostSyncPipeControl{}};
 
     bool waitEvents = false;
     bool signalEvent = false;

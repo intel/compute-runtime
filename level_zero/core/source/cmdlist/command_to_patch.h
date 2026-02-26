@@ -116,7 +116,7 @@ struct PatchPrefetchKernelMemory {
 
 struct PatchInvalidPatchType {};
 
-using CommandToPatch = std::variant<
+using CommandToPatchOnQueue = std::variant<
     PatchInvalidPatchType,
     PatchFrontEndState,
     PatchPauseOnEnqueueSemaphoreStart,
@@ -127,7 +127,10 @@ using CommandToPatch = std::variant<
     PatchComputeWalkerImplicitArgsScratch,
     PatchNoopSpace,
     PatchHostFunctionId,
-    PatchHostFunctionWait,
+    PatchHostFunctionWait>;
+
+using CommandToPatchInCmdList = std::variant<
+    PatchInvalidPatchType,
     PatchSignalEventPostSyncPipeControl,
     PatchWaitEventSemaphoreWait,
     PatchTimestampEventPostSyncStoreRegMem,
@@ -137,5 +140,6 @@ using CommandToPatch = std::variant<
     PatchCbWaitEventLoadRegisterImm,
     PatchPrefetchKernelMemory>;
 
-using CommandToPatchContainer = std::vector<CommandToPatch>;
+using CommandToPatchContainer = std::vector<CommandToPatchInCmdList>;
+
 } // namespace L0

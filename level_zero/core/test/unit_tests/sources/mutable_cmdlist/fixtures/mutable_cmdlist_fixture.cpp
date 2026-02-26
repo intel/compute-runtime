@@ -379,7 +379,7 @@ std::vector<L0::MCL::Variable *> MutableCommandListFixtureInit::getVariableList(
 }
 
 void MutableCommandListFixtureInit::overridePatchedScratchAddress(uint64_t scratchAddress) {
-    auto &cmdsToPatch = mutableCommandList->base->getCommandsToPatch();
+    auto cmdsToPatch = mutableCommandList->base->getCommandsToPatch();
     for (auto &cmd : cmdsToPatch) {
         if (auto *patch = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmd)) {
             patch->scratchAddressAfterPatch = scratchAddress;

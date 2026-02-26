@@ -90,7 +90,7 @@ struct CommandList : _ze_command_list_handle_t {
         static CommandList *allocate(uint32_t numIddsPerBlock) { return new Type(numIddsPerBlock); }
     };
 
-    using CommandsToPatch = StackVec<CommandToPatch, 16>;
+    using CommandsToPatch = StackVec<CommandToPatchOnQueue, 16>;
     using CmdListReturnPoints = StackVec<CmdListReturnPoint, 32>;
 
     virtual ze_result_t close() = 0;
@@ -376,8 +376,9 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::StreamProperties &getFinalStreamState() {
         return finalStreamState;
     }
-    const CommandsToPatch &getCommandsToPatch() {
-        return commandsToPatch;
+
+    auto getCommandsToPatch() {
+        return std::span(commandsToPatch.begin(), commandsToPatch.end());
     }
 
     CmdListReturnPoints &getReturnPoints() {

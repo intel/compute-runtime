@@ -131,96 +131,51 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapC
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
-                                                  bool patchNewScratchController,
-                                                  bool patchPreambleEnabled,
-                                                  void **patchPreambleBuffer) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-    uint32_t hostFunctionsCounter = 0;
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchFrontEndState &patchElem) {
+    UNRECOVERABLE_IF(true);
+}
 
-    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchComputeWalkerInlineDataScratch &patchElem) {
+    UNRECOVERABLE_IF(true);
+}
 
-    auto patchCommandsLambda = [&](auto &commandToPatch) {
-        using CommandType = std::decay_t<decltype(commandToPatch)>;
-        if constexpr (std::is_same_v<CommandType, PatchFrontEndState>) {
-            UNRECOVERABLE_IF(true);
-        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreStart>) {
-            NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
-                                                                    csr->getDebugPauseStateGPUAddress(),
-                                                                    static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
-                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                                    false, true, false, false, false, false);
-        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreEnd>) {
-            NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
-                                                                    csr->getDebugPauseStateGPUAddress(),
-                                                                    static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
-                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                                    false, true, false, false, false, false);
-        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueuePipeControlStart>) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = csr->getDcFlushSupport();
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchComputeWalkerImplicitArgsScratch &patchElem) {
+    UNRECOVERABLE_IF(true);
+}
 
-            auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
-            NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
-                command,
-                NEO::PostSyncMode::immediateData,
-                csr->getDebugPauseStateGPUAddress(),
-                static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
-                device->getNEODevice()->getRootDeviceEnvironment(),
-                args);
-        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueuePipeControlEnd>) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = csr->getDcFlushSupport();
-
-            auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
-            NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
-                command,
-                NEO::PostSyncMode::immediateData,
-                csr->getDebugPauseStateGPUAddress(),
-                static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
-                device->getNEODevice()->getRootDeviceEnvironment(),
-                args);
-        } else if constexpr (std::is_same_v<CommandType, PatchNoopSpace>) {
-            if (commandToPatch.pDestination != nullptr) {
-                memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
-            }
-        } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionId>) {
-
-            NEO::HostFunction hostFunction = {.hostFunctionAddress = commandToPatch.callbackAddress,
-                                              .userDataAddress = commandToPatch.userDataAddress};
-            auto allocator = this->getDevice()->getHostFunctionAllocator(csr);
-            csr->ensureHostFunctionWorkerStarted(allocator);
-
-            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
-                                                                      commandToPatch.cmdBufferSpace,
-                                                                      csr->getHostFunctionStreamer(),
-                                                                      std::move(hostFunction),
-                                                                      memorySynchronizationRequired);
-
-            hostFunctionsCounter++;
-        } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionWait>) {
-            auto partitionId = commandToPatch.partitionId;
-
-            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
-                                                                                     commandToPatch.cmdBufferSpace,
-                                                                                     csr->getHostFunctionStreamer(),
-                                                                                     partitionId);
-        } else {
-            UNRECOVERABLE_IF(true);
-        }
-    };
-
-    auto &commandsToPatch = commandList.getCommandsToPatch();
-
-    for (auto &command : commandsToPatch) {
-        std::visit(patchCommandsLambda, command);
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchNoopSpace &patchElem) {
+    if (patchElem.pDestination != nullptr) {
+        memset(patchElem.pDestination, 0, patchElem.patchSize);
     }
+}
 
-    if (hostFunctionsCounter > 0) {
-        csr->makeResidentHostFunctionAllocation();
-        csr->signalHostFunctionWorker(hostFunctionsCounter);
-    }
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchHostFunctionId &patchElem) {
+    NEO::HostFunction hostFunction = {.hostFunctionAddress = patchElem.callbackAddress,
+                                      .userDataAddress = patchElem.userDataAddress};
+    auto allocator = queue.getDevice()->getHostFunctionAllocator(queue.csr);
+    queue.csr->ensureHostFunctionWorkerStarted(allocator);
+
+    NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
+                                                              patchElem.cmdBufferSpace,
+                                                              queue.csr->getHostFunctionStreamer(),
+                                                              std::move(hostFunction),
+                                                              memorySynchronizationRequired);
+
+    hostFunctionsCounter++;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchHostFunctionWait &patchElem) {
+    auto partitionId = patchElem.partitionId;
+
+    NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
+                                                                             patchElem.cmdBufferSpace,
+                                                                             queue.csr->getHostFunctionStreamer(),
+                                                                             partitionId);
 }
 
 } // namespace L0

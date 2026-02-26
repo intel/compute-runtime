@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
 namespace NEO {
@@ -223,6 +224,32 @@ struct CommandQueueHw : public CommandQueue {
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
     inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
     void prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx);
+
+    struct CommandsToPatchVisitor {
+        CommandQueueHw &queue;
+        uint32_t &hostFunctionsCounter;
+        uint64_t scratchAddress;
+        void **patchPreambleBuffer;
+        bool patchNewScratchController;
+        bool patchPreambleEnabled;
+        bool memorySynchronizationRequired;
+
+        void operator()(PatchInvalidPatchType &patchElem) {
+            UNRECOVERABLE_IF(true);
+        }
+
+        void operator()(PatchPauseOnEnqueueSemaphoreStart &patchElem);
+        void operator()(PatchPauseOnEnqueueSemaphoreEnd &patchElem);
+        void operator()(PatchPauseOnEnqueuePipeControlStart &patchElem);
+        void operator()(PatchPauseOnEnqueuePipeControlEnd &patchElem);
+
+        void operator()(PatchFrontEndState &patchElem);
+        void operator()(PatchComputeWalkerInlineDataScratch &patchElem);
+        void operator()(PatchComputeWalkerImplicitArgsScratch &patchElem);
+        void operator()(PatchNoopSpace &patchElem);
+        void operator()(PatchHostFunctionId &patchElem);
+        void operator()(PatchHostFunctionWait &patchElem);
+    };
 
     size_t alignedChildStreamPadding{};
 };
