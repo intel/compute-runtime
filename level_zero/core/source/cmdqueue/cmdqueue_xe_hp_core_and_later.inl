@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -242,7 +243,7 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
 
     if (patchPreambleEnabled) {
         auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, queue.csr->getDcFlushSupport());
-        auto cmdStorage = std::make_unique_for_overwrite<uint8_t[]>(size);
+        auto cmdStorage = allocateAlignedMemory(size, sizeof(uint32_t));
         void *cmdBuffer = static_cast<void *>(cmdStorage.get());
 
         NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
