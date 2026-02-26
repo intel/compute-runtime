@@ -47,6 +47,7 @@ class HostFunctionScheduler final : public HostFunctionWorker {
     HostFunctionThreadPool threadPool;
 
     std::vector<HostFunctionStreamer *> registeredStreamers;
+    std::atomic<bool> schedulerStarted{false};
 };
 
 } // namespace NEO

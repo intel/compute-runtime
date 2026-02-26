@@ -27,12 +27,13 @@ void HostFunctionScheduler::start(HostFunctionStreamer *streamer) {
     this->registerHostFunctionStreamer(streamer);
     this->threadPool.registerThread();
 
-    if (worker == nullptr) {
+    if (!schedulerStarted.load(std::memory_order_acquire)) {
         std::unique_lock<std::mutex> lock(workerMutex);
-        if (worker == nullptr) {
+        if (!schedulerStarted.load(std::memory_order_relaxed)) {
             worker = std::make_unique<std::jthread>([this](std::stop_token st) {
                 this->schedulerLoop(st);
             });
+            schedulerStarted.store(true, std::memory_order_release);
         }
     }
 }
