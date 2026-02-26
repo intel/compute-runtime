@@ -5,19 +5,16 @@
  *
  */
 
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/kernel/debug_data.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/stream_capture.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/os_interface/linux/xe/eudebug/mock_eudebug_interface.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
@@ -28,6 +25,15 @@ using namespace NEO;
 
 namespace L0 {
 namespace ult {
+
+struct MockIoctlHelperXeDebug : IoctlHelperXe {
+    using IoctlHelperXe::bindInfo;
+    using IoctlHelperXe::euDebugInterface;
+    using IoctlHelperXe::getEudebugExtProperty;
+    using IoctlHelperXe::getEudebugExtPropertyValue;
+    using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::tileIdToGtId;
+};
 
 struct L0DebuggerLinuxFixture {
 
@@ -246,6 +252,100 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
         EXPECT_FALSE(result);
         EXPECT_FALSE(drmMock->registerClassesCalled);
     }
+}
+
+TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenHandleReturnedIncrementsEachTime) {
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    IsaDebugData::nextDebugDataMapHandle.store(0u);
+    NEO::DebugData debugData;
+    debugData.vIsa = "01234567890";
+    debugData.vIsaSize = 10;
+    auto handle = device->getL0Debugger()->registerElf(&debugData);
+    EXPECT_EQ(handle, 0u);
+    handle = device->getL0Debugger()->registerElf(&debugData);
+    EXPECT_EQ(handle, 1u);
+    handle = device->getL0Debugger()->registerElf(&debugData);
+    EXPECT_EQ(handle, 2u);
+    handle = device->getL0Debugger()->registerElf(&debugData);
+    EXPECT_EQ(handle, 3u);
+}
+
+TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerwhenRemoveZebinModulecalledThenIsaDebugDataMapHasEntryDeleted) {
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    uint32_t handle = 5;
+    EXPECT_EQ(drmMock->isaDebugDataMap.size(), 0u);
+    auto entry = drmMock->isaDebugDataMap[handle];
+    EXPECT_EQ(drmMock->isaDebugDataMap.size(), 1u);
+    EXPECT_EQ(drmMock->isaDebugDataMap.count(handle), 1u);
+    EXPECT_TRUE(device->getL0Debugger()->removeZebinModule(handle));
+    EXPECT_EQ(drmMock->isaDebugDataMap.size(), 0u);
+    EXPECT_EQ(drmMock->isaDebugDataMap.count(handle), 0u);
+}
+
+TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerwhenattachZebinModuleToSegmentAllocationscalledThenSegmentsHaveCorrectHandleSet) {
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
+    isaAllocation.bufferObjects[0] = &bo;
+
+    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
+    MockBufferObject bo2(rootDeviceIndex, drmMock, 3, 0, 0, 1);
+    isaAllocation2.bufferObjects[0] = &bo2;
+
+    uint32_t handle = 12;
+    const uint32_t elfHandle = 198;
+
+    StackVec<NEO::GraphicsAllocation *, 32> kernelAllocs;
+    kernelAllocs.push_back(&isaAllocation);
+    kernelAllocs.push_back(&isaAllocation2);
+
+    EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle, elfHandle));
+
+    auto boHandle = bo.getIsaDebugDataHandle();
+    auto bo2Handle = bo2.getIsaDebugDataHandle();
+    ASSERT_TRUE(boHandle.has_value());
+    ASSERT_TRUE(bo2Handle.has_value());
+    EXPECT_EQ(boHandle.value(), elfHandle);
+    EXPECT_EQ(bo2Handle.value(), elfHandle);
+    EXPECT_EQ(bo.getDrmResourceClass(), DrmResourceClass::isa);
+    EXPECT_EQ(bo2.getDrmResourceClass(), DrmResourceClass::isa);
+
+    EXPECT_EQ(drmMock->isaDebugDataMap.count(handle), 1u);
+    EXPECT_EQ(handle, elfHandle);
+}
+
+TEST_F(L0DebuggerLinuxTest, givenNullEntryWhenSetDrmResourceClassThenValidEntriesSet) {
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
+    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
+    isaAllocation.bufferObjects[0] = &bo;
+    isaAllocation.bufferObjects[1] = nullptr;
+
+    isaAllocation.setDrmResourceClass(DrmResourceClass::isa);
+    EXPECT_EQ(bo.resourceClass, DrmResourceClass::isa);
 }
 
 TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRegistersBindExtHandles) {

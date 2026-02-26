@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,14 @@
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <array>
 #include <atomic>
 #include <cstddef>
 #include <mutex>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -255,6 +257,22 @@ class BufferObject {
         return registeredBindHandleCookie;
     }
 
+    void setDrmResourceClass(DrmResourceClass resourceClassToSet) {
+        resourceClass = resourceClassToSet;
+    }
+
+    DrmResourceClass getDrmResourceClass() {
+        return resourceClass;
+    }
+
+    void setIsaDebugDataHandle(uint32_t handle) {
+        isaDebugDataHandle = handle;
+    }
+
+    std::optional<uint32_t> getIsaDebugDataHandle() {
+        return isaDebugDataHandle;
+    }
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
@@ -275,7 +293,9 @@ class BufferObject {
     std::vector<uint64_t> bindAddresses;
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
+    std::optional<uint32_t> isaDebugDataHandle;
     uint64_t registeredBindHandleCookie = 0;
+    DrmResourceClass resourceClass = DrmResourceClass::maxSize;
     BOType boType = BOType::legacy;
     std::atomic<uint32_t> refCount;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();

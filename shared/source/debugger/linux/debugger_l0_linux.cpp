@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/debugger/linux/debugger_xe.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -64,10 +65,16 @@ void DebuggerL0::registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO
 
 uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
     uint32_t handle = 0;
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+    if (!device->getRootDeviceEnvironment().osInterface.get()) {
+        return handle;
+    }
+    auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+    if (drm->getEuDebugInterfaceType() == EuDebugInterfaceType::upstream) {
+        handle = IsaDebugData::nextDebugDataMapHandle.fetch_add(1);
+    } else {
         handle = drm->registerResource(NEO::DrmResourceClass::elf, debugData->vIsa, debugData->vIsaSize);
     }
+
     return handle;
 }
 
@@ -75,16 +82,29 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
     if (device->getRootDeviceEnvironment().osInterface == nullptr) {
         return false;
     }
+
     auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
     uint32_t segmentCount = static_cast<uint32_t>(allocs.size());
-    moduleHandle = drm->registerResource(NEO::DrmResourceClass::l0ZebinModule, &segmentCount, sizeof(uint32_t));
+    if (drm->getEuDebugInterfaceType() == EuDebugInterfaceType::upstream) {
+        moduleHandle = elfHandle;
+        auto &isaDebugData = drm->isaDebugDataMap[elfHandle];
+        isaDebugData.totalSegments = segmentCount;
+        for (auto &allocation : allocs) {
+            auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+            drmAllocation->setIsaDebugDataHandle(elfHandle);
+            drmAllocation->setDrmResourceClass(DrmResourceClass::isa);
+        }
 
-    for (auto &allocation : allocs) {
-        auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+    } else {
+        moduleHandle = drm->registerResource(NEO::DrmResourceClass::l0ZebinModule, &segmentCount, sizeof(uint32_t));
 
-        DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::kernelIsaInternal);
-        drmAllocation->linkWithRegisteredHandle(elfHandle);
-        drmAllocation->linkWithRegisteredHandle(moduleHandle);
+        for (auto &allocation : allocs) {
+            auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+
+            DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::kernelIsaInternal);
+            drmAllocation->linkWithRegisteredHandle(elfHandle);
+            drmAllocation->linkWithRegisteredHandle(moduleHandle);
+        }
     }
 
     return true;
@@ -95,8 +115,12 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
         return false;
     }
     auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+    if (drm->getEuDebugInterfaceType() == EuDebugInterfaceType::upstream) {
+        drm->isaDebugDataMap.erase(moduleHandle);
+    } else {
+        drm->unregisterResource(moduleHandle);
+    }
 
-    drm->unregisterResource(moduleHandle);
     return true;
 }
 

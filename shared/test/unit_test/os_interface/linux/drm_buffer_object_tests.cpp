@@ -898,6 +898,52 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsWithForcePagingFenceWithD
     delete osContext;
 }
 
+TEST(DrmBufferObject, givenDebuggingEnabledWhenBindAndUnbindBufferObjectThenBindAddDebugDataCalled) {
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    class MockDrmDebugData : public DrmMock {
+      public:
+        MockDrmDebugData(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+
+        int bindAddDebugData(OsContext *osContext, BufferObject *bo, uint32_t vmHandleId, bool isAdd) override {
+            bindAddDebugDataCalled = true;
+            return 0;
+        }
+
+        bool bindAddDebugDataCalled = false;
+    };
+
+    auto drm = new MockDrmDebugData(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->requirePerContextVM = false;
+    drm->isVMBindImmediateSupported = true;
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
+    ioctlHelper->requiresUserFenceSetupResult = true;
+    drm->ioctlHelper.reset(ioctlHelper.release());
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+
+    auto &engines = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
+    auto osContextCount = engines.size();
+    auto contextId = osContextCount / 2;
+    auto osContext = engines[contextId].osContext;
+    MockBufferObject bo(device->getRootDeviceIndex(), drm, 3, 0, 0, osContextCount);
+    drm->bindBufferObject(osContext, 0, &bo, false);
+
+    EXPECT_TRUE(drm->bindAddDebugDataCalled);
+
+    drm->bindAddDebugDataCalled = false;
+    drm->unbindBufferObject(osContext, 0, &bo);
+    EXPECT_TRUE(drm->bindAddDebugDataCalled);
+}
+
 TEST(DrmBufferObject, givenDrmWhenUnBindOperationFailsThenFenceValueNotGrow) {
     auto executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

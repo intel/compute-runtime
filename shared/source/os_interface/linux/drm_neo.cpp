@@ -1731,17 +1731,64 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
     return ret;
 }
 
+int Drm::bindAddDebugData(OsContext *osContext, BufferObject *bo, uint32_t vmHandleId, bool isAdd) {
+    if (this->getEuDebugInterfaceType() != EuDebugInterfaceType::upstream) {
+        return 0;
+    }
+
+    auto vmId = getVirtualMemoryAddressSpace(vmHandleId);
+    if (isPerContextVMRequired()) {
+        auto osContextLinux = static_cast<const OsContextLinux *>(osContext);
+        UNRECOVERABLE_IF(osContextLinux->getDrmVmIds().size() <= vmHandleId);
+        vmId = osContextLinux->getDrmVmIds()[vmHandleId];
+    }
+
+    auto ioctlHelper = this->getIoctlHelper();
+    auto debugDataVec = ioctlHelper->addDebugDataAndCreateBindOpVec(bo, vmId, isAdd);
+    if (!debugDataVec.has_value()) {
+        return 0;
+    }
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+    if (isAdd) {
+        programUserFence(this, osContext, bo, vmBindExtUserFence, vmHandleId, 0u);
+    }
+
+    auto ret = ioctlHelper->bindAddDebugData(debugDataVec.value(), vmId, &vmBindExtUserFence, isAdd);
+
+    if (ret == 0 && isAdd) {
+        auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+        if (isPerContextVMRequired()) {
+            osContextLinux->incFenceVal(vmHandleId);
+        } else {
+            incFenceVal(vmHandleId);
+        }
+    }
+
+    return ret;
+}
+
 int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence) {
     auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     if (ret != 0) {
         static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
         ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     }
+    auto debuggingEnabled = getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if (debuggingEnabled && !ret) {
+        ret = this->bindAddDebugData(osContext, bo, vmHandleId, true);
+    }
+
     return ret;
 }
 
 int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false, false);
+    auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, false, false);
+    auto debuggingEnabled = getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if (debuggingEnabled && !ret) {
+        ret = this->bindAddDebugData(osContext, bo, vmHandleId, false);
+    }
+    return ret;
 }
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {

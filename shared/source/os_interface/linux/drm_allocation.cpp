@@ -400,6 +400,24 @@ void DrmAllocation::setAsReadOnly() {
     }
 }
 
+void DrmAllocation::setIsaDebugDataHandle(uint32_t handle) {
+    auto &bos = getBOs();
+    for (auto bo : bos) {
+        if (bo) {
+            bo->setIsaDebugDataHandle(handle);
+        }
+    }
+}
+
+void DrmAllocation::setDrmResourceClass(DrmResourceClass resourceClassToSet) {
+    auto &bos = getBOs();
+    for (auto bo : bos) {
+        if (bo) {
+            bo->setDrmResourceClass(resourceClassToSet);
+        }
+    }
+}
+
 void DrmAllocation::linkWithRegisteredHandle(uint32_t handle) {
     auto &bos = getBOs();
     for (auto bo : bos) {

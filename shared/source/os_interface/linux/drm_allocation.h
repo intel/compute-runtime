@@ -9,6 +9,7 @@
 #include "shared/source/device/sub_device_ids_vec.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
+#include "shared/source/os_interface/linux/drm_debug.h"
 
 namespace NEO {
 class BufferObject;
@@ -133,10 +134,13 @@ class DrmAllocation : public GraphicsAllocation {
     void addRegisteredBoBindHandle(uint32_t handle) { registeredBoBindHandles.push_back(handle); }
     void freeRegisteredBOBindExtHandles(Drm *drm);
     void linkWithRegisteredHandle(uint32_t handle);
+
     MOCKABLE_VIRTUAL void markForCapture();
     MOCKABLE_VIRTUAL bool shouldAllocationPageFault(const Drm *drm);
     void registerMemoryToUnmap(void *pointer, size_t size, MemoryUnmapFunction unmapFunction);
     void setAsReadOnly() override;
+    void setIsaDebugDataHandle(uint32_t handle);
+    void setDrmResourceClass(DrmResourceClass resourceClassToSet);
 
   protected:
     OsContextLinux *osContext = nullptr;

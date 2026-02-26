@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/debugger/linux/debugger_xe.h"
 #include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
@@ -275,6 +276,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL void setSharedSystemAllocAddressRange(uint64_t value) { this->sharedSystemAllocAddressRange = value; }
     MOCKABLE_VIRTUAL uint64_t getSharedSystemAllocAddressRange() const { return this->sharedSystemAllocAddressRange; }
     EuDebugInterfaceType getEuDebugInterfaceType();
+    std::unordered_map<uint32_t, IsaDebugData> isaDebugDataMap;
 
   protected:
     Drm() = delete;
@@ -292,6 +294,7 @@ class Drm : public DriverModel {
     bool queryDeviceIdAndRevision();
     MOCKABLE_VIRTUAL const DeviceDescriptor *getDeviceDescriptor(uint32_t deviceId);
     static uint64_t alignUpGttSize(uint64_t inputGttSize);
+    MOCKABLE_VIRTUAL int bindAddDebugData(OsContext *osContext, BufferObject *bo, uint32_t vmHandleId, bool isAdd);
 
 #pragma pack(1)
     struct PCIConfig {

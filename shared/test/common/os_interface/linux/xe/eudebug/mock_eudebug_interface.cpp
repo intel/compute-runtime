@@ -68,7 +68,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea);
         RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataSipArea);
         RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
-        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionsDebugDataName);
+        RETURN_AS_IS(EuDebugParam::vmBindOpExtensionDebugDataName);
     }
     return 0;
 }

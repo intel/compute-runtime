@@ -1932,17 +1932,29 @@ void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation)
         return;
     }
 
-    uint64_t gpuAddress = drmAllocation->getGpuAddress();
-    auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
-    drmAllocation->addRegisteredBoBindHandle(handle);
-    auto &bos = drmAllocation->getBOs();
-    for (auto bo : bos) {
-        if (!bo) {
-            continue;
+    if (euDebugInterface->getInterfaceType() == EuDebugInterfaceType::upstream) {
+        auto &bos = drmAllocation->getBOs();
+        for (auto bo : bos) {
+            if (!bo) {
+                continue;
+            }
+            bo->setDrmResourceClass(resourceClass);
+            bo->markForCapture();
+            bo->requireImmediateBinding(true);
         }
-        bo->addBindExtHandle(handle);
-        bo->markForCapture();
-        bo->requireImmediateBinding(true);
+    } else {
+        uint64_t gpuAddress = drmAllocation->getGpuAddress();
+        auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        drmAllocation->addRegisteredBoBindHandle(handle);
+        auto &bos = drmAllocation->getBOs();
+        for (auto bo : bos) {
+            if (!bo) {
+                continue;
+            }
+            bo->addBindExtHandle(handle);
+            bo->markForCapture();
+            bo->requireImmediateBinding(true);
+        }
     }
 }
 

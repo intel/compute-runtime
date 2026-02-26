@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ using namespace NEO;
 
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
+    using IoctlHelperXe::convertDrmResourceClassToXeDebugPseudoPath;
     using IoctlHelperXe::euDebugInterface;
     using IoctlHelperXe::getEudebugExtProperty;
     using IoctlHelperXe::getEudebugExtPropertyValue;
@@ -45,6 +46,9 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 
 struct DrmMockXeDebug : public DrmMockCustom {
     using Drm::engineInfo;
+    using Drm::fenceVal;
+    using Drm::pagingFence;
+    using Drm::requirePerContextVM;
 
     static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
         auto drm = std::unique_ptr<DrmMockXeDebug>(new DrmMockXeDebug{rootDeviceEnvironment});
@@ -158,7 +162,41 @@ struct DrmMockXeDebug : public DrmMockCustom {
         }
         switch (request) {
         case DrmIoctl::gemVmBind: {
-            return 0;
+            // save the input for later verification in tests
+            gemVmBindInput = *static_cast<drm_xe_vm_bind *>(arg);
+            auto drmSyncs = reinterpret_cast<drm_xe_sync *>(gemVmBindInput.syncs);
+            if (gemVmBindInput.num_syncs > 0) {
+                gemVmBindSyncs = std::make_unique<drm_xe_sync[]>(gemVmBindInput.num_syncs);
+                memcpy(gemVmBindSyncs.get(), drmSyncs, sizeof(drm_xe_sync) * gemVmBindInput.num_syncs);
+                gemVmBindInput.syncs = reinterpret_cast<uint64_t>(gemVmBindSyncs.get());
+            }
+
+            if (gemVmBindInput.num_binds > 1) {
+                auto drmBindOps = reinterpret_cast<drm_xe_vm_bind_op *>(gemVmBindInput.vector_of_binds);
+                gemVmBindOps = std::make_unique<drm_xe_vm_bind_op[]>(gemVmBindInput.num_binds);
+                memcpy(gemVmBindOps.get(), drmBindOps, sizeof(drm_xe_vm_bind_op) * gemVmBindInput.num_binds);
+                gemVmBindInput.vector_of_binds = reinterpret_cast<uint64_t>(gemVmBindOps.get());
+
+                gemVmBindDebugData = std::make_unique<VmBindOpExtDebugData[]>(gemVmBindInput.num_binds);
+                for (uint32_t i = 0; i < gemVmBindInput.num_binds; i++) {
+                    auto &bindOp = gemVmBindOps[i];
+                    if (bindOp.op == 0x5 || bindOp.op == 0x6) { // DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA or DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA
+                        auto drmBindDebugData = reinterpret_cast<VmBindOpExtDebugData *>(bindOp.extensions);
+                        memcpy(&gemVmBindDebugData[i], drmBindDebugData, sizeof(VmBindOpExtDebugData));
+                        bindOp.extensions = reinterpret_cast<uint64_t>(&gemVmBindDebugData[i]);
+                    }
+                }
+            } else {
+                auto &bindOp = gemVmBindInput.bind;
+                if (bindOp.op == 0x5 || bindOp.op == 0x6) { // DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA or DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA
+                    auto drmBindDebugData = reinterpret_cast<VmBindOpExtDebugData *>(bindOp.extensions);
+                    gemVmBindDebugData = std::make_unique<VmBindOpExtDebugData[]>(1);
+                    memcpy(gemVmBindDebugData.get(), drmBindDebugData, sizeof(VmBindOpExtDebugData));
+                    bindOp.extensions = reinterpret_cast<uint64_t>(gemVmBindDebugData.get());
+                }
+            }
+            gemVmBindCalled = true;
+            return gemVmBindReturn;
         } break;
         case DrmIoctl::query: {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
@@ -297,6 +335,12 @@ struct DrmMockXeDebug : public DrmMockCustom {
     static constexpr uint32_t mockTimestampFrequency = 12500000;
     uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
     static constexpr int32_t mockMaxExecQueuePriority = 3;
+
+    bool gemVmBindCalled = false;
+    drm_xe_vm_bind gemVmBindInput = {};
+    std::unique_ptr<drm_xe_sync[]> gemVmBindSyncs = nullptr;
+    std::unique_ptr<drm_xe_vm_bind_op[]> gemVmBindOps = nullptr;
+    std::unique_ptr<VmBindOpExtDebugData[]> gemVmBindDebugData = nullptr;
 
   protected:
     // Don't call directly, use the create() function

@@ -55,7 +55,7 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSipArea));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsRemoveDebugData));
-    EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataName));
+    EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionDebugDataName));
 }
 
 TEST(EuDebugInterfacePrelimTest, whenGettingInterfaceTypeThenPrelimIsReturned) {

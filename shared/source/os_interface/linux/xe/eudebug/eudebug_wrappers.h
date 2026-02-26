@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "limits.h"
-
 #include <cstdint>
 #include <linux/limits.h>
 namespace NEO {
@@ -259,6 +257,6 @@ enum class EuDebugParam {
     vmBindOpExtensionsDebugDataSbaArea,
     vmBindOpExtensionsDebugDataSipArea,
     vmBindOpExtensionsDebugDataPseudoFlag,
-    vmBindOpExtensionsDebugDataName
+    vmBindOpExtensionDebugDataName
 };
 } // namespace NEO

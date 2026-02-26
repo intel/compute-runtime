@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,11 @@ class MockBufferObject : public BufferObject {
     using BufferObject::bindExtHandles;
     using BufferObject::bindInfo;
     using BufferObject::BufferObject;
+    using BufferObject::gpuAddress;
     using BufferObject::handle;
+    using BufferObject::isaDebugDataHandle;
+    using BufferObject::resourceClass;
+    using BufferObject::size;
 
     struct ExecParams {
         uint64_t completionGpuAddress = 0;

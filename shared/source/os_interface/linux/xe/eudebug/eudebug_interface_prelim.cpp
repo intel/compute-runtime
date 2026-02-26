@@ -99,7 +99,7 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return 0;
     case EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag:
         return 0;
-    case EuDebugParam::vmBindOpExtensionsDebugDataName:
+    case EuDebugParam::vmBindOpExtensionDebugDataName:
         return 0;
     default:
         return getAdditionalParamValue(param);

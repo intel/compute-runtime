@@ -17,6 +17,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_data_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_bindless_heap_tests.cpp
@@ -95,6 +96,7 @@ endif()
 if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_tests.cpp
+       #${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_data_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp

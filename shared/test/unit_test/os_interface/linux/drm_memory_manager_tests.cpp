@@ -5531,6 +5531,21 @@ TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForCachedType
     EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
 }
 
+TEST_F(DrmAllocationTests, givenUpstreamDebuggerWhenSetIsaDebugDataHandleCalledThenHandleIsSetAndReturnedCorrectly) {
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.bufferObjects[1] = nullptr;
+
+    uint32_t isaDebugDataHandle = 0x1234;
+    allocation.setIsaDebugDataHandle(isaDebugDataHandle);
+    EXPECT_EQ(isaDebugDataHandle, bo.isaDebugDataHandle);
+
+    EXPECT_EQ(isaDebugDataHandle, bo.getIsaDebugDataHandle());
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();

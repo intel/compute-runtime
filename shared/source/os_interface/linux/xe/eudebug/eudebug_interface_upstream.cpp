@@ -104,7 +104,7 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA;
     case EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag:
         return DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO;
-    case EuDebugParam::vmBindOpExtensionsDebugDataName:
+    case EuDebugParam::vmBindOpExtensionDebugDataName:
         return XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA;
     }
     return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,18 @@ void IoctlHelperXe::unregisterResource(uint32_t handle) {
 
 std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) {
     return {};
+}
+
+std::optional<std::vector<VmBindOpExtDebugData>> IoctlHelperXe::addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) {
+    return std::nullopt;
+}
+
+int IoctlHelperXe::bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) {
+    UNRECOVERABLE_IF(true);
+}
+
+uint64_t IoctlHelperXe::convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass resourceClass) {
+    UNRECOVERABLE_IF(true);
 }
 
 } // namespace NEO

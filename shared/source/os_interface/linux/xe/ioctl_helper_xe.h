@@ -147,6 +147,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
     EuDebugInterfaceType getEuDebugInterfaceType() override;
+    int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) override;
+    std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
@@ -169,6 +171,7 @@ class IoctlHelperXe : public IoctlHelper {
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
     int getEudebugExtProperty();
     uint64_t getEudebugExtPropertyValue();
+    uint64_t convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass resourceClass);
     virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
     virtual bool isMediaGt(uint16_t gtType) const;
     virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut){};

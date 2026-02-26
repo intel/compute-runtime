@@ -8,6 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -18,6 +19,7 @@
 #include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -373,6 +375,9 @@ TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsTileInstancedThenBOCook
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
 
     drm.ioctlHelper.reset(xeIoctlHelper.release());
 
@@ -385,11 +390,555 @@ TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsTileInstancedThenBOCook
     EXPECT_EQ(bo.getRegisteredBindHandleCookie(), allocation.storageInfo.subDeviceBitfield.to_ulong());
 }
 
+class IoctlHelperXeDebugDataTest : public Test<XeConfigFixture> {
+  public:
+    void SetUp() override {
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    }
+    const uint32_t rootDeviceIndex = 0u;
+    std::unique_ptr<DrmMockXeDebug> drm;
+    MockIoctlHelperXeDebug *xeIoctlHelper = nullptr;
+};
+
+TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenRegisterBOBindHandleCalledWithEmptyBOTheValidBOIsRegistered) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+
+    MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = nullptr;
+    allocation.bufferObjects[1] = &bo;
+    allocation.registerBOBindExtHandle(drm.get());
+
+    EXPECT_EQ(bo.getDrmResourceClass(), DrmResourceClass::contextSaveArea);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenPseudoClassesWhenCallingConvertDrmResourceClassToXeDebugPseudoPathThenCorrectPseudoPathReturned) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    EXPECT_EQ(0x1u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::moduleHeapDebugArea));
+    EXPECT_EQ(0x2u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::sbaTrackingBuffer));
+    EXPECT_EQ(0x3u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::contextSaveArea));
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenNonPseudoClassesWhenCallingConvertDrmResourceClassToXeDebugPseudoPathThenZeroPseudoPathReturned) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+
+    EXPECT_EQ(0x0u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::elf));
+    EXPECT_EQ(0x0u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::isa));
+    EXPECT_EQ(0x0u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::contextID));
+    EXPECT_EQ(0x0u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::l0ZebinModule));
+    EXPECT_EQ(0x0u, xeIoctlHelper->convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass::cookie));
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenAddDebugDataAndCreateBindOpVecCalledThenVectorWithDebugDataReturned) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint32_t vmId = 1;
+    auto isAdd = false;
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x1234;
+        bo.size = 0x1000;
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+        EXPECT_EQ(debugData.pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSipArea));
+        EXPECT_EQ(debugData.addr, 0x1234u);
+        EXPECT_EQ(debugData.range, 0x1000u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x2345;
+        bo.size = 0x1001;
+
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+        EXPECT_EQ(debugData.pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea));
+        EXPECT_EQ(debugData.addr, 0x2345u);
+        EXPECT_EQ(debugData.range, 0x1001u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x3456;
+        bo.size = 0x1002;
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+        EXPECT_EQ(debugData.pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+        EXPECT_EQ(debugData.addr, 0x3456u);
+        EXPECT_EQ(debugData.range, 0x1002u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenIsaClassWhenAddDebugDataAndCreateBindOpVecCalledThenVectorWithDebugDataReturnedAndEntryAddedToBindInfoMap) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint32_t vmId = 1;
+    auto isAdd = true;
+    uint32_t isaDebugDataHandle = 0x5678;
+
+    MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    bo.gpuAddress = 0x1234;
+    bo.size = 0x1000;
+    MockBufferObject bo2(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    bo2.gpuAddress = 0x5678;
+    bo2.size = 0x1000;
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(drm.get());
+    allocation.setDrmResourceClass(DrmResourceClass::isa);
+
+    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation2.bufferObjects[0] = &bo2;
+    allocation2.registerBOBindExtHandle(drm.get());
+    allocation2.setDrmResourceClass(DrmResourceClass::isa);
+
+    bo.isaDebugDataHandle = isaDebugDataHandle;
+    bo2.isaDebugDataHandle = isaDebugDataHandle;
+
+    struct IsaDebugData isaDebugData {};
+    isaDebugData.totalSegments = 2;
+    strcpy_s(isaDebugData.elfPath, sizeof(isaDebugData.elfPath), "mockElfPath");
+
+    drm->isaDebugDataMap[isaDebugDataHandle] = isaDebugData;
+
+    auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+    EXPECT_EQ(1u, drm->isaDebugDataMap[isaDebugDataHandle].bindInfoMap[vmId].size());
+    EXPECT_EQ(std::nullopt, result);
+
+    result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo2, vmId, isAdd);
+    EXPECT_EQ(2u, drm->isaDebugDataMap[isaDebugDataHandle].bindInfoMap[vmId].size());
+    EXPECT_NE(std::nullopt, result);
+
+    EXPECT_EQ(2u, result.value().size());
+    auto data1 = result.value()[0];
+    auto data2 = result.value()[1];
+
+    EXPECT_EQ(data1.base.name, 0u);
+    EXPECT_EQ(data1.base.nextExtension, 0u);
+    EXPECT_EQ(data1.flags, 0u);
+    EXPECT_STREQ(data1.pathname, "mockElfPath");
+    EXPECT_EQ(data1.addr, bo.gpuAddress);
+    EXPECT_EQ(data1.range, bo.size);
+    EXPECT_EQ(data1.offset, 0u);
+
+    EXPECT_EQ(data2.base.name, 0u);
+    EXPECT_EQ(data2.base.nextExtension, 0u);
+    EXPECT_EQ(data2.flags, 0u);
+    EXPECT_STREQ(data2.pathname, "mockElfPath");
+    EXPECT_EQ(data2.addr, bo2.gpuAddress);
+    EXPECT_EQ(data2.range, bo2.size);
+    EXPECT_EQ(data2.offset, 0u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenSingleIsaWhenAddDebugDataAndCreateBindOpVecCalledWithNotAddThenNulloptReturned) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint32_t vmId = 1;
+    auto isAdd = false;
+    uint32_t isaDebugDataHandle = 0x5678;
+
+    MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    bo.gpuAddress = 0x1234;
+    bo.size = 0x1000;
+    MockBufferObject bo2(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    bo2.gpuAddress = 0x1234;
+    bo2.size = 0x100;
+    MockBufferObject bo3(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    bo3.gpuAddress = 0x5678;
+    bo3.size = 0x1000;
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.bufferObjects[1] = &bo2;
+    allocation.bufferObjects[2] = &bo3;
+    allocation.registerBOBindExtHandle(drm.get());
+    allocation.setDrmResourceClass(DrmResourceClass::isa);
+
+    bo.isaDebugDataHandle = isaDebugDataHandle;
+    bo2.isaDebugDataHandle = isaDebugDataHandle;
+    bo3.isaDebugDataHandle = isaDebugDataHandle;
+
+    struct IsaDebugData isaDebugData {};
+    isaDebugData.totalSegments = 3;
+    strcpy_s(isaDebugData.elfPath, sizeof(isaDebugData.elfPath), "mockElfPath");
+    std::vector<IsaDebugData::DebugDataBindInfo> bindInfoVec({{bo.gpuAddress, bo.size}, {bo2.gpuAddress, bo2.size}, {bo3.gpuAddress, bo3.size}});
+    isaDebugData.bindInfoMap[vmId] = bindInfoVec;
+
+    drm->isaDebugDataMap[isaDebugDataHandle] = isaDebugData;
+
+    auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+    EXPECT_NE(std::nullopt, result);
+    EXPECT_EQ(3u, result.value().size());
+    auto data1 = result.value()[0];
+    auto data2 = result.value()[1];
+    auto data3 = result.value()[2];
+
+    EXPECT_EQ(data1.base.name, 0u);
+    EXPECT_EQ(data1.base.nextExtension, 0u);
+    EXPECT_EQ(data1.flags, 0u);
+    EXPECT_STREQ(data1.pathname, "mockElfPath");
+    EXPECT_EQ(data1.addr, bo.gpuAddress);
+    EXPECT_EQ(data1.range, bo.size);
+    EXPECT_EQ(data1.offset, 0u);
+
+    EXPECT_EQ(data2.base.name, 0u);
+    EXPECT_EQ(data2.base.nextExtension, 0u);
+    EXPECT_EQ(data2.flags, 0u);
+    EXPECT_STREQ(data2.pathname, "mockElfPath");
+    EXPECT_EQ(data2.addr, bo2.gpuAddress);
+    EXPECT_EQ(data2.range, bo2.size);
+    EXPECT_EQ(data2.offset, 0u);
+
+    EXPECT_EQ(data3.base.name, 0u);
+    EXPECT_EQ(data3.base.nextExtension, 0u);
+    EXPECT_EQ(data3.flags, 0u);
+    EXPECT_STREQ(data3.pathname, "mockElfPath");
+    EXPECT_EQ(data3.addr, bo3.gpuAddress);
+    EXPECT_EQ(data3.range, bo3.size);
+    EXPECT_EQ(data3.offset, 0u);
+
+    // 1 less entry expected since bo is removed
+    EXPECT_EQ(2u, drm->isaDebugDataMap[isaDebugDataHandle].bindInfoMap[vmId].size());
+
+    result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo2, vmId, isAdd);
+    EXPECT_EQ(std::nullopt, result);
+    EXPECT_EQ(1u, drm->isaDebugDataMap[isaDebugDataHandle].bindInfoMap[vmId].size());
+
+    result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo3, vmId, isAdd);
+    EXPECT_EQ(std::nullopt, result);
+    EXPECT_EQ(0u, drm->isaDebugDataMap[isaDebugDataHandle].bindInfoMap[vmId].size());
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenInvalidResourceClassWhenAddDebugDataAndCreateBindOpVecThenNulloptReturnedAndNoEntryAddedToBindInfoMap) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint32_t vmId = 1;
+    MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(drm.get());
+
+    EXPECT_EQ(std::nullopt, xeIoctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, false));
+    EXPECT_EQ(0u, drm->isaDebugDataMap.size());
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenPseudoDebugDataWhenCallbindAddDebugDataThenBindSucceedsAndIoctlCalledWithProperArguments) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+    debugData.pseudopath = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea);
+    debugDataVec.push_back(debugData);
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, true);
+
+    EXPECT_EQ(retVal, 0);
+
+    auto bind = drm->gemVmBindInput;
+
+    EXPECT_EQ(bind.vm_id, 1u);
+    EXPECT_EQ(bind.num_binds, 1u);
+    EXPECT_EQ(bind.num_syncs, 1u);
+
+    auto &drmSyncs = drm->gemVmBindSyncs;
+    EXPECT_EQ(drmSyncs[0].type, static_cast<uint32_t>(DRM_XE_SYNC_TYPE_USER_FENCE));
+    EXPECT_EQ(drmSyncs[0].addr, 0x4321u);
+    EXPECT_EQ(drmSyncs[0].flags, static_cast<uint32_t>(DRM_XE_SYNC_FLAG_SIGNAL));
+    EXPECT_EQ(drmSyncs[0].timeline_value, 0x789u);
+
+    EXPECT_EQ(bind.pad, 0u);
+    EXPECT_EQ(bind.pad2, 0u);
+
+    // drm_xe_vm_bind_op
+    EXPECT_EQ(bind.bind.pad, 0u);
+    EXPECT_EQ(bind.bind.addr, 0u);
+    EXPECT_EQ(bind.bind.range, 0u);
+    EXPECT_EQ(bind.bind.flags, 0u);
+
+    EXPECT_EQ(bind.bind.op, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
+
+    auto bindDebugData = drm->gemVmBindDebugData.get();
+    EXPECT_EQ(bindDebugData->base.name, 0u);
+    EXPECT_EQ(bindDebugData->base.nextExtension, 0u);
+    EXPECT_EQ(bindDebugData->base.pad, 0u);
+    EXPECT_EQ(bindDebugData->addr, 0x1234u);
+    EXPECT_EQ(bindDebugData->range, 0x1000u);
+    EXPECT_EQ(bindDebugData->flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(bindDebugData->pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 1u);
+    auto fenceData = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(fenceData.addr, 0x4321u);
+    EXPECT_EQ(fenceData.value, 0x789u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenNonPseudoDebugDataWhenCallbindAddDebugDataThenBindSucceedsAndDebugDataSetCorrectlyAndFenceSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = 0;
+    debugData.pseudopath = 0;
+    debugDataVec.push_back(debugData);
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, true);
+    EXPECT_EQ(retVal, 0);
+
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 1u);
+    auto fenceData = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(fenceData.addr, 0x4321u);
+    EXPECT_EQ(fenceData.value, 0x789u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenNonPseudoDebugDataWhenCallbindAddDebugDataWithNotAddThenBindSucceedsAndDebugDataSetCorrectlyAndFenceNotSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    drm->waitUserFenceInputs.clear();
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = 0;
+    debugData.pseudopath = 0;
+    debugDataVec.push_back(debugData);
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, false);
+    EXPECT_EQ(retVal, 0);
+
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 0u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenPseudoDebugDataWhenCallbindAddDebugDataWithNotAddThenBindSucceedsAndFenceNotSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+    debugData.pseudopath = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea);
+    debugDataVec.push_back(debugData);
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, false);
+    EXPECT_EQ(retVal, 0);
+
+    auto bind = drm->gemVmBindInput;
+    EXPECT_EQ(bind.vm_id, 1u);
+    EXPECT_EQ(bind.num_binds, 1u);
+    EXPECT_EQ(bind.num_syncs, 0u);
+
+    EXPECT_EQ(bind.pad, 0u);
+    EXPECT_EQ(bind.pad2, 0u);
+
+    // drm_xe_vm_bind_op
+    EXPECT_EQ(bind.bind.pad, 0u);
+    EXPECT_EQ(bind.bind.addr, 0u);
+    EXPECT_EQ(bind.bind.range, 0u);
+    EXPECT_EQ(bind.bind.flags, 0u);
+
+    EXPECT_EQ(bind.bind.op, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsRemoveDebugData));
+
+    auto bindDebugData = drm->gemVmBindDebugData.get();
+    EXPECT_EQ(bindDebugData->base.name, 0u);
+    EXPECT_EQ(bindDebugData->base.nextExtension, 0u);
+    EXPECT_EQ(bindDebugData->base.pad, 0u);
+    EXPECT_EQ(bindDebugData->addr, 0x1234u);
+    EXPECT_EQ(bindDebugData->range, 0x1000u);
+    EXPECT_EQ(bindDebugData->flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(bindDebugData->pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 0u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenMultiplePseudoDebugDataWhenCallbindAddDebugDataThenVectorOfBindsSetAndDataCorrectForEachBindAndFenceSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+    debugData.pseudopath = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea);
+
+    VmBindOpExtDebugData debugData2{};
+    debugData2.base.name = 0;
+    debugData2.base.nextExtension = 0;
+    debugData2.base.pad = 0;
+    debugData2.addr = 0x5678;
+    debugData2.range = 0x1000;
+    debugData2.flags = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+    debugData2.pseudopath = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea);
+
+    debugDataVec.push_back(debugData);
+    debugDataVec.push_back(debugData2);
+
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, true);
+    EXPECT_EQ(retVal, 0);
+
+    auto bind = drm->gemVmBindInput;
+    EXPECT_EQ(bind.vm_id, 1u);
+    EXPECT_EQ(bind.num_binds, 2u);
+    EXPECT_EQ(bind.num_syncs, 1u);
+
+    auto &drmSyncs = drm->gemVmBindSyncs;
+    EXPECT_EQ(drmSyncs[0].type, static_cast<uint32_t>(DRM_XE_SYNC_TYPE_USER_FENCE));
+    EXPECT_EQ(drmSyncs[0].addr, 0x4321u);
+    EXPECT_EQ(drmSyncs[0].flags, static_cast<uint32_t>(DRM_XE_SYNC_FLAG_SIGNAL));
+    EXPECT_EQ(drmSyncs[0].timeline_value, 0x789u);
+
+    EXPECT_EQ(bind.pad, 0u);
+    EXPECT_EQ(bind.pad2, 0u);
+
+    // drm_xe_vm_bind_op
+    auto binds = reinterpret_cast<drm_xe_vm_bind_op *>(bind.vector_of_binds);
+    EXPECT_EQ(binds[0].op, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
+    EXPECT_EQ(binds[1].op, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
+
+    auto bindDebugData = drm->gemVmBindDebugData.get();
+    EXPECT_EQ(bindDebugData->base.name, 0u);
+    EXPECT_EQ(bindDebugData->base.nextExtension, 0u);
+    EXPECT_EQ(bindDebugData->base.pad, 0u);
+    EXPECT_EQ(bindDebugData->addr, 0x1234u);
+    EXPECT_EQ(bindDebugData->range, 0x1000u);
+    EXPECT_EQ(bindDebugData->flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(bindDebugData->pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+
+    auto bindDebugData2 = bindDebugData + 1;
+    EXPECT_EQ(bindDebugData2->base.name, 0u);
+    EXPECT_EQ(bindDebugData2->base.nextExtension, 0u);
+    EXPECT_EQ(bindDebugData2->base.pad, 0u);
+    EXPECT_EQ(bindDebugData2->addr, 0x5678u);
+    EXPECT_EQ(bindDebugData2->range, 0x1000u);
+    EXPECT_EQ(bindDebugData2->flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(bindDebugData2->pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea));
+
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 1u);
+    auto fenceData = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(fenceData.addr, 0x4321u);
+    EXPECT_EQ(fenceData.value, 0x789u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenIoctlFailsWhenCallbindAddDebugDataThenBindFailsAndFenceNotSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    drm->waitUserFenceInputs.clear();
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+    debugData.pseudopath = 0x1;
+    debugDataVec.push_back(debugData);
+
+    drm->gemVmBindReturn = -1;
+    auto retVal = xeIoctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, true);
+    EXPECT_NE(retVal, 0);
+
+    EXPECT_TRUE(drm->gemVmBindCalled);
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 0u);
+}
+
 TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsNotTileInstancedThenBOCookieNotSet) {
     const uint32_t rootDeviceIndex = 0u;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
 
     drm.ioctlHelper.reset(xeIoctlHelper.release());
 
@@ -406,6 +955,9 @@ TEST_F(IoctlHelperXeTest, givenResourceRegistrationEnabledWhenAllocationTypeShou
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
 
     drm.ioctlHelper.reset(xeIoctlHelper.release());
 
@@ -522,4 +1074,75 @@ TEST_F(IoctlHelperXeTest, whenGettingEuDEbugInterfaceTypeThenCorrectValueReturne
     EXPECT_EQ(xeIoctlHelper->getEuDebugInterfaceType(), EuDebugInterfaceType::prelim);
     static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
     EXPECT_EQ(xeIoctlHelper->getEuDebugInterfaceType(), EuDebugInterfaceType::upstream);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenPrelimIoctlHelperWhenBindAddDebugDataCalledThenReturnZeroAndIoctlNotCalledNorFenceSet) {
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    uint32_t vmId = 1;
+    VmBindExtUserFenceT userFence{};
+    ioctlHelper->fillVmBindExtUserFence(userFence, fenceAddress, fenceValue, 0);
+    std::vector<VmBindOpExtDebugData> debugDataVec;
+    VmBindOpExtDebugData debugData{};
+    debugData.base.name = 0;
+    debugData.base.nextExtension = 0;
+    debugData.base.pad = 0;
+    debugData.addr = 0x1234;
+    debugData.range = 0x1000;
+    debugData.flags = 0;
+    debugData.pseudopath = 0;
+    debugDataVec.push_back(debugData);
+    auto retVal = ioctlHelper->bindAddDebugData(debugDataVec, vmId, &userFence, true);
+    EXPECT_EQ(retVal, 0);
+
+    EXPECT_FALSE(drm->gemVmBindCalled);
+    EXPECT_EQ(drm->waitUserFenceInputs.size(), 0u);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenPrelimIoctlHelperWhenAddDebugDataAndCreateBindOpVecThenNulloptReturned) {
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
+
+    uint32_t vmId = 1;
+    auto isAdd = false;
+    MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(drm.get());
+
+    auto result = ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+    EXPECT_EQ(std::nullopt, result);
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenRegisterBOBindHandleCalledThenResourceClassIsSet) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        EXPECT_EQ(bo.getDrmResourceClass(), DrmResourceClass::contextSaveArea);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        EXPECT_EQ(bo.getDrmResourceClass(), DrmResourceClass::sbaTrackingBuffer);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        EXPECT_EQ(bo.getDrmResourceClass(), DrmResourceClass::moduleHeapDebugArea);
+    }
 }
