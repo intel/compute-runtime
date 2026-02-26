@@ -8,10 +8,11 @@
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_test_hw_helper.h"
 
 #include <array>
+#include <cstdio>
 namespace L0 {
 namespace ult {
 
-void IpSamplingTestProductHelper::getMetricCount(PRODUCT_FAMILY productFamily, uint32_t &metricCount) {
+void IpSamplingTestProductHelper::getExpectedMetricCount(PRODUCT_FAMILY productFamily, uint32_t &metricCount) {
     if (productFamily == IGFX_PVC) {
         metricCount = metricCountXe;
         return;
@@ -22,7 +23,7 @@ void IpSamplingTestProductHelper::getMetricCount(PRODUCT_FAMILY productFamily, u
     metricCount = 0U;
 }
 
-void IpSamplingTestProductHelper::getMetricsProperties(PRODUCT_FAMILY productFamily, std::vector<IpSamplingTestProductHelper::MetricProperties> &metricsProperties) {
+void IpSamplingTestProductHelper::getExpectedMetricsProperties(PRODUCT_FAMILY productFamily, std::vector<IpSamplingTestProductHelper::MetricProperties> &metricsProperties) {
     if (productFamily == IGFX_PVC) {
         metricsProperties = metricsXe;
         return;
@@ -115,16 +116,63 @@ void IpSamplingTestProductHelper::rawElementsToRawReports(PRODUCT_FAMILY product
     rawReports = nullptr;
 }
 
-void IpSamplingTestProductHelper::getExpectedCalculateResults(PRODUCT_FAMILY productFamily, std::vector<zet_typed_value_t> &expectedMetricValues) {
-    if (productFamily == IGFX_PVC) {
-        expectedMetricValues = expectedMetricValuesXe;
-        return;
-    } else if (productFamily >= IGFX_BMG) {
-        expectedMetricValues = expectedMetricValuesXe2AndLater;
+void IpSamplingTestProductHelper::getExpectedCalculateResults(PRODUCT_FAMILY productFamily, CalculationResultType resultsType, std::vector<uint64_t> &expectedMetricValues) {
+    uint32_t metricCount = 0;
+    getExpectedMetricCount(productFamily, metricCount);
+    uint32_t scopesCount = 0;
+    getExpectedRootDeviceMetricScopeCount(productFamily, scopesCount);
+
+    expectedMetricValues.clear();
+
+    // Three IPs, as defined by numperIpsInRawData: 1, 10 and 100
+    if (resultsType == CalculationResultType::Legacy) {
+        // IP 1, expected result is 11 for all metrics
+        expectedMetricValues.push_back(1);
+        expectedMetricValues.insert(expectedMetricValues.end(), metricCount - 1 /* don't count the IP */, 11);
+        // IP 10, expected result is 110 for all metrics
+        expectedMetricValues.push_back(10);
+        expectedMetricValues.insert(expectedMetricValues.end(), metricCount - 1, 110);
+        // IP 100, expected result is 210 for all metrics
+        expectedMetricValues.push_back(100);
+        expectedMetricValues.insert(expectedMetricValues.end(), metricCount - 1, 210);
+    } else if (resultsType == CalculationResultType::ScopeOddMetrics) {
+        // result report will include only the odd metrics for all the scopes available
+        if ((productFamily >= IGFX_PVC) && (productFamily <= IGFX_CRI)) {
+            expectedMetricValues.insert(expectedMetricValues.end(), metricCount / 2 * scopesCount, 11);
+            expectedMetricValues.insert(expectedMetricValues.end(), metricCount / 2 * scopesCount, 110);
+            expectedMetricValues.insert(expectedMetricValues.end(), metricCount / 2 * scopesCount, 210);
+        }
+    }
+}
+
+void IpSamplingTestProductHelper::getExpectedRootDeviceMetricScopeCount(PRODUCT_FAMILY productFamily, uint32_t &metricScopeCount) {
+    if ((productFamily >= IGFX_PVC) && (productFamily <= IGFX_CRI)) {
+        metricScopeCount = rootDevMetricScopesCountXe2Xe3p;
         return;
     }
+    metricScopeCount = 0U;
+}
 
-    expectedMetricValues = {};
+void IpSamplingTestProductHelper::getExpectedRootDeviceMetricScopeProperties(PRODUCT_FAMILY productFamily, std::vector<zet_intel_metric_scope_properties_exp_t> &metricsScopesProperties) {
+    if ((productFamily >= IGFX_PVC) && (productFamily <= IGFX_CRI)) {
+        const std::string computeScopeName0 = std::string(computeScopeNamePrefix) + std::to_string(0);               // Sub-device 0
+        const std::string computeScopeDescription0 = std::string(computeScopeDescriptionPrefix) + std::to_string(0); // Sub-device 0
+        const std::string computeScopeName1 = std::string(computeScopeNamePrefix) + std::to_string(1);               // Sub-device 1
+        const std::string computeScopeDescription1 = std::string(computeScopeDescriptionPrefix) + std::to_string(1); // Sub-device 1
+
+        zet_intel_metric_scope_properties_exp_t metricScopePropertiesSubDevice0 = {ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP, nullptr, 0, {}, {}};
+        zet_intel_metric_scope_properties_exp_t metricScopePropertiesSubDevice1 = {ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP, nullptr, 1, {}, {}};
+
+        std::snprintf(metricScopePropertiesSubDevice0.name, sizeof(metricScopePropertiesSubDevice0.name), "%s", computeScopeName0.c_str());
+        std::snprintf(metricScopePropertiesSubDevice0.description, sizeof(metricScopePropertiesSubDevice0.description), "%s", computeScopeDescription0.c_str());
+
+        std::snprintf(metricScopePropertiesSubDevice1.name, sizeof(metricScopePropertiesSubDevice1.name), "%s", computeScopeName1.c_str());
+        std::snprintf(metricScopePropertiesSubDevice1.description, sizeof(metricScopePropertiesSubDevice1.description), "%s", computeScopeDescription1.c_str());
+
+        metricsScopesProperties = {metricScopePropertiesSubDevice0, metricScopePropertiesSubDevice1};
+        return;
+    }
+    metricsScopesProperties = {};
 }
 
 } // namespace ult

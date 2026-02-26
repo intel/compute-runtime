@@ -65,8 +65,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingAvailableWhenCreateMet
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenValidMetricGroupIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-
+    for (auto device : rootOneSubDev) {
         uint32_t metricGroupCount = 0;
         EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupCount, 1u);
@@ -85,8 +84,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetr
         osInterface->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    for (auto device : testDevices) {
-
+    for (auto device : rootOneSubDev) {
         uint32_t metricGroupCount = 0;
         EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         EXPECT_EQ(metricGroupCount, 0u);
@@ -95,7 +93,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetr
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledMultipleTimesThenValidMetricGroupIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         uint32_t metricGroupCount = 0;
         EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupCount, 1u);
@@ -112,30 +110,24 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenMetricGroupWithCorrectPropertiesIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
-
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupProperties.domain, 100u);
         EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
         uint32_t expectedMetricCount = 0;
-        ipSamplingTestProductHelper->getMetricCount(productFamily, expectedMetricCount);
+        ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricCount);
         EXPECT_EQ(metricGroupProperties.metricCount, expectedMetricCount);
         EXPECT_EQ(strcmp(metricGroupProperties.description, "EU stall sampling"), 0);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
     }
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, , HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupSourceIdIsRequestedThenCorrectSourceIdIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
-
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         zet_intel_metric_source_id_exp_t metricGroupSourceId{};
         metricGroupSourceId.sourceId = 0xFFFFFFFF;
         metricGroupSourceId.pNext = nullptr;
@@ -156,12 +148,9 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenCorrectMetricsAreReturned, HasIPSamplingSupport) {
 
     std::vector<IpSamplingTestProductHelper::MetricProperties> expectedMetricsProperties = {};
-    ipSamplingTestProductHelper->getMetricsProperties(productFamily, expectedMetricsProperties);
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
-
+    ipSamplingTestProductHelper->getExpectedMetricsProperties(productFamily, expectedMetricsProperties);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties);
 
@@ -171,22 +160,24 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
         EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricCount, metricGroupProperties.metricCount);
         uint32_t expectedMetricCount = 0;
-        ipSamplingTestProductHelper->getMetricCount(productFamily, expectedMetricCount);
+        ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricCount);
         EXPECT_EQ(metricCount, expectedMetricCount);
         EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
         std::vector<IpSamplingTestProductHelper::MetricProperties>::iterator propertiesIter = expectedMetricsProperties.begin();
 
-        zet_metric_properties_t ipSamplingMetricProperties = {};
+        zet_metric_properties_t metricProperties = {};
+        metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+        metricProperties.pNext = nullptr;
         for (auto &metricHandle : metricHandles) {
-            EXPECT_EQ(zetMetricGetProperties(metricHandle, &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
             EXPECT_EQ(zetMetricDestroyExp(metricHandle), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, propertiesIter->name), 0);
-            EXPECT_EQ(strcmp(ipSamplingMetricProperties.description, propertiesIter->description), 0);
-            EXPECT_EQ(strcmp(ipSamplingMetricProperties.component, propertiesIter->component), 0);
-            EXPECT_EQ(ipSamplingMetricProperties.tierNumber, propertiesIter->tierNumber);
-            EXPECT_EQ(ipSamplingMetricProperties.metricType, propertiesIter->metricType);
-            EXPECT_EQ(ipSamplingMetricProperties.resultType, propertiesIter->resultType);
-            EXPECT_EQ(strcmp(ipSamplingMetricProperties.resultUnits, propertiesIter->resultUnits), 0);
+            EXPECT_EQ(strcmp(metricProperties.name, propertiesIter->name), 0);
+            EXPECT_EQ(strcmp(metricProperties.description, propertiesIter->description), 0);
+            EXPECT_EQ(strcmp(metricProperties.component, propertiesIter->component), 0);
+            EXPECT_EQ(metricProperties.tierNumber, propertiesIter->tierNumber);
+            EXPECT_EQ(metricProperties.metricType, propertiesIter->metricType);
+            EXPECT_EQ(metricProperties.resultType, propertiesIter->resultType);
+            EXPECT_EQ(strcmp(metricProperties.resultUnits, propertiesIter->resultUnits), 0);
             propertiesIter++;
         }
     }
@@ -194,40 +185,39 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingMetricsThenCalculablePropertyIsAlwaysTrue, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         uint32_t metricCount = 0;
         EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, nullptr), ZE_RESULT_SUCCESS);
         std::vector<zet_metric_handle_t> metricHandles(metricCount);
         EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
 
-        zet_metric_properties_t ipSamplingMetricProperties = {};
+        zet_metric_properties_t metricProperties = {};
+        metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+        metricProperties.pNext = nullptr;
+
         zet_intel_metric_calculable_properties_exp_t calculableProperties{};
         calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
         calculableProperties.pNext = nullptr;
-        ipSamplingMetricProperties.pNext = &calculableProperties;
+        metricProperties.pNext = &calculableProperties;
 
         for (auto &metricHandle : metricHandles) {
-            EXPECT_EQ(zetMetricGetProperties(metricHandle, &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
             EXPECT_TRUE(calculableProperties.isCalculable);
         }
 
         // Check that invalid structure is handled gracefully
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        ipSamplingMetricProperties.pNext = &metricGroupProperties;
-        EXPECT_EQ(zetMetricGetProperties(metricHandles[0], &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+        metricProperties.pNext = &metricGroupProperties;
+        EXPECT_EQ(zetMetricGetProperties(metricHandles[0], &metricProperties), ZE_RESULT_SUCCESS);
     }
 }
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyActivationAndDeActivationHappens, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
@@ -241,10 +231,8 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummy
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenMetricsDisableIsCalledThenActivationReturnsFailure, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &hMetricGroup), ZE_RESULT_SUCCESS);
         device->activateMetricGroups();
@@ -263,10 +251,8 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenMetricsDisableIsCalledThenActiva
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEuStallSamplingIsPredefinedMetricGroupThenProgrammableApisAreUnsupported, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_handle_t hMetric{};
         EXPECT_EQ(zetMetricGroupAddMetricExp(hMetricGroup, hMetric, nullptr, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
@@ -284,13 +270,11 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEuStallSamplingIsPredefinedMetri
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyAndValidBitsThenConfirmAreTheSameAsDevice, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
         device->getProperties(&deviceProps);
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP, nullptr};
 
@@ -304,13 +288,11 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadi
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQueryingMetricGroupTypeThenAppropriateGroupTypeIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
         device->getProperties(&deviceProps);
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_group_type_exp_t metricGroupType{};
         metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
@@ -326,13 +308,11 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQuery
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQueryingUnsupportedPropertyThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
         device->getProperties(&deviceProps);
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_group_type_exp_t metricGroupType{};
         metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES;
@@ -346,15 +326,10 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQuery
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulOnMultiDeviceWhenReadingMetricsTimestampThenResultIsSuccess, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
         device->getProperties(&deviceProps);
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
-
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
-        ASSERT_NE(hMetricGroup, nullptr);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         ze_bool_t synchronizedWithHost = true;
         uint64_t globalTimestamp = 0;
         uint64_t metricTimestamp = 0;
@@ -371,9 +346,7 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReading
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
     device->getProperties(&deviceProps);
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
     ze_bool_t synchronizedWithHost = true;
     uint64_t globalTimestamp = 0;
@@ -409,9 +382,7 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMet
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
     device->getProperties(&deviceProps);
 
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
     ze_bool_t synchronizedWithHost = true;
     uint64_t globalTimestamp = 1;
@@ -422,11 +393,11 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMet
     EXPECT_EQ(metricTimestamp, 0UL);
 }
 
-using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingCalculateMultiDevFixture;
+using MetricIpSamplingCalculateMetricGroupTest = MetricIpSamplingCalculateMetricGroupFixture;
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenValidDataWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenValidDataWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         bool isRootdevice = true;
         ze_result_t expectedResult = ZE_RESULT_SUCCESS;
         ze_device_properties_t props = {};
@@ -439,13 +410,11 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenValidDataWhenCalculateMulti
             expectedResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-        uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+        uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
         // Simulate data from two tiles
         std::vector<uint8_t> rawDataWithHeader((rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader)) * 2);
@@ -476,24 +445,21 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenValidDataWhenCalculateMulti
             EXPECT_EQ(metricCounts[0], expectedResultCountPerSet);
             EXPECT_EQ(metricCounts[1], expectedResultCountPerSet);
 
-            std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+            std::vector<uint64_t> expectedMetricCalculateValues = {};
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-                EXPECT_EQ(expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()].type, metricValues[i].type);
-                EXPECT_EQ(expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()].value.ui64, metricValues[i].value.ui64);
+                EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+                EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()]);
             }
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidHeaderWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidHeaderWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
 
     std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader));
     MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize, 0);
@@ -509,20 +475,18 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidHeaderWhenCalculateM
               ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            uint32_t metricGroupCount = 1;
-            zet_metric_group_handle_t hMetricGroup;
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-            uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+            uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
             uint32_t setCount = 0;
             // Use random initializer
             uint32_t totalMetricValueCount = std::numeric_limits<uint32_t>::max();
@@ -542,26 +506,25 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataFromSingleDeviceWhenCal
             EXPECT_EQ(setCount, 1u);
             EXPECT_EQ(totalMetricValueCount, expectedResultCountPerSet);
             EXPECT_EQ(metricCounts[0], expectedResultCountPerSet);
-            std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+
+            std::vector<uint64_t> expectedMetricCalculateValues = {};
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-                EXPECT_TRUE(expectedMetricCalculateValues[i].type == metricValues[i].type);
-                EXPECT_TRUE(expectedMetricCalculateValues[i].value.ui64 == metricValues[i].value.ui64);
+                EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+                EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i]);
             }
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            uint32_t metricGroupCount = 1;
-            zet_metric_group_handle_t hMetricGroup;
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
             uint32_t setCount = 0;
             uint32_t totalMetricValueCount = std::numeric_limits<uint32_t>::max();
@@ -574,19 +537,14 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidDataFromSingleDevice
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRootDeviceDataAndLessThanRequiredMetricCountWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataAndLessThanRequiredMetricCountWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
-    std::vector<zet_typed_value_t> metricValues(30);
-
-    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
 
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-    uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+    uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
     // Allocate for 2 sub-devices
     std::vector<uint8_t> rawDataWithHeader((rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader)) * 2);
@@ -607,6 +565,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRootDeviceDataAndLessThanRe
     EXPECT_EQ(setCount, 2u);
     EXPECT_EQ(totalMetricValueCount, expectedResultCountPerSet * setCount);
     totalMetricValueCount = 10;
+    std::vector<zet_typed_value_t> metricValues(totalMetricValueCount);
     EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup,
                                                                  ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
                                                                  reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
@@ -615,21 +574,20 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRootDeviceDataAndLessThanRe
     EXPECT_EQ(setCount, 2u);
     EXPECT_EQ(totalMetricValueCount, 10u);
     EXPECT_EQ(metricCounts[0], 10u);
-    std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+
+    std::vector<uint64_t> expectedMetricCalculateValues = {};
+    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
 
     for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-        EXPECT_TRUE(expectedMetricCalculateValues[i].type == metricValues[i].type);
-        EXPECT_TRUE(expectedMetricCalculateValues[i].value.ui64 == metricValues[i].value.ui64);
+        EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+        EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i]);
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader) + 1);
         MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize, 0);
@@ -643,11 +601,11 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeWhenCalcu
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeDuringValueCalculationPhaseWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeDuringValueCalculationPhaseWhenCalculateMultipleMetricValuesExpIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
     std::vector<zet_typed_value_t> metricValues(30);
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         bool isRootdevice = false;
         ze_device_properties_t props = {};
         device->getProperties(&props);
@@ -655,10 +613,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeDuringVal
             isRootdevice = true;
         }
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         std::vector<uint8_t> rawData;
         if (isRootdevice) { // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
@@ -692,13 +647,10 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeDuringVal
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderDuringSizeCalculationWhenCalculateMultipleMetricValuesExpThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeInHeaderDuringSizeCalculationWhenCalculateMultipleMetricValuesExpThenErrorIsReturned, HasIPSamplingSupport) {
 
-    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
 
     std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader) + 1);
     MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize - 1, 0);
@@ -712,13 +664,10 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderD
               ZE_RESULT_ERROR_INVALID_SIZE);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderWhenCalculateMultipleMetricValuesExpCalculateSizeIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeInHeaderWhenCalculateMultipleMetricValuesExpCalculateSizeIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
 
     std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader) + 1);
     MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize - 1, 0);
@@ -733,17 +682,14 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderW
               ZE_RESULT_ERROR_INVALID_SIZE);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderWhenCalledWhenCalculateMultipleMetricValuesExpCalculateDataThenErrorUnknownIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeInHeaderWhenCalledWhenCalculateMultipleMetricValuesExpCalculateDataThenErrorUnknownIsReturned, HasIPSamplingSupport) {
 
-    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup;
-    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+    zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
 
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-    uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+    uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
     // Allocate for 2 sub-devices
     std::vector<uint8_t> rawDataWithHeader((rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader)) * 2);
@@ -769,9 +715,9 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenInvalidRawDataSizeInHeaderW
               ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenSubDeviceDataWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSubDeviceDataWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         bool isRootdevice = false;
         ze_result_t expectedResult = ZE_RESULT_SUCCESS;
         ze_device_properties_t props = {};
@@ -784,9 +730,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenSubDeviceDataWhenCalculateM
             expectedResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         uint32_t metricValueCount = 0;
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
@@ -795,29 +739,29 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenSubDeviceDataWhenCalculateM
         if (!isRootdevice) {
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
             std::vector<zet_typed_value_t> metricValues(expectedResultCount);
             EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                           rawReportsBytesSize, reinterpret_cast<uint8_t *>(rawReports.data()), &metricValueCount, metricValues.data()),
                       expectedResult);
 
             EXPECT_EQ(metricValueCount, expectedResultCount);
-            std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+
+            std::vector<uint64_t> expectedMetricCalculateValues = {};
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+
             for (uint32_t i = 0; i < metricValueCount; i++) {
-                EXPECT_EQ(expectedMetricCalculateValues[i].type, metricValues[i].type);
-                EXPECT_EQ(expectedMetricCalculateValues[i].value.ui64, metricValues[i].value.ui64);
+                EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+                EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i]);
             }
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRootDeviceDataWhenCalculateMetricValuesIsCalledThenReturnError, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataWhenCalculateMetricValuesIsCalledThenReturnError, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader));
         MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize, 0);
@@ -829,19 +773,17 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRootDeviceDataWhenCalculate
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenSmallValueCountWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSmallValueCountWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawReports) will work only with sub-device metric group handle.
-            uint32_t metricGroupCount = 1;
-            zet_metric_group_handle_t hMetricGroup;
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
             std::vector<zet_typed_value_t> metricValues(expectedResultCount);
 
             uint32_t metricValueCount = 0;
@@ -855,26 +797,25 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenSmallValueCountWhenCalculat
                                                           rawReportsBytesSize, reinterpret_cast<uint8_t *>(rawReports.data()), &metricValueCount, metricValues.data()),
                       ZE_RESULT_SUCCESS);
             EXPECT_EQ(metricValueCount, 15U);
-            std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+
+            std::vector<uint64_t> expectedMetricCalculateValues = {};
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < metricValueCount; i++) {
-                EXPECT_EQ(expectedMetricCalculateValues[i].type, metricValues[i].type);
-                EXPECT_EQ(expectedMetricCalculateValues[i].value.ui64, metricValues[i].value.ui64);
+                EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+                EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i]);
             }
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenBadRawDataSizeWhenCalculateMetricValuesIsCalledForValueCountThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenBadRawDataSizeWhenCalculateMetricValuesIsCalledForValueCountThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawReports) will work only with sub-device metric group handle.
-            uint32_t metricGroupCount = 1;
-            zet_metric_group_handle_t hMetricGroup;
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
             uint32_t metricValueCount = 0;
             EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
@@ -884,31 +825,26 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenBadRawDataSizeWhenCalculate
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenBadRawDataSizeDuringCalculationWhenCalculateMetricValuesIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenBadRawDataSizeDuringCalculationWhenCalculateMetricValuesIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawReports) will work only with sub-device metric group handle.
 
-            uint32_t metricGroupCount = 0;
-            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-            std::vector<zet_metric_group_handle_t> metricGroups;
-            metricGroups.resize(metricGroupCount);
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-            ASSERT_NE(metricGroups[0], nullptr);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+            EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
+            uint32_t expectedResultCount = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
             uint32_t metricValueCount = 0;
-            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                           rawReportsBytesSize, reinterpret_cast<uint8_t *>(rawReports.data()), &metricValueCount, nullptr),
                       ZE_RESULT_SUCCESS);
 
             EXPECT_EQ(metricValueCount, expectedResultCount);
             std::vector<zet_typed_value_t> metricValues(expectedResultCount);
-            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                           rawReportsBytesSize - 1, reinterpret_cast<uint8_t *>(rawReports.data()), &metricValueCount, metricValues.data()),
                       ZE_RESULT_ERROR_INVALID_SIZE);
         }
@@ -916,8 +852,8 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenBadRawDataSizeDuringCalcula
 }
 
 // Only PVC has the overflow bit in raw data, so this test is only for PVC. This test verifies that when overflow happens and streamer read data is called, calculate will return valid metrics values with overflow warning.
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, EuStallSupportXe) {
-    for (auto device : testDevices) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, EuStallSupportXe) {
+    for (auto device : rootOneSubDev) {
         uint32_t expectedSetCount = 1u;
         bool isRootdevice = false;
         ze_device_properties_t props = {};
@@ -927,12 +863,10 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStr
             expectedSetCount = 2u;
         }
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-        uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+        uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
         // Prepare raw data with overflow bit set.
         //  NOTE: Override the default fixture SeTup() for rawReports
@@ -970,30 +904,28 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStr
         EXPECT_EQ(totalMetricValueCount, expectedResultCountPerSet * setCount);
         EXPECT_EQ(metricCounts[0], expectedResultCountPerSet);
 
-        std::vector<zet_typed_value_t> expectedMetricCalculateValues = {};
-        ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, expectedMetricCalculateValues);
+        std::vector<uint64_t> expectedMetricCalculateValues = {};
+        ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
 
         for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-            EXPECT_EQ(expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()].type, metricValues[i].type);
-            EXPECT_EQ(expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()].value.ui64, metricValues[i].value.ui64);
+            EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
+            EXPECT_EQ(metricValues[i].value.ui64, expectedMetricCalculateValues[i % expectedMetricCalculateValues.size()]);
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRequestForMaxMetricValuesWhenCalculateMetricValuesIsCalledThenErrorUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRequestForMaxMetricValuesWhenCalculateMetricValuesIsCalledThenErrorUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
 
     std::vector<zet_typed_value_t> metricValues(30);
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawReports) will work only with sub-device metric group handle.
-            uint32_t metricGroupCount = 1;
-            zet_metric_group_handle_t hMetricGroup;
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+            zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
-            uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numperIpsInRawData;
+            uint32_t expectedResultCountPerSet = metricGroupProperties.metricCount * IpSamplingTestProductHelper::numberOfIpsInRawData;
 
             uint32_t metricValueCount = 0;
             EXPECT_EQ(zetMetricGroupCalculateMetricValues(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
@@ -1011,10 +943,8 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenRequestForMaxMetricValuesWh
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, WhenQueryPoolCreateIsCalledThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         zet_metric_query_pool_desc_t poolDesc = {};
         poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
@@ -1037,10 +967,8 @@ using MetricExportDataIpSamplingTest = MetricIpSamplingMultiDevFixture;
 
 HWTEST2_F(MetricExportDataIpSamplingTest, WhenMetricGroupGetExportDataIsCalledThenReturnSuccess, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         uint8_t dummyRawData = 8;
         size_t exportDataSize = 0;
@@ -1061,10 +989,8 @@ HWTEST2_F(MetricExportDataIpSamplingTest, WhenMetricGroupGetExportDataIsCalledTh
 
 HWTEST2_F(MetricExportDataIpSamplingTest, GivenIncorrectExportDataSizeWhenMetricGroupGetExportDataIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         uint8_t dummyRawData = 0;
         size_t exportDataSize = 0;
@@ -1094,16 +1020,14 @@ class MockMultiDomainDeferredActivationTracker : public MultiDomainDeferredActiv
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, WhenActivationFailsThenErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         auto &metricSource = (static_cast<Device *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
         MockMultiDomainDeferredActivationTracker *mockTracker = new MockMultiDomainDeferredActivationTracker(0);
         metricSource.setActivationTracker(mockTracker);
     }
 
-    for (auto device : testDevices) {
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t hMetricGroup;
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &hMetricGroup), ZE_RESULT_ERROR_UNKNOWN);
     }
@@ -1111,7 +1035,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, WhenActivationFailsThenErrorIsReturne
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, WhenUnsupportedFunctionsAreCalledThenUnsupportedErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         auto &metricSource = (static_cast<Device *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
 
         char name[ZET_MAX_METRIC_GROUP_NAME] = {};
@@ -1128,7 +1052,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, WhenUnsupportedFunctionsAreCalledThen
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, WhenUnsupportedFunctionsForDeviceContextAreCalledUnsupportedErrorIsReturned, HasIPSamplingSupport) {
 
-    for (auto device : testDevices) {
+    for (auto device : rootOneSubDev) {
         auto &deviceContext = (static_cast<Device *>(device))->getMetricDeviceContext();
 
         char name[ZET_MAX_METRIC_GROUP_NAME] = {};

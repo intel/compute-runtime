@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "level_zero/include/level_zero/zet_intel_gpu_metric.h"
+#include "level_zero/tools/source/metrics/metric.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -34,14 +36,21 @@ class IpSamplingTestProductHelper {
         const char *resultUnits;
     };
 
+    enum CalculationResultType {
+        Legacy = 0,          // zetMetricGroupCalculate* APIs
+        ScopeOddMetrics = 1, // zetIntelMetricCalculateValuesExp() with odd metrics count in the calcOp
+    };
+
     static IpSamplingTestProductHelper *create();
-    virtual void getMetricCount(PRODUCT_FAMILY productFamily, uint32_t &metricCount);
-    virtual void getMetricsProperties(PRODUCT_FAMILY productFamily, std::vector<MetricProperties> &metricsProperties);
+    virtual void getExpectedMetricCount(PRODUCT_FAMILY productFamily, uint32_t &metricCount);
+    virtual void getExpectedMetricsProperties(PRODUCT_FAMILY productFamily, std::vector<MetricProperties> &metricsProperties);
     virtual void rawElementsToRawReports(PRODUCT_FAMILY productFamily, bool overflow, std::vector<std::array<uint64_t, 8>> *rawReports); // Raw reports are 64Bytes, 8 x uint64_t
-    virtual void getExpectedCalculateResults(PRODUCT_FAMILY productFamily, std::vector<zet_typed_value_t> &expectedMetricValues);
+    virtual void getExpectedCalculateResults(PRODUCT_FAMILY productFamily, CalculationResultType resultsType, std::vector<uint64_t> &expectedMetricValues);
+    virtual void getExpectedRootDeviceMetricScopeCount(PRODUCT_FAMILY productFamily, uint32_t &metricScopeCount);
+    virtual void getExpectedRootDeviceMetricScopeProperties(PRODUCT_FAMILY productFamily, std::vector<zet_intel_metric_scope_properties_exp_t> &metricsScopesProperties);
 
     // Define the number of IPs to have in manually constructed raw data elements
-    constexpr static uint32_t numperIpsInRawData = 3;
+    constexpr static uint32_t numberOfIpsInRawData = 3;
 
   private:
     uint32_t metricCountXe = 10;
@@ -131,79 +140,14 @@ class IpSamplingTestProductHelper {
         {100, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1000, 0x3}};        // 6th raw report
 
     std::vector<RawReportElementsXe2andLater> rawDataElementsXe2AndLater = {
-        {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},                   // 1st raw report
-        {10, 1, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},        // 2nd raw report
-        {1, 1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},                    // 3rd raw report
-        {10, 1, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3},           // 4th raw report
-        {100, 1, 190, 180, 170, 160, 150, 140, 130, 120, 110, 1000, 0x3}, // 5th raw report
-        {100, 1, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1000, 0x3}};        // 6th raw report
+        {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},                     // 1st raw report
+        {10, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},         // 2nd raw report
+        {1, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},                     // 3rd raw report
+        {10, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3},           // 4th raw report
+        {100, 200, 190, 180, 170, 160, 150, 140, 130, 120, 110, 1000, 0x3}, // 5th raw report
+        {100, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1000, 0x3}};         // 6th raw report
 
-    std::vector<zet_typed_value_t> expectedMetricValuesXe = {
-        {ZET_VALUE_TYPE_UINT64, {1}}, // 1st raw report + 3rd raw report
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {10}}, // 2nd raw report + 4th raw report
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {100}}, // 5th raw report + 6th raw report
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}}};
-
-    std::vector<zet_typed_value_t> expectedMetricValuesXe2AndLater = {
-        {ZET_VALUE_TYPE_UINT64, {1}}, // 1st raw report + 3rd raw report
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {2}}, // PSDepStall count from 1st raw report + 3rd raw report
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {10}}, // 2nd raw report + 4th raw report
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {2}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {100}}, // 5th raw report + 6th raw report
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {2}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}}};
+    uint32_t rootDevMetricScopesCountXe2Xe3p = 2; // Sub-device 0 and Sub-device 1
 };
 
 } // namespace ult

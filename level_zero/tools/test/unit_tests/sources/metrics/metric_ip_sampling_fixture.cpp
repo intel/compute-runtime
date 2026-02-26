@@ -66,6 +66,7 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
 
     ipSamplingTestProductHelper = IpSamplingTestProductHelper::create();
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    rootOneSubDev.insert(rootOneSubDev.end(), testDevices.begin(), testDevices.begin() + 2);
 }
 
 void MetricIpSamplingMultiDevFixture::TearDown() {
@@ -73,6 +74,13 @@ void MetricIpSamplingMultiDevFixture::TearDown() {
     globalDriverHandles->clear();
     delete ipSamplingTestProductHelper;
     ipSamplingTestProductHelper = nullptr;
+}
+
+zet_metric_group_handle_t MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(L0::Device *device) {
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    return metricGroupHandle;
 }
 
 void MetricIpSamplingFixture::SetUp() {
@@ -111,8 +119,8 @@ void MetricIpSamplingCalculateBaseFixture::initRawReports(IpSamplingTestProductH
     rawReportsBytesSize = sizeof(rawReports[0][0]) * rawReports[0].size() * rawReports.size();
 }
 
-void MetricIpSamplingCalculateBaseFixture::initCalHandles(L0::ContextImp *context,
-                                                          L0::Device *device) {
+void MetricIpSamplingCalculateOperationFixture::initCalcDescHandles(L0::ContextImp *context,
+                                                                    L0::Device *device) {
 
     uint32_t metricScopesCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
@@ -141,39 +149,41 @@ void MetricIpSamplingCalculateBaseFixture::initCalHandles(L0::ContextImp *contex
     calcDescPerDevice[device].phMetricScopes = scopesPerDevice[device].data();      // phMetricScopes
 }
 
-void MetricIpSamplingCalculateBaseFixture::cleanUpHandles() {
+void MetricIpSamplingCalculateOperationFixture::cleanUpHandles() {
     metricGroupHandlePerDevice.clear();
     scopesPerDevice.clear();
     calcDescPerDevice.clear();
 }
 
-void MetricIpSamplingCalculateMultiDevFixture::SetUp() {
+void MetricIpSamplingCalculateMetricGroupFixture::SetUp() {
     MetricIpSamplingMultiDevFixture::SetUp();
 
-    for (auto device : testDevices) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-        initCalHandles(context, device);
-    }
     rootDevice = testDevices[0];
     initRawReports(ipSamplingTestProductHelper, productFamily);
 }
 
-void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
+void MetricIpSamplingCalculateMetricGroupFixture::TearDown() {
     MetricIpSamplingMultiDevFixture::TearDown();
     rootDevice = nullptr;
-    cleanUpHandles();
 }
 
-void MetricIpSamplingCalculateSingleDevFixture::SetUp() {
-    MetricIpSamplingFixture::SetUp();
-    device->getMetricDeviceContext().enableMetricApi();
+void MetricIpSamplingCalculateOperationFixture::SetUp() {
+    MetricIpSamplingMultiDevFixture::SetUp();
 
-    initCalHandles(context, device);
+    for (auto device : testDevices) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
+        initCalcDescHandles(context, device);
+    }
+
+    rootDevice = testDevices[0];
+    subDevice = testDevices[1];
     initRawReports(ipSamplingTestProductHelper, productFamily);
 }
 
-void MetricIpSamplingCalculateSingleDevFixture::TearDown() {
-    MetricIpSamplingFixture::TearDown();
+void MetricIpSamplingCalculateOperationFixture::TearDown() {
+    MetricIpSamplingMultiDevFixture::TearDown();
+    rootDevice = nullptr;
+    subDevice = nullptr;
     cleanUpHandles();
 }
 

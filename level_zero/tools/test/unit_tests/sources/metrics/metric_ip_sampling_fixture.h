@@ -9,6 +9,7 @@
 
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_test_hw_helper.h"
@@ -31,8 +32,10 @@ class MetricIpSamplingMultiDevFixture : public MultiDeviceFixture,
     void SetUp() override;
     void TearDown() override;
 
+    static zet_metric_group_handle_t getMetricGroupForDevice(L0::Device *device);
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
     std::vector<L0::Device *> testDevices = {};
+    std::vector<L0::Device *> rootOneSubDev = {};
     IpSamplingTestProductHelper *ipSamplingTestProductHelper = {};
 };
 
@@ -157,78 +160,33 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {210}},
         {ZET_VALUE_TYPE_UINT64, {210}}};
 
-    // Expected values when calculating only odd index metrics from all raw reports in rawReports
-    std::vector<zet_typed_value_t> expectedMetricValuesOddMetrics{
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}}};
-
-    std::vector<zet_typed_value_t> expectedMetricValuesOddMetricsTwoScopes{
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}},
-        {ZET_VALUE_TYPE_UINT64, {210}}};
-
-    std::map<L0::Device *, zet_metric_group_handle_t> metricGroupHandlePerDevice{};
-    std::map<L0::Device *, std::vector<zet_intel_metric_scope_exp_handle_t>> scopesPerDevice{};
-    std::map<L0::Device *, zet_intel_metric_calculation_exp_desc_t> calcDescPerDevice{};
-
     void initRawReports(IpSamplingTestProductHelper *ipSamplingTestProductHelper, PRODUCT_FAMILY productFamily);
-    void initCalHandles(L0::ContextImp *context,
-                        L0::Device *device);
-    void cleanUpHandles();
 };
 
-struct MetricIpSamplingCalculateSingleDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingFixture {
-  public:
-    void SetUp() override;
-    void TearDown() override;
-};
-struct MetricIpSamplingCalculateMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
+// Fixture used for zetMetricGroupCalculateMultipleMetricValuesExp() and zetMetricGroupCalculateMetricValues()
+struct MetricIpSamplingCalculateMetricGroupFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
   public:
     void SetUp() override;
     void TearDown() override;
     L0::Device *rootDevice = nullptr;
 };
+// Fixture used for APIs that use zet_intel_metric_calculation_operation_exp_handle_t
+struct MetricIpSamplingCalculateOperationFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
+  public:
+    void SetUp() override;
+    void TearDown() override;
+    void initCalcDescHandles(L0::ContextImp *context,
+                             L0::Device *device);
+    void cleanUpHandles();
 
+    L0::Device *rootDevice = nullptr;
+    L0::Device *subDevice = nullptr;
+    std::map<L0::Device *, zet_metric_group_handle_t> metricGroupHandlePerDevice{};
+    std::map<L0::Device *, std::vector<zet_intel_metric_scope_exp_handle_t>> scopesPerDevice{};
+    std::map<L0::Device *, zet_intel_metric_calculation_exp_desc_t> calcDescPerDevice{};
+};
+
+// Fixture for corner cases of zetIntelMetricCalculateValuesExp()
 struct MetricIpSamplingMetricsAggregationMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
   public:
     void SetUp() override;

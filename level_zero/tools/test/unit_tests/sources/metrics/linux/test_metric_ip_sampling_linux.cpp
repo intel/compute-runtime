@@ -5,7 +5,6 @@
  *
  */
 
-// _MAC delete #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
