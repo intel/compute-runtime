@@ -1,11 +1,27 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 R"===(
+
+#ifdef USE_LSC_INTRINSICS_WB
+enum LSC_STCC {
+    LSC_STCC_DEFAULT = 0,
+    LSC_STCC_L1UC_L3UC = 1,
+    LSC_STCC_L1UC_L3WB = 2,
+    LSC_STCC_L1WT_L3UC = 3,
+    LSC_STCC_L1WT_L3WB = 4,
+    LSC_STCC_L1S_L3UC = 5,
+    LSC_STCC_L1S_L3WB = 6,
+    LSC_STCC_L1WB_L3WB = 7
+};
+
+void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, enum LSC_STCC cacheOpt);
+#endif
+
 #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
 
 // assumption is local work size = pattern size
@@ -67,8 +83,13 @@ __kernel void FillBufferImmediate(
 {
     ALIGNED4(ptr);
     idx_t gid = get_global_id(0);
+#ifdef USE_LSC_INTRINSICS_WB
+    __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset + gid * 16);
+    __builtin_IB_lsc_store_global_uint4(dstPtr, 0, (uint4)(value), LSC_STCC_L1WB_L3WB);
+#else
     __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset);
     dstPtr[gid] = value;
+#endif
 }
 
 __kernel void FillBufferImmediateLeftOver(

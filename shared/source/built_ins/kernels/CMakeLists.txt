@@ -98,6 +98,11 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   else()
     list(APPEND __ocloc__options__ ${KERNEL_TYPES})
   endif()
+
+  if(platform_it_lower STREQUAL "bmg")
+    list(APPEND __ocloc__options__ "-DUSE_LSC_INTRINSICS_WB")
+  endif()
+
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
 
   set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")

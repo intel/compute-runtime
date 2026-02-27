@@ -54,6 +54,10 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
 
       list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
 
+      if(platform_it_lower STREQUAL "bmg")
+        list(APPEND __ocloc__options__ "-DUSE_LSC_INTRINSICS_WB")
+      endif()
+
       add_custom_command(
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "$<JOIN:${__ocloc__options__}, >"

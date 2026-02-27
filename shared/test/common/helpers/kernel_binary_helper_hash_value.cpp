@@ -7,5 +7,5 @@
 
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 
-const std::string KernelBinaryHelper::BUILT_INS("8269933243477284911");
-const std::string KernelBinaryHelper::BUILT_INS_WITH_IMAGES("4492014413880551303_images");
+const std::string KernelBinaryHelper::BUILT_INS("7294049290369512507");
+const std::string KernelBinaryHelper::BUILT_INS_WITH_IMAGES("4604154718614753649_images");
