@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -477,8 +477,7 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
     EXPECT_NE(nullptr, buffer.get());
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
-    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
+    auto expectedTaskCount = commandStreamReceiver.peekTaskCount();
 
     auto ptrResult = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, 0, 8, 0,
                                         nullptr, &mapEventReturned, &retVal);

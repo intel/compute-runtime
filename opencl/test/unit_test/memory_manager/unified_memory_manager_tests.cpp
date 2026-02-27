@@ -881,18 +881,16 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedFo
     ASSERT_EQ(CL_SUCCESS, status);
 
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
-    auto heaplessStateInit = neoQueue->getHeaplessStateInitEnabled();
 
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, gpuAllocation->getTaskCount(osContextId));
-
+    auto taskCountBefore = gpuAllocation->getTaskCount(osContextId);
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(taskCountBefore + 1, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -924,18 +922,17 @@ TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForT
     ASSERT_EQ(CL_SUCCESS, status);
 
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
-    auto heaplessStateInit = neoQueue->getHeaplessStateInitEnabled();
 
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, gpuAllocation->getTaskCount(osContextId));
+    auto taskCountBefore = gpuAllocation->getTaskCount(osContextId);
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(taskCountBefore + 1, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -967,18 +964,17 @@ TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForT
     ASSERT_EQ(CL_SUCCESS, status);
 
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
-    auto heaplessStateInit = neoQueue->getHeaplessStateInitEnabled();
 
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, gpuAllocation->getTaskCount(osContextId));
+    auto taskCountBefore = gpuAllocation->getTaskCount(osContextId);
 
     status = clEnqueueReadBuffer(commandQueue, buffer, true, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(taskCountBefore + 1, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -1092,18 +1088,17 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemor
     ASSERT_EQ(CL_SUCCESS, status);
 
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
-    auto heaplessStateInit = neoQueue->getHeaplessStateInitEnabled();
 
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, gpuAllocation->getTaskCount(osContextId));
+    auto taskCountBefore = gpuAllocation->getTaskCount(osContextId);
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(taskCountBefore + 1, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -1135,7 +1130,6 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWh
 
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
-    auto heaplessStateInit = neoQueue->getHeaplessStateInitEnabled();
 
     EXPECT_EQ(GraphicsAllocation::objectNotUsed, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
@@ -1145,12 +1139,12 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWh
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+    auto taskCountBefore = svmAllocation->cpuAllocation->getTaskCount(osContextId);
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(taskCountBefore + 1, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);

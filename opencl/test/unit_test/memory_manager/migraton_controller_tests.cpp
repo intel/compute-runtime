@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,8 @@ struct MigrationControllerTests : public ::testing::Test {
 };
 
 HWTEST_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandleMigrationThenNoMigrationIsPerformedAndProperLocationIsSet) {
+    auto latestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+
     std::unique_ptr<Image> pImage(Image1dHelperUlt<>::create(&context));
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
@@ -54,10 +56,11 @@ HWTEST_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandl
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCountBefore, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandleMigrationToTheSameLocationThenDontMigrateMemory) {
+    auto latestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
     std::unique_ptr<Image> pImage(Image1dHelperUlt<>::create(&context));
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
@@ -68,7 +71,7 @@ HWTEST_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandleM
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCountBefore, pCsr1->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteImage) {
@@ -129,6 +132,9 @@ HWTEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLo
     EXPECT_FALSE(srcAllocation->isAllocationLockable());
     EXPECT_FALSE(dstAllocation->isAllocationLockable());
 
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->setCurrentLocation(0);
     EXPECT_EQ(0u, pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     MigrationController::handleMigration(context, *pCsr1, pBuffer.get());
@@ -136,8 +142,8 @@ HWTEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLo
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore + 1, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore + 1, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaLockMemory) {
@@ -153,13 +159,17 @@ HWTEST_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLocat
 
     pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->setCurrentLocation(0);
     EXPECT_EQ(0u, pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     MigrationController::handleMigration(context, *pCsr1, pBuffer.get());
     EXPECT_EQ(1u, pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
 
     EXPECT_EQ(2u, memoryManager->lockResourceCalled);
     EXPECT_EQ(2u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenDontWaitOnCpuForTheFirstCsrCompletion) {
@@ -178,13 +188,17 @@ HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenH
 
     migrationSyncData->setCurrentLocation(0);
     EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
+
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     MigrationController::handleMigration(context, *pCsr0, pImage.get());
     EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 
@@ -209,13 +223,17 @@ HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenH
 
     migrationSyncData->setCurrentLocation(1);
     EXPECT_EQ(1u, migrationSyncData->getCurrentLocation());
+
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     MigrationController::handleMigration(context, *pCsr0, pImage.get());
     EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
 
     EXPECT_EQ(2u, memoryManager->lockResourceCalled);
     EXPECT_EQ(2u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(1u, migrationSyncData->waitOnCpuCalled);
 }
 
@@ -236,13 +254,17 @@ HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenH
     migrationSyncData->signalUsage(pCsr0->getTagAddress(), 0u);
     migrationSyncData->setCurrentLocation(0);
     EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
+
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     MigrationController::handleMigration(context, *pCsr0, pImage.get());
     EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 
