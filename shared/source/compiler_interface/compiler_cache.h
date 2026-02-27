@@ -23,8 +23,15 @@ namespace NEO {
 struct HardwareInfo;
 struct ElementsStruct;
 
+struct CacheStats {
+    uint64_t hits = 0;
+    uint64_t misses = 0;
+    uint64_t version = 0;
+};
+
 struct CompilerCacheConfig {
     bool enabled = false;
+    bool statsEnabled = false;
     std::string cacheFileExtension;
     std::string cacheDir;
     size_t cacheSize = 0;
@@ -47,16 +54,21 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize);
 
+    constexpr static uint64_t cacheVersion = 1;
+
   protected:
     MOCKABLE_VIRTUAL bool evictCache(uint64_t &bytesEvicted);
     MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize);
+    MOCKABLE_VIRTUAL bool createStats(const std::string &statsPath);
+    MOCKABLE_VIRTUAL bool updateStats(const std::string &statsPath, bool hit);
+    MOCKABLE_VIRTUAL bool updateAllStats(const std::string &cacheFile, bool hit);
     MOCKABLE_VIRTUAL bool getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles);
     MOCKABLE_VIRTUAL std::string getCachedFilePath(const std::string &cacheFile);
     MOCKABLE_VIRTUAL bool createCacheDirectories(const std::string &cacheFile);
     MOCKABLE_VIRTUAL bool compareByLastAccessTime(const ElementsStruct &a, const ElementsStruct &b);
-    bool getCachedFiles(std::vector<ElementsStruct> &cacheFiles);
+    MOCKABLE_VIRTUAL bool getCachedFiles(std::vector<ElementsStruct> &cacheFiles);
 
     constexpr static int maxCacheDepth = 2;
     static std::mutex cacheAccessMtx;

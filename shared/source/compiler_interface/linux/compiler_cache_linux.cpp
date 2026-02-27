@@ -29,8 +29,7 @@ bool CompilerCache::compareByLastAccessTime(const ElementsStruct &a, const Eleme
 
 bool CompilerCache::createCacheDirectories(const std::string &cacheFile) {
     std::string path = config.cacheDir;
-    for (int i = 0; i < maxCacheDepth; i++) {
-        path = joinPath(path, std::string(1, cacheFile[i]));
+    for (int i = 0; i <= maxCacheDepth; i++) {
         if (NEO::SysCalls::mkdir(path)) {
             int error = errno;
             if (error != EEXIST) {
@@ -38,6 +37,12 @@ bool CompilerCache::createCacheDirectories(const std::string &cacheFile) {
                 return false;
             }
         }
+
+        if (config.statsEnabled) {
+            createStats(joinPath(path, "stats"));
+        }
+
+        path = joinPath(path, std::string(1, cacheFile[i]));
     }
 
     return true;
@@ -86,7 +91,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
 
             if (S_ISDIR(statBuf.st_mode)) {
                 if (currentDir.depth < maxCacheDepth) {
-                    directories.push({fullPath, currentDir.depth + 1});
+                    directories.push({std::move(fullPath), currentDir.depth + 1});
                 }
             } else if (S_ISREG(statBuf.st_mode) && filter(fullPath)) {
                 ElementsStruct fileElement = {};
@@ -174,6 +179,114 @@ void unlockFileAndClose(int fd) {
     }
 
     NEO::SysCalls::close(fd);
+}
+
+bool CompilerCache::createStats(const std::string &statsPath) {
+    int fd = NEO::SysCalls::openWithMode(statsPath.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+    if (fd < 0) {
+        int error = errno;
+        if (error != EEXIST) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Creating stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+            return false;
+        }
+
+        fd = NEO::SysCalls::open(statsPath.c_str(), O_RDWR);
+        if (fd < 0) {
+            error = errno;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening existing stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+            return false;
+        }
+    }
+
+    const int lockErr = NEO::SysCalls::flock(fd, LOCK_EX);
+    if (lockErr < 0) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        NEO::SysCalls::close(fd);
+        return false;
+    }
+
+    CacheStats stats{};
+    ssize_t readBytes = NEO::SysCalls::pread(fd, &stats, sizeof(stats), 0);
+    if (readBytes == sizeof(stats) && stats.version == CompilerCache::cacheVersion) {
+        unlockFileAndClose(fd);
+        return true;
+    }
+    stats = {};
+    stats.version = CompilerCache::cacheVersion;
+
+    ssize_t written = NEO::SysCalls::pwrite(fd, &stats, sizeof(stats), 0);
+    if (written != sizeof(stats)) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing into stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        unlockFileAndClose(fd);
+        return false;
+    }
+
+    unlockFileAndClose(fd);
+    return true;
+}
+
+bool CompilerCache::updateStats(const std::string &statsPath, bool hit) {
+    int fd = NEO::SysCalls::open(statsPath.c_str(), O_RDWR);
+    if (fd < 0) {
+        int error = errno;
+        if (error != ENOENT) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+            return false;
+        }
+
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Stats file missing, creating a new one.\n", NEO::SysCalls::getProcessId());
+        if (!createStats(statsPath)) {
+            return false;
+        }
+
+        fd = NEO::SysCalls::open(statsPath.c_str(), O_RDWR);
+        if (fd < 0) {
+            error = errno;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening newly created stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+            return false;
+        }
+    }
+
+    const int lockErr = NEO::SysCalls::flock(fd, LOCK_EX);
+    if (lockErr < 0) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        NEO::SysCalls::close(fd);
+        return false;
+    }
+
+    CacheStats stats = {};
+    const ssize_t readBytes = NEO::SysCalls::pread(fd, &stats, sizeof(stats), 0);
+    if (readBytes != sizeof(stats)) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        unlockFileAndClose(fd);
+        return false;
+    }
+
+    if (stats.version != CompilerCache::cacheVersion) {
+        stats = {};
+        stats.version = CompilerCache::cacheVersion;
+    }
+
+    if (hit) {
+        stats.hits++;
+    } else {
+        stats.misses++;
+    }
+
+    ssize_t written = NEO::SysCalls::pwrite(fd, &stats, sizeof(stats), 0);
+    if (written != sizeof(stats)) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        unlockFileAndClose(fd);
+        return false;
+    }
+
+    unlockFileAndClose(fd);
+    return true;
 }
 
 void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) {

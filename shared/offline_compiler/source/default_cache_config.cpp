@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ namespace NEO {
 const std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
 const std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
 const std::string neoCacheDir = "NEO_CACHE_DIR";
+const std::string neoCacheStats = "NEO_CACHE_STATS";
 
 const int64_t neoCacheMaxSizeDefault = static_cast<int64_t>(1 * 1024 * 1024 * 1024); // 1 Gigabyte
 
@@ -47,11 +48,15 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
 
     if (NEO::getSetting(neoCachePersistent.c_str(), compilerCacheDefaultEnabled) != 0) {
         ret.enabled = true;
+
+        ret.statsEnabled = (NEO::getSetting(neoCacheStats.c_str(), 0) != 0);
+
         std::string emptyString = "";
         ret.cacheDir = NEO::getSetting(neoCacheDir.c_str(), emptyString);
 
         if (ret.cacheDir.empty()) {
             ret.enabled = false;
+            ret.statsEnabled = false;
             return ret;
         }
 

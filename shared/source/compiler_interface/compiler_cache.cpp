@@ -154,14 +154,29 @@ std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string &kerne
         cachedBinarySize = 0;
         return nullptr;
     }
+
     std::string filePath = getCachedFilePath(cacheFilename);
-    return loadDataFromFile(filePath.c_str(), cachedBinarySize);
+    auto data = loadDataFromFile(filePath.c_str(), cachedBinarySize);
+
+    if (cachedBinarySize == 0) {
+        if (config.statsEnabled) {
+            updateAllStats(cacheFilename, false);
+        }
+        return nullptr;
+    }
+
+    if (config.statsEnabled) {
+        updateAllStats(cacheFilename, true);
+    }
+
+    return data;
 }
 
 bool CompilerCache::getCachedFiles(std::vector<ElementsStruct> &cacheFiles) {
     cacheFiles.clear();
+
     auto filterFunction = [](const std::string_view &path) {
-        return path.find(".cl_cache") != path.npos || path.find(".l0_cache") != path.npos;
+        return path.find(".cl_cache") != path.npos || path.find(".ocloc_cache") != path.npos || path.find(".l0_cache") != path.npos;
     };
 
     if (!getFiles(config.cacheDir, filterFunction, cacheFiles)) {
@@ -171,6 +186,18 @@ bool CompilerCache::getCachedFiles(std::vector<ElementsStruct> &cacheFiles) {
     std::sort(cacheFiles.begin(), cacheFiles.end(), [this](const ElementsStruct &a, const ElementsStruct &b) {
         return this->compareByLastAccessTime(a, b);
     });
+
+    return true;
+}
+
+bool CompilerCache::updateAllStats(const std::string &fileName, bool hit) {
+    std::string path = config.cacheDir;
+    for (int i = 0; i <= maxCacheDepth; i++) {
+        if (!updateStats(joinPath(path, "stats"), hit)) {
+            return false;
+        }
+        path = joinPath(path, std::string(1, fileName[i]));
+    }
 
     return true;
 }

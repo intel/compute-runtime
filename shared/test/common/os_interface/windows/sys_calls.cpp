@@ -71,6 +71,7 @@ extern const size_t createFileAResultsCount = 4;
 HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
 
 size_t deleteFileACalled = 0u;
+BOOL deleteFileAResult = TRUE;
 const size_t deleteFilesCount = 4;
 constexpr size_t deleteFilesMaxLength = 256;
 char deleteFiles[deleteFilesCount][deleteFilesMaxLength] = {{0}};
@@ -82,17 +83,20 @@ wchar_t shGetKnownFolderSetPath[shGetKnownFolderSetPathSize];
 bool callBaseReadFile = true;
 BOOL readFileResult = TRUE;
 size_t readFileCalled = 0u;
-size_t readFileBufferData = 0u;
+extern const size_t readFileBufferDataSize = 32;
+char readFileBufferData[readFileBufferDataSize];
+DWORD readFileNumberOfBytesRead = 0u;
 
 size_t writeFileCalled = 0u;
 BOOL writeFileResult = true;
-extern const size_t writeFileBufferSize = 10;
+extern const size_t writeFileBufferSize = 32;
 char writeFileBuffer[writeFileBufferSize];
 DWORD writeFileNumberOfBytesWritten = 0u;
 
 size_t findFirstFileACalled = 0u;
 extern const size_t findFirstFileAResultsCount = 4;
 HANDLE findFirstFileAResults[findFirstFileAResultsCount] = {INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE};
+WIN32_FIND_DATAA findFirstFileAFfd[findFirstFileAResultsCount]{};
 
 size_t findNextFileACalled = 0u;
 BOOL findNextFileAResult = TRUE;
@@ -281,7 +285,7 @@ BOOL deleteFileA(LPCSTR lpFileName) {
         memcpy_s(deleteFiles[deleteFileACalled], deleteFilesMaxLength, lpFileName, strlen(lpFileName));
     }
     deleteFileACalled++;
-    return TRUE;
+    return deleteFileAResult;
 }
 
 HRESULT shGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD dwFlags, HANDLE hToken, PWSTR *ppszPat) {
@@ -294,8 +298,11 @@ BOOL readFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD
     if (callBaseReadFile) {
         return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
     }
-    if (lpBuffer) {
-        *static_cast<size_t *>(lpBuffer) = readFileBufferData;
+    if (lpBuffer && nNumberOfBytesToRead <= readFileBufferDataSize) {
+        memcpy_s(lpBuffer, nNumberOfBytesToRead, readFileBufferData, nNumberOfBytesToRead);
+    }
+    if (lpNumberOfBytesRead) {
+        *lpNumberOfBytesRead = readFileNumberOfBytesRead;
     }
     return readFileResult;
 }
@@ -311,6 +318,9 @@ BOOL writeFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDW
 
 HANDLE findFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData) {
     if (findFirstFileACalled < findFirstFileAResultsCount) {
+        if (lpFindFileData && findFirstFileAFfd[findFirstFileACalled].cFileName[0] != '\0') {
+            *lpFindFileData = findFirstFileAFfd[findFirstFileACalled];
+        }
         return findFirstFileAResults[findFirstFileACalled++];
     }
     findFirstFileACalled++;

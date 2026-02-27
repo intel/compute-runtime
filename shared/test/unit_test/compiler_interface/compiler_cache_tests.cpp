@@ -987,7 +987,7 @@ TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenSourceWithNonWhit
 }
 
 TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenDisabledOrNullCacheWhenGettingCachingModeThenReturnsCachingModeNone) {
-    CompilerCache cache(CompilerCacheConfig{false, "", "", 0});
+    CompilerCache cache(CompilerCacheConfig{false, false, "", "", 0});
     const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 3> testCases = {
         {"#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::oclC},      // disabled cache
         {"__kernel void k() {}", IGC::CodeType::oclC},                              // disabled cache, no includes
@@ -1005,7 +1005,7 @@ TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenDisabledOrNullCac
 }
 
 TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndOclCWithWhitelistedIncludesWhenGettingCachingModeThenReturnsCachingModeDirect) {
-    CompilerCache cache(CompilerCacheConfig{true, "", "", 0});
+    CompilerCache cache(CompilerCacheConfig{true, true, "", "", 0});
     const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 2> testCases = {
         {"__kernel void k() {}", IGC::CodeType::oclC},                        // no includes
         {"#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::oclC} // only whitelisted include
@@ -1019,7 +1019,7 @@ TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndOc
 }
 
 TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndNonWhitelistedIncludesOrNonOclCWhenGettingCachingModeThenReturnsCachingModePreProcess) {
-    CompilerCache cache(CompilerCacheConfig{true, "", "", 0});
+    CompilerCache cache(CompilerCacheConfig{true, true, "", "", 0});
     const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 6> testCases = {
         {"#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::oclC},                         // non-whitelisted include
         {"#include <whitelisted>\n#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::oclC}, // mixed includes

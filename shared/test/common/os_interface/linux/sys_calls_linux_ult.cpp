@@ -63,6 +63,7 @@ int flockCalled = 0;
 int opendirCalled = 0;
 int readdirCalled = 0;
 int closedirCalled = 0;
+int rmdirCalled = 0;
 int pidfdopenCalled = 0;
 int pidfdgetfdCalled = 0;
 int prctlCalled = 0;
@@ -157,6 +158,7 @@ int mkdir(const std::string &path) {
 }
 
 int rmdir(const std::string &path) {
+    rmdirCalled++;
     if (sysCallsRmdir != nullptr) {
         return sysCallsRmdir(path);
     }
@@ -280,6 +282,9 @@ int access(const char *pathName, int mode) {
     accessFuncCalled++;
     if (failAccess) {
         return -1;
+    }
+    if (R_OK == mode) {
+        return 0;
     }
     if (F_OK == mode) {
         if (mkfifoPathNamePassed == pathName) {

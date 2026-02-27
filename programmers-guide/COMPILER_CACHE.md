@@ -61,6 +61,7 @@ This ensures that we always read/write the right binary file under the given con
 | NEO_CACHE_PERSISTENT | 0: disabled<br>1: enabled<br>Default: 1                            | Enable or disable on-disk binary cache.<br>When enabled Compute Runtime will try to cache and reuse compiled binaries.                                                                                     |
 | NEO_CACHE_DIR        | \<Absolute path><br>Default: %LocalAppData%\NEO\neo_compiler_cache | Path to persistent cache directory.<br>If `NEO_CACHE_DIR` is not set and %LocalAppData% could not be accessed, <br>on-disk cache is disabled.                                                  |
 | NEO_CACHE_MAX_SIZE   | \<Size in bytes><br>Default: 1 GB                                  | Maximum size of compiler cache in bytes.<br>Total size of files stored in the cache will never exceed this value.<br>If adding a new binary would cause the cache to exceed its limit, the eviction mechanism is triggered.<br>Set to 0 to disable size-based cache eviction. |
+| NEO_CACHE_STATS      | 0: disabled<br>1: enabled<br>Default: 0                            | Enable or disable cache statistics files (`stats`).<br>When enabled, cache hit/miss counters are tracked per directory and propagated up to cache root.                                        |
 
 ## Linux
 
@@ -69,6 +70,7 @@ This ensures that we always read/write the right binary file under the given con
 | NEO_CACHE_PERSISTENT | 0: disabled<br>1: enabled<br>Default: 1                         | Enable or disable on-disk binary cache.<br>When enabled Compute Runtime will try to cache and reuse compiled binaries.                                                                                                                                                       |
 | NEO_CACHE_DIR        | \<Absolute path><br>Default: $XDG_CACHE_HOME/neo_compiler_cache | Path to persistent cache directory.<br>Default value is $XDG_CACHE_HOME/neo_compiler_cache if $XDG_CACHE_HOME is set, $HOME/.cache/neo_compiler_cache otherwise.<br>If neither `NEO_CACHE_DIR`, $XDG_CACHE_HOME nor $HOME is defined, on-disk cache is disabled. |
 | NEO_CACHE_MAX_SIZE   | \<Size in bytes><br>Default: 1GB                                | Maximum size of compiler cache in bytes.<br>Total size of files stored in the cache will never exceed this value.<br>If adding a new binary would cause the cache to exceed its limit, the eviction mechanism is triggered.<br>Set to 0 to disable size-based cache eviction.                                                                   |
+| NEO_CACHE_STATS      | 0: disabled<br>1: enabled<br>Default: 0                         | Enable or disable cache statistics files (`stats`).<br>When enabled, cache hit/miss counters are tracked per directory and propagated up to cache root.                                                                                                             |
 
 # Implementation
 
@@ -86,6 +88,19 @@ Each write to disk has following steps:
 1. rename temporary file to proper hash name in the target subdirectory (for cache depth = 2: e.g., `cache_dir/f/i/file.cl_cache`)
 1. store updated directory size in the *config.file*
 1. unlock *config.file*
+
+## Cache Statistics
+
+When `NEO_CACHE_STATS=1`, the driver creates a *stats* file in cache root and each hash subdirectory.
+Each *stats* file stores a small structure with:
+
+- cache hits
+- cache misses
+- stats version
+
+After each cache lookup, corresponding counters are updated in the leaf directory and then propagated up to the cache root.
+
+Using this feature could have negative impact on performance, so it is disabled by default and should be enabled only when needed.
 
 ## Cache Eviction
 
@@ -134,4 +149,5 @@ Additionally, the `BinaryCacheTrace` flag can be used to provide deeper insights
 
 - When generating a unique hash, Compiler Cache does not take into account the environment variables of external components. Changes in these variables may not trigger cache invalidation, which can lead to unexpected behavior and difficult to debug errors.
 
-- When files are evicted, any resulting empty directories are intentionally left in place. This is to support future features such as a *stats* mechanism, which relies on the consistent directory structure.
+- When files are evicted, any resulting empty directories are intentionally left in place. This supports the *stats* mechanism, which relies on a consistent directory structure.
+

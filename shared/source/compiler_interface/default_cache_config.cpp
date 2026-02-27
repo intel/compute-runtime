@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ namespace NEO {
 const std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
 const std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
 const std::string neoCacheDir = "NEO_CACHE_DIR";
+const std::string neoCacheStats = "NEO_CACHE_STATS";
 
 const int64_t neoCacheMaxSizeDefault = static_cast<int64_t>(MemoryConstants::gigaByte);
 
@@ -32,8 +33,11 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
     if (envReader.getSetting(neoCachePersistent.c_str(), ApiSpecificConfig::compilerCacheDefaultEnabled()) != 0) {
         ret.enabled = true;
 
+        ret.statsEnabled = (envReader.getSetting(neoCacheStats.c_str(), 0) != 0);
+
         if (isAnyIgcEnvVarSet()) {
             ret.enabled = false;
+            ret.statsEnabled = false;
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
             return ret;
         }
@@ -44,12 +48,14 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         if (ret.cacheDir.empty()) {
             if (!checkDefaultCacheDirSettings(ret.cacheDir, envReader)) {
                 ret.enabled = false;
+                ret.statsEnabled = false;
                 return ret;
             }
         } else {
             if (!NEO::pathExists(ret.cacheDir)) {
                 ret.cacheDir = "";
                 ret.enabled = false;
+                ret.statsEnabled = false;
                 return ret;
             }
         }
