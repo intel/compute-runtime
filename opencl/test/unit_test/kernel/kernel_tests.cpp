@@ -4242,3 +4242,346 @@ TEST_F(KernelInfoIsaAllocationTest, givenTransitionBetweenAllocationTypesWhenCha
     EXPECT_EQ(pooledOffset, kernelInfo->getIsaOffsetInParentAllocation());
     EXPECT_EQ(nullptr, kernelInfo->kernelAllocation);
 }
+
+using KernelAllocationsInfoTest = Test<ClDeviceFixture>;
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithPrivateSurfaceAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+    pKernelInfo->setPrivateMemory(112, false, 8, 40, 64);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    auto privateSurface = kernel->privateSurface;
+    ASSERT_NE(nullptr, privateSurface);
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(privateSurface->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(privateSurface->getUnderlyingBufferSize(), allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithGlobalSurfaceAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+    pKernelInfo->setGlobalVariablesSurface(8, 0);
+
+    char buffer[16];
+    MockGraphicsAllocation globalSurface(buffer, sizeof(buffer));
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.setGlobalSurface(&globalSurface);
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(globalSurface.getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(globalSurface.getUnderlyingBufferSize(), allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+    program.setGlobalSurface(nullptr);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithConstantSurfaceAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+    pKernelInfo->setGlobalConstantsSurface(8, 0);
+
+    char buffer[16];
+    MockGraphicsAllocation constantSurface(buffer, sizeof(buffer));
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.setConstantSurface(&constantSurface);
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(constantSurface.getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(constantSurface.getUnderlyingBufferSize(), allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+    program.setConstantSurface(nullptr);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithExternalFunctionsSurfaceAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+
+    char buffer[16];
+    MockGraphicsAllocation exportedFunctionsSurface(buffer, sizeof(buffer));
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = &exportedFunctionsSurface;
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(exportedFunctionsSurface.getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(exportedFunctionsSurface.getUnderlyingBufferSize(), allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+    program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = nullptr;
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithSvmExecInfoSetAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    auto svmAlloc = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    auto svmData = context.getSVMAllocsManager()->getSVMAlloc(svmAlloc);
+    auto svmAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    kernel->setSvmKernelExecInfo(svmAllocation);
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(svmAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(svmData->size, allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type); // InternalType::svm
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+
+    context.getSVMAllocsManager()->freeSVMAlloc(svmAlloc);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithUnifiedMemoryExecInfoSetAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    auto svmAllocsManager = context.getSVMAllocsManager();
+
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    auto unifiedHostMemoryAllocation = svmAllocsManager->createUnifiedMemoryAllocation(256u, hostProperties);
+    auto hostSvmData = svmAllocsManager->getSVMAlloc(unifiedHostMemoryAllocation);
+    auto hostGfxAllocation = hostSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+    kernel->setUnifiedMemoryExecInfo(hostGfxAllocation);
+
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    deviceProperties.device = pDevice;
+    auto unifiedDeviceMemoryAllocation = svmAllocsManager->createUnifiedMemoryAllocation(256u, deviceProperties);
+    auto deviceSvmData = svmAllocsManager->getSVMAlloc(unifiedDeviceMemoryAllocation);
+    auto deviceGfxAllocation = deviceSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+    kernel->setUnifiedMemoryExecInfo(deviceGfxAllocation);
+
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    auto unifiedSharedMemoryAllocation = svmAllocsManager->createSharedUnifiedMemoryAllocation(256u, sharedProperties, context.getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto sharedSvmData = svmAllocsManager->getSVMAlloc(unifiedSharedMemoryAllocation);
+    auto sharedGfxAllocation = sharedSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+    kernel->setUnifiedMemoryExecInfo(sharedGfxAllocation);
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+
+    EXPECT_EQ(3u, allocsInfo.size());
+
+    EXPECT_EQ(hostGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(hostSvmData->size, allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_HOST_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
+
+    EXPECT_EQ(deviceGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[1].base));
+    EXPECT_EQ(deviceSvmData->size, allocsInfo[1].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_DEVICE_INTEL), allocsInfo[1].type);
+    EXPECT_EQ(-1, allocsInfo[1].arg_index);
+
+    EXPECT_EQ(sharedGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[2].base));
+    EXPECT_EQ(sharedSvmData->size, allocsInfo[2].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_SHARED_INTEL), allocsInfo[2].type);
+    EXPECT_EQ(-1, allocsInfo[2].arg_index);
+
+    svmAllocsManager->freeSVMAlloc(unifiedSharedMemoryAllocation);
+    svmAllocsManager->freeSVMAlloc(unifiedDeviceMemoryAllocation);
+    svmAllocsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithArgsSetAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+
+    pKernelInfo->addArgBuffer(0, 0x10);
+    pKernelInfo->addArgBuffer(1, 0x20);
+    pKernelInfo->addArgBuffer(2, 0x30);
+    pKernelInfo->addArgBuffer(3, 0x40);
+    pKernelInfo->addArgBuffer(4, 0x50);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    auto svmAllocsManager = context.getSVMAllocsManager();
+
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    auto unifiedHostMemoryAllocation = svmAllocsManager->createUnifiedMemoryAllocation(256u, hostProperties);
+    auto hostSvmData = svmAllocsManager->getSVMAlloc(unifiedHostMemoryAllocation);
+    auto hostGfxAllocation = hostSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    kernel->kernelArguments[0] = {
+        sizeof(uintptr_t),
+        hostGfxAllocation,
+        unifiedHostMemoryAllocation,
+        256u,
+        hostGfxAllocation,
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
+
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    deviceProperties.device = pDevice;
+    auto unifiedDeviceMemoryAllocation = svmAllocsManager->createUnifiedMemoryAllocation(256u, deviceProperties);
+    auto deviceSvmData = svmAllocsManager->getSVMAlloc(unifiedDeviceMemoryAllocation);
+    auto deviceGfxAllocation = deviceSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    kernel->kernelArguments[1] = {
+        sizeof(uintptr_t),
+        deviceGfxAllocation,
+        unifiedDeviceMemoryAllocation,
+        256u,
+        deviceGfxAllocation,
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
+
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    auto unifiedSharedMemoryAllocation = svmAllocsManager->createSharedUnifiedMemoryAllocation(256u, sharedProperties, context.getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto sharedSvmData = svmAllocsManager->getSVMAlloc(unifiedSharedMemoryAllocation);
+    auto sharedGfxAllocation = sharedSvmData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    kernel->kernelArguments[2] = {
+        sizeof(uintptr_t),
+        sharedGfxAllocation,
+        unifiedSharedMemoryAllocation,
+        256u,
+        sharedGfxAllocation,
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
+
+    auto buffer = std::make_unique<uint8_t[]>(1000);
+    auto bufferGfxAllocation = std::make_unique<MockGraphicsAllocation>(buffer.get(), sizeof(buffer.get()));
+    bufferGfxAllocation->overrideMemoryPool(MemoryPool::localMemory);
+    auto mockBuffer = std::make_unique<MockBuffer>(*bufferGfxAllocation);
+    mockBuffer->size = 500;
+    mockBuffer->offset = 100;
+
+    // kernel->kernelArgument[3] is not set to get holes in arg_index reported
+
+    kernel->kernelArguments[4] = {
+        sizeof(cl_mem),
+        static_cast<cl_mem>(static_cast<Buffer *>(mockBuffer.get())),
+        nullptr,
+        256u,
+        nullptr,
+        Kernel::KernelArgType::BUFFER_OBJ};
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+
+    EXPECT_EQ(4u, allocsInfo.size());
+
+    EXPECT_EQ(hostGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(hostSvmData->size, allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_HOST_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(0, allocsInfo[0].arg_index);
+
+    EXPECT_EQ(deviceGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[1].base));
+    EXPECT_EQ(deviceSvmData->size, allocsInfo[1].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_DEVICE_INTEL), allocsInfo[1].type);
+    EXPECT_EQ(1, allocsInfo[1].arg_index);
+
+    EXPECT_EQ(sharedGfxAllocation->getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[2].base));
+    EXPECT_EQ(sharedSvmData->size, allocsInfo[2].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_SHARED_INTEL), allocsInfo[2].type);
+    EXPECT_EQ(2, allocsInfo[2].arg_index);
+
+    EXPECT_EQ(bufferGfxAllocation->getGpuAddress() + mockBuffer->offset, reinterpret_cast<uint64_t>(allocsInfo[3].base));
+    EXPECT_EQ(mockBuffer->size, allocsInfo[3].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_DEVICE_INTEL), allocsInfo[3].type);
+    EXPECT_EQ(4, allocsInfo[3].arg_index);
+
+    svmAllocsManager->freeSVMAlloc(unifiedSharedMemoryAllocation);
+    svmAllocsManager->freeSVMAlloc(unifiedDeviceMemoryAllocation);
+    svmAllocsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelAllocationsInfoRequestedAndRetSizeSmallerOrBiggerThenCorrectAllocationsInfoIsReturnedAndCorrectRetSizeIsSet) {
+
+    struct MockKernelWithAllocationsInfo : public MockKernel {
+        MockKernelWithAllocationsInfo(Program *program, KernelInfo &kernelInfo, ClDevice &clDevice,
+                                      const std::vector<cl_kernel_allocation_info_intel> &allocsInfoArg) : MockKernel(program, kernelInfo, clDevice), allocsInfo(allocsInfoArg) {}
+        void getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &outAllocsInfo) const override {
+            std::copy(allocsInfo.begin(), allocsInfo.end(), std::back_inserter(outAllocsInfo));
+        }
+        const std::vector<cl_kernel_allocation_info_intel> &allocsInfo;
+    };
+
+    std::vector<cl_kernel_allocation_info_intel> allocationsInfoRet{
+        {reinterpret_cast<void *>(0x1234), 0x100, CL_MEM_TYPE_HOST_INTEL, 0},
+        {reinterpret_cast<void *>(0x5678), 0x200, CL_MEM_TYPE_DEVICE_INTEL, 1},
+        {reinterpret_cast<void *>(0xABCD), 0x300, CL_MEM_TYPE_UNKNOWN_INTEL, -1},
+    };
+
+    KernelInfo kernelInfo = {};
+    auto rootDeviceIndex = 0u;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex));
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    MockKernelWithAllocationsInfo kernel(program.get(), kernelInfo, *device, allocationsInfoRet);
+
+    cl_int retVal = CL_SUCCESS;
+    size_t paramRetSize;
+    retVal = kernel.getWorkGroupInfo(CL_KERNEL_ALLOCATIONS_INFO_INTEL, 0, nullptr, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto numAllocs = paramRetSize / sizeof(cl_kernel_allocation_info_intel);
+    EXPECT_EQ(3u, numAllocs);
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo(numAllocs);
+    retVal = kernel.getWorkGroupInfo(CL_KERNEL_ALLOCATIONS_INFO_INTEL, numAllocs * sizeof(cl_kernel_allocation_info_intel), allocsInfo.data(), &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    numAllocs = paramRetSize / sizeof(cl_kernel_allocation_info_intel);
+    EXPECT_EQ(3u, numAllocs);
+    EXPECT_EQ(0, memcmp(&allocsInfo[0], &allocationsInfoRet[0], paramRetSize));
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfoBig(100);
+    retVal = kernel.getWorkGroupInfo(CL_KERNEL_ALLOCATIONS_INFO_INTEL, 100 * sizeof(cl_kernel_allocation_info_intel), allocsInfoBig.data(), &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    numAllocs = paramRetSize / sizeof(cl_kernel_allocation_info_intel);
+    EXPECT_EQ(3u, numAllocs);
+    EXPECT_EQ(0, memcmp(&allocsInfoBig[0], &allocationsInfoRet[0], paramRetSize));
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfoSmall(2);
+    retVal = kernel.getWorkGroupInfo(CL_KERNEL_ALLOCATIONS_INFO_INTEL, 2 * sizeof(cl_kernel_allocation_info_intel), allocsInfoSmall.data(), &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    numAllocs = paramRetSize / sizeof(cl_kernel_allocation_info_intel);
+    EXPECT_EQ(2u, numAllocs);
+    EXPECT_EQ(0, memcmp(&allocsInfoSmall[0], &allocationsInfoRet[0], paramRetSize));
+}
