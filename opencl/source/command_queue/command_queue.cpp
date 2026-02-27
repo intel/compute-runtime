@@ -1560,6 +1560,7 @@ void CommandQueue::registerBcsCsrClient(CommandStreamReceiver &bcsCsr) {
 
 void CommandQueue::unregisterGpgpuCsrClient() {
     if (gpgpuCsrClientRegistered) {
+        UNRECOVERABLE_IF(gpgpuEngine == nullptr);
         gpgpuEngine->commandStreamReceiver->unregisterClient(this);
         gpgpuCsrClientRegistered = false;
     }
