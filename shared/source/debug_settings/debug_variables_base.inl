@@ -468,7 +468,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmAllocationPoolManager, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmPoolResidencyTracking, -1, "-1: default, 0: disabled, 1: enabled, track residency per chunk")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIsaAllocationPool, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLinearStreamPoolAllocator, -1, "-1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableInternalHeapPoolAllocator, 0, "0: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableInternalHeapPoolAllocator, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCommandBufferPoolAllocator, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmPoolLazyInit, -1, "-1: default, 0: disabled, 1: enabled, initialize usm pools on first alloc")
 DECLARE_DEBUG_VARIABLE(int32_t, UseLocalPreferredForCacheableBuffers, -1, "Use localPreferred for cacheable buffers")
