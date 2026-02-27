@@ -795,7 +795,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
     ze_result_t ret = ZE_RESULT_SUCCESS;
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    if (signalEvent && signalEvent->isCounterBased()) {
+    if (signalEvent->isCounterBased()) {
         return appendBarrier(hSignalEvent, 0, nullptr, relaxedOrderingDispatch);
     }
 
