@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -54,7 +55,23 @@ struct MockZebinWrapper {
         std::fill_n(binarySizes.begin(), binariesCount, this->data.storage.size());
     }
 
-    MockZebinWrapper(const HardwareInfo &hwInfo) : MockZebinWrapper(hwInfo, Descriptor{}) {}
+    MockZebinWrapper(const HardwareInfo &hwInfo) : MockZebinWrapper(hwInfo, getDefaultDescriptor(hwInfo)) {}
+    MockZebinWrapper(const HardwareInfo &hwInfo, bool useStateless) : MockZebinWrapper(hwInfo, getDescriptor(useStateless)) {}
+
+    static Descriptor getDefaultDescriptor(const HardwareInfo &hwInfo) {
+        Descriptor desc{};
+        auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+        if (compilerProductHelper) {
+            desc.isStateless = compilerProductHelper->isForceToStatelessRequired();
+        }
+        return desc;
+    }
+
+    static Descriptor getDescriptor(bool useStateless) {
+        Descriptor desc{};
+        desc.isStateless = useStateless;
+        return desc;
+    }
 
     auto &getFlags() {
         return reinterpret_cast<Zebin::Elf::ZebinTargetFlags &>(this->data.elfHeader->flags);

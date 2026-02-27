@@ -103,11 +103,45 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
+HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramWithStatefulAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
+    bool useStateless = false;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo(), useStateless};
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        &testedClDevice,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
+        &binaryStatus,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST2_F(ClBuildProgramTests, GivenXe3pAndLaterWithStatefulBuffersWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXe3pCore) {
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(-1);
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_SUCCESS;
+    bool useStateless = false;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo(), useStateless};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -139,7 +173,8 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryGeneratedByNgenAsIn
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
+    bool useStateless = false;
+    MockZebinWrapper zebin{pDevice->getHardwareInfo(), useStateless};
 
     zebin.getFlags().generatorId = 0u; // ngen generated
 
