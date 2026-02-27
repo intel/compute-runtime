@@ -875,7 +875,7 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenNotInitializedPoolsFacadeWhenUsingPo
     EXPECT_FALSE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(allocation, true));
 }
 
-TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFacadeThenPoolManagerIsNotEnabledByDefault) {
+TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFacadeThenPoolManagerIsEnabledByDefault) {
     mockUsmMemAllocPoolsFacade.cleanup();
     EXPECT_FALSE(mockUsmMemAllocPoolsFacade.isInitialized());
 
@@ -884,8 +884,13 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFac
     mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get());
 
     EXPECT_TRUE(mockUsmMemAllocPoolsFacade.isInitialized());
-    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
-    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    if (poolMemoryType == InternalMemoryType::deviceUnifiedMemory) {
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    } else {
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    }
 }
 
 TEST_P(UnifiedMemoryPoolingFacadeTest, givenPoolManagerDisabledAndCustomPoolSizeWhenInitializingPoolsFacadeThenPoolHasCorrectSize) {
