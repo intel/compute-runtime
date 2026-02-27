@@ -139,6 +139,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     auto allocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     cl_bool usesCompression;
+    size_t extendedSize = 0;
 
     switch (paramName) {
     case CL_MEM_TYPE:
@@ -153,7 +154,12 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
     case CL_MEM_SIZE:
         srcParamSize = sizeof(size);
-        srcParam = &size;
+        if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+            extendedSize = size - MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get();
+            srcParam = &extendedSize;
+        } else {
+            srcParam = &size;
+        }
         break;
 
     case CL_MEM_HOST_PTR:

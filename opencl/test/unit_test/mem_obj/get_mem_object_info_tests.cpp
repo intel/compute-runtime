@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -510,4 +511,49 @@ TEST_F(GetMemObjectInfo, GivenTwoRootDevicesInReverseOrderWhenGettingMemObjectIn
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(internalHandle), sizeReturned);
     EXPECT_EQ(internalHandle, graphicsAllocation2->internalHandle);
+}
+
+using ClCreateBufferTests = ApiTests;
+
+TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenGettingMemSizeViaApiThenOriginalSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    constexpr size_t requestedSize = 64u;
+    constexpr int32_t pageSizeNumber = 2;
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_context clCtx = pContext;
+    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, memObj);
+
+    auto bufferObj = NEO::castToObject<Buffer>(memObj);
+    ASSERT_NE(nullptr, bufferObj);
+    auto expectedExtendedSize = requestedSize + MemoryConstants::pageSize * pageSizeNumber;
+    EXPECT_EQ(expectedExtendedSize, bufferObj->getSize());
+
+    size_t queriedSize = 0;
+    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(requestedSize, queriedSize);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
+}
+
+TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagNotSetWhenGettingMemSizeViaApiThenBufferSizeIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    cl_context clCtx = pContext;
+    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, BufferDefaults::sizeInBytes, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, memObj);
+
+    auto bufferObj = NEO::castToObject<Buffer>(memObj);
+    ASSERT_NE(nullptr, bufferObj);
+
+    size_t queriedSize = 0;
+    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(bufferObj->getSize(), queriedSize);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
 }
