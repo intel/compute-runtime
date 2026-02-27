@@ -14,12 +14,15 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_host_function_allocator.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <cstddef>
@@ -409,6 +412,83 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
             }
         }
     }
+}
+
+HWTEST_F(HostFunctionTests, givenTbxCsrWithAllocationsForDownloadWhenPrepareForExecutionCalledThenAllocationsAreDownloaded) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+
+    bool isTbx = true;
+    MockGraphicsAllocation mockHostFunctionAlloc;
+    uint64_t hostFunctionData = 0u;
+    std::function<void(GraphicsAllocation &)> downloadImpl = [&](GraphicsAllocation &) {};
+
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(
+        &tbxCsr, &mockHostFunctionAlloc, &hostFunctionData, downloadImpl,
+        1u, static_cast<uint32_t>(sizeof(uint64_t)), isTbx, tbxCsr.getDcFlushSupport(),
+        HasSemaphore64bCmd<FamilyType>);
+
+    MockGraphicsAllocation outputAlloc;
+    MockGraphicsAllocation outputAlloc2;
+    tbxCsr.allocationsForDownload = {&outputAlloc, &outputAlloc2};
+
+    constexpr auto size = 4096u;
+    std::byte buff[size] = {};
+    LinearStream stream(buff, size);
+
+    HostFunction hf{.hostFunctionAddress = 1024u, .userDataAddress = 2048u};
+    bool isMemorySynchronizationRequired = HostFunctionHelper<FamilyType>::isMemorySynchronizationRequired();
+    HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer, std::move(hf), isMemorySynchronizationRequired);
+
+    hostFunctionData = 1u;
+    auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
+
+    EXPECT_EQ(0u, tbxCsr.downloadedAllocations.size());
+    hostFunctionStreamer->prepareForExecution(programmedHostFunction);
+
+    EXPECT_TRUE(tbxCsr.downloadedAllocations.count(&outputAlloc) > 0);
+    EXPECT_TRUE(tbxCsr.downloadedAllocations.count(&outputAlloc2) > 0);
+    EXPECT_EQ(2u, tbxCsr.downloadedAllocations.size());
+    EXPECT_EQ(2u, tbxCsr.allocationsForDownload.size());
+
+    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction);
+}
+
+HWTEST_F(HostFunctionTests, givenTbxCsrWithAllocationsForDownloadWhenSignalHostFunctionCompletionCalledThenAllocationsAreUploaded) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    tbxCsr.setupContext(osContext);
+
+    MockGraphicsAllocation mockHostFunctionAlloc;
+    uint64_t hostFunctionData = 0u;
+    std::function<void(GraphicsAllocation &)> downloadImpl = [](GraphicsAllocation &) {};
+
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(
+        &tbxCsr, &mockHostFunctionAlloc, &hostFunctionData, downloadImpl,
+        1u, static_cast<uint32_t>(sizeof(uint64_t)), true, tbxCsr.getDcFlushSupport(),
+        HasSemaphore64bCmd<FamilyType>);
+
+    int data1[4] = {10, 20, 30, 40};
+    MockGraphicsAllocation outputAlloc(data1, sizeof(data1));
+    tbxCsr.allocationsForDownload = {&outputAlloc};
+
+    constexpr auto size = 4096u;
+    std::byte buff[size] = {};
+    LinearStream stream(buff, size);
+
+    HostFunction hf{.hostFunctionAddress = 1024u, .userDataAddress = 2048u};
+    bool isMemorySynchronizationRequired = HostFunctionHelper<FamilyType>::isMemorySynchronizationRequired();
+    HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer, std::move(hf), isMemorySynchronizationRequired);
+
+    hostFunctionData = 1u;
+    auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
+    hostFunctionStreamer->prepareForExecution(programmedHostFunction);
+
+    tbxCsr.writeMemoryGfxAllocCalled = false;
+    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction);
+    EXPECT_TRUE(tbxCsr.writeMemoryGfxAllocCalled);
 }
 
 TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationIsBeingAllocatedOnlyOnce) {

@@ -523,6 +523,24 @@ AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
 }
 
 template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationsForHostFunction() {
+    auto lock = this->obtainUniqueOwnership();
+    for (auto *alloc : this->allocationsForDownload) {
+        this->downloadAllocation(*alloc);
+    }
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::uploadAllocationsForHostFunction() {
+    auto lock = this->obtainUniqueOwnership();
+    for (auto *alloc : this->allocationsForDownload) {
+        alloc->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+        this->writeMemory(*alloc);
+        alloc->setTbxWritable(false, std::numeric_limits<uint32_t>::max());
+    }
+}
+
+template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &gfxAllocation) {
     if (!hardwareContextController) {
         return;

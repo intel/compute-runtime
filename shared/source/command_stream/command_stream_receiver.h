@@ -283,6 +283,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return this->peekLatestFlushedTaskCount() == this->peekTaskCount();
     }
 
+    virtual void downloadAllocationsForHostFunction() {}
+    virtual void uploadAllocationsForHostFunction() {}
+
     size_t defaultSshSize = 0u;
 
     AllocationsList &getTemporaryAllocations();

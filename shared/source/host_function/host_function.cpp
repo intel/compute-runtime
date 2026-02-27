@@ -67,6 +67,10 @@ void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction)
     startInOrderExecution();
     pendingHostFunctions.fetch_sub(1, std::memory_order_acq_rel);
 
+    if (isTbx) {
+        csr->downloadAllocationsForHostFunction();
+    }
+
     auto pageFaultManager = csr->getMemoryManager()->getPageFaultManager();
     if (pageFaultManager) {
         pageFaultManager->beginHostFunctionContext();
@@ -103,6 +107,7 @@ void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
 
     if (isTbx) {
         auto lock = csr->obtainHostAllocationLock();
+        csr->uploadAllocationsForHostFunction();
 
         if (pageFaultManager) {
             pageFaultManager->migrateHostFunctionSharedAllocationsToGpuDomain();
