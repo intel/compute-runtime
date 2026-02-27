@@ -3515,7 +3515,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
     if (stall) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = true;
         args.workloadPartitionOffset = partitionCount > 1;
         args.textureCacheInvalidationEnable = textureFlushRequired;
         args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
