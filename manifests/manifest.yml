@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 4034-6244
+    revision: 4035-6252
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
@@ -79,13 +79,13 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 06aee2a0bc6d3d6824382c606702747bd073aa54-4012
+    revision: 4e9054cb573e89625176b16c0347bc46aa7c7b93-4035
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-4034
+converter: M-4035
 include:
 - infra.yml
 version: '1'
