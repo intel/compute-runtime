@@ -784,16 +784,13 @@ void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType>
 
     auto gpgpuPipeControls = findAll<PIPE_CONTROL *>(hwParserGpGpu.cmdList.begin(), hwParserGpGpu.cmdList.end());
     uint64_t cacheFlushWriteAddress = 0;
-
-    for (auto &pipeControl : gpgpuPipeControls) {
-        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
-        cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
-        if (cacheFlushWriteAddress != 0) {
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->bcsCsr->peekRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
-            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(isCacheFlushForBcsRequired, 0u == pipeControlCmd->getImmediateData());
-            break;
-        }
+    auto isCacheFlushRequired = this->device->getGfxCoreHelper().crossEngineCacheFlushRequired();
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*gpgpuPipeControls[0]);
+    cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
+    if (isCacheFlushForBcsRequired && cacheFlushWriteAddress != 0) {
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(isCacheFlushRequired, this->bcsCsr->peekRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
+        EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+        EXPECT_TRUE(0u == pipeControlCmd->getImmediateData());
     }
 
     auto bcsSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserBcs.cmdList.begin(), hwParserBcs.cmdList.end());

@@ -628,7 +628,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
             this->isCacheFlushOnNextBcsWriteRequired = false;
             auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(device->getGfxCoreHelper().crossEngineCacheFlushRequired(), device->getRootDeviceEnvironment());
             args.textureCacheInvalidationEnable = true;
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
