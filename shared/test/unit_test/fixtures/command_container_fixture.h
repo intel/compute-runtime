@@ -49,6 +49,8 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .additionalCommands = nullptr,
             .extendedArgs = nullptr,
             .postSyncArgs = {
+                .eventPacketSize = 32,
+                .eventPacketsCount = 1,
                 .eventAddress = 0,
                 .postSyncImmValue = 0,
                 .inOrderCounterValue = 0,

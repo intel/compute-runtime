@@ -168,7 +168,11 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
         }
 
         if (args.eventAddress) {
-            setPostSyncData(getPostSync(cmd, postSyncId++), (args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA), args.eventAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
+            for (auto i = 0u; i < args.eventPacketsCount; ++i) {
+                auto packetAddress = args.eventAddress + i * args.eventPacketSize;
+                auto operationType = args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA;
+                setPostSyncData(getPostSync(cmd, postSyncId++), operationType, packetAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
+            }
         }
 
         if (args.inOrderIncrementValue > 0) {

@@ -384,6 +384,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .additionalCommands = &additionalCommands,
         .extendedArgs = &dispatchKernelArgsExt,
         .postSyncArgs = {
+            .eventPacketSize = event ? event->getSinglePacketSize() : 0u,
+            .eventPacketsCount = event ? 1u : 0u,
             .eventAddress = eventAddress,
             .postSyncImmValue = static_cast<uint64_t>(Event::STATE_SIGNALED),
             .inOrderCounterValue = inOrderCounterValue,

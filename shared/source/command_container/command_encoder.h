@@ -53,6 +53,8 @@ struct ImplicitArgs;
 struct EncodeKernelArgsExt;
 
 struct EncodePostSyncArgs {
+    size_t eventPacketSize = 0;
+    uint32_t eventPacketsCount = 0;
     uint64_t eventAddress = 0;
     uint64_t postSyncImmValue = 0;
     uint64_t inOrderCounterValue = 0;

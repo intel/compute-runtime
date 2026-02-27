@@ -489,22 +489,24 @@ template <typename CommandType>
 void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args) {
     using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    auto &postSync = getPostSync(cmd, 0);
+    for (auto i = 0u; i < args.eventPacketsCount; ++i) {
+        auto &postSync = getPostSync(cmd, i);
 
-    auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
-    uint64_t gpuVa = args.eventAddress;
-    uint64_t immData = args.postSyncImmValue;
+        auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
+        uint64_t gpuVa = args.eventAddress + i * args.eventPacketSize;
+        uint64_t immData = args.postSyncImmValue;
 
-    if (args.isTimestampEvent) {
-        operationType = POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP;
-        immData = 0;
+        if (args.isTimestampEvent) {
+            operationType = POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP;
+            immData = 0;
 
-        UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(gpuVa)));
-    } else {
-        UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+            UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(gpuVa)));
+        } else {
+            UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+        }
+        uint32_t mocs = getPostSyncMocs(args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+        setPostSyncData(postSync, operationType, gpuVa, immData, 0, mocs, false, false);
     }
-    uint32_t mocs = getPostSyncMocs(args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
-    setPostSyncData(postSync, operationType, gpuVa, immData, 0, mocs, false, false);
 
     encodeL3Flush(cmd, args);
     adjustTimestampPacket(cmd, args);
