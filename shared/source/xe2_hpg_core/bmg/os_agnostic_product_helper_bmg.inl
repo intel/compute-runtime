@@ -63,10 +63,4 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
 }
 
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBusWidth(const HardwareInfo &hwInfo) const {
-    const uint32_t euCount = hwInfo.gtSystemInfo.EUCount;
-    return (euCount >= 448) ? 256u : 192u;
-}
-
 } // namespace NEO

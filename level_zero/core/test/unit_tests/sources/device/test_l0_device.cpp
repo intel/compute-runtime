@@ -2445,14 +2445,11 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     auto hwInfo = *NEO::defaultHwInfo;
     auto &productHelper = device->getProductHelper();
     EXPECT_EQ(memProperties.maxClockRate, productHelper.getDeviceMemoryMaxClkRate(hwInfo, nullptr, 0));
-    auto expectedBusWidth = productHelper.getDeviceMemoryMaxBusWidth(hwInfo);
-    if (expectedBusWidth == 0) {
-        expectedBusWidth = this->neoDevice->getDeviceInfo().addressBits;
-    }
-    EXPECT_EQ(memProperties.maxBusWidth, expectedBusWidth);
+    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
     EXPECT_EQ(0u, memProperties.flags);
 }
+
 HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,

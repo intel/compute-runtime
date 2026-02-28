@@ -33,7 +33,6 @@ class ProductHelperHw : public ProductHelper {
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const override;
-    uint32_t getDeviceMemoryMaxBusWidth(const HardwareInfo &hwInfo) const override;
     uint64_t getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const override;
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;

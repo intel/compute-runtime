@@ -663,8 +663,7 @@ ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_prope
     strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, getDeviceMemoryName());
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     pMemProperties->maxClockRate = productHelper.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
-    auto memBusWidth = productHelper.getDeviceMemoryMaxBusWidth(hwInfo);
-    pMemProperties->maxBusWidth = (memBusWidth > 0) ? memBusWidth : deviceInfo.addressBits;
+    pMemProperties->maxBusWidth = deviceInfo.addressBits;
 
     if (this->isImplicitScalingCapable() ||
         this->getNEODevice()->getNumGenericSubDevices() == 0) {

@@ -104,7 +104,8 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecon
         return 0;
     }
 
-    const uint64_t memoryBusWidthInBits = getDeviceMemoryMaxBusWidth(hwInfo);
+    const uint32_t euCount = hwInfo.gtSystemInfo.EUCount;
+    const uint64_t memoryBusWidthInBits = (euCount >= 448) ? 256u : 192u;
 
     // Bandwidth = Clock Rate (MHz) x 10^6 x Bus Width (bits) / 8
     return memoryMaxClkRateInMhz * 1000 * 1000 * memoryBusWidthInBits / 8;
