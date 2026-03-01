@@ -136,7 +136,7 @@ for more details.
 
 ### Level Zero specific
 * [oneAPI Level Zero specification](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/index.html)
-* [Intel(R) OneApi Level Zero Specification API C/C++ header files](https://github.com/oneapi-src/level-zero/)
+* [Intel(R) oneAPI Level Zero Specification API C/C++ header files](https://github.com/oneapi-src/level-zero/)
 * [oneAPI Level Zero tests](https://github.com/oneapi-src/level-zero-tests/)
 
 ### OpenCL specific
