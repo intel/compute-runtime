@@ -13,6 +13,7 @@
 
 #include <bit>
 #include <sstream>
+#include <unordered_map>
 
 namespace L0 {
 namespace Sysman {
@@ -1378,25 +1379,20 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
-    std::string telemDir = "";
-    std::string guid = "";
-    uint64_t telemOffset = 0;
-
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    telemOffset = 0;
-
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
-    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
-    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
-    keyOffsetMap = keyOffsetMapEntry->second;
 
     uint32_t gpuMaxTemperature = 0;
     std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, gpuMaxTemperature)) {
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuMaxTemperature)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
@@ -1410,25 +1406,20 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
-    std::string telemDir = "";
-    std::string guid = "";
-    uint64_t telemOffset = 0;
-
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    telemOffset = 0;
-
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
-    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
-    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
-    keyOffsetMap = keyOffsetMapEntry->second;
 
     uint32_t memoryMaxTemperature = 0;
     std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
-    if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, memoryMaxTemperature)) {
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, memoryMaxTemperature)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
