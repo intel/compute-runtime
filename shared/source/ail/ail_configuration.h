@@ -47,6 +47,7 @@ enum class AILEnumeration : uint32_t {
     disableBindlessAddressing,
     forceLocalOnlyForDeviceUSM,
     customWmtpDataSize,
+    forceRunAloneContext,
 };
 
 class AILConfiguration;
