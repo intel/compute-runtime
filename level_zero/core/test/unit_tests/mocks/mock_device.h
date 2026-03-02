@@ -22,7 +22,6 @@ struct Device : public ::L0::Device {
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;
     using Base::freeMemoryAllocation;
-    using Base::getRequiredLibBinaryOptionalSearchPaths;
     using Base::getRequiredLibDirPath;
     using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
@@ -114,8 +113,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
     ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltinResourceT, std::vector<char>{'X'}, (const std::string &dirPath, const std::string &fileName))
     ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltinResourceT & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))
-    ADDMETHOD(getRequiredLibBinaryOptionalSearchPaths, std::span<const std::string_view>, false, {}, (), ())
-    ADDMETHOD_CONST_NOBASE(getRequiredLibBinaryDefaultSearchPaths, std::span<const std::string_view>, {}, ())
+    ADDMETHOD(getRequiredLibModule, ::L0::Module *, false, nullptr, (const std::string &libName, ModuleBuildLog *moduleBuildLog), (libName, moduleBuildLog))
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -151,7 +149,7 @@ struct MockDeviceImp : public L0::Device {
         BaseClass::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     }
 
-    ADDMETHOD(createRequiredLibModule, ::L0::Module *, true, nullptr, (const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result), (libName, buildLog, result));
+    ADDMETHOD_NOBASE(createRequiredLibModule, ::L0::Module *, nullptr, (const std::string &libName, ModuleBuildLog *moduleBuildLog, ze_result_t &result))
 };
 
 } // namespace ult

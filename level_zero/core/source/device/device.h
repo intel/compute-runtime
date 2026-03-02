@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/utilities/lockable.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
@@ -53,6 +54,7 @@ enum class AllocationType;
 enum class EngineUsage : uint32_t;
 struct DeviceInfo;
 struct HardwareInfo;
+struct RequiredLibsHelpers;
 } // namespace NEO
 
 namespace L0 {
@@ -230,7 +232,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     void releaseResources();
 
-    Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);
+    MOCKABLE_VIRTUAL Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);
 
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;
@@ -276,16 +278,13 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);
-    MOCKABLE_VIRTUAL std::span<const std::string_view> getRequiredLibBinaryOptionalSearchPaths();
-    MOCKABLE_VIRTUAL std::span<const std::string_view> getRequiredLibBinaryDefaultSearchPaths() const;
     bool getRequiredLibDirPath(const std::string &libName, std::string &outPath);
     MOCKABLE_VIRTUAL NEO::BuiltinResourceT getBufferFromFile(const std::string &dirPath, const std::string &fileName) const;
     MOCKABLE_VIRTUAL Module *doCreateRequiredLibModule(NEO::BuiltinResourceT &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
-    std::vector<std::string_view> requiredLibsOptionalSearchPaths;
-    std::unordered_map<std::string, Module *> requiredLibsRegistry;
-    std::mutex requiredLibsRegistryMutex;
+    NEO::Lockable<std::vector<std::string_view>> requiredLibsOptionalSearchPaths;
+    NEO::Lockable<std::unordered_map<std::string, Module *>> requiredLibsRegistry;
 
     SysmanDevice *pSysmanDevice = nullptr;
     std::unique_ptr<DebugSession> debugSession;

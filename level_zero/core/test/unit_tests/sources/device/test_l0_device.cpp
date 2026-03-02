@@ -10,11 +10,10 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/path.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/helpers/required_libs_helpers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -24,7 +23,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
-#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
@@ -56,6 +54,7 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -731,9 +730,19 @@ struct DeviceRequiredLibsTest : public ::testing::Test {
         execEnv->prepareRootDeviceEnvironments(rootDeviceIndex + 1U);
         execEnv->incRefInternal();
         device = std::make_unique<MockDevice>(neoDevice);
+
+        pOsInterface = new NEO::OSInterface;
+        execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
+        auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::unknown);
+        execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
+        device->getOsInterfaceResultPtr = &pOsInterface;
+
+        NEO::IoFunctions::mockFopenCalled = 0U;
     }
 
     void TearDown() override {
+        NEO::IoFunctions::mockFopenCalled = 0U;
+        execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
         device.reset();
         execEnv->decRefInternal();
     }
@@ -742,208 +751,41 @@ struct DeviceRequiredLibsTest : public ::testing::Test {
     NEO::ExecutionEnvironment *execEnv;
     NEO::MockDevice *neoDevice = nullptr;
     std::unique_ptr<MockDevice> device = nullptr;
+    NEO::OSInterface *pOsInterface = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 };
 
 TEST_F(DeviceRequiredLibsTest, givenRequiredLibWhenFileDoesNotExistThenNoModuleIsRegistered) {
     debugManager.flags.RequiredLibsBinarySearchPath.set("/no/such/path/exists");
-    NEO::IoFunctions::mockFopenCalled = 0U;
     VariableBackup<FILE *> mockFopenReturned(&NEO::IoFunctions::mockFopenReturned, nullptr);
+    device->getRequiredLibModuleCallBase = true;
 
     constexpr auto exampleLibName = "exampleRequiredLib";
-    EXPECT_FALSE(device->requiredLibsRegistry.contains(exampleLibName));
-    auto *reqLibModule = device->getRequiredLibModule(exampleLibName, nullptr);
+    auto moduleBuildLog = std::unique_ptr<ModuleBuildLog>(ModuleBuildLog::create());
+    EXPECT_FALSE(device->requiredLibsRegistry->contains(exampleLibName));
+    auto *reqLibModule = device->getRequiredLibModule(exampleLibName, moduleBuildLog.get());
     EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1U);
     EXPECT_EQ(reqLibModule, nullptr);
-    EXPECT_FALSE(device->requiredLibsRegistry.contains(exampleLibName));
+    EXPECT_FALSE(device->requiredLibsRegistry->contains(exampleLibName));
+    const auto expectedLog = std::string("Failed to load dependency (") + exampleLibName + ")\n";
+    EXPECT_STREQ(expectedLog.c_str(), moduleBuildLog->getBuildLog());
 }
 
 TEST_F(DeviceRequiredLibsTest, givenRequiredLibPathWhenBinaryFoundThenModuleIsCreated) {
     debugManager.flags.RequiredLibsBinarySearchPath.set("/fake/path");
-    NEO::IoFunctions::mockFopenCalled = 0U;
     device->doCreateRequiredLibModuleCalled = 0U;
+    const auto fakeModuleAddr = reinterpret_cast<::L0::Module *>(0x1234578);
+    device->doCreateRequiredLibModuleResult = fakeModuleAddr;
+    device->getRequiredLibModuleCallBase = true;
 
     constexpr auto exampleLibName = "exampleRequiredLib";
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    device->createRequiredLibModule(exampleLibName, nullptr, result);
+    EXPECT_FALSE(device->requiredLibsRegistry->contains(exampleLibName));
+    auto *reqLibModule = device->getRequiredLibModule(exampleLibName, nullptr);
+
+    EXPECT_TRUE(device->requiredLibsRegistry->contains(exampleLibName));
     EXPECT_EQ(NEO::IoFunctions::mockFopenCalled, 1U);
     EXPECT_EQ(device->doCreateRequiredLibModuleCalled, 1U);
-}
-
-TEST_F(DeviceRequiredLibsTest, givenLdLibraryPathEnvUsedWhenSearchingForLibThenTheSpecifiedPathsAreReturned) {
-    auto pOsInterface = new NEO::OSInterface;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
-    auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::drm);
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
-
-    NEO::IoFunctions::mockGetenvCalled = 0U;
-    auto envVal = std::string{};
-    auto mockedEnv = std::unordered_map<std::string, std::string>{
-        {"LD_LIBRARY_PATH", "/test/path/foo:/test/path/bar"}};
-    NEO::IoFunctions::mockableEnvValues = &mockedEnv;
-
-    device->getOsInterfaceResultPtr = &pOsInterface;
-    device->getRequiredLibBinaryOptionalSearchPathsCallBase = true;
-    auto dev = static_cast<Device *>(device.get());
-    auto pathsSpan = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 1U);
-    EXPECT_EQ(pathsSpan.size(), 2U);
-    EXPECT_EQ(pathsSpan.size(), dev->requiredLibsOptionalSearchPaths.size());
-    EXPECT_EQ(pathsSpan[0], "/test/path/foo");
-    EXPECT_EQ(pathsSpan[1], "/test/path/bar");
-    EXPECT_EQ(dev->requiredLibsOptionalSearchPaths[0], pathsSpan[0]);
-    EXPECT_EQ(dev->requiredLibsOptionalSearchPaths[1], pathsSpan[1]);
-
-    NEO::IoFunctions::mockableEnvValues = nullptr;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
-}
-
-TEST_F(DeviceRequiredLibsTest, givenNonDrmDriverModelWhenSearchingRequiredLibsThenLdLibraryPathNotConsidered) {
-    auto pOsInterface = new NEO::OSInterface;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
-    auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::unknown);
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
-
-    NEO::IoFunctions::mockGetenvCalled = 0U;
-    auto mockedEnv = std::unordered_map<std::string, std::string>{};
-    NEO::IoFunctions::mockableEnvValues = &mockedEnv;
-
-    device->getOsInterfaceResultPtr = &pOsInterface;
-    device->getRequiredLibBinaryOptionalSearchPathsCallBase = true;
-    auto dev = static_cast<Device *>(device.get());
-    auto pathsSpan = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 0U);
-    EXPECT_EQ(pathsSpan.size(), 0U);
-
-    NEO::IoFunctions::mockableEnvValues = nullptr;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
-}
-
-TEST_F(DeviceRequiredLibsTest, givenPreviouslyCachedRequiredLibsOptionalSearchPathsWhenSearchingAgainThenCachedValuesUsed) {
-    auto pOsInterface = new NEO::OSInterface;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
-    auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::drm);
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
-
-    NEO::IoFunctions::mockGetenvCalled = 0U;
-    auto mockedEnv = std::unordered_map<std::string, std::string>{
-        {"LD_LIBRARY_PATH", "/test/path/FOO"}};
-    NEO::IoFunctions::mockableEnvValues = &mockedEnv;
-
-    device->getOsInterfaceResultPtr = &pOsInterface;
-    device->getRequiredLibBinaryOptionalSearchPathsCallBase = true;
-    auto dev = static_cast<Device *>(device.get());
-    auto pathsSpan1 = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 1U);
-    EXPECT_EQ(pathsSpan1.size(), 1U);
-    EXPECT_EQ(pathsSpan1[0], "/test/path/FOO");
-
-    auto pathsSpan2 = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 1U);
-    EXPECT_EQ(pathsSpan2.size(), 1U);
-    EXPECT_EQ(pathsSpan2[0], "/test/path/FOO");
-
-    NEO::IoFunctions::mockableEnvValues = nullptr;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
-}
-
-TEST_F(DeviceRequiredLibsTest, givenLdLibraryPathNotSetWhenSearchingRequiredLibsThenOptionalSearchPathsAreEmpty) {
-    auto pOsInterface = new NEO::OSInterface;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
-    auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::drm);
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
-
-    NEO::IoFunctions::mockGetenvCalled = 0U;
-    auto mockedEnv = std::unordered_map<std::string, std::string>{};
-    NEO::IoFunctions::mockableEnvValues = &mockedEnv;
-
-    device->getOsInterfaceResultPtr = &pOsInterface;
-    device->getRequiredLibBinaryOptionalSearchPathsCallBase = true;
-    auto dev = static_cast<Device *>(device.get());
-    auto pathsSpan = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 1U);
-    EXPECT_EQ(pathsSpan.size(), 0U);
-
-    NEO::IoFunctions::mockableEnvValues = nullptr;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
-}
-
-TEST_F(DeviceRequiredLibsTest, givenLdLibraryPathSetToEmptyStringWhenSearchingRequiredLibsThenOptionalSearchPathsAreEmpty) {
-    auto pOsInterface = new NEO::OSInterface;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
-    auto driverModel = std::make_unique<NEO::MockDriverModel>(DriverModelType::drm);
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
-
-    NEO::IoFunctions::mockGetenvCalled = 0U;
-    // this is not natural but handled anyway
-    auto mockedEnv = std::unordered_map<std::string, std::string>{
-        {"LD_LIBRARY_PATH", ""}};
-    NEO::IoFunctions::mockableEnvValues = &mockedEnv;
-
-    device->getOsInterfaceResultPtr = &pOsInterface;
-    device->getRequiredLibBinaryOptionalSearchPathsCallBase = true;
-    auto dev = static_cast<Device *>(device.get());
-    auto pathsSpan = dev->getRequiredLibBinaryOptionalSearchPaths();
-    EXPECT_EQ(NEO::IoFunctions::mockGetenvCalled, 1U);
-    EXPECT_EQ(pathsSpan.size(), 0U);
-
-    NEO::IoFunctions::mockableEnvValues = nullptr;
-    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset();
-}
-
-TEST_F(DeviceRequiredLibsTest, givenRequiredLibPathWhenOptionalSearchPathsDefinedThenTheyHavePriority) {
-    using namespace std::string_view_literals;
-
-    NEO::IoFunctions::mockFopenCalled = 0U;
-    device->doCreateRequiredLibModuleCalled = 0U;
-
-    auto fakeOptionalPaths = std::to_array({"/fake1/path"sv, "/fake2/path"sv});
-    device->getRequiredLibBinaryOptionalSearchPathsCalled = 0U;
-    device->getRequiredLibBinaryOptionalSearchPathsResult = fakeOptionalPaths;
-    device->getRequiredLibBinaryDefaultSearchPathsCalled = 0U;
-
-    VariableBackup<FILE *> mockFopenReturnedBkp(&IoFunctions::mockFopenReturned, static_cast<FILE *>(nullptr));
-
-    constexpr auto exampleLibName = "exampleRequiredLib.so.8.7.6";
-    const auto exampleLibPath = NEO::joinPath(std::string{"/fake2/path"}, exampleLibName);
-    writeDataToFile(exampleLibPath.c_str(), "fakeData");
-    EXPECT_TRUE(virtualFileExists(exampleLibPath));
-
-    std::string reqLibPath;
-    device->getRequiredLibDirPath(exampleLibName, reqLibPath);
-    EXPECT_EQ(device->getRequiredLibBinaryOptionalSearchPathsCalled, 1U);
-    EXPECT_EQ(device->getRequiredLibBinaryDefaultSearchPathsCalled, 0U);
-    EXPECT_STREQ(reqLibPath.c_str(), "/fake2/path");
-    removeVirtualFile(exampleLibPath);
-}
-
-TEST_F(DeviceRequiredLibsTest, givenRequiredLibPathWhenOptionalSearchPathsDoNotHaveTheLibThenDefaultSearchPathsExamined) {
-    using namespace std::string_view_literals;
-
-    NEO::IoFunctions::mockFopenCalled = 0U;
-    device->doCreateRequiredLibModuleCalled = 0U;
-
-    auto fakeOptionalPaths = std::to_array({"/fake1/path"sv, "/fake2/path"sv});
-    device->getRequiredLibBinaryOptionalSearchPathsCalled = 0U;
-    device->getRequiredLibBinaryOptionalSearchPathsResult = fakeOptionalPaths;
-
-    auto fakeDefaultPaths = std::to_array({"/default1/fake/path"sv, "/default2/fake/path"sv});
-    device->getRequiredLibBinaryDefaultSearchPathsCalled = 0U;
-    device->getRequiredLibBinaryDefaultSearchPathsResult = fakeDefaultPaths;
-
-    VariableBackup<FILE *> mockFopenReturnedBkp(&IoFunctions::mockFopenReturned, static_cast<FILE *>(nullptr));
-
-    constexpr auto exampleLibName = "exampleRequiredLib.so.8.7.6";
-    const auto exampleLibPath = NEO::joinPath(std::string{"/default2/fake/path"}, exampleLibName);
-    writeDataToFile(exampleLibPath.c_str(), "fakeData");
-    EXPECT_TRUE(virtualFileExists(exampleLibPath));
-
-    std::string reqLibPath;
-    device->getRequiredLibDirPath(exampleLibName, reqLibPath);
-    EXPECT_EQ(device->getRequiredLibBinaryOptionalSearchPathsCalled, 1U);
-    EXPECT_EQ(device->getRequiredLibBinaryDefaultSearchPathsCalled, 1U);
-    EXPECT_STREQ(reqLibPath.c_str(), "/default2/fake/path");
-    removeVirtualFile(exampleLibPath);
+    EXPECT_EQ(reqLibModule, fakeModuleAddr);
 }
 
 struct DeviceTest : public ::testing::Test {

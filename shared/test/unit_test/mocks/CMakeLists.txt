@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_required_libs_helpers.h
 )
 
 if(WIN32)

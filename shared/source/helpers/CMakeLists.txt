@@ -140,6 +140,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sleep.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sleep.h
@@ -176,12 +177,14 @@ if(WIN32)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/path.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/cpu_copy_helper.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/required_libs_helpers.cpp
   )
 else()
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/path.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/device_caps_reader.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/cpu_copy_helper.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/required_libs_helpers.cpp
   )
 endif()
 
