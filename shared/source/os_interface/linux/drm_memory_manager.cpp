@@ -1306,11 +1306,38 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
 
     const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
+    std::unique_ptr<Gmm> gmm;
+    size_t size = SysCalls::lseek(osHandleData.handle, 0, SEEK_END);
+    if (properties.imgInfo) {
+        GemGetTiling getTiling{};
+        getTiling.handle = boHandle;
+        ret = ioctlHelper->getGemTiling(&getTiling);
+
+        if (ret) {
+            if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::tilingNone))) {
+                properties.imgInfo->linearStorage = true;
+            }
+        }
+
+        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo,
+                                    createStorageInfoFromProperties(properties), properties.flags.preferCompressed);
+
+        gmm->updateImgInfoAndDesc(*properties.imgInfo, 0, NEO::ImagePlane::noPlane);
+        if (bo) {
+            bo->setPatIndex(drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool)));
+        }
+    } else {
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.preferCompressed = properties.flags.preferCompressed;
+        gmm = std::make_unique<Gmm>(gmmHelper, nullptr,
+                                    size, 0u, CacheSettingsHelper::getGmmUsageType(properties.allocationType, false, drm.getRootDeviceEnvironment().getHelper<ProductHelper>(), gmmHelper->getHardwareInfo()), createStorageInfoFromProperties(properties), gmmRequirements);
+    }
+
     if (bo == nullptr) {
-        size_t size = SysCalls::lseek(osHandleData.handle, 0, SEEK_END);
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
-        auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
+        auto patIndex = drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
         auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
         bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
@@ -1361,27 +1388,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                                            osHandleData.handle, memoryPool, canonizedGpuAddress);
+
+    drmAllocation->setDefaultGmm(gmm.release());
     this->makeAllocationResident(drmAllocation);
-
-    if (properties.imgInfo) {
-        GemGetTiling getTiling{};
-        getTiling.handle = boHandle;
-        ret = ioctlHelper->getGemTiling(&getTiling);
-
-        if (ret) {
-            if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::tilingNone))) {
-                properties.imgInfo->linearStorage = true;
-            }
-        }
-
-        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo,
-                           createStorageInfoFromProperties(properties), properties.flags.preferCompressed);
-
-        gmm->updateImgInfoAndDesc(*properties.imgInfo, 0, NEO::ImagePlane::noPlane);
-        drmAllocation->setDefaultGmm(gmm);
-
-        bo->setPatIndex(drm.getPatIndex(gmm, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool)));
-    }
 
     if (!reuseSharedAllocation) {
         registerSharedBoHandleAllocation(drmAllocation);

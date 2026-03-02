@@ -132,7 +132,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr);
+                                   nullptr, false);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -140,7 +140,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
                                                       lookupTable.sharedHandleType.ntHandle,
-                                                      NEO::AllocationType::bufferHostMemory, 0);
+                                                      NEO::AllocationType::bufferHostMemory, 0, false);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -283,7 +283,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr);
+                                   nullptr, false);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -292,7 +292,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
             *ptr = this->driverHandle->importNTHandle(hDevice,
                                                       lookupTable.sharedHandleType.ntHandle,
                                                       NEO::AllocationType::buffer,
-                                                      0);
+                                                      0, false);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -972,9 +972,9 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     unsigned int processId;
     uint64_t poolOffset;
     uint64_t cacheID;
+    bool compressedMemory = false;
     void *reservedHandleData = nullptr;
-
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData);
+    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -991,7 +991,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                            processId,
                            flags,
                            cacheID,
-                           reservedHandleData);
+                           reservedHandleData,
+                           compressedMemory);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1015,9 +1016,9 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         unsigned int processId;
         [[maybe_unused]] uint64_t poolOffset;
         uint64_t cacheID;
+        bool compressedMemory = false;
         void *reservedHandleData = nullptr;
-
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData);
+        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory);
 
         if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1032,7 +1033,7 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         neoDevice = device->getNEODevice()->getRootDevice();
     }
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
-    *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr, nullptr, allocDataInternal);
+    *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr, nullptr, allocDataInternal, false);
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

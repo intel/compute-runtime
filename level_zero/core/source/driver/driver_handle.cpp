@@ -704,13 +704,15 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                    NEO::AllocationType allocationType,
                                    void *basePointer,
                                    NEO::GraphicsAllocation **pAlloc,
-                                   NEO::SvmAllocationData &mappedPeerAllocData) {
+                                   NEO::SvmAllocationData &mappedPeerAllocData,
+                                   bool compressedMemory) {
     NEO::MemoryManager::OsHandleData osHandleData{handle};
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       allocationType,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData,
@@ -759,13 +761,13 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) {
+void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::AllocationType::buffer,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
-
+    unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromMultipleSharedHandles(handles,
                                                                                     unifiedMemoryProperties,
@@ -921,7 +923,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                 handles.push_back(static_cast<NEO::osHandle>(handle));
             }
             auto neoDevice = device->getNEODevice()->getRootDevice();
-            peerPtr = this->importFdHandles(neoDevice, flags, handles, peerMapAddress, &alloc, allocDataInternal);
+            peerPtr = this->importFdHandles(neoDevice, flags, handles, peerMapAddress, &alloc, allocDataInternal, false);
         } else {
             uint64_t handle = 0;
             int ret = alloc->peekInternalHandle(this->getMemoryManager(), handle, nullptr);
@@ -934,7 +936,8 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                            NEO::AllocationType::buffer,
                                            peerMapAddress,
                                            &alloc,
-                                           allocDataInternal);
+                                           allocDataInternal,
+                                           false);
         }
 
         if (peerPtr == nullptr) {
@@ -963,7 +966,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
     return alloc;
 }
 
-void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
+void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
@@ -974,6 +977,7 @@ void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO
                                          MemoryConstants::pageSize,
                                          allocationType,
                                          neoDevice->getDeviceBitfield()};
+    properties.flags.preferCompressed = compressedMemory;
     auto alloc = this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
 
     if (alloc == nullptr) {
