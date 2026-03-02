@@ -393,6 +393,8 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         return isBuiltIn;
     }
 
+    MOCKABLE_VIRTUAL void getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &allocationsInfo) const;
+
   protected:
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
 
