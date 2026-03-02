@@ -143,12 +143,11 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         uint64_t *hostAddress = &(standaloneCbEventStorage.data()[standaloneCbEventStorage.size() - 1]);
         uint64_t *deviceAddress = ptrOffset(hostAddress, 0x1000);
 
-        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(deviceAddress), nullptr, hostAddress, 1, 1, 1);
-
         ze_result_t result = ZE_RESULT_SUCCESS;
         auto event = static_cast<InOrderFixtureMockEvent *>(Event::create<uint64_t>(eventDescriptor, device, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+        event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, castToUint64(deviceAddress), hostAddress, 0, 0, true, true);
 
         return DestroyableZeUniquePtr<InOrderFixtureMockEvent>(event);
     }

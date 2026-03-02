@@ -195,20 +195,17 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
     auto &newInOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(newEventMock->getInOrderExecEventHelper());
 
-    auto inOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(newInOrderEventHelper.inOrderExecInfo.get());
+    EXPECT_EQ(newInOrderEventHelper.getDeviceCounterAllocation()->getGpuAddress(), newInOrderEventHelper.getBaseDeviceAddress());
+    EXPECT_EQ(event0InOrderInfo->getNumDevicePartitionsToWait(), newInOrderEventHelper.getEventData()->devicePartitions);
+    EXPECT_EQ(event0InOrderInfo->isHostStorageDuplicated() ? event0InOrderInfo->getNumHostPartitionsToWait() : event0InOrderInfo->getNumDevicePartitionsToWait(), newInOrderEventHelper.getEventData()->hostPartitions);
 
-    EXPECT_EQ(inOrderInfo->getDeviceCounterAllocation()->getGpuAddress(), inOrderInfo->getBaseDeviceAddress());
-    EXPECT_EQ(event0InOrderInfo->getNumDevicePartitionsToWait(), inOrderInfo->getNumDevicePartitionsToWait());
-    EXPECT_EQ(event0InOrderInfo->isHostStorageDuplicated() ? event0InOrderInfo->getNumHostPartitionsToWait() : event0InOrderInfo->getNumDevicePartitionsToWait(), inOrderInfo->getNumHostPartitionsToWait());
-
-    EXPECT_NE(nullptr, inOrderInfo->getExternalDeviceAllocation());
-    EXPECT_NE(nullptr, inOrderInfo->getExternalHostAllocation());
+    EXPECT_TRUE(newInOrderEventHelper.isFromExternalMemory());
+    EXPECT_EQ(event0InOrderInfo->isHostStorageDuplicated(), newInOrderEventHelper.isHostStorageDuplicated());
 
     if (event0InOrderInfo->isHostStorageDuplicated()) {
-        EXPECT_NE(inOrderInfo->getExternalDeviceAllocation(), inOrderInfo->getExternalHostAllocation());
-        EXPECT_TRUE(inOrderInfo->isHostStorageDuplicated());
+        EXPECT_NE(newInOrderEventHelper.getDeviceCounterAllocation(), newInOrderEventHelper.getHostCounterAllocation());
     } else {
-        EXPECT_EQ(inOrderInfo->getExternalDeviceAllocation(), inOrderInfo->getExternalHostAllocation());
+        EXPECT_EQ(newInOrderEventHelper.getDeviceCounterAllocation(), newInOrderEventHelper.getHostCounterAllocation());
     }
 
     EXPECT_TRUE(newEventMock->isFromIpcPool);

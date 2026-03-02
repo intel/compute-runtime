@@ -5259,13 +5259,12 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
 
     uint64_t counter = 2;
-    auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, 0x1, nullptr, &counter, 1, 1, 1);
-    inOrderExecInfo1->setLastWaitedCounterValue(1, 0);
-    event1->updateInOrderExecState(inOrderExecInfo1, 1, 0);
+
+    event1->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, 1, &counter, 0, 0, false, true);
 
     MockGraphicsAllocation mockAlloc(rootDeviceIndex, nullptr, 1);
-    auto inOrderExecInfo2 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), &mockAlloc, 0x1, &mockAlloc, &counter, 1, 1, 1);
-    event2->updateInOrderExecState(inOrderExecInfo2, 1, 0);
+
+    event2->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &mockAlloc, &mockAlloc, 1, &counter, 0, 0, false, true);
 
     ultCsr0->makeResident(*inOrderExecInfo0->getDeviceCounterAllocation());
 

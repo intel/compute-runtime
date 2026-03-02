@@ -63,40 +63,6 @@ HWTEST_F(CommandEncoderTests, givenMisalignedSizeWhenProgrammingSurfaceStateForB
     EXPECT_EQ(alignedSize, renderSurfaceState.getWidth());
 }
 
-HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInOrderExecInfoThenSetupCorrectly) {
-    MockDevice mockDevice;
-
-    uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
-    uint64_t gpuAddress = castToUint64(ptrOffset(&counterValue, 64));
-
-    MockGraphicsAllocation deviceAlloc(nullptr, gpuAddress, 1);
-
-    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, &deviceAlloc, gpuAddress, nullptr, hostAddress, counterValue, 2, 3);
-
-    EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
-    EXPECT_EQ(hostAddress, inOrderExecInfo->getBaseHostAddress());
-    EXPECT_EQ(gpuAddress, inOrderExecInfo->getBaseDeviceAddress());
-    EXPECT_EQ(&deviceAlloc, inOrderExecInfo->getDeviceCounterAllocation());
-    EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
-    EXPECT_TRUE(inOrderExecInfo->isExternalMemoryExecInfo());
-    EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
-    EXPECT_EQ(3u, inOrderExecInfo->getNumHostPartitionsToWait());
-    EXPECT_EQ(0u, inOrderExecInfo->getDeviceNodeWriteSize());
-    EXPECT_EQ(0u, inOrderExecInfo->getHostNodeWriteSize());
-    EXPECT_EQ(0u, inOrderExecInfo->getDeviceNodeGpuAddress());
-    EXPECT_EQ(0u, inOrderExecInfo->getHostNodeGpuAddress());
-
-    inOrderExecInfo->reset();
-
-    EXPECT_EQ(0u, inOrderExecInfo->getCounterValue());
-
-    MockGraphicsAllocation hostAlloc(nullptr, castToUint64(hostAddress), 1);
-
-    inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, &deviceAlloc, gpuAddress, &hostAlloc, hostAddress, counterValue, 2, 3);
-    EXPECT_EQ(&hostAlloc, inOrderExecInfo->getHostCounterAllocation());
-}
-
 HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnershipCorrectly) {
     class MyMockInOrderExecInfo : public NEO::InOrderExecInfo {
       public:

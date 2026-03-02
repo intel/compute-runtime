@@ -56,8 +56,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     InOrderExecInfo() = delete;
 
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount);
-    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation,
-                                                                         uint64_t *hostAddress, uint64_t counterValue, uint32_t devicePartitions, uint32_t hostPartitions);
 
     InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool atomicDeviceSignalling);
 
@@ -113,9 +111,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
         return lastWaitedCounterValue[allocationOffset != 0] >= waitValue;
     }
 
-    NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
-    NEO::GraphicsAllocation *getExternalDeviceAllocation() const { return externalDeviceAllocation; }
-
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
     void setupInterruptFence();
@@ -131,8 +126,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::Device &device;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
-    NEO::GraphicsAllocation *externalHostAllocation = nullptr;
-    NEO::GraphicsAllocation *externalDeviceAllocation = nullptr;
     std::vector<std::pair<NEO::TagNodeBase *, CounterAndOffsetPairT>> tempTimestampNodes;
 
     std::mutex mutex;
@@ -175,8 +168,12 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     bool isDataAssigned() const { return dataAssigned; }
 
-    bool isCounterAlreadyDone(uint64_t waitValue, uint32_t offset) const { return inOrderExecInfo->isCounterAlreadyDone(waitValue, offset); }
-    void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) { inOrderExecInfo->setLastWaitedCounterValue(value, allocationOffset); }
+    bool isCounterAlreadyDone(uint64_t waitValue, uint32_t offset) const { return inOrderExecInfo.get() ? inOrderExecInfo->isCounterAlreadyDone(waitValue, offset) : false; }
+    void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) {
+        if (inOrderExecInfo) {
+            inOrderExecInfo->setLastWaitedCounterValue(value, allocationOffset);
+        }
+    }
     SyncFence *getInterruptFence() const { return inOrderExecInfo.get() ? inOrderExecInfo->getInterruptFence() : nullptr; }
 
     const InOrderExecEventData *getEventData() const { return eventData.get(); }
@@ -189,7 +186,6 @@ class InOrderExecEventHelper : public NonCopyableClass {
     bool isHostStorageDuplicated() const { return hostStorageDuplicated; }
     bool isFromExternalMemory() const { return fromExternalMemory; }
 
-    void setIncrementValue(uint64_t newIncrementValue) { eventData->incrementValue = newIncrementValue; }
     uint64_t getIncrementValue() const { return eventData ? eventData->incrementValue : 0; }
 
     NEO::TagNodeBase *getLatestTimestampNode() const { return timestampNodes.back(); }
@@ -212,12 +208,13 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void addAggregatedEventUsageCounter(uint64_t addValue) { aggregatedEventUsageCounter += addValue; }
     void resetAggregatedEventUsageCounter() { aggregatedEventUsageCounter = 0; }
 
-  protected:
     void assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
                     NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                     bool hostStorageDuplicated, bool fromExternalMemory);
 
+  protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
+    void moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes);
 
     std::unique_ptr<InOrderExecEventData> eventData;
 

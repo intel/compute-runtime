@@ -326,9 +326,6 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         hostAlloc = deviceAlloc;
     }
 
-    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*neoDevice, deviceAlloc, deviceAlloc->getGpuAddress(), hostAlloc, static_cast<uint64_t *>(hostAlloc->getUnderlyingBuffer()),
-                                                                              ipcData.counterValue, ipcData.devicePartitions, ipcData.hostPartitions);
-
     const EventDescriptor eventDescriptor = {
         .eventPoolAllocation = nullptr,
         .extensions = nullptr,
@@ -348,7 +345,9 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto event = Event::create<uint64_t>(eventDescriptor, device, result);
-    event->updateInOrderExecState(inOrderExecInfo, ipcData.counterValue, ipcData.counterOffset);
+
+    event->getInOrderExecEventHelper().assignData(ipcData.counterValue, ipcData.counterOffset, ipcData.devicePartitions, ipcData.hostPartitions, deviceAlloc, hostAlloc, deviceAlloc->getGpuAddress(),
+                                                  static_cast<uint64_t *>(hostAlloc->getUnderlyingBuffer()), 0, 0, (deviceAlloc != hostAlloc), true);
 
     *eventHandle = event;
 
@@ -787,9 +786,9 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), deviceAlloc, castToUint64(externalSyncAllocProperties->deviceAddress),
-                                                                                      hostAlloc, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
-            updateInOrderExecState(inOrderExecInfo, externalSyncAllocProperties->completionValue, 0);
+            inOrderExecHelper.assignData(externalSyncAllocProperties->completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(externalSyncAllocProperties->deviceAddress),
+                                         externalSyncAllocProperties->hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
+
             disableHostCaching(true);
         } else if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
             auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
@@ -804,12 +803,9 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
 
             auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(deviceAlloc), offset);
 
-            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), deviceAlloc, castToUint64(externalStorageProperties->deviceAddress),
-                                                                                      deviceAlloc, reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->completionValue, 1, 1);
+            inOrderExecHelper.assignData(externalStorageProperties->completionValue, 0, 1, 1, deviceAlloc, deviceAlloc, castToUint64(externalStorageProperties->deviceAddress),
+                                         reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->incrementValue, 0, false, true);
 
-            updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
-
-            this->inOrderExecHelper.setIncrementValue(externalStorageProperties->incrementValue);
             disableHostCaching(true);
         }
 
