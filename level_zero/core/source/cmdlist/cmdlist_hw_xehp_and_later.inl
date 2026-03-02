@@ -336,7 +336,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (this->consumeTextureCacheFlushPending()) {
+    if (this->consumeTextureCacheFlushPending() || kernelDescriptor.kernelAttributes.flags.hasSample) {
         NEO::PipeControlArgs args;
         args.textureCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

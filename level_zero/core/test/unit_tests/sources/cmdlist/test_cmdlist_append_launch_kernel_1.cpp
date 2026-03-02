@@ -1487,6 +1487,49 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     }
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSamplerAccessesThenInvalidateTextureCachePriorComputeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    auto kernel = std::make_unique<Mock<KernelImp>>();
+    kernel->setModule(module.get());
+    const_cast<NEO::KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.hasSample = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
+
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceAfter));
+
+    auto itorCW = findAll<COMPUTE_WALKER *>(
+        cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, itorCW.size());
+
+    auto pipeControls =
+        findAll<PIPE_CONTROL *>(cmdList.begin(), itorCW[0]);
+
+    bool foundTextureCacheInvalidation = false;
+    for (auto itorPC : pipeControls) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+        if (pcCmd->getTextureCacheInvalidationEnable()) {
+            foundTextureCacheInvalidation = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundTextureCacheInvalidation);
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->setModule(module.get());
