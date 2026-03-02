@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 #include "neo_aot_platforms.h"
 constexpr auto gfxProduct = IGFX_CRI;
-#include "shared/source/helpers/compiler_product_helper_e64_xe3p_and_later.inl"
+#include "shared/source/xe3p_core/compiler_product_helper_xe3p.inl"
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
