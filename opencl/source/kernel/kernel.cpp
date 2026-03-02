@@ -666,20 +666,6 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         srcSize = sizeof(cl_uint);
         pSrc = &regCount;
         break;
-    case CL_KERNEL_ALLOCATIONS_INFO_INTEL: {
-        std::vector<cl_kernel_allocation_info_intel> allocationsInfo;
-        this->getAllocationsInfo(allocationsInfo);
-        pSrc = allocationsInfo.data();
-        srcSize = allocationsInfo.size() * sizeof(cl_kernel_allocation_info_intel);
-        if (paramValueSize && paramValue) {
-            srcSize = std::min(srcSize, paramValueSize);
-        }
-        auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
-        retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
-        GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
-        return retVal;
-    }
-
     default:
         break;
     }
@@ -1405,98 +1391,6 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
     }
 
     gtpinNotifyUpdateResidencyList(this, &dst);
-}
-
-void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &allocationsInfo) const {
-    if (privateSurface) {
-        allocationsInfo.push_back({.base = reinterpret_cast<void *>(privateSurface->getGpuAddress()),
-                                   .size = privateSurface->getUnderlyingBufferSize(),
-                                   .type = CL_MEM_TYPE_UNKNOWN_INTEL,
-                                   .arg_index = -1});
-    }
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    if (auto constantSurface = program->getConstantSurface(rootDeviceIndex)) {
-        allocationsInfo.push_back({.base = reinterpret_cast<void *>(constantSurface->getGpuAddress()),
-                                   .size = constantSurface->getSize(),
-                                   .type = CL_MEM_TYPE_UNKNOWN_INTEL,
-                                   .arg_index = -1});
-    }
-
-    if (auto globalSurface = program->getGlobalSurface(rootDeviceIndex)) {
-        allocationsInfo.push_back({.base = reinterpret_cast<void *>(globalSurface->getGpuAddress()),
-                                   .size = globalSurface->getSize(),
-                                   .type = CL_MEM_TYPE_UNKNOWN_INTEL,
-                                   .arg_index = -1});
-    }
-
-    if (auto exportedFunctionsSurface = program->getExportedFunctionsSurface(rootDeviceIndex)) {
-        allocationsInfo.push_back({.base = reinterpret_cast<void *>(exportedFunctionsSurface->getGpuAddress()),
-                                   .size = exportedFunctionsSurface->getUnderlyingBufferSize(),
-                                   .type = CL_MEM_TYPE_UNKNOWN_INTEL,
-                                   .arg_index = -1});
-    }
-
-    auto internalMemoryTypeToClMemTypeINTEL = [](InternalMemoryType internalType) -> cl_unified_shared_memory_type_intel {
-        switch (internalType) {
-        case InternalMemoryType::deviceUnifiedMemory:
-            return CL_MEM_TYPE_DEVICE_INTEL;
-        case InternalMemoryType::hostUnifiedMemory:
-            return CL_MEM_TYPE_HOST_INTEL;
-        case InternalMemoryType::sharedUnifiedMemory:
-            return CL_MEM_TYPE_SHARED_INTEL;
-        default:
-            return CL_MEM_TYPE_UNKNOWN_INTEL;
-        }
-    };
-
-    auto memoryPoolToClMemTypeINTEL = [](MemoryPool pool) -> cl_unified_shared_memory_type_intel {
-        return MemoryPoolHelper::isSystemMemoryPool(pool) ? CL_MEM_TYPE_HOST_INTEL : CL_MEM_TYPE_DEVICE_INTEL;
-    };
-
-    auto svmAllocsManager = getContext().getSVMAllocsManager();
-    for (auto gfxAlloc : kernelSvmGfxAllocations) {
-        auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(gfxAlloc->getGpuAddress()));
-        if (svmAlloc) {
-            allocationsInfo.push_back({.base = reinterpret_cast<void *>(gfxAlloc->getGpuAddress()),
-                                       .size = svmAlloc->size,
-                                       .type = internalMemoryTypeToClMemTypeINTEL(svmAlloc->memoryType),
-                                       .arg_index = -1});
-        }
-    }
-
-    for (auto gfxAlloc : kernelUnifiedMemoryGfxAllocations) {
-        auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(gfxAlloc->getGpuAddress()));
-        if (svmAlloc) {
-            allocationsInfo.push_back({.base = reinterpret_cast<void *>(gfxAlloc->getGpuAddress()),
-                                       .size = svmAlloc->size,
-                                       .type = internalMemoryTypeToClMemTypeINTEL(svmAlloc->memoryType),
-                                       .arg_index = -1});
-        }
-    }
-
-    auto numArgs = static_cast<int>(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.size());
-    for (auto argIndex = 0; argIndex < numArgs; argIndex++) {
-        if (kernelArguments[argIndex].object) {
-            if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = reinterpret_cast<GraphicsAllocation *>(kernelArguments[argIndex].object);
-                auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(pSVMAlloc->getGpuAddress()));
-                allocationsInfo.push_back({.base = reinterpret_cast<void *>(pSVMAlloc->getGpuAddress()),
-                                           .size = svmAlloc->size,
-                                           .type = internalMemoryTypeToClMemTypeINTEL(svmAlloc->memoryType),
-                                           .arg_index = argIndex});
-            } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
-                auto memObj = castToObject<MemObj>(clMem);
-                DEBUG_BREAK_IF(memObj == nullptr);
-                auto graphicsAllocation = memObj->getGraphicsAllocation(rootDeviceIndex);
-                allocationsInfo.push_back({.base = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + memObj->getOffset()),
-                                           .size = memObj->getSize(),
-                                           .type = memoryPoolToClMemTypeINTEL(graphicsAllocation->getMemoryPool()),
-                                           .arg_index = argIndex});
-            }
-        }
-    }
 }
 
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,
