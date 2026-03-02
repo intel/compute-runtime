@@ -266,6 +266,7 @@ struct CommandListCoreFamily : public CommandList {
     MOCKABLE_VIRTUAL void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     bool isUsingAdditionalBlitProperties() const { return useAdditionalBlitProperties; }
     bool useZeroedPatternInMemoryFill(CmdListMemoryCopyParams &memoryCopyParams) const;
+    bool doParamsRequireCopyOnly(CmdListMemoryCopyParams &memoryCopyParams) const;
 
   protected:
     void dispatchHostFunction(ze_host_function_callback_t pHostFunction,

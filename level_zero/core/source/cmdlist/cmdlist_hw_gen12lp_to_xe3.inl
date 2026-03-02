@@ -79,6 +79,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::useZeroedPatternInMemoryFill(CmdListM
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::doParamsRequireCopyOnly(CmdListMemoryCopyParams &memoryCopyParams) const {
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCustomOperation(const void *pNext,
                                                                         ze_event_handle_t hSignalEvent,
                                                                         uint32_t numWaitEvents,

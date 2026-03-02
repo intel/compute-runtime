@@ -2622,8 +2622,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     const auto isStateless = this->forceStateless(size);
     const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
+    const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred() && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && isCopyOffloadForFillOrStagingPreferred() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && isCopyOffloadForFillPreferred(size);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && shouldUseCopyOffload;
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();
@@ -2644,6 +2645,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(signalEvent);
         return status;
+    } else if (doParamsRequireCopyOnly(memoryCopyParams)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, false);
