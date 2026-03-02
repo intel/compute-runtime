@@ -35,7 +35,7 @@ namespace ult {
 
 struct DriverHandleGetFdMock : public L0::DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
+                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
 
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
@@ -82,10 +82,10 @@ struct MemoryExportImportTest : public ::testing::Test {
 };
 
 struct DriverHandleGetMemHandleMock : public L0::DriverHandle {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) override;
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer,
-                         NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
+                         NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
 
     const int mockFd = 57;
     std::pair<void *, int> allocationFdMap;
@@ -131,7 +131,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 };
 
 struct DriverHandleGetWinHandleMock : public L0::DriverHandle {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) override;
 
     uint64_t mockHandle = 57;
     std::pair<void *, uint64_t> allocationMap;
@@ -177,7 +177,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
 
 struct DriverHandleGetIpcHandleMock : public DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
+                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
 
     const int mockFd = 999;
     std::pair<void *, int> allocationMap;

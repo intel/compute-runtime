@@ -208,8 +208,8 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData) override;
-    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) override;
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory) override;
     uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) override;
 
     bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
@@ -278,6 +278,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                 // For fdHandle, we store the handle as an int
                 ipcData.handle.fd = static_cast<int>(handle);
             }
+            ipcData.compressedMemory = graphicsAllocation->isCompressionEnabled();
             memset(ipcData.reservedHandleData, 0, sizeof(IpcOpaqueMemoryData::reservedHandleData));
             if (reservedHandleData) {
                 std::memcpy(ipcData.reservedHandleData, reservedHandleData, sizeof(IpcOpaqueMemoryData::reservedHandleData));
