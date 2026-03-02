@@ -659,7 +659,10 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
             device->getL0Debugger()->notifyModuleLoadAllocations(device->getNEODevice(), allocs);
             notifyModuleCreate();
         }
-        this->dumpKernelInfoToAubComments();
+
+        if (!device->getNEODevice()->getDefaultEngine().commandStreamReceiver->isHardwareMode()) [[unlikely]] {
+            this->dumpKernelInfoToAubComments();
+        }
     }
     if (linkageSuccessful == false) {
         result = ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
@@ -1905,17 +1908,13 @@ size_t ModuleImp::getIsaAllocationPageSize() const {
     }
 }
 
-void ModuleImp::dumpKernelInfoToAubComments() {
+FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
 
     if (NEO::debugManager.flags.PrintZeInfoInAub.get() == false) {
         return;
     }
 
     auto neoDevice = device->getNEODevice();
-    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    if (csr->getType() == NEO::CommandStreamReceiverType::hardware) {
-        return;
-    }
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(device->getHwInfo());

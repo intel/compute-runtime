@@ -306,7 +306,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int createFromILExt(Context *context, const void *il, size_t length);
 
   protected:
-    void dumpKernelInfoToAubComments();
+    FORCE_NOINLINE void dumpKernelInfoToAubComments();
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
     cl_int packDeviceBinary(ClDevice &clDevice);

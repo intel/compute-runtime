@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
@@ -160,7 +161,10 @@ cl_int Program::build(
             debugNotify(deviceVector, phaseReached);
         }
         notifyModuleCreate();
-        dumpKernelInfoToAubComments();
+        if (!clDevices[0]->getDevice().getDefaultEngine().commandStreamReceiver->isHardwareMode()) [[unlikely]] {
+            dumpKernelInfoToAubComments();
+        }
+
     } while (false);
 
     if (retVal != CL_SUCCESS) {

@@ -185,17 +185,13 @@ void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocati
     }
 }
 
-void Program::dumpKernelInfoToAubComments() {
+FORCE_NOINLINE void Program::dumpKernelInfoToAubComments() {
 
     if (NEO::debugManager.flags.PrintZeInfoInAub.get() == false) {
         return;
     }
 
     auto pClDevice = clDevices[0];
-    auto csr = pClDevice->getDevice().getDefaultEngine().commandStreamReceiver;
-    if (csr->getType() == NEO::CommandStreamReceiverType::hardware) {
-        return;
-    }
 
     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
