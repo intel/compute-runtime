@@ -185,7 +185,9 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     this->handleInOrderCounterOverflow(copyOffloadOperation);
 
-    inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
+    if (!this->isPostSyncSkippedOnLatestInOrderOperation) {
+        inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
+    }
 
     this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
 
@@ -3180,9 +3182,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
     }
 
     if (hasInOrderDependencies()) {
-        if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
+        if (!this->isPostSyncSkippedOnLatestInOrderOperation && inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasHeapfullCbEventWithProfiling = false;
-            this->isPostSyncSkippedOnLatestInOrderOperation = false;
             return false;
         }
 
@@ -4770,7 +4771,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
     const bool skip = (NEO::debugManager.flags.SkipImplicitInOrderDependencies.get() == 1);
 
-    return (!skip && inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
+    return (!skip && inOrderExecInfo.get() && (inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue() || this->isPostSyncSkippedOnLatestInOrderOperation));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

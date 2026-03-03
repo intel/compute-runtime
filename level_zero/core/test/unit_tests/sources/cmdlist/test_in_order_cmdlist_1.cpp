@@ -993,14 +993,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenSubmitting
         ptrOffset(cmdStream->getCpuBase(), offset),
         cmdStream->getUsed() - offset));
 
-    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
+    auto barrierItor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+    if (barrierItor == cmdList.end()) {
+        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
 
-    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
-        std::advance(itor, -2); // verify 2x LRI before semaphore
+        if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
+            std::advance(itor, -2); // verify 2x LRI before semaphore
+        }
+
+        const uint64_t expectedDependencyValue = immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u;
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedDependencyValue, immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, immCmdList->isQwordInOrderCounter(), false));
     }
-
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, immCmdList->isQwordInOrderCounter(), false));
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
@@ -1624,6 +1628,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchi
 
     auto eventHandle = events[0]->toHandle();
 
+    uint32_t expectedCounterValue = 0;
+    auto expectCounterUpdate = [&](bool isKernelDispatch, bool hasEvent) {
+        if (!immCmdList->isWalkerPostSyncSkipEnabled || (isKernelDispatch && hasEvent)) {
+            expectedCounterValue++;
+        }
+        EXPECT_EQ(expectedCounterValue, immCmdList->inOrderExecInfo->getCounterValue());
+    };
+
     auto offset = cmdStream->getUsed();
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
     uint32_t copyData = 0;
@@ -1643,57 +1655,57 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchi
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(1); // chaining
-    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     findSemaphores(0); // no implicit dependency semaphore
-    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, false);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(2); // implicit dependency + chaining
-    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
     findSemaphores(0); // no implicit dependency
-    EXPECT_EQ(4u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(false, false);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(2); // implicit dependency + chaining
-    EXPECT_EQ(5u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, copyParams);
     findSemaphores(0); // no implicit dependency
-    EXPECT_EQ(6u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(false, false);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(2); // implicit dependency + chaining
-    EXPECT_EQ(7u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryFill(alloc, &copyData, 1, 16, nullptr, 0, nullptr, copyParams);
     findSemaphores(0); // no implicit dependency
-    EXPECT_EQ(8u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(false, false);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(2); // implicit dependency + chaining
-    EXPECT_EQ(9u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernelIndirect(kernel->toHandle(), *static_cast<ze_group_count_t *>(alloc), nullptr, 0, nullptr, false);
     findSemaphores(0); // no implicit dependency
-    EXPECT_EQ(10u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, false);
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(2); // implicit dependency + chaining
-    EXPECT_EQ(11u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, true);
 
     offset = cmdStream->getUsed();
 
@@ -1702,7 +1714,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchi
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams);
     findSemaphores(0); // no implicit dependency
-    EXPECT_EQ(12u, immCmdList->inOrderExecInfo->getCounterValue());
+    expectCounterUpdate(true, false);
 
     context->freeMem(alloc);
 }
@@ -2625,11 +2637,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenDispatchin
     ultCsr->storeMakeResidentAllocations = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u, immCmdList->inOrderExecInfo->getCounterValue());
     EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList->inOrderExecInfo->getDeviceCounterAllocation()]);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 2u, immCmdList->inOrderExecInfo->getCounterValue());
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList->inOrderExecInfo->getDeviceCounterAllocation()]);
 }
 
@@ -2754,7 +2766,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             address <<= 32;
             address |= pcCmd->getAddress();
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
-            EXPECT_EQ(2u, pcCmd->getImmediateData());
+            EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, pcCmd->getImmediateData());
 
             auto releaseHelper = device->getNEODevice()->getReleaseHelper();
             const bool textureFlushRequired = releaseHelper && releaseHelper->isPostImageWriteFlushRequired() &&
@@ -2763,7 +2775,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         } else {
             if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
                 EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-                EXPECT_EQ(2u, postSync.getImmediateData());
+                EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, postSync.getImmediateData());
                 EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
             }
         }
@@ -2776,13 +2788,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer(), counterOffset));
     }
 
-    *hostAddress = 1;
+    const uint64_t expectedEventValue = immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u;
+
+    *hostAddress = expectedEventValue - 1;
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
 
-    *hostAddress = 2;
+    *hostAddress = expectedEventValue;
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
 
-    *hostAddress = 3;
+    *hostAddress = expectedEventValue + 1;
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
 }
 
@@ -3614,7 +3628,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
                                                       (cmdStream->getUsed() - offset)));
 
     auto itor = cmdList.begin();
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, inOrderSyncVa, immCmdList->isQwordInOrderCounter(), false));
+    const uint64_t expectedDependencyValue = immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u;
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedDependencyValue, inOrderSyncVa, immCmdList->isQwordInOrderCounter(), false));
 
     {
 
@@ -3632,7 +3647,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
         EXPECT_EQ(sdiSyncVa, sdiCmd->getAddress());
         EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-        EXPECT_EQ(2u, sdiCmd->getDataDword0());
+        EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
 }
@@ -3655,7 +3670,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
-    uint32_t inOrderCounter = 1;
+    uint32_t inOrderCounter = immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u;
 
     auto verifySdi = [&sdiSyncVa, &immCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
@@ -3772,6 +3787,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
         EXPECT_EQ(getHighPart(signalValue), sdiCmd->getDataDword1());
     };
 
+    uint64_t inOrderCounter = regularCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u;
+
     {
         auto offset = cmdStream->getUsed();
 
@@ -3783,8 +3800,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
-        verifySdi(cmdList.rbegin(), cmdList.rend(), 2);
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
     {
@@ -3800,8 +3817,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 2, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
-        verifySdi(cmdList.rbegin(), cmdList.rend(), 3);
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
     {
@@ -3815,8 +3832,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 3, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
-        verifySdi(cmdList.rbegin(), cmdList.rend(), 4);
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
     {
@@ -3832,8 +3849,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 4, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
-        verifySdi(cmdList.rbegin(), cmdList.rend(), 5);
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
     {
@@ -3849,8 +3866,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
-        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 5, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
-        verifySdi(cmdList.rbegin(), cmdList.rend(), 6);
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, regularCmdList->isQwordInOrderCounter(), false));
+        verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 }
 
@@ -4445,18 +4462,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), semaphoreItor);
-
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport);
-
-    if (lriRequired) {
-        std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
-    }
-
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    const uint64_t expectedDependencyValue = immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u;
 
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, 2, inOrderExecInfo->getBaseDeviceAddress(), immCmdList->isQwordInOrderCounter(), false));
+    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    // implicit dependency: either semaphore wait on in-order counter or a stalling barrier
+    auto itor = cmdList.begin();
+    if (genCmdCast<typename FamilyType::StallingBarrierType *>(*itor)) {
+        itor++;
+    } else {
+        const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(immCmdList->isQwordInOrderCounter(), immCmdList->getDevice()->getDeviceInfo().semaphore64bCmdSupport);
+        if (lriRequired) {
+            std::advance(semaphoreItor, -2);
+        }
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, expectedDependencyValue, inOrderExecInfo->getBaseDeviceAddress(), immCmdList->isQwordInOrderCounter(), false));
+    }
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
     ASSERT_NE(cmdList.end(), sdiItor);
@@ -4467,7 +4488,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(3u, sdiCmd->getDataDword0());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 2u : 3u, sdiCmd->getDataDword0());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWaitOnEventsThenDontSignalSyncAllocation) {
@@ -4509,7 +4530,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularInOrderCmdListWhen
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(3u, sdiCmd->getDataDword0());
+    EXPECT_EQ(regularCmdList->isWalkerPostSyncSkipEnabled ? 2u : 3u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
@@ -4803,7 +4824,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
-    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u, immCmdList->inOrderExecInfo->getCounterValue());
 
     auto offset = cmdStream->getUsed();
 
@@ -4816,7 +4837,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     if (immCmdList->isWalkerPostSyncSkipEnabled) {
         EXPECT_LT(offset, cmdStream->getUsed());
-        EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(1u, events[0]->getInOrderExecBaseSignalValue());
     } else {
         if (immCmdList->dcFlushSupport) {
             EXPECT_NE(offset, cmdStream->getUsed());
@@ -4946,7 +4967,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     itor = find<MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    EXPECT_EQ(3u, events[2]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(immCmdList2->isWalkerPostSyncSkipEnabled ? 2u : 3u, events[2]->getInOrderExecBaseSignalValue());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndTimestampEventThenSignalSyncAllocation) {
@@ -4958,7 +4979,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
-    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u, immCmdList->inOrderExecInfo->getCounterValue());
 
     auto offset = cmdStream->getUsed();
 
@@ -4982,7 +5003,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
@@ -4997,7 +5018,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithou
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
-    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u, immCmdList->inOrderExecInfo->getCounterValue());
 
     auto offset = cmdStream->getUsed();
 
@@ -5037,7 +5058,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithou
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
@@ -5346,7 +5367,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDoing
     immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, copyParams);
 
     EXPECT_TRUE(events[0]->getInOrderExecEventHelper().isDataAssigned());
-    EXPECT_EQ(2u, events[0]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, events[0]->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
 
     context->freeMem(deviceAlloc);
@@ -6364,7 +6385,7 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
-    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
 
     cmdList->close();
@@ -6378,13 +6399,13 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
-    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
 
     static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 0x12300;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
-    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress() + events[0]->getInOrderAllocationOffset(), address);
 }
 

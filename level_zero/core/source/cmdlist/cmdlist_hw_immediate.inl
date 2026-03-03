@@ -1270,6 +1270,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     if (status != ZE_RESULT_NOT_READY) {
         if (isInOrderExecutionEnabled()) {
             inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
+            this->isPostSyncSkippedOnLatestInOrderOperation = false;
         }
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
