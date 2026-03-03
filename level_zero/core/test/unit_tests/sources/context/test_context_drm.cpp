@@ -96,6 +96,46 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidHandleThenSuccess
     EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u, nullptr, false));
 }
 
+TEST_F(GetMemHandlePtrTest, givenExternalFdImportViaAllocDeviceMemWhenSuccessfulThenImportedFdIsClosed) {
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_external_memory_import_fd_t importDesc = {};
+    importDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    importDesc.fd = 57;
+    deviceDesc.pNext = &importDesc;
+
+    void *ptr = nullptr;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 10, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(GetMemHandlePtrTest, givenExternalFdImportViaAllocHostMemWhenSuccessfulThenImportedFdIsClosed) {
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_external_memory_import_fd_t importDesc = {};
+    importDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    importDesc.fd = 57;
+    hostDesc.pNext = &importDesc;
+
+    void *ptr = nullptr;
+    ze_result_t result = context->allocHostMem(&hostDesc, 10, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
+
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullptrIsReturned) {
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
 

@@ -76,6 +76,10 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
     return false;
 }
 
+void ContextImp::closeExternalHandle(uint64_t handle) {
+    NEO::SysCalls::close(static_cast<int>(handle));
+}
+
 void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     uint64_t importHandle = handle;

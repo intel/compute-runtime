@@ -93,6 +93,17 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
     return false;
 }
 
+void ContextImp::closeExternalHandle(uint64_t handle) {
+    auto neoDevice = L0::Device::fromHandle(this->devices.begin()->second)->getNEODevice();
+    NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
+    if (neoDevice->getRootDeviceEnvironment().osInterface) {
+        driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
+    }
+    if (driverType == NEO::DriverModelType::drm) {
+        NEO::SysCalls::close(static_cast<int>(handle));
+    }
+}
+
 void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                   uint64_t handle,
                                   NEO::AllocationType allocationType,

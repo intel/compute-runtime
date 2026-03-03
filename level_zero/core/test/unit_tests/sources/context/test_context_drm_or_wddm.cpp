@@ -1698,5 +1698,34 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithImportFailureAndNonZer
     driverHandle->failHandleLookup = false;
 }
 
+TEST_F(GetMemHandlePtrTest, givenNullOsInterfaceWhenCloseExternalHandleCalledThenFdIsNotClosed) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    context->closeExternalHandle(57);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(GetMemHandlePtrTest, givenDrmDriverWhenCloseExternalHandleCalledThenFdIsClosed) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    context->closeExternalHandle(57);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(GetMemHandlePtrTest, givenWddmDriverWhenCloseExternalHandleCalledThenFdIsNotClosed) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    context->closeExternalHandle(57);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+}
+
 } // namespace ult
 } // namespace L0
