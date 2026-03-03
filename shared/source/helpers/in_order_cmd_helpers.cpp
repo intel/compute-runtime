@@ -90,8 +90,12 @@ void InOrderExecInfo::uploadAllocationsToSimulation() {
     };
 
     if (deviceCounterNode) {
-        // In atomic + duplicated mode device counter is GPU-owned, host upload would overwrite it.
-        const bool skipDeviceCounterUploadToSimulation = atomicDeviceSignalling && duplicatedHostStorage;
+        // In atomic + duplicated mode device counter is GPU-owned.
+        // Skip host upload only in pure AUB mode to avoid overwrite.
+        const bool gpuOwnedDeviceCounter = atomicDeviceSignalling && duplicatedHostStorage;
+        const bool skipDeviceCounterUploadToSimulation = gpuOwnedDeviceCounter &&
+                                                         simulationUploadCsr->isAubMode() &&
+                                                         !simulationUploadCsr->isTbxMode();
         if (!skipDeviceCounterUploadToSimulation) {
             uploadCounterNodeToSimulation(*deviceCounterNode, getUploadSize(numDevicePartitionsToWait));
         }

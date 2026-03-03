@@ -384,10 +384,37 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUpload
     EXPECT_EQ(6u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
 }
 
-HWTEST_F(CommandEncoderTests, givenAtomicSignallingAndDuplicatedHostStorageWhenResetCalledThenSkipDeviceCounterUploadToSimulation) {
+HWTEST_F(CommandEncoderTests, givenAtomicSignallingAndDuplicatedHostStorageInTbxWhenResetCalledThenUploadBothCountersToSimulation) {
     MockDevice mockDevice;
     auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+    auto hostNode = hostTagAllocator.getTag();
+
+    auto hostAllocation = hostNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex());
+    auto deviceAllocation = deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex());
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, hostNode, mockDevice, 2, true);
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(hostAllocation, csr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_NE(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    inOrderExecInfo->reset();
+    EXPECT_EQ(4u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(4u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(hostAllocation, csr.writeMemoryParams.latestGfxAllocation);
+    EXPECT_NE(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(CommandEncoderTests, givenAtomicSignallingAndDuplicatedHostStorageInPureAubWhenResetCalledThenSkipDeviceCounterUploadToSimulation) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
     const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
 
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
@@ -409,6 +436,27 @@ HWTEST_F(CommandEncoderTests, givenAtomicSignallingAndDuplicatedHostStorageWhenR
     EXPECT_EQ(2u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(hostAllocation, csr.writeMemoryParams.latestGfxAllocation);
     EXPECT_NE(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(CommandEncoderTests, givenAtomicSignallingWithoutDuplicatedHostStorageInPureAubWhenResetCalledThenUploadDeviceCounterToSimulation) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    const uint32_t expectedChunkWriteMultiplier = csr.isChunkCopySupportedForSimulation() ? 1u : 0u;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+    auto deviceAllocation = deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex());
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(deviceNode, nullptr, mockDevice, 2, true);
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    inOrderExecInfo->reset();
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(deviceAllocation, csr.writeMemoryParams.latestGfxAllocation);
 }
 
 HWTEST_F(CommandEncoderTests, givenAtomicSignallingWithoutDuplicatedHostStorageWhenUploadingAllocationsThenDoNotSkipDeviceNodeUpload) {
