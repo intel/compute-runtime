@@ -1324,6 +1324,12 @@ NEO::SipRegisterType DebugSessionImp::getSipRegisterType(zet_debug_regset_type_i
         return SipRegisterType::eScalar;
     case ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU:
         return SipRegisterType::eMessageControl;
+    case ZET_DEBUG_REGSET_TYPE_STATUS_INTEL_GPU:
+        return SipRegisterType::eStatus;
+    case ZET_DEBUG_REGSET_TYPE_RANDOM_INTEL_GPU:
+        return SipRegisterType::eRandom;
+    case ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU:
+        return SipRegisterType::eDirect;
     case ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU:
@@ -1394,6 +1400,7 @@ uint32_t DebugSessionImp::typeToRegsetFlags(zet_debug_regset_type_intel_gpu_t ty
     case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU:
+    case ZET_DEBUG_REGSET_TYPE_STATUS_INTEL_GPU:
         return ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE;
 
     case ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU:
@@ -1402,6 +1409,8 @@ uint32_t DebugSessionImp::typeToRegsetFlags(zet_debug_regset_type_intel_gpu_t ty
     case ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU:
+    case ZET_DEBUG_REGSET_TYPE_RANDOM_INTEL_GPU:
+    case ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU:
         return ZET_DEBUG_REGSET_FLAG_READABLE;
 
     default:
@@ -1668,6 +1677,12 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         }
 
         regsetTypes.push_back(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU);
+    }
+
+    if (pStateSaveArea->versionHeader.version.major >= 5) {
+        regsetTypes.insert(regsetTypes.end(), {ZET_DEBUG_REGSET_TYPE_STATUS_INTEL_GPU,
+                                               ZET_DEBUG_REGSET_TYPE_RANDOM_INTEL_GPU,
+                                               ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU});
     }
 
     // Process each register type using the conditional helper

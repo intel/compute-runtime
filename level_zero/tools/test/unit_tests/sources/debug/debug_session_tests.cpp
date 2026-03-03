@@ -6886,6 +6886,9 @@ TEST(DebugSessionTest, GivenZetRegsetTypeThenSipRegsetTypeIsReturned) {
     EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), SipRegisterType::eInvalid);
     EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_FORCE_UINT32), SipRegisterType::eInvalid);
     EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_STATUS_INTEL_GPU), SipRegisterType::eStatus);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_RANDOM_INTEL_GPU), SipRegisterType::eRandom);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU), SipRegisterType::eDirect);
     EXPECT_EQ(DebugSessionImp::getSipRegisterType(static_cast<zet_debug_regset_type_intel_gpu_t>(ZET_DEBUG_REGSET_TYPE_FORCE_UINT32 - 1)), SipRegisterType::eInvalid);
 }
 

@@ -45,6 +45,7 @@ enum class SipRegisterType {
     eDirect,
     eRandom,
     eCommand,
+    eStatus,
 };
 
 struct SipLibThreadId {

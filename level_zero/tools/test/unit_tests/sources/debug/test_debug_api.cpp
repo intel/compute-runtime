@@ -417,11 +417,14 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPrope
         {NEO::SipRegisterType::eFlowControl, {.num = 1, .bytes = 4}},
         {NEO::SipRegisterType::eMessageControl, {.num = 1, .bytes = 8}},
         {NEO::SipRegisterType::eScalar, {.num = 1, .bytes = 8}},
+        {NEO::SipRegisterType::eStatus, {.num = 1, .bytes = 4}},
+        {NEO::SipRegisterType::eRandom, {.num = 1, .bytes = 16}},
+        {NEO::SipRegisterType::eDirect, {.num = 1, .bytes = 8}},
     };
     setUpV5Header(sipExternalLib);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(17u, count);
+    EXPECT_EQ(20u, count);
 
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
@@ -470,6 +473,9 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPrope
     validateRegsetProps(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, readOnly, 2, 8);
     validateRegsetProps(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, readOnly, 2, 8);
     validateRegsetProps(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, readWrite, 1, 8);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_STATUS_INTEL_GPU, readWrite, 1, 4);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_RANDOM_INTEL_GPU, readOnly, 1, 16);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU, readOnly, 1, 8);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned) {
