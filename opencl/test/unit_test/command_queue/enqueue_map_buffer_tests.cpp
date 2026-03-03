@@ -54,7 +54,7 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
 
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+        heaplessStateInit = heapless;
     }
 
     void TearDown() override {

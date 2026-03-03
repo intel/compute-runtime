@@ -125,8 +125,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
         auto &compilerProductHelper = device->getCompilerProductHelper();
         auto isHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
-        if (isHeaplessStateInit) {
+        if (isHeapless) {
             if (device->getRTMemoryBackedBuffer() != nullptr) {
                 mock->ioctlExpected.gemClose += 1;
                 mock->ioctlExpected.gemWait += 1;

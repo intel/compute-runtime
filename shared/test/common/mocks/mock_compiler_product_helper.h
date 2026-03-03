@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getDeviceOpenCLCVersions, getDeviceOpenCLCVersionsRetType, {}, (const HardwareInfo &hwInfo, OclCVersion max));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustHwInfoForIgc, (HardwareInfo & hwInfo));
     ADDMETHOD_CONST_NOBASE(isHeaplessModeEnabled, bool, false, (const HardwareInfo &hwInfo));
-    ADDMETHOD_CONST_NOBASE(isHeaplessStateInitEnabled, bool, false, (bool heaplessModeEnabled));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp16AtomicCapabilities, (const ReleaseHelper *releaseHelper, uint32_t &fp16Caps));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp32AtomicCapabilities, (uint32_t & fp32Caps));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp64AtomicCapabilities, (uint32_t & fp64Caps));

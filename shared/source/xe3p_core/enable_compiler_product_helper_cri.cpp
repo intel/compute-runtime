@@ -21,15 +21,6 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
     return AOT::CRI_A0;
 }
 
-template <>
-bool CompilerProductHelperHw<gfxProduct>::isHeaplessStateInitEnabled(bool heaplessModeEnabled) const {
-
-    if (debugManager.flags.Enable64bAddressingStateInit.get() != -1) {
-        return (debugManager.flags.Enable64bAddressingStateInit.get() == 1);
-    }
-    return heaplessModeEnabled;
-}
-
 static EnableCompilerProductHelper<gfxProduct> enableCompilerProductHelperCRI;
 
 } // namespace NEO

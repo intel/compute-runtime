@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
         miMemFenceSupported = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
+        heaplessStateInit = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     }
 
     template <typename FamilyType>

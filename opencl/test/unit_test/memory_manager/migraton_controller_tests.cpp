@@ -33,7 +33,7 @@ struct MigrationControllerTests : public ::testing::Test {
         }
         auto &compilerProductHelper = context.getDevice(0)->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+        heaplessStateInit = heapless;
     }
     void TearDown() override {
     }

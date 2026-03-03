@@ -59,7 +59,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         miMemFenceRequired = debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get();
     }
 
-    if (miMemFenceRequired && compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*hwInfo))) {
+    if (miMemFenceRequired && compilerProductHelper.isHeaplessModeEnabled(*hwInfo)) {
         this->systemMemoryFenceAddressSet = true;
     }
 

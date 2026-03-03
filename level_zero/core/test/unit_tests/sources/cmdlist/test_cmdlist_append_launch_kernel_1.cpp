@@ -1159,7 +1159,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+    auto heaplessStateInitEnabled = heaplessEnabled;
 
     if constexpr (FamilyType::isHeaplessRequired() == false) {
         using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

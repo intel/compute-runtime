@@ -1277,7 +1277,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForComple
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+    auto heaplessStateInitEnabled = heaplessEnabled;
 
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;

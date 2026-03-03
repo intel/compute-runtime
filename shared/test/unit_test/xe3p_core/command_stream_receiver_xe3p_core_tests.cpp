@@ -89,7 +89,6 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenDebugEnabledWhenInitializing
     VariableBackup<bool> backupMockSipInit(&MockSipData::called, false);
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.Enable64BitAddressing.set(true);
-    debugManager.flags.Enable64bAddressingStateInit.set(true);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -111,32 +110,6 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenDebugEnabledWhenInitializing
     EXPECT_TRUE(stateComputeCmd->getMemoryExceptionEnable());
     EXPECT_TRUE(stateComputeCmd->getEnableBreakpoints());
     EXPECT_TRUE(stateComputeCmd->getEnableForceExternalHaltAndForceException());
-}
-
-XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenStateInitDebugFlagDisabledAnd1ContextGroupWhenPrimaryEngineCreatedThenFullStateIsNotInitialized) {
-    DebugManagerStateRestore dbgRestorer;
-    const uint32_t contextGroupSize = 1;
-
-    debugManager.flags.ContextGroupSize.set(contextGroupSize);
-    debugManager.flags.Enable64bAddressingStateInit.set(0);
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 0;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
-    executionEnvironment.incRefInternal();
-
-    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
-
-    auto &ultCsr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
-    auto &csrStream = ultCsr.commandStream;
-
-    EXPECT_FALSE(ultCsr.osContext->isPartOfContextGroup());
-    EXPECT_EQ(0u, csrStream.getUsed());
 }
 
 XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, WhenFlushingImmediateTaskStatelessThenEnginePrologueIsNotSent) {

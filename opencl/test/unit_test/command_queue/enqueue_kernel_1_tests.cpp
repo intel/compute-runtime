@@ -1878,7 +1878,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+        heaplessStateInit = heapless;
     }
 
     template <typename FamilyType>

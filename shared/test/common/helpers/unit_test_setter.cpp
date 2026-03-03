@@ -17,10 +17,6 @@ void UnitTestSetter::disableHeapless([[maybe_unused]] const DebugManagerStateRes
     debugManager.flags.Enable64BitAddressing.set(0);
 };
 
-void UnitTestSetter::disableHeaplessStateInit([[maybe_unused]] const DebugManagerStateRestore &restorer) {
-    debugManager.flags.Enable64bAddressingStateInit.set(0);
-};
-
 void UnitTestSetter::setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment) {
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 

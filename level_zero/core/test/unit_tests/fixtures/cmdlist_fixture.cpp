@@ -246,7 +246,7 @@ void CommandListGlobalHeapsFixtureInit::setUp() {
 
 void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
 
-    UnitTestSetter::disableHeaplessStateInit(this->restorer);
+    UnitTestSetter::disableHeapless(this->restorer);
 
     if (globalHeapMode == static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)) {
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);

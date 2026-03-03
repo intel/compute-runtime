@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -924,13 +924,12 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     }
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t offset = 1;
-    auto taskCount = commandQueue->taskCount + (heaplessStateInit ? 1u : 0u);
+    auto taskCount = commandQueue->taskCount + (heapless ? 1u : 0u);
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, glBuffer, CL_TRUE, CL_MAP_WRITE, offset, (buffer->getSize() - offset),
                                         0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

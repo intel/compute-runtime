@@ -100,7 +100,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+    if (heaplessEnabled) {
         GTEST_SKIP();
     }
 
@@ -176,7 +176,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+    if (heaplessEnabled) {
         GTEST_SKIP();
     }
 

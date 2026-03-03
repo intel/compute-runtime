@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,6 @@ class CompilerProductHelper {
     virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const = 0;
     virtual void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const = 0;
     virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
@@ -134,7 +133,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override;
-    bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const override;
     void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const override;
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;

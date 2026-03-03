@@ -48,7 +48,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        this->heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+        this->heaplessStateInit = heapless;
     }
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {

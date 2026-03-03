@@ -253,8 +253,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
-    if (heaplessStateInit) {
+    if (heaplessEnabled) {
         GTEST_SKIP();
     }
 

@@ -91,7 +91,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        this->heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+        this->heaplessStateInit = heaplessEnabled;
     }
 
     void TearDown() override {

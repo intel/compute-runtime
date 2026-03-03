@@ -214,11 +214,6 @@ bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isHeaplessStateInitEnabled([[maybe_unused]] bool heaplessModeEnabled) const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t CompilerProductHelperHw<gfxProduct>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
     return ipVersion.value;
 }

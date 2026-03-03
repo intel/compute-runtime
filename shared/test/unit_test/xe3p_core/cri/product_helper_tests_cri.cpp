@@ -111,23 +111,6 @@ CRITEST_F(CriProductHelper, givenFtrHeaplessModeFalseWhenIsHeaplessModeEnabledTh
     EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 
-CRITEST_F(CriProductHelper, givenCompilerProductHelperWhenIsHeaplessStateInitEnabledThenCorrectValueIsSet) {
-    DebugManagerStateRestore restorer;
-
-    bool heaplessEnabled = false;
-    debugManager.flags.Enable64bAddressingStateInit.set(-1);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessStateInitEnabled(heaplessEnabled));
-
-    heaplessEnabled = true;
-    EXPECT_TRUE(compilerProductHelper->isHeaplessStateInitEnabled(heaplessEnabled));
-
-    debugManager.flags.Enable64bAddressingStateInit.set(0);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessStateInitEnabled(heaplessEnabled));
-
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
-    EXPECT_TRUE(compilerProductHelper->isHeaplessStateInitEnabled(heaplessEnabled));
-}
-
 CRITEST_F(CriProductHelper, whenApplyExtraInternalOptionsIsCalledThenInternalOptionsAreCorrect) {
     DebugManagerStateRestore restorer;
     std::string enable64bitAddressing = "-ze-intel-64bit-addressing";

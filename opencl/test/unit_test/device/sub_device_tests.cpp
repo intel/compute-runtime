@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    UnitTestSetter::disableHeaplessStateInit(restorer);
+    UnitTestSetter::disableHeapless(restorer);
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
@@ -111,7 +111,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
 TEST(SubDevicesTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    UnitTestSetter::disableHeaplessStateInit(restorer);
+    UnitTestSetter::disableHeapless(restorer);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};

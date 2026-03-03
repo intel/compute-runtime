@@ -54,7 +54,7 @@ struct UltCommandStreamReceiverTest
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
         auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        this->heaplessStateEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+        this->heaplessStateEnabled = heaplessEnabled;
     }
 
     void initHeaps() {

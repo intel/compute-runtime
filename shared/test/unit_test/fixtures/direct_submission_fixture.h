@@ -56,7 +56,7 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         batchBuffer.stream = stream.get();
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
+        heaplessStateInit = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
         UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     }

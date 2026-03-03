@@ -638,7 +638,7 @@ bool Device::initializeEngines() {
         auto &compilerProductHelper = this->getCompilerProductHelper();
         auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
 
-        bool isHeaplessStateInit = engine.osContext->getIsPrimaryEngine() && compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+        bool isHeaplessStateInit = engine.osContext->getIsPrimaryEngine() && heaplessEnabled;
         bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessStateInit) && !firstSubmissionDone;
 
         if (initializeDevice) {

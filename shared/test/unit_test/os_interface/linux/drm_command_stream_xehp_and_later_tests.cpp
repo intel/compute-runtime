@@ -153,7 +153,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+    auto heaplessStateInit = heapless;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
     allocation->updateTaskCount(heaplessStateInit ? 3 : 2, defaultEngine.osContext->getContextId());

@@ -3139,10 +3139,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
 
     auto &compilerProductHelper = context.getDevice(0)->getCompilerProductHelper();
     auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessModeEnabled);
 
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular).osContext;
-    if (heaplessStateInit) {
+    if (heaplessModeEnabled) {
         EXPECT_TRUE(osContext.isInitialized());
     } else {
         EXPECT_FALSE(osContext.isInitialized());

@@ -445,7 +445,6 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessStateInitAndScratchRequir
 
     DebugManagerStateRestore restore;
     debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -501,7 +500,6 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndBindlessHeapsHelperWhe
 
     DebugManagerStateRestore restore;
     debugManager.flags.Enable64BitAddressing.set(1);
-    debugManager.flags.Enable64bAddressingStateInit.set(1);
     debugManager.flags.UseBindlessMode.set(1);
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
