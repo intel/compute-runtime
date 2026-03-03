@@ -1512,3 +1512,113 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
     EXPECT_EQ(nullptr, svmAllocation);
 }
+
+TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndSharedMemWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceExtendedUSMBufferSize.set(2);
+
+    const size_t requestedSize = 64u;
+    auto device = mockContext->getDevice(0u);
+
+    cl_int retVal = CL_SUCCESS;
+
+    auto ptr = clSharedMemAllocINTEL(mockContext.get(), device, nullptr, requestedSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    size_t queriedSize = 0u;
+    size_t queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(requestedSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    debugManager.flags.ForceExtendedUSMBufferSize.set(0);
+    ptr = clSharedMemAllocINTEL(mockContext.get(), device, nullptr, requestedSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    queriedSize = 0u;
+    queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(requestedSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndHostMemWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHostUsmAllocationPool.set(2);
+
+    const size_t requestedSize = 64u;
+    const auto pageSizeNumber = 2;
+    auto device = mockContext->getDevice(0u);
+    auto platform = static_cast<MockPlatform *>(device->getPlatform());
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(false);
+    platform->getHostMemAllocPoolManager().cleanup();
+    platform->usmPoolInitialized = false;
+
+    debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+
+    cl_int retVal = CL_SUCCESS;
+    auto ptr = clHostMemAllocINTEL(mockContext.get(), nullptr, requestedSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    auto pooledSize = platform->getHostMemAllocPoolManager().getPooledAllocationSize(ptr);
+    EXPECT_NE(0u, pooledSize);
+
+    size_t queriedSize = 0u;
+    size_t queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(requestedSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndDeviceMemWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
+
+    const size_t requestedSize = 64u;
+    const auto pageSizeNumber = 2;
+    auto device = mockContext->getDevice(0u);
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(false);
+    mockContext->getDeviceMemAllocPoolsManager().cleanup();
+    mockContext->usmPoolInitialized = false;
+
+    debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+
+    cl_int retVal = CL_SUCCESS;
+    auto ptr = clDeviceMemAllocINTEL(mockContext.get(), device, nullptr, requestedSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    auto pooledSize = mockContext->getDeviceMemAllocPoolsManager().getPooledAllocationSize(ptr);
+    EXPECT_NE(0u, pooledSize);
+
+    size_t queriedSize = 0u;
+    size_t queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(requestedSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}

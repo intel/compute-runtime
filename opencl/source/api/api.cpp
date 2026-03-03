@@ -4277,16 +4277,26 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
             return retVal;
         }
         if (auto sizeFromDevicePool = pContext->getDeviceMemAllocPoolsManager().getPooledAllocationSize(ptr)) {
+            if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+                sizeFromDevicePool -= (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
+            }
             retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromDevicePool));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
         if (auto sizeFromHostPool = pContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().getPooledAllocationSize(ptr)) {
+            if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+                sizeFromHostPool -= (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
+            }
             retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromHostPool));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
-        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(unifiedMemoryAllocation->size));
+        auto allocSize = unifiedMemoryAllocation->size;
+        if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+            allocSize -= (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
+        }
+        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(allocSize));
         TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
         return retVal;
     }
