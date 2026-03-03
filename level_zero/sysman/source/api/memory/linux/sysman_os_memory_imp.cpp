@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,9 +53,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         return status;
     }
 
-    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    pSysmanProductHelper->getMemoryHealthIndicator(pFwInterface, &pState->health);
+    pSysmanProductHelper->getMemoryHealthIndicator(pLinuxSysmanImp, &pState->health);
 
     std::unique_ptr<NEO::MemoryInfo> memoryInfo;
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();

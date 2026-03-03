@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -416,10 +416,12 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         }
         return status;
     }
-    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto productFamily = SysmanDeviceImp::getProductFamily(pDevice);
-    if ((pFwInterface != nullptr) && (IGFX_PVC == productFamily)) {
-        pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
+    if (IGFX_PVC == productFamily) {
+        FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+        if (pFwInterface != nullptr) {
+            pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
+        }
     }
     auto memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
     if (memoryInfo != nullptr) {

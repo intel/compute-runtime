@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -313,8 +313,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 }
 
 template <>
-void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(FirmwareUtil *pFwInterface, zes_mem_health_t *health) {
+void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) {
     *health = ZES_MEM_HEALTH_UNKNOWN;
+    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     if (pFwInterface != nullptr) {
         pFwInterface->fwGetMemoryHealthIndicator(health);
     }

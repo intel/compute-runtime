@@ -140,7 +140,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(FirmwareUtil *pFwInterface, zes_mem_health_t *health) {
+void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) {
     *health = ZES_MEM_HEALTH_UNKNOWN;
 }
 
