@@ -96,10 +96,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDr
     EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingGetImportHandleFromReservedHandleDataThenDefaultFailureIsReturned) {
-    uint8_t reservedHandleData[32] = {};
-
-    int result = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, rootDeviceIndex);
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingGetImportHandleFromNullReservedHandleDataThenFailureIsReturned) {
+    int result = memoryManager->getImportHandleFromReservedHandleData(nullptr, rootDeviceIndex);
 
     EXPECT_EQ(-1, result);
 }
@@ -1389,7 +1387,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHan
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandleWithReservedDataThenSucceeds) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandleWithNullReservedDataThenSucceeds) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -1404,13 +1402,12 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandl
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
-    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEF));
-    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, reservedHandleData);
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHandleWithReservedDataThenSucceeds) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHandleWithNullReservedDataThenSucceeds) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -1425,8 +1422,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHan
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
-    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xCAFEBABE));
-    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, nullptr, reservedHandleData);
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, nullptr, nullptr);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -1451,7 +1447,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullReservedDataWhenClosingInterna
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenClosingInternalHandleWithReservedDataThenCloseInternalHandleIsCalled) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenClosingInternalHandleWithNullReservedDataThenCloseInternalHandleIsCalled) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -1466,22 +1462,17 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenClosingInterna
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
-    // Test that closeInternalHandleWithReservedData calls closeInternalHandle
-    // DrmMemoryManager's default implementation should just delegate to closeInternalHandle
-    void *reservedHandleData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xBEEFCAFE));
-    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, reservedHandleData);
+    // Test that closeInternalHandleWithReservedData calls closeInternalHandle.
+    memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
 
     // If we get here without errors, the test passed
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenObtainReservedHandleDataIsCalledThenNoAction) {
-    // Test that obtainReservedHandleData does nothing in default implementation
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenObtainReservedHandleDataIsCalledWithNullReservedDataThenNoAction) {
+    // Test that obtainReservedHandleData safely handles null reserved data.
     int testFd = 42;
-    void *reservedHandleData = reinterpret_cast<void *>(0x12345678);
-
-    // This should not crash or throw - it's a no-op in the default implementation
-    memoryManager->obtainReservedHandleData(testFd, 0u, reservedHandleData);
+    memoryManager->obtainReservedHandleData(testFd, 0u, nullptr);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrDrmAllocationWhenTryingToRegisterItThenRegisterSharedBoHandleAllocationDoesNothing) {
@@ -10011,4 +10002,211 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given2MBAllocationWhenAllocateByKMDThen
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(HeapIndex::heapStandard2MB, memoryManager->acquireGpuRangeLastHeapIndex);
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+struct MockDrmFabric : public DrmFabric {
+    MockDrmFabric() = default;
+
+    bool isAvailable() const override { return true; }
+
+    int fdToHandle(int32_t dmabufFd, void *reservedHandleData) override {
+        fdToHandleCalled++;
+        return -1;
+    }
+
+    int handleClose(const void *reservedHandleData) override {
+        handleCloseCalled++;
+        return -1;
+    }
+
+    int handleToFd(const void *reservedHandleData, int32_t &dmabufFd) override {
+        handleToFdCalled++;
+        if (handleToFdReturnValue == 0) {
+            dmabufFd = 1;
+        }
+        return handleToFdReturnValue;
+    }
+
+    uint32_t fdToHandleCalled = 0;
+    uint32_t handleCloseCalled = 0;
+    uint32_t handleToFdCalled = 0;
+    int handleToFdReturnValue = -1;
+};
+
+struct DrmMemoryManagerHandleTracking : public TestedDrmMemoryManager {
+    using TestedDrmMemoryManager::TestedDrmMemoryManager;
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closeInternalHandleCalled++;
+        TestedDrmMemoryManager::closeInternalHandle(handle, handleId, graphicsAllocation);
+    }
+
+    uint32_t closeInternalHandleCalled = 0;
+};
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenNullReservedHandleDataWhenObtainReservedHandleDataThenReturnsEarlyWithoutCallingFdToHandle) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    drm->drmFabric.reset(mockFabric);
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    memoryManager.obtainReservedHandleData(123, 0, nullptr);
+
+    EXPECT_EQ(0u, mockFabric->fdToHandleCalled);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenFabricNotAvailableWhenObtainReservedHandleDataThenBufferRemainsUnchanged) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    drm->drmFabric.reset();
+    drm->setupDrmFabric();
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+    uint8_t reservedData[32] = {0};
+
+    memoryManager.obtainReservedHandleData(123, 0, reservedData);
+
+    uint8_t zeroBuffer[32] = {0};
+    EXPECT_EQ(0, memcmp(reservedData, zeroBuffer, 32));
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenNullReservedHandleDataWhenCloseInternalHandleWithReservedDataThenClosesInternalHandleButNotFabricHandle) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    drm->drmFabric.reset(mockFabric);
+
+    DrmMemoryManagerHandleTracking memoryManager(executionEnvironment);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, AllocationType::buffer, 1});
+
+    uint64_t handle = 123;
+
+    memoryManager.closeInternalHandleWithReservedData(handle, 0, allocation, nullptr);
+
+    EXPECT_NE(0u, memoryManager.closeInternalHandleCalled);
+    EXPECT_EQ(0u, mockFabric->handleCloseCalled);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenNullGraphicsAllocationWhenCloseInternalHandleWithReservedDataThenReturnsEarlyWithoutClosingHandles) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    drm->drmFabric.reset(mockFabric);
+
+    DrmMemoryManagerHandleTracking memoryManager(executionEnvironment);
+    uint8_t reservedData[32] = {1, 2, 3};
+    uint64_t handle = 123;
+
+    memoryManager.closeInternalHandleWithReservedData(handle, 0, nullptr, reservedData);
+
+    EXPECT_NE(0u, memoryManager.closeInternalHandleCalled);
+    EXPECT_EQ(0u, mockFabric->handleCloseCalled);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenValidPointersWhenCloseInternalHandleWithReservedDataThenClosesBothInternalAndFabricHandles) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    drm->drmFabric.reset(mockFabric);
+
+    DrmMemoryManagerHandleTracking memoryManager(executionEnvironment);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, AllocationType::buffer, 1});
+
+    uint8_t reservedData[32] = {1, 2, 3};
+    uint64_t handle = 123;
+
+    memoryManager.closeInternalHandleWithReservedData(handle, 0, allocation, reservedData);
+
+    EXPECT_NE(0u, memoryManager.closeInternalHandleCalled);
+    EXPECT_NE(0u, mockFabric->handleCloseCalled);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenFabricNotAvailableAndNullReservedHandleDataWhenGetImportHandleFromReservedHandleDataThenReturnsMinusOne) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    drm->drmFabric.reset();
+    drm->setupDrmFabric();
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    int result = memoryManager.getImportHandleFromReservedHandleData(nullptr, 0);
+
+    EXPECT_EQ(-1, result);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenDrmFabricStubWhenGetImportHandleFromReservedHandleDataThenReturnsMinusOne) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    drm->drmFabric.reset();
+    drm->setupDrmFabric();
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+    uint8_t reservedData[32] = {1, 2, 3};
+
+    int result = memoryManager.getImportHandleFromReservedHandleData(reservedData, 0);
+
+    EXPECT_EQ(-1, result);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenValidReservedHandleDataAndSuccessfulHandleToFdWhenGetImportHandleFromReservedHandleDataThenReturnsSuccess) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    drm->drmFabric.reset(mockFabric);
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+    uint8_t reservedData[32] = {1, 2, 3};
+
+    mockFabric->handleToFdReturnValue = 0;
+
+    int result = memoryManager.getImportHandleFromReservedHandleData(reservedData, 0);
+
+    EXPECT_GT(result, 0);
+    EXPECT_NE(0u, mockFabric->handleToFdCalled);
 }

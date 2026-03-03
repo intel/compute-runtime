@@ -917,3 +917,10 @@ TEST(IoctlHelperTestsUpstream, whenGettingEuDebugInterfaceTypeThenCorrectValueIs
     IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(ioctlHelper.getEuDebugInterfaceType(), EuDebugInterfaceType::maxValue);
 }
+
+TEST(IoctlHelperTestsUpstream, whenCheckingIsDrmFabricSupportedThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_FALSE(ioctlHelper.isDrmFabricSupported());
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     if (drm->setupHardwareInfo(usDeviceID, true)) {
         return nullptr;
     }
+
+    drm->setupDrmFabric();
 
     if (drm->enableTurboBoost()) {
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");

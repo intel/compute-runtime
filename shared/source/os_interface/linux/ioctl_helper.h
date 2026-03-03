@@ -261,6 +261,7 @@ class IoctlHelper {
     virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
     virtual uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) { return 0; }
     virtual EuDebugInterfaceType getEuDebugInterfaceType() { return EuDebugInterfaceType::maxValue; }
+    virtual bool isDrmFabricSupported() const { return false; }
     virtual int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) { return 0; };
     virtual std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) { return std::nullopt; };
 

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/drm_fabric.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
@@ -207,6 +208,10 @@ class Drm : public DriverModel {
         return ioctlHelper.get();
     }
 
+    DrmFabric *getDrmFabric() const {
+        return drmFabric.get();
+    }
+
     const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }
@@ -290,6 +295,7 @@ class Drm : public DriverModel {
     std::string generateElfUUID(const void *data);
     void printIoctlStatistics();
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
+    void setupDrmFabric();
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
     MOCKABLE_VIRTUAL const DeviceDescriptor *getDeviceDescriptor(uint32_t deviceId);
@@ -343,6 +349,7 @@ class Drm : public DriverModel {
 
     std::unique_ptr<HwDeviceIdDrm> hwDeviceId;
     std::unique_ptr<IoctlHelper> ioctlHelper;
+    std::unique_ptr<DrmFabric> drmFabric;
     std::unique_ptr<SystemInfo> systemInfo;
     std::unique_ptr<CacheInfo> cacheInfo;
     std::unique_ptr<EngineInfo> engineInfo;

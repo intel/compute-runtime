@@ -1272,6 +1272,12 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     }
 }
 
+void Drm::setupDrmFabric() {
+    if (!this->drmFabric) {
+        this->drmFabric = DrmFabric::create(*this);
+    }
+}
+
 bool Drm::queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
     UNRECOVERABLE_IF(!systemInfoQueried);
     UNRECOVERABLE_IF(!engineInfoQueried);

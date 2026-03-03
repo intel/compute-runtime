@@ -36,6 +36,7 @@ class DrmMock : public Drm {
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
     using Drm::disableScratch;
+    using Drm::drmFabric;
     using Drm::engineInfo;
     using Drm::engineInfoQueried;
     using Drm::fenceVal;
@@ -59,6 +60,7 @@ class DrmMock : public Drm {
     using Drm::setPageFaultSupported;
     using Drm::setPairAvailable;
     using Drm::setSharedSystemAllocEnable;
+    using Drm::setupDrmFabric;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;

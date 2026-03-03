@@ -2739,3 +2739,28 @@ TEST(DrmTest, whenGettingEuDebugInterfaceTypeThenCorrectValueIsReturned) {
 
     EXPECT_EQ(drm.getEuDebugInterfaceType(), EuDebugInterfaceType::prelim);
 }
+
+TEST(DrmTest, givenDrmWhenSetupDrmFabricCalledOnceThenCreatesDrmFabric) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    EXPECT_EQ(nullptr, drm.drmFabric.get());
+
+    drm.setupDrmFabric();
+
+    EXPECT_NE(nullptr, drm.drmFabric.get());
+}
+
+TEST(DrmTest, givenDrmWhenSetupDrmFabricCalledTwiceThenDoesNotRecreate) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setupDrmFabric();
+    auto firstFabric = drm.drmFabric.get();
+    EXPECT_NE(nullptr, firstFabric);
+
+    drm.setupDrmFabric();
+    auto secondFabric = drm.drmFabric.get();
+
+    EXPECT_EQ(firstFabric, secondFabric);
+}
