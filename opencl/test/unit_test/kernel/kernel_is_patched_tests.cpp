@@ -26,7 +26,6 @@ class PatchedKernelTest : public ::testing::Test {
         program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
-        program->callBasePopulateZebinExtendedArgsMetadataOnce = true;
         kernel.reset(Kernel::create(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *device, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
@@ -49,12 +48,10 @@ TEST_F(PatchedKernelTest, givenKernelWithoutPatchedArgsWhenIsPatchedIsCalledThen
 TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithBufferWhenIsPatchedIsCalledThenReturnsTrue) {
     auto buffer = clCreateBuffer(context.get(), CL_MEM_READ_ONLY, sizeof(int), nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    kernel->setArg(0, buffer);
-    uint32_t immArgValue = 0x12345678;
-    kernel->setArg(1, immArgValue);
-    kernel->setArg(2, buffer);
-
+    auto argsNum = kernel->getKernelArgsNumber();
+    for (uint32_t i = 0; i < argsNum; i++) {
+        kernel->setArg(i, buffer);
+    }
     EXPECT_TRUE(kernel->isPatched());
     clReleaseMemObject(buffer);
 }

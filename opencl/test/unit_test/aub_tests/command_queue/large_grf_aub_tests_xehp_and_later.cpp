@@ -202,7 +202,7 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
 
         retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &smallGrfArg0);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        retVal = clSetKernelArg(kernel, 1, sizeof(cl_uint), &smallGrfArg1);
+        retVal = clSetKernelArg(kernel, 1, sizeof(cl_mem), &smallGrfArg1);
         ASSERT_EQ(CL_SUCCESS, retVal);
         retVal = clSetKernelArg(kernel, 2, sizeof(cl_mem), &smallGrfArg2);
         ASSERT_EQ(CL_SUCCESS, retVal);

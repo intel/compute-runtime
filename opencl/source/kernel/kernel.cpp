@@ -379,8 +379,6 @@ cl_int Kernel::initialize() {
         initializeLocalIdsCache();
     }
 
-    program->callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
-
     return CL_SUCCESS;
 }
 
@@ -1740,14 +1738,6 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
     auto retVal = CL_INVALID_ARG_VALUE;
 
     if (argVal) {
-        const auto &extendedMetadata = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata;
-        if (!extendedMetadata.empty()) {
-            size_t requiredArgSize = extendedMetadata[argIndex].typeSize;
-            if (requiredArgSize != 0 && argSize != requiredArgSize) {
-                return CL_INVALID_ARG_SIZE;
-            }
-        }
-
         storeKernelArg(argIndex, NONE_OBJ, nullptr, nullptr, argSize);
 
         [[maybe_unused]] auto crossThreadDataEnd = ptrOffset(crossThreadData, crossThreadDataSize);

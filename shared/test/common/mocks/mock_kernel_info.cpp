@@ -46,15 +46,6 @@ void MockKernelInfo::addArgImmediate(uint32_t index, uint16_t size, CrossThreadD
 
     ArgDescValue::Element element{offset, size, sourceOffset};
     argAt(index).as<ArgDescValue>(true).elements.push_back(element);
-
-    auto &extendedMetadata = kernelDescriptor.explicitArgsExtendedMetadata;
-    if (index >= extendedMetadata.size()) {
-        extendedMetadata.resize(index + 1);
-    }
-    auto requiredSize = static_cast<size_t>(sourceOffset) + static_cast<size_t>(size);
-    if (requiredSize > extendedMetadata[index].typeSize) {
-        extendedMetadata[index].typeSize = requiredSize;
-    }
 }
 
 void MockKernelInfo::addArgLocal(uint32_t index, CrossThreadDataOffset slmOffset, uint8_t requiredSlmAlignment) {
@@ -92,13 +83,13 @@ void MockKernelInfo::resizeArgsIfIndexTooBig(uint32_t index) {
     }
 }
 
-void MockKernelInfo::addExtendedMetadata(uint32_t index, const std::string &argName, const std::string &type, const std::string &accessQualifier, const std::string &addressQualifier, const std::string &typeQualifiers, size_t typeSize) {
+void MockKernelInfo::addExtendedMetadata(uint32_t index, const std::string &argName, const std::string &type, const std::string &accessQualifier, const std::string &addressQualifier, const std::string &typeQualifiers) {
     auto &extendedMetadata = kernelDescriptor.explicitArgsExtendedMetadata;
     if (index >= extendedMetadata.size()) {
         extendedMetadata.resize(index + 1);
     }
 
-    extendedMetadata[index] = {argName, type, accessQualifier, addressQualifier, typeQualifiers, typeSize};
+    extendedMetadata[index] = {argName, type, accessQualifier, addressQualifier, typeQualifiers};
 }
 
 void MockKernelInfo::populatePointerArg(ArgDescPointer &arg, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
