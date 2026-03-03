@@ -1225,7 +1225,7 @@ void CommandQueueHw<gfxCoreFamily>::getTagsManagerHeapsAndMakeThemResidentIfSWTa
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::makeSbaTrackingBufferResidentIfL0DebuggerEnabled(bool isDebugEnabled) {
-    if (isDebugEnabled && this->device->getL0Debugger()) {
+    if (isDebugEnabled && this->device->getL0Debugger() && this->device->getL0Debugger()->isSbaTrackingEnabled()) {
         this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
     }
 }

@@ -12,7 +12,9 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -36,39 +38,45 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 
 void DebuggerL0::initialize() {
 
-    initSbaTrackingMode();
+    auto hwInfo = device->getHardwareInfo();
+    auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    debuggerRequiresSBATracking = !compilerProductHelper.isHeaplessModeEnabled(hwInfo);
 
-    if (NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
-        setSingleAddressSpaceSbaTracking(NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get());
-    }
+    if (debuggerRequiresSBATracking) {
+        initSbaTrackingMode();
 
-    auto &engines = device->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());
+        if (NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
+            setSingleAddressSpaceSbaTracking(NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get());
+        }
 
-    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
-                                         NEO::AllocationType::debugSbaTrackingBuffer,
-                                         false,
-                                         device->getDeviceBitfield()};
+        auto &engines = device->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());
 
-    if (!singleAddressSpaceSbaTracking) {
-        RootDeviceIndicesContainer rootDeviceIndices;
-        rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
-        uint32_t rootDeviceIndexReserved = 0;
-        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
-        UNRECOVERABLE_IF(sbaTrackingGpuVa.address == 0u);
-        properties.gpuAddress = sbaTrackingGpuVa.address;
-    }
+        NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
+                                             NEO::AllocationType::debugSbaTrackingBuffer,
+                                             false,
+                                             device->getDeviceBitfield()};
 
-    SbaTrackedAddresses sbaHeader{};
+        if (!singleAddressSpaceSbaTracking) {
+            RootDeviceIndicesContainer rootDeviceIndices;
+            rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
+            uint32_t rootDeviceIndexReserved = 0;
+            sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
+            UNRECOVERABLE_IF(sbaTrackingGpuVa.address == 0u);
+            properties.gpuAddress = sbaTrackingGpuVa.address;
+        }
 
-    for (auto &engine : engines) {
-        properties.osContext = engine.osContext;
-        properties.subDevicesBitfield = engine.osContext->getDeviceBitfield();
+        SbaTrackedAddresses sbaHeader{};
 
-        auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-        device->getMemoryManager()->copyMemoryToAllocation(sbaAllocation, 0, &sbaHeader, sizeof(sbaHeader));
+        for (auto &engine : engines) {
+            properties.osContext = engine.osContext;
+            properties.subDevicesBitfield = engine.osContext->getDeviceBitfield();
 
-        perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
-        registerAllocationType(sbaAllocation); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+            auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            device->getMemoryManager()->copyMemoryToAllocation(sbaAllocation, 0, &sbaHeader, sizeof(sbaHeader));
+
+            perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
+            registerAllocationType(sbaAllocation); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+        }
     }
 
     {
@@ -113,6 +121,9 @@ void DebuggerL0::initialize() {
 }
 
 void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
+    if (!debuggerRequiresSBATracking) {
+        return;
+    }
     auto memory = perContextSbaAllocations[contextId]->getUnderlyingBuffer();
     auto sba = reinterpret_cast<SbaTrackedAddresses *>(memory);
 
@@ -127,11 +138,13 @@ void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
 }
 
 DebuggerL0 ::~DebuggerL0() {
-    for (auto &alloc : perContextSbaAllocations) {
-        device->getMemoryManager()->freeGraphicsMemory(alloc.second);
-    }
-    if (sbaTrackingGpuVa.size != 0) {
-        device->getMemoryManager()->freeGpuAddress(sbaTrackingGpuVa, device->getRootDeviceIndex());
+    if (debuggerRequiresSBATracking) {
+        for (auto &alloc : perContextSbaAllocations) {
+            device->getMemoryManager()->freeGraphicsMemory(alloc.second);
+        }
+        if (sbaTrackingGpuVa.size != 0) {
+            device->getMemoryManager()->freeGpuAddress(sbaTrackingGpuVa, device->getRootDeviceIndex());
+        }
     }
     device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
 }

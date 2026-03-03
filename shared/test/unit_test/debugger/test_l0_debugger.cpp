@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -305,8 +305,9 @@ HWTEST_F(L0DebuggerTest, givenProgramDebuggingWhenGettingDebuggingModeThenCorrec
 }
 
 using PerContextAddressSpaceL0DebuggerTest = L0DebuggerTest;
+using PlatformsSupportingSbaTracking = IsWithinGfxCore<IGFX_GEN12_CORE, IGFX_XE3_CORE>;
 
-HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThenNonCanonicalAddressesAreStored) {
+HWTEST2_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThenNonCanonicalAddressesAreStored, PlatformsSupportingSbaTracking) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
@@ -396,7 +397,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
     EXPECT_TRUE(cmdSdi->getStoreQword());
 }
 
-HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
+HWTEST2_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream, PlatformsSupportingSbaTracking) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
@@ -488,7 +489,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgramming
 
 using L0DebuggerMultiSubDeviceTest = L0DebuggerTest;
 
-HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffersAllocatedThenThereIsSeparatePhysicalStorageForEveryContext) {
+HWTEST2_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffersAllocatedThenThereIsSeparatePhysicalStorageForEveryContext, PlatformsSupportingSbaTracking) {
 
     if (is32bit) {
         GTEST_SKIP();
@@ -582,7 +583,7 @@ struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>,
 
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
-HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed, Gen12Plus) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed, PlatformsSupportingSbaTracking) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();
 
@@ -602,7 +603,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTr
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNoTrackingCmdsAreAdded, Gen12Plus) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNoTrackingCmdsAreAdded, PlatformsSupportingSbaTracking) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();
 
@@ -626,7 +627,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapt
     EXPECT_EQ(sizeUsed, sizeUsed2);
 }
 
-HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCapturingSBAThenTrackingCmdsAreAdded, Gen12Plus) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCapturingSBAThenTrackingCmdsAreAdded, PlatformsSupportingSbaTracking) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();
 

@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -326,7 +327,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
                 container.setDirtyStateForAllHeaps(false);
 
-                bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(args.isInternal) && args.device->getL0Debugger();
+                bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(args.isInternal) && args.device->getL0Debugger() && args.device->getL0Debugger()->isSbaTrackingEnabled();
                 NEO::EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                           *args.device,
                                                                                           *container.getCommandStream(),

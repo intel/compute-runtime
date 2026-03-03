@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ class MockDebuggerL0 : public NEO::DebuggerL0 {
 template <typename GfxFamily>
 class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
   public:
+    using NEO::DebuggerL0::debuggerRequiresSBATracking;
     using NEO::DebuggerL0::perContextSbaAllocations;
     using NEO::DebuggerL0::sbaTrackingGpuVa;
     using NEO::DebuggerL0::singleAddressSpaceSbaTracking;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
         singleAddressSpaceSbaTracking = value;
     }
     bool getSingleAddressSpaceSbaTracking() const override { return singleAddressSpaceSbaTracking; }
-
+    bool isSbaTrackingEnabled() const { return debuggerRequiresSBATracking; }
     struct CommandQueueNotification {
         uint32_t subDeviceIndex = 0;
         uint32_t subDeviceCount = 0;
@@ -120,6 +120,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
     std::vector<uint32_t> uuidL0CommandQueueHandle;
     bool singleAddressSpaceSbaTracking = false;
     std::mutex debuggerL0Mutex;
+    bool debuggerRequiresSBATracking = true;
 };
 
 static_assert(std::is_standard_layout<DebuggerL0::CommandQueueNotification>::value, "DebuggerL0::CommandQueueNotification issue");

@@ -85,7 +85,8 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCrea
     EXPECT_NE(nullptr, neoDevice->getDebugger());
 }
 
-TEST_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressModeIsSingleSpace) {
+using PlatformsSupportingSbaTracking = IsWithinGfxCore<IGFX_GEN12_CORE, IGFX_XE3_CORE>;
+HWTEST2_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressModeIsSingleSpace, PlatformsSupportingSbaTracking) {
     EXPECT_TRUE(device->getL0Debugger()->getSingleAddressSpaceSbaTracking());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,9 @@ namespace NEO {
 
 template <typename GfxFamily>
 void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) {
+    if (!debuggerRequiresSBATracking) {
+        return;
+    }
     const auto gmmHelper = device->getGmmHelper();
     const auto gpuAddress = gmmHelper->decanonize(sbaTrackingGpuVa.address);
     SbaAddresses sbaCanonized = sba;
@@ -110,6 +113,10 @@ DebuggerL0 *DebuggerL0Hw<GfxFamily>::allocate(NEO::Device *device) {
 
 template <typename GfxFamily>
 size_t DebuggerL0Hw<GfxFamily>::getSbaAddressLoadCommandsSize() {
+
+    if (!debuggerRequiresSBATracking) {
+        return 0;
+    }
     if (!singleAddressSpaceSbaTracking) {
         return 0;
     }
@@ -118,6 +125,9 @@ size_t DebuggerL0Hw<GfxFamily>::getSbaAddressLoadCommandsSize() {
 
 template <typename GfxFamily>
 void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) {
+    if (!isSbaTrackingEnabled()) {
+        return;
+    }
     if (!singleAddressSpaceSbaTracking) {
         return;
     }

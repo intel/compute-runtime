@@ -151,7 +151,8 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
     commandList->destroy();
 }
 
-HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
+using PlatformsSupportingSbaTracking = IsWithinGfxCore<IGFX_GEN12_CORE, IGFX_XE3_CORE>;
+HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, PlatformsSupportingSbaTracking) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
@@ -203,7 +204,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, Gen12Plus) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     Mock<Module> module(device, nullptr, ModuleType::user);
@@ -235,7 +236,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
-    EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
+    if (device->getL0Debugger()->isSbaTrackingEnabled()) {
+        EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
+    }
     EXPECT_TRUE(csr.isMadeResident(sipIsa));
     EXPECT_TRUE(csr.isMadeResident(debugSurface));
 
@@ -286,7 +289,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
-    EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
+    if (device->getL0Debugger()->isSbaTrackingEnabled()) {
+        EXPECT_TRUE(csr.isMadeResident(sbaBuffer));
+    }
     EXPECT_TRUE(csr.isMadeResident(sipIsa));
     EXPECT_TRUE(csr.isMadeResident(debugSurface));
 

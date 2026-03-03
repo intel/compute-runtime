@@ -233,7 +233,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     }
     auto debugger = this->device->getL0Debugger();
     if (debugger) {
-        csr->makeResident(*debugger->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+        if (debugger->isSbaTrackingEnabled()) {
+            csr->makeResident(*debugger->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+        }
         csr->makeResident(*this->device->getDebugSurface());
         if (bindlessHeapsHelper) {
             csr->makeResident(*bindlessHeapsHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
@@ -380,7 +382,9 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         }
 
         if (this->device->getL0Debugger() && NEO::Debugger::isDebugEnabled(this->internalUsage)) {
-            csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+            if (this->device->getL0Debugger()->isSbaTrackingEnabled()) {
+                csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+            }
             csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
                 csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());

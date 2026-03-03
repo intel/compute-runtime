@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,8 +95,9 @@ struct SingleAddressSpaceLinuxFixture : public Test<NEO::DeviceFixture> {
         Test<NEO::DeviceFixture>::TearDown();
     }
 };
+using PlatformsSupportingSbaTracking = IsWithinGfxCore<IGFX_GEN12_CORE, IGFX_XE3_CORE>;
 
-HWTEST_F(SingleAddressSpaceLinuxFixture, givenDebuggingModeOfflineWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
+HWTEST2_F(SingleAddressSpaceLinuxFixture, givenDebuggingModeOfflineWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue, PlatformsSupportingSbaTracking) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();
     EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
