@@ -1201,6 +1201,20 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
     EXPECT_EQ(ALLOCATION_HANDLE, mockTemporaryResources->resourceHandles.back());
 }
 
+TEST_F(WddmLockWithMakeResidentTests, whenRemovingResourceThenAllMatchingHandlesAreRemovedFromContainer) {
+    D3DKMT_HANDLE handle0 = ALLOCATION_HANDLE;
+    D3DKMT_HANDLE handle1 = ALLOCATION_HANDLE + 1;
+
+    wddm->temporaryResources->makeResidentResource(handle0, 0x1000);
+    wddm->temporaryResources->makeResidentResource(handle0, 0x1000);
+    wddm->temporaryResources->makeResidentResource(handle1, 0x1000);
+    EXPECT_EQ(3u, wddm->makeResidentResult.called);
+    EXPECT_EQ(3u, mockTemporaryResources->resourceHandles.size());
+    wddm->temporaryResources->removeResource(handle0);
+    EXPECT_EQ(1u, mockTemporaryResources->resourceHandles.size());
+    EXPECT_EQ(handle1, mockTemporaryResources->resourceHandles.back());
+}
+
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenWaitForCurrentPagingFenceValue) {
     wddm->callBaseMakeResident = true;
     wddm->mockPagingFence = 0u;

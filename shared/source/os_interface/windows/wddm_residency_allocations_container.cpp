@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,12 +90,14 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(c
 
 void WddmResidentAllocationsContainer::removeResource(const D3DKMT_HANDLE &handle) {
     auto lock = acquireLock(resourcesLock);
-    auto position = std::find(resourceHandles.begin(), resourceHandles.end(), handle);
-    if (position == resourceHandles.end()) {
-        return;
+    while (true) {
+        auto position = std::find(resourceHandles.begin(), resourceHandles.end(), handle);
+        if (position == resourceHandles.end()) {
+            return;
+        }
+        *position = resourceHandles.back();
+        resourceHandles.pop_back();
     }
-    *position = resourceHandles.back();
-    resourceHandles.pop_back();
 }
 
 } // namespace NEO
