@@ -492,5 +492,50 @@ TEST_F(FabricEdgeFixture, givenMdfiLinksAreAvailableWhenEdgesAreCreatedThenVerif
     EXPECT_FALSE(fabricDeviceMdfi->getEdgeProperty(driverHandle->fabricVertices[0]->subVertices[0], unusedProperty));
 }
 
+TEST(FabricVertexTestFixture, givenFlatHierarchyWhenGetSubVerticesIsCalledThenZeroSubVerticesReturned) {
+    DebugManagerStateRestore restorer;
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
+    phVertices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->fabricVertexGetExp(&count, phVertices.data()), ZE_RESULT_SUCCESS);
+
+    for (uint32_t i = 0; i < count; i++) {
+        uint32_t subVertexCount = 0;
+        EXPECT_EQ(L0::zeFabricVertexGetSubVerticesExp(phVertices[i], &subVertexCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subVertexCount, 0u);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(FabricVertexTestFixture, givenExposeSingleDeviceModeWhenGetSubVerticesIsCalledThenZeroSubVerticesReturned) {
+    DebugManagerStateRestore restorer;
+    MultiDeviceFixtureCompositeHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    for (auto l0Device : multiDeviceFixture.driverHandle->devices) {
+        auto neoDevice = l0Device->getNEODevice();
+        neoDevice->getRootDeviceEnvironmentRef().setExposeSingleDeviceMode(true);
+    }
+
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
+    phVertices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->fabricVertexGetExp(&count, phVertices.data()), ZE_RESULT_SUCCESS);
+
+    for (uint32_t i = 0; i < count; i++) {
+        uint32_t subVertexCount = 0;
+        EXPECT_EQ(L0::zeFabricVertexGetSubVerticesExp(phVertices[i], &subVertexCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subVertexCount, 0u);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
 } // namespace ult
 } // namespace L0

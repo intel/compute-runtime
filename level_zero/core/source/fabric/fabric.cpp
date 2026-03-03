@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/fabric/fabric.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -74,6 +76,12 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
 }
 
 ze_result_t FabricVertex::getSubVertices(uint32_t *pCount, ze_fabric_vertex_handle_t *phSubvertices) {
+
+    if (device->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::flat ||
+        device->getNEODevice()->getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+        *pCount = 0;
+        return ZE_RESULT_SUCCESS;
+    }
 
     uint32_t subVertexCount = static_cast<uint32_t>(subVertices.size());
     if (*pCount == 0) {
