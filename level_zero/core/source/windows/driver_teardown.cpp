@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,9 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         L0::globalDriverSetup();
     }
     if (fdwReason == DLL_PROCESS_DETACH) {
+        if (lpvReserved != nullptr) {
+            return TRUE;
+        }
         L0::globalDriverTeardown();
         if (L0::globalOsSysmanDriver != nullptr) {
             delete L0::globalOsSysmanDriver;
