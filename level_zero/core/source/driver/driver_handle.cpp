@@ -909,6 +909,8 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
         if (numHandles > 1) {
             peerAllocRootDeviceIndex = device->getNEODevice()->getRootDevice()->getRootDeviceIndex();
         }
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+        l0GfxCoreHelper.p2pDecompressBufferIfRequired(alloc, device->getDriverHandle());
         NEO::SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
 
         if (numHandles > 1) {

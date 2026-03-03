@@ -73,6 +73,8 @@ struct MockIoctlHelperXe : IoctlHelperXe {
         return IoctlHelperXe::ioctl(fd, request, arg);
     }
 
+    bool isVmBindDecompressAvailable(uint32_t vmId) override { return false; }
+
     void testLog(auto &&...args) {
         XELOG(args...);
     }

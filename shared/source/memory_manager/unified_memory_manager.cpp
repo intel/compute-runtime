@@ -508,11 +508,11 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
+    bool preferCompressed = true;
     if (compressionEnabled && memoryProperties.device) {
-        auto *releaseHelper = memoryProperties.device->getReleaseHelper();
-        if (releaseHelper && !releaseHelper->isUsmCompressionSupportedOnPeerAccess() &&
+        if (not memoryProperties.device->getExecutionEnvironment()->isResourceDecompressionEnabled() &&
             memoryProperties.device->hasAnyPeerAccess().value_or(false)) {
-            compressionEnabled = false;
+            preferCompressed = false;
         }
     }
 
@@ -533,6 +533,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled || memoryProperties.allocationFlags.flags.compressedHint;
     unifiedMemoryProperties.flags.preferCompressed &= memoryManager->isCompressionSupportedForShareable(memoryProperties.allocationFlags.flags.shareable);
+    unifiedMemoryProperties.flags.preferCompressed &= preferCompressed;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {

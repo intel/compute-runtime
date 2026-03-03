@@ -50,6 +50,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *d
     return ret;
 }
 
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::decompress(Device *device, GraphicsAllocation &gfxAllocation) {
+    return MemoryOperationsStatus::unsupported;
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     OsContext *osContext = nullptr;
     for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {

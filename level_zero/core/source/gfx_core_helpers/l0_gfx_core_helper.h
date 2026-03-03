@@ -11,6 +11,7 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include "level_zero/zet_intel_gpu_debug.h"
@@ -46,6 +47,7 @@ enum class RTASDeviceFormatInternal {
 struct CopyOffloadMode;
 struct Event;
 struct Device;
+struct DriverHandleImp;
 struct EventPool;
 struct EventDescriptor;
 
@@ -123,6 +125,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual size_t getMaxFillPatternSizeForCopyEngine() const = 0;
     virtual uint64_t getSupportedCustomOperations1() const = 0;
     virtual uint64_t getSupportedCustomOperations2() const = 0;
+    virtual void p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, L0::DriverHandle *driverHandle) const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -186,6 +189,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     size_t getMaxFillPatternSizeForCopyEngine() const override;
     uint64_t getSupportedCustomOperations1() const override;
     uint64_t getSupportedCustomOperations2() const override;
+    void p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, L0::DriverHandle *driverHandle) const override;
 
   protected:
     L0GfxCoreHelperHw() = default;
