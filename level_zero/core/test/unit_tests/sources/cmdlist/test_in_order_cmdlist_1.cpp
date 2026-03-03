@@ -4774,7 +4774,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto eventHandle = events[1]->toHandle();
 
     immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    EXPECT_EQ(nullptr, events[1]->getLatestUsedCmdQueue());
     immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
+    EXPECT_EQ(immCmdList->cmdQImmediate, events[1]->getLatestUsedCmdQueue());
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 
@@ -4841,8 +4843,10 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
     auto eventHandle = events[1]->toHandle();
     events[1]->signalScope = 0;
 
+    events[1]->setLatestUsedCmdQueue(reinterpret_cast<L0::CommandQueue *>(0x1234));
     cmdList->appendBarrier(nullptr, 0, nullptr, false);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+    EXPECT_EQ(reinterpret_cast<void *>(0x1234), events[1]->getLatestUsedCmdQueue());
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 

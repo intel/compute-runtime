@@ -4264,6 +4264,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         if (hSignalEvent) {
             auto event = Event::fromHandle(hSignalEvent);
             assignInOrderExecInfoToEvent(event);
+            if (isImmediateType()) {
+                event->setLatestUsedCmdQueue(this->cmdQImmediate);
+            }
         }
 
         return ZE_RESULT_SUCCESS;
