@@ -48,10 +48,8 @@ macro(macro_for_each_platform)
       endforeach()
     endif()
 
-    #skip Gen8 bindless kernel generation
-    if(NOT ("${CORE_TYPE_LOWER}" STREQUAL "gen8"))
-      level_zero_generate_kernels_with_internal_options(l0_bindless_test_kernel_outputs ${PLATFORM_IT_LOWER} "bindless" ${DEVICE_ID} ${REVISION_ID} "-g" ${TEST_KERNEL_BINDLESS_internal_options} ${TEST_KERNEL_BINDLESS})
-    endif()
+    level_zero_generate_kernels_with_internal_options(l0_bindless_test_kernel_outputs ${PLATFORM_IT_LOWER} "bindless" ${DEVICE_ID} ${REVISION_ID} "-g" ${TEST_KERNEL_BINDLESS_internal_options} ${TEST_KERNEL_BINDLESS})
+
   endforeach()
 endmacro()
 

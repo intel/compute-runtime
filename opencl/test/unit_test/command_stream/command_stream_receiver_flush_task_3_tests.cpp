@@ -1995,7 +1995,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCall
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCallingAddPipeControlThenDcFlushIsEnabledOnlyOnGen8) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCallingAddPipeControlThenDcFlushIsDisabled) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto buffer = std::make_unique<uint8_t[]>(128);
     LinearStream commandStream(buffer.get(), 128);

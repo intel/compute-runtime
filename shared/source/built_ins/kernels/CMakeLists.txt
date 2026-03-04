@@ -259,7 +259,7 @@ macro(macro_for_each_platform)
 
     additional_heapless_checker()
 
-    if((${MODE} STREQUAL "bindless") AND (NOT BUILD_WITH_L0 OR("${CORE_TYPE}" STREQUAL "GEN8")))
+    if((${MODE} STREQUAL "bindless") AND (NOT BUILD_WITH_L0))
       continue()
     endif()
 
