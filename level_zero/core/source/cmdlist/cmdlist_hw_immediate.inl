@@ -1227,16 +1227,37 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
     } else if (!inOrderWaitAllowed) {
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
-        auto waitStatus = NEO::WaitStatus::notReady;
 
-        if (indefinitelyPoll && waitQueue->getUseKmdWaitFunction()) {
-            waitStatus = waitCsr->waitForTaskCountWithKmdNotifyFallback(waitTaskCount,
-                                                                        waitCsr->obtainCurrentFlushStamp(),
+        auto waitOnQueue = [&](CommandQueue *queueToWait, TaskCountType taskCountToWait, NEO::CommandStreamReceiver *csrToWait, uint64_t timeoutNs) -> NEO::WaitStatus {
+            const bool indefiniteWait = timeoutNs == std::numeric_limits<uint64_t>::max();
+
+            if (indefiniteWait && queueToWait->getUseKmdWaitFunction()) {
+                return csrToWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
+                                                                        csrToWait->obtainCurrentFlushStamp(),
                                                                         true,
                                                                         NEO::QueueThrottle::MEDIUM);
+            }
+
+            const int64_t timeoutInMicroSeconds = indefiniteWait ? 0 : static_cast<int64_t>(timeoutNs / 1000);
+            return csrToWait->waitForCompletionWithTimeout(NEO::WaitParams{indefiniteWait, !indefiniteWait, false, timeoutInMicroSeconds}, taskCountToWait);
+        };
+
+        auto waitStatus = NEO::WaitStatus::notReady;
+
+        if (this->latestFlushIsDualCopyOffload) {
+            uint64_t remainingTimeoutNs = timeout;
+            const auto startTime = std::chrono::steady_clock::now();
+            mainQueueCsr->flushTagUpdateIfRequired(mainQueueTaskCount);
+            waitStatus = waitOnQueue(this->cmdQImmediateCopyOffload, copyOffloadTaskCount, copyOffloadCsr, remainingTimeoutNs);
+            if (!indefinitelyPoll) {
+                const auto elapsedNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - startTime).count());
+                remainingTimeoutNs = (elapsedNs >= timeout) ? 0u : (timeout - elapsedNs);
+            }
+            if (waitStatus == NEO::WaitStatus::ready) {
+                waitStatus = waitOnQueue(this->cmdQImmediate, mainQueueTaskCount, mainQueueCsr, remainingTimeoutNs);
+            }
         } else {
-            const int64_t timeoutInMicroSeconds = timeout / 1000;
-            waitStatus = waitCsr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, false, timeoutInMicroSeconds}, waitTaskCount);
+            waitStatus = waitOnQueue(waitQueue, waitTaskCount, waitCsr, timeout);
         }
 
         if (waitStatus == NEO::WaitStatus::gpuHang) {

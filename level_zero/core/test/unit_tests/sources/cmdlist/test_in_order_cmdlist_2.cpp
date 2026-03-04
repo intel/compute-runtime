@@ -215,6 +215,73 @@ HWTEST2_F(CopyOffloadInOrderTests, givenStagingCopyEnabledWhenCopyCalledThenOffl
     context->freeMem(usmDevice);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenHostSynchronizeThenWaitOnBothMainAndCopyCsrTaskCounts, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->forceDisableInOrderWaits();
+
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    mainCsr->callBaseWaitForCompletionWithTimeout = false;
+    copyCsr->callBaseWaitForCompletionWithTimeout = false;
+    mainCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->latestFlushIsDualCopyOffload = true;
+
+    mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    copyCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    auto initialFlushedTaskCountMainCsr = mainCsr->peekLatestFlushedTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
+
+    EXPECT_EQ(1u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, copyCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    EXPECT_EQ(10u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    EXPECT_EQ(initialFlushedTaskCountMainCsr + 1, mainCsr->peekLatestFlushedTaskCount());
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotReadyThenDoNotWaitOnCompute, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->forceDisableInOrderWaits();
+
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    mainCsr->callBaseWaitForCompletionWithTimeout = false;
+    copyCsr->callBaseWaitForCompletionWithTimeout = false;
+    mainCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->latestFlushIsDualCopyOffload = true;
+
+    mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    copyCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(1000, false));
+
+    EXPECT_EQ(0u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, copyCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    EXPECT_EQ(0u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
@@ -1566,7 +1633,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     immCmdList->hostSynchronize(0, false);
 
     if (immCmdList->dcFlushSupport) {
-        EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
         EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     } else {
         EXPECT_EQ(mainCsrDownloadedAlloc, expectedAlloc);
@@ -1665,7 +1732,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
 
     immCmdList->hostSynchronize(0, true);
-    EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(2u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     *hostAddress = std::numeric_limits<uint64_t>::max();
 }
@@ -1689,8 +1756,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
 
-    *mainQueueCsr->getTagAddress() = 4;
-    *offloadCsr->getTagAddress() = 4;
+    *mainQueueCsr->getTagAddress() = 10;
+    *offloadCsr->getTagAddress() = 10;
 
     auto mainInternalStorage = mainQueueCsr->getInternalAllocationStorage();
 

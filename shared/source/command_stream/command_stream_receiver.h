@@ -339,10 +339,14 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool isUpdateTagFromWaitEnabled() = 0;
     virtual void flushMonitorFence(bool notifyKmd){};
     virtual bool isTlbFlushRequiredForStateCacheFlush();
+
     TaskCountType flushTagUpdateIfRequired() {
-        if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+        return flushTagUpdateIfRequired(this->peekTaskCount());
+    }
+    TaskCountType flushTagUpdateIfRequired(TaskCountType taskCountToWait) {
+        if (taskCountToWait > this->peekLatestFlushedTaskCount()) {
             auto lock = this->obtainUniqueOwnership();
-            if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+            if (taskCountToWait > this->peekLatestFlushedTaskCount()) {
                 this->flushTagUpdate();
             }
         }
