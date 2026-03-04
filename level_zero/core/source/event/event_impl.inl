@@ -1133,9 +1133,13 @@ void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPac
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::isCacheFlushRequiredForHostSync() const {
-    if (!isDcFlushAllowed || isHeaplessModeEnabled) {
+    if (!isDcFlushAllowed) {
         return false;
     }
-    return isCounterBased() || (inOrderExecHelper.isDataAssigned() && isNonCoherentTimestampsModeEnabled);
+    if (isDualCopyOffloadEvent) {
+        return true;
+    }
+
+    return !isHeaplessModeEnabled && (isCounterBased() || (inOrderExecHelper.isDataAssigned() && isNonCoherentTimestampsModeEnabled));
 }
 } // namespace L0

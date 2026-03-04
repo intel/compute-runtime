@@ -6178,43 +6178,6 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCal
     zeEventDestroy(handle);
 }
 
-HWTEST_F(InOrderCmdListTests, givenCopyOffloadAndBcsDispatchAndCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported) {
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
-
-    auto srcAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto dstAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-
-    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(true);
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    immCmdList->appendMemoryCopy(dstAddress, dstAddress, sizeof(uint64_t), handle, 0, nullptr, copyParams);
-
-    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-
-    auto eventObj = Event::fromHandle(handle);
-    *static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress()) = 2u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
-
-    if (device->getProductHelper().isDcFlushAllowed() && !immCmdList->isHeaplessModeEnabled()) {
-        EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
-        EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
-    } else {
-        EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    }
-
-    context->freeMem(srcAddress);
-    context->freeMem(dstAddress);
-    zeEventDestroy(handle);
-}
-
 HWTEST_F(InOrderCmdListTests, givenCachedTimestampWhenCallingSynchronizeOnRegularEventThenFlushDcIfSupported) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 

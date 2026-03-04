@@ -210,6 +210,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
             }
             signalEvent->getInOrderExecEventHelper().addAggregatedEventUsageCounter(incrementValue);
         }
+        signalEvent->setDualCopyOffload(getCopyOffloadModeForOperation(copyOffloadOperation) == CopyOffloadModes::dualStream);
     }
 
     this->latestOperationRequiredNonWalkerInOrderCmdsChaining = nonWalkerInOrderCmdsChaining;

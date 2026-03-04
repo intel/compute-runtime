@@ -381,6 +381,10 @@ struct Event : _ze_event_handle_t {
         return this->device;
     }
 
+    void setDualCopyOffload(bool value) {
+        this->isDualCopyOffloadEvent = value;
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -455,6 +459,7 @@ struct Event : _ze_event_handle_t {
     bool reportEmptyCbEventAsReady = true;
     bool heapfullCbEventWithProfiling = false;
     bool externalEvent = false;
+    bool isDualCopyOffloadEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
