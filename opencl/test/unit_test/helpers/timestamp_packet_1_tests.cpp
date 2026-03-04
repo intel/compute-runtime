@@ -1998,16 +1998,68 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables
 
     auto allocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
     EXPECT_TRUE(allocation->isTbxWritable(allBanks));
-    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
     cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, cmdQ->getGpgpuCommandStreamReceiver());
     EXPECT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
 
-    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
     EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(allocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenSettingTagAllocatorForSimulationMultipleTimesThenInitialUploadIsExecutedOnlyOnce) {
+    auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    csr.timestampPacketWriteEnabled = true;
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    auto allocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
+
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+    EXPECT_TRUE(allocation->isSimulationInitialUploadDone());
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(allocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(allocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
+HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenCreatingNewTagPoolThenInitialUploadIsExecutedOnceForNewAllocation) {
+    auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    csr.timestampPacketWriteEnabled = true;
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+
+    auto firstPoolAllocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    EXPECT_TRUE(firstPoolAllocation->isSimulationInitialUploadDone());
+
+    mockTagAllocator->setTagNodeUpdateCallback({});
+    csr.writeMemoryParams = {};
+
+    auto firstNode = mockTagAllocator->getTag();
+    auto secondNode = mockTagAllocator->getTag();
+
+    auto secondPoolAllocation = secondNode->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    EXPECT_NE(firstPoolAllocation, secondPoolAllocation);
+    EXPECT_TRUE(secondPoolAllocation->isSimulationInitialUploadDone());
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(secondPoolAllocation, csr.writeMemoryParams.latestGfxAllocation);
+
+    csr.setupTagAllocatorForSimulation(*mockTagAllocator);
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+
+    firstNode->returnTag();
+    secondNode->returnTag();
 }
 
 HWTEST_F(TimestampPacketTests, givenTbxCsrWhenReusingTagNodeThenEveryNodeUpdateIsUploadedToSimulation) {

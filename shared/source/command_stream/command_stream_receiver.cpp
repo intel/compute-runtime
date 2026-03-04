@@ -1250,12 +1250,36 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
 void CommandStreamReceiver::setupTagAllocatorForSimulation(TagAllocatorBase &tagAllocator) {
     if (!isTbxMode() && !isAubMode()) {
         tagAllocator.setTagNodeUpdateCallback({});
+        tagAllocator.setTagPoolCreatedCallback({});
         return;
     }
 
     tagAllocator.setTagNodeUpdateCallback([this](TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {
         this->writeTagAllocationChunkToSimulation(tagNode, tagOffset, chunkSize);
     });
+
+    auto uploadTagPoolToSimulation = [this](MultiGraphicsAllocation &multiAllocation) {
+        for (auto *gfxAllocation : multiAllocation.getGraphicsAllocations()) {
+            if (gfxAllocation == nullptr || gfxAllocation->isSimulationInitialUploadDone()) {
+                continue;
+            }
+            const size_t fullAllocationSize = gfxAllocation->getUnderlyingBufferSize();
+            if (fullAllocationSize == 0) {
+                gfxAllocation->setSimulationInitialUploadDone(true);
+                continue;
+            }
+            writeAllocationChunkToSimulation(*gfxAllocation, 0u, fullAllocationSize);
+            gfxAllocation->setSimulationInitialUploadDone(true);
+        }
+    };
+
+    tagAllocator.setTagPoolCreatedCallback(uploadTagPoolToSimulation);
+
+    for (const auto &multiAllocation : tagAllocator.getGfxAllocations()) {
+        if (multiAllocation != nullptr) {
+            uploadTagPoolToSimulation(*multiAllocation);
+        }
+    }
 }
 
 void CommandStreamReceiver::writeAllocationChunkToSimulation(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize) {

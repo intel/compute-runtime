@@ -142,6 +142,7 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 class TagAllocatorBase {
   public:
     using TagNodeUpdateCallback = std::function<void(TagNodeBase &, uint64_t, size_t)>;
+    using TagPoolCreatedCallback = std::function<void(MultiGraphicsAllocation &)>;
 
     virtual ~TagAllocatorBase() { cleanUpResources(); };
 
@@ -153,6 +154,12 @@ class TagAllocatorBase {
     void notifyTagNodeUpdated(TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {
         if (tagNodeUpdateCallback) {
             tagNodeUpdateCallback(tagNode, tagOffset, chunkSize);
+        }
+    }
+    void setTagPoolCreatedCallback(TagPoolCreatedCallback callback) { tagPoolCreatedCallback = std::move(callback); }
+    void notifyTagPoolCreated(MultiGraphicsAllocation &allocation) {
+        if (tagPoolCreatedCallback) {
+            tagPoolCreatedCallback(allocation);
         }
     }
     size_t getTagSize() const { return tagSize; }
@@ -182,7 +189,9 @@ class TagAllocatorBase {
     const uint32_t tagCount;
     const uint32_t tagSize;
     bool doNotReleaseNodes = false;
+
     TagNodeUpdateCallback tagNodeUpdateCallback;
+    TagPoolCreatedCallback tagPoolCreatedCallback;
 
     std::mutex allocatorMutex;
 };

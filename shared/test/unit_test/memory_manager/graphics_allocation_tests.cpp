@@ -39,6 +39,18 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenAllo
     EXPECT_TRUE(graphicsAllocation.isUsed());
 }
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingSimulationInitialUploadDoneStateThenStateIsUpdated) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    EXPECT_FALSE(graphicsAllocation.isSimulationInitialUploadDone());
+
+    graphicsAllocation.setSimulationInitialUploadDone(true);
+    EXPECT_TRUE(graphicsAllocation.isSimulationInitialUploadDone());
+
+    graphicsAllocation.setSimulationInitialUploadDone(false);
+    EXPECT_FALSE(graphicsAllocation.isSimulationInitialUploadDone());
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationGetDefaultHandleAddressAndHandleSize) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(0lu, graphicsAllocation.getHandleAddressBase(0));

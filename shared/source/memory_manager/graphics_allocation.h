@@ -49,6 +49,7 @@ struct AubInfo {
     bool bcsDumpOnly = false;
     bool memObjectsAllocationWithWritableFlags = false;
     bool writeMemoryOnly = false;
+    bool simulationInitialUploadDone = false;
 };
 
 struct SurfaceStateInHeapInfo {
@@ -172,6 +173,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     }
     void setWriteMemoryOnly(bool writeMemoryOnly) {
         aubInfo.writeMemoryOnly = writeMemoryOnly;
+    }
+    void setSimulationInitialUploadDone(bool done) {
+        aubInfo.simulationInitialUploadDone = done;
+    }
+    bool isSimulationInitialUploadDone() const {
+        return aubInfo.simulationInitialUploadDone;
     }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }
