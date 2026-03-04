@@ -153,7 +153,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
 template <typename TagSizeT>
 EventImp<TagSizeT>::EventImp(int index, Device *device, bool tbxMode)
-    : Event(index, device), tbxMode(tbxMode) {
+    : Event(index, device), tbxMode(tbxMode),
+      isHeaplessModeEnabled(device->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo())),
+      isDcFlushAllowed(device->getProductHelper().isDcFlushAllowed()),
+      isNonCoherentTimestampsModeEnabled(device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
     contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
     contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
     globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();
@@ -1125,12 +1128,9 @@ void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPac
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::isCacheFlushRequiredForHostSync() const {
-    auto &hwInfo = this->device->getHwInfo();
-    auto isHeaplessModeEnabled = this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
-    auto isDcFlushAllowed = this->device->getProductHelper().isDcFlushAllowed();
     if (!isDcFlushAllowed || isHeaplessModeEnabled) {
         return false;
     }
-    return isCounterBased() || (inOrderExecHelper.isDataAssigned() && this->device->getProductHelper().isNonCoherentTimestampsModeEnabled());
+    return isCounterBased() || (inOrderExecHelper.isDataAssigned() && isNonCoherentTimestampsModeEnabled);
 }
 } // namespace L0

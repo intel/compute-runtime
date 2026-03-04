@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,9 @@ struct EventImp : public Event {
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 
     const bool tbxMode = false;
+    const bool isHeaplessModeEnabled = false;
+    const bool isDcFlushAllowed = false;
+    const bool isNonCoherentTimestampsModeEnabled = false;
 
   protected:
     ze_result_t waitForUserFence(uint64_t timeout);
