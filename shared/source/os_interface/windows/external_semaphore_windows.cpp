@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,13 +178,12 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
 
     uint64_t lastSignaledValue = 0;
     if (this->type == ExternalSemaphore::OpaqueWin32) {
-        lastSignaledValue = *this->pLastSignaledValue;
+        lastSignaledValue = *this->pLastSignaledValue + 2;
         wait.FenceValueArray = &lastSignaledValue;
     } else {
         wait.FenceValueArray = fenceValue;
     }
 
-    wait.FenceValueArray = fenceValue;
     wait.hAsyncEvent = nullptr;
     wait.Flags = waitFlags;
 
